@@ -91,8 +91,8 @@ public class AuthenticationTest {
             // Setup fresh driver for each test
             DriverManager.createDriver("chrome");
             driver = DriverManager.getDriver("chrome");
-            loginPage = new LoginPage();
-            dashboardPage = new DashboardPage();
+            loginPage = new LoginPage(driver);
+            dashboardPage = new DashboardPage(driver);
             
             // Execute the specific test case
             switch(testCaseName) {
