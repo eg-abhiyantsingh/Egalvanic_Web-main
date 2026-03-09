@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Extent Report Hierarchical Structure Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .report-header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .test-node {
+            border: 1px solid #ddd;
+            margin: 10px 0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .node-header {
+            background-color: #f9f9f9;
+            padding: 12px 15px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .node-header.module {
+            background-color: #E3F2FD;
+            border-left: 4px solid #2196F3;
+        }
+        .node-header.feature {
+            background-color: #E8F5E9;
+            border-left: 4px solid #4CAF50;
+        }
+        .node-header.subfeature {
+            background-color: #FFF3E0;
+            border-left: 4px solid #FF9800;
+        }
+        .node-content {
+            padding: 15px;
+            display: none;
+        }
+        .log-entry {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 3px;
+        }
+        .log-info {
+            background-color: #E3F2FD;
+            border-left: 3px solid #2196F3;
+        }
+        .log-pass {
+            background-color: #E8F5E9;
+            border-left: 3px solid #4CAF50;
+        }
+        .log-fail {
+            background-color: #FFEBEE;
+            border-left: 3px solid #F44336;
+        }
+        .toggle-btn {
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .color-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="report-header">
+            <h1>Extent Report Hierarchical Structure Demo</h1>
+            <p>This demonstrates how the Extent report will be organized with the implemented hierarchy</p>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="color-box" style="background-color: #E3F2FD; border-left: 4px solid #2196F3;"></div>
+                <span>Module Level</span>
+            </div>
+            <div class="legend-item">
+                <div class="color-box" style="background-color: #E8F5E9; border-left: 4px solid #4CAF50;"></div>
+                <span>Feature Level</span>
+            </div>
+            <div class="legend-item">
+                <div class="color-box" style="background-color: #FFF3E0; border-left: 4px solid #FF9800;"></div>
+                <span>Sub-Feature Level</span>
+            </div>
+        </div>
+
+        <!-- Module: Assets -->
+        <div class="test-node">
+            <div class="node-header module" onclick="toggleNode(this)">
+                <span>Module: Assets</span>
+                <button class="toggle-btn">▼</button>
+            </div>
+            <div class="node-content" style="display: block;">
+                
+                <!-- Feature: List -->
+                <div class="test-node">
+                    <div class="node-header feature" onclick="toggleNode(this)">
+                        <span>Feature: List</span>
+                        <button class="toggle-btn">▼</button>
+                    </div>
+                    <div class="node-content" style="display: block;">
+                        
+                        <!-- Sub-Feature: CRUD Assets -->
+                        <div class="test-node">
+                            <div class="node-header subfeature" onclick="toggleNode(this)">
+                                <span>Sub-Feature: CRUD Assets</span>
+                                <button class="toggle-btn">▼</button>
+                            </div>
+                            <div class="node-content" style="display: block;">
+                                <div class="log-entry log-info">INFO: Starting UI testing for dashboard, create asset and edit asset flow</div>
+                                <div class="log-entry log-info">INFO: Starting UI testing</div>
+                                <div class="log-entry log-pass">PASS: Login Successful</div>
+                                <div class="log-entry log-pass">PASS: Site Selection Successful</div>
+                                <div class="log-entry log-pass">PASS: Assets Page Loaded</div>
+                                <div class="log-entry log-pass">PASS: Asset Creation Phase 1 Successful</div>
+                                <div class="log-entry log-pass">PASS: Asset Edit Phase 2 Successful</div>
+                                <div class="log-entry log-pass">PASS: Asset deleted successfully</div>
+                                <div class="log-entry log-pass">PASS: Full UI flow completed successfully</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Sub-Feature: Search -->
+                        <div class="test-node">
+                            <div class="node-header subfeature" onclick="toggleNode(this)">
+                                <span>Sub-Feature: Search</span>
+                                <button class="toggle-btn">▼</button>
+                            </div>
+                            <div class="node-content" style="display: block;">
+                                <div class="log-entry log-info">INFO: Starting search functionality testing</div>
+                                <div class="log-entry log-pass">PASS: Asset search completed successfully</div>
+                                <div class="log-entry log-pass">PASS: Search results displayed correctly</div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        function toggleNode(element) {
+            const content = element.nextElementSibling;
+            const button = element.querySelector('.toggle-btn');
+            
+            if (content.style.display === 'block') {
+                content.style.display = 'none';
+                button.textContent = '▶';
+            } else {
+                content.style.display = 'block';
+                button.textContent = '▼';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john.doe@example.com",
+      "credentials": {
+        "username": "johndoe",
+        "password": "secret123"
+      },
+      "roles": ["user", "tester"],
+      "active": true
+    },
+    {
+      "id": 2,
+      "name": "Jane Smith",
+      "email": "jane.smith@example.com",
+      "credentials": {
+        "username": "janesmith",
+        "password": "secret456"
+      },
+      "roles": ["admin", "user"],
+      "active": true
+    },
+    {
+      "id": 3,
+      "name": "Bob Johnson",
+      "email": "bob.johnson@example.com",
+      "credentials": {
+        "username": "bobjohnson",
+        "password": "secret789"
+      },
+      "roles": ["user"],
+      "active": false
+    }
+  ],
+  "testScenarios": [
+    {
+      "name": "valid_login",
+      "description": "Valid user login",
+      "data": {
+        "email": "john.doe@example.com",
+        "password": "secret123",
+        "expectedResult": "success"
+      }
+    },
+    {
+      "name": "invalid_password",
+      "description": "Invalid password login",
+      "data": {
+        "email": "john.doe@example.com",
+        "password": "wrongpassword",
+        "expectedResult": "failure"
+      }
+    },
+    {
+      "name": "nonexistent_user",
+      "description": "Non-existent user login",
+      "data": {
+        "email": "nonexistent@example.com",
+        "password": "anypassword",
+        "expectedResult": "failure"
+      }
+    }
+  ]
+}

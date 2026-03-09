@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="TestSuite" time="458.418" tests="22" errors="0" skipped="0" failures="0">
+  <properties>
+    <property name="java.specification.version" value="21"/>
+    <property name="webdriver.chrome.driver" value="C:\Users\Abhiyant\.cache\selenium\chromedriver\win64\143.0.7499.146\chromedriver.exe"/>
+    <property name="sun.cpu.isalist" value="amd64"/>
+    <property name="sun.jnu.encoding" value="Cp1252"/>
+    <property name="java.class.path" value="C:\Users\Abhiyant\Downloads\New_mukul\Egalvanic_automation-1\target\test-classes;C:\Users\Abhiyant\Downloads\New_mukul\Egalvanic_automation-1\target\classes;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-java\4.16.1\selenium-java-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-chrome-driver\4.16.1\selenium-chrome-driver-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\com\google\auto\service\auto-service-annotations\1.1.1\auto-service-annotations-1.1.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-chromium-driver\4.16.1\selenium-chromium-driver-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-json\4.16.1\selenium-json-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-manager\4.16.1\selenium-manager-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-devtools-v118\4.16.1\selenium-devtools-v118-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-devtools-v119\4.16.1\selenium-devtools-v119-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-devtools-v120\4.16.1\selenium-devtools-v120-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-devtools-v85\4.16.1\selenium-devtools-v85-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-edge-driver\4.16.1\selenium-edge-driver-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-firefox-driver\4.16.1\selenium-firefox-driver-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-http\4.16.1\selenium-http-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\dev\failsafe\failsafe\3.3.2\failsafe-3.3.2.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-ie-driver\4.16.1\selenium-ie-driver-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-safari-driver\4.16.1\selenium-safari-driver-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\io\github\bonigarcia\webdrivermanager\5.6.3\webdrivermanager-5.6.3.jar;C:\Users\Abhiyant\.m2\repository\org\slf4j\slf4j-api\2.0.10\slf4j-api-2.0.10.jar;C:\Users\Abhiyant\.m2\repository\com\google\code\gson\gson\2.10.1\gson-2.10.1.jar;C:\Users\Abhiyant\.m2\repository\com\github\docker-java\docker-java\3.3.4\docker-java-3.3.4.jar;C:\Users\Abhiyant\.m2\repository\com\github\docker-java\docker-java-core\3.3.4\docker-java-core-3.3.4.jar;C:\Users\Abhiyant\.m2\repository\com\github\docker-java\docker-java-api\3.3.4\docker-java-api-3.3.4.jar;C:\Users\Abhiyant\.m2\repository\com\fasterxml\jackson\core\jackson-annotations\2.10.3\jackson-annotations-2.10.3.jar;C:\Users\Abhiyant\.m2\repository\com\fasterxml\jackson\core\jackson-databind\2.10.3\jackson-databind-2.10.3.jar;C:\Users\Abhiyant\.m2\repository\com\fasterxml\jackson\core\jackson-core\2.10.3\jackson-core-2.10.3.jar;C:\Users\Abhiyant\.m2\repository\org\bouncycastle\bcpkix-jdk18on\1.76\bcpkix-jdk18on-1.76.jar;C:\Users\Abhiyant\.m2\repository\org\bouncycastle\bcprov-jdk18on\1.76\bcprov-jdk18on-1.76.jar;C:\Users\Abhiyant\.m2\repository\org\bouncycastle\bcutil-jdk18on\1.76\bcutil-jdk18on-1.76.jar;C:\Users\Abhiyant\.m2\repository\org\slf4j\jcl-over-slf4j\1.7.30\jcl-over-slf4j-1.7.30.jar;C:\Users\Abhiyant\.m2\repository\com\github\docker-java\docker-java-transport-httpclient5\3.3.4\docker-java-transport-httpclient5-3.3.4.jar;C:\Users\Abhiyant\.m2\repository\com\github\docker-java\docker-java-transport\3.3.4\docker-java-transport-3.3.4.jar;C:\Users\Abhiyant\.m2\repository\net\java\dev\jna\jna\5.13.0\jna-5.13.0.jar;C:\Users\Abhiyant\.m2\repository\org\brotli\dec\0.1.2\dec-0.1.2.jar;C:\Users\Abhiyant\.m2\repository\org\apache\commons\commons-lang3\3.14.0\commons-lang3-3.14.0.jar;C:\Users\Abhiyant\.m2\repository\org\apache\commons\commons-compress\1.25.0\commons-compress-1.25.0.jar;C:\Users\Abhiyant\.m2\repository\org\apache\httpcomponents\client5\httpclient5\5.2.1\httpclient5-5.2.1.jar;C:\Users\Abhiyant\.m2\repository\org\apache\httpcomponents\core5\httpcore5\5.2\httpcore5-5.2.jar;C:\Users\Abhiyant\.m2\repository\org\apache\httpcomponents\core5\httpcore5-h2\5.2\httpcore5-h2-5.2.jar;C:\Users\Abhiyant\.m2\repository\org\apache\httpcomponents\httpclient\4.5.13\httpclient-4.5.13.jar;C:\Users\Abhiyant\.m2\repository\org\apache\httpcomponents\httpcore\4.4.13\httpcore-4.4.13.jar;C:\Users\Abhiyant\.m2\repository\commons-logging\commons-logging\1.2\commons-logging-1.2.jar;C:\Users\Abhiyant\.m2\repository\commons-codec\commons-codec\1.11\commons-codec-1.11.jar;C:\Users\Abhiyant\.m2\repository\com\aventstack\extentreports\5.0.9\extentreports-5.0.9.jar;C:\Users\Abhiyant\.m2\repository\io\reactivex\rxjava3\rxjava\3.0.4\rxjava-3.0.4.jar;C:\Users\Abhiyant\.m2\repository\org\reactivestreams\reactive-streams\1.0.3\reactive-streams-1.0.3.jar;C:\Users\Abhiyant\.m2\repository\org\freemarker\freemarker\2.3.30\freemarker-2.3.30.jar;C:\Users\Abhiyant\.m2\repository\org\projectlombok\lombok\1.18.12\lombok-1.18.12.jar;C:\Users\Abhiyant\.m2\repository\io\rest-assured\rest-assured\5.4.0\rest-assured-5.4.0.jar;C:\Users\Abhiyant\.m2\repository\org\apache\groovy\groovy\4.0.16\groovy-4.0.16.jar;C:\Users\Abhiyant\.m2\repository\org\apache\groovy\groovy-xml\4.0.16\groovy-xml-4.0.16.jar;C:\Users\Abhiyant\.m2\repository\org\apache\httpcomponents\httpmime\4.5.13\httpmime-4.5.13.jar;C:\Users\Abhiyant\.m2\repository\org\hamcrest\hamcrest\2.2\hamcrest-2.2.jar;C:\Users\Abhiyant\.m2\repository\org\ccil\cowan\tagsoup\tagsoup\1.2.1\tagsoup-1.2.1.jar;C:\Users\Abhiyant\.m2\repository\io\rest-assured\json-path\5.4.0\json-path-5.4.0.jar;C:\Users\Abhiyant\.m2\repository\org\apache\groovy\groovy-json\4.0.16\groovy-json-4.0.16.jar;C:\Users\Abhiyant\.m2\repository\io\rest-assured\rest-assured-common\5.4.0\rest-assured-common-5.4.0.jar;C:\Users\Abhiyant\.m2\repository\io\rest-assured\xml-path\5.4.0\xml-path-5.4.0.jar;C:\Users\Abhiyant\.m2\repository\org\json\json\20231013\json-20231013.jar;C:\Users\Abhiyant\.m2\repository\io\appium\java-client\8.6.0\java-client-8.6.0.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-api\4.13.0\selenium-api-4.13.0.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-remote-driver\4.13.0\selenium-remote-driver-4.13.0.jar;C:\Users\Abhiyant\.m2\repository\com\google\guava\guava\32.1.2-jre\guava-32.1.2-jre.jar;C:\Users\Abhiyant\.m2\repository\com\google\guava\failureaccess\1.0.1\failureaccess-1.0.1.jar;C:\Users\Abhiyant\.m2\repository\com\google\guava\listenablefuture\9999.0-empty-to-avoid-conflict-with-guava\listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar;C:\Users\Abhiyant\.m2\repository\com\google\code\findbugs\jsr305\3.0.2\jsr305-3.0.2.jar;C:\Users\Abhiyant\.m2\repository\org\checkerframework\checker-qual\3.33.0\checker-qual-3.33.0.jar;C:\Users\Abhiyant\.m2\repository\com\google\errorprone\error_prone_annotations\2.18.0\error_prone_annotations-2.18.0.jar;C:\Users\Abhiyant\.m2\repository\com\google\j2objc\j2objc-annotations\2.8\j2objc-annotations-2.8.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-buffer\4.1.96.Final\netty-buffer-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-codec-http\4.1.96.Final\netty-codec-http-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-codec\4.1.96.Final\netty-codec-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-handler\4.1.96.Final\netty-handler-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-common\4.1.96.Final\netty-common-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-transport-classes-epoll\4.1.96.Final\netty-transport-classes-epoll-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-transport-classes-kqueue\4.1.96.Final\netty-transport-classes-kqueue-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-transport-native-epoll\4.1.96.Final\netty-transport-native-epoll-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-transport-native-kqueue\4.1.96.Final\netty-transport-native-kqueue-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-transport-native-unix-common\4.1.96.Final\netty-transport-native-unix-common-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-transport\4.1.96.Final\netty-transport-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-resolver\4.1.96.Final\netty-resolver-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-api\1.28.0\opentelemetry-api-1.28.0.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-context\1.28.0\opentelemetry-context-1.28.0.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-exporter-logging\1.28.0\opentelemetry-exporter-logging-1.28.0.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-sdk-metrics\1.28.0\opentelemetry-sdk-metrics-1.28.0.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-extension-incubator\1.28.0-alpha\opentelemetry-extension-incubator-1.28.0-alpha.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-sdk-logs\1.28.0\opentelemetry-sdk-logs-1.28.0.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-sdk-common\1.28.0\opentelemetry-sdk-common-1.28.0.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-sdk-extension-autoconfigure-spi\1.28.0\opentelemetry-sdk-extension-autoconfigure-spi-1.28.0.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-sdk-extension-autoconfigure\1.28.0\opentelemetry-sdk-extension-autoconfigure-1.28.0.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-api-events\1.28.0-alpha\opentelemetry-api-events-1.28.0-alpha.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-sdk-trace\1.28.0\opentelemetry-sdk-trace-1.28.0.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-sdk\1.28.0\opentelemetry-sdk-1.28.0.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-semconv\1.28.0-alpha\opentelemetry-semconv-1.28.0-alpha.jar;C:\Users\Abhiyant\.m2\repository\net\bytebuddy\byte-buddy\1.14.5\byte-buddy-1.14.5.jar;C:\Users\Abhiyant\.m2\repository\org\asynchttpclient\async-http-client\2.12.3\async-http-client-2.12.3.jar;C:\Users\Abhiyant\.m2\repository\org\asynchttpclient\async-http-client-netty-utils\2.12.3\async-http-client-netty-utils-2.12.3.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-codec-socks\4.1.60.Final\netty-codec-socks-4.1.60.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-handler-proxy\4.1.60.Final\netty-handler-proxy-4.1.60.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-transport-native-epoll\4.1.60.Final\netty-transport-native-epoll-4.1.60.Final-linux-x86_64.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-transport-native-kqueue\4.1.60.Final\netty-transport-native-kqueue-4.1.60.Final-osx-x86_64.jar;C:\Users\Abhiyant\.m2\repository\com\typesafe\netty\netty-reactive-streams\2.0.4\netty-reactive-streams-2.0.4.jar;C:\Users\Abhiyant\.m2\repository\com\sun\activation\jakarta.activation\1.2.2\jakarta.activation-1.2.2.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-os\4.13.0\selenium-os-4.13.0.jar;C:\Users\Abhiyant\.m2\repository\org\apache\commons\commons-exec\1.3\commons-exec-1.3.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-support\4.13.0\selenium-support-4.13.0.jar;C:\Users\Abhiyant\.m2\repository\commons-io\commons-io\2.14.0\commons-io-2.14.0.jar;C:\Users\Abhiyant\.m2\repository\org\testng\testng\7.8.0\testng-7.8.0.jar;C:\Users\Abhiyant\.m2\repository\com\beust\jcommander\1.82\jcommander-1.82.jar;C:\Users\Abhiyant\.m2\repository\org\webjars\jquery\3.6.1\jquery-3.6.1.jar;"/>
+    <property name="java.vm.vendor" value="Oracle Corporation"/>
+    <property name="sun.arch.data.model" value="64"/>
+    <property name="user.variant" value=""/>
+    <property name="java.vendor.url" value="https://java.oracle.com/"/>
+    <property name="user.timezone" value="Asia/Calcutta"/>
+    <property name="os.name" value="Windows 10"/>
+    <property name="java.vm.specification.version" value="21"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+    <property name="user.country" value="US"/>
+    <property name="sun.boot.library.path" value="C:\Program Files\Java\jdk-21\bin"/>
+    <property name="sun.java.command" value="C:\Users\Abhiyant\AppData\Local\Temp\surefire15346304417997404840\surefirebooter-20251217174215292_3.jar C:\Users\Abhiyant\AppData\Local\Temp\surefire15346304417997404840 2025-12-17T17-42-14_882-jvmRun1 surefire-20251217174215292_1tmp surefire_0-20251217174215292_2tmp"/>
+    <property name="jdk.debug" value="release"/>
+    <property name="surefire.test.class.path" value="C:\Users\Abhiyant\Downloads\New_mukul\Egalvanic_automation-1\target\test-classes;C:\Users\Abhiyant\Downloads\New_mukul\Egalvanic_automation-1\target\classes;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-java\4.16.1\selenium-java-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-chrome-driver\4.16.1\selenium-chrome-driver-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\com\google\auto\service\auto-service-annotations\1.1.1\auto-service-annotations-1.1.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-chromium-driver\4.16.1\selenium-chromium-driver-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-json\4.16.1\selenium-json-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-manager\4.16.1\selenium-manager-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-devtools-v118\4.16.1\selenium-devtools-v118-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-devtools-v119\4.16.1\selenium-devtools-v119-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-devtools-v120\4.16.1\selenium-devtools-v120-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-devtools-v85\4.16.1\selenium-devtools-v85-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-edge-driver\4.16.1\selenium-edge-driver-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-firefox-driver\4.16.1\selenium-firefox-driver-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-http\4.16.1\selenium-http-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\dev\failsafe\failsafe\3.3.2\failsafe-3.3.2.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-ie-driver\4.16.1\selenium-ie-driver-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-safari-driver\4.16.1\selenium-safari-driver-4.16.1.jar;C:\Users\Abhiyant\.m2\repository\io\github\bonigarcia\webdrivermanager\5.6.3\webdrivermanager-5.6.3.jar;C:\Users\Abhiyant\.m2\repository\org\slf4j\slf4j-api\2.0.10\slf4j-api-2.0.10.jar;C:\Users\Abhiyant\.m2\repository\com\google\code\gson\gson\2.10.1\gson-2.10.1.jar;C:\Users\Abhiyant\.m2\repository\com\github\docker-java\docker-java\3.3.4\docker-java-3.3.4.jar;C:\Users\Abhiyant\.m2\repository\com\github\docker-java\docker-java-core\3.3.4\docker-java-core-3.3.4.jar;C:\Users\Abhiyant\.m2\repository\com\github\docker-java\docker-java-api\3.3.4\docker-java-api-3.3.4.jar;C:\Users\Abhiyant\.m2\repository\com\fasterxml\jackson\core\jackson-annotations\2.10.3\jackson-annotations-2.10.3.jar;C:\Users\Abhiyant\.m2\repository\com\fasterxml\jackson\core\jackson-databind\2.10.3\jackson-databind-2.10.3.jar;C:\Users\Abhiyant\.m2\repository\com\fasterxml\jackson\core\jackson-core\2.10.3\jackson-core-2.10.3.jar;C:\Users\Abhiyant\.m2\repository\org\bouncycastle\bcpkix-jdk18on\1.76\bcpkix-jdk18on-1.76.jar;C:\Users\Abhiyant\.m2\repository\org\bouncycastle\bcprov-jdk18on\1.76\bcprov-jdk18on-1.76.jar;C:\Users\Abhiyant\.m2\repository\org\bouncycastle\bcutil-jdk18on\1.76\bcutil-jdk18on-1.76.jar;C:\Users\Abhiyant\.m2\repository\org\slf4j\jcl-over-slf4j\1.7.30\jcl-over-slf4j-1.7.30.jar;C:\Users\Abhiyant\.m2\repository\com\github\docker-java\docker-java-transport-httpclient5\3.3.4\docker-java-transport-httpclient5-3.3.4.jar;C:\Users\Abhiyant\.m2\repository\com\github\docker-java\docker-java-transport\3.3.4\docker-java-transport-3.3.4.jar;C:\Users\Abhiyant\.m2\repository\net\java\dev\jna\jna\5.13.0\jna-5.13.0.jar;C:\Users\Abhiyant\.m2\repository\org\brotli\dec\0.1.2\dec-0.1.2.jar;C:\Users\Abhiyant\.m2\repository\org\apache\commons\commons-lang3\3.14.0\commons-lang3-3.14.0.jar;C:\Users\Abhiyant\.m2\repository\org\apache\commons\commons-compress\1.25.0\commons-compress-1.25.0.jar;C:\Users\Abhiyant\.m2\repository\org\apache\httpcomponents\client5\httpclient5\5.2.1\httpclient5-5.2.1.jar;C:\Users\Abhiyant\.m2\repository\org\apache\httpcomponents\core5\httpcore5\5.2\httpcore5-5.2.jar;C:\Users\Abhiyant\.m2\repository\org\apache\httpcomponents\core5\httpcore5-h2\5.2\httpcore5-h2-5.2.jar;C:\Users\Abhiyant\.m2\repository\org\apache\httpcomponents\httpclient\4.5.13\httpclient-4.5.13.jar;C:\Users\Abhiyant\.m2\repository\org\apache\httpcomponents\httpcore\4.4.13\httpcore-4.4.13.jar;C:\Users\Abhiyant\.m2\repository\commons-logging\commons-logging\1.2\commons-logging-1.2.jar;C:\Users\Abhiyant\.m2\repository\commons-codec\commons-codec\1.11\commons-codec-1.11.jar;C:\Users\Abhiyant\.m2\repository\com\aventstack\extentreports\5.0.9\extentreports-5.0.9.jar;C:\Users\Abhiyant\.m2\repository\io\reactivex\rxjava3\rxjava\3.0.4\rxjava-3.0.4.jar;C:\Users\Abhiyant\.m2\repository\org\reactivestreams\reactive-streams\1.0.3\reactive-streams-1.0.3.jar;C:\Users\Abhiyant\.m2\repository\org\freemarker\freemarker\2.3.30\freemarker-2.3.30.jar;C:\Users\Abhiyant\.m2\repository\org\projectlombok\lombok\1.18.12\lombok-1.18.12.jar;C:\Users\Abhiyant\.m2\repository\io\rest-assured\rest-assured\5.4.0\rest-assured-5.4.0.jar;C:\Users\Abhiyant\.m2\repository\org\apache\groovy\groovy\4.0.16\groovy-4.0.16.jar;C:\Users\Abhiyant\.m2\repository\org\apache\groovy\groovy-xml\4.0.16\groovy-xml-4.0.16.jar;C:\Users\Abhiyant\.m2\repository\org\apache\httpcomponents\httpmime\4.5.13\httpmime-4.5.13.jar;C:\Users\Abhiyant\.m2\repository\org\hamcrest\hamcrest\2.2\hamcrest-2.2.jar;C:\Users\Abhiyant\.m2\repository\org\ccil\cowan\tagsoup\tagsoup\1.2.1\tagsoup-1.2.1.jar;C:\Users\Abhiyant\.m2\repository\io\rest-assured\json-path\5.4.0\json-path-5.4.0.jar;C:\Users\Abhiyant\.m2\repository\org\apache\groovy\groovy-json\4.0.16\groovy-json-4.0.16.jar;C:\Users\Abhiyant\.m2\repository\io\rest-assured\rest-assured-common\5.4.0\rest-assured-common-5.4.0.jar;C:\Users\Abhiyant\.m2\repository\io\rest-assured\xml-path\5.4.0\xml-path-5.4.0.jar;C:\Users\Abhiyant\.m2\repository\org\json\json\20231013\json-20231013.jar;C:\Users\Abhiyant\.m2\repository\io\appium\java-client\8.6.0\java-client-8.6.0.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-api\4.13.0\selenium-api-4.13.0.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-remote-driver\4.13.0\selenium-remote-driver-4.13.0.jar;C:\Users\Abhiyant\.m2\repository\com\google\guava\guava\32.1.2-jre\guava-32.1.2-jre.jar;C:\Users\Abhiyant\.m2\repository\com\google\guava\failureaccess\1.0.1\failureaccess-1.0.1.jar;C:\Users\Abhiyant\.m2\repository\com\google\guava\listenablefuture\9999.0-empty-to-avoid-conflict-with-guava\listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar;C:\Users\Abhiyant\.m2\repository\com\google\code\findbugs\jsr305\3.0.2\jsr305-3.0.2.jar;C:\Users\Abhiyant\.m2\repository\org\checkerframework\checker-qual\3.33.0\checker-qual-3.33.0.jar;C:\Users\Abhiyant\.m2\repository\com\google\errorprone\error_prone_annotations\2.18.0\error_prone_annotations-2.18.0.jar;C:\Users\Abhiyant\.m2\repository\com\google\j2objc\j2objc-annotations\2.8\j2objc-annotations-2.8.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-buffer\4.1.96.Final\netty-buffer-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-codec-http\4.1.96.Final\netty-codec-http-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-codec\4.1.96.Final\netty-codec-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-handler\4.1.96.Final\netty-handler-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-common\4.1.96.Final\netty-common-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-transport-classes-epoll\4.1.96.Final\netty-transport-classes-epoll-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-transport-classes-kqueue\4.1.96.Final\netty-transport-classes-kqueue-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-transport-native-epoll\4.1.96.Final\netty-transport-native-epoll-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-transport-native-kqueue\4.1.96.Final\netty-transport-native-kqueue-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-transport-native-unix-common\4.1.96.Final\netty-transport-native-unix-common-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-transport\4.1.96.Final\netty-transport-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-resolver\4.1.96.Final\netty-resolver-4.1.96.Final.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-api\1.28.0\opentelemetry-api-1.28.0.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-context\1.28.0\opentelemetry-context-1.28.0.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-exporter-logging\1.28.0\opentelemetry-exporter-logging-1.28.0.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-sdk-metrics\1.28.0\opentelemetry-sdk-metrics-1.28.0.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-extension-incubator\1.28.0-alpha\opentelemetry-extension-incubator-1.28.0-alpha.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-sdk-logs\1.28.0\opentelemetry-sdk-logs-1.28.0.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-sdk-common\1.28.0\opentelemetry-sdk-common-1.28.0.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-sdk-extension-autoconfigure-spi\1.28.0\opentelemetry-sdk-extension-autoconfigure-spi-1.28.0.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-sdk-extension-autoconfigure\1.28.0\opentelemetry-sdk-extension-autoconfigure-1.28.0.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-api-events\1.28.0-alpha\opentelemetry-api-events-1.28.0-alpha.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-sdk-trace\1.28.0\opentelemetry-sdk-trace-1.28.0.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-sdk\1.28.0\opentelemetry-sdk-1.28.0.jar;C:\Users\Abhiyant\.m2\repository\io\opentelemetry\opentelemetry-semconv\1.28.0-alpha\opentelemetry-semconv-1.28.0-alpha.jar;C:\Users\Abhiyant\.m2\repository\net\bytebuddy\byte-buddy\1.14.5\byte-buddy-1.14.5.jar;C:\Users\Abhiyant\.m2\repository\org\asynchttpclient\async-http-client\2.12.3\async-http-client-2.12.3.jar;C:\Users\Abhiyant\.m2\repository\org\asynchttpclient\async-http-client-netty-utils\2.12.3\async-http-client-netty-utils-2.12.3.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-codec-socks\4.1.60.Final\netty-codec-socks-4.1.60.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-handler-proxy\4.1.60.Final\netty-handler-proxy-4.1.60.Final.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-transport-native-epoll\4.1.60.Final\netty-transport-native-epoll-4.1.60.Final-linux-x86_64.jar;C:\Users\Abhiyant\.m2\repository\io\netty\netty-transport-native-kqueue\4.1.60.Final\netty-transport-native-kqueue-4.1.60.Final-osx-x86_64.jar;C:\Users\Abhiyant\.m2\repository\com\typesafe\netty\netty-reactive-streams\2.0.4\netty-reactive-streams-2.0.4.jar;C:\Users\Abhiyant\.m2\repository\com\sun\activation\jakarta.activation\1.2.2\jakarta.activation-1.2.2.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-os\4.13.0\selenium-os-4.13.0.jar;C:\Users\Abhiyant\.m2\repository\org\apache\commons\commons-exec\1.3\commons-exec-1.3.jar;C:\Users\Abhiyant\.m2\repository\org\seleniumhq\selenium\selenium-support\4.13.0\selenium-support-4.13.0.jar;C:\Users\Abhiyant\.m2\repository\commons-io\commons-io\2.14.0\commons-io-2.14.0.jar;C:\Users\Abhiyant\.m2\repository\org\testng\testng\7.8.0\testng-7.8.0.jar;C:\Users\Abhiyant\.m2\repository\com\beust\jcommander\1.82\jcommander-1.82.jar;C:\Users\Abhiyant\.m2\repository\org\webjars\jquery\3.6.1\jquery-3.6.1.jar;"/>
+    <property name="sun.cpu.endian" value="little"/>
+    <property name="user.home" value="C:\Users\Abhiyant"/>
+    <property name="user.language" value="en"/>
+    <property name="java.specification.vendor" value="Oracle Corporation"/>
+    <property name="java.version.date" value="2025-04-15"/>
+    <property name="java.home" value="C:\Program Files\Java\jdk-21"/>
+    <property name="file.separator" value="\"/>
+    <property name="basedir" value="C:\Users\Abhiyant\Downloads\New_mukul\Egalvanic_automation-1"/>
+    <property name="java.vm.compressedOopsMode" value="Zero based"/>
+    <property name="line.separator" value="&#10;"/>
+    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
+    <property name="java.specification.name" value="Java Platform API Specification"/>
+    <property name="surefire.real.class.path" value="C:\Users\Abhiyant\AppData\Local\Temp\surefire15346304417997404840\surefirebooter-20251217174215292_3.jar"/>
+    <property name="user.script" value=""/>
+    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
+    <property name="java.runtime.version" value="21.0.7+8-LTS-245"/>
+    <property name="user.name" value="Abhiyant"/>
+    <property name="stdout.encoding" value="Cp1252"/>
+    <property name="path.separator" value=";"/>
+    <property name="os.version" value="10.0"/>
+    <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
+    <property name="file.encoding" value="UTF-8"/>
+    <property name="java.vm.name" value="Java HotSpot(TM) 64-Bit Server VM"/>
+    <property name="localRepository" value="C:\Users\Abhiyant\.m2\repository"/>
+    <property name="java.vendor.url.bug" value="https://bugreport.java.com/bugreport/"/>
+    <property name="java.io.tmpdir" value="C:\Users\Abhiyant\AppData\Local\Temp\"/>
+    <property name="java.version" value="21.0.7"/>
+    <property name="user.dir" value="C:\Users\Abhiyant\Downloads\New_mukul\Egalvanic_automation-1"/>
+    <property name="os.arch" value="amd64"/>
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+    <property name="sun.os.patch.level" value=""/>
+    <property name="native.encoding" value="Cp1252"/>
+    <property name="java.library.path" value="C:\Program Files\Java\jdk-21\bin;C:\WINDOWS\Sun\Java\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\Program Files\Java\jdk-17.0.16.8-hotspot\bin;C:\Program Files\Python311\Scripts\;C:\Program Files\Python311\;C:\Android\cmdline-tools\latest\bin;C:\Program Files\Eclipse Adoptium\jdk-17.0.10.7-hotspot\bin;C:\Python313\;C:\Python313\Scripts\;C:\Program Files\nodejs\;C:\Users\Abhiyant\AppData\Local\Android\Sdk\platform-tools;C:\Windows\System32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Program Files\Apache\Maven\apache-maven-3.9.11\bin;C:\flutter\bin;C:\Program Files\dotnet\;C:\Program Files\Docker\Docker\resources\bin;C:\Program Files\Git\cmd;C:\Program Files\NVIDIA Corporation\NVIDIA App\NvDLISR;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\ProgramData\chocolatey\bin;C:\Program Files\cursor\resources\app\bin;C:\Program Files\Eclipse Adoptium\jdk-17.0.16.8-hotspot\bin;C:\Android\cmdline-tools\latest\bin;C:\Program Files\Eclipse Adoptium\jdk-17.0.10.7-hotspot\bin;C:\Python313\;C:\Python313\Scripts\;C:\Program Files\nodejs\;C:\Users\Abhiyant\AppData\Local\Android\Sdk\platform-tools;C:\Windows\System32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Program Files\Apache\Maven\apache-maven-3.9.11\bin;C:\flutter\bin;C:\Program Files\dotnet\;C:\Users\Abhiyant\AppData\Roaming\npm;C:\ffmpeg\bin;C:\Users\Abhiyant\AppData\Local\Programs\Qoder\bin;C:\Users\Abhiyant\AppData\Local\Programs\Antigravity\bin;c:\Users\Abhiyant\AppData\Local\Programs\Qoder\resources\app\extensions\ms-python.debugpy\bundled\scripts\noConfigScripts;c:\Users\Abhiyant\.qoder\extensions\vscjava.vscode-java-debug-0.58.4\bundled\scripts\noConfigScripts;."/>
+    <property name="java.vm.info" value="mixed mode, sharing"/>
+    <property name="stderr.encoding" value="Cp1252"/>
+    <property name="java.vendor" value="Oracle Corporation"/>
+    <property name="java.vm.version" value="21.0.7+8-LTS-245"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
+    <property name="java.class.version" value="65.0"/>
+  </properties>
+  <testcase name="TC01_ValidCredentials" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="9.34">
+    <system-out><![CDATA[🧪 Starting Independent Authentication Test Execution with TestNG
+✔ Screenshot saved: tc01_before_login_20251217_174227.png
+✔ Screenshot saved: tc01_after_login_20251217_174231.png
+]]></system-out>
+    <system-err><![CDATA[SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+Dec 17, 2025 5:42:22 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:42:22 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+  <testcase name="TC02_InvalidCredentials" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="33.231">
+    <system-out><![CDATA[✔ Screenshot saved: tc02_before_login_20251217_174237.png
+✔ Screenshot saved: tc02_no_error_20251217_174307.png
+]]></system-out>
+    <system-err><![CDATA[Dec 17, 2025 5:42:34 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:42:34 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+  <testcase name="TC03_TrailingSpaceUsername" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="33.354">
+    <system-out><![CDATA[✔ Screenshot saved: tc03_before_login_20251217_174312.png
+✔ Screenshot saved: tc03_result_20251217_174342.png
+]]></system-out>
+    <system-err><![CDATA[Dec 17, 2025 5:43:09 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:43:09 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+  <testcase name="TC04_LeadingSpaceUsername" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="33.184">
+    <system-out><![CDATA[✔ Screenshot saved: tc04_before_login_20251217_174347.png
+✔ Screenshot saved: tc04_result_20251217_174417.png
+]]></system-out>
+    <system-err><![CDATA[Dec 17, 2025 5:43:44 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:43:44 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+  <testcase name="TC05_LeadingTrailingSpacesUsername" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="33.535">
+    <system-out><![CDATA[✔ Screenshot saved: tc05_before_login_20251217_174422.png
+✔ Screenshot saved: tc05_result_20251217_174452.png
+]]></system-out>
+    <system-err><![CDATA[Dec 17, 2025 5:44:19 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:44:19 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+  <testcase name="TC06_OnlySpacesUsername" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="8.451">
+    <system-out><![CDATA[✔ Screenshot saved: tc06_before_login_20251217_174456.png
+✔ Screenshot saved: tc06_result_20251217_174502.png
+]]></system-out>
+    <system-err><![CDATA[Dec 17, 2025 5:44:53 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:44:53 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+  <testcase name="TC07_TrailingSpacePassword" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="8.257">
+    <system-out><![CDATA[✔ Screenshot saved: tc07_before_login_20251217_174507.png
+✔ Screenshot saved: tc07_result_20251217_174512.png
+]]></system-out>
+    <system-err><![CDATA[Dec 17, 2025 5:45:04 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:45:04 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+  <testcase name="TC08_SpecialCharactersUsername" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="8.153">
+    <system-out><![CDATA[✔ Screenshot saved: tc08_before_login_20251217_174517.png
+✔ Screenshot saved: tc08_result_20251217_174522.png
+]]></system-out>
+    <system-err><![CDATA[Dec 17, 2025 5:45:14 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:45:14 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+  <testcase name="TC09_NumericOnlyUsername" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="8.385">
+    <system-out><![CDATA[✔ Screenshot saved: tc09_before_login_20251217_174527.png
+✔ Screenshot saved: tc09_result_20251217_174532.png
+]]></system-out>
+    <system-err><![CDATA[Dec 17, 2025 5:45:24 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:45:24 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+  <testcase name="TC10_CaseSensitivityUsername" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="8.755">
+    <system-out><![CDATA[✔ Screenshot saved: tc10_before_login_20251217_174537.png
+✔ Screenshot saved: tc10_result_20251217_174543.png
+]]></system-out>
+    <system-err><![CDATA[Dec 17, 2025 5:45:34 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:45:34 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+  <testcase name="TC11_ExceedingMaxLengthUsername" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="39.697">
+    <system-out><![CDATA[✔ Screenshot saved: tc11_before_login_20251217_174553.png
+✔ Screenshot saved: tc11_result_20251217_174625.png
+]]></system-out>
+    <system-err><![CDATA[Dec 17, 2025 5:45:44 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:45:45 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+  <testcase name="TC12_LeadingSpacePassword" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="8.228">
+    <system-out><![CDATA[✔ Screenshot saved: tc12_before_login_20251217_174630.png
+✔ Screenshot saved: tc12_result_20251217_174635.png
+]]></system-out>
+    <system-err><![CDATA[Dec 17, 2025 5:46:27 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:46:27 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+  <testcase name="TC13_OnlySpacesPassword" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="33.351">
+    <system-out><![CDATA[✔ Screenshot saved: tc13_before_login_20251217_174640.png
+✔ Screenshot saved: tc13_result_20251217_174710.png
+]]></system-out>
+    <system-err><![CDATA[Dec 17, 2025 5:46:37 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:46:37 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+  <testcase name="TC14_MinLengthPassword" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="33.63">
+    <system-out><![CDATA[✔ Screenshot saved: tc14_before_login_20251217_174715.png
+✔ Screenshot saved: tc14_result_20251217_174746.png
+]]></system-out>
+    <system-err><![CDATA[Dec 17, 2025 5:47:12 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:47:12 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+  <testcase name="TC15_MaxLengthPassword" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="36.743">
+    <system-out><![CDATA[✔ Screenshot saved: tc15_before_login_20251217_174751.png
+✔ Screenshot saved: tc15_result_20251217_174824.png
+]]></system-out>
+    <system-err><![CDATA[Dec 17, 2025 5:47:47 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:47:47 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+  <testcase name="TC16_SQLInjectionUsername" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="8.927">
+    <system-out><![CDATA[✔ Screenshot saved: tc16_before_login_20251217_174829.png
+✔ Screenshot saved: tc16_result_20251217_174834.png
+]]></system-out>
+    <system-err><![CDATA[Dec 17, 2025 5:48:25 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:48:25 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+  <testcase name="TC17_XSSUsername" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="8.664">
+    <system-out><![CDATA[✔ Screenshot saved: tc17_before_login_20251217_174839.png
+✔ Screenshot saved: tc17_result_20251217_174844.png
+]]></system-out>
+    <system-err><![CDATA[Dec 17, 2025 5:48:36 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:48:36 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+  <testcase name="TC18_ErrorMessageCleared" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="12.884">
+    <system-out><![CDATA[✔ Screenshot saved: tc18_before_invalid_login_20251217_174849.png
+✔ Screenshot saved: tc18_error_shown_20251217_174855.png
+✔ Screenshot saved: tc18_result_20251217_174859.png
+]]></system-out>
+    <system-err><![CDATA[Dec 17, 2025 5:48:46 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:48:46 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+  <testcase name="TC19_AccessDashboardWithoutLogin" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="7.314">
+    <system-out><![CDATA[✔ Screenshot saved: tc19_direct_access_20251217_174905.png
+✔ Screenshot saved: tc19_result_20251217_174909.png
+]]></system-out>
+    <system-err><![CDATA[Dec 17, 2025 5:49:02 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:49:02 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+  <testcase name="TC20_RefreshAfterLogin" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="13.548">
+    <system-out><![CDATA[✔ Screenshot saved: tc20_logged_in_20251217_174920.png
+✔ Screenshot saved: tc20_result_20251217_174925.png
+]]></system-out>
+    <system-err><![CDATA[Dec 17, 2025 5:49:12 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:49:12 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+  <testcase name="TC21_EnterKeyLogin" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="8.546">
+    <system-out><![CDATA[✔ Screenshot saved: tc21_before_login_20251217_174930.png
+✔ Screenshot saved: tc21_result_20251217_174935.png
+]]></system-out>
+    <system-err><![CDATA[Dec 17, 2025 5:49:27 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:49:27 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+  <testcase name="TC22_BackButtonSession" classname="com.egalvanic.qa.testcase.AuthenticationTestNG" time="15.159">
+    <system-out><![CDATA[✔ Screenshot saved: tc22_logged_in_20251217_174944.png
+✔ Screenshot saved: tc22_logged_out_20251217_174946.png
+✔ Screenshot saved: tc22_result_20251217_174952.png
+]]></system-out>
+    <system-err><![CDATA[Dec 17, 2025 5:49:37 PM org.openqa.selenium.devtools.CdpVersionFinder findNearestMatch
+WARNING: Unable to find CDP implementation matching 143
+Dec 17, 2025 5:49:37 PM org.openqa.selenium.chromium.ChromiumDriver lambda$new$5
+WARNING: Unable to find version of CDP to use for 143.0.7499.42. You may need to include a dependency on a specific version of the CDP using something similar to `org.seleniumhq.selenium:selenium-devtools-v86:4.13.0` where the version ("v86") matches the version of the chromium-based browser you're using and the version number of the artifact is the same as Selenium's.
+]]></system-err>
+  </testcase>
+</testsuite>

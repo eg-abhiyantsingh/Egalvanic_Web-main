@@ -1,0 +1,11 @@
+com/acme/tests/ui/LoginPageTest.class
+com/acme/tests/security/APISecurityTest.class
+com/acme/tests/ui/ComprehensiveWebsiteTest.class
+com/acme/tests/api/UserAPITest.class
+com/acme/tests/ui/QuickDropdownTest.class
+com/acme/tests/security/UISecurityTest.class
+com/acme/tests/api/BaseAPITest.class
+com/acme/tests/performance/APIPerformanceTest.class
+com/acme/tests/performance/UIPerformanceTest.class
+com/acme/tests/ui/DropdownFunctionalityTest.class
+com/acme/tests/api/AuthenticationTest.class

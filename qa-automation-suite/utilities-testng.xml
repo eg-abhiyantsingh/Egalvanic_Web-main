@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="ACME-Utilities-Tests" parallel="false">
+    <listeners>
+        <listener class-name="com.acme.utils.ExtentReporterNG"/>
+        <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
+    </listeners>
+
+    <test name="Utilities-Functional-Tests">
+        <classes>
+            <class name="com.acme.tests.utilities.TestDataManagerTest"/>
+        </classes>
+    </test>
+</suite>

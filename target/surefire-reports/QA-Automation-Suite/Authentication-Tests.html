@@ -1,0 +1,190 @@
+<html>
+<head>
+<title>TestNG:  Authentication-Tests</title>
+<link href="../testng.css" rel="stylesheet" type="text/css" />
+<link href="../my-testng.css" rel="stylesheet" type="text/css" />
+
+<style type="text/css">
+.log { display: none;} 
+.stack-trace { display: none;} 
+</style>
+<script type="text/javascript">
+<!--
+function flip(e) {
+  current = e.style.display;
+  if (current == 'block') {
+    e.style.display = 'none';
+    return 0;
+  }
+  else {
+    e.style.display = 'block';
+    return 1;
+  }
+}
+
+function toggleBox(szDivId, elem, msg1, msg2)
+{
+  var res = -1;  if (document.getElementById) {
+    res = flip(document.getElementById(szDivId));
+  }
+  else if (document.all) {
+    // this is the way old msie versions work
+    res = flip(document.all[szDivId]);
+  }
+  if(elem) {
+    if(res == 0) elem.innerHTML = msg1; else elem.innerHTML = msg2;
+  }
+
+}
+
+function toggleAllBoxes() {
+  if (document.getElementsByTagName) {
+    d = document.getElementsByTagName('div');
+    for (i = 0; i < d.length; i++) {
+      if (d[i].className == 'log') {
+        flip(d[i]);
+      }
+    }
+  }
+}
+
+// -->
+</script>
+
+</head>
+<body>
+<h2 align='center'>Authentication-Tests</h2><table border='1' align="center">
+<tr>
+<td>Tests passed/Failed/Skipped:</td><td>22/0/0</td>
+</tr><tr>
+<td>Started on:</td><td>Wed Dec 17 17:42:18 IST 2025</td>
+</tr>
+<tr><td>Total time:</td><td>456 seconds (456334 ms)</td>
+</tr><tr>
+<td>Included groups:</td><td></td>
+</tr><tr>
+<td>Excluded groups:</td><td></td>
+</tr>
+</table><p/>
+<small><i>(Hover the method name to see the test class name)</i></small><p/>
+<table width='100%' border='1' class='invocation-passed'>
+<tr><td colspan='4' align='center'><b>PASSED TESTS</b></td></tr>
+<tr><td><b>Test method</b></td>
+<td><b>Attribute(s)</b></td>
+<td width="30%"><b>Exception</b></td>
+<td width="10%"><b>Time (seconds)</b></td>
+<td><b>Instance</b></td>
+</tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC02_InvalidCredentials()'><b>TC02_InvalidCredentials</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>33</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC12_LeadingSpacePassword()'><b>TC12_LeadingSpacePassword</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>8</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC03_TrailingSpaceUsername()'><b>TC03_TrailingSpaceUsername</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>33</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC06_OnlySpacesUsername()'><b>TC06_OnlySpacesUsername</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>8</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC04_LeadingSpaceUsername()'><b>TC04_LeadingSpaceUsername</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>33</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC16_SQLInjectionUsername()'><b>TC16_SQLInjectionUsername</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>8</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC10_CaseSensitivityUsername()'><b>TC10_CaseSensitivityUsername</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>8</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC21_EnterKeyLogin()'><b>TC21_EnterKeyLogin</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>8</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC14_MinLengthPassword()'><b>TC14_MinLengthPassword</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>33</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC13_OnlySpacesPassword()'><b>TC13_OnlySpacesPassword</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>33</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC18_ErrorMessageCleared()'><b>TC18_ErrorMessageCleared</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>12</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC09_NumericOnlyUsername()'><b>TC09_NumericOnlyUsername</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>8</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC17_XSSUsername()'><b>TC17_XSSUsername</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>8</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC11_ExceedingMaxLengthUsername()'><b>TC11_ExceedingMaxLengthUsername</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>39</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC07_TrailingSpacePassword()'><b>TC07_TrailingSpacePassword</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>8</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC08_SpecialCharactersUsername()'><b>TC08_SpecialCharactersUsername</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>8</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC15_MaxLengthPassword()'><b>TC15_MaxLengthPassword</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>36</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC19_AccessDashboardWithoutLogin()'><b>TC19_AccessDashboardWithoutLogin</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>7</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC05_LeadingTrailingSpacesUsername()'><b>TC05_LeadingTrailingSpacesUsername</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>33</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC01_ValidCredentials()'><b>TC01_ValidCredentials</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>9</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC22_BackButtonSession()'><b>TC22_BackButtonSession</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>15</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+<tr>
+<td title='com.egalvanic.qa.testcase.AuthenticationTestNG.TC20_RefreshAfterLogin()'><b>TC20_RefreshAfterLogin</b><br>Test class: com.egalvanic.qa.testcase.AuthenticationTestNG</td>
+<td></td>
+<td>13</td>
+<td>com.egalvanic.qa.testcase.AuthenticationTestNG@f6efaab</td></tr>
+</table><p>
+</body>
+</html>

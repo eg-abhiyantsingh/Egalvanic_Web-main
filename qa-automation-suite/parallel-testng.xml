@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="ACME-Automation-Suite-Parallel" parallel="methods" thread-count="3">
+    <listeners>
+        <listener class-name="com.acme.utils.ExtentReporterNG"/>
+        <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
+    </listeners>
+
+    <test name="UI-Functional-Tests-Parallel">
+        <classes>
+            <class name="com.acme.tests.ui.LoginPageTest"/>
+            <class name="com.acme.tests.ui.ComprehensiveWebsiteTest"/>
+            <class name="com.acme.tests.ui.DropdownFunctionalityTest"/>
+        </classes>
+    </test>
+
+    <test name="API-Functional-Tests-Parallel">
+        <classes>
+            <class name="com.acme.tests.api.UserAPITest"/>
+            <class name="com.acme.tests.api.AuthenticationTest"/>
+        </classes>
+    </test>
+</suite>

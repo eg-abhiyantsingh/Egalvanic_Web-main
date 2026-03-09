@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ACME QA Automation Report Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .report-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .screenshot {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .screenshot img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .info-box {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .success-box {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .warning-box {
+            background-color: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ACME QA Automation Report</h1>
+        
+        <div class="info-box">
+            <h2>Test Execution Summary</h2>
+            <p><strong>Status:</strong> In Progress</p>
+            <p><strong>Target Application:</strong> https://acme.egalvanic.ai</p>
+            <p><strong>Test Type:</strong> UI Functional Testing</p>
+        </div>
+        
+        <div class="report-section">
+            <h2>Login Page Test Results</h2>
+            
+            <div class="success-box">
+                <h3>✅ Login Page Load Test</h3>
+                <p><strong>Status:</strong> Passed</p>
+                <p><strong>Description:</strong> Successfully loaded the login page and validated its elements.</p>
+                <p><strong>Performance Metrics:</strong></p>
+                <ul>
+                    <li>Page Load Time: 8686 ms</li>
+                    <li>DOM Loading Time: 3401 ms</li>
+                    <li>Time to First Byte (TTFB): 787 ms</li>
+                </ul>
+            </div>
+            
+            <div class="warning-box">
+                <h3>⚠️ Test Execution In Progress</h3>
+                <p>Additional tests are currently running. This report will be updated upon completion.</p>
+            </div>
+        </div>
+        
+        <div class="report-section">
+            <h2>Screenshots</h2>
+            <p>Captured screenshots during test execution:</p>
+            
+            <div class="screenshot">
+                <h3>Login Page Load</h3>
+                <img src="test-output/screenshots/LoginPageLoad_20251130_192651.png" alt="Login Page Screenshot">
+                <p><em>Timestamp: November 30, 2025 19:26:51</em></p>
+            </div>
+        </div>
+        
+        <div class="report-section">
+            <h2>Performance Analysis</h2>
+            <div class="info-box">
+                <h3>Initial Performance Metrics</h3>
+                <ul>
+                    <li><strong>Page Load Time:</strong> 8686 ms (Needs improvement)</li>
+                    <li><strong>DOM Loading Time:</strong> 3401 ms (Acceptable)</li>
+                    <li><strong>TTFB:</strong> 787 ms (Good)</li>
+                </ul>
+                <p><strong>Recommendation:</strong> Optimize asset loading to improve overall page load time.</p>
+            </div>
+        </div>
+        
+        <div class="report-section">
+            <h2>Next Steps</h2>
+            <ol>
+                <li>Complete remaining test cases (login validation, security tests, API tests)</li>
+                <li>Generate full Extent Reports with detailed test results</li>
+                <li>Analyze performance bottlenecks</li>
+                <li>Document any issues found</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

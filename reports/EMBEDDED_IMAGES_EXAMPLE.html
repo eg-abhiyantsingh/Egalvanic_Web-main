@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Embedded vs Linked Images Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .explanation {
+            background-color: #e8f4fd;
+            padding: 15px;
+            border-left: 4px solid #2196F3;
+            margin: 20px 0;
+        }
+        .issue-example {
+            background-color: #fff3e0;
+            padding: 15px;
+            border-left: 4px solid #ff9800;
+            margin: 20px 0;
+        }
+        .solution {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-left: 4px solid #4caf50;
+            margin: 20px 0;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        code {
+            background-color: #f1f1f1;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Embedded vs Linked Images in HTML Reports</h1>
+        
+        <div class="explanation">
+            <h2>Explanation</h2>
+            <p>This example demonstrates the difference between linked images and embedded images in HTML reports:</p>
+            <ul>
+                <li><strong>Linked Images</strong>: Reference external files using file paths</li>
+                <li><strong>Embedded Images</strong>: Contain image data directly within the HTML file</li>
+            </ul>
+        </div>
+        
+        <div class="issue-example">
+            <h2>The Issue You Experienced</h2>
+            <p>When you shared your AutomationReport.html with your manager, they couldn't see the screenshots because:</p>
+            <ol>
+                <li>Your report used <strong>linked images</strong> that reference files on your computer</li>
+                <li>These file paths don't exist on your manager's computer</li>
+                <li>The browser shows broken image icons instead of the actual screenshots</li>
+            </ol>
+            <p>Example of linked image (won't work on other computers):<br>
+            <code>&lt;img src="../screenshots/example.png"&gt;</code></p>
+        </div>
+        
+        <div class="solution">
+            <h2>The Solution Implemented</h2>
+            <p>I've updated the automation to include <strong>embedded images</strong> in addition to linked images:</p>
+            <ol>
+                <li>Screenshots are still saved to files locally</li>
+                <li>Images are converted to Base64 format and embedded directly in the HTML</li>
+                <li>Both versions are included in the report for maximum compatibility</li>
+            </ol>
+            <p>Example of embedded image (works on any computer):<br>
+            <code>&lt;img src="data:image/png;base64,iVBORw0KG..."&gt;</code></p>
+            <p>Now when you share the report, your manager will see the embedded images even without access to your file system.</p>
+        </div>
+        
+        <h2>Technical Details</h2>
+        <p>The fix involved modifying the screenshot handling code to:</p>
+        <pre>
+// Convert screenshot to Base64 for embedding
+byte[] fileContent = Files.readAllBytes(Path.of(destPath));
+String base64Image = java.util.Base64.getEncoder().encodeToString(fileContent);
+
+// Add both linked and embedded versions to report
+test.addScreenCaptureFromPath("../screenshots/" + fname, testName + " (Linked)");
+test.addScreenCaptureFromBase64String(base64Image, testName + " (Embedded)");
+        </pre>
+        
+        <h2>Benefits of This Approach</h2>
+        <ul>
+            <li><strong>Shareability</strong>: Reports work on any computer without external files</li>
+            <li><strong>Self-contained</strong>: All information is in a single HTML file</li>
+            <li><strong>Backwards compatibility</strong>: Still maintains linked images for local viewing</li>
+            <li><strong>Professional presentation</strong>: Managers see complete reports without broken images</li>
+        </ul>
+    </div>
+</body>
+</html>

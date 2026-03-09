@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="ACME-Regression-Suite">
+    <listeners>
+        <listener class-name="com.acme.utils.ExtentReporterNG"/>
+        <listener class-name="io.qameta.allure.testng.AllureTestNg"/>
+    </listeners>
+
+    <!-- Critical Path Tests -->
+    <test name="Critical-Path-Tests" parallel="false">
+        <classes>
+            <class name="com.acme.tests.ui.LoginPageTest">
+                <methods>
+                    <include name="testLoginPageLoad"/>
+                    <include name="testValidLogin"/>
+                </methods>
+            </class>
+            <class name="com.acme.tests.api.AuthenticationTest">
+                <methods>
+                    <include name="testValidLogin"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- API Functional Tests -->
+    <test name="API-Regression-Tests" parallel="methods" thread-count="3">
+        <classes>
+            <class name="com.acme.tests.api.UserAPITest">
+                <methods>
+                    <include name="testGetUsersWithValidToken"/>
+                    <include name="testGetUsersWithoutToken"/>
+                </methods>
+            </class>
+            <class name="com.acme.tests.api.AuthenticationTest">
+                <methods>
+                    <include name="testInvalidLogin"/>
+                    <include name="testLoginWithMissingFields"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- Security Tests -->
+    <test name="Security-Regression-Tests" parallel="false">
+        <classes>
+            <class name="com.acme.tests.security.UISecurityTest">
+                <methods>
+                    <include name="testSQLInjectionInEmailField"/>
+                    <include name="testXSSInEmailField"/>
+                </methods>
+            </class>
+            <class name="com.acme.tests.security.APISecurityTest">
+                <methods>
+                    <include name="testMissingAuthentication"/>
+                    <include name="testParameterManipulation"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- Performance Tests -->
+    <test name="Performance-Regression-Tests" parallel="false">
+        <classes>
+            <class name="com.acme.tests.performance.UIPerformanceTest">
+                <methods>
+                    <include name="testLoginPageLoadPerformance"/>
+                    <include name="testLoginProcessPerformance"/>
+                </methods>
+            </class>
+            <class name="com.acme.tests.performance.APIPerformanceTest">
+                <methods>
+                    <include name="testLoginAPIPerformance"/>
+                    <include name="testGetUsersAPIPerformance"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

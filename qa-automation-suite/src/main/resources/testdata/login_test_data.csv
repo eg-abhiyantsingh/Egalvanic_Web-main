@@ -1,0 +1,6 @@
+email,password,expectedResult
+rahul+acme@egalvanic.com,RP@egalvanic123,success
+invalid@example.com,wrongpassword,failure
+user@#$%^&*()@example.com,!@#$%^&*(),failure
+,,failure
+testuser@example.com,validpassword,success
