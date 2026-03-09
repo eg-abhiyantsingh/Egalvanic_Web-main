@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
          http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
@@ -17,25 +17,11 @@
     </properties>
 
     <dependencies>
-        <!-- Selenium WebDriver -->
+        <!-- Selenium WebDriver (4.29+ has built-in driver management) -->
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
             <version>4.29.0</version>
-        </dependency>
-
-        <!-- WebDriverManager for automatic driver management -->
-        <dependency>
-            <groupId>io.github.bonigarcia</groupId>
-            <artifactId>webdrivermanager</artifactId>
-            <version>5.9.2</version>
-        </dependency>
-
-        <!-- Apache HTTP Client for Selenium -->
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.13</version>
         </dependency>
 
         <!-- Extent Reports for HTML reporting -->
@@ -51,6 +37,13 @@
             </exclusions>
         </dependency>
 
+        <!-- TestNG for test execution -->
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>7.8.0</version>
+        </dependency>
+
         <!-- REST Assured for API testing -->
         <dependency>
             <groupId>io.rest-assured</groupId>
@@ -63,20 +56,6 @@
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
             <version>20231013</version>
-        </dependency>
-        
-        <!-- Appium Java Client for mobile testing -->
-        <dependency>
-            <groupId>io.appium</groupId>
-            <artifactId>java-client</artifactId>
-            <version>8.6.0</version>
-        </dependency>
-        
-        <!-- TestNG for test execution -->
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>7.8.0</version>
         </dependency>
     </dependencies>
 
@@ -102,16 +81,6 @@
                     <suiteXmlFiles>
                         <suiteXmlFile>${suiteXmlFile}</suiteXmlFile>
                     </suiteXmlFiles>
-                </configuration>
-            </plugin>
-            
-            <!-- Exec Maven Plugin for running the main class -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <mainClass>com.egalvanic.qa.Main</mainClass>
                 </configuration>
             </plugin>
         </plugins>

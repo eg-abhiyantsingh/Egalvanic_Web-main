@@ -19,8 +19,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -113,7 +111,6 @@ public class AuthenticationTestNG {
     @BeforeMethod
     public void setUp() {
         // Setup fresh driver for each test
-        WebDriverManager.chromedriver().setup();
         ChromeOptions chromeOpts = new ChromeOptions();
         chromeOpts.addArguments("--start-maximized");
         chromeOpts.addArguments("--remote-allow-origins=*");

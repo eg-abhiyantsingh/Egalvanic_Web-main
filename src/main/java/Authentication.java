@@ -1,4 +1,3 @@
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -283,7 +282,6 @@ public class Authentication {
     static void setupDriver(String browserType) {
         switch(browserType.toLowerCase()) {
             case "firefox":
-                WebDriverManager.firefoxdriver().setup();
                 driver = new FirefoxDriver();
                 break;
             case "edge":
@@ -297,14 +295,11 @@ public class Authentication {
                 }
                 break;
             case "safari":
-                WebDriverManager.safaridriver().setup();
                 driver = new SafariDriver();
                 driver.manage().window().maximize();
                 break;
             case "chrome":
             default:
-                WebDriverManager.chromedriver().clearDriverCache();
-                WebDriverManager.chromedriver().setup();
                 ChromeOptions chromeOpts = new ChromeOptions();
                 chromeOpts.addArguments("--start-maximized");
                 chromeOpts.addArguments("--remote-allow-origins=*");

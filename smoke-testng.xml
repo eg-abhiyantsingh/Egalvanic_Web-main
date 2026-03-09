@@ -2,6 +2,10 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 <suite name="Smoke-Test-Suite" verbose="2">
 
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
     <test name="Asset-CRUD-Smoke">
         <classes>
             <class name="com.egalvanic.qa.testcase.AssetSmokeTestNG"/>

@@ -1,6 +1,5 @@
 package com.egalvanic.qa.utils;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -37,21 +36,16 @@ public class DriverManager {
         
         switch(browserType.toLowerCase()) {
             case "firefox":
-                WebDriverManager.firefoxdriver().setup();
                 driver = new FirefoxDriver();
                 break;
             case "edge":
-                WebDriverManager.edgedriver().setup();
                 driver = new EdgeDriver();
                 break;
             case "safari":
-                WebDriverManager.safaridriver().setup();
                 driver = new SafariDriver();
                 break;
             case "chrome":
             default:
-                WebDriverManager.chromedriver().clearDriverCache();
-                WebDriverManager.chromedriver().setup();
                 ChromeOptions chromeOpts = new ChromeOptions();
                 chromeOpts.addArguments("--start-maximized");
                 chromeOpts.addArguments("--remote-allow-origins=*");

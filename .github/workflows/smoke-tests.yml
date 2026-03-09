@@ -36,6 +36,8 @@ jobs:
         run: |
           mkdir -p test-output/reports
           mkdir -p test-output/screenshots
+          mkdir -p reports/detailed
+          mkdir -p reports/client
 
       - name: Run Smoke Tests
         run: |
@@ -46,16 +48,23 @@ jobs:
         env:
           DISPLAY: ':99'
 
-      - name: Upload Test Reports
+      - name: Upload Detailed Reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: smoke-test-reports
+          name: detailed-test-reports
           path: |
-            test-output/reports/
+            reports/detailed/
             test-output/screenshots/
-            target/surefire-reports/
-          retention-days: 14
+          retention-days: 30
+
+      - name: Upload Client Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-test-reports
+          path: reports/client/
+          retention-days: 30
 
       - name: Upload Surefire Reports
         if: always()
@@ -70,17 +79,24 @@ jobs:
         run: |
           echo "## Smoke Test Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+
           if [ -f target/surefire-reports/testng-results.xml ]; then
             TOTAL=$(grep -o 'total="[0-9]*"' target/surefire-reports/testng-results.xml | head -1 | grep -o '[0-9]*')
             PASSED=$(grep -o 'passed="[0-9]*"' target/surefire-reports/testng-results.xml | head -1 | grep -o '[0-9]*')
             FAILED=$(grep -o 'failed="[0-9]*"' target/surefire-reports/testng-results.xml | head -1 | grep -o '[0-9]*')
             SKIPPED=$(grep -o 'skipped="[0-9]*"' target/surefire-reports/testng-results.xml | head -1 | grep -o '[0-9]*')
-            echo "| Metric | Count |" >> $GITHUB_STEP_SUMMARY
-            echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
-            echo "| Total  | ${TOTAL:-0} |" >> $GITHUB_STEP_SUMMARY
-            echo "| Passed | ${PASSED:-0} |" >> $GITHUB_STEP_SUMMARY
-            echo "| Failed | ${FAILED:-0} |" >> $GITHUB_STEP_SUMMARY
-            echo "| Skipped| ${SKIPPED:-0} |" >> $GITHUB_STEP_SUMMARY
+
+            echo "| Metric  | Count |" >> $GITHUB_STEP_SUMMARY
+            echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Total   | ${TOTAL:-0} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Passed  | ${PASSED:-0} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Failed  | ${FAILED:-0} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Skipped | ${SKIPPED:-0} |" >> $GITHUB_STEP_SUMMARY
+
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Reports" >> $GITHUB_STEP_SUMMARY
+            echo "- **Detailed Report** (QA Team): Download from \`detailed-test-reports\` artifact" >> $GITHUB_STEP_SUMMARY
+            echo "- **Client Report** (Presentation): Download from \`client-test-reports\` artifact" >> $GITHUB_STEP_SUMMARY
           else
             echo "No test results found." >> $GITHUB_STEP_SUMMARY
           fi

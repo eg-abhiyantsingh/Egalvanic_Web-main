@@ -6,7 +6,6 @@ import com.egalvanic.qa.utils.ConfigReader;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import io.github.bonigarcia.wdm.WebDriverManager;
 
 /**
  * Demo class to show Page Object Model with Page Factory in action
@@ -24,8 +23,7 @@ public class PageObjectDemo {
         System.out.println("- Base URL: " + baseUrl);
         System.out.println("- User Email: " + email);
         
-        // Setup WebDriver
-        WebDriverManager.chromedriver().setup();
+        // Setup WebDriver (Selenium 4.29+ manages driver automatically)
         ChromeOptions chromeOpts = new ChromeOptions();
         chromeOpts.addArguments("--headless"); // Run in headless mode for demo
         chromeOpts.addArguments("--no-sandbox");

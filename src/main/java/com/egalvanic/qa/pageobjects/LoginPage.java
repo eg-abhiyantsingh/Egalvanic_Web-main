@@ -1,11 +1,9 @@
 package com.egalvanic.qa.pageobjects;
 
-import com.egalvanic.qa.testcase.BaseTest;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.PageFactory;
-import org.openqa.selenium.By;
 
 /**
  * Page Object Model for Login Page
