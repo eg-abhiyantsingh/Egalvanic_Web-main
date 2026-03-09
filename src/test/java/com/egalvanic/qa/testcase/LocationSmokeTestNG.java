@@ -9,8 +9,6 @@ import com.egalvanic.qa.utils.ReportManager;
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.Status;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
-
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.NoSuchElementException;
@@ -75,8 +73,6 @@ public class LocationSmokeTestNG {
 
     @BeforeMethod
     public void setUp() {
-        WebDriverManager.chromedriver().clearDriverCache();
-        WebDriverManager.chromedriver().setup();
         ChromeOptions opts = new ChromeOptions();
         opts.addArguments("--start-maximized", "--remote-allow-origins=*",
                 "--disable-blink-features=AutomationControlled", "--no-sandbox", "--disable-dev-shm-usage");
