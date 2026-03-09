@@ -108,6 +108,8 @@ public class AssetSmokeTestNG {
 
         // Login and select site
         driver.get(BASE_URL);
+        new WebDriverWait(driver, Duration.ofSeconds(DEFAULT_TIMEOUT))
+                .until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
         loginPage.login(EMAIL, PASSWORD);
         dashboardPage.waitForDashboard();
         selectTestSite();
