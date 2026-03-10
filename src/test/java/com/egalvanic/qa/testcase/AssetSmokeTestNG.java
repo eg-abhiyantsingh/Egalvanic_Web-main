@@ -10,53 +10,12 @@ import org.testng.annotations.Test;
 /**
  * Smoke Tests for Asset CRUD operations.
  * Every test is fully independent — can be run alone from IDE.
- *
- * When run as a suite (priority 1→2→3→4), tests share the asset
- * created by testCreateAsset to avoid redundant creation.
- * When run individually, each test creates its own test data first.
+ * Tests operate on existing data in the grid (no inter-test dependencies).
  */
 public class AssetSmokeTestNG extends BaseTest {
 
     private static final String TEST_ASSET_CLASS = "Circuit Breaker";
     private static final String TEST_REPLACEMENT_COST = "30000";
-
-    // Tracks the asset created in this session (shared when running full suite)
-    private String createdAssetName;
-
-    /**
-     * Helper: create a test asset and return its name.
-     * Called by any test that needs a pre-existing asset.
-     */
-    private String createTestAsset() {
-        String name = "SmokeTest_Asset_" + System.currentTimeMillis();
-        String qrCode = "QR_" + System.currentTimeMillis();
-
-        System.out.println("[Setup] Creating test asset: " + name);
-        assetPage.navigateToAssets();
-        assetPage.openCreateAssetForm();
-        assetPage.fillBasicInfo(name, qrCode, TEST_ASSET_CLASS);
-        assetPage.fillCoreAttributes();
-        assetPage.fillReplacementCost(TEST_REPLACEMENT_COST);
-        assetPage.submitCreateAsset();
-
-        boolean success = assetPage.waitForCreateSuccess();
-        if (!success) {
-            throw new RuntimeException("Setup failed: could not create test asset: " + name);
-        }
-        System.out.println("[Setup] Test asset created: " + name);
-        return name;
-    }
-
-    /**
-     * Ensures an asset exists for this session.
-     * If running full suite, testCreateAsset already set createdAssetName.
-     * If running a single test, creates an asset on demand.
-     */
-    private void ensureAssetExists() {
-        if (createdAssetName == null) {
-            createdAssetName = createTestAsset();
-        }
-    }
 
     @Test(priority = 1, description = "Smoke: Create a new asset with all fields")
     public void testCreateAsset() {
@@ -87,7 +46,6 @@ public class AssetSmokeTestNG extends BaseTest {
             boolean success = assetPage.waitForCreateSuccess();
             Assert.assertTrue(success, "Asset creation did not complete successfully");
 
-            createdAssetName = name;
             ExtentReportManager.logPass("Asset created successfully: " + name);
 
         } catch (Exception e) {
@@ -96,19 +54,33 @@ public class AssetSmokeTestNG extends BaseTest {
         }
     }
 
-    @Test(priority = 2, description = "Smoke: Read/verify asset exists in grid")
+    @Test(priority = 2, description = "Smoke: Read and verify asset data in grid")
     public void testReadAsset() {
-        ensureAssetExists();
         ExtentReportManager.createTest(
                 AppConstants.MODULE_ASSET, AppConstants.FEATURE_ASSET_LIST, "TC_Asset_Read");
 
         try {
             assetPage.navigateToAssets();
-            boolean found = assetPage.isAssetVisible(createdAssetName);
-            logStepWithScreenshot("Asset search result");
+            logStep("Navigated to Assets page");
 
-            Assert.assertTrue(found, "Asset not found in grid: " + createdAssetName);
-            ExtentReportManager.logPass("Asset found in grid: " + createdAssetName);
+            // 1. Verify grid is populated
+            boolean hasAssets = assetPage.isGridPopulated();
+            Assert.assertTrue(hasAssets, "Asset grid is empty — no assets found");
+            logStep("Grid has data rows");
+
+            // 2. Read first row data and verify it has actual content
+            String firstAssetName = assetPage.getFirstRowAssetName();
+            Assert.assertNotNull(firstAssetName, "First asset name is null");
+            Assert.assertFalse(firstAssetName.trim().isEmpty(), "First asset name is blank");
+            logStep("First asset in grid: " + firstAssetName);
+
+            // 3. Search for that asset and verify it appears in filtered results
+            assetPage.searchAsset(firstAssetName);
+            boolean found = assetPage.isAssetVisible(firstAssetName);
+            Assert.assertTrue(found, "Asset not found after searching: " + firstAssetName);
+            logStepWithScreenshot("Asset found via search: " + firstAssetName);
+
+            ExtentReportManager.logPass("Asset data verified: " + firstAssetName);
 
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("asset_read_error");
@@ -142,22 +114,19 @@ public class AssetSmokeTestNG extends BaseTest {
         }
     }
 
-    @Test(priority = 4, description = "Smoke: Delete the created asset")
+    @Test(priority = 4, description = "Smoke: Delete an existing asset")
     public void testDeleteAsset() {
-        ensureAssetExists();
         ExtentReportManager.createTest(
                 AppConstants.MODULE_ASSET, AppConstants.FEATURE_DELETE_ASSET, "TC_Asset_Delete");
 
         try {
             assetPage.navigateToAssets();
-            assetPage.searchAsset(createdAssetName);
-            assetPage.deleteFirstAsset();
-            logStep("Clicked delete on asset");
+            assetPage.deleteFirstAssetFromGrid();
+            logStep("Clicked delete on first asset");
 
             assetPage.confirmDelete();
             logStepWithScreenshot("Asset deleted");
 
-            createdAssetName = null; // asset is gone
             ExtentReportManager.logPass("Asset deleted successfully");
 
         } catch (Exception e) {

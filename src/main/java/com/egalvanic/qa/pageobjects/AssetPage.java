@@ -41,8 +41,6 @@ public class AssetPage {
 
     // Data grid actions
     private static final By SEARCH_INPUT = By.xpath("//input[contains(@placeholder,'Search')]");
-    private static final By FIRST_ROW_EDIT_BTN = By.xpath("(//div[contains(@class,'MuiDataGrid-row')]//button[contains(@title,'Edit') or contains(@aria-label,'Edit')])[1]");
-    private static final By FIRST_ROW_DELETE_BTN = By.xpath("(//div[contains(@class,'MuiDataGrid-row')]//button[@title='Delete Asset'])[1]");
     private static final By CONFIRM_DELETE_BTN = By.xpath("//button[contains(@class,'MuiButton-containedError') and contains(.,'Delete')]");
 
     // Success / form indicators
@@ -312,6 +310,51 @@ public class AssetPage {
         }
     }
 
+    /**
+     * Check if the asset grid has at least one data row.
+     * Waits up to 10 seconds for rows to load.
+     */
+    public boolean isGridPopulated() {
+        try {
+            recoverFromErrorOverlay();
+            By gridRow = By.xpath("//div[contains(@class,'MuiDataGrid-row') and @data-rowindex]");
+
+            for (int i = 0; i < 10; i++) {
+                java.util.List<WebElement> rows = driver.findElements(gridRow);
+                if (!rows.isEmpty()) {
+                    System.out.println("[AssetPage] Grid has " + rows.size() + " rows");
+                    return true;
+                }
+                pause(1000);
+            }
+
+            System.out.println("[AssetPage] Grid is empty after waiting 10s");
+            return false;
+        } catch (Exception e) {
+            System.out.println("[AssetPage] Error checking grid: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get the asset name from the first row in the grid (first cell text).
+     */
+    public String getFirstRowAssetName() {
+        try {
+            By firstCell = By.xpath("(//div[contains(@class,'MuiDataGrid-row') and @data-rowindex])[1]//div[contains(@class,'MuiDataGrid-cell')][1]");
+            // Use presenceOfElementLocated instead of visibilityOfElementLocated
+            // because CSS zoom (80%) causes Selenium to miscalculate element visibility
+            WebElement cell = wait.until(ExpectedConditions.presenceOfElementLocated(firstCell));
+            // Use JS textContent — more reliable than getText() with CSS zoom
+            String text = (String) js.executeScript("return arguments[0].textContent.trim();", cell);
+            System.out.println("[AssetPage] First row asset name: '" + text + "'");
+            return (text == null || text.isEmpty()) ? null : text;
+        } catch (Exception e) {
+            System.out.println("[AssetPage] Could not read first row asset name: " + e.getMessage());
+            return null;
+        }
+    }
+
     public boolean isAssetVisible(String assetName) {
         try {
             recoverFromErrorOverlay();
@@ -386,98 +429,425 @@ public class AssetPage {
 
     // --- UPDATE ---
 
-    public void openEditForFirstAsset() {
+    /**
+     * Navigate to the detail page for the first asset in the grid.
+     * Tries multiple strategies: data-id URL, href links, cell clicks, row clicks.
+     */
+    public void navigateToFirstAssetDetail() {
         recoverFromErrorOverlay();
 
-        By firstRow = By.xpath("(//div[contains(@class,'MuiDataGrid-row')])[1]");
+        // IMPORTANT: Use @data-rowindex to skip the header row.
+        // The header row also matches MuiDataGrid-row (via MuiDataGrid-row--borderBottom)
+        // but does NOT have data-rowindex. Only real data rows have it.
+        By firstDataRow = By.xpath("(//div[contains(@class,'MuiDataGrid-row') and @data-rowindex])[1]");
+        WebElement row = wait.until(ExpectedConditions.presenceOfElementLocated(firstDataRow));
+        String currentUrl = driver.getCurrentUrl();
 
-        // Wait for at least one row in the grid
+        String dataId = row.getDomAttribute("data-id");
+        System.out.println("[AssetPage] First data row: data-id=" + dataId + ", data-rowindex=" + row.getDomAttribute("data-rowindex"));
+
+        // Strategy 1: data-id UUID → direct URL navigation (most reliable)
+        if (dataId != null && !dataId.isEmpty() && dataId.contains("-")) {
+            String baseUrl = currentUrl.replaceAll("/assets.*", "/assets/");
+            driver.get(baseUrl + dataId);
+            waitForDetailPageLoad();
+            System.out.println("[AssetPage] Navigated via data-id — URL: " + driver.getCurrentUrl());
+            if (driver.getCurrentUrl().contains(dataId)) return;
+        }
+
+        // Strategy 2: Find <a> link inside the row
         try {
-            wait.until(ExpectedConditions.presenceOfElementLocated(firstRow));
+            String href = (String) js.executeScript(
+                    "var all = arguments[0].querySelectorAll('a[href]');" +
+                    "for(var i=0; i<all.length; i++) { " +
+                    "  if(all[i].href.includes('/assets/')) return all[i].href; " +
+                    "}" +
+                    "return '';", row);
+            if (href != null && !href.isEmpty()) {
+                driver.get(href);
+                pause(3000);
+                if (!driver.getCurrentUrl().equals(currentUrl)) {
+                    System.out.println("[AssetPage] Strategy 2 (href) succeeded: " + driver.getCurrentUrl());
+                    return;
+                }
+            }
+        } catch (Exception ignored) {}
+
+        // Strategy 3: Click the first cell (asset name)
+        try {
+            WebElement cell = row.findElement(By.xpath(".//div[contains(@class,'MuiDataGrid-cell')][1]"));
+            System.out.println("[AssetPage] Clicking first cell: '" + cell.getText() + "'");
+            cell.click();
+            pause(3000);
+            if (!driver.getCurrentUrl().equals(currentUrl)) {
+                System.out.println("[AssetPage] Strategy 3 (cell click) succeeded: " + driver.getCurrentUrl());
+                return;
+            }
         } catch (Exception e) {
-            throw new RuntimeException("No rows found in asset grid");
+            System.out.println("[AssetPage] Cell click failed: " + e.getMessage());
         }
 
-        // Hover over the first row — MUI DataGrid often hides action buttons until hover
+        // Strategy 4: Click the row itself
         try {
-            WebElement row = driver.findElement(firstRow);
-            new org.openqa.selenium.interactions.Actions(driver).moveToElement(row).perform();
-            pause(800);
-        } catch (Exception ignored) {}
-
-        // Strategy 1: Edit button with title or aria-label in first row
-        if (driver.findElements(FIRST_ROW_EDIT_BTN).size() > 0) {
-            click(FIRST_ROW_EDIT_BTN);
-            pause(700);
-            return;
-        }
-
-        // Strategy 2: Edit icon (SVG) inside first row
-        By editIcon = By.xpath("(//div[contains(@class,'MuiDataGrid-row')]//button[.//svg[@data-testid='EditIcon' or @data-testid='CreateIcon']])[1]");
-        if (driver.findElements(editIcon).size() > 0) {
-            js.executeScript("arguments[0].click();", driver.findElement(editIcon));
-            pause(700);
-            return;
-        }
-
-        // Strategy 3: Any button inside the first row (actions column)
-        By anyRowBtn = By.xpath("(//div[contains(@class,'MuiDataGrid-row')])[1]//button");
-        java.util.List<WebElement> rowButtons = driver.findElements(anyRowBtn);
-        System.out.println("[AssetPage] First row has " + rowButtons.size() + " buttons:");
-        for (WebElement btn : rowButtons) {
-            String text = "", title = "", ariaLabel = "";
-            try { text = btn.getText().trim(); } catch (Exception ignored) {}
-            try { title = btn.getAttribute("title"); } catch (Exception ignored) {}
-            try { ariaLabel = btn.getAttribute("aria-label"); } catch (Exception ignored) {}
-            System.out.println("  - text='" + text + "' title='" + title + "' aria-label='" + ariaLabel + "'");
-
-            // Click the first button that looks like edit
-            if ((title != null && title.toLowerCase().contains("edit"))
-                    || (ariaLabel != null && ariaLabel.toLowerCase().contains("edit"))
-                    || text.toLowerCase().contains("edit")) {
-                js.executeScript("arguments[0].click();", btn);
-                pause(700);
+            row.click();
+            pause(3000);
+            if (!driver.getCurrentUrl().equals(currentUrl)) {
+                System.out.println("[AssetPage] Strategy 4 (row click) succeeded: " + driver.getCurrentUrl());
                 return;
             }
-        }
+        } catch (Exception ignored) {}
 
-        // Strategy 4: Click the first row itself to open detail/edit panel
-        try {
-            driver.findElement(firstRow).click();
+        System.out.println("[AssetPage] FAILED to navigate. Current URL: " + driver.getCurrentUrl());
+        throw new RuntimeException("Could not navigate to asset detail page from grid.");
+    }
+
+    /**
+     * Wait for the asset detail page to fully load after direct URL navigation.
+     * Waits for the loading spinner to disappear and content to render.
+     */
+    private void waitForDetailPageLoad() {
+        // Wait for initial page load
+        pause(2000);
+
+        // Wait for spinner to disappear (up to 20s)
+        for (int i = 0; i < 20; i++) {
+            // Check if content has loaded — use tagName (not XPath) due to SVG namespace issues
+            java.util.List<WebElement> buttons = driver.findElements(By.tagName("button"));
+            java.util.List<WebElement> headings = driver.findElements(
+                    By.xpath("//h1 | //h2 | //h3 | //h4 | //h5 | //h6 | //*[contains(@class,'title') or contains(@class,'header')]//span"));
+
+            // Check for loading spinner
+            java.util.List<WebElement> spinners = driver.findElements(
+                    By.xpath("//*[contains(@class,'MuiCircularProgress') or contains(@class,'spinner') or contains(@class,'loading')]" +
+                            " | //svg[contains(@class,'MuiCircularProgress')]" +
+                            " | //*[@role='progressbar']"));
+
+            System.out.println("[AssetPage] Detail page load check " + i + ": buttons=" + buttons.size()
+                    + ", headings=" + headings.size() + ", spinners=" + spinners.size());
+
+            // Content loaded if we have enough buttons (spinners may persist for lazy-loaded sections)
+            if (buttons.size() > 10) {
+                System.out.println("[AssetPage] Detail page loaded after " + (2 + i) + "s — " + buttons.size() + " buttons found");
+                pause(1000); // extra buffer for React rendering
+                return;
+            }
+
+            // Also check if an error page appeared
+            if (driver.findElements(By.xpath("//*[contains(text(),'Application Error')]")).size() > 0) {
+                System.out.println("[AssetPage] Error page on detail load — attempting recovery");
+                recoverFromErrorOverlay();
+                return;
+            }
+
             pause(1000);
+        }
 
-            // Look for Edit button in a detail panel that may have opened
-            By editInPanel = By.xpath("//button[contains(.,'Edit') or @aria-label='Edit' or @title='Edit']");
-            if (driver.findElements(editInPanel).size() > 0) {
-                click(editInPanel);
-                pause(700);
-                return;
-            }
+        System.out.println("[AssetPage] Detail page may not have fully loaded after 22s");
+    }
+
+    /**
+     * Open the ⋮ (kebab/three-dot) menu on the asset detail page and click a menu item.
+     *
+     * NOTE: XPath //button[.//svg] fails on this page due to SVG namespace issues.
+     * All button finding uses By.tagName("button") or By.cssSelector instead.
+     */
+    private void clickKebabMenuItem(String itemText) {
+        // CRITICAL: Save the detail page URL before any click attempts.
+        // Strategies may accidentally navigate away, so we always use this to recover.
+        final String detailUrl = driver.getCurrentUrl();
+        System.out.println("[AssetPage] clickKebabMenuItem('" + itemText + "') — detail URL: " + detailUrl);
+
+        // Extract UUID from detail URL for use in Strategy 4 (direct URL)
+        String uuid = "";
+        try {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("/assets/([a-f0-9-]{36})").matcher(detailUrl);
+            if (m.find()) uuid = m.group(1);
         } catch (Exception ignored) {}
 
-        // Strategy 5: Click the asset name link in the first row (may navigate to edit page)
-        By assetNameLink = By.xpath("(//div[contains(@class,'MuiDataGrid-row')])[1]//a | (//div[contains(@class,'MuiDataGrid-row')])[1]//div[contains(@class,'MuiDataGrid-cell')]//span[1]");
-        if (driver.findElements(assetNameLink).size() > 0) {
-            js.executeScript("arguments[0].click();", driver.findElement(assetNameLink));
-            pause(1500);
-            System.out.println("[AssetPage] Clicked asset name/link — URL: " + driver.getCurrentUrl());
-
-            // Check if we navigated to an asset detail page
-            By editOnDetailPage = By.xpath("//button[contains(.,'Edit') or @aria-label='Edit' or @title='Edit']");
-            if (driver.findElements(editOnDetailPage).size() > 0) {
-                click(editOnDetailPage);
-                pause(700);
-                return;
+        // Strategy 0: Find kebab by aria-label, title, or data-testid attributes.
+        // MUI IconButton typically renders with aria-label="more" or similar.
+        try {
+            @SuppressWarnings("unchecked")
+            java.util.List<WebElement> candidates = (java.util.List<WebElement>) js.executeScript(
+                    "var result = [];" +
+                    "var all = document.querySelectorAll('[aria-label], [data-testid]');" +
+                    "for (var el of all) {" +
+                    "  var label = (el.getAttribute('aria-label')||'').toLowerCase();" +
+                    "  var testid = (el.getAttribute('data-testid')||'').toLowerCase();" +
+                    "  if (label.match(/more|menu|option|kebab|action|three.?dot|\\.\\.\\./)" +
+                    "      || testid.match(/more|menu|kebab|action/)) {" +
+                    "    result.push(el);" +
+                    "  }" +
+                    "}" +
+                    "return result;");
+            System.out.println("[AssetPage] Strategy 0 — aria-label/testid candidates: " + candidates.size());
+            for (int i = 0; i < candidates.size(); i++) {
+                try {
+                    String info = (String) js.executeScript(
+                            "var e=arguments[0]; var r=e.getBoundingClientRect();" +
+                            "return e.tagName+'[aria-label=\"'+(e.getAttribute('aria-label')||'')+'\"]'" +
+                            "+'[data-testid=\"'+(e.getAttribute('data-testid')||'')+'\"]'" +
+                            "+' at('+Math.round(r.left)+','+Math.round(r.top)+') size='+Math.round(r.width)+'x'+Math.round(r.height);",
+                            candidates.get(i));
+                    System.out.println("[AssetPage]   candidate[" + i + "] " + info);
+                    js.executeScript("arguments[0].click();", candidates.get(i));
+                    pause(800);
+                    if (!driver.getCurrentUrl().equals(detailUrl)) {
+                        System.out.println("[AssetPage]   navigated away — recovering");
+                        driver.get(detailUrl); waitForDetailPageLoad(); continue;
+                    }
+                    if (tryClickMenuItem(itemText)) {
+                        System.out.println("[AssetPage] Success via aria-label candidate " + i);
+                        return;
+                    }
+                    dismissPopup();
+                } catch (Exception ignored) {}
             }
-            // If detail page has editable fields directly, we're already in edit mode
-            By anyInput = By.xpath("//input[@type='text'] | //textarea");
-            if (driver.findElements(anyInput).size() > 0) {
-                System.out.println("[AssetPage] Detail page has input fields — already in edit mode");
+        } catch (Exception e) {
+            System.out.println("[AssetPage] Strategy 0 error: " + e.getMessage());
+        }
+        ensureOnDetailPage(detailUrl);
+
+        // Strategy 1: Find small <button> elements in top 200px using Selenium click.
+        // Previous attempts used JS click which may not trigger React event handlers.
+        // Also look for MoreVert icon (three vertical dots SVG path).
+        try {
+            @SuppressWarnings("unchecked")
+            java.util.List<WebElement> headerButtons = (java.util.List<WebElement>) js.executeScript(
+                    "var result = [];" +
+                    "var buttons = document.querySelectorAll('button');" +
+                    "for (var btn of buttons) {" +
+                    "  var r = btn.getBoundingClientRect();" +
+                    "  // Small buttons in the header area (top 200px, right of sidebar)\n" +
+                    "  if (r.top > 0 && r.top < 200 && r.left > 200 && r.width < 60 && r.width > 15) {" +
+                    "    result.push(btn);" +
+                    "  }" +
+                    "}" +
+                    "return result;");
+            System.out.println("[AssetPage] Strategy 1 — small header buttons: " + headerButtons.size());
+            for (int i = 0; i < headerButtons.size(); i++) {
+                try {
+                    String info = (String) js.executeScript(
+                            "var e=arguments[0]; var r=e.getBoundingClientRect();" +
+                            "return 'aria=\"'+(e.getAttribute('aria-label')||'')+'\" class=\"'+(e.className||'').substring(0,60)+'\"'" +
+                            "+' at('+Math.round(r.left)+','+Math.round(r.top)+') size='+Math.round(r.width)+'x'+Math.round(r.height);",
+                            headerButtons.get(i));
+                    System.out.println("[AssetPage]   btn[" + i + "] " + info);
+                } catch (Exception ignored) {}
+            }
+            // Try clicking from rightmost first (kebab is typically the last icon)
+            for (int i = headerButtons.size() - 1; i >= 0; i--) {
+                try {
+                    // Use Selenium click (not JS) to properly trigger React handlers
+                    try {
+                        headerButtons.get(i).click();
+                    } catch (Exception clickEx) {
+                        js.executeScript("arguments[0].click();", headerButtons.get(i));
+                    }
+                    pause(800);
+                    if (!driver.getCurrentUrl().equals(detailUrl)) {
+                        System.out.println("[AssetPage]   btn[" + i + "] navigated away — recovering");
+                        driver.get(detailUrl); waitForDetailPageLoad(); continue;
+                    }
+                    if (tryClickMenuItem(itemText)) {
+                        System.out.println("[AssetPage] Success via header button " + i);
+                        return;
+                    }
+                    dismissPopup();
+                } catch (Exception ignored) {}
+            }
+        } catch (Exception e) {
+            System.out.println("[AssetPage] Strategy 1 error: " + e.getMessage());
+        }
+        ensureOnDetailPage(detailUrl);
+
+        // Strategy 2: Find MoreVert SVG icon (three vertical dots) by its SVG path data.
+        // MUI MoreVertIcon uses path: "M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z..."
+        // Also try any SVG parent elements in header that aren't links.
+        try {
+            @SuppressWarnings("unchecked")
+            java.util.List<WebElement> svgParents = (java.util.List<WebElement>) js.executeScript(
+                    "var result = [];" +
+                    "var svgs = document.querySelectorAll('svg');" +
+                    "for (var svg of svgs) {" +
+                    "  var r = svg.getBoundingClientRect();" +
+                    "  if (r.top < 0 || r.top > 200 || r.left < 200) continue;" +
+                    "  if (r.width > 50 || r.width < 5) continue;" +
+                    "  // Check for MoreVert path\n" +
+                    "  var paths = svg.querySelectorAll('path');" +
+                    "  var isMoreVert = false;" +
+                    "  for (var p of paths) {" +
+                    "    var d = p.getAttribute('d') || '';" +
+                    "    if (d.indexOf('M12 8c1.1') > -1 || d.indexOf('M12 2C6.48') > -1" +
+                    "        || (d.match(/M12.*M12.*M12/))) { isMoreVert = true; break; }" +
+                    "  }" +
+                    "  var clickable = svg.closest('button, [role=\"button\"], div, span');" +
+                    "  if (!clickable) clickable = svg.parentElement;" +
+                    "  // Skip nav links\n" +
+                    "  if (clickable.tagName === 'A') continue;" +
+                    "  result.push({el: clickable, vert: isMoreVert, x: r.left});" +
+                    "}" +
+                    "// Sort: MoreVert first, then by x position descending\n" +
+                    "result.sort(function(a,b) { if (a.vert !== b.vert) return a.vert ? -1 : 1; return b.x - a.x; });" +
+                    "return result.map(function(r) { return r.el; });");
+            System.out.println("[AssetPage] Strategy 2 — SVG parents in header: " + svgParents.size());
+            for (int i = 0; i < Math.min(svgParents.size(), 6); i++) {
+                try {
+                    String info = (String) js.executeScript(
+                            "var e=arguments[0]; var r=e.getBoundingClientRect();" +
+                            "return e.tagName+' at('+Math.round(r.left)+','+Math.round(r.top)+')'" +
+                            "+' size='+Math.round(r.width)+'x'+Math.round(r.height)" +
+                            "+' aria=\"'+(e.getAttribute('aria-label')||'')+'\"';", svgParents.get(i));
+                    System.out.println("[AssetPage]   svgP[" + i + "] " + info);
+                    // Try both Selenium and JS click
+                    try { svgParents.get(i).click(); } catch (Exception ce) {
+                        js.executeScript("arguments[0].click();", svgParents.get(i));
+                    }
+                    pause(800);
+                    if (!driver.getCurrentUrl().equals(detailUrl)) {
+                        System.out.println("[AssetPage]   svgP[" + i + "] navigated away — recovering");
+                        driver.get(detailUrl); waitForDetailPageLoad(); continue;
+                    }
+                    if (tryClickMenuItem(itemText)) {
+                        System.out.println("[AssetPage] Success via SVG parent " + i);
+                        return;
+                    }
+                    dismissPopup();
+                } catch (Exception ignored) {}
+            }
+        } catch (Exception e) {
+            System.out.println("[AssetPage] Strategy 2 error: " + e.getMessage());
+        }
+        ensureOnDetailPage(detailUrl);
+
+        // Strategy 3: Dump full header DOM diagnostic for debugging, then try
+        // ALL interactive elements in the top area as last resort.
+        {
+            try {
+                String dump = (String) js.executeScript(
+                        "var result = '';" +
+                        "var all = document.querySelectorAll('button, a, [role=\"button\"], [tabindex]');" +
+                        "var count = 0;" +
+                        "for (var el of all) {" +
+                        "  var r = el.getBoundingClientRect();" +
+                        "  if (r.top < 0 || r.top > 200 || r.width < 5) continue;" +
+                        "  result += el.tagName + '[' + (el.className||'').substring(0,40) + ']'" +
+                        "    + ' aria=\"' + (el.getAttribute('aria-label')||'') + '\"'" +
+                        "    + ' text=\"' + (el.textContent||'').substring(0,30).trim() + '\"'" +
+                        "    + ' at(' + Math.round(r.left) + ',' + Math.round(r.top) + ')'" +
+                        "    + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + '\\n';" +
+                        "  if (++count > 30) break;" +
+                        "}" +
+                        "return result;");
+                System.out.println("[AssetPage] === HEADER DOM DIAGNOSTIC ===\n" + dump + "=== END DIAGNOSTIC ===");
+            } catch (Exception ignored) {}
+        }
+
+        // Strategy 4: Direct URL for edit (bypass ⋮ entirely)
+        if (itemText.contains("Edit") && !uuid.isEmpty()) {
+            String editUrl = detailUrl.replaceAll("/assets/.*", "/assets/" + uuid + "/edit");
+            System.out.println("[AssetPage] Strategy 4 — trying direct edit URL: " + editUrl);
+            driver.get(editUrl);
+            pause(3000);
+            String newUrl = driver.getCurrentUrl();
+            if (newUrl.contains("/edit") || newUrl.contains(uuid)) {
+                System.out.println("[AssetPage] Direct edit URL result: " + newUrl);
                 return;
             }
         }
 
-        throw new RuntimeException("Edit button not found for first asset in grid. Row had " + rowButtons.size() + " buttons (see log for details).");
+        // All strategies exhausted
+        throw new RuntimeException("Could not open ⋮ menu and click '" + itemText + "' on detail page. Detail URL was: " + detailUrl);
+    }
+
+    /** Ensure we're still on the detail page; navigate back if not. */
+    private void ensureOnDetailPage(String detailUrl) {
+        try {
+            if (!driver.getCurrentUrl().equals(detailUrl)) {
+                System.out.println("[AssetPage] Off detail page — navigating back");
+                driver.get(detailUrl);
+                waitForDetailPageLoad();
+            }
+        } catch (Exception ignored) {}
+    }
+
+    /**
+     * Check if a menu item with the given text is visible, and click it immediately if found.
+     * Returns true if the item was found and clicked.
+     */
+    private boolean tryClickMenuItem(String itemText) {
+        // Quick check: is the text even present on the page?
+        java.util.List<WebElement> textEls = driver.findElements(
+                By.xpath("//*[contains(text(),'" + itemText + "')]"));
+        if (textEls.isEmpty()) {
+            // Also check for role=menuitem presence
+            if (driver.findElements(By.cssSelector("[role='menuitem']")).isEmpty()) {
+                return false; // no menu at all — fast exit
+            }
+        }
+
+        // Menu detected! Try to click the item.
+        System.out.println("[AssetPage] Menu detected — looking for '" + itemText + "'");
+
+        // Try XPath text match first (most reliable — worked in hasMenuItemVisible)
+        for (WebElement el : textEls) {
+            try {
+                System.out.println("[AssetPage]   XPath match: tag=" + el.getTagName() + " text='" + el.getText().trim() + "'");
+                js.executeScript("arguments[0].click();", el);
+                pause(1000);
+                System.out.println("[AssetPage] Clicked '" + itemText + "' via XPath text match");
+                return true;
+            } catch (Exception e) {
+                System.out.println("[AssetPage]   XPath click failed: " + e.getMessage());
+            }
+        }
+
+        // Try CSS menuitem selectors
+        java.util.List<WebElement> menuItems = driver.findElements(
+                By.cssSelector("[role='menuitem'], .MuiMenuItem-root"));
+        System.out.println("[AssetPage]   CSS menuitem count: " + menuItems.size());
+        for (int idx = 0; idx < menuItems.size(); idx++) {
+            try {
+                WebElement mi = menuItems.get(idx);
+                String text = mi.getText().trim();
+                String innerHtml = (String) js.executeScript("return arguments[0].innerHTML.substring(0,100);", mi);
+                System.out.println("[AssetPage]   menuitem[" + idx + "] text='" + text + "' html=" + innerHtml);
+                if (text.contains(itemText) || text.toLowerCase().contains(itemText.toLowerCase())) {
+                    js.executeScript("arguments[0].click();", mi);
+                    pause(1000);
+                    System.out.println("[AssetPage] Clicked menu item: '" + text + "'");
+                    return true;
+                }
+            } catch (Exception ignored) {}
+        }
+
+        System.out.println("[AssetPage]   Could not click '" + itemText + "' from detected menu");
+        return false;
+    }
+
+
+    /** Dismiss any open popup/menu by pressing Escape */
+    private void dismissPopup() {
+        try {
+            driver.findElement(By.tagName("body")).sendKeys(org.openqa.selenium.Keys.ESCAPE);
+            pause(200);
+        } catch (Exception ignored) {}
+    }
+
+    /**
+     * Opens edit form for the first asset: grid → detail page → ⋮ → Edit Asset
+     */
+    public void openEditForFirstAsset() {
+        navigateToFirstAssetDetail();
+        clickKebabMenuItem("Edit Asset");
+    }
+
+    /**
+     * Deletes the first asset: grid → detail page → ⋮ → Delete Asset
+     */
+    public void deleteFirstAssetFromGrid() {
+        navigateToFirstAssetDetail();
+        clickKebabMenuItem("Delete Asset");
     }
 
     public void editModel(String newModel) {
@@ -504,11 +874,45 @@ public class AssetPage {
     }
 
     public void saveChanges() {
-        try {
+        pause(500);
+
+        // Strategy 1: "Save Changes" button
+        if (driver.findElements(SAVE_CHANGES_BTN).size() > 0) {
             click(SAVE_CHANGES_BTN);
-        } catch (Exception e) {
-            click(By.xpath("//button[contains(.,'Save') or contains(.,'Update')][last()]"));
+            return;
         }
+
+        // Strategy 2: Any button with save/update/submit/apply/done text
+        String[] saveTexts = {"Save", "Update", "Submit", "Apply", "Done", "Confirm"};
+        for (String text : saveTexts) {
+            By btn = By.xpath("//button[contains(.,'" + text + "')]");
+            if (driver.findElements(btn).size() > 0) {
+                System.out.println("[AssetPage] Clicking save button with text: " + text);
+                click(btn);
+                return;
+            }
+        }
+
+        // Strategy 3: If we're in inline edit mode (DataGrid), press Enter to commit
+        try {
+            org.openqa.selenium.WebElement activeEl = driver.switchTo().activeElement();
+            activeEl.sendKeys(org.openqa.selenium.Keys.ENTER);
+            pause(500);
+            System.out.println("[AssetPage] Pressed Enter to save inline edit");
+            return;
+        } catch (Exception ignored) {}
+
+        // Diagnostic: log all visible buttons on the page
+        java.util.List<WebElement> allButtons = driver.findElements(By.xpath("//button"));
+        System.out.println("[AssetPage] saveChanges — no Save button found. Page has " + allButtons.size() + " buttons:");
+        for (int i = 0; i < Math.min(allButtons.size(), 20); i++) {
+            String btnText = "";
+            try { btnText = allButtons.get(i).getText().trim().replace("\n", " "); } catch (Exception ignored) {}
+            System.out.println("  [" + i + "] '" + btnText + "'");
+        }
+        System.out.println("[AssetPage] Current URL: " + driver.getCurrentUrl());
+
+        throw new RuntimeException("No save/update button found on page");
     }
 
     public boolean waitForEditSuccess() {
@@ -524,15 +928,6 @@ public class AssetPage {
     }
 
     // --- DELETE ---
-
-    public void deleteFirstAsset() {
-        recoverFromErrorOverlay();
-        WebElement delBtn = wait.until(ExpectedConditions.elementToBeClickable(FIRST_ROW_DELETE_BTN));
-        js.executeScript("arguments[0].scrollIntoView({block:'center'});", delBtn);
-        pause(200);
-        js.executeScript("arguments[0].click();", delBtn);
-        pause(700);
-    }
 
     public void confirmDelete() {
         WebElement confirm = wait.until(ExpectedConditions.elementToBeClickable(CONFIRM_DELETE_BTN));
