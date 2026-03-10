@@ -119,6 +119,12 @@ public class BaseTest {
         opts.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
         opts.setExperimentalOption("useAutomationExtension", false);
 
+        // Disable "Save password?" popup
+        java.util.Map<String, Object> prefs = new java.util.HashMap<>();
+        prefs.put("credentials_enable_service", false);
+        prefs.put("profile.password_manager_enabled", false);
+        opts.setExperimentalOption("prefs", prefs);
+
         if ("true".equals(System.getProperty("headless"))) {
             opts.addArguments("--headless=new");
         }

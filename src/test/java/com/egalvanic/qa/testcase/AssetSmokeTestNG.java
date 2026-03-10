@@ -118,15 +118,13 @@ public class AssetSmokeTestNG extends BaseTest {
 
     @Test(priority = 3, description = "Smoke: Update asset model and notes")
     public void testUpdateAsset() {
-        ensureAssetExists();
         ExtentReportManager.createTest(
                 AppConstants.MODULE_ASSET, AppConstants.FEATURE_EDIT_ASSET, "TC_Asset_Update");
 
         try {
             assetPage.navigateToAssets();
-            assetPage.searchAsset(createdAssetName);
             assetPage.openEditForFirstAsset();
-            logStep("Opened edit form");
+            logStep("Opened edit form for existing asset");
 
             assetPage.editModel("UpdatedModel");
             assetPage.editNotes("Updated notes from smoke test");
