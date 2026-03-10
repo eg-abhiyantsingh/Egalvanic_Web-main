@@ -389,6 +389,22 @@ public class AssetPage {
     public void openEditForFirstAsset() {
         recoverFromErrorOverlay();
 
+        By firstRow = By.xpath("(//div[contains(@class,'MuiDataGrid-row')])[1]");
+
+        // Wait for at least one row in the grid
+        try {
+            wait.until(ExpectedConditions.presenceOfElementLocated(firstRow));
+        } catch (Exception e) {
+            throw new RuntimeException("No rows found in asset grid");
+        }
+
+        // Hover over the first row — MUI DataGrid often hides action buttons until hover
+        try {
+            WebElement row = driver.findElement(firstRow);
+            new org.openqa.selenium.interactions.Actions(driver).moveToElement(row).perform();
+            pause(800);
+        } catch (Exception ignored) {}
+
         // Strategy 1: Edit button with title or aria-label in first row
         if (driver.findElements(FIRST_ROW_EDIT_BTN).size() > 0) {
             click(FIRST_ROW_EDIT_BTN);
@@ -404,9 +420,29 @@ public class AssetPage {
             return;
         }
 
-        // Strategy 3: Click the first row itself to open detail/edit panel
-        By firstRow = By.xpath("(//div[contains(@class,'MuiDataGrid-row')])[1]");
-        if (driver.findElements(firstRow).size() > 0) {
+        // Strategy 3: Any button inside the first row (actions column)
+        By anyRowBtn = By.xpath("(//div[contains(@class,'MuiDataGrid-row')])[1]//button");
+        java.util.List<WebElement> rowButtons = driver.findElements(anyRowBtn);
+        System.out.println("[AssetPage] First row has " + rowButtons.size() + " buttons:");
+        for (WebElement btn : rowButtons) {
+            String text = "", title = "", ariaLabel = "";
+            try { text = btn.getText().trim(); } catch (Exception ignored) {}
+            try { title = btn.getAttribute("title"); } catch (Exception ignored) {}
+            try { ariaLabel = btn.getAttribute("aria-label"); } catch (Exception ignored) {}
+            System.out.println("  - text='" + text + "' title='" + title + "' aria-label='" + ariaLabel + "'");
+
+            // Click the first button that looks like edit
+            if ((title != null && title.toLowerCase().contains("edit"))
+                    || (ariaLabel != null && ariaLabel.toLowerCase().contains("edit"))
+                    || text.toLowerCase().contains("edit")) {
+                js.executeScript("arguments[0].click();", btn);
+                pause(700);
+                return;
+            }
+        }
+
+        // Strategy 4: Click the first row itself to open detail/edit panel
+        try {
             driver.findElement(firstRow).click();
             pause(1000);
 
@@ -417,24 +453,31 @@ public class AssetPage {
                 pause(700);
                 return;
             }
-        }
+        } catch (Exception ignored) {}
 
-        // Strategy 4: Any icon button in the first row (actions column)
-        By anyIconBtn = By.xpath("(//div[contains(@class,'MuiDataGrid-row')]//button[contains(@class,'MuiIconButton')])[1]");
-        if (driver.findElements(anyIconBtn).size() > 0) {
-            js.executeScript("arguments[0].click();", driver.findElement(anyIconBtn));
-            pause(700);
+        // Strategy 5: Click the asset name link in the first row (may navigate to edit page)
+        By assetNameLink = By.xpath("(//div[contains(@class,'MuiDataGrid-row')])[1]//a | (//div[contains(@class,'MuiDataGrid-row')])[1]//div[contains(@class,'MuiDataGrid-cell')]//span[1]");
+        if (driver.findElements(assetNameLink).size() > 0) {
+            js.executeScript("arguments[0].click();", driver.findElement(assetNameLink));
+            pause(1500);
+            System.out.println("[AssetPage] Clicked asset name/link — URL: " + driver.getCurrentUrl());
 
-            // Check if a menu opened with Edit option
-            By editMenu = By.xpath("//li[contains(.,'Edit')] | //div[@role='menuitem'][contains(.,'Edit')]");
-            if (driver.findElements(editMenu).size() > 0) {
-                click(editMenu);
+            // Check if we navigated to an asset detail page
+            By editOnDetailPage = By.xpath("//button[contains(.,'Edit') or @aria-label='Edit' or @title='Edit']");
+            if (driver.findElements(editOnDetailPage).size() > 0) {
+                click(editOnDetailPage);
                 pause(700);
+                return;
+            }
+            // If detail page has editable fields directly, we're already in edit mode
+            By anyInput = By.xpath("//input[@type='text'] | //textarea");
+            if (driver.findElements(anyInput).size() > 0) {
+                System.out.println("[AssetPage] Detail page has input fields — already in edit mode");
                 return;
             }
         }
 
-        throw new RuntimeException("Edit button not found for first asset in grid");
+        throw new RuntimeException("Edit button not found for first asset in grid. Row had " + rowButtons.size() + " buttons (see log for details).");
     }
 
     public void editModel(String newModel) {
