@@ -21,8 +21,10 @@ import org.openqa.selenium.support.ui.FluentWait;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import org.testng.ITestResult;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 
@@ -32,7 +34,20 @@ import java.time.format.DateTimeFormatter;
 
 /**
  * Base Test - Parent class for all Web Test classes
- * Handles driver lifecycle, report initialization, login, and site selection
+ *
+ * Architecture: ONE browser session per test CLASS (not per method).
+ * All CRUD test methods within a class share the same browser session.
+ * This avoids repeated login/logout cycles which trigger server-side
+ * Application Error pages on rapid sequential sessions.
+ *
+ * Lifecycle:
+ *   @BeforeSuite  → init reports
+ *   @BeforeClass  → create browser, login, select site (ONCE per class)
+ *   @BeforeMethod → record start time (per test)
+ *   [test runs]
+ *   @AfterMethod  → failure screenshot, timing (per test, does NOT quit driver)
+ *   @AfterClass   → quit browser (ONCE per class)
+ *   @AfterSuite   → flush reports
  */
 public class BaseTest {
 
@@ -92,13 +107,11 @@ public class BaseTest {
     }
 
     // ================================================================
-    // TEST LEVEL SETUP/TEARDOWN
+    // CLASS LEVEL SETUP/TEARDOWN (shared browser per test class)
     // ================================================================
 
-    @BeforeMethod
-    public void testSetup() {
-        testStartTime = System.currentTimeMillis();
-
+    @BeforeClass
+    public void classSetup() {
         // Create ChromeDriver (Selenium 4.29+ manages driver automatically)
         ChromeOptions opts = new ChromeOptions();
         opts.addArguments("--start-maximized", "--remote-allow-origins=*",
@@ -129,11 +142,28 @@ public class BaseTest {
         loginAndSelectSite();
     }
 
+    @AfterClass
+    public void classTeardown() {
+        if (driver != null) {
+            driver.quit();
+            driver = null;
+        }
+    }
+
+    // ================================================================
+    // TEST LEVEL SETUP/TEARDOWN (lightweight, per method)
+    // ================================================================
+
+    @BeforeMethod
+    public void testSetup() {
+        testStartTime = System.currentTimeMillis();
+    }
+
     @AfterMethod
     public void testTeardown(ITestResult result) {
         long duration = System.currentTimeMillis() - testStartTime;
 
-        // Capture failure screenshot
+        // Capture failure screenshot (driver is still alive — it persists across methods)
         if (result.getStatus() == ITestResult.FAILURE) {
             String screenshotName = result.getMethod().getMethodName() + "_FAIL";
             ScreenshotUtil.captureScreenshot(screenshotName);
@@ -146,12 +176,6 @@ public class BaseTest {
 
         ExtentReportManager.removeTests();
 
-        // Quit driver
-        if (driver != null) {
-            driver.quit();
-            driver = null;
-        }
-
         System.out.println("Test completed in " + formatDuration(duration));
     }
 
@@ -160,18 +184,73 @@ public class BaseTest {
     // ================================================================
 
     /**
-     * Perform full login and site selection flow
+     * Perform full login and site selection flow.
+     * Includes retry logic for transient Application Error pages.
      */
     protected void loginAndSelectSite() {
-        driver.get(AppConstants.BASE_URL);
+        int maxRetries = 3;
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                driver.get(AppConstants.BASE_URL);
+                pause(2000);
 
-        // Wait for login page to load
-        new WebDriverWait(driver, Duration.ofSeconds(AppConstants.DEFAULT_TIMEOUT))
-                .until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
+                // Check for Application Error / "We encountered an error" page
+                if (isApplicationErrorPage()) {
+                    System.out.println("Error page on attempt " + attempt + " — recovering...");
+                    // Dismiss Sentry feedback dialog if present
+                    try { driver.findElement(By.xpath("//button[contains(@aria-label,'Close')]")).click(); pause(500); } catch (Exception ignored) {}
+                    driver.navigate().refresh();
+                    pause(3000);
+                    if (isApplicationErrorPage()) {
+                        try { driver.findElement(By.xpath("//button[contains(.,'Try Again')]")).click(); pause(3000); } catch (Exception ignored) {}
+                        try { driver.findElement(By.xpath("//button[contains(.,'Refresh Page')]")).click(); pause(3000); } catch (Exception ignored) {}
+                    }
+                    if (isApplicationErrorPage()) {
+                        driver.get(AppConstants.BASE_URL);
+                        pause(3000);
+                    }
+                    if (isApplicationErrorPage() && attempt < maxRetries) {
+                        continue;
+                    }
+                }
 
-        loginPage.login(AppConstants.VALID_EMAIL, AppConstants.VALID_PASSWORD);
-        dashboardPage.waitForDashboard();
-        selectTestSite();
+                // Wait for login page to load
+                new WebDriverWait(driver, Duration.ofSeconds(AppConstants.DEFAULT_TIMEOUT))
+                        .until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
+
+                loginPage.login(AppConstants.VALID_EMAIL, AppConstants.VALID_PASSWORD);
+                pause(2000);
+
+                // Check for error after login
+                if (isApplicationErrorPage()) {
+                    System.out.println("Application Error after login on attempt " + attempt);
+                    if (attempt < maxRetries) continue;
+                }
+
+                dashboardPage.waitForDashboard();
+                selectTestSite();
+                return; // success
+            } catch (Exception e) {
+                System.out.println("Login attempt " + attempt + " failed: " + e.getMessage());
+                if (attempt == maxRetries) {
+                    throw new RuntimeException("Login failed after " + maxRetries + " attempts", e);
+                }
+                pause(3000);
+            }
+        }
+    }
+
+    /**
+     * Detect the "Application Error" crash page or Sentry error overlay
+     */
+    private boolean isApplicationErrorPage() {
+        try {
+            return driver.findElements(By.xpath(
+                    "//*[contains(text(),'Application Error') or contains(text(),'We encountered an error') or contains(text(),'something went wrong')]"
+            )).size() > 0;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /**
@@ -180,14 +259,41 @@ public class BaseTest {
     protected void selectTestSite() {
         try {
             JavascriptExecutor js = (JavascriptExecutor) driver;
-            WebDriverWait w = new WebDriverWait(driver, Duration.ofSeconds(AppConstants.DEFAULT_TIMEOUT));
 
-            w.until(ExpectedConditions.elementToBeClickable(
-                    By.xpath("//div[contains(@class,'MuiAutocomplete-root')]"))).click();
-            w.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//ul[@role='listbox']")));
+            // The facility selector uses placeholder='Select facility'
+            By facilityInput = By.xpath("//input[@placeholder='Select facility']");
+
+            // Check if already selected
+            if (driver.findElements(facilityInput).size() > 0) {
+                String currentValue = driver.findElement(facilityInput).getAttribute("value");
+                if (currentValue != null && !currentValue.isEmpty()) {
+                    System.out.println("Site already selected: " + currentValue);
+                    return;
+                }
+            } else {
+                System.out.println("Facility selector not found — skipping site selection");
+                return;
+            }
+
+            // Click the facility input to open dropdown
+            WebElement input = driver.findElement(facilityInput);
+            input.click();
+            pause(500);
+
+            // Wait for listbox
+            WebDriverWait w = new WebDriverWait(driver, Duration.ofSeconds(10));
+            try {
+                w.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//ul[@role='listbox']")));
+            } catch (Exception e) {
+                System.out.println("Facility dropdown did not open — skipping");
+                return;
+            }
+
+            // Scroll and find the test site
             js.executeScript("document.querySelectorAll('ul[role=\"listbox\"]').forEach(e => e.scrollTop=e.scrollHeight);");
+            pause(300);
 
-            By testSite = By.xpath("//li[normalize-space()='" + AppConstants.TEST_SITE_NAME + "']");
+            By testSite = By.xpath("//li[@role='option'][contains(normalize-space(),'" + AppConstants.TEST_SITE_NAME + "')]");
             new FluentWait<>(driver)
                     .withTimeout(Duration.ofSeconds(10))
                     .pollingEvery(Duration.ofMillis(200))
@@ -200,6 +306,7 @@ public class BaseTest {
                         return null;
                     });
             pause(500);
+            System.out.println("Site selected: " + AppConstants.TEST_SITE_NAME);
         } catch (Exception e) {
             System.out.println("Site selection skipped or failed: " + e.getMessage());
         }

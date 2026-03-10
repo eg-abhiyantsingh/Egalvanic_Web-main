@@ -1,18 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="Smoke-Test-Suite" verbose="0">
+<suite name="Location-CRUD-Smoke" verbose="0">
 
     <listeners>
         <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
     </listeners>
 
-    <test name="Asset-CRUD-Smoke">
-        <classes>
-            <class name="com.egalvanic.qa.testcase.AssetSmokeTestNG"/>
-        </classes>
-    </test>
-
-    <test name="Location-CRUD-Smoke">
+    <test name="Location-CRUD">
         <classes>
             <class name="com.egalvanic.qa.testcase.LocationSmokeTestNG"/>
         </classes>

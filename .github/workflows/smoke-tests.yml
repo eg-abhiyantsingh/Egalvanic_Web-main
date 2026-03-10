@@ -1,5 +1,20 @@
-name: Smoke Tests - Asset & Location CRUD
+name: Web Smoke Tests - Asset & Location CRUD
 
+# ============================================================
+# WEB SMOKE TEST SUITE - Quick Critical Path Validation
+# ============================================================
+# Tests: 8 tests across 2 modules
+#
+# Modules:
+#   Module 1: Asset CRUD    (4 tests) — Create → Read → Update → Delete
+#   Module 2: Location CRUD (4 tests) — Create Hierarchy → Read → Update → Delete
+#
+# Per-module TestNG XMLs:
+#   smoke-asset-testng.xml
+#   smoke-location-testng.xml
+#
+# Dashboard script: .github/scripts/smoke-dashboard.sh
+# ============================================================
 on:
   workflow_dispatch:
 
@@ -9,6 +24,9 @@ jobs:
     timeout-minutes: 30
 
     steps:
+      # ============================================================
+      # Environment Setup
+      # ============================================================
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -32,22 +50,79 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
+      # ============================================================
+      # Pre-flight: Download dependencies quietly
+      # ============================================================
+      - name: Download dependencies
+        run: |
+          echo "Downloading Maven dependencies..."
+          mvn dependency:resolve -B -q 2>/dev/null || true
+          mvn dependency:resolve-plugins -B -q 2>/dev/null || true
+          echo "✅ Dependencies ready"
+
       - name: Create output directories
         run: |
-          mkdir -p test-output/reports
           mkdir -p test-output/screenshots
           mkdir -p reports/detailed
           mkdir -p reports/client
+          mkdir -p reports/modules
 
-      - name: Run Smoke Tests
+      # ============================================================
+      # Compile (quiet — only show errors)
+      # ============================================================
+      - name: Compile project
         run: |
-          mvn clean test \
-            -DsuiteXmlFile=smoke-testng.xml \
-            -Dheadless=true \
-            -Dmaven.test.failure.ignore=true
-        env:
-          DISPLAY: ':99'
+          echo "Compiling project..."
+          mvn compile test-compile -B -q
+          echo "✅ Compilation successful"
 
+      # ============================================================
+      # Run Smoke Tests — Module-by-Module with Dashboard
+      # ============================================================
+      - name: Run Smoke Tests with Dashboard
+        id: smoke_tests
+        continue-on-error: true
+        run: |
+          bash .github/scripts/smoke-dashboard.sh
+
+      # ============================================================
+      # Test Summary (GitHub Actions step summary)
+      # ============================================================
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "## 🔥 Web Smoke Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -n "${{ env.SMOKE_PASSED }}" ]; then
+            RESULT="${{ env.SMOKE_RESULT }}"
+
+            if [ "$RESULT" = "passed" ]; then
+              echo "### ✅ ALL TESTS PASSED" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "### ❌ SOME TESTS FAILED" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Metric  | Count |" >> $GITHUB_STEP_SUMMARY
+            echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Total   | ${{ env.SMOKE_TOTAL }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Passed  | ${{ env.SMOKE_PASSED }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Failed  | ${{ env.SMOKE_FAILED }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Skipped | ${{ env.SMOKE_SKIPPED }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Duration | ${{ env.SMOKE_DURATION }}s |" >> $GITHUB_STEP_SUMMARY
+
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Reports" >> $GITHUB_STEP_SUMMARY
+            echo "- **Detailed Report** (QA Team): Download from \`detailed-test-reports\` artifact" >> $GITHUB_STEP_SUMMARY
+            echo "- **Client Report** (Presentation): Download from \`client-test-reports\` artifact" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No test results available." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      # ============================================================
+      # Upload Artifacts (reports + screenshots)
+      # ============================================================
       - name: Upload Detailed Reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -56,6 +131,7 @@ jobs:
           path: |
             reports/detailed/
             test-output/screenshots/
+            reports/modules/
           retention-days: 30
 
       - name: Upload Client Reports
@@ -71,32 +147,23 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: surefire-reports
-          path: target/surefire-reports/
+          path: |
+            target/surefire-reports/
+            reports/modules/
           retention-days: 14
 
-      - name: Test Summary
+      # ============================================================
+      # Final Status
+      # ============================================================
+      - name: Check smoke test result
         if: always()
         run: |
-          echo "## Smoke Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-
-          if [ -f target/surefire-reports/testng-results.xml ]; then
-            TOTAL=$(grep -o 'total="[0-9]*"' target/surefire-reports/testng-results.xml | head -1 | grep -o '[0-9]*')
-            PASSED=$(grep -o 'passed="[0-9]*"' target/surefire-reports/testng-results.xml | head -1 | grep -o '[0-9]*')
-            FAILED=$(grep -o 'failed="[0-9]*"' target/surefire-reports/testng-results.xml | head -1 | grep -o '[0-9]*')
-            SKIPPED=$(grep -o 'skipped="[0-9]*"' target/surefire-reports/testng-results.xml | head -1 | grep -o '[0-9]*')
-
-            echo "| Metric  | Count |" >> $GITHUB_STEP_SUMMARY
-            echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
-            echo "| Total   | ${TOTAL:-0} |" >> $GITHUB_STEP_SUMMARY
-            echo "| Passed  | ${PASSED:-0} |" >> $GITHUB_STEP_SUMMARY
-            echo "| Failed  | ${FAILED:-0} |" >> $GITHUB_STEP_SUMMARY
-            echo "| Skipped | ${SKIPPED:-0} |" >> $GITHUB_STEP_SUMMARY
-
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### Reports" >> $GITHUB_STEP_SUMMARY
-            echo "- **Detailed Report** (QA Team): Download from \`detailed-test-reports\` artifact" >> $GITHUB_STEP_SUMMARY
-            echo "- **Client Report** (Presentation): Download from \`client-test-reports\` artifact" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ env.SMOKE_RESULT }}" = "failed" ]; then
+            echo "❌ Smoke tests failed"
+            exit 1
+          elif [ "${{ env.SMOKE_RESULT }}" = "passed" ]; then
+            echo "✅ All smoke tests passed"
           else
-            echo "No test results found." >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ Smoke test result unknown — check logs"
+            exit 1
           fi

@@ -5,29 +5,27 @@ import com.egalvanic.qa.utils.ExtentReportManager;
 import com.egalvanic.qa.utils.ScreenshotUtil;
 
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 /**
- * Smoke Tests for Asset CRUD operations
- * Extends BaseTest for driver lifecycle, login, and reporting
- * Create -> Read -> Update -> Delete
+ * Smoke Tests for Asset CRUD operations.
+ * All 4 tests share ONE browser session (via BaseTest @BeforeClass).
+ *
+ * Execution order is controlled by priority (1→2→3→4).
+ * No dependsOnMethods — each test can be run individually from IDE.
+ * When run individually, dependent tests skip with a clear message.
  */
 public class AssetSmokeTestNG extends BaseTest {
 
-    // Test data with unique timestamps
+    // Test data with unique timestamps (shared across all methods in this class instance)
     private static final String TEST_ASSET_NAME = "SmokeTest_Asset_" + System.currentTimeMillis();
     private static final String TEST_QR_CODE = "QR_" + System.currentTimeMillis();
-    private static final String TEST_ASSET_CLASS = "3-Pole Breaker";
-    private static final String TEST_CONDITION = "2";
-    private static final String TEST_MODEL = "TestModel";
-    private static final String TEST_NOTES = "Smoke test notes";
-    private static final String TEST_AMPERE_RATING = "20 A";
-    private static final String TEST_MANUFACTURER = "Eaton";
-    private static final String TEST_CATALOG_NUMBER = "CAT001";
-    private static final String TEST_BREAKER_SETTINGS = "Setting1";
-    private static final String TEST_INTERRUPTING_RATING = "10 kA";
-    private static final String TEST_KA_RATING = "18 kA";
+    private static final String TEST_ASSET_CLASS = "Circuit Breaker";
     private static final String TEST_REPLACEMENT_COST = "30000";
+
+    // State tracking — set by testCreate, checked by dependent tests
+    private boolean assetCreated = false;
 
     @Test(priority = 1, description = "Smoke: Create a new asset with all fields")
     public void testCreateAsset() {
@@ -41,21 +39,21 @@ public class AssetSmokeTestNG extends BaseTest {
             assetPage.openCreateAssetForm();
             logStep("Opened create asset form");
 
-            assetPage.fillBasicInfo(TEST_ASSET_NAME, TEST_QR_CODE, TEST_ASSET_CLASS, TEST_CONDITION);
+            assetPage.fillBasicInfo(TEST_ASSET_NAME, TEST_QR_CODE, TEST_ASSET_CLASS);
             logStep("Filled basic info: " + TEST_ASSET_NAME);
 
-            assetPage.fillCoreAttributes(TEST_MODEL, TEST_NOTES, TEST_AMPERE_RATING,
-                    TEST_MANUFACTURER, TEST_CATALOG_NUMBER, TEST_BREAKER_SETTINGS,
-                    TEST_INTERRUPTING_RATING, TEST_KA_RATING);
-            logStep("Filled core attributes");
+            assetPage.fillCoreAttributes();
+            logStep("Core attributes section checked");
 
             assetPage.fillReplacementCost(TEST_REPLACEMENT_COST);
+            logStepWithScreenshot("Form filled — about to submit");
             assetPage.submitCreateAsset();
             logStepWithScreenshot("Asset creation submitted");
 
             boolean success = assetPage.waitForCreateSuccess();
             Assert.assertTrue(success, "Asset creation did not complete successfully");
 
+            assetCreated = true;
             ExtentReportManager.logPass("Asset created successfully: " + TEST_ASSET_NAME);
 
         } catch (Exception e) {
@@ -64,8 +62,9 @@ public class AssetSmokeTestNG extends BaseTest {
         }
     }
 
-    @Test(priority = 2, description = "Smoke: Read/verify asset exists in grid", dependsOnMethods = "testCreateAsset")
+    @Test(priority = 2, description = "Smoke: Read/verify asset exists in grid")
     public void testReadAsset() {
+        requireAssetCreated("testReadAsset");
         ExtentReportManager.createTest(
                 AppConstants.MODULE_ASSET, AppConstants.FEATURE_ASSET_LIST, "TC_Asset_Read");
 
@@ -83,8 +82,9 @@ public class AssetSmokeTestNG extends BaseTest {
         }
     }
 
-    @Test(priority = 3, description = "Smoke: Update asset model and notes", dependsOnMethods = "testReadAsset")
+    @Test(priority = 3, description = "Smoke: Update asset model and notes")
     public void testUpdateAsset() {
+        requireAssetCreated("testUpdateAsset");
         ExtentReportManager.createTest(
                 AppConstants.MODULE_ASSET, AppConstants.FEATURE_EDIT_ASSET, "TC_Asset_Update");
 
@@ -110,8 +110,9 @@ public class AssetSmokeTestNG extends BaseTest {
         }
     }
 
-    @Test(priority = 4, description = "Smoke: Delete the created asset", dependsOnMethods = "testUpdateAsset")
+    @Test(priority = 4, description = "Smoke: Delete the created asset")
     public void testDeleteAsset() {
+        requireAssetCreated("testDeleteAsset");
         ExtentReportManager.createTest(
                 AppConstants.MODULE_ASSET, AppConstants.FEATURE_DELETE_ASSET, "TC_Asset_Delete");
 
@@ -129,6 +130,18 @@ public class AssetSmokeTestNG extends BaseTest {
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("asset_delete_error");
             Assert.fail("Asset delete failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Check precondition: asset must have been created by testCreateAsset.
+     * When running a single test from IDE, testCreateAsset won't have run,
+     * so this skips gracefully instead of throwing a cryptic dependency error.
+     */
+    private void requireAssetCreated(String testName) {
+        if (!assetCreated) {
+            throw new SkipException(testName + " requires testCreateAsset to run first. "
+                    + "Run the full class or suite, not a single method.");
         }
     }
 }

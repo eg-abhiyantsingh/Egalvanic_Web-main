@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn clean compile test-compile)",
+      "Read(//Users/abhiyantsingh/Downloads/iOS_automation_site/**)",
+      "Bash(mvn clean compile test-compile -q)",
+      "Bash(git status -u)",
+      "Bash(chmod +x /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/.github/scripts/smoke-dashboard.sh)",
+      "Bash(mvn clean compile test-compile -B -q)",
+      "Bash(mvn compile test-compile -B -q)",
+      "Bash(mvn test -DsuiteXmlFile=smoke-testng.xml)"
+    ]
+  }
+}
