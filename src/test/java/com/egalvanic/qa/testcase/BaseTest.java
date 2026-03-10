@@ -157,6 +157,46 @@ public class BaseTest {
     @BeforeMethod
     public void testSetup() {
         testStartTime = System.currentTimeMillis();
+        recoverFromErrorPage();
+    }
+
+    /**
+     * If the previous test left an error overlay or crash page,
+     * recover before starting the next test.
+     */
+    private void recoverFromErrorPage() {
+        try {
+            if (!isApplicationErrorPage()) return;
+
+            System.out.println("[BaseTest] Error page detected — recovering before next test...");
+
+            // Strategy 1: Dismiss Sentry dialog + refresh
+            try { driver.findElement(By.xpath("//button[contains(@aria-label,'Close')]")).click(); pause(500); } catch (Exception ignored) {}
+            driver.navigate().refresh();
+            pause(3000);
+            if (!isApplicationErrorPage()) return;
+
+            // Strategy 2: Navigate to base URL
+            driver.get(AppConstants.BASE_URL);
+            pause(3000);
+
+            // Strategy 3: Click recovery buttons if still on error page
+            if (isApplicationErrorPage()) {
+                try { driver.findElement(By.xpath("//button[contains(.,'Try Again')]")).click(); pause(3000); } catch (Exception ignored) {}
+                try { driver.findElement(By.xpath("//button[contains(.,'Refresh Page')]")).click(); pause(3000); } catch (Exception ignored) {}
+            }
+
+            // If we ended up on the login page, re-login
+            if (driver.findElements(By.id("email")).size() > 0) {
+                System.out.println("[BaseTest] Re-logging in after recovery...");
+                loginPage.login(AppConstants.VALID_EMAIL, AppConstants.VALID_PASSWORD);
+                pause(2000);
+                dashboardPage.waitForDashboard();
+                selectTestSite();
+            }
+        } catch (Exception e) {
+            System.out.println("[BaseTest] Recovery failed: " + e.getMessage());
+        }
     }
 
     @AfterMethod

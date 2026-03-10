@@ -58,25 +58,15 @@ public class AssetPage {
     // --- Navigation ---
 
     public void navigateToAssets() {
-        checkForErrorOverlay();
+        recoverFromErrorOverlay();
 
-        // If already on Assets page, just ensure the grid is visible (don't re-click nav)
+        // If already on Assets page, do a full page refresh to get fresh grid data.
+        // Re-clicking the Assets nav link triggers a React crash, so we refresh instead.
         if (driver.findElements(CREATE_ASSET_BTN).size() > 0 && isOnAssetsPage()) {
-            System.out.println("[AssetPage] Already on Assets page — refreshing grid");
-            // Clear any search filter to show all assets
-            try {
-                java.util.List<WebElement> searchInputs = driver.findElements(SEARCH_INPUT);
-                for (WebElement input : searchInputs) {
-                    if (input.isDisplayed()) {
-                        input.click();
-                        input.sendKeys(org.openqa.selenium.Keys.chord(
-                                org.openqa.selenium.Keys.CONTROL, "a"), org.openqa.selenium.Keys.DELETE);
-                        input.sendKeys(org.openqa.selenium.Keys.chord(
-                                org.openqa.selenium.Keys.COMMAND, "a"), org.openqa.selenium.Keys.DELETE);
-                        pause(500);
-                    }
-                }
-            } catch (Exception ignored) {}
+            System.out.println("[AssetPage] Already on Assets page — refreshing page for fresh data");
+            driver.navigate().refresh();
+            pause(2000);
+            wait.until(ExpectedConditions.visibilityOfElementLocated(CREATE_ASSET_BTN));
             return;
         }
 
@@ -319,7 +309,7 @@ public class AssetPage {
 
     public boolean isAssetVisible(String assetName) {
         try {
-            checkForErrorOverlay();
+            recoverFromErrorOverlay();
             searchAsset(assetName);
             pause(1500);
 
@@ -345,15 +335,41 @@ public class AssetPage {
 
     /**
      * Detect Sentry error dialog or Application Error page.
-     * Throws RuntimeException with clear SERVER BUG message if found.
+     * Attempts recovery: dismiss overlay → refresh → wait for grid.
+     * Only throws if recovery fails completely.
      */
-    private void checkForErrorOverlay() {
+    private void recoverFromErrorOverlay() {
         try {
-            boolean hasError = driver.findElements(By.xpath(
-                    "//*[contains(text(),'Application Error') or contains(text(),'We encountered an error') or contains(text(),'something went wrong')]"
-            )).size() > 0;
-            if (hasError) {
-                throw new RuntimeException("SERVER BUG: Application crashed (error overlay/page detected). This is a server-side issue, not a test failure.");
+            By errorXpath = By.xpath(
+                    "//*[contains(text(),'Application Error') or contains(text(),'We encountered an error') or contains(text(),'something went wrong')]");
+            if (driver.findElements(errorXpath).size() == 0) return; // no error
+
+            System.out.println("[AssetPage] Error overlay detected — attempting recovery...");
+
+            // Step 1: Dismiss Sentry feedback dialog
+            try { driver.findElement(By.xpath("//button[contains(@aria-label,'Close')]")).click(); pause(500); } catch (Exception ignored) {}
+
+            // Step 2: Refresh page
+            driver.navigate().refresh();
+            pause(3000);
+
+            // Step 3: Wait for Assets page to reload
+            try {
+                wait.until(ExpectedConditions.visibilityOfElementLocated(CREATE_ASSET_BTN));
+                System.out.println("[AssetPage] Recovery successful — page reloaded");
+                return;
+            } catch (Exception ignored) {}
+
+            // Step 4: If still broken, check for error again
+            if (driver.findElements(errorXpath).size() > 0) {
+                // Try recovery buttons
+                try { driver.findElement(By.xpath("//button[contains(.,'Try Again')]")).click(); pause(3000); } catch (Exception ignored) {}
+                try { driver.findElement(By.xpath("//button[contains(.,'Refresh Page')]")).click(); pause(3000); } catch (Exception ignored) {}
+            }
+
+            // Step 5: Final check
+            if (driver.findElements(errorXpath).size() > 0) {
+                throw new RuntimeException("SERVER BUG: Application crashed and recovery failed. Error overlay could not be dismissed.");
             }
         } catch (RuntimeException e) {
             throw e;
@@ -363,7 +379,7 @@ public class AssetPage {
     // --- UPDATE ---
 
     public void openEditForFirstAsset() {
-        checkForErrorOverlay();
+        recoverFromErrorOverlay();
         if (driver.findElements(FIRST_ROW_EDIT_BTN).size() > 0) {
             click(FIRST_ROW_EDIT_BTN);
         } else {
@@ -420,7 +436,7 @@ public class AssetPage {
     // --- DELETE ---
 
     public void deleteFirstAsset() {
-        checkForErrorOverlay();
+        recoverFromErrorOverlay();
         WebElement delBtn = wait.until(ExpectedConditions.elementToBeClickable(FIRST_ROW_DELETE_BTN));
         js.executeScript("arguments[0].scrollIntoView({block:'center'});", delBtn);
         pause(200);

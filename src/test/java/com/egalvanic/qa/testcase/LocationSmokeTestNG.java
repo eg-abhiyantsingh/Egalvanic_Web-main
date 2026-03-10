@@ -5,26 +5,54 @@ import com.egalvanic.qa.utils.ExtentReportManager;
 import com.egalvanic.qa.utils.ScreenshotUtil;
 
 import org.testng.Assert;
-import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 /**
  * Smoke Tests for Location CRUD operations.
- * All 4 tests share ONE browser session (via BaseTest @BeforeClass).
+ * Every test is fully independent — can be run alone from IDE.
  *
- * Execution order is controlled by priority (1→2→3→4).
- * No dependsOnMethods — each test can be run individually from IDE.
- * When run individually, dependent tests skip with a clear message.
+ * When run as a suite (priority 1→2→3→4), tests share the building
+ * created by testCreateLocationHierarchy to avoid redundant creation.
+ * When run individually, each test creates its own test data first.
  */
 public class LocationSmokeTestNG extends BaseTest {
 
-    // Test data with unique timestamps
-    private static final String BUILDING_NAME = "SmokeTest_Building_" + System.currentTimeMillis();
-    private static final String FLOOR_NAME = "SmokeTest_Floor_" + System.currentTimeMillis();
     private static final String ACCESS_NOTES = "Smoke test access notes";
 
-    // State tracking
-    private boolean buildingCreated = false;
+    // Tracks the building name in this session (updated if renamed)
+    private String currentBuildingName;
+
+    /**
+     * Helper: create a test building and return its name.
+     * Called by any test that needs a pre-existing building.
+     */
+    private String createTestBuilding() {
+        String name = "SmokeTest_Building_" + System.currentTimeMillis();
+        System.out.println("[Setup] Creating test building: " + name);
+
+        locationPage.navigateToLocations();
+        Assert.assertTrue(locationPage.isOnLocationsPage(), "Not on Locations page");
+
+        locationPage.createBuilding(name, ACCESS_NOTES);
+
+        boolean visible = locationPage.isLocationVisible(name);
+        if (!visible) {
+            throw new RuntimeException("Setup failed: building not visible after creation: " + name);
+        }
+        System.out.println("[Setup] Test building created: " + name);
+        return name;
+    }
+
+    /**
+     * Ensures a building exists for this session.
+     * If running full suite, testCreateLocationHierarchy already set currentBuildingName.
+     * If running a single test, creates a building on demand.
+     */
+    private void ensureBuildingExists() {
+        if (currentBuildingName == null) {
+            currentBuildingName = createTestBuilding();
+        }
+    }
 
     @Test(priority = 1, description = "Smoke: Create Building and Floor")
     public void testCreateLocationHierarchy() {
@@ -32,26 +60,28 @@ public class LocationSmokeTestNG extends BaseTest {
                 AppConstants.MODULE_LOCATIONS, AppConstants.FEATURE_LOCATION_CRUD, "TC_Location_Create");
 
         try {
+            String buildingName = "SmokeTest_Building_" + System.currentTimeMillis();
+            String floorName = "SmokeTest_Floor_" + System.currentTimeMillis();
+
             locationPage.navigateToLocations();
             Assert.assertTrue(locationPage.isOnLocationsPage(), "Not on Locations page");
             logStepWithScreenshot("Locations page loaded");
 
             // Create Building
-            locationPage.createBuilding(BUILDING_NAME, ACCESS_NOTES);
-            logStep("Building created: " + BUILDING_NAME);
+            locationPage.createBuilding(buildingName, ACCESS_NOTES);
+            logStep("Building created: " + buildingName);
 
             // Verify building appears in tree
-            boolean buildingVisible = locationPage.isLocationVisible(BUILDING_NAME);
-            Assert.assertTrue(buildingVisible, "Building not visible after creation: " + BUILDING_NAME);
+            boolean buildingVisible = locationPage.isLocationVisible(buildingName);
+            Assert.assertTrue(buildingVisible, "Building not visible after creation: " + buildingName);
             logStepWithScreenshot("Building verified in tree");
 
-            // Create Floor under Building (verified via dialog completion —
-            // the Locations tree uses lazy loading so floors are not visible in the flat tree)
-            locationPage.createFloor(BUILDING_NAME, FLOOR_NAME, ACCESS_NOTES + " floor");
-            logStep("Floor creation dialog completed: " + FLOOR_NAME);
+            // Create Floor under Building
+            locationPage.createFloor(buildingName, floorName, ACCESS_NOTES + " floor");
+            logStep("Floor creation dialog completed: " + floorName);
             logStepWithScreenshot("Floor created");
 
-            buildingCreated = true;
+            currentBuildingName = buildingName;
             ExtentReportManager.logPass("Building and Floor created successfully");
 
         } catch (Exception e) {
@@ -62,16 +92,16 @@ public class LocationSmokeTestNG extends BaseTest {
 
     @Test(priority = 2, description = "Smoke: Verify building is visible in tree")
     public void testReadLocations() {
-        requireBuildingCreated("testReadLocations");
+        ensureBuildingExists();
         ExtentReportManager.createTest(
                 AppConstants.MODULE_LOCATIONS, AppConstants.FEATURE_LOCATION_LIST, "TC_Location_Read");
 
         try {
             locationPage.navigateToLocations();
 
-            boolean buildingVisible = locationPage.isLocationVisible(BUILDING_NAME);
-            Assert.assertTrue(buildingVisible, "Building not visible: " + BUILDING_NAME);
-            logStep("Building visible: " + BUILDING_NAME);
+            boolean buildingVisible = locationPage.isLocationVisible(currentBuildingName);
+            Assert.assertTrue(buildingVisible, "Building not visible: " + currentBuildingName);
+            logStep("Building visible: " + currentBuildingName);
 
             logStepWithScreenshot("Locations verified");
             ExtentReportManager.logPass("Building is visible in the tree");
@@ -84,16 +114,17 @@ public class LocationSmokeTestNG extends BaseTest {
 
     @Test(priority = 3, description = "Smoke: Update building name")
     public void testUpdateLocation() {
-        requireBuildingCreated("testUpdateLocation");
+        ensureBuildingExists();
         ExtentReportManager.createTest(
                 AppConstants.MODULE_LOCATIONS, AppConstants.FEATURE_EDIT_LOCATION, "TC_Location_Update");
 
-        String updatedName = BUILDING_NAME + "_Updated";
+        String updatedName = currentBuildingName + "_Updated";
         try {
             locationPage.navigateToLocations();
-            locationPage.selectAndEditLocation(BUILDING_NAME, updatedName);
+            locationPage.selectAndEditLocation(currentBuildingName, updatedName);
             logStepWithScreenshot("Location updated");
 
+            currentBuildingName = updatedName; // track the rename
             ExtentReportManager.logPass("Location updated successfully");
 
         } catch (Exception e) {
@@ -104,31 +135,22 @@ public class LocationSmokeTestNG extends BaseTest {
 
     @Test(priority = 4, description = "Smoke: Delete the created building")
     public void testDeleteLocation() {
-        requireBuildingCreated("testDeleteLocation");
+        ensureBuildingExists();
         ExtentReportManager.createTest(
                 AppConstants.MODULE_LOCATIONS, AppConstants.FEATURE_DELETE_LOCATION, "TC_Location_Delete");
 
         try {
             locationPage.navigateToLocations();
-            locationPage.deleteLocation(BUILDING_NAME);
+            locationPage.deleteLocation(currentBuildingName);
             locationPage.confirmDelete();
             logStepWithScreenshot("Location deleted");
 
+            currentBuildingName = null; // building is gone
             ExtentReportManager.logPass("Location deleted successfully");
 
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("location_delete_error");
             Assert.fail("Location delete failed: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Check precondition: building must have been created by testCreateLocationHierarchy.
-     */
-    private void requireBuildingCreated(String testName) {
-        if (!buildingCreated) {
-            throw new SkipException(testName + " requires testCreateLocationHierarchy to run first. "
-                    + "Run the full class or suite, not a single method.");
         }
     }
 }
