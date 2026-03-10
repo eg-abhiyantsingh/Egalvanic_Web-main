@@ -41,7 +41,7 @@ public class AssetPage {
 
     // Data grid actions
     private static final By SEARCH_INPUT = By.xpath("//input[contains(@placeholder,'Search')]");
-    private static final By FIRST_ROW_EDIT_BTN = By.xpath("//div[@class='MuiDataGrid-row MuiDataGrid-row--firstVisible']//button[@title='Edit Asset']");
+    private static final By FIRST_ROW_EDIT_BTN = By.xpath("(//div[contains(@class,'MuiDataGrid-row')]//button[contains(@title,'Edit') or contains(@aria-label,'Edit')])[1]");
     private static final By FIRST_ROW_DELETE_BTN = By.xpath("(//div[contains(@class,'MuiDataGrid-row')]//button[@title='Delete Asset'])[1]");
     private static final By CONFIRM_DELETE_BTN = By.xpath("//button[contains(@class,'MuiButton-containedError') and contains(.,'Delete')]");
 
@@ -388,14 +388,53 @@ public class AssetPage {
 
     public void openEditForFirstAsset() {
         recoverFromErrorOverlay();
+
+        // Strategy 1: Edit button with title or aria-label in first row
         if (driver.findElements(FIRST_ROW_EDIT_BTN).size() > 0) {
             click(FIRST_ROW_EDIT_BTN);
-        } else {
-            click(By.xpath("(//button[contains(@class,'MuiIconButton-root')])[1]"));
-            pause(400);
-            click(By.xpath("//li[normalize-space()='Edit' or contains(.,'Edit')]"));
+            pause(700);
+            return;
         }
-        pause(700);
+
+        // Strategy 2: Edit icon (SVG) inside first row
+        By editIcon = By.xpath("(//div[contains(@class,'MuiDataGrid-row')]//button[.//svg[@data-testid='EditIcon' or @data-testid='CreateIcon']])[1]");
+        if (driver.findElements(editIcon).size() > 0) {
+            js.executeScript("arguments[0].click();", driver.findElement(editIcon));
+            pause(700);
+            return;
+        }
+
+        // Strategy 3: Click the first row itself to open detail/edit panel
+        By firstRow = By.xpath("(//div[contains(@class,'MuiDataGrid-row')])[1]");
+        if (driver.findElements(firstRow).size() > 0) {
+            driver.findElement(firstRow).click();
+            pause(1000);
+
+            // Look for Edit button in a detail panel that may have opened
+            By editInPanel = By.xpath("//button[contains(.,'Edit') or @aria-label='Edit' or @title='Edit']");
+            if (driver.findElements(editInPanel).size() > 0) {
+                click(editInPanel);
+                pause(700);
+                return;
+            }
+        }
+
+        // Strategy 4: Any icon button in the first row (actions column)
+        By anyIconBtn = By.xpath("(//div[contains(@class,'MuiDataGrid-row')]//button[contains(@class,'MuiIconButton')])[1]");
+        if (driver.findElements(anyIconBtn).size() > 0) {
+            js.executeScript("arguments[0].click();", driver.findElement(anyIconBtn));
+            pause(700);
+
+            // Check if a menu opened with Edit option
+            By editMenu = By.xpath("//li[contains(.,'Edit')] | //div[@role='menuitem'][contains(.,'Edit')]");
+            if (driver.findElements(editMenu).size() > 0) {
+                click(editMenu);
+                pause(700);
+                return;
+            }
+        }
+
+        throw new RuntimeException("Edit button not found for first asset in grid");
     }
 
     public void editModel(String newModel) {
