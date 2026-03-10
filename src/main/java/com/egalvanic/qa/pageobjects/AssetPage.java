@@ -23,6 +23,7 @@ public class AssetPage {
 
     // Navigation
     private static final By ASSETS_NAV = By.xpath("//span[normalize-space()='Assets'] | //a[normalize-space()='Assets'] | //button[normalize-space()='Assets']");
+    private static final By LOCATIONS_NAV = By.xpath("//span[normalize-space()='Locations'] | //a[normalize-space()='Locations'] | //button[normalize-space()='Locations']");
     private static final By CREATE_ASSET_BTN = By.xpath("//button[normalize-space()='Create Asset']");
 
     // Asset form fields (using placeholder selectors — confirmed by diagnostic)
@@ -60,14 +61,18 @@ public class AssetPage {
     public void navigateToAssets() {
         recoverFromErrorOverlay();
 
-        // If already on Assets page, do a full page refresh to get fresh grid data.
-        // Re-clicking the Assets nav link triggers a React crash, so we refresh instead.
+        // If already on Assets page, navigate away then back to force fresh data.
+        // driver.navigate().refresh() loses SPA state (site selector resets).
+        // Re-clicking Assets nav on same page can trigger React crash.
+        // Solution: go to Locations briefly, then back to Assets.
         if (driver.findElements(CREATE_ASSET_BTN).size() > 0 && isOnAssetsPage()) {
-            System.out.println("[AssetPage] Already on Assets page — refreshing page for fresh data");
-            driver.navigate().refresh();
-            pause(2000);
-            wait.until(ExpectedConditions.visibilityOfElementLocated(CREATE_ASSET_BTN));
-            return;
+            System.out.println("[AssetPage] Already on Assets page — navigating away and back for fresh data");
+            try {
+                driver.findElement(LOCATIONS_NAV).click();
+                pause(1500);
+            } catch (Exception e) {
+                System.out.println("[AssetPage] Could not navigate to Locations: " + e.getMessage());
+            }
         }
 
         click(ASSETS_NAV);
@@ -349,20 +354,23 @@ public class AssetPage {
             // Step 1: Dismiss Sentry feedback dialog
             try { driver.findElement(By.xpath("//button[contains(@aria-label,'Close')]")).click(); pause(500); } catch (Exception ignored) {}
 
-            // Step 2: Refresh page
-            driver.navigate().refresh();
-            pause(3000);
+            // Step 2: Navigate to Locations then back (avoids SPA state loss from page refresh)
+            try {
+                driver.findElement(LOCATIONS_NAV).click();
+                pause(1500);
+                driver.findElement(ASSETS_NAV).click();
+                pause(2000);
+            } catch (Exception ignored) {}
 
-            // Step 3: Wait for Assets page to reload
+            // Step 3: Check if recovered
             try {
                 wait.until(ExpectedConditions.visibilityOfElementLocated(CREATE_ASSET_BTN));
-                System.out.println("[AssetPage] Recovery successful — page reloaded");
+                System.out.println("[AssetPage] Recovery successful — Assets page reloaded");
                 return;
             } catch (Exception ignored) {}
 
-            // Step 4: If still broken, check for error again
+            // Step 4: If still broken, try recovery buttons
             if (driver.findElements(errorXpath).size() > 0) {
-                // Try recovery buttons
                 try { driver.findElement(By.xpath("//button[contains(.,'Try Again')]")).click(); pause(3000); } catch (Exception ignored) {}
                 try { driver.findElement(By.xpath("//button[contains(.,'Refresh Page')]")).click(); pause(3000); } catch (Exception ignored) {}
             }

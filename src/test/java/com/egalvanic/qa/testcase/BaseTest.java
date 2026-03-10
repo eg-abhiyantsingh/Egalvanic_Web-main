@@ -170,17 +170,25 @@ public class BaseTest {
 
             System.out.println("[BaseTest] Error page detected — recovering before next test...");
 
-            // Strategy 1: Dismiss Sentry dialog + refresh
+            // Strategy 1: Dismiss Sentry dialog
             try { driver.findElement(By.xpath("//button[contains(@aria-label,'Close')]")).click(); pause(500); } catch (Exception ignored) {}
-            driver.navigate().refresh();
-            pause(3000);
-            if (!isApplicationErrorPage()) return;
 
-            // Strategy 2: Navigate to base URL
+            // Strategy 2: Navigate away using sidebar nav (preserves SPA state unlike page refresh)
+            try {
+                By locationsNav = By.xpath("//span[normalize-space()='Locations'] | //a[normalize-space()='Locations']");
+                driver.findElement(locationsNav).click();
+                pause(2000);
+                if (!isApplicationErrorPage()) {
+                    System.out.println("[BaseTest] Recovery successful via nav to Locations");
+                    return;
+                }
+            } catch (Exception ignored) {}
+
+            // Strategy 3: Navigate to base URL (last resort — may require re-login)
             driver.get(AppConstants.BASE_URL);
             pause(3000);
 
-            // Strategy 3: Click recovery buttons if still on error page
+            // Strategy 4: Click recovery buttons if still on error page
             if (isApplicationErrorPage()) {
                 try { driver.findElement(By.xpath("//button[contains(.,'Try Again')]")).click(); pause(3000); } catch (Exception ignored) {}
                 try { driver.findElement(By.xpath("//button[contains(.,'Refresh Page')]")).click(); pause(3000); } catch (Exception ignored) {}
