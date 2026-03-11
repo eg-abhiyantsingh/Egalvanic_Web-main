@@ -209,7 +209,7 @@ public class AuthSmokeTestNG {
     @Test(priority = 2, description = "Smoke: Project Manager login and access verification")
     public void testProjectManagerLogin() {
         ExtentReportManager.createTest(
-                AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_LOGIN, "TC_Auth_PMLogin");
+                AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_LOGIN, "TC_Auth_ProjectManagerLogin");
 
         try {
             logStep("Logging in as Project Manager: " + AppConstants.PM_EMAIL);
@@ -250,7 +250,7 @@ public class AuthSmokeTestNG {
     @Test(priority = 3, description = "Smoke: Technician login — verify web access restricted")
     public void testTechnicianLogin() {
         ExtentReportManager.createTest(
-                AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_ROLE_ACCESS, "TC_Auth_TechLogin");
+                AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_ROLE_ACCESS, "TC_Auth_TechnicianLogin");
 
         try {
             logStep("Logging in as Technician: " + AppConstants.TECH_EMAIL);
@@ -313,7 +313,7 @@ public class AuthSmokeTestNG {
     @Test(priority = 4, description = "Smoke: Facility Manager login and access verification")
     public void testFacilityManagerLogin() {
         ExtentReportManager.createTest(
-                AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_ROLE_ACCESS, "TC_Auth_FMLogin");
+                AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_ROLE_ACCESS, "TC_Auth_FacilityManagerLogin");
 
         try {
             logStep("Logging in as Facility Manager: " + AppConstants.FM_EMAIL);
@@ -380,7 +380,7 @@ public class AuthSmokeTestNG {
     @Test(priority = 5, description = "Smoke: Client Portal login and access verification")
     public void testClientPortalLogin() {
         ExtentReportManager.createTest(
-                AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_ROLE_ACCESS, "TC_Auth_CPLogin");
+                AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_ROLE_ACCESS, "TC_Auth_ClientPortalLogin");
 
         try {
             logStep("Logging in as Client Portal: " + AppConstants.CP_EMAIL);
