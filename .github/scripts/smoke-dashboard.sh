@@ -315,9 +315,9 @@ for i in $(seq 0 $((TOTAL_MODULES - 1))); do
           continue
         fi
 
-        if echo "$LINE" | grep -q " PASSED: "; then
+        if echo "$LINE" | grep -q "PASSED:"; then
           ICON="✅"; MOD_PASSED=$((MOD_PASSED + 1)); TOTAL_PASSED=$((TOTAL_PASSED + 1))
-        elif echo "$LINE" | grep -q " FAILED: "; then
+        elif echo "$LINE" | grep -q "FAILED:"; then
           ICON="❌"; MOD_FAILED=$((MOD_FAILED + 1)); TOTAL_FAILED=$((TOTAL_FAILED + 1))
         else
           ICON="⏭️"; MOD_SKIPPED=$((MOD_SKIPPED + 1)); TOTAL_SKIPPED=$((TOTAL_SKIPPED + 1))
@@ -356,9 +356,9 @@ for i in $(seq 0 $((TOTAL_MODULES - 1))); do
     LAST_COUNT=$((LAST_COUNT + 1))
     LINE=$(grep -E '(PASSED|FAILED|SKIPPED): [A-Za-z_0-9]+\.[A-Za-z_0-9]+ \([0-9]+s\)' "$LOG_FILE" | sed -n "${LAST_COUNT}p")
 
-    if echo "$LINE" | grep -q " PASSED: "; then
+    if echo "$LINE" | grep -q "PASSED:"; then
       ICON="✅"; MOD_PASSED=$((MOD_PASSED + 1)); TOTAL_PASSED=$((TOTAL_PASSED + 1))
-    elif echo "$LINE" | grep -q " FAILED: "; then
+    elif echo "$LINE" | grep -q "FAILED:"; then
       ICON="❌"; MOD_FAILED=$((MOD_FAILED + 1)); TOTAL_FAILED=$((TOTAL_FAILED + 1))
     else
       ICON="⏭️"; MOD_SKIPPED=$((MOD_SKIPPED + 1)); TOTAL_SKIPPED=$((TOTAL_SKIPPED + 1))
