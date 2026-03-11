@@ -24,6 +24,12 @@
         </classes>
     </test>
 
+    <test name="Connection-CRUD-Smoke">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ConnectionSmokeTestNG"/>
+        </classes>
+    </test>
+
     <test name="Location-CRUD-Smoke">
         <classes>
             <class name="com.egalvanic.qa.testcase.LocationSmokeTestNG"/>

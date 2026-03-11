@@ -19,7 +19,7 @@ public class AppConstants {
     // ============================================
     // TEST DATA - AUTHENTICATION
     // ============================================
-    public static final String VALID_EMAIL = getEnv("USER_EMAIL", "rahul+acme@egalvanic.com");
+    public static final String VALID_EMAIL = getEnv("USER_EMAIL", "abhiyant.singh+acme@egalvanic.com");
     public static final String VALID_PASSWORD = getEnv("USER_PASSWORD", "RP@egalvanic123");
     public static final String INVALID_EMAIL = "invalidemail@test.com";
     public static final String INVALID_PASSWORD = "wrongpassword123";
@@ -27,7 +27,7 @@ public class AppConstants {
     // ============================================
     // ROLE-BASED CREDENTIALS
     // ============================================
-    public static final String ADMIN_EMAIL = getEnv("ADMIN_EMAIL", "rahul+acme@egalvanic.com");
+    public static final String ADMIN_EMAIL = getEnv("ADMIN_EMAIL", "abhiyant.singh+acme@egalvanic.com");
     public static final String ADMIN_PASSWORD = getEnv("ADMIN_PASSWORD", "RP@egalvanic123");
     public static final String PM_EMAIL = getEnv("PM_EMAIL", "abhiyant.singh+pm@egalvanic.com");
     public static final String PM_PASSWORD = getEnv("PM_PASSWORD", "RP@egalvanic123");

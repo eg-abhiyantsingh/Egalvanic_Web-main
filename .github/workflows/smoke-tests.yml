@@ -1,20 +1,22 @@
-name: Web Smoke Tests - Asset & Location CRUD
+name: Web Smoke Tests - Asset, Connection & Location CRUD
 
 # ============================================================
 # WEB SMOKE TEST SUITE - Quick Critical Path Validation
 # ============================================================
-# Tests: 18 tests across 4 modules
+# Tests: 21 tests across 5 modules
 #
 # Modules:
 #   Module 1: Auth & Login      (6 tests) — Admin → PM → Technician → FM → Client Portal → Invalid
 #   Module 2: Site Selection    (4 tests) — Selector Present → Dropdown → Select Site → Context Persists
 #   Module 3: Asset CRUD        (4 tests) — Create → Read → Update → Delete
-#   Module 4: Location CRUD     (4 tests) — Create Hierarchy → Read → Update → Delete
+#   Module 4: Connection CRUD   (3 tests) — Add Loadside → Verify → Delete
+#   Module 5: Location CRUD     (4 tests) — Create Hierarchy → Read → Update → Delete
 #
 # Per-module TestNG XMLs:
 #   smoke-auth-testng.xml
 #   smoke-site-testng.xml
 #   smoke-asset-testng.xml
+#   smoke-connection-testng.xml
 #   smoke-location-testng.xml
 #
 # Dashboard script: .github/scripts/smoke-dashboard.sh

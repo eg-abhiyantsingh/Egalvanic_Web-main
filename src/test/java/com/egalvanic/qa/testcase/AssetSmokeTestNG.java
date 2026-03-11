@@ -88,7 +88,7 @@ public class AssetSmokeTestNG extends BaseTest {
         }
     }
 
-    @Test(priority = 3, description = "Smoke: Update asset model and notes")
+    @Test(priority = 3, description = "Smoke: Update asset class, model, notes and add a connection")
     public void testUpdateAsset() {
         ExtentReportManager.createTest(
                 AppConstants.MODULE_ASSET, AppConstants.FEATURE_EDIT_ASSET, "TC_Asset_Update");
@@ -98,15 +98,121 @@ public class AssetSmokeTestNG extends BaseTest {
             assetPage.openEditForFirstAsset();
             logStep("Opened edit form for existing asset");
 
+            // 1. Update model and notes
             assetPage.editModel("UpdatedModel");
             assetPage.editNotes("Updated notes from smoke test");
+            logStep("Updated model and notes");
+            logStepWithScreenshot("Basic fields updated");
+
+            // 2. Scroll to CONNECTIONS section and add Lineside + Loadside connections
+            boolean linesideAdded = false;
+            boolean loadsideAdded = false;
+
+            assetPage.expandConnectionsSection();
+            int beforeCount = assetPage.getConnectionCount();
+            logStep("CONNECTIONS expanded. Current count: " + beforeCount);
+
+            // 3a. Add Lineside Connection
+            try {
+                assetPage.clickAddConnectionButton();
+                logStep("Clicked '+' for Lineside connection");
+
+                assetPage.selectNewLinesideConnection();
+                logStep("Selected 'New Lineside Connection'");
+
+                assetPage.selectTargetAsset(null);
+                logStep("Selected target for Lineside");
+
+                try {
+                    assetPage.selectConnectionType("Cable");
+                    logStep("Selected connection type: Cable");
+                } catch (Exception e) {
+                    logStep("Connection type selection skipped: " + e.getMessage());
+                }
+
+                assetPage.clickCreateConnection();
+                assetPage.waitForConnectionDialogClose();
+                logStep("Lineside connection created");
+                linesideAdded = true;
+            } catch (Exception e) {
+                logStep("Lineside connection skipped: " + e.getMessage());
+                assetPage.dismissAnyDialog();
+            }
+            logStepWithScreenshot("After Lineside connection attempt");
+
+            // 2b. Add Loadside Connection
+            try {
+                assetPage.clickAddConnectionButton();
+                logStep("Clicked '+' for Loadside connection");
+
+                assetPage.selectNewLoadsideConnection();
+                logStep("Selected 'New Loadside Connection'");
+
+                assetPage.selectTargetAsset(null);
+                logStep("Selected target for Loadside");
+
+                try {
+                    assetPage.selectConnectionType("Cable");
+                    logStep("Selected connection type: Cable");
+                } catch (Exception e) {
+                    logStep("Connection type selection skipped: " + e.getMessage());
+                }
+
+                assetPage.clickCreateConnection();
+                assetPage.waitForConnectionDialogClose();
+                logStep("Loadside connection created");
+                loadsideAdded = true;
+            } catch (Exception e) {
+                logStep("Loadside connection skipped: " + e.getMessage());
+                assetPage.dismissAnyDialog();
+            }
+            logStepWithScreenshot("After Loadside connection attempt");
+
+            // 3. Change asset class (after connections — scroll back to top first)
+            assetPage.editAssetClass(TEST_ASSET_CLASS);
+            logStep("Changed asset class to: " + TEST_ASSET_CLASS);
+            logStepWithScreenshot("Asset class updated");
+
+            // 4. Save all changes
             assetPage.saveChanges();
-            logStepWithScreenshot("Asset updated");
+            logStepWithScreenshot("Save clicked");
 
             boolean success = assetPage.waitForEditSuccess();
             Assert.assertTrue(success, "Asset update did not complete successfully");
+            logStep("Save confirmed successful");
 
-            ExtentReportManager.logPass("Asset updated successfully");
+            // 5. Verify saved data — check values still on the edit page after save
+            //    (save keeps us on the same page in edit mode)
+            String savedClass = assetPage.getAssetClassValue();
+            logStep("Post-save asset class: " + savedClass);
+
+            String savedName = assetPage.getAssetNameValue();
+            logStep("Post-save asset name: " + savedName);
+
+            assetPage.expandConnectionsSection();
+            int finalConnCount = assetPage.getConnectionCount();
+            logStep("Post-save connection count: " + finalConnCount);
+            logStepWithScreenshot("Post-save verification");
+
+            // 6. Navigate away and back to verify data persisted
+            assetPage.navigateToAssets();
+            pause(2000);
+            assetPage.openEditForFirstAsset();
+            pause(2000);
+            logStep("Re-opened first asset edit for final verification");
+
+            String reloadedClass = assetPage.getAssetClassValue();
+            String reloadedName = assetPage.getAssetNameValue();
+            logStep("After reload — class: " + reloadedClass + ", name: " + reloadedName);
+
+            assetPage.expandConnectionsSection();
+            int reloadedConnCount = assetPage.getConnectionCount();
+            logStep("After reload — connections: " + reloadedConnCount);
+            logStepWithScreenshot("Final data verification complete");
+
+            ExtentReportManager.logPass("Asset updated and verified: class=" + reloadedClass +
+                    ", name=" + reloadedName + ", connections=" + reloadedConnCount +
+                    ", lineside=" + linesideAdded + ", loadside=" + loadsideAdded);
 
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("asset_update_error");

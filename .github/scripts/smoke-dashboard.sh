@@ -1,12 +1,13 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════════
-# WEB SMOKE TEST DASHBOARD v4 — Auth + Site Selection + Asset CRUD + Location CRUD
+# WEB SMOKE TEST DASHBOARD v5 — Auth + Site + Asset + Connection + Location
 # ═══════════════════════════════════════════════════════════════════════
-# Runs 4 modules individually with LIVE per-test progress updates.
+# Runs 5 modules individually with LIVE per-test progress updates.
 #   Module 1: Auth & Login (Admin → PM → Technician → FM → CP → Invalid)
 #   Module 2: Site Selection (Selector Present → Dropdown Options → Select Site → Context Persists)
 #   Module 3: Asset CRUD (Create → Read → Update → Delete)
-#   Module 4: Location CRUD (Create Hierarchy → Read → Update → Delete)
+#   Module 4: Connection CRUD (Add Loadside → Verify → Delete)
+#   Module 5: Location CRUD (Create Hierarchy → Read → Update → Delete)
 #
 # Architecture:
 #   1. Maven runs in background → output to temp log file
@@ -24,27 +25,28 @@ set +e  # Don't exit on error — we handle failures ourselves
 # ─────────────────────────────────────────────────────
 # MODULE DEFINITIONS
 # ─────────────────────────────────────────────────────
-MODULES=("auth-login" "site-selection" "asset-crud" "location-crud")
-MODULE_NAMES=("Auth & Login" "Site Selection" "Asset CRUD" "Location CRUD")
-MODULE_TESTS=(6 4 4 4)
+MODULES=("auth-login" "site-selection" "asset-crud" "connection-crud" "location-crud")
+MODULE_NAMES=("Auth & Login" "Site Selection" "Asset CRUD" "Connection CRUD" "Location CRUD")
+MODULE_TESTS=(6 4 4 3 4)
 MODULE_XMLS=(
   "smoke-auth-testng.xml"
   "smoke-site-testng.xml"
   "smoke-asset-testng.xml"
+  "smoke-connection-testng.xml"
   "smoke-location-testng.xml"
 )
 
-TOTAL_TESTS=18
-TOTAL_MODULES=4
+TOTAL_TESTS=21
+TOTAL_MODULES=5
 
 # ─────────────────────────────────────────────────────
 # STATE TRACKING
 # ─────────────────────────────────────────────────────
-STATUS=("pending" "pending" "pending" "pending")
-M_PASSED=(0 0 0 0)
-M_FAILED=(0 0 0 0)
-M_SKIPPED=(0 0 0 0)
-M_DURATION=(0 0 0 0)
+STATUS=("pending" "pending" "pending" "pending" "pending")
+M_PASSED=(0 0 0 0 0)
+M_FAILED=(0 0 0 0 0)
+M_SKIPPED=(0 0 0 0 0)
+M_DURATION=(0 0 0 0 0)
 
 SUITE_START=$(date +%s)
 GLOBAL_COMPLETED=0
@@ -201,7 +203,7 @@ draw_final_banner() {
     echo "  ║"
     echo "  ║     ${TOTAL_PASSED}/${TOTAL_TESTS} tests passed in ${elapsed_fmt}"
     echo "  ║     All ${TOTAL_MODULES} modules verified successfully"
-    echo "  ║     (Auth [6] ✅ + Site [4] ✅ + Asset [4] ✅ + Location [4] ✅)"
+    echo "  ║     (Auth [6] ✅ + Site [4] ✅ + Asset [4] ✅ + Connection [3] ✅ + Location [4] ✅)"
     echo "  ║"
     echo "  ║   🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉"
     echo "  ║"
@@ -256,7 +258,8 @@ echo "  │  📦  ${TOTAL_TESTS} tests across ${TOTAL_MODULES} modules"
 echo "  │  📋  Module 1: Auth & Login (Admin → PM → Technician → FM → CP → Invalid)"
 echo "  │  📋  Module 2: Site Selection (Selector → Dropdown → Select → Persist)"
 echo "  │  📋  Module 3: Asset CRUD (Create → Read → Update → Delete)"
-echo "  │  📋  Module 4: Location CRUD (Building → Floor → Room → Read → Update → Delete)"
+echo "  │  📋  Module 4: Connection CRUD (Add Loadside → Verify → Delete)"
+echo "  │  📋  Module 5: Location CRUD (Building → Floor → Room → Read → Update → Delete)"
 echo "  │  ⏰  $(date '+%Y-%m-%d %H:%M:%S')"
 echo "  └──────────────────────────────────────────────────────────────────────────"
 echo ""

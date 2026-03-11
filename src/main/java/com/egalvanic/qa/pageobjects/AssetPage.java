@@ -667,7 +667,7 @@ public class AssetPage {
      * NOTE: XPath //button[.//svg] fails on this page due to SVG namespace issues.
      * All button finding uses By.tagName("button") or By.cssSelector instead.
      */
-    private void clickKebabMenuItem(String itemText) {
+    public void clickKebabMenuItem(String itemText) {
         // CRITICAL: Save the detail page URL before any click attempts.
         // Strategies may accidentally navigate away, so we always use this to recover.
         final String detailUrl = driver.getCurrentUrl();
@@ -1149,6 +1149,115 @@ public class AssetPage {
         }
     }
 
+    /**
+     * Change the Asset Class in the edit drawer.
+     * The field is an MUI Autocomplete with placeholder "Select Class".
+     * Clears the current value, types the new class, and selects from dropdown.
+     */
+
+    /**
+     * Read the current asset class value from the edit/detail page.
+     */
+    public String getAssetClassValue() {
+        try {
+            By classInput = By.xpath("//input[@placeholder='Select Class']");
+            WebElement input = driver.findElement(classInput);
+            String value = input.getAttribute("value");
+            System.out.println("[AssetPage] getAssetClassValue: " + value);
+            return value;
+        } catch (Exception e) {
+            System.out.println("[AssetPage] getAssetClassValue failed: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Read the current asset name value from the edit/detail page.
+     */
+    public String getAssetNameValue() {
+        try {
+            By nameInput = By.xpath("//input[@placeholder='Enter Asset Name']");
+            WebElement input = driver.findElement(nameInput);
+            String value = input.getAttribute("value");
+            System.out.println("[AssetPage] getAssetNameValue: " + value);
+            return value;
+        } catch (Exception e) {
+            System.out.println("[AssetPage] getAssetNameValue failed: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public void editAssetClass(String newClass) {
+        System.out.println("[AssetPage] editAssetClass — changing to: " + newClass);
+
+        // Step 1: Clear the current value via the X (clear) button
+        Boolean cleared = (Boolean) js.executeScript(
+            "var inputs = document.querySelectorAll('input[placeholder=\"Select Class\"]');" +
+            "for (var inp of inputs) {" +
+            "  var r = inp.getBoundingClientRect();" +
+            "  if (r.width > 0) {" +
+            "    var wrapper = inp.closest('[class*=\"MuiAutocomplete\"]');" +
+            "    if (wrapper) {" +
+            "      var clearBtn = wrapper.querySelector('[class*=\"MuiAutocomplete-clearIndicator\"]');" +
+            "      if (clearBtn) { clearBtn.click(); return true; }" +
+            "    }" +
+            "  }" +
+            "}" +
+            "return false;"
+        );
+        System.out.println("[AssetPage] Asset class cleared: " + cleared);
+        pause(800);
+
+        // Step 2: Click the input, type the class name, wait for options, select
+        WebElement classInput = driver.findElement(ASSET_CLASS_INPUT);
+        classInput.click();
+        pause(300);
+
+        // Use React native setter to properly trigger filtering
+        js.executeScript(
+            "var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+            "nativeInputValueSetter.call(arguments[0], arguments[1]);" +
+            "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));" +
+            "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
+            classInput, newClass);
+        pause(1500);
+
+        // Step 3: Select matching option from the dropdown
+        Boolean selected = (Boolean) js.executeScript(
+            "var items = document.querySelectorAll('li[role=\"option\"]');" +
+            "var searchText = arguments[0];" +
+            "for (var item of items) {" +
+            "  if (item.textContent.trim() === searchText) { item.click(); return true; }" +
+            "}" +
+            "for (var item of items) {" +
+            "  if (item.textContent.trim().includes(searchText)) { item.click(); return true; }" +
+            "}" +
+            "if (items.length > 0) { items[0].click(); return true; }" +
+            "return false;", newClass);
+        System.out.println("[AssetPage] Asset class option selected: " + selected);
+        pause(1000);
+
+        // Step 4: Select subtype (first available option after class change)
+        try {
+            pause(500);
+            if (driver.findElements(ASSET_SUBTYPE_INPUT).size() > 0) {
+                WebElement subtypeInput = driver.findElement(ASSET_SUBTYPE_INPUT);
+                String currentSubtype = subtypeInput.getAttribute("value");
+                if (currentSubtype == null || currentSubtype.isEmpty()) {
+                    click(ASSET_SUBTYPE_INPUT);
+                    pause(400);
+                    By firstOption = By.xpath("(//li[@role='option'])[1]");
+                    if (driver.findElements(firstOption).size() > 0) {
+                        click(firstOption);
+                        pause(300);
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+
+        System.out.println("[AssetPage] Asset class changed to: " + newClass);
+    }
+
     public void editModel(String newModel) {
         // After "Edit Asset" is clicked, the UI may show:
         // 1. A side panel/drawer with form fields
@@ -1500,6 +1609,481 @@ public class AssetPage {
         } catch (Exception ignored) {}
 
         throw new RuntimeException("No delete confirmation button found");
+    }
+
+    // --- CONNECTIONS ---
+
+    /**
+     * Scroll the edit drawer to the CONNECTIONS accordion and expand it if collapsed.
+     * Must be called while the Edit Asset drawer is open.
+     */
+    public void expandConnectionsSection() {
+        // Scroll all scrollable containers in the edit drawer to find CONNECTIONS
+        js.executeScript(
+            "var containers = document.querySelectorAll('[class*=\"MuiDrawer\"] > div, [class*=\"MuiPaper\"]');" +
+            "for (var c of containers) {" +
+            "  if (c.scrollHeight > c.clientHeight + 100) c.scrollTop = c.scrollHeight;" +
+            "}"
+        );
+        pause(1000);
+
+        // Find CONNECTIONS accordion and expand if collapsed
+        js.executeScript(
+            "var h6s = document.querySelectorAll('h6');" +
+            "for (var el of h6s) {" +
+            "  if (el.textContent.trim() === 'CONNECTIONS') {" +
+            "    var accordion = el.closest('[class*=\"MuiAccordion\"]');" +
+            "    if (accordion && !accordion.classList.contains('Mui-expanded')) {" +
+            "      var summary = accordion.querySelector('[class*=\"MuiAccordionSummary\"]');" +
+            "      if (summary) summary.click();" +
+            "    }" +
+            "    el.scrollIntoView({block:'center'});" +
+            "    break;" +
+            "  }" +
+            "}"
+        );
+        pause(1000);
+        System.out.println("[AssetPage] CONNECTIONS section expanded");
+    }
+
+    /**
+     * Click the "+" IconButton in the CONNECTIONS header.
+     * Opens a menu with "New Lineside Connection" and "New Loadside Connection".
+     */
+    public void clickAddConnectionButton() {
+        js.executeScript(
+            "var h6s = document.querySelectorAll('h6');" +
+            "for (var el of h6s) {" +
+            "  if (el.textContent.trim() === 'CONNECTIONS') {" +
+            "    var parent = el.parentElement;" +
+            "    for (var i = 0; i < 4; i++) {" +
+            "      var btns = parent.querySelectorAll('button[class*=\"MuiIconButton\"]');" +
+            "      for (var btn of btns) {" +
+            "        var paths = btn.querySelectorAll('path');" +
+            "        for (var p of paths) {" +
+            "          if ((p.getAttribute('d')||'').indexOf('M19 13') > -1) { btn.click(); return; }" +
+            "        }" +
+            "      }" +
+            "      if (parent.parentElement) parent = parent.parentElement;" +
+            "    }" +
+            "  }" +
+            "}"
+        );
+        pause(1000);
+        System.out.println("[AssetPage] Clicked '+' button on CONNECTIONS");
+    }
+
+    /**
+     * Click "New Loadside Connection" from the connection type menu.
+     * Must be called after clickAddConnectionButton().
+     */
+    public void selectNewLoadsideConnection() {
+        Boolean clicked = (Boolean) js.executeScript(
+            "var items = document.querySelectorAll('[role=\"menuitem\"]');" +
+            "for (var item of items) {" +
+            "  if (item.textContent.trim().indexOf('Loadside') > -1) { item.click(); return true; }" +
+            "}" +
+            "return false;"
+        );
+        if (clicked == null || !clicked) {
+            throw new RuntimeException("Could not find 'New Loadside Connection' menu item");
+        }
+        pause(2000);
+        System.out.println("[AssetPage] Selected 'New Loadside Connection'");
+    }
+
+    /**
+     * Click "New Lineside Connection" from the connection type menu.
+     * Must be called after clickAddConnectionButton().
+     */
+    public void selectNewLinesideConnection() {
+        Boolean clicked = (Boolean) js.executeScript(
+            "var items = document.querySelectorAll('[role=\"menuitem\"]');" +
+            "for (var item of items) {" +
+            "  if (item.textContent.trim().indexOf('Lineside') > -1) { item.click(); return true; }" +
+            "}" +
+            "return false;"
+        );
+        if (clicked == null || !clicked) {
+            throw new RuntimeException("Could not find 'New Lineside Connection' menu item");
+        }
+        pause(2000);
+        System.out.println("[AssetPage] Selected 'New Lineside Connection'");
+    }
+
+    /**
+     * Select target asset in the "New Connection" dialog.
+     * Uses the MUI Autocomplete with placeholder "Select target asset".
+     *
+     * @param targetName partial or full asset name to search and select
+     */
+    public void selectTargetAsset(String targetName) {
+        // Try "Select target asset" (Loadside) or "Select source asset" (Lineside)
+        By targetInput = By.xpath(
+            "//input[@placeholder='Select target asset'] | //input[@placeholder='Select source asset']");
+        WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(targetInput));
+        System.out.println("[AssetPage] Found connection asset input: placeholder=\"" + input.getAttribute("placeholder") + "\"");
+        input.click();
+        pause(300);
+
+        if (targetName != null && !targetName.isEmpty()) {
+            // Use React native setter for controlled input
+            js.executeScript(
+                "var inp = arguments[0]; var text = arguments[1];" +
+                "var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+                "nativeSetter.call(inp, '');" +
+                "inp.dispatchEvent(new Event('input', { bubbles: true }));" +
+                "nativeSetter.call(inp, text);" +
+                "inp.dispatchEvent(new Event('input', { bubbles: true }));" +
+                "inp.dispatchEvent(new Event('change', { bubbles: true }));",
+                input, targetName);
+            pause(2000);
+
+            // Wait for dropdown options to appear and click the matching one
+            By option = By.xpath("//li[@role='option'][contains(normalize-space(),'" + targetName + "')]");
+            for (int i = 0; i < 5; i++) {
+                java.util.List<WebElement> options = driver.findElements(option);
+                if (!options.isEmpty()) {
+                    js.executeScript("arguments[0].click();", options.get(0));
+                    pause(500);
+                    System.out.println("[AssetPage] Selected target asset: " + targetName);
+                    return;
+                }
+                pause(500);
+            }
+        }
+
+        // Select first available option from dropdown (no filter)
+        selectFirstAvailableTargetAsset(input);
+    }
+
+    /**
+     * Select the first available option from the target asset dropdown.
+     * Clears any typed text first to show the full unfiltered list.
+     */
+    private void selectFirstAvailableTargetAsset(WebElement input) {
+        // Click input and use ArrowDown to open MUI Autocomplete dropdown
+        input.click();
+        pause(300);
+        input.sendKeys(org.openqa.selenium.Keys.ARROW_DOWN);
+        pause(2000);
+
+        By anyOption = By.xpath("//li[@role='option']");
+        java.util.List<WebElement> options = driver.findElements(anyOption);
+
+        // Fallback: try popup indicator button
+        if (options.isEmpty()) {
+            try {
+                js.executeScript(
+                    "var inp = arguments[0];" +
+                    "var ac = inp.closest('.MuiAutocomplete-root');" +
+                    "if (ac) { var btn = ac.querySelector('.MuiAutocomplete-popupIndicator'); if (btn) btn.click(); }",
+                    input);
+                pause(2000);
+                options = driver.findElements(anyOption);
+            } catch (Exception ignored) {}
+        }
+
+        // Poll a few more times
+        for (int i = 0; i < 5 && options.isEmpty(); i++) {
+            pause(1000);
+            options = driver.findElements(anyOption);
+        }
+
+        if (!options.isEmpty()) {
+            String optText = (String) js.executeScript("return arguments[0].textContent.trim();", options.get(0));
+            js.executeScript("arguments[0].click();", options.get(0));
+            pause(500);
+            System.out.println("[AssetPage] Selected first available target: " + optText);
+            return;
+        }
+
+        throw new RuntimeException("No target asset options available in dropdown");
+    }
+
+    /**
+     * Select connection type in the "New Connection" dialog (optional field).
+     *
+     * @param typeName connection type to select (e.g., "Cable", "Bus")
+     */
+    public void selectConnectionType(String typeName) {
+        By typeInput = By.xpath("//input[@placeholder='Select type (optional)']");
+        java.util.List<WebElement> inputs = driver.findElements(typeInput);
+        if (inputs.isEmpty()) {
+            System.out.println("[AssetPage] Connection Type field not found — skipping");
+            return;
+        }
+
+        WebElement input = inputs.get(0);
+        input.click();
+        pause(300);
+        input.sendKeys(typeName);
+        pause(1500);
+
+        By option = By.xpath("//li[@role='option'][contains(normalize-space(),'" + typeName + "')]");
+        for (int i = 0; i < 5; i++) {
+            java.util.List<WebElement> options = driver.findElements(option);
+            if (!options.isEmpty()) {
+                js.executeScript("arguments[0].click();", options.get(0));
+                pause(500);
+                System.out.println("[AssetPage] Selected connection type: " + typeName);
+                return;
+            }
+            // Try first available option as fallback
+            By anyOpt = By.xpath("//li[@role='option']");
+            java.util.List<WebElement> allOpts = driver.findElements(anyOpt);
+            if (!allOpts.isEmpty()) {
+                js.executeScript("arguments[0].click();", allOpts.get(0));
+                pause(500);
+                System.out.println("[AssetPage] Selected first available connection type");
+                return;
+            }
+            pause(500);
+        }
+        System.out.println("[AssetPage] WARNING: Could not select connection type '" + typeName + "'");
+    }
+
+    /**
+     * Click "Create Connection" button in the connection dialog.
+     */
+    public void clickCreateConnection() {
+        Boolean clicked = (Boolean) js.executeScript(
+            "var btns = document.querySelectorAll('button');" +
+            "for (var b of btns) {" +
+            "  if (b.textContent.trim() === 'Create Connection' && !b.disabled) {" +
+            "    b.click(); return true;" +
+            "  }" +
+            "}" +
+            "return false;"
+        );
+        if (clicked == null || !clicked) {
+            throw new RuntimeException("'Create Connection' button not found or is disabled. Ensure a target asset is selected.");
+        }
+        pause(2000);
+        System.out.println("[AssetPage] Clicked 'Create Connection'");
+    }
+
+    /**
+     * Wait for the connection dialog to close after creation.
+     */
+    public void waitForConnectionDialogClose() {
+        for (int i = 0; i < 10; i++) {
+            boolean dialogOpen = !driver.findElements(By.cssSelector("[role='dialog']")).isEmpty();
+            if (!dialogOpen) {
+                System.out.println("[AssetPage] Connection dialog closed");
+                return;
+            }
+            pause(1000);
+        }
+        // Force close if still open
+        dismissAnyDialog();
+    }
+
+    /**
+     * Dismiss any open dialog (press Escape or click Cancel/Close).
+     */
+    public void dismissAnyDialog() {
+        try {
+            js.executeScript(
+                "var dialogs = document.querySelectorAll('[role=\"dialog\"]');" +
+                "for (var d of dialogs) {" +
+                "  var closeBtn = d.querySelector('[aria-label=\"Close\"], [aria-label=\"close\"]');" +
+                "  if (closeBtn) { closeBtn.click(); return; }" +
+                "  var cancelBtns = d.querySelectorAll('button');" +
+                "  for (var b of cancelBtns) {" +
+                "    if (b.textContent.trim() === 'Cancel') { b.click(); return; }" +
+                "  }" +
+                "}"
+            );
+            pause(500);
+        } catch (Exception ignored) {}
+        // Fallback: press Escape
+        try {
+            driver.findElement(By.tagName("body")).sendKeys(org.openqa.selenium.Keys.ESCAPE);
+            pause(500);
+        } catch (Exception ignored) {}
+        System.out.println("[AssetPage] dismissAnyDialog completed");
+    }
+
+    /**
+     * Cancel the connection dialog.
+     */
+    public void cancelConnectionDialog() {
+        // The dialog has its own Cancel button — find it within the dialog
+        Boolean clicked = (Boolean) js.executeScript(
+            "var dialogs = document.querySelectorAll('[role=\"dialog\"]');" +
+            "for (var d of dialogs) {" +
+            "  var btns = d.querySelectorAll('button');" +
+            "  for (var b of btns) {" +
+            "    if (b.textContent.trim() === 'Cancel') { b.click(); return true; }" +
+            "  }" +
+            "}" +
+            "return false;"
+        );
+        pause(1000);
+        System.out.println("[AssetPage] Connection dialog cancelled: " + clicked);
+    }
+
+    /**
+     * Get the number of connections currently shown in the CONNECTIONS accordion.
+     * Returns 0 if "No connections" is displayed.
+     */
+    public int getConnectionCount() {
+        try {
+            // Check for "No connections" text
+            Boolean noConn = (Boolean) js.executeScript(
+                "var accordions = document.querySelectorAll('[class*=\"MuiAccordion\"]');" +
+                "for (var a of accordions) {" +
+                "  if (a.textContent.indexOf('CONNECTIONS') > -1) {" +
+                "    return a.textContent.indexOf('No connections') > -1;" +
+                "  }" +
+                "}" +
+                "return true;"
+            );
+            if (noConn != null && noConn) return 0;
+
+            // Count connection entries (each has a kebab menu ⋮)
+            Long count = (Long) js.executeScript(
+                "var accordions = document.querySelectorAll('[class*=\"MuiAccordion\"]');" +
+                "for (var a of accordions) {" +
+                "  if (a.textContent.indexOf('CONNECTIONS') > -1) {" +
+                "    var details = a.querySelector('[class*=\"MuiAccordionDetails\"]');" +
+                "    if (!details) return 0;" +
+                "    // Count items with arrow icon (→) pattern or kebab menus\n" +
+                "    var items = details.querySelectorAll('[class*=\"MuiListItem\"], [class*=\"connection-item\"]');" +
+                "    if (items.length > 0) return items.length;" +
+                "    // Alternative: count by text containing '→'\n" +
+                "    var text = details.textContent;" +
+                "    var arrows = (text.match(/→/g) || []).length;" +
+                "    return arrows > 0 ? arrows : 0;" +
+                "  }" +
+                "}" +
+                "return 0;"
+            );
+            return count != null ? count.intValue() : 0;
+        } catch (Exception e) {
+            System.out.println("[AssetPage] Error getting connection count: " + e.getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Check if a connection to the given target asset is visible in the CONNECTIONS section.
+     */
+    public boolean isConnectionVisible(String targetAssetName) {
+        try {
+            Boolean found = (Boolean) js.executeScript(
+                "var accordions = document.querySelectorAll('[class*=\"MuiAccordion\"]');" +
+                "for (var a of accordions) {" +
+                "  if (a.textContent.indexOf('CONNECTIONS') > -1) {" +
+                "    return a.textContent.indexOf(arguments[0]) > -1;" +
+                "  }" +
+                "}" +
+                "return false;", targetAssetName);
+            return found != null && found;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Delete a connection by clicking the kebab menu (⋮) on a connection entry
+     * and selecting "Delete" or "Remove".
+     * If targetAssetName is null, deletes the first connection found.
+     */
+    public void deleteConnection(String targetAssetName) {
+        // Find the kebab menu on the connection entry
+        Boolean deleted = (Boolean) js.executeScript(
+            "var accordions = document.querySelectorAll('[class*=\"MuiAccordion\"]');" +
+            "for (var a of accordions) {" +
+            "  if (a.textContent.indexOf('CONNECTIONS') === -1) continue;" +
+            "  var details = a.querySelector('[class*=\"MuiAccordionDetails\"]');" +
+            "  if (!details) continue;" +
+            "  // Find connection entries containing the target name (or any if null)\n" +
+            "  var entries = details.querySelectorAll('[class*=\"MuiBox\"], [class*=\"MuiListItem\"], div');" +
+            "  for (var entry of entries) {" +
+            "    var text = entry.textContent || '';" +
+            "    var target = arguments[0];" +
+            "    if (target && text.indexOf(target) === -1) continue;" +
+            "    // Find kebab button (MoreVert icon) within this entry\n" +
+            "    var btns = entry.querySelectorAll('button');" +
+            "    for (var btn of btns) {" +
+            "      var paths = btn.querySelectorAll('path');" +
+            "      for (var p of paths) {" +
+            "        var d = p.getAttribute('d') || '';" +
+            "        if (d.indexOf('M12 8c1.1') > -1 || d.indexOf('M6 10') > -1) {" +
+            "          btn.click(); return true;" +
+            "        }" +
+            "      }" +
+            "    }" +
+            "  }" +
+            "}" +
+            "return false;", targetAssetName);
+
+        if (deleted == null || !deleted) {
+            // Fallback: try clicking any visible kebab/more icon in the connections area
+            System.out.println("[AssetPage] Primary kebab search failed, trying fallback...");
+            js.executeScript(
+                "var accordions = document.querySelectorAll('[class*=\"MuiAccordion\"]');" +
+                "for (var a of accordions) {" +
+                "  if (a.textContent.indexOf('CONNECTIONS') === -1) continue;" +
+                "  var btns = a.querySelectorAll('button[class*=\"MuiIconButton\"]');" +
+                "  // Skip the first button (expand toggle) and the + button\n" +
+                "  for (var btn of btns) {" +
+                "    var paths = btn.querySelectorAll('path');" +
+                "    for (var p of paths) {" +
+                "      var d = p.getAttribute('d') || '';" +
+                "      if (d.indexOf('M12 8c1.1') > -1) { btn.click(); return; }" +
+                "    }" +
+                "  }" +
+                "}"
+            );
+        }
+        pause(1000);
+
+        // Click "Delete" or "Remove" from the dropdown menu
+        Boolean menuClicked = (Boolean) js.executeScript(
+            "var items = document.querySelectorAll('[role=\"menuitem\"]');" +
+            "for (var item of items) {" +
+            "  var text = item.textContent.trim().toLowerCase();" +
+            "  if (text.indexOf('delete') > -1 || text.indexOf('remove') > -1) {" +
+            "    item.click(); return true;" +
+            "  }" +
+            "}" +
+            "return false;"
+        );
+        pause(1500);
+
+        // Confirm delete if a confirmation dialog appears
+        try {
+            By confirmBtn = By.xpath("//button[contains(@class,'containedError') and contains(.,'Delete')] | //button[contains(.,'Confirm')]");
+            java.util.List<WebElement> confirmBtns = driver.findElements(confirmBtn);
+            if (!confirmBtns.isEmpty()) {
+                js.executeScript("arguments[0].click();", confirmBtns.get(0));
+                pause(1500);
+                System.out.println("[AssetPage] Delete confirmed via dialog");
+            }
+        } catch (Exception ignored) {}
+
+        System.out.println("[AssetPage] Connection delete action completed. Menu clicked: " + menuClicked);
+    }
+
+    /**
+     * Click the "Connections" tab on the asset detail page.
+     */
+    public void clickConnectionsTab() {
+        Boolean clicked = (Boolean) js.executeScript(
+            "var btns = document.querySelectorAll('button');" +
+            "for (var b of btns) {" +
+            "  var r = b.getBoundingClientRect();" +
+            "  if (b.textContent.trim() === 'Connections' && r.top > 200 && r.top < 500) {" +
+            "    b.click(); return true;" +
+            "  }" +
+            "}" +
+            "return false;"
+        );
+        pause(2000);
+        System.out.println("[AssetPage] Clicked Connections tab: " + clicked);
     }
 
     // --- Helpers ---

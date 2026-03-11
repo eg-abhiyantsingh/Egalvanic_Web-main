@@ -2,6 +2,7 @@ package com.egalvanic.qa.testcase;
 
 import com.egalvanic.qa.constants.AppConstants;
 import com.egalvanic.qa.pageobjects.AssetPage;
+import com.egalvanic.qa.pageobjects.ConnectionPage;
 import com.egalvanic.qa.pageobjects.DashboardPage;
 import com.egalvanic.qa.pageobjects.LocationPage;
 import com.egalvanic.qa.pageobjects.LoginPage;
@@ -55,6 +56,7 @@ public class BaseTest {
     protected LoginPage loginPage;
     protected DashboardPage dashboardPage;
     protected AssetPage assetPage;
+    protected ConnectionPage connectionPage;
     protected LocationPage locationPage;
 
     private long testStartTime;
@@ -142,6 +144,7 @@ public class BaseTest {
         loginPage = new LoginPage(driver);
         dashboardPage = new DashboardPage(driver);
         assetPage = new AssetPage(driver);
+        connectionPage = new ConnectionPage(driver);
         locationPage = new LocationPage(driver);
 
         // Login and select site
