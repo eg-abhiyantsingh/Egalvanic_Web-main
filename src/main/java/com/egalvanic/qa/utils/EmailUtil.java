@@ -104,19 +104,7 @@ public class EmailUtil {
                     "text/html; charset=utf-8");
             multipart.addBodyPart(htmlBody);
 
-            // Attach detailed report
-            if (detailedReportPath != null) {
-                File detailedFile = new File(detailedReportPath);
-                if (detailedFile.exists()) {
-                    MimeBodyPart attachment = new MimeBodyPart();
-                    attachment.attachFile(detailedFile);
-                    attachment.setFileName("Detail_Report_" + dateStr.replace(" ", "_") + ".html");
-                    multipart.addBodyPart(attachment);
-                    System.out.println("[Email] Attached: " + detailedFile.getName());
-                }
-            }
-
-            // Attach client report
+            // Attach client report only (detail report is for internal QA, not emailed)
             if (clientReportPath != null) {
                 File clientFile = new File(clientReportPath);
                 if (clientFile.exists()) {
@@ -195,9 +183,8 @@ public class EmailUtil {
 
         // Attachments note
         sb.append("<p style='color:#666;font-size:13px;margin:15px 0 5px;'>")
-          .append("<strong>Attached Reports:</strong></p>");
+          .append("<strong>Attached Report:</strong></p>");
         sb.append("<ul style='color:#666;font-size:13px;margin:0;padding-left:20px;'>");
-        if (detailedPath != null) sb.append("<li>Detail Report (QA Team) — full logs & screenshots</li>");
         if (clientPath != null) sb.append("<li>Client Report — pass/fail summary</li>");
         sb.append("</ul>");
 
