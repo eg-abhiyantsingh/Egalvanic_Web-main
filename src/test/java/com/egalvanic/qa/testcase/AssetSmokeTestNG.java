@@ -114,20 +114,41 @@ public class AssetSmokeTestNG extends BaseTest {
         }
     }
 
-    @Test(priority = 4, description = "Smoke: Delete an existing asset")
+    @Test(priority = 4, description = "Smoke: Delete an existing asset and verify removal")
     public void testDeleteAsset() {
         ExtentReportManager.createTest(
                 AppConstants.MODULE_ASSET, AppConstants.FEATURE_DELETE_ASSET, "TC_Asset_Delete");
 
         try {
+            // 1. Navigate to assets and capture the name of the first asset
             assetPage.navigateToAssets();
+            String assetName = assetPage.getFirstRowAssetName();
+            Assert.assertNotNull(assetName, "No asset found in grid to delete");
+            logStep("Target asset for deletion: " + assetName);
+
+            // 2. Open detail page → kebab → Delete Asset → confirm
             assetPage.deleteFirstAssetFromGrid();
-            logStep("Clicked delete on first asset");
+            logStep("Clicked delete on asset: " + assetName);
 
             assetPage.confirmDelete();
-            logStepWithScreenshot("Asset deleted");
+            logStep("Delete confirmed");
 
-            ExtentReportManager.logPass("Asset deleted successfully");
+            // 3. Wait for delete to complete (redirect back to grid or success toast)
+            boolean deleteCompleted = assetPage.waitForDeleteSuccess();
+            Assert.assertTrue(deleteCompleted, "Delete did not complete — no success indicator");
+            logStepWithScreenshot("Delete completed");
+
+            // 4. Navigate back to assets grid and verify the deleted asset is gone
+            assetPage.navigateToAssets();
+            logStep("Back on assets grid — searching for deleted asset");
+
+            assetPage.searchAsset(assetName);
+            boolean stillVisible = assetPage.isAssetVisible(assetName);
+            Assert.assertFalse(stillVisible,
+                    "Deleted asset '" + assetName + "' is still visible in the grid after deletion");
+            logStepWithScreenshot("Verified: asset '" + assetName + "' no longer in grid");
+
+            ExtentReportManager.logPass("Asset deleted and verified removed: " + assetName);
 
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("asset_delete_error");

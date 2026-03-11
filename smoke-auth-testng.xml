@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Auth-Login-Smoke" verbose="0">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <test name="Auth-Login">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AuthSmokeTestNG"/>
+        </classes>
+    </test>
+
+</suite>

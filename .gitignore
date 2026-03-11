@@ -4,6 +4,9 @@ target/
 # Test output & screenshots
 test-output/
 
+# Extent reports (generated per run)
+reports/
+
 # IDE files
 .classpath
 .project

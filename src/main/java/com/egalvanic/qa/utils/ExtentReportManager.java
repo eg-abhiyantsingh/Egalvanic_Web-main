@@ -245,6 +245,7 @@ public class ExtentReportManager {
         if (client != null) {
             client.pass("PASS");
         }
+        incrementPassed();
     }
 
     public static void logFail(String message) {
@@ -256,6 +257,7 @@ public class ExtentReportManager {
         if (client != null) {
             client.fail("FAIL");
         }
+        incrementFailed();
     }
 
     public static void logFailWithScreenshot(String message, Throwable throwable) {
@@ -278,6 +280,7 @@ public class ExtentReportManager {
         if (client != null) {
             client.fail("FAIL");
         }
+        incrementFailed();
     }
 
     public static void logSkip(String message) {
@@ -289,6 +292,7 @@ public class ExtentReportManager {
         if (client != null) {
             client.skip("SKIP");
         }
+        incrementSkipped();
     }
 
     // ================================================================
@@ -309,7 +313,23 @@ public class ExtentReportManager {
             clientReport.flush();
             System.out.println("Client Report generated: " + clientReportPath);
         }
+
+        // Send report email (if enabled)
+        EmailUtil.sendReportEmail(detailedReportPath, clientReportPath,
+                totalPassed, totalFailed, totalSkipped);
     }
+
+    // ================================================================
+    // TEST RESULT COUNTERS (for email summary)
+    // ================================================================
+
+    private static int totalPassed = 0;
+    private static int totalFailed = 0;
+    private static int totalSkipped = 0;
+
+    public static void incrementPassed() { totalPassed++; }
+    public static void incrementFailed() { totalFailed++; }
+    public static void incrementSkipped() { totalSkipped++; }
 
     public static String getDetailedReportPath() {
         return detailedReportPath;

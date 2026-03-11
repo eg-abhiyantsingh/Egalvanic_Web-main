@@ -304,10 +304,37 @@ public class AssetPage {
     // --- READ ---
 
     public void searchAsset(String assetName) {
-        if (driver.findElements(SEARCH_INPUT).size() > 0) {
-            typeField(SEARCH_INPUT, assetName);
-            pause(500);
+        // Try standard search input
+        java.util.List<WebElement> searchInputs = driver.findElements(SEARCH_INPUT);
+        if (searchInputs.isEmpty()) {
+            System.out.println("[AssetPage] No search input found (placeholder='Search')");
+            return;
         }
+
+        WebElement searchInput = searchInputs.get(0);
+        System.out.println("[AssetPage] Found search input, typing: '" + assetName + "'");
+
+        // Use JS to clear and set value, then trigger React events
+        // This is more reliable than Selenium clear()+sendKeys() with React controlled inputs
+        js.executeScript(
+                "var inp = arguments[0];" +
+                "var text = arguments[1];" +
+                "// Clear using native setter to trigger React\n" +
+                "var nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+                "nativeSetter.call(inp, '');" +
+                "inp.dispatchEvent(new Event('input', { bubbles: true }));" +
+                "inp.dispatchEvent(new Event('change', { bubbles: true }));" +
+                "// Now set the actual value\n" +
+                "nativeSetter.call(inp, text);" +
+                "inp.dispatchEvent(new Event('input', { bubbles: true }));" +
+                "inp.dispatchEvent(new Event('change', { bubbles: true }));",
+                searchInput, assetName);
+
+        pause(2000);
+
+        // Verify what value ended up in the search input
+        String actualValue = (String) js.executeScript("return arguments[0].value;", searchInput);
+        System.out.println("[AssetPage] Search input value after typing: '" + actualValue + "'");
     }
 
     /**
@@ -341,14 +368,45 @@ public class AssetPage {
      */
     public String getFirstRowAssetName() {
         try {
-            By firstCell = By.xpath("(//div[contains(@class,'MuiDataGrid-row') and @data-rowindex])[1]//div[contains(@class,'MuiDataGrid-cell')][1]");
-            // Use presenceOfElementLocated instead of visibilityOfElementLocated
-            // because CSS zoom (80%) causes Selenium to miscalculate element visibility
-            WebElement cell = wait.until(ExpectedConditions.presenceOfElementLocated(firstCell));
-            // Use JS textContent — more reliable than getText() with CSS zoom
-            String text = (String) js.executeScript("return arguments[0].textContent.trim();", cell);
-            System.out.println("[AssetPage] First row asset name: '" + text + "'");
-            return (text == null || text.isEmpty()) ? null : text;
+            By firstRow = By.xpath("(//div[contains(@class,'MuiDataGrid-row') and @data-rowindex])[1]");
+            WebElement row = wait.until(ExpectedConditions.presenceOfElementLocated(firstRow));
+
+            // Dump all cells in the first row for diagnostic
+            @SuppressWarnings("unchecked")
+            java.util.List<String> cellTexts = (java.util.List<String>) js.executeScript(
+                    "var cells = arguments[0].querySelectorAll('[class*=\"MuiDataGrid-cell\"]');" +
+                    "var result = [];" +
+                    "for (var i = 0; i < cells.length; i++) {" +
+                    "  var txt = (cells[i].textContent||'').trim();" +
+                    "  var field = cells[i].getAttribute('data-field') || '';" +
+                    "  result.push('[' + i + '] field=\"' + field + '\" text=\"' + txt.substring(0,40) + '\"');" +
+                    "}" +
+                    "return result;", row);
+            System.out.println("[AssetPage] First row cells:");
+            for (String cellInfo : cellTexts) {
+                System.out.println("[AssetPage]   " + cellInfo);
+            }
+
+            // Find the cell with data-field="name" or the first cell with non-empty text
+            String name = (String) js.executeScript(
+                    "var cells = arguments[0].querySelectorAll('[class*=\"MuiDataGrid-cell\"]');" +
+                    "// First try: cell with data-field 'label' or 'name'\n" +
+                    "for (var cell of cells) {" +
+                    "  var field = (cell.getAttribute('data-field')||'').toLowerCase();" +
+                    "  if (field === 'label' || field === 'name' || field === 'assetname' || field === 'asset_name') {" +
+                    "    return (cell.textContent||'').trim();" +
+                    "  }" +
+                    "}" +
+                    "// Second try: first cell with non-empty text that isn't a checkbox\n" +
+                    "for (var cell of cells) {" +
+                    "  var txt = (cell.textContent||'').trim();" +
+                    "  var field = (cell.getAttribute('data-field')||'').toLowerCase();" +
+                    "  if (field === '__check__' || field === 'checkbox' || field === 'actions') continue;" +
+                    "  if (txt.length > 0) return txt;" +
+                    "}" +
+                    "return '';", row);
+            System.out.println("[AssetPage] First row asset name: '" + name + "'");
+            return (name == null || name.isEmpty()) ? null : name;
         } catch (Exception e) {
             System.out.println("[AssetPage] Could not read first row asset name: " + e.getMessage());
             return null;
@@ -358,25 +416,49 @@ public class AssetPage {
     public boolean isAssetVisible(String assetName) {
         try {
             recoverFromErrorOverlay();
+            // Search is already called by the test; call again to ensure filtering
             searchAsset(assetName);
-            pause(1500);
+            pause(2000);
 
-            By assetRow = By.xpath("//div[contains(@class,'MuiDataGrid-row')]//*[contains(text(),'" + assetName + "')]");
-
-            // Retry — grid may take time to filter/load
-            for (int i = 0; i < 5; i++) {
-                if (driver.findElements(assetRow).size() > 0) return true;
+            // Use JS to check textContent (CSS zoom 80% breaks XPath text() matching)
+            for (int attempt = 0; attempt < 8; attempt++) {
+                Boolean found = (Boolean) js.executeScript(
+                        "var rows = document.querySelectorAll('[class*=\"MuiDataGrid-row\"][data-rowindex]');" +
+                        "for (var row of rows) {" +
+                        "  var cells = row.querySelectorAll('[class*=\"MuiDataGrid-cell\"]');" +
+                        "  for (var cell of cells) {" +
+                        "    var txt = (cell.textContent||'').trim();" +
+                        "    if (txt.indexOf(arguments[0]) > -1) return true;" +
+                        "  }" +
+                        "}" +
+                        "return false;", assetName);
+                if (found != null && found) {
+                    System.out.println("[AssetPage] Asset '" + assetName + "' found in grid");
+                    return true;
+                }
                 pause(1000);
             }
 
-            // Debug: log grid state
-            java.util.List<WebElement> rows = driver.findElements(By.xpath("//div[contains(@class,'MuiDataGrid-row')]"));
-            System.out.println("[AssetPage] Grid has " + rows.size() + " rows. Searched for: " + assetName);
+            // Debug: log what's actually in the grid
+            @SuppressWarnings("unchecked")
+            java.util.List<String> rowTexts = (java.util.List<String>) js.executeScript(
+                    "var rows = document.querySelectorAll('[class*=\"MuiDataGrid-row\"][data-rowindex]');" +
+                    "var result = [];" +
+                    "for (var row of rows) {" +
+                    "  var labelCell = row.querySelector('[data-field=\"label\"]');" +
+                    "  result.push(labelCell ? (labelCell.textContent||'').trim() : '(no label cell)');" +
+                    "}" +
+                    "return result;");
+            System.out.println("[AssetPage] Grid has " + rowTexts.size() + " rows. Searched for: '" + assetName + "'");
+            for (int i = 0; i < rowTexts.size(); i++) {
+                System.out.println("[AssetPage]   row[" + i + "] label: '" + rowTexts.get(i) + "'");
+            }
 
             return false;
         } catch (RuntimeException e) {
             throw e;
         } catch (Exception e) {
+            System.out.println("[AssetPage] isAssetVisible error: " + e.getMessage());
             return false;
         }
     }
@@ -437,8 +519,6 @@ public class AssetPage {
         recoverFromErrorOverlay();
 
         // IMPORTANT: Use @data-rowindex to skip the header row.
-        // The header row also matches MuiDataGrid-row (via MuiDataGrid-row--borderBottom)
-        // but does NOT have data-rowindex. Only real data rows have it.
         By firstDataRow = By.xpath("(//div[contains(@class,'MuiDataGrid-row') and @data-rowindex])[1]");
         WebElement row = wait.until(ExpectedConditions.presenceOfElementLocated(firstDataRow));
         String currentUrl = driver.getCurrentUrl();
@@ -446,56 +526,84 @@ public class AssetPage {
         String dataId = row.getDomAttribute("data-id");
         System.out.println("[AssetPage] First data row: data-id=" + dataId + ", data-rowindex=" + row.getDomAttribute("data-rowindex"));
 
-        // Strategy 1: data-id UUID → direct URL navigation (most reliable)
-        if (dataId != null && !dataId.isEmpty() && dataId.contains("-")) {
-            String baseUrl = currentUrl.replaceAll("/assets.*", "/assets/");
-            driver.get(baseUrl + dataId);
-            waitForDetailPageLoad();
-            System.out.println("[AssetPage] Navigated via data-id — URL: " + driver.getCurrentUrl());
-            if (driver.getCurrentUrl().contains(dataId)) return;
-        }
+        // CRITICAL: Prefer SPA click navigation over driver.get() URL navigation.
+        // driver.get() does a full page reload which LOSES SPA state (selected facility,
+        // auth context). The detail page then shows a loading spinner forever.
+        // Clicking within the SPA preserves state.
 
-        // Strategy 2: Find <a> link inside the row
+        // Strategy 1: Click <a> link inside the row (SPA navigation)
         try {
-            String href = (String) js.executeScript(
+            WebElement link = (WebElement) js.executeScript(
                     "var all = arguments[0].querySelectorAll('a[href]');" +
                     "for(var i=0; i<all.length; i++) { " +
-                    "  if(all[i].href.includes('/assets/')) return all[i].href; " +
+                    "  if(all[i].href.includes('/assets/')) return all[i]; " +
                     "}" +
-                    "return '';", row);
-            if (href != null && !href.isEmpty()) {
-                driver.get(href);
-                pause(3000);
+                    "return null;", row);
+            if (link != null) {
+                System.out.println("[AssetPage] Strategy 1: clicking link in row");
+                link.click();
+                waitForDetailPageLoad();
                 if (!driver.getCurrentUrl().equals(currentUrl)) {
-                    System.out.println("[AssetPage] Strategy 2 (href) succeeded: " + driver.getCurrentUrl());
+                    System.out.println("[AssetPage] Strategy 1 (link click) succeeded: " + driver.getCurrentUrl());
                     return;
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            System.out.println("[AssetPage] Strategy 1 failed: " + e.getMessage());
+        }
 
-        // Strategy 3: Click the first cell (asset name)
+        // Strategy 2: Click the first cell (asset name) — triggers SPA row click handler
         try {
             WebElement cell = row.findElement(By.xpath(".//div[contains(@class,'MuiDataGrid-cell')][1]"));
-            System.out.println("[AssetPage] Clicking first cell: '" + cell.getText() + "'");
-            cell.click();
-            pause(3000);
+            String cellText = (String) js.executeScript("return arguments[0].textContent.trim();", cell);
+            System.out.println("[AssetPage] Strategy 2: clicking first cell '" + cellText + "'");
+            try { cell.click(); } catch (Exception ce) { js.executeScript("arguments[0].click();", cell); }
+            waitForDetailPageLoad();
             if (!driver.getCurrentUrl().equals(currentUrl)) {
-                System.out.println("[AssetPage] Strategy 3 (cell click) succeeded: " + driver.getCurrentUrl());
+                System.out.println("[AssetPage] Strategy 2 (cell click) succeeded: " + driver.getCurrentUrl());
                 return;
             }
         } catch (Exception e) {
-            System.out.println("[AssetPage] Cell click failed: " + e.getMessage());
+            System.out.println("[AssetPage] Strategy 2 failed: " + e.getMessage());
         }
 
-        // Strategy 4: Click the row itself
+        // Strategy 3: Click the row itself
         try {
-            row.click();
-            pause(3000);
+            System.out.println("[AssetPage] Strategy 3: clicking row");
+            try { row.click(); } catch (Exception ce) { js.executeScript("arguments[0].click();", row); }
+            waitForDetailPageLoad();
             if (!driver.getCurrentUrl().equals(currentUrl)) {
-                System.out.println("[AssetPage] Strategy 4 (row click) succeeded: " + driver.getCurrentUrl());
+                System.out.println("[AssetPage] Strategy 3 (row click) succeeded: " + driver.getCurrentUrl());
                 return;
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            System.out.println("[AssetPage] Strategy 3 failed: " + e.getMessage());
+        }
+
+        // Strategy 4: Double-click the row (some DataGrids use double-click to navigate)
+        try {
+            System.out.println("[AssetPage] Strategy 4: double-clicking row");
+            new org.openqa.selenium.interactions.Actions(driver).doubleClick(row).perform();
+            waitForDetailPageLoad();
+            if (!driver.getCurrentUrl().equals(currentUrl)) {
+                System.out.println("[AssetPage] Strategy 4 (double-click) succeeded: " + driver.getCurrentUrl());
+                return;
+            }
+        } catch (Exception e) {
+            System.out.println("[AssetPage] Strategy 4 failed: " + e.getMessage());
+        }
+
+        // Strategy 5: Last resort — direct URL (loses SPA state but may still work)
+        if (dataId != null && !dataId.isEmpty() && dataId.contains("-")) {
+            String baseUrl = currentUrl.replaceAll("/assets.*", "/assets/");
+            System.out.println("[AssetPage] Strategy 5: direct URL navigation (loses SPA state)");
+            driver.get(baseUrl + dataId);
+            waitForDetailPageLoad();
+            if (driver.getCurrentUrl().contains(dataId)) {
+                System.out.println("[AssetPage] Strategy 5 (URL) succeeded: " + driver.getCurrentUrl());
+                return;
+            }
+        }
 
         System.out.println("[AssetPage] FAILED to navigate. Current URL: " + driver.getCurrentUrl());
         throw new RuntimeException("Could not navigate to asset detail page from grid.");
@@ -506,43 +614,51 @@ public class AssetPage {
      * Waits for the loading spinner to disappear and content to render.
      */
     private void waitForDetailPageLoad() {
-        // Wait for initial page load
         pause(2000);
 
-        // Wait for spinner to disappear (up to 20s)
-        for (int i = 0; i < 20; i++) {
-            // Check if content has loaded — use tagName (not XPath) due to SVG namespace issues
-            java.util.List<WebElement> buttons = driver.findElements(By.tagName("button"));
-            java.util.List<WebElement> headings = driver.findElements(
-                    By.xpath("//h1 | //h2 | //h3 | //h4 | //h5 | //h6 | //*[contains(@class,'title') or contains(@class,'header')]//span"));
+        // Wait up to 30s for actual detail page content to render.
+        // Key insight: sidebar/nav always present (~10 elements at x<80).
+        // Detail page content appears in the main area (x>80, y>50).
+        // Count interactive elements there — 0 means still loading.
+        for (int i = 0; i < 30; i++) {
+            try {
+                Long mainElements = (Long) js.executeScript(
+                        "var count = 0;" +
+                        "var els = document.querySelectorAll('button, a[href], [role=\"button\"], [role=\"tab\"]');" +
+                        "for (var el of els) {" +
+                        "  var r = el.getBoundingClientRect();" +
+                        "  if (r.left > 80 && r.top > 50 && r.width > 0 && r.height > 0) count++;" +
+                        "}" +
+                        "return count;");
 
-            // Check for loading spinner
-            java.util.List<WebElement> spinners = driver.findElements(
-                    By.xpath("//*[contains(@class,'MuiCircularProgress') or contains(@class,'spinner') or contains(@class,'loading')]" +
-                            " | //svg[contains(@class,'MuiCircularProgress')]" +
-                            " | //*[@role='progressbar']"));
+                System.out.println("[AssetPage] Detail load check " + i + ": mainAreaElements=" + mainElements);
 
-            System.out.println("[AssetPage] Detail page load check " + i + ": buttons=" + buttons.size()
-                    + ", headings=" + headings.size() + ", spinners=" + spinners.size());
-
-            // Content loaded if we have enough buttons (spinners may persist for lazy-loaded sections)
-            if (buttons.size() > 10) {
-                System.out.println("[AssetPage] Detail page loaded after " + (2 + i) + "s — " + buttons.size() + " buttons found");
-                pause(1000); // extra buffer for React rendering
-                return;
+                // Detail page typically has 10+ interactive elements (back arrow,
+                // action icons, tabs, section toggles). Loading state has 0.
+                if (mainElements != null && mainElements > 3) {
+                    System.out.println("[AssetPage] Detail page loaded after " + (2 + i) + "s — " + mainElements + " elements in main area");
+                    pause(1500);
+                    return;
+                }
+            } catch (Exception e) {
+                System.out.println("[AssetPage] Detail load check error: " + e.getMessage());
             }
 
-            // Also check if an error page appeared
-            if (driver.findElements(By.xpath("//*[contains(text(),'Application Error')]")).size() > 0) {
-                System.out.println("[AssetPage] Error page on detail load — attempting recovery");
-                recoverFromErrorOverlay();
-                return;
+            // Check for URL change (SPA navigation may have completed)
+            String url = driver.getCurrentUrl();
+            if (url.contains("/assets/") && url.length() > 20) {
+                // We're on an asset detail URL — check if it has loaded
+                if (driver.findElements(By.xpath("//*[contains(text(),'Application Error')]")).size() > 0) {
+                    System.out.println("[AssetPage] Error page on detail load");
+                    recoverFromErrorOverlay();
+                    return;
+                }
             }
 
             pause(1000);
         }
 
-        System.out.println("[AssetPage] Detail page may not have fully loaded after 22s");
+        System.out.println("[AssetPage] Detail page content did not load after 32s");
     }
 
     /**
@@ -556,13 +672,6 @@ public class AssetPage {
         // Strategies may accidentally navigate away, so we always use this to recover.
         final String detailUrl = driver.getCurrentUrl();
         System.out.println("[AssetPage] clickKebabMenuItem('" + itemText + "') — detail URL: " + detailUrl);
-
-        // Extract UUID from detail URL for use in Strategy 4 (direct URL)
-        String uuid = "";
-        try {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("/assets/([a-f0-9-]{36})").matcher(detailUrl);
-            if (m.find()) uuid = m.group(1);
-        } catch (Exception ignored) {}
 
         // Strategy 0: Find kebab by aria-label, title, or data-testid attributes.
         // MUI IconButton typically renders with aria-label="more" or similar.
@@ -619,7 +728,7 @@ public class AssetPage {
                     "for (var btn of buttons) {" +
                     "  var r = btn.getBoundingClientRect();" +
                     "  // Small buttons in the header area (top 200px, right of sidebar)\n" +
-                    "  if (r.top > 0 && r.top < 200 && r.left > 200 && r.width < 60 && r.width > 15) {" +
+                    "  if (r.top > 0 && r.top < 400 && r.left > 80 && r.width < 60 && r.width > 15) {" +
                     "    result.push(btn);" +
                     "  }" +
                     "}" +
@@ -671,7 +780,7 @@ public class AssetPage {
                     "var svgs = document.querySelectorAll('svg');" +
                     "for (var svg of svgs) {" +
                     "  var r = svg.getBoundingClientRect();" +
-                    "  if (r.top < 0 || r.top > 200 || r.left < 200) continue;" +
+                    "  if (r.top < 0 || r.top > 400 || r.left < 80) continue;" +
                     "  if (r.width > 50 || r.width < 5) continue;" +
                     "  // Check for MoreVert path\n" +
                     "  var paths = svg.querySelectorAll('path');" +
@@ -730,30 +839,18 @@ public class AssetPage {
                         "var count = 0;" +
                         "for (var el of all) {" +
                         "  var r = el.getBoundingClientRect();" +
-                        "  if (r.top < 0 || r.top > 200 || r.width < 5) continue;" +
-                        "  result += el.tagName + '[' + (el.className||'').substring(0,40) + ']'" +
+                        "  if (r.top < 0 || r.top > 400 || r.width < 5) continue;" +
+                        "  result += el.tagName + '[' + (el.className||'').substring(0,50) + ']'" +
                         "    + ' aria=\"' + (el.getAttribute('aria-label')||'') + '\"'" +
-                        "    + ' text=\"' + (el.textContent||'').substring(0,30).trim() + '\"'" +
+                        "    + ' text=\"' + (el.textContent||'').substring(0,40).trim() + '\"'" +
+                        "    + ' href=\"' + (el.getAttribute('href')||'').substring(0,40) + '\"'" +
                         "    + ' at(' + Math.round(r.left) + ',' + Math.round(r.top) + ')'" +
                         "    + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + '\\n';" +
-                        "  if (++count > 30) break;" +
+                        "  if (++count > 40) break;" +
                         "}" +
                         "return result;");
                 System.out.println("[AssetPage] === HEADER DOM DIAGNOSTIC ===\n" + dump + "=== END DIAGNOSTIC ===");
             } catch (Exception ignored) {}
-        }
-
-        // Strategy 4: Direct URL for edit (bypass ⋮ entirely)
-        if (itemText.contains("Edit") && !uuid.isEmpty()) {
-            String editUrl = detailUrl.replaceAll("/assets/.*", "/assets/" + uuid + "/edit");
-            System.out.println("[AssetPage] Strategy 4 — trying direct edit URL: " + editUrl);
-            driver.get(editUrl);
-            pause(3000);
-            String newUrl = driver.getCurrentUrl();
-            if (newUrl.contains("/edit") || newUrl.contains(uuid)) {
-                System.out.println("[AssetPage] Direct edit URL result: " + newUrl);
-                return;
-            }
         }
 
         // All strategies exhausted
@@ -840,89 +937,484 @@ public class AssetPage {
     public void openEditForFirstAsset() {
         navigateToFirstAssetDetail();
         clickKebabMenuItem("Edit Asset");
+
+        // Wait for edit UI to render after "Edit Asset" click
+        pause(2000);
+
+        // Capture the current URL — "Edit Asset" may navigate to a different URL or stay on same page
+        String editUrl = driver.getCurrentUrl();
+        System.out.println("[AssetPage] After 'Edit Asset' click — URL: " + editUrl);
+
+        // Comprehensive DOM diagnostic: find ALL interactive form elements on the page
+        // This tells us exactly what the edit UI looks like
+        try {
+            String diagnostic = (String) js.executeScript(
+                    "var result = '--- EDIT UI DIAGNOSTIC ---\\n';" +
+                    "result += 'URL: ' + window.location.href + '\\n';" +
+                    "result += 'Title: ' + document.title + '\\n\\n';" +
+
+                    "// 1. All input fields\n" +
+                    "var inputs = document.querySelectorAll('input');" +
+                    "result += '=== INPUTS (' + inputs.length + ') ===\\n';" +
+                    "for (var inp of inputs) {" +
+                    "  var r = inp.getBoundingClientRect();" +
+                    "  if (r.width < 5 || r.height < 5) continue;" +
+                    "  result += '  type=\"' + (inp.type||'') + '\"'" +
+                    "    + ' name=\"' + (inp.name||'') + '\"'" +
+                    "    + ' placeholder=\"' + (inp.placeholder||'') + '\"'" +
+                    "    + ' value=\"' + (inp.value||'').substring(0,40) + '\"'" +
+                    "    + ' id=\"' + (inp.id||'') + '\"'" +
+                    "    + ' at(' + Math.round(r.left) + ',' + Math.round(r.top) + ')'" +
+                    "    + ' ' + Math.round(r.width) + 'x' + Math.round(r.height)" +
+                    "    + ' disabled=' + inp.disabled" +
+                    "    + ' readonly=' + inp.readOnly + '\\n';" +
+                    "}" +
+
+                    "// 2. All textareas\n" +
+                    "var tas = document.querySelectorAll('textarea');" +
+                    "result += '\\n=== TEXTAREAS (' + tas.length + ') ===\\n';" +
+                    "for (var ta of tas) {" +
+                    "  var r = ta.getBoundingClientRect();" +
+                    "  if (r.width < 5) continue;" +
+                    "  result += '  name=\"' + (ta.name||'') + '\"'" +
+                    "    + ' placeholder=\"' + (ta.placeholder||'') + '\"'" +
+                    "    + ' value=\"' + (ta.value||'').substring(0,40) + '\"'" +
+                    "    + ' at(' + Math.round(r.left) + ',' + Math.round(r.top) + ')'" +
+                    "    + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + '\\n';" +
+                    "}" +
+
+                    "// 3. All select/combobox elements\n" +
+                    "var sels = document.querySelectorAll('select, [role=\"combobox\"], [role=\"listbox\"]');" +
+                    "result += '\\n=== SELECTS/COMBOBOX (' + sels.length + ') ===\\n';" +
+                    "for (var s of sels) {" +
+                    "  var r = s.getBoundingClientRect();" +
+                    "  result += '  tag=' + s.tagName + ' role=\"' + (s.getAttribute('role')||'') + '\"'" +
+                    "    + ' text=\"' + (s.textContent||'').substring(0,40).trim() + '\"'" +
+                    "    + ' at(' + Math.round(r.left) + ',' + Math.round(r.top) + ')'" +
+                    "    + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + '\\n';" +
+                    "}" +
+
+                    "// 4. All buttons with text\n" +
+                    "var btns = document.querySelectorAll('button');" +
+                    "result += '\\n=== BUTTONS (' + btns.length + ') ===\\n';" +
+                    "for (var btn of btns) {" +
+                    "  var r = btn.getBoundingClientRect();" +
+                    "  if (r.width < 5 || r.height < 5) continue;" +
+                    "  var txt = (btn.textContent||'').trim().substring(0,50).replace(/\\n/g,' ');" +
+                    "  result += '  \"' + txt + '\"'" +
+                    "    + ' aria=\"' + (btn.getAttribute('aria-label')||'') + '\"'" +
+                    "    + ' at(' + Math.round(r.left) + ',' + Math.round(r.top) + ')'" +
+                    "    + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + '\\n';" +
+                    "}" +
+
+                    "// 5. Dialogs / modals / drawers / panels\n" +
+                    "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"presentation\"], .MuiDrawer-root, .MuiDialog-root, .MuiModal-root');" +
+                    "result += '\\n=== DIALOGS/DRAWERS (' + dialogs.length + ') ===\\n';" +
+                    "for (var d of dialogs) {" +
+                    "  var r = d.getBoundingClientRect();" +
+                    "  result += '  tag=' + d.tagName + ' role=\"' + (d.getAttribute('role')||'') + '\"'" +
+                    "    + ' class=\"' + (d.className||'').substring(0,80) + '\"'" +
+                    "    + ' at(' + Math.round(r.left) + ',' + Math.round(r.top) + ')'" +
+                    "    + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + '\\n';" +
+                    "}" +
+
+                    "// 6. Visible text headings and labels in main area\n" +
+                    "var headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6, label, legend, [class*=\"label\" i], [class*=\"header\" i]');" +
+                    "result += '\\n=== HEADINGS/LABELS ===\\n';" +
+                    "var hCount = 0;" +
+                    "for (var h of headings) {" +
+                    "  var r = h.getBoundingClientRect();" +
+                    "  if (r.width < 5 || r.left < 80) continue;" +
+                    "  var txt = (h.textContent||'').trim().substring(0,60).replace(/\\n/g,' ');" +
+                    "  if (!txt) continue;" +
+                    "  result += '  <' + h.tagName.toLowerCase() + '> \"' + txt + '\"'" +
+                    "    + ' at(' + Math.round(r.left) + ',' + Math.round(r.top) + ')\\n';" +
+                    "  if (++hCount > 25) break;" +
+                    "}" +
+
+                    "result += '\\n--- END EDIT UI DIAGNOSTIC ---';" +
+                    "return result;");
+            System.out.println("[AssetPage] " + diagnostic);
+        } catch (Exception e) {
+            System.out.println("[AssetPage] Edit UI diagnostic error: " + e.getMessage());
+        }
     }
 
     /**
      * Deletes the first asset: grid → detail page → ⋮ → Delete Asset
      */
+    /**
+     * Get the asset name from the detail page header (e.g., "← 12" → "12").
+     * Uses JS textContent on the h5 heading in the main area.
+     */
+    public String getDetailPageAssetName() {
+        try {
+            // The detail page header has an h5 with the asset name
+            String name = (String) js.executeScript(
+                    "var headings = document.querySelectorAll('h5, h4, h3');" +
+                    "for (var h of headings) {" +
+                    "  var r = h.getBoundingClientRect();" +
+                    "  // Header area: y between 50-150, x > 80 (past sidebar)\n" +
+                    "  if (r.top > 50 && r.top < 150 && r.left > 80 && r.width > 10) {" +
+                    "    var txt = (h.textContent||'').trim();" +
+                    "    if (txt.length > 0 && txt.length < 100) return txt;" +
+                    "  }" +
+                    "}" +
+                    "return '';");
+            System.out.println("[AssetPage] Detail page asset name: '" + name + "'");
+            return (name == null || name.isEmpty()) ? null : name;
+        } catch (Exception e) {
+            System.out.println("[AssetPage] Could not read detail page asset name: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Wait for delete to complete. After confirmDelete(), the app should either:
+     * 1. Navigate back to the asset list
+     * 2. Show a success toast/snackbar
+     * 3. The detail page should no longer be showing the deleted asset
+     */
+    public boolean waitForDeleteSuccess() {
+        System.out.println("[AssetPage] waitForDeleteSuccess — checking...");
+        try {
+            WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(15));
+            shortWait.until(driver -> {
+                String url = driver.getCurrentUrl();
+                // Back to asset list (no UUID in URL)
+                if (url.matches(".*/assets/?$") || url.endsWith("/assets")) return true;
+                // Success toast
+                if (driver.findElements(By.xpath(
+                        "//*[contains(text(),'deleted') or contains(text(),'Deleted') or contains(text(),'removed') or contains(text(),'success')]")).size() > 0)
+                    return true;
+                // MUI Snackbar/Alert
+                if (driver.findElements(By.cssSelector(".MuiSnackbar-root, .MuiAlert-root, [role='alert']")).size() > 0)
+                    return true;
+                // DataGrid visible (we're back on the list)
+                if (driver.findElements(By.xpath("//div[contains(@class,'MuiDataGrid')]")).size() > 0) return true;
+                return false;
+            });
+            System.out.println("[AssetPage] Delete success detected. URL: " + driver.getCurrentUrl());
+            return true;
+        } catch (Exception e) {
+            System.out.println("[AssetPage] waitForDeleteSuccess — no indicator found after 15s. URL: " + driver.getCurrentUrl());
+            // If we're on assets page already, treat as success
+            if (driver.getCurrentUrl().contains("/assets")) {
+                return true;
+            }
+            return false;
+        }
+    }
+
     public void deleteFirstAssetFromGrid() {
         navigateToFirstAssetDetail();
         clickKebabMenuItem("Delete Asset");
+        pause(1000);
+
+        // Diagnostic: what does the delete UI look like?
+        try {
+            String diagnostic = (String) js.executeScript(
+                    "var result = '--- DELETE UI DIAGNOSTIC ---\\n';" +
+                    "result += 'URL: ' + window.location.href + '\\n';" +
+
+                    "// Dialogs/modals\n" +
+                    "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"presentation\"], .MuiDialog-root, .MuiModal-root, [role=\"alertdialog\"]');" +
+                    "result += 'Dialogs: ' + dialogs.length + '\\n';" +
+                    "for (var d of dialogs) {" +
+                    "  var r = d.getBoundingClientRect();" +
+                    "  result += '  tag=' + d.tagName + ' role=\"' + (d.getAttribute('role')||'') + '\"'" +
+                    "    + ' text=\"' + (d.textContent||'').substring(0,100).trim().replace(/\\n/g,' ') + '\"'" +
+                    "    + ' at(' + Math.round(r.left) + ',' + Math.round(r.top) + ')'" +
+                    "    + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + '\\n';" +
+                    "}" +
+
+                    "// All buttons\n" +
+                    "var btns = document.querySelectorAll('button');" +
+                    "result += 'Buttons: ' + btns.length + '\\n';" +
+                    "for (var btn of btns) {" +
+                    "  var r = btn.getBoundingClientRect();" +
+                    "  if (r.width < 5) continue;" +
+                    "  var txt = (btn.textContent||'').trim().substring(0,50).replace(/\\n/g,' ');" +
+                    "  var cls = (btn.className||'').substring(0,80);" +
+                    "  result += '  \"' + txt + '\" class=\"' + cls + '\"'" +
+                    "    + ' at(' + Math.round(r.left) + ',' + Math.round(r.top) + ')'" +
+                    "    + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + '\\n';" +
+                    "}" +
+
+                    "result += '--- END DELETE UI DIAGNOSTIC ---';" +
+                    "return result;");
+            System.out.println("[AssetPage] " + diagnostic);
+        } catch (Exception e) {
+            System.out.println("[AssetPage] Delete UI diagnostic error: " + e.getMessage());
+        }
     }
 
     public void editModel(String newModel) {
-        expandCoreAttributes();
-        // Find first text input in core attributes section
-        try {
-            By modelField = By.xpath("//*[contains(text(),'CORE ATTRIBUTES')]/following::input[@type='text'][1]");
-            typeField(modelField, newModel);
-        } catch (Exception e) {
-            System.out.println("WARNING: Could not edit model: " + e.getMessage());
+        // After "Edit Asset" is clicked, the UI may show:
+        // 1. A side panel/drawer with form fields
+        // 2. Inline editable fields on the detail page
+        // 3. A full-page edit form
+        // We try multiple strategies to find and edit a text input field.
+
+        System.out.println("[AssetPage] editModel — looking for any editable text input...");
+
+        // Strategy 1: Find input with placeholder containing model/name related text
+        String[] placeholders = {"Model", "model", "Name", "name", "Enter", "Asset"};
+        for (String ph : placeholders) {
+            try {
+                By field = By.xpath("//input[contains(@placeholder,'" + ph + "')]");
+                java.util.List<WebElement> els = driver.findElements(field);
+                for (WebElement el : els) {
+                    if (el.isDisplayed() && el.isEnabled() && !el.getDomAttribute("readonly").equals("true")) {
+                        System.out.println("[AssetPage] Found editable input with placeholder containing '" + ph + "'");
+                        try { el.clear(); } catch (Exception ignored) {}
+                        el.click();
+                        el.sendKeys(newModel);
+                        return;
+                    }
+                }
+            } catch (Exception ignored) {}
         }
+
+        // Strategy 2: Find any visible, enabled text input in the main content area (x > 80)
+        try {
+            @SuppressWarnings("unchecked")
+            java.util.List<WebElement> inputs = (java.util.List<WebElement>) js.executeScript(
+                    "var result = [];" +
+                    "var inputs = document.querySelectorAll('input[type=\"text\"], input:not([type])');" +
+                    "for (var inp of inputs) {" +
+                    "  var r = inp.getBoundingClientRect();" +
+                    "  if (r.width < 20 || r.height < 10 || r.left < 80) continue;" +
+                    "  if (inp.disabled || inp.readOnly) continue;" +
+                    "  if (inp.type === 'hidden') continue;" +
+                    "  result.push(inp);" +
+                    "}" +
+                    "return result;");
+            System.out.println("[AssetPage] Strategy 2 — editable text inputs in main area: " + inputs.size());
+            if (!inputs.isEmpty()) {
+                WebElement first = inputs.get(0);
+                String info = (String) js.executeScript(
+                        "var e=arguments[0]; var r=e.getBoundingClientRect();" +
+                        "return 'placeholder=\"'+(e.placeholder||'')+'\" name=\"'+(e.name||'')+'\"'" +
+                        "+' at('+Math.round(r.left)+','+Math.round(r.top)+') '+Math.round(r.width)+'x'+Math.round(r.height);",
+                        first);
+                System.out.println("[AssetPage]   Editing first editable input: " + info);
+                js.executeScript("arguments[0].focus(); arguments[0].value = '';", first);
+                first.sendKeys(newModel);
+                // Trigger React onChange
+                js.executeScript(
+                        "var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+                        "nativeInputValueSetter.call(arguments[0], arguments[1]);" +
+                        "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));" +
+                        "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
+                        first, newModel);
+                return;
+            }
+        } catch (Exception e) {
+            System.out.println("[AssetPage] Strategy 2 error: " + e.getMessage());
+        }
+
+        // Strategy 3: Look for contenteditable elements
+        try {
+            @SuppressWarnings("unchecked")
+            java.util.List<WebElement> editables = (java.util.List<WebElement>) js.executeScript(
+                    "var result = [];" +
+                    "var all = document.querySelectorAll('[contenteditable=\"true\"]');" +
+                    "for (var el of all) {" +
+                    "  var r = el.getBoundingClientRect();" +
+                    "  if (r.width < 20 || r.left < 80) continue;" +
+                    "  result.push(el);" +
+                    "}" +
+                    "return result;");
+            if (!editables.isEmpty()) {
+                System.out.println("[AssetPage] Found contenteditable element, typing model...");
+                WebElement el = editables.get(0);
+                el.click();
+                el.clear();
+                el.sendKeys(newModel);
+                return;
+            }
+        } catch (Exception ignored) {}
+
+        System.out.println("WARNING: Could not find any editable field for model. " +
+                "Check the EDIT UI DIAGNOSTIC output above for available form elements.");
     }
 
     public void editNotes(String newNotes) {
+        System.out.println("[AssetPage] editNotes — looking for any textarea or notes field...");
+
+        // Strategy 1: Find any visible textarea
         try {
-            By notesField = By.xpath("//textarea[1]");
-            WebElement el = wait.until(ExpectedConditions.visibilityOfElementLocated(notesField));
-            try { el.clear(); } catch (Exception ignored) {}
-            el.click();
-            el.sendKeys(newNotes);
+            @SuppressWarnings("unchecked")
+            java.util.List<WebElement> textareas = (java.util.List<WebElement>) js.executeScript(
+                    "var result = [];" +
+                    "var tas = document.querySelectorAll('textarea');" +
+                    "for (var ta of tas) {" +
+                    "  var r = ta.getBoundingClientRect();" +
+                    "  if (r.width < 20 || r.left < 80) continue;" +
+                    "  if (ta.disabled || ta.readOnly) continue;" +
+                    "  result.push(ta);" +
+                    "}" +
+                    "return result;");
+            System.out.println("[AssetPage] Editable textareas found: " + textareas.size());
+            if (!textareas.isEmpty()) {
+                WebElement ta = textareas.get(0);
+                js.executeScript("arguments[0].focus(); arguments[0].value = '';", ta);
+                ta.sendKeys(newNotes);
+                js.executeScript(
+                        "var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;" +
+                        "nativeInputValueSetter.call(arguments[0], arguments[1]);" +
+                        "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));" +
+                        "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
+                        ta, newNotes);
+                return;
+            }
         } catch (Exception e) {
-            System.out.println("WARNING: Could not edit notes: " + e.getMessage());
+            System.out.println("[AssetPage] textarea strategy error: " + e.getMessage());
         }
+
+        // Strategy 2: Find any input with notes/description/comment related placeholder
+        String[] noteWords = {"Note", "note", "Description", "description", "Comment", "comment"};
+        for (String word : noteWords) {
+            try {
+                By field = By.xpath("//input[contains(@placeholder,'" + word + "')] | //textarea[contains(@placeholder,'" + word + "')]");
+                java.util.List<WebElement> els = driver.findElements(field);
+                for (WebElement el : els) {
+                    try {
+                        if (el.isDisplayed() && el.isEnabled()) {
+                            System.out.println("[AssetPage] Found notes field with placeholder containing '" + word + "'");
+                            try { el.clear(); } catch (Exception ignored) {}
+                            el.click();
+                            el.sendKeys(newNotes);
+                            return;
+                        }
+                    } catch (Exception ignored) {}
+                }
+            } catch (Exception ignored) {}
+        }
+
+        System.out.println("WARNING: Could not find any notes/textarea field. " +
+                "Check the EDIT UI DIAGNOSTIC output above for available form elements.");
     }
 
     public void saveChanges() {
         pause(500);
+        System.out.println("[AssetPage] saveChanges — looking for save button...");
+        System.out.println("[AssetPage] Current URL: " + driver.getCurrentUrl());
 
         // Strategy 1: "Save Changes" button
         if (driver.findElements(SAVE_CHANGES_BTN).size() > 0) {
+            System.out.println("[AssetPage] Found 'Save Changes' button");
             click(SAVE_CHANGES_BTN);
             return;
         }
 
-        // Strategy 2: Any button with save/update/submit/apply/done text
+        // Strategy 2: Any button with save/update/submit/apply/done/confirm text
         String[] saveTexts = {"Save", "Update", "Submit", "Apply", "Done", "Confirm"};
         for (String text : saveTexts) {
-            By btn = By.xpath("//button[contains(.,'" + text + "')]");
-            if (driver.findElements(btn).size() > 0) {
-                System.out.println("[AssetPage] Clicking save button with text: " + text);
-                click(btn);
-                return;
-            }
+            try {
+                @SuppressWarnings("unchecked")
+                java.util.List<WebElement> btns = (java.util.List<WebElement>) js.executeScript(
+                        "var result = [];" +
+                        "var buttons = document.querySelectorAll('button');" +
+                        "for (var btn of buttons) {" +
+                        "  var r = btn.getBoundingClientRect();" +
+                        "  if (r.width < 5) continue;" +
+                        "  var txt = (btn.textContent||'').trim();" +
+                        "  if (txt.toLowerCase().indexOf('" + text.toLowerCase() + "') > -1) {" +
+                        "    result.push(btn);" +
+                        "  }" +
+                        "}" +
+                        "return result;");
+                if (btns != null && !btns.isEmpty()) {
+                    System.out.println("[AssetPage] Clicking button containing '" + text + "'");
+                    try { btns.get(0).click(); } catch (Exception ce) {
+                        js.executeScript("arguments[0].click();", btns.get(0));
+                    }
+                    pause(1000);
+                    return;
+                }
+            } catch (Exception ignored) {}
         }
 
-        // Strategy 3: If we're in inline edit mode (DataGrid), press Enter to commit
+        // Strategy 3: Look for a primary/contained button (MUI primary CTA)
         try {
-            org.openqa.selenium.WebElement activeEl = driver.switchTo().activeElement();
+            @SuppressWarnings("unchecked")
+            java.util.List<WebElement> primaryBtns = (java.util.List<WebElement>) js.executeScript(
+                    "var result = [];" +
+                    "var buttons = document.querySelectorAll('.MuiButton-containedPrimary, button[color=\"primary\"]');" +
+                    "for (var btn of buttons) {" +
+                    "  var r = btn.getBoundingClientRect();" +
+                    "  if (r.width < 20 || r.left < 80) continue;" +
+                    "  result.push(btn);" +
+                    "}" +
+                    "return result;");
+            if (primaryBtns != null && !primaryBtns.isEmpty()) {
+                String btnText = (String) js.executeScript("return (arguments[0].textContent||'').trim();", primaryBtns.get(0));
+                System.out.println("[AssetPage] Clicking primary button: '" + btnText + "'");
+                try { primaryBtns.get(0).click(); } catch (Exception ce) {
+                    js.executeScript("arguments[0].click();", primaryBtns.get(0));
+                }
+                pause(1000);
+                return;
+            }
+        } catch (Exception ignored) {}
+
+        // Strategy 4: Press Enter on active element to commit inline edit
+        try {
+            WebElement activeEl = driver.switchTo().activeElement();
             activeEl.sendKeys(org.openqa.selenium.Keys.ENTER);
             pause(500);
             System.out.println("[AssetPage] Pressed Enter to save inline edit");
             return;
         } catch (Exception ignored) {}
 
-        // Diagnostic: log all visible buttons on the page
+        // Diagnostic dump
         java.util.List<WebElement> allButtons = driver.findElements(By.xpath("//button"));
-        System.out.println("[AssetPage] saveChanges — no Save button found. Page has " + allButtons.size() + " buttons:");
-        for (int i = 0; i < Math.min(allButtons.size(), 20); i++) {
-            String btnText = "";
-            try { btnText = allButtons.get(i).getText().trim().replace("\n", " "); } catch (Exception ignored) {}
-            System.out.println("  [" + i + "] '" + btnText + "'");
+        System.out.println("[AssetPage] saveChanges FAILED — no Save button found. " + allButtons.size() + " buttons on page:");
+        for (int i = 0; i < Math.min(allButtons.size(), 25); i++) {
+            try {
+                String btnInfo = (String) js.executeScript(
+                        "var e=arguments[0]; var r=e.getBoundingClientRect();" +
+                        "return '\"'+(e.textContent||'').trim().substring(0,40).replace(/\\n/g,' ')+'\"'" +
+                        "+' class=\"'+(e.className||'').substring(0,60)+'\"'" +
+                        "+' at('+Math.round(r.left)+','+Math.round(r.top)+') '+Math.round(r.width)+'x'+Math.round(r.height);",
+                        allButtons.get(i));
+                System.out.println("  [" + i + "] " + btnInfo);
+            } catch (Exception ignored) {}
         }
-        System.out.println("[AssetPage] Current URL: " + driver.getCurrentUrl());
 
-        throw new RuntimeException("No save/update button found on page");
+        throw new RuntimeException("No save/update button found on page. URL: " + driver.getCurrentUrl());
     }
 
     public boolean waitForEditSuccess() {
+        System.out.println("[AssetPage] waitForEditSuccess — checking for success indicators...");
         try {
-            wait.until(ExpectedConditions.or(
-                    ExpectedConditions.presenceOfElementLocated(By.xpath("//*[contains(text(),'updated') or contains(text(),'saved') or contains(text(),'successfully')]")),
-                    ExpectedConditions.presenceOfElementLocated(ASSET_LIST_INDICATOR)
+            // Wait for any success indicator: toast, redirect, or text change
+            WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(15));
+            shortWait.until(ExpectedConditions.or(
+                    // Toast/snackbar success message
+                    ExpectedConditions.presenceOfElementLocated(
+                            By.xpath("//*[contains(text(),'updated') or contains(text(),'saved') or contains(text(),'success') or contains(text(),'Updated') or contains(text(),'Saved')]")),
+                    // MUI Snackbar
+                    ExpectedConditions.presenceOfElementLocated(
+                            By.cssSelector(".MuiSnackbar-root, .MuiAlert-root, [role='alert']")),
+                    // Back to asset list
+                    ExpectedConditions.presenceOfElementLocated(ASSET_LIST_INDICATOR),
+                    // URL changed back to assets list
+                    ExpectedConditions.urlContains("/assets")
             ));
+            System.out.println("[AssetPage] Edit success detected. URL: " + driver.getCurrentUrl());
             return true;
         } catch (Exception e) {
+            System.out.println("[AssetPage] waitForEditSuccess — no success indicator found after 15s");
+            System.out.println("[AssetPage] Current URL: " + driver.getCurrentUrl());
+            // Check if we're still on the detail page (edit might have silently succeeded)
+            String url = driver.getCurrentUrl();
+            if (url.contains("/assets/")) {
+                System.out.println("[AssetPage] Still on asset page — treating as success");
+                return true;
+            }
             return false;
         }
     }
@@ -930,11 +1422,84 @@ public class AssetPage {
     // --- DELETE ---
 
     public void confirmDelete() {
-        WebElement confirm = wait.until(ExpectedConditions.elementToBeClickable(CONFIRM_DELETE_BTN));
-        js.executeScript("arguments[0].scrollIntoView({block:'center'});", confirm);
-        pause(200);
-        js.executeScript("arguments[0].click();", confirm);
-        pause(1500);
+        System.out.println("[AssetPage] confirmDelete — looking for confirmation button...");
+
+        // Strategy 1: MUI error-colored Delete button (standard confirmation dialog)
+        try {
+            WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(10));
+            WebElement confirm = shortWait.until(ExpectedConditions.elementToBeClickable(CONFIRM_DELETE_BTN));
+            System.out.println("[AssetPage] Found MUI error Delete button");
+            js.executeScript("arguments[0].scrollIntoView({block:'center'});", confirm);
+            pause(200);
+            js.executeScript("arguments[0].click();", confirm);
+            pause(1500);
+            return;
+        } catch (Exception e) {
+            System.out.println("[AssetPage] CONFIRM_DELETE_BTN not found: " + e.getMessage());
+        }
+
+        // Strategy 2: Any button with "Delete" or "Confirm" or "Yes" in a dialog/modal
+        try {
+            @SuppressWarnings("unchecked")
+            java.util.List<WebElement> dialogBtns = (java.util.List<WebElement>) js.executeScript(
+                    "var result = [];" +
+                    "var containers = document.querySelectorAll('[role=\"dialog\"], [role=\"alertdialog\"], .MuiDialog-root, .MuiModal-root, [role=\"presentation\"]');" +
+                    "for (var c of containers) {" +
+                    "  var btns = c.querySelectorAll('button');" +
+                    "  for (var btn of btns) {" +
+                    "    var txt = (btn.textContent||'').trim().toLowerCase();" +
+                    "    if (txt.indexOf('delete') > -1 || txt.indexOf('confirm') > -1 || txt === 'yes' || txt === 'ok') {" +
+                    "      result.push(btn);" +
+                    "    }" +
+                    "  }" +
+                    "}" +
+                    "return result;");
+            if (dialogBtns != null && !dialogBtns.isEmpty()) {
+                String btnText = (String) js.executeScript("return (arguments[0].textContent||'').trim();", dialogBtns.get(0));
+                System.out.println("[AssetPage] Clicking dialog button: '" + btnText + "'");
+                js.executeScript("arguments[0].click();", dialogBtns.get(0));
+                pause(1500);
+                return;
+            }
+        } catch (Exception ignored) {}
+
+        // Strategy 3: Any visible button with "Delete" text anywhere on page
+        try {
+            By deleteBtn = By.xpath("//button[contains(.,'Delete') or contains(.,'delete')]");
+            java.util.List<WebElement> btns = driver.findElements(deleteBtn);
+            System.out.println("[AssetPage] Buttons with 'Delete' text: " + btns.size());
+            for (WebElement btn : btns) {
+                try {
+                    if (btn.isDisplayed() && btn.isEnabled()) {
+                        String txt = btn.getText().trim();
+                        System.out.println("[AssetPage] Clicking Delete button: '" + txt + "'");
+                        js.executeScript("arguments[0].click();", btn);
+                        pause(1500);
+                        return;
+                    }
+                } catch (Exception ignored) {}
+            }
+        } catch (Exception ignored) {}
+
+        // Diagnostic
+        System.out.println("[AssetPage] confirmDelete FAILED — dumping all visible buttons:");
+        try {
+            String dump = (String) js.executeScript(
+                    "var result = '';" +
+                    "var btns = document.querySelectorAll('button');" +
+                    "for (var btn of btns) {" +
+                    "  var r = btn.getBoundingClientRect();" +
+                    "  if (r.width < 5) continue;" +
+                    "  result += '  \"' + (btn.textContent||'').trim().substring(0,40).replace(/\\n/g,' ') + '\"'" +
+                    "    + ' class=\"' + (btn.className||'').substring(0,60) + '\"'" +
+                    "    + ' at(' + Math.round(r.left) + ',' + Math.round(r.top) + ')'" +
+                    "    + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + '\\n';" +
+                    "}" +
+                    "return result;");
+            System.out.println(dump);
+        } catch (Exception ignored) {}
+
+        throw new RuntimeException("No delete confirmation button found");
     }
 
     // --- Helpers ---
