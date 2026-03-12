@@ -2,10 +2,8 @@ package com.egalvanic.qa.pageobjects;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -2596,137 +2594,15 @@ public class AssetPage {
     private void typeAndSelectDropdown(By inputLocator, String textToType, String optionText) {
         WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(inputLocator));
 
-        // Use JS to scroll, focus, and click — avoids MuiBackdrop interception
+        // ── PRIMARY STRATEGY: Open dropdown via popup indicator on the CORRECT autocomplete field ──
+        // This avoids all sendKeys/Actions issues where keystrokes go to wrong field behind MuiBackdrop
         js.executeScript(
             "arguments[0].scrollIntoView({block:'center'});" +
             "arguments[0].focus();" +
             "arguments[0].click();", input);
         pause(300);
 
-        // Clear existing value via React native setter, then set new value
-        js.executeScript(
-            "var input = arguments[0];" +
-            "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
-            "setter.call(input, '');" +
-            "input.dispatchEvent(new Event('input', {bubbles: true}));" +
-            "input.dispatchEvent(new Event('change', {bubbles: true}));",
-            input);
-        pause(200);
-
-        // Type to trigger autocomplete filtering.
-        // MUI Autocomplete needs actual keystroke events for filtering.
-        // Strategy: JS focus → Actions sendKeys (sends to focused element, bypasses interactability check)
-        // Fallback: sendKeys directly on element if Actions fails
-        try {
-            input.sendKeys(textToType);
-        } catch (Exception e1) {
-            System.out.println("[AssetPage] sendKeys failed, trying Actions on focused element...");
-            // JS already focused the input above. Actions.sendKeys() sends to the active element.
-            try {
-                new Actions(driver).sendKeys(textToType).perform();
-            } catch (Exception e2) {
-                System.out.println("[AssetPage] Actions failed too: " + e2.getMessage());
-                // Last resort: set value via JS and dispatch per-character events
-                js.executeScript(
-                    "var el = arguments[0]; var text = arguments[1];" +
-                    "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
-                    "for (var i = 0; i < text.length; i++) {" +
-                    "  var partial = text.substring(0, i + 1);" +
-                    "  setter.call(el, partial);" +
-                    "  el.dispatchEvent(new Event('input', {bubbles: true}));" +
-                    "  el.dispatchEvent(new KeyboardEvent('keydown', {key: text[i], bubbles: true}));" +
-                    "  el.dispatchEvent(new KeyboardEvent('keyup', {key: text[i], bubbles: true}));" +
-                    "}" +
-                    "el.dispatchEvent(new Event('change', {bubbles: true}));",
-                    input, textToType);
-            }
-        }
-        pause(800);
-
-        // Wait for the listbox dropdown to appear
-        By listbox = By.xpath("//ul[@role='listbox']");
-        for (int attempt = 0; attempt < 5; attempt++) {
-            if (driver.findElements(listbox).size() > 0) break;
-
-            if (attempt == 1) {
-                // Try clicking the popup indicator to open dropdown
-                try {
-                    WebElement popup = driver.findElement(
-                            By.xpath("//button[contains(@class,'MuiAutocomplete-popupIndicator')]"));
-                    js.executeScript("arguments[0].click();", popup);
-                    pause(500);
-                    continue;
-                } catch (Exception ignored) {}
-            }
-
-            // Re-focus and retry typing via Actions
-            js.executeScript("arguments[0].focus(); arguments[0].click();", input);
-            pause(200);
-            try {
-                new Actions(driver).sendKeys(Keys.chord(Keys.CONTROL, "a"))
-                    .sendKeys(Keys.DELETE).sendKeys(textToType).perform();
-            } catch (Exception e) {
-                js.executeScript(
-                    "var el = arguments[0]; var text = arguments[1];" +
-                    "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
-                    "setter.call(el, text);" +
-                    "el.dispatchEvent(new Event('input', {bubbles: true}));" +
-                    "el.dispatchEvent(new Event('change', {bubbles: true}));",
-                    input, textToType);
-            }
-            pause(800);
-        }
-
-        // Log listbox state and available options for debugging
-        String listboxDebug = (String) js.executeScript(
-            "var lb = document.querySelector('ul[role=\"listbox\"]');" +
-            "if (!lb) return 'no listbox';" +
-            "var opts = lb.querySelectorAll('li[role=\"option\"]');" +
-            "var texts = [];" +
-            "for (var o of opts) texts.push(o.textContent.trim());" +
-            "return 'listbox has ' + opts.length + ' options: [' + texts.join(', ') + ']';");
-        System.out.println("[AssetPage] " + listboxDebug);
-
-        // Find and click the matching option
-        By exactOption = By.xpath("//li[@role='option'][normalize-space()='" + optionText + "']");
-        By partialOption = By.xpath("//li[@role='option'][contains(normalize-space(),'" + optionText + "')]");
-        By anyOption = By.xpath("//li[contains(@id,'option') or @role='option'][contains(normalize-space(),'" + optionText + "')]");
-
-        for (int attempt = 0; attempt < 5; attempt++) {
-            for (By opt : new By[]{exactOption, partialOption, anyOption}) {
-                if (driver.findElements(opt).size() > 0) {
-                    WebElement option = driver.findElement(opt);
-                    js.executeScript("arguments[0].scrollIntoView({block:'center'});", option);
-                    pause(150);
-                    js.executeScript("arguments[0].click();", option);
-                    pause(300);
-                    System.out.println("[AssetPage] Selected dropdown option: " + optionText);
-                    return;
-                }
-            }
-            pause(400);
-        }
-
-        // ── FALLBACK: open full dropdown via popup indicator, then search all options via JS ──
-        System.out.println("[AssetPage] Option not found by typing — trying popup indicator fallback");
-
-        // Close any open listbox first
-        js.executeScript("var lb = document.querySelector('[role=\"listbox\"]'); if (lb) lb.remove();");
-        pause(300);
-
-        // Clear the input and open the full dropdown
-        input = driver.findElement(inputLocator);
-        js.executeScript(
-            "var el = arguments[0];" +
-            "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
-            "setter.call(el, '');" +
-            "el.dispatchEvent(new Event('input', {bubbles: true}));" +
-            "el.dispatchEvent(new Event('change', {bubbles: true}));" +
-            "el.focus(); el.click();",
-            input);
-        pause(300);
-
-        // Click the popup indicator to show ALL options
+        // Click popup indicator on THIS specific autocomplete to show all options
         js.executeScript(
             "var wrapper = arguments[0].closest('.MuiAutocomplete-root');" +
             "if (wrapper) {" +
@@ -2736,28 +2612,89 @@ public class AssetPage {
             input);
         pause(1000);
 
-        // Now search through ALL options via JS and click the matching one
-        Boolean fallbackSelected = (Boolean) js.executeScript(
-            "var items = document.querySelectorAll('li[role=\"option\"]');" +
-            "var target = arguments[0];" +
-            "for (var item of items) {" +
-            "  if (item.textContent.trim() === target) {" +
-            "    item.scrollIntoView({block:'center'});" +
-            "    item.click(); return true;" +
-            "  }" +
-            "}" +
-            "for (var item of items) {" +
-            "  if (item.textContent.trim().toLowerCase().includes(target.toLowerCase())) {" +
-            "    item.scrollIntoView({block:'center'});" +
-            "    item.click(); return true;" +
-            "  }" +
-            "}" +
-            "return false;", optionText);
+        // Log available options for debugging
+        String listboxDebug = (String) js.executeScript(
+            "var lb = document.querySelector('ul[role=\"listbox\"]');" +
+            "if (!lb) return 'no listbox';" +
+            "var opts = lb.querySelectorAll('li[role=\"option\"]');" +
+            "var texts = [];" +
+            "for (var o of opts) texts.push(o.textContent.trim());" +
+            "return 'listbox has ' + opts.length + ' options: [' + texts.slice(0,10).join(', ') + (opts.length > 10 ? '...' : '') + ']';");
+        System.out.println("[AssetPage] " + listboxDebug);
 
-        if (fallbackSelected != null && fallbackSelected) {
-            System.out.println("[AssetPage] Selected dropdown option via popup indicator: " + optionText);
-            pause(300);
-            return;
+        // Search through options and click the matching one via JS
+        for (int attempt = 0; attempt < 3; attempt++) {
+            Boolean selected = (Boolean) js.executeScript(
+                "var items = document.querySelectorAll('li[role=\"option\"]');" +
+                "var target = arguments[0];" +
+                "for (var item of items) {" +
+                "  if (item.textContent.trim() === target) {" +
+                "    item.scrollIntoView({block:'center'});" +
+                "    item.click(); return true;" +
+                "  }" +
+                "}" +
+                "for (var item of items) {" +
+                "  if (item.textContent.trim().toLowerCase().includes(target.toLowerCase())) {" +
+                "    item.scrollIntoView({block:'center'});" +
+                "    item.click(); return true;" +
+                "  }" +
+                "}" +
+                "return false;", optionText);
+
+            if (selected != null && selected) {
+                System.out.println("[AssetPage] Selected dropdown option: " + optionText);
+                pause(500);
+                return;
+            }
+            pause(500);
+        }
+
+        // ── FALLBACK: Try typing to filter, then select ──
+        System.out.println("[AssetPage] Popup indicator approach failed — trying keyboard input");
+
+        // Close any open listbox via Escape
+        js.executeScript("document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true}));");
+        pause(500);
+
+        // Re-find and focus the input
+        input = driver.findElement(inputLocator);
+        js.executeScript(
+            "arguments[0].scrollIntoView({block:'center'});" +
+            "arguments[0].focus();" +
+            "arguments[0].click();", input);
+        pause(300);
+
+        // Clear and type using per-character keyboard events directly on the target input
+        js.executeScript(
+            "var el = arguments[0]; var text = arguments[1];" +
+            "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+            "setter.call(el, '');" +
+            "el.dispatchEvent(new Event('input', {bubbles: true}));" +
+            "for (var i = 0; i < text.length; i++) {" +
+            "  var partial = text.substring(0, i + 1);" +
+            "  setter.call(el, partial);" +
+            "  el.dispatchEvent(new Event('input', {bubbles: true}));" +
+            "  el.dispatchEvent(new KeyboardEvent('keydown', {key: text[i], bubbles: true}));" +
+            "  el.dispatchEvent(new KeyboardEvent('keyup', {key: text[i], bubbles: true}));" +
+            "}" +
+            "el.dispatchEvent(new Event('change', {bubbles: true}));",
+            input, textToType);
+        pause(1000);
+
+        // Try to find and click the option
+        By exactOption = By.xpath("//li[@role='option'][normalize-space()='" + optionText + "']");
+        By partialOption = By.xpath("//li[@role='option'][contains(normalize-space(),'" + optionText + "')]");
+        for (int attempt = 0; attempt < 5; attempt++) {
+            for (By opt : new By[]{exactOption, partialOption}) {
+                if (driver.findElements(opt).size() > 0) {
+                    WebElement option = driver.findElement(opt);
+                    js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", option);
+                    pause(300);
+                    System.out.println("[AssetPage] Selected dropdown option (keyboard fallback): " + optionText);
+                    return;
+                }
+            }
+            pause(500);
         }
 
         System.out.println("WARNING: Could not select dropdown option '" + optionText + "' for " + inputLocator);

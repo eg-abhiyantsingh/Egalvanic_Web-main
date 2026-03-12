@@ -4,6 +4,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -433,84 +434,61 @@ public class ConnectionPage {
      */
     public void confirmDelete() {
         // Wait for confirmation dialog to appear (up to 5s)
-        boolean dialogFound = false;
         for (int i = 0; i < 10; i++) {
-            String dialogInfo = (String) js.executeScript(
-                "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"presentation\"], [class*=\"MuiDialog\"], [class*=\"MuiModal\"]');" +
-                "var info = 'dialogs: ' + dialogs.length;" +
-                "for (var d of dialogs) {" +
-                "  var r = d.getBoundingClientRect();" +
-                "  if (r.width < 50 || r.height < 50) continue;" +
-                "  var text = (d.textContent||'').substring(0, 200);" +
-                "  info += ' | [' + r.width + 'x' + r.height + '] text=\"' + text + '\"';" +
-                "  var btns = d.querySelectorAll('button');" +
-                "  info += ' btns=' + btns.length;" +
-                "  for (var b of btns) info += ' btn=\"' + b.textContent.trim() + '\"';" +
-                "}" +
-                "return info;"
-            );
-            System.out.println("[ConnectionPage] Dialog scan " + i + ": " + dialogInfo);
-
-            // Strategy: find the Delete button with MuiButton-containedError class (the red delete confirmation button)
-            // Use full React-compatible event dispatch (mousedown + mouseup + click) to ensure React event handlers fire
-            Boolean clicked = (Boolean) js.executeScript(
-                "// Strategy 1: Find the red Delete confirmation button directly by MUI class\n" +
-                "var errorBtns = document.querySelectorAll('button[class*=\"containedError\"], button[class*=\"MuiButton-containedError\"]');" +
-                "for (var b of errorBtns) {" +
-                "  var r = b.getBoundingClientRect();" +
-                "  if (r.width > 0 && r.height > 0 && b.textContent.trim() === 'Delete') {" +
-                "    b.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, cancelable: true}));" +
-                "    b.dispatchEvent(new MouseEvent('mouseup', {bubbles: true, cancelable: true}));" +
-                "    b.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));" +
-                "    return true;" +
-                "  }" +
-                "}" +
-                "// Strategy 2: Find Delete button inside dialog with 'sure' or 'delete' text\n" +
-                "var dialogs = document.querySelectorAll('[role=\"dialog\"], [class*=\"MuiDialog-paper\"]');" +
-                "for (var d of dialogs) {" +
-                "  var r = d.getBoundingClientRect();" +
-                "  if (r.width < 100 || r.height < 50) continue;" +
-                "  var text = (d.textContent||'').toLowerCase();" +
-                "  if (text.includes('sure') || text.includes('confirm')) {" +
-                "    var btns = d.querySelectorAll('button');" +
-                "    for (var b of btns) {" +
-                "      if (b.textContent.trim() === 'Delete') {" +
-                "        b.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, cancelable: true}));" +
-                "        b.dispatchEvent(new MouseEvent('mouseup', {bubbles: true, cancelable: true}));" +
-                "        b.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));" +
-                "        return true;" +
-                "      }" +
-                "    }" +
-                "  }" +
-                "}" +
-                "return false;"
-            );
-            if (clicked != null && clicked) {
-                System.out.println("[ConnectionPage] Delete confirmed via dialog button");
-                dialogFound = true;
-                break;
+            // Find the red Delete confirmation button (MuiButton-containedError) via Selenium
+            try {
+                java.util.List<WebElement> errorBtns = driver.findElements(
+                    By.cssSelector("button[class*='containedError']"));
+                for (WebElement btn : errorBtns) {
+                    if (btn.isDisplayed() && "Delete".equals(btn.getText().trim())) {
+                        System.out.println("[ConnectionPage] Found Delete confirmation button, clicking via Selenium Actions...");
+                        // Use Selenium Actions to click — creates trusted events that React handles
+                        new Actions(driver).moveToElement(btn).click().perform();
+                        System.out.println("[ConnectionPage] Delete confirmed via Selenium Actions click");
+                        pause(3000);
+                        return;
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("[ConnectionPage] Selenium click attempt " + i + " failed: " + e.getMessage());
             }
+
+            // Fallback: try finding by dialog text + button text
+            try {
+                java.util.List<WebElement> allBtns = driver.findElements(By.cssSelector("button"));
+                for (WebElement btn : allBtns) {
+                    try {
+                        if (btn.isDisplayed() && "Delete".equals(btn.getText().trim())) {
+                            String cls = btn.getAttribute("class");
+                            if (cls != null && (cls.contains("contained") || cls.contains("error"))) {
+                                System.out.println("[ConnectionPage] Found Delete button via class scan, clicking...");
+                                new Actions(driver).moveToElement(btn).click().perform();
+                                System.out.println("[ConnectionPage] Delete confirmed via class scan");
+                                pause(3000);
+                                return;
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }
+            } catch (Exception ignored) {}
+
             pause(500);
         }
 
-        if (!dialogFound) {
-            System.out.println("[ConnectionPage] WARNING: No delete confirmation dialog found — trying fallback");
-            // Fallback: find any visible button with error/delete styling
-            js.executeScript(
-                "var btns = document.querySelectorAll('button');" +
-                "for (var b of btns) {" +
-                "  var t = b.textContent.trim();" +
-                "  var r = b.getBoundingClientRect();" +
-                "  var cls = (b.className||'');" +
-                "  if (t === 'Delete' && r.width > 0 && r.height > 0 && (cls.includes('error') || cls.includes('danger') || cls.includes('contained'))) {" +
-                "    b.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, cancelable: true}));" +
-                "    b.dispatchEvent(new MouseEvent('mouseup', {bubbles: true, cancelable: true}));" +
-                "    b.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));" +
-                "    return;" +
-                "  }" +
-                "}"
-            );
-        }
+        System.out.println("[ConnectionPage] WARNING: No delete confirmation button found — trying JS fallback");
+        // Last resort: JS click with full event sequence
+        js.executeScript(
+            "var btns = document.querySelectorAll('button[class*=\"containedError\"]');" +
+            "for (var b of btns) {" +
+            "  if (b.textContent.trim() === 'Delete' && b.getBoundingClientRect().width > 0) {" +
+            "    b.focus();" +
+            "    b.dispatchEvent(new MouseEvent('mousedown', {bubbles:true, cancelable:true, view:window}));" +
+            "    b.dispatchEvent(new MouseEvent('mouseup', {bubbles:true, cancelable:true, view:window}));" +
+            "    b.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true, view:window}));" +
+            "    return;" +
+            "  }" +
+            "}"
+        );
         pause(3000);
     }
 
