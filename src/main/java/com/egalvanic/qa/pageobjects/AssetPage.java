@@ -1,9 +1,11 @@
 package com.egalvanic.qa.pageobjects;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -58,6 +60,7 @@ public class AssetPage {
 
     public void navigateToAssets() {
         recoverFromErrorOverlay();
+        dismissAnyDrawerOrBackdrop();
 
         // If already on Assets page, navigate away then back to force fresh data.
         // driver.navigate().refresh() loses SPA state (site selector resets).
@@ -99,6 +102,9 @@ public class AssetPage {
     // --- CREATE ---
 
     public void openCreateAssetForm() {
+        // Dismiss any residual drawer/dialog left open by a previous test
+        dismissAnyDialog();
+        pause(300);
         click(CREATE_ASSET_BTN);
         wait.until(ExpectedConditions.visibilityOfElementLocated(ASSET_FORM_DIALOG));
     }
@@ -1829,6 +1835,33 @@ public class AssetPage {
     /**
      * Dismiss any open dialog (press Escape or click Cancel/Close).
      */
+    /**
+     * Dismiss any open MUI Drawer, Backdrop, or side panel that may linger from a previous test.
+     * MUI Drawers/Backdrops close on Escape by default.
+     * This prevents "element not interactable" errors when a previous test leaves a drawer open.
+     */
+    private void dismissAnyDrawerOrBackdrop() {
+        try {
+            // Check for MUI Backdrops (present when drawers/dialogs are open)
+            Boolean hasBackdrop = (Boolean) js.executeScript(
+                "return document.querySelectorAll('.MuiBackdrop-root, .MuiDrawer-root, [role=\"presentation\"]').length > 0;");
+            if (Boolean.TRUE.equals(hasBackdrop)) {
+                System.out.println("[AssetPage] Backdrop/drawer detected — pressing Escape to dismiss");
+                new Actions(driver).sendKeys(Keys.ESCAPE).perform();
+                pause(800);
+                // Press Escape again in case there are nested overlays
+                Boolean stillPresent = (Boolean) js.executeScript(
+                    "return document.querySelectorAll('.MuiBackdrop-root').length > 0;");
+                if (Boolean.TRUE.equals(stillPresent)) {
+                    new Actions(driver).sendKeys(Keys.ESCAPE).perform();
+                    pause(800);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("[AssetPage] dismissAnyDrawerOrBackdrop: " + e.getMessage());
+        }
+    }
+
     public void dismissAnyDialog() {
         try {
             js.executeScript(
@@ -2557,7 +2590,18 @@ public class AssetPage {
             "arguments[0].dispatchEvent(new Event('input', {bubbles: true}));",
             el);
         pause(100);
-        el.sendKeys(text);
+        try {
+            el.sendKeys(text);
+        } catch (Exception e) {
+            // Fallback: use JS to set value when native sendKeys is blocked by MUI Backdrop
+            System.out.println("[AssetPage] Native sendKeys blocked, using JS fallback for: " + by);
+            js.executeScript(
+                "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+                "setter.call(arguments[0], arguments[1]);" +
+                "arguments[0].dispatchEvent(new Event('input', {bubbles: true}));" +
+                "arguments[0].dispatchEvent(new Event('change', {bubbles: true}));",
+                el, text);
+        }
     }
 
     private void typeAndSelectDropdown(By inputLocator, String textToType, String optionText) {
@@ -2580,8 +2624,8 @@ public class AssetPage {
             input);
         pause(200);
 
-        // Type using sendKeys (triggers React's synthetic events in MUI Autocomplete)
-        input.sendKeys(textToType);
+        // Type using sendKeys — fall back to JS if blocked by MUI Backdrop
+        sendKeysWithJsFallback(input, textToType, inputLocator);
         pause(800);
 
         // Wait for the listbox dropdown to appear
@@ -2609,7 +2653,7 @@ public class AssetPage {
                 "input.focus(); input.click();",
                 input);
             pause(300);
-            input.sendKeys(textToType);
+            sendKeysWithJsFallback(input, textToType, inputLocator);
             pause(800);
         }
 
@@ -2635,6 +2679,31 @@ public class AssetPage {
             pause(400);
         }
         System.out.println("WARNING: Could not select dropdown option '" + optionText + "' for " + inputLocator);
+    }
+
+    /**
+     * Attempt native sendKeys; if blocked by MUI Backdrop, fall back to JS-based input
+     * with synthetic React events so MUI Autocomplete recognizes the value change.
+     */
+    private void sendKeysWithJsFallback(WebElement el, String text, By locator) {
+        try {
+            el.sendKeys(text);
+        } catch (Exception e) {
+            System.out.println("[AssetPage] Native sendKeys blocked, using JS fallback for: " + locator);
+            js.executeScript(
+                "var el = arguments[0];" +
+                "var text = arguments[1];" +
+                "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+                "setter.call(el, text);" +
+                "el.dispatchEvent(new Event('input', {bubbles: true}));" +
+                "el.dispatchEvent(new Event('change', {bubbles: true}));" +
+                // Dispatch keydown/keyup events to trigger MUI Autocomplete filtering
+                "for (var i = 0; i < text.length; i++) {" +
+                "  el.dispatchEvent(new KeyboardEvent('keydown', {key: text[i], bubbles: true}));" +
+                "  el.dispatchEvent(new KeyboardEvent('keyup', {key: text[i], bubbles: true}));" +
+                "}",
+                el, text);
+        }
     }
 
     private void pause(long ms) {
