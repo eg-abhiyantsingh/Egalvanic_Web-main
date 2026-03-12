@@ -2127,8 +2127,34 @@ public class AssetPage {
         if (clicked == null || !clicked) {
             throw new RuntimeException("Could not find 'Create New Child' menu item");
         }
-        pause(3000); // Dialog needs time to render fully
-        System.out.println("[AssetPage] Selected 'Create New Child'");
+        // Wait for Quick Add dialog to appear by checking for its "Select class" input
+        for (int i = 0; i < 10; i++) {
+            pause(1000);
+            Boolean dialogVisible = (Boolean) js.executeScript(
+                "var inputs = document.querySelectorAll('input[placeholder=\"Select class\"]');" +
+                "for (var inp of inputs) {" +
+                "  var r = inp.getBoundingClientRect();" +
+                "  if (r.width > 10 && r.height > 10 && !inp.value) return true;" +
+                "}" +
+                "return false;"
+            );
+            if (dialogVisible != null && dialogVisible) {
+                System.out.println("[AssetPage] Quick Add dialog detected after " + (i + 1) + "s");
+                return;
+            }
+        }
+        System.out.println("[AssetPage] WARNING: Quick Add dialog not detected after 10s");
+        // Log what we see for debugging
+        String debug = (String) js.executeScript(
+            "var info = 'All inputs with placeholder:\\n';" +
+            "var inputs = document.querySelectorAll('input[placeholder]');" +
+            "for (var inp of inputs) {" +
+            "  var r = inp.getBoundingClientRect();" +
+            "  if (r.width > 0) info += '  ph=\"' + inp.placeholder + '\" val=\"' + inp.value + '\" at(' + Math.round(r.x) + ',' + Math.round(r.y) + ')\\n';" +
+            "}" +
+            "return info;"
+        );
+        System.out.println("[AssetPage] Dialog debug:\n" + debug);
     }
 
     /**
@@ -2186,67 +2212,92 @@ public class AssetPage {
      * @param className e.g. "Fuse", "Disconnect Switch", etc.
      */
     public void selectOCPAssetClass(String className) {
-        // The Quick Add dialog has a "Select class" input with empty value.
-        // The main edit form also has a "Select Class" input but it has a value (e.g., "Panelboard").
-        // Strategy: find the input with placeholder "Select class" that has NO value set.
-        Boolean opened = (Boolean) js.executeScript(
-            "var allInputs = document.querySelectorAll('input[placeholder]');" +
-            "var info = 'All placeholder inputs: ';" +
-            "for (var inp of allInputs) {" +
-            "  var ph = inp.placeholder.toLowerCase();" +
-            "  if (ph.includes('class') || ph.includes('select')) {" +
-            "    var r = inp.getBoundingClientRect();" +
-            "    info += '\\n  ph=\"' + inp.placeholder + '\" val=\"' + inp.value + '\" vis=' + (r.width>0) + ' at(' + Math.round(r.x) + ',' + Math.round(r.y) + ')';" +
-            "  }" +
-            "}" +
-            "console.log(info);" +
-            "// Find the 'Select class' input with empty value (the dialog's input)\n" +
-            "for (var inp of allInputs) {" +
-            "  if (inp.placeholder === 'Select class' && !inp.value) {" +
-            "    var r = inp.getBoundingClientRect();" +
-            "    if (r.width > 10 && r.height > 10) {" +
-            "      inp.scrollIntoView({block:'center'});" +
-            "      inp.focus();" +
-            "      inp.click();" +
-            "      return true;" +
-            "    }" +
-            "  }" +
-            "}" +
-            "// Fallback: try any empty 'Select Class' (capital C) input\n" +
-            "for (var inp of allInputs) {" +
-            "  if (inp.placeholder === 'Select Class' && !inp.value) {" +
-            "    var r = inp.getBoundingClientRect();" +
-            "    if (r.width > 10 && r.height > 10) {" +
-            "      inp.focus(); inp.click(); return true;" +
-            "    }" +
-            "  }" +
-            "}" +
-            "return false;"
-        );
-        pause(1500);
-        System.out.println("[AssetPage] OCP class dropdown opened: " + opened);
+        // Use Selenium to find the "Select class" input in the Quick Add dialog.
+        // The dialog's input has placeholder="Select class" with empty value.
+        // The main form's input has placeholder="Select Class" with a value set.
+        try {
+            // Find all inputs with placeholder containing "class" (case-insensitive XPath)
+            java.util.List<WebElement> classInputs = driver.findElements(
+                By.cssSelector("input[placeholder='Select class']"));
+            System.out.println("[AssetPage] Found " + classInputs.size() + " 'Select class' inputs");
+
+            WebElement target = null;
+            for (WebElement inp : classInputs) {
+                String val = inp.getAttribute("value");
+                System.out.println("[AssetPage]   input: val='" + val + "' displayed=" + inp.isDisplayed());
+                if (val == null || val.isEmpty()) {
+                    target = inp;
+                    break;
+                }
+            }
+
+            // Fallback: try "Select Class" (capital C) with empty value
+            if (target == null) {
+                classInputs = driver.findElements(By.cssSelector("input[placeholder='Select Class']"));
+                System.out.println("[AssetPage] Found " + classInputs.size() + " 'Select Class' inputs");
+                for (WebElement inp : classInputs) {
+                    String val = inp.getAttribute("value");
+                    System.out.println("[AssetPage]   input: val='" + val + "' displayed=" + inp.isDisplayed());
+                    if (val == null || val.isEmpty()) {
+                        target = inp;
+                        break;
+                    }
+                }
+            }
+
+            if (target == null) {
+                System.out.println("[AssetPage] ERROR: No empty 'Select class' input found");
+                // Dump all visible inputs for debugging
+                java.util.List<WebElement> allInputs = driver.findElements(By.cssSelector("input[placeholder]"));
+                for (WebElement inp : allInputs) {
+                    if (inp.isDisplayed()) {
+                        System.out.println("[AssetPage]   visible input: ph='" + inp.getAttribute("placeholder") +
+                            "' val='" + inp.getAttribute("value") + "'");
+                    }
+                }
+                return;
+            }
+
+            // Click the input to open dropdown
+            js.executeScript("arguments[0].scrollIntoView({block:'center'});", target);
+            pause(500);
+            target.click();
+            pause(1500);
+            System.out.println("[AssetPage] OCP class dropdown opened via Selenium click");
+
+            // Type the class name to filter options
+            target.sendKeys(className);
+            pause(1500);
+            System.out.println("[AssetPage] Typed '" + className + "' into class input");
+
+        } catch (Exception e) {
+            System.out.println("[AssetPage] ERROR opening OCP class dropdown: " + e.getMessage());
+            return;
+        }
 
         // Select the class from the dropdown listbox
-        Boolean selected = (Boolean) js.executeScript(
-            "var options = document.querySelectorAll('[role=\"option\"], li[role=\"option\"]');" +
-            "console.log('OCP dropdown options: ' + options.length);" +
-            "for (var opt of options) {" +
-            "  var txt = (opt.textContent||'').trim();" +
-            "  console.log('  option: ' + txt);" +
-            "  if (txt === arguments[0]) { opt.click(); return true; }" +
-            "}" +
-            "// Try partial match\n" +
-            "for (var opt of options) {" +
-            "  var txt = (opt.textContent||'').trim();" +
-            "  if (txt.indexOf(arguments[0]) > -1) { opt.click(); return true; }" +
-            "}" +
-            "// Select first available option if specific not found\n" +
-            "if (options.length > 0) { options[0].click(); return true; }" +
-            "return false;",
-            className
-        );
-        pause(1000);
-        System.out.println("[AssetPage] OCP class selected '" + className + "': " + selected);
+        try {
+            java.util.List<WebElement> options = driver.findElements(By.cssSelector("[role='option']"));
+            System.out.println("[AssetPage] Dropdown options found: " + options.size());
+            for (WebElement opt : options) {
+                String txt = opt.getText().trim();
+                System.out.println("[AssetPage]   option: '" + txt + "'");
+                if (txt.equals(className) || txt.contains(className)) {
+                    opt.click();
+                    pause(1000);
+                    System.out.println("[AssetPage] OCP class selected: " + className);
+                    return;
+                }
+            }
+            // If exact match not found, click first option
+            if (!options.isEmpty()) {
+                options.get(0).click();
+                pause(1000);
+                System.out.println("[AssetPage] Selected first available option: " + options.get(0).getText());
+            }
+        } catch (Exception e) {
+            System.out.println("[AssetPage] ERROR selecting OCP class option: " + e.getMessage());
+        }
     }
 
     /**
@@ -2255,21 +2306,34 @@ public class AssetPage {
      * @param qty the number of child assets to add
      */
     public void setOCPQuantity(int qty) {
+        // The Qty field is inside the Quick Add dialog, near the "Select class" input.
+        // Find it by locating the dialog first (contains "Quick Add" text), then its number input.
         Boolean set = (Boolean) js.executeScript(
-            "var inputs = document.querySelectorAll('input[type=\"number\"]');" +
-            "// Find the Qty input — it's in the Quick Add dialog, visible and with small width\n" +
-            "for (var inp of inputs) {" +
-            "  var r = inp.getBoundingClientRect();" +
-            "  if (r.width > 10 && r.height > 10) {" +
-            "    var nativeInputValueSetter = Object.getOwnPropertyDescriptor(" +
-            "      window.HTMLInputElement.prototype, 'value').set;" +
-            "    nativeInputValueSetter.call(inp, arguments[0]);" +
-            "    inp.dispatchEvent(new Event('input', {bubbles: true}));" +
-            "    inp.dispatchEvent(new Event('change', {bubbles: true}));" +
-            "    return true;" +
+            "// Find the Quick Add dialog by looking for its heading text\n" +
+            "var allEls = document.querySelectorAll('*');" +
+            "var dialogContainer = null;" +
+            "for (var el of allEls) {" +
+            "  var t = (el.textContent||'').trim();" +
+            "  if (el.children.length === 0 && t === 'Quick Add Child Assets') {" +
+            "    // Walk up to find the dialog container\n" +
+            "    var parent = el.parentElement;" +
+            "    for (var i = 0; i < 10 && parent; i++) {" +
+            "      var numInputs = parent.querySelectorAll('input[type=\"number\"]');" +
+            "      if (numInputs.length > 0) { dialogContainer = parent; break; }" +
+            "      parent = parent.parentElement;" +
+            "    }" +
+            "    break;" +
             "  }" +
             "}" +
-            "return false;",
+            "if (!dialogContainer) { console.log('OCP dialog container not found for Qty'); return false; }" +
+            "var qtyInput = dialogContainer.querySelector('input[type=\"number\"]');" +
+            "if (!qtyInput) { console.log('Qty input not found in dialog'); return false; }" +
+            "var nativeInputValueSetter = Object.getOwnPropertyDescriptor(" +
+            "  window.HTMLInputElement.prototype, 'value').set;" +
+            "nativeInputValueSetter.call(qtyInput, arguments[0]);" +
+            "qtyInput.dispatchEvent(new Event('input', {bubbles: true}));" +
+            "qtyInput.dispatchEvent(new Event('change', {bubbles: true}));" +
+            "return true;",
             String.valueOf(qty)
         );
         pause(500);
