@@ -325,7 +325,7 @@ for i in $(seq 0 $((TOTAL_MODULES - 1))); do
 
         GLOBAL_COMPLETED=$((GLOBAL_COMPLETED + 1))
 
-        TEST_NAME=$(echo "$LINE" | sed 's/.*: [A-Za-z0-9_]*\.//' | sed 's/ (.*//')
+        TEST_NAME=$(echo "$LINE" | sed 's/.*: [A-Za-z0-9_]*\.//' | sed 's/ (.*//' | sed 's/^test//')
         DURATION=$(echo "$LINE" | sed 's/.*(\([0-9]*\)s).*/\1/')
         [ -z "$DURATION" ] || [ "$DURATION" = "$LINE" ] && DURATION="?"
 
@@ -365,7 +365,7 @@ for i in $(seq 0 $((TOTAL_MODULES - 1))); do
     fi
 
     GLOBAL_COMPLETED=$((GLOBAL_COMPLETED + 1))
-    TEST_NAME=$(echo "$LINE" | sed 's/.*: [A-Za-z0-9_]*\.//' | sed 's/ (.*//')
+    TEST_NAME=$(echo "$LINE" | sed 's/.*: [A-Za-z0-9_]*\.//' | sed 's/ (.*//' | sed 's/^test//')
     DURATION=$(echo "$LINE" | sed 's/.*(\([0-9]*\)s).*/\1/')
     [ -z "$DURATION" ] || [ "$DURATION" = "$LINE" ] && DURATION="?"
 
