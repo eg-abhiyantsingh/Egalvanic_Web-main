@@ -2177,24 +2177,111 @@ public class AssetPage {
     }
 
     /**
+     * Click the "OCP" tab in the edit drawer's tab bar.
+     * This switches to the OCP tab view showing child devices.
+     */
+    public void clickOCPTab() {
+        Boolean clicked = (Boolean) js.executeScript(
+            "var tabs = document.querySelectorAll('button');" +
+            "for (var tab of tabs) {" +
+            "  var txt = (tab.textContent||'').trim();" +
+            "  if (txt === 'OCP') {" +
+            "    var r = tab.getBoundingClientRect();" +
+            "    // The tab is in the tab bar (y < 400, width ~90)\n" +
+            "    if (r.y < 400 && r.width < 150 && r.width > 30) {" +
+            "      tab.click(); return true;" +
+            "    }" +
+            "  }" +
+            "}" +
+            "return false;"
+        );
+        pause(2000);
+        System.out.println("[AssetPage] OCP tab clicked: " + clicked);
+    }
+
+    /**
      * Get the count of OCP child devices currently listed in the OCP section.
+     * Tries multiple strategies: OCP accordion content, OCP tab content, badge count.
      */
     public int getOCPChildCount() {
+        // First scroll to OCP area
+        js.executeScript(
+            "var containers = document.querySelectorAll('[class*=\"MuiDrawer\"] > div, [class*=\"MuiPaper\"]');" +
+            "for (var c of containers) {" +
+            "  if (c.scrollHeight > c.clientHeight + 100) c.scrollTop = c.scrollHeight * 0.7;" +
+            "}"
+        );
+        pause(500);
+
+        String debug = (String) js.executeScript(
+            "var info = '';" +
+            "// Find OCP accordion\n" +
+            "var h6s = document.querySelectorAll('h6');" +
+            "for (var el of h6s) {" +
+            "  if (el.textContent.trim() === 'OCP') {" +
+            "    var accordion = el.closest('[class*=\"MuiAccordion\"]');" +
+            "    if (accordion) {" +
+            "      info += 'OCP accordion found. expanded=' + accordion.classList.contains('Mui-expanded');" +
+            "      info += ' children=' + accordion.children.length;" +
+            "      info += ' innerHTML_len=' + accordion.innerHTML.length;" +
+            "      // List direct child elements\n" +
+            "      var details = accordion.querySelector('[class*=\"MuiAccordionDetails\"]');" +
+            "      if (details) {" +
+            "        info += '\\nDetails children: ' + details.children.length;" +
+            "        for (var i = 0; i < Math.min(details.children.length, 10); i++) {" +
+            "          var ch = details.children[i];" +
+            "          info += '\\n  child[' + i + ']: tag=' + ch.tagName + ' class=' + (ch.className||'').substring(0,60) + ' text=' + (ch.textContent||'').substring(0,80);" +
+            "        }" +
+            "      }" +
+            "      // Also check for any elements with asset-like content\n" +
+            "      var allInner = accordion.querySelectorAll('*');" +
+            "      var assetItems = 0;" +
+            "      for (var item of allInner) {" +
+            "        var t = (item.textContent||'').trim();" +
+            "        if (item.children.length < 3 && (t.includes('Fuse') || t.includes('Disconnect') || t.includes('Relay') || t.includes('MCC Bucket'))) {" +
+            "          assetItems++;" +
+            "        }" +
+            "      }" +
+            "      info += '\\nAsset-name elements in OCP: ' + assetItems;" +
+            "    }" +
+            "    break;" +
+            "  }" +
+            "}" +
+            "return info;"
+        );
+        System.out.println("[AssetPage] OCP count debug: " + debug);
+
         Long count = (Long) js.executeScript(
             "var h6s = document.querySelectorAll('h6');" +
             "for (var el of h6s) {" +
             "  if (el.textContent.trim() === 'OCP') {" +
             "    var accordion = el.closest('[class*=\"MuiAccordion\"]');" +
             "    if (!accordion) continue;" +
-            "    // Count data rows or list items inside the accordion\n" +
-            "    var rows = accordion.querySelectorAll('[data-rowindex], tr[class*=\"MuiTableRow\"], [class*=\"MuiListItem\"]');" +
+            "    // Expand if collapsed\n" +
+            "    if (!accordion.classList.contains('Mui-expanded')) {" +
+            "      var summary = accordion.querySelector('[class*=\"MuiAccordionSummary\"]');" +
+            "      if (summary) summary.click();" +
+            "    }" +
+            "    // Count rows, list items, cards, or any clickable child entries\n" +
+            "    var rows = accordion.querySelectorAll('[data-rowindex], tr[class*=\"MuiTableRow\"], [class*=\"MuiListItem\"], [class*=\"MuiCard\"], [class*=\"MuiListItemButton\"]');" +
             "    if (rows.length > 0) return rows.length;" +
+            "    // Count child elements in the accordion details section (excluding the summary)\n" +
+            "    var details = accordion.querySelector('[class*=\"MuiAccordionDetails\"]');" +
+            "    if (details) {" +
+            "      // Count visible child divs that look like data entries (have some height)\n" +
+            "      var entries = 0;" +
+            "      for (var ch of details.children) {" +
+            "        var r = ch.getBoundingClientRect();" +
+            "        if (r.height > 20 && r.width > 100) entries++;" +
+            "      }" +
+            "      if (entries > 0) return entries;" +
+            "    }" +
             "    // Check badge on the header\n" +
             "    var badge = el.parentElement ? el.parentElement.querySelector('[class*=\"MuiBadge-badge\"]') : null;" +
             "    if (badge) { var n = parseInt(badge.textContent); if (!isNaN(n)) return n; }" +
-            "    // Check for 'No child assets' text\n" +
+            "    // Check for 'No child' or empty text\n" +
             "    var text = accordion.textContent || '';" +
-            "    if (text.indexOf('No child assets') > -1) return 0;" +
+            "    if (text.indexOf('No child') > -1 || text.indexOf('No OCP') > -1) return 0;" +
             "    return 0;" +
             "  }" +
             "}" +
