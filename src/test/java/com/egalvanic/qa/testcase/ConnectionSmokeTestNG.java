@@ -147,13 +147,13 @@ public class ConnectionSmokeTestNG extends BaseTest {
             logStep("Delete result: " + deleteSuccess);
 
             // 5. Wait for server to process, then navigate away and back for fresh grid
-            pause(3000);
+            pause(5000);
             connectionPage.navigateToConnections();
             pause(3000);
 
             // 6. Poll for count decrease (handles eventual consistency)
             boolean deleted = false;
-            for (int attempt = 0; attempt < 3; attempt++) {
+            for (int attempt = 0; attempt < 5; attempt++) {
                 int afterCount = connectionPage.getGridRowCount();
                 logStep("Post-delete check " + (attempt + 1) + ": grid rows = " + afterCount);
                 if (afterCount < beforeCount) {
@@ -162,7 +162,7 @@ public class ConnectionSmokeTestNG extends BaseTest {
                     break;
                 }
                 connectionPage.navigateToConnections();
-                pause(3000);
+                pause(5000);
             }
             logStepWithScreenshot("Grid after deletion");
 

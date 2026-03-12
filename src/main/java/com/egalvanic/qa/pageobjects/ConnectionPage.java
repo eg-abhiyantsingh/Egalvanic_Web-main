@@ -451,38 +451,35 @@ public class ConnectionPage {
             );
             System.out.println("[ConnectionPage] Dialog scan " + i + ": " + dialogInfo);
 
-            // Find the most specific delete dialog (smallest container with exactly 2 buttons: Cancel + Delete)
+            // Strategy: find the Delete button with MuiButton-containedError class (the red delete confirmation button)
+            // Use full React-compatible event dispatch (mousedown + mouseup + click) to ensure React event handlers fire
             Boolean clicked = (Boolean) js.executeScript(
-                "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"presentation\"], [class*=\"MuiDialog\"], [class*=\"MuiModal\"]');" +
-                "var bestDialog = null; var bestArea = Infinity;" +
-                "for (var d of dialogs) {" +
-                "  var r = d.getBoundingClientRect();" +
-                "  if (r.width < 50 || r.height < 50) continue;" +
-                "  var text = (d.textContent||'').toLowerCase();" +
-                "  var btns = d.querySelectorAll('button');" +
-                "  // Find dialog with delete text AND exactly 2 buttons (Cancel + Delete)\n" +
-                "  if ((text.includes('delete') || text.includes('sure')) && btns.length === 2) {" +
-                "    var area = r.width * r.height;" +
-                "    if (area < bestArea) { bestArea = area; bestDialog = d; }" +
+                "// Strategy 1: Find the red Delete confirmation button directly by MUI class\n" +
+                "var errorBtns = document.querySelectorAll('button[class*=\"containedError\"], button[class*=\"MuiButton-containedError\"]');" +
+                "for (var b of errorBtns) {" +
+                "  var r = b.getBoundingClientRect();" +
+                "  if (r.width > 0 && r.height > 0 && b.textContent.trim() === 'Delete') {" +
+                "    b.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, cancelable: true}));" +
+                "    b.dispatchEvent(new MouseEvent('mouseup', {bubbles: true, cancelable: true}));" +
+                "    b.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));" +
+                "    return true;" +
                 "  }" +
                 "}" +
-                "if (bestDialog) {" +
-                "  var btns = bestDialog.querySelectorAll('button');" +
-                "  for (var b of btns) {" +
-                "    if (b.textContent.trim() === 'Delete') { b.click(); return true; }" +
-                "  }" +
-                "  // Fallback: click last button\n" +
-                "  btns[btns.length - 1].click(); return true;" +
-                "}" +
-                "// Wider search: any dialog with delete text\n" +
+                "// Strategy 2: Find Delete button inside dialog with 'sure' or 'delete' text\n" +
+                "var dialogs = document.querySelectorAll('[role=\"dialog\"], [class*=\"MuiDialog-paper\"]');" +
                 "for (var d of dialogs) {" +
                 "  var r = d.getBoundingClientRect();" +
-                "  if (r.width < 50 || r.height < 50) continue;" +
+                "  if (r.width < 100 || r.height < 50) continue;" +
                 "  var text = (d.textContent||'').toLowerCase();" +
-                "  if (text.includes('delete') || text.includes('sure')) {" +
+                "  if (text.includes('sure') || text.includes('confirm')) {" +
                 "    var btns = d.querySelectorAll('button');" +
                 "    for (var b of btns) {" +
-                "      if (b.textContent.trim() === 'Delete') { b.click(); return true; }" +
+                "      if (b.textContent.trim() === 'Delete') {" +
+                "        b.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, cancelable: true}));" +
+                "        b.dispatchEvent(new MouseEvent('mouseup', {bubbles: true, cancelable: true}));" +
+                "        b.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));" +
+                "        return true;" +
+                "      }" +
                 "    }" +
                 "  }" +
                 "}" +
@@ -506,7 +503,10 @@ public class ConnectionPage {
                 "  var r = b.getBoundingClientRect();" +
                 "  var cls = (b.className||'');" +
                 "  if (t === 'Delete' && r.width > 0 && r.height > 0 && (cls.includes('error') || cls.includes('danger') || cls.includes('contained'))) {" +
-                "    b.click(); return;" +
+                "    b.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, cancelable: true}));" +
+                "    b.dispatchEvent(new MouseEvent('mouseup', {bubbles: true, cancelable: true}));" +
+                "    b.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));" +
+                "    return;" +
                 "  }" +
                 "}"
             );

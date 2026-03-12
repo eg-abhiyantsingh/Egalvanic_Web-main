@@ -2677,7 +2677,15 @@ public class AssetPage {
             pause(800);
         }
 
-        System.out.println("[AssetPage] Listbox visible: " + (driver.findElements(listbox).size() > 0));
+        // Log listbox state and available options for debugging
+        String listboxDebug = (String) js.executeScript(
+            "var lb = document.querySelector('ul[role=\"listbox\"]');" +
+            "if (!lb) return 'no listbox';" +
+            "var opts = lb.querySelectorAll('li[role=\"option\"]');" +
+            "var texts = [];" +
+            "for (var o of opts) texts.push(o.textContent.trim());" +
+            "return 'listbox has ' + opts.length + ' options: [' + texts.join(', ') + ']';");
+        System.out.println("[AssetPage] " + listboxDebug);
 
         // Find and click the matching option
         By exactOption = By.xpath("//li[@role='option'][normalize-space()='" + optionText + "']");
@@ -2698,6 +2706,60 @@ public class AssetPage {
             }
             pause(400);
         }
+
+        // ── FALLBACK: open full dropdown via popup indicator, then search all options via JS ──
+        System.out.println("[AssetPage] Option not found by typing — trying popup indicator fallback");
+
+        // Close any open listbox first
+        js.executeScript("var lb = document.querySelector('[role=\"listbox\"]'); if (lb) lb.remove();");
+        pause(300);
+
+        // Clear the input and open the full dropdown
+        input = driver.findElement(inputLocator);
+        js.executeScript(
+            "var el = arguments[0];" +
+            "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+            "setter.call(el, '');" +
+            "el.dispatchEvent(new Event('input', {bubbles: true}));" +
+            "el.dispatchEvent(new Event('change', {bubbles: true}));" +
+            "el.focus(); el.click();",
+            input);
+        pause(300);
+
+        // Click the popup indicator to show ALL options
+        js.executeScript(
+            "var wrapper = arguments[0].closest('.MuiAutocomplete-root');" +
+            "if (wrapper) {" +
+            "  var btn = wrapper.querySelector('.MuiAutocomplete-popupIndicator');" +
+            "  if (btn) btn.click();" +
+            "}",
+            input);
+        pause(1000);
+
+        // Now search through ALL options via JS and click the matching one
+        Boolean fallbackSelected = (Boolean) js.executeScript(
+            "var items = document.querySelectorAll('li[role=\"option\"]');" +
+            "var target = arguments[0];" +
+            "for (var item of items) {" +
+            "  if (item.textContent.trim() === target) {" +
+            "    item.scrollIntoView({block:'center'});" +
+            "    item.click(); return true;" +
+            "  }" +
+            "}" +
+            "for (var item of items) {" +
+            "  if (item.textContent.trim().toLowerCase().includes(target.toLowerCase())) {" +
+            "    item.scrollIntoView({block:'center'});" +
+            "    item.click(); return true;" +
+            "  }" +
+            "}" +
+            "return false;", optionText);
+
+        if (fallbackSelected != null && fallbackSelected) {
+            System.out.println("[AssetPage] Selected dropdown option via popup indicator: " + optionText);
+            pause(300);
+            return;
+        }
+
         System.out.println("WARNING: Could not select dropdown option '" + optionText + "' for " + inputLocator);
     }
 
