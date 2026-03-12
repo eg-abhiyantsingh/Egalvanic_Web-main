@@ -4,6 +4,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -2622,29 +2623,29 @@ public class AssetPage {
             "return 'listbox has ' + opts.length + ' options: [' + texts.slice(0,10).join(', ') + (opts.length > 10 ? '...' : '') + ']';");
         System.out.println("[AssetPage] " + listboxDebug);
 
-        // Search through options and click the matching one via JS
+        // Search through options and click using Selenium's native click (trusted events)
         for (int attempt = 0; attempt < 3; attempt++) {
-            Boolean selected = (Boolean) js.executeScript(
-                "var items = document.querySelectorAll('li[role=\"option\"]');" +
-                "var target = arguments[0];" +
-                "for (var item of items) {" +
-                "  if (item.textContent.trim() === target) {" +
-                "    item.scrollIntoView({block:'center'});" +
-                "    item.click(); return true;" +
-                "  }" +
-                "}" +
-                "for (var item of items) {" +
-                "  if (item.textContent.trim().toLowerCase().includes(target.toLowerCase())) {" +
-                "    item.scrollIntoView({block:'center'});" +
-                "    item.click(); return true;" +
-                "  }" +
-                "}" +
-                "return false;", optionText);
+            // Try exact match first, then partial match
+            By exactOption = By.xpath("//li[@role='option'][normalize-space()='" + optionText + "']");
+            By partialOption = By.xpath("//li[@role='option'][contains(normalize-space(),'" + optionText + "')]");
 
-            if (selected != null && selected) {
-                System.out.println("[AssetPage] Selected dropdown option: " + optionText);
-                pause(500);
-                return;
+            for (By optBy : new By[]{exactOption, partialOption}) {
+                java.util.List<WebElement> options = driver.findElements(optBy);
+                if (!options.isEmpty()) {
+                    WebElement option = options.get(0);
+                    js.executeScript("arguments[0].scrollIntoView({block:'center'});", option);
+                    pause(150);
+                    try {
+                        // Use Selenium Actions for trusted click — MUI Autocomplete requires trusted events
+                        new Actions(driver).moveToElement(option).click().perform();
+                    } catch (Exception e) {
+                        // Fallback to direct Selenium click
+                        option.click();
+                    }
+                    System.out.println("[AssetPage] Selected dropdown option: " + optionText);
+                    pause(500);
+                    return;
+                }
             }
             pause(500);
         }
@@ -2682,15 +2683,22 @@ public class AssetPage {
         pause(1000);
 
         // Try to find and click the option
-        By exactOption = By.xpath("//li[@role='option'][normalize-space()='" + optionText + "']");
-        By partialOption = By.xpath("//li[@role='option'][contains(normalize-space(),'" + optionText + "')]");
+        By exactOpt = By.xpath("//li[@role='option'][normalize-space()='" + optionText + "']");
+        By partialOpt = By.xpath("//li[@role='option'][contains(normalize-space(),'" + optionText + "')]");
         for (int attempt = 0; attempt < 5; attempt++) {
-            for (By opt : new By[]{exactOption, partialOption}) {
-                if (driver.findElements(opt).size() > 0) {
-                    WebElement option = driver.findElement(opt);
-                    js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", option);
-                    pause(300);
+            for (By opt : new By[]{exactOpt, partialOpt}) {
+                java.util.List<WebElement> opts = driver.findElements(opt);
+                if (!opts.isEmpty()) {
+                    WebElement option = opts.get(0);
+                    js.executeScript("arguments[0].scrollIntoView({block:'center'});", option);
+                    pause(150);
+                    try {
+                        new Actions(driver).moveToElement(option).click().perform();
+                    } catch (Exception e) {
+                        option.click();
+                    }
                     System.out.println("[AssetPage] Selected dropdown option (keyboard fallback): " + optionText);
+                    pause(300);
                     return;
                 }
             }

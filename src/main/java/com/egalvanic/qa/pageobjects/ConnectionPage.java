@@ -441,10 +441,22 @@ public class ConnectionPage {
                     By.cssSelector("button[class*='containedError']"));
                 for (WebElement btn : errorBtns) {
                     if (btn.isDisplayed() && "Delete".equals(btn.getText().trim())) {
-                        System.out.println("[ConnectionPage] Found Delete confirmation button, clicking via Selenium Actions...");
-                        // Use Selenium Actions to click — creates trusted events that React handles
+                        System.out.println("[ConnectionPage] Found Delete confirmation button");
+
+                        // CRITICAL: Disable pointer-events on ALL backdrops BEFORE clicking.
+                        // MUI Dialog renders a backdrop at the same z-level as the dialog.
+                        // Actions.moveToElement().click() can hit the backdrop instead of the button,
+                        // which closes the dialog via onClose (backdrop click) WITHOUT triggering Delete.
+                        js.executeScript(
+                            "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"]').forEach(" +
+                            "  function(b) { b.style.pointerEvents = 'none'; }" +
+                            ");"
+                        );
+                        pause(200);
+
+                        // Now click the button — backdrop won't intercept
                         new Actions(driver).moveToElement(btn).click().perform();
-                        System.out.println("[ConnectionPage] Delete confirmed via Selenium Actions click");
+                        System.out.println("[ConnectionPage] Delete confirmed via Selenium click (backdrop disabled)");
                         pause(3000);
                         return;
                     }
@@ -452,40 +464,17 @@ public class ConnectionPage {
             } catch (Exception e) {
                 System.out.println("[ConnectionPage] Selenium click attempt " + i + " failed: " + e.getMessage());
             }
-
-            // Fallback: try finding by dialog text + button text
-            try {
-                java.util.List<WebElement> allBtns = driver.findElements(By.cssSelector("button"));
-                for (WebElement btn : allBtns) {
-                    try {
-                        if (btn.isDisplayed() && "Delete".equals(btn.getText().trim())) {
-                            String cls = btn.getAttribute("class");
-                            if (cls != null && (cls.contains("contained") || cls.contains("error"))) {
-                                System.out.println("[ConnectionPage] Found Delete button via class scan, clicking...");
-                                new Actions(driver).moveToElement(btn).click().perform();
-                                System.out.println("[ConnectionPage] Delete confirmed via class scan");
-                                pause(3000);
-                                return;
-                            }
-                        }
-                    } catch (Exception ignored) {}
-                }
-            } catch (Exception ignored) {}
-
             pause(500);
         }
 
         System.out.println("[ConnectionPage] WARNING: No delete confirmation button found — trying JS fallback");
-        // Last resort: JS click with full event sequence
+        // Last resort: disable backdrop and use JS to find and click the Delete button
         js.executeScript(
+            "document.querySelectorAll('.MuiBackdrop-root').forEach(function(b) { b.style.pointerEvents = 'none'; });" +
             "var btns = document.querySelectorAll('button[class*=\"containedError\"]');" +
             "for (var b of btns) {" +
             "  if (b.textContent.trim() === 'Delete' && b.getBoundingClientRect().width > 0) {" +
-            "    b.focus();" +
-            "    b.dispatchEvent(new MouseEvent('mousedown', {bubbles:true, cancelable:true, view:window}));" +
-            "    b.dispatchEvent(new MouseEvent('mouseup', {bubbles:true, cancelable:true, view:window}));" +
-            "    b.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true, view:window}));" +
-            "    return;" +
+            "    b.focus(); b.click(); return;" +
             "  }" +
             "}"
         );
