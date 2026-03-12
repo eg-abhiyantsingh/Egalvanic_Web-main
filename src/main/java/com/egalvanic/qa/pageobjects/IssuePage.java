@@ -18,11 +18,11 @@ import java.util.List;
  * Supports CRUD operations on issues.
  *
  * UI structure:
- *   - Card/Tile layout (NOT MUI DataGrid)
+ *   - Supports both MUI DataGrid rows AND Card/Tile layout (auto-detected)
  *   - "Create Issue" button opens a side drawer/dialog
  *   - Create form has: Name, Asset (autocomplete), Priority (dropdown), Type (dropdown)
  *   - Issue detail page has: Activate Jobs button, Photo upload
- *   - Search input filters cards
+ *   - Search input filters items
  */
 public class IssuePage {
 
@@ -48,21 +48,34 @@ public class IssuePage {
     private static final By ISSUE_FORM_DIALOG = By.xpath(
             "//*[contains(text(),'Add Issue') or contains(text(),'Create Issue') or contains(text(),'BASIC INFO') or contains(text(),'New Issue')]");
     private static final By ISSUE_NAME_INPUT = By.xpath(
-            "//input[@placeholder='Enter Issue Name' or @placeholder='Enter issue name' or @placeholder='Issue Name' or @placeholder='Enter name']");
+            "//input[@placeholder='Enter Issue Name' or @placeholder='Enter issue name' or @placeholder='Issue Name' or @placeholder='Enter name'"
+            + " or @placeholder='Enter Issue name' or @placeholder='Issue name' or @placeholder='Name' or @placeholder='Enter Name'"
+            + " or @placeholder='Enter issue Name']"
+            + " | //label[contains(text(),'Name') or contains(text(),'name')]/following::input[1]"
+            + " | //div[contains(@class,'MuiDrawer-paper')]//input[@type='text' or not(@type)][1]");
     private static final By ASSET_INPUT = By.xpath(
-            "//input[@placeholder='Select Asset' or @placeholder='Select asset' or @placeholder='Search asset' or @placeholder='Select Asset...']");
+            "//input[@placeholder='Select Asset' or @placeholder='Select asset' or @placeholder='Search asset'"
+            + " or @placeholder='Select Asset...' or @placeholder='Select an asset' or @placeholder='Asset'"
+            + " or @placeholder='Choose Asset' or @placeholder='Choose asset']"
+            + " | //label[contains(text(),'Asset')]/following::input[1]");
     private static final By PRIORITY_INPUT = By.xpath(
-            "//input[@placeholder='Select Priority' or @placeholder='Select priority' or @placeholder='Priority']");
+            "//input[@placeholder='Select Priority' or @placeholder='Select priority' or @placeholder='Priority'"
+            + " or @placeholder='Choose Priority' or @placeholder='Choose priority'"
+            + " or @placeholder='Select a priority']"
+            + " | //label[contains(text(),'Priority')]/following::input[1]");
     private static final By TYPE_INPUT = By.xpath(
-            "//input[@placeholder='Select Type' or @placeholder='Select type' or @placeholder='Select Issue Type' or @placeholder='Type']");
+            "//input[@placeholder='Select Type' or @placeholder='Select type' or @placeholder='Select Issue Type'"
+            + " or @placeholder='Type' or @placeholder='Select issue type'"
+            + " or @placeholder='Choose Type' or @placeholder='Choose type']"
+            + " | //label[contains(text(),'Type') or contains(text(),'type')]/following::input[1]");
 
     // Search
     private static final By SEARCH_INPUT = By.xpath(
             "//input[contains(@placeholder,'Search') or contains(@placeholder,'search')]");
 
-    // Issue cards (tile layout — use multiple strategies)
-    private static final By ISSUE_CARDS = By.xpath(
-            "//div[contains(@class,'MuiCard')] | //div[contains(@class,'card')] | //div[contains(@class,'issue-card')] | //div[contains(@class,'tile')]");
+    // Issue items — support both card/tile layout AND MUI DataGrid rows (consistent with AssetPage/ConnectionPage)
+    private static final By ISSUE_CARDS = By.cssSelector(
+            "[data-rowindex], [class*='MuiCard'], [class*='card'], [class*='issue-card'], [class*='tile']");
 
     // Issue detail page
     private static final By ACTIVATE_JOBS_BTN = By.xpath(
@@ -169,7 +182,30 @@ public class IssuePage {
             wait.until(ExpectedConditions.visibilityOfElementLocated(ISSUE_FORM_DIALOG));
         } catch (Exception e) {
             System.out.println("[IssuePage] Form dialog not found with primary selector, trying name input");
-            wait.until(ExpectedConditions.visibilityOfElementLocated(ISSUE_NAME_INPUT));
+            try {
+                wait.until(ExpectedConditions.visibilityOfElementLocated(ISSUE_NAME_INPUT));
+            } catch (Exception e2) {
+                System.out.println("[IssuePage] Name input not found either — logging drawer contents for diagnostics");
+                // Log available inputs in the drawer for debugging
+                String diag = (String) js.executeScript(
+                    "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"], [role=\"dialog\"], [role=\"presentation\"]');" +
+                    "var info = 'Drawers: ' + drawers.length + '. ';" +
+                    "for (var d of drawers) {" +
+                    "  var inputs = d.querySelectorAll('input');" +
+                    "  info += 'Drawer inputs: ' + inputs.length + ' [';" +
+                    "  for (var inp of inputs) {" +
+                    "    info += '{type=' + (inp.type||'') + ', placeholder=' + (inp.placeholder||'') + ', name=' + (inp.name||'') + '} ';" +
+                    "  }" +
+                    "  info += '] ';" +
+                    "  var labels = d.querySelectorAll('label');" +
+                    "  info += 'Labels: [';" +
+                    "  for (var l of labels) { info += l.textContent.trim() + ', '; }" +
+                    "  info += '] ';" +
+                    "}" +
+                    "return info;");
+                System.out.println("[IssuePage] DIAGNOSTIC: " + diag);
+                throw e2;
+            }
         }
         System.out.println("[IssuePage] Create Issue form opened");
     }
@@ -268,8 +304,20 @@ public class IssuePage {
      */
     public int getCardCount() {
         try {
-            // Use JS to find cards — try multiple selectors
+            // Use JS to find items — try DataGrid rows first (consistent with AssetPage/ConnectionPage), then cards
             Long count = (Long) js.executeScript(
+                "// Strategy 1: MUI DataGrid rows (like AssetPage and ConnectionPage)\n" +
+                "var gridRows = document.querySelectorAll('[data-rowindex]');" +
+                "if (gridRows.length > 0) return gridRows.length;" +
+                "// Strategy 2: table body rows\n" +
+                "var tableRows = document.querySelectorAll('tbody tr, [role=\"row\"]');" +
+                "var visibleRows = 0;" +
+                "for (var r of tableRows) {" +
+                "  var rect = r.getBoundingClientRect();" +
+                "  if (rect.width > 50 && rect.height > 10) visibleRows++;" +
+                "}" +
+                "if (visibleRows > 0) return visibleRows;" +
+                "// Strategy 3: Card/tile layout (original)\n" +
                 "var cards = document.querySelectorAll('[class*=\"MuiCard\"], [class*=\"card\"], [class*=\"issue-card\"], [class*=\"tile\"]');" +
                 "var visible = 0;" +
                 "for (var c of cards) {" +
@@ -304,6 +352,31 @@ public class IssuePage {
     public String getFirstCardTitle() {
         try {
             String title = (String) js.executeScript(
+                "// Strategy 1: MUI DataGrid — get first row's name/title cell\n" +
+                "var gridRows = document.querySelectorAll('[data-rowindex]');" +
+                "if (gridRows.length > 0) {" +
+                "  var row = gridRows[0];" +
+                "  // Try common field names for issue name\n" +
+                "  var nameCell = row.querySelector('[data-field=\"name\"], [data-field=\"issueName\"], [data-field=\"title\"], [data-field=\"label\"]');" +
+                "  if (nameCell) return nameCell.textContent.trim();" +
+                "  // Fallback: first cell with text\n" +
+                "  var cells = row.querySelectorAll('[data-field]');" +
+                "  for (var cell of cells) {" +
+                "    var txt = cell.textContent.trim();" +
+                "    if (txt.length > 2 && txt.length < 100) return txt;" +
+                "  }" +
+                "  return row.textContent.trim().split('\\n')[0].trim();" +
+                "}" +
+                "// Strategy 2: table rows\n" +
+                "var tableRows = document.querySelectorAll('tbody tr');" +
+                "if (tableRows.length > 0) {" +
+                "  var cells = tableRows[0].querySelectorAll('td');" +
+                "  for (var c of cells) {" +
+                "    var txt = c.textContent.trim();" +
+                "    if (txt.length > 2 && txt.length < 100) return txt;" +
+                "  }" +
+                "}" +
+                "// Strategy 3: Card/tile layout (original)\n" +
                 "var cards = document.querySelectorAll('[class*=\"MuiCard\"], [class*=\"card\"], [class*=\"issue-card\"], [class*=\"tile\"]');" +
                 "for (var c of cards) {" +
                 "  var r = c.getBoundingClientRect();" +
@@ -333,6 +406,17 @@ public class IssuePage {
     public boolean isIssueVisible(String issueName) {
         try {
             Boolean found = (Boolean) js.executeScript(
+                "// Check DataGrid rows first\n" +
+                "var gridRows = document.querySelectorAll('[data-rowindex]');" +
+                "for (var r of gridRows) {" +
+                "  if (r.textContent.indexOf(arguments[0]) > -1) return true;" +
+                "}" +
+                "// Check table rows\n" +
+                "var tableRows = document.querySelectorAll('tbody tr');" +
+                "for (var r of tableRows) {" +
+                "  if (r.textContent.indexOf(arguments[0]) > -1) return true;" +
+                "}" +
+                "// Check cards\n" +
                 "var cards = document.querySelectorAll('[class*=\"MuiCard\"], [class*=\"card\"], [class*=\"issue-card\"], [class*=\"tile\"]');" +
                 "for (var c of cards) {" +
                 "  if (c.textContent.indexOf(arguments[0]) > -1) return true;" +
@@ -454,14 +538,28 @@ public class IssuePage {
      */
     public void openFirstIssueDetail() {
         js.executeScript(
+            "// Strategy 1: DataGrid row — click first row's link or the row itself\n" +
+            "var gridRows = document.querySelectorAll('[data-rowindex]');" +
+            "if (gridRows.length > 0) {" +
+            "  var row = gridRows[0];" +
+            "  var link = row.querySelector('a');" +
+            "  if (link) { link.click(); return; }" +
+            "  row.click(); return;" +
+            "}" +
+            "// Strategy 2: table rows\n" +
+            "var tableRows = document.querySelectorAll('tbody tr');" +
+            "if (tableRows.length > 0) {" +
+            "  var link = tableRows[0].querySelector('a');" +
+            "  if (link) { link.click(); return; }" +
+            "  tableRows[0].click(); return;" +
+            "}" +
+            "// Strategy 3: Card/tile layout (original)\n" +
             "var cards = document.querySelectorAll('[class*=\"MuiCard\"], [class*=\"card\"], [class*=\"issue-card\"], [class*=\"tile\"]');" +
             "for (var c of cards) {" +
             "  var r = c.getBoundingClientRect();" +
             "  if (r.width > 50 && r.height > 50) {" +
-            // Try clicking a link inside the card first (SPA navigation)
             "    var link = c.querySelector('a');" +
             "    if (link) { link.click(); return; }" +
-            // Otherwise click the card itself
             "    c.click(); return;" +
             "  }" +
             "}"
@@ -476,6 +574,25 @@ public class IssuePage {
      */
     public void openIssueDetail(String issueName) {
         js.executeScript(
+            "// Strategy 1: DataGrid rows\n" +
+            "var gridRows = document.querySelectorAll('[data-rowindex]');" +
+            "for (var r of gridRows) {" +
+            "  if (r.textContent.indexOf(arguments[0]) > -1) {" +
+            "    var link = r.querySelector('a');" +
+            "    if (link) { link.click(); return; }" +
+            "    r.click(); return;" +
+            "  }" +
+            "}" +
+            "// Strategy 2: table rows\n" +
+            "var tableRows = document.querySelectorAll('tbody tr');" +
+            "for (var r of tableRows) {" +
+            "  if (r.textContent.indexOf(arguments[0]) > -1) {" +
+            "    var link = r.querySelector('a');" +
+            "    if (link) { link.click(); return; }" +
+            "    r.click(); return;" +
+            "  }" +
+            "}" +
+            "// Strategy 3: Card/tile layout (original)\n" +
             "var cards = document.querySelectorAll('[class*=\"MuiCard\"], [class*=\"card\"], [class*=\"issue-card\"], [class*=\"tile\"]');" +
             "for (var c of cards) {" +
             "  if (c.textContent.indexOf(arguments[0]) > -1) {" +
