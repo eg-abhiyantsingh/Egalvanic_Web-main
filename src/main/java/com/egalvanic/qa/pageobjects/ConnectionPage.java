@@ -368,34 +368,62 @@ public class ConnectionPage {
      */
     public void clickDeleteOnRow(int rowIndex) {
         int idx = rowIndex >= 0 ? rowIndex : 0;
-        js.executeScript(
+        Boolean clicked = (Boolean) js.executeScript(
             "var rows = document.querySelectorAll('[data-rowindex]');" +
-            "if (rows.length > arguments[0]) {" +
-            "  var row = rows[arguments[0]];" +
-            "  var btns = row.querySelectorAll('button[title=\"Delete connection\"]');" +
-            "  if (btns.length > 0) { btns[0].click(); return; }" +
-            "  // Fallback: click second icon button in actions cell\n" +
-            "  var actionCell = row.querySelector('[data-field=\"actions\"]');" +
-            "  if (actionCell) {" +
-            "    var allBtns = actionCell.querySelectorAll('button');" +
-            "    if (allBtns.length > 1) allBtns[1].click();" +
+            "if (rows.length <= arguments[0]) return false;" +
+            "var row = rows[arguments[0]];" +
+            "// Strategy 1: title attribute\n" +
+            "var btns = row.querySelectorAll('button[title=\"Delete connection\"], button[title=\"Delete\"]');" +
+            "if (btns.length > 0) { btns[0].click(); return true; }" +
+            "// Strategy 2: look for trash/delete icon (SVG path) in action buttons\n" +
+            "var actionCell = row.querySelector('[data-field=\"actions\"]');" +
+            "if (actionCell) {" +
+            "  var allBtns = actionCell.querySelectorAll('button');" +
+            "  console.log('Action buttons in row: ' + allBtns.length);" +
+            "  // Last button in actions is usually delete\n" +
+            "  if (allBtns.length > 0) { allBtns[allBtns.length - 1].click(); return true; }" +
+            "}" +
+            "// Strategy 3: any button with delete-like SVG\n" +
+            "var allBtns = row.querySelectorAll('button');" +
+            "for (var b of allBtns) {" +
+            "  var svg = b.querySelector('svg');" +
+            "  if (svg && (b.getAttribute('aria-label')||'').toLowerCase().includes('delete')) {" +
+            "    b.click(); return true;" +
             "  }" +
-            "}", idx);
-        pause(1500);
-        System.out.println("[ConnectionPage] Delete clicked on row " + idx);
+            "}" +
+            "return false;", idx);
+        pause(2000);
+        System.out.println("[ConnectionPage] Delete clicked on row " + idx + ": " + clicked);
     }
 
     /**
      * Confirm the delete operation in the confirmation dialog.
      */
     public void confirmDelete() {
+        // Try dialog-scoped delete first
         Boolean clicked = (Boolean) js.executeScript(
-            "var dialogs = document.querySelectorAll('[role=\"dialog\"]');" +
+            "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"presentation\"]');" +
             "for (var d of dialogs) {" +
-            "  if (!d.textContent.includes('Delete Connection')) continue;" +
-            "  var btns = d.querySelectorAll('button');" +
-            "  for (var b of btns) {" +
-            "    if (b.textContent.trim() === 'Delete') { b.click(); return true; }" +
+            "  var r = d.getBoundingClientRect();" +
+            "  if (r.width < 50 || r.height < 50) continue;" +
+            "  var text = (d.textContent||'').toLowerCase();" +
+            "  if (text.includes('delete') || text.includes('confirm') || text.includes('remove')) {" +
+            "    var btns = d.querySelectorAll('button');" +
+            "    for (var b of btns) {" +
+            "      var t = b.textContent.trim();" +
+            "      if (t === 'Delete' || t === 'Confirm' || t === 'Yes' || t === 'OK') {" +
+            "        b.click(); return true;" +
+            "      }" +
+            "    }" +
+            "  }" +
+            "}" +
+            "// Fallback: find any visible Delete button\n" +
+            "var btns = document.querySelectorAll('button');" +
+            "for (var b of btns) {" +
+            "  var t = b.textContent.trim();" +
+            "  var r2 = b.getBoundingClientRect();" +
+            "  if (t === 'Delete' && r2.width > 0 && r2.height > 0) {" +
+            "    b.click(); return true;" +
             "  }" +
             "}" +
             "return false;"
@@ -469,13 +497,19 @@ public class ConnectionPage {
      */
     private void selectAutocomplete(By inputLocator, String searchText) {
         WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(inputLocator));
-        input.click();
+        // Use JS click to avoid "element click intercepted" when overlays exist
+        try {
+            input.click();
+        } catch (Exception e) {
+            System.out.println("[ConnectionPage] Standard click failed, using JS click: " + e.getMessage());
+            js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", input);
+        }
         pause(500);
 
         // Type to filter
         try { input.clear(); } catch (Exception ignored) {}
         input.sendKeys(searchText);
-        pause(1000);
+        pause(1500);
 
         // Wait for listbox and click matching option
         for (int attempt = 0; attempt < 5; attempt++) {

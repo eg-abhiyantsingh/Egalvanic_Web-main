@@ -152,7 +152,8 @@ public class ConnectionSmokeTestNG extends BaseTest {
             boolean deleteSuccess = connectionPage.waitForDeleteSuccess();
             logStep("Delete result: " + deleteSuccess);
 
-            // 5. Verify the row was removed
+            // 5. Navigate away and back to get fresh grid count
+            connectionPage.navigateToConnections();
             pause(2000);
             int afterCount = connectionPage.getGridRowCount();
             logStep("Grid rows after delete: " + afterCount);
