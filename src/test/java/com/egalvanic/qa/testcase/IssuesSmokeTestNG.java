@@ -10,62 +10,81 @@ import org.testng.annotations.Test;
 /**
  * Smoke Tests for Issues module.
  *
- * Tests the Issues page (card/tile layout):
- *   1. Create a new issue (Name + Asset + Priority + Type)
+ * Tests the Issues page (table/grid layout):
+ *   1. Create a new issue (Issue Class + Asset + Priority + Immediate Hazard + Customer Notified)
  *   2. Search, filter, and sort issues
  *   3. Activate jobs on an issue detail page
  *   4. Upload a photo to an issue
  *   5. Delete an issue and verify removal
  *
- * UI Flow: Sidebar → Issues → Card View / Create drawer / Detail page
+ * UI Flow: Sidebar → Issues → Table View / "Add Issue" drawer / Detail page
+ *
+ * Add Issue form fields (BASIC INFO):
+ *   - Priority (dropdown, default "Medium")
+ *   - Immediate Hazard (Yes/No toggle)
+ *   - Customer Notified (Yes/No toggle)
+ *   - Issue Class * (required dropdown)
+ *   - Asset (dropdown)
  *
  * Tests share a browser session (inherited from BaseTest).
  * Priority order ensures Create runs before dependent tests.
  */
 public class IssuesSmokeTestNG extends BaseTest {
 
-    private static final String TEST_ASSET_NAME = "ATS 1";
+    // Form field values matching what exists in the app
+    private static final String TEST_ISSUE_CLASS = "NEC Violation";
+    private static final String TEST_ASSET_NAME = "ATS";
     private static final String TEST_PRIORITY = "High";
-    private static final String TEST_ISSUE_TYPE = "Corrective";
     private static final String TEST_PHOTO_PATH = "src/test/resources/test-photo.jpg";
 
-    // Track created issue name across tests
+    // Track created issue across tests
     private String createdIssueName;
 
     // ================================================================
     // TEST 1: CREATE ISSUE
     // ================================================================
 
-    @Test(priority = 1, description = "Smoke: Create a new issue with all fields")
+    @Test(priority = 1, description = "Smoke: Create a new issue via Add Issue form")
     public void testCreateIssue() {
         ExtentReportManager.createTest(
                 AppConstants.MODULE_ISSUES, AppConstants.FEATURE_CREATE_ISSUE,
                 "TC_Issue_Create");
 
         try {
-            createdIssueName = "SmokeTest_Issue_" + System.currentTimeMillis();
-
             // 1. Navigate to Issues page
             issuePage.navigateToIssues();
             logStep("Navigated to Issues page");
             logStepWithScreenshot("Issues page loaded");
 
-            // 2. Open Create Issue form
+            int beforeCount = issuePage.getRowCount();
+            logStep("Row count before create: " + beforeCount);
+
+            // 2. Open Add Issue form
             issuePage.openCreateIssueForm();
-            logStep("Create Issue form opened");
+            logStep("Add Issue form opened");
+            logStepWithScreenshot("Add Issue drawer");
 
-            // 3. Fill the form
-            issuePage.fillIssueName(createdIssueName);
-            logStep("Filled issue name: " + createdIssueName);
-
-            issuePage.selectAsset(TEST_ASSET_NAME);
-            logStep("Selected asset: " + TEST_ASSET_NAME);
-
+            // 3. Fill the form fields
+            // Priority — select High (default is Medium)
             issuePage.selectPriority(TEST_PRIORITY);
             logStep("Selected priority: " + TEST_PRIORITY);
 
-            issuePage.selectType(TEST_ISSUE_TYPE);
-            logStep("Selected type: " + TEST_ISSUE_TYPE);
+            // Immediate Hazard — set to No
+            issuePage.setImmediateHazard(false);
+            logStep("Set Immediate Hazard: No");
+
+            // Customer Notified — set to No
+            issuePage.setCustomerNotified(false);
+            logStep("Set Customer Notified: No");
+
+            // Issue Class (required) — select NEC Violation
+            issuePage.selectIssueClass(TEST_ISSUE_CLASS);
+            logStep("Selected issue class: " + TEST_ISSUE_CLASS);
+
+            // Asset — select an asset
+            issuePage.selectAsset(TEST_ASSET_NAME);
+            logStep("Selected asset: " + TEST_ASSET_NAME);
+
             logStepWithScreenshot("Form filled — about to submit");
 
             // 4. Submit
@@ -77,16 +96,25 @@ public class IssuesSmokeTestNG extends BaseTest {
             Assert.assertTrue(success, "Issue creation did not complete successfully");
             logStep("Create success confirmed");
 
-            // 6. Verify issue appears
+            // 6. Verify issue count increased
             issuePage.navigateToIssues();
             pause(2000);
-            issuePage.searchIssues(createdIssueName);
-            pause(2000);
-            boolean found = issuePage.isIssueVisible(createdIssueName);
-            Assert.assertTrue(found, "Newly created issue not found: " + createdIssueName);
-            logStepWithScreenshot("Issue verified on page: " + createdIssueName);
 
-            ExtentReportManager.logPass("Issue created and verified: " + createdIssueName);
+            boolean countIncreased = false;
+            for (int attempt = 0; attempt < 5; attempt++) {
+                int afterCount = issuePage.getRowCount();
+                logStep("Post-create check " + (attempt + 1) + ": row count = " + afterCount);
+                if (afterCount > beforeCount) {
+                    countIncreased = true;
+                    break;
+                }
+                issuePage.navigateToIssues();
+                pause(2000);
+            }
+            Assert.assertTrue(countIncreased, "Issue count did not increase after creation");
+            logStepWithScreenshot("Issue created and verified in table");
+
+            ExtentReportManager.logPass("Issue created successfully");
 
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("issue_create_error");
@@ -109,17 +137,17 @@ public class IssuesSmokeTestNG extends BaseTest {
             issuePage.navigateToIssues();
             logStep("Navigated to Issues page");
 
-            // 2. Verify cards are populated
+            // 2. Verify rows are populated
             boolean hasIssues = issuePage.isCardsPopulated();
-            Assert.assertTrue(hasIssues, "Issues page has no cards");
-            int initialCount = issuePage.getCardCount();
-            logStep("Card count: " + initialCount);
-            logStepWithScreenshot("Issues cards loaded");
+            Assert.assertTrue(hasIssues, "Issues page has no rows");
+            int initialCount = issuePage.getRowCount();
+            logStep("Row count: " + initialCount);
+            logStepWithScreenshot("Issues table loaded");
 
-            // 3. Get first card title for valid search
+            // 3. Get first row title for valid search
             String firstTitle = issuePage.getFirstCardTitle();
-            Assert.assertNotNull(firstTitle, "First card title is null");
-            logStep("First card title: " + firstTitle);
+            Assert.assertNotNull(firstTitle, "First row title is null");
+            logStep("First row title: " + firstTitle);
 
             // 4. Search with valid term
             issuePage.searchIssues(firstTitle);
@@ -136,17 +164,17 @@ public class IssuesSmokeTestNG extends BaseTest {
             Assert.assertTrue(notFound, "Invalid search unexpectedly returned results");
             logStep("Invalid search correctly returned no match");
 
-            // 6. Clear search and verify cards restored
+            // 6. Clear search and verify rows restored
             issuePage.clearSearch();
             pause(2000);
             boolean restored = issuePage.isCardsPopulated();
-            Assert.assertTrue(restored, "Cards not restored after clearing search");
-            logStep("Cards restored after clearing search");
+            Assert.assertTrue(restored, "Rows not restored after clearing search");
+            logStep("Rows restored after clearing search");
 
             // 7. Try sort if available (soft — sort UI may vary)
             try {
-                issuePage.clickSortOption("Name");
-                logStep("Sort by Name applied");
+                issuePage.clickSortOption("Title");
+                logStep("Sort by Title applied");
                 logStepWithScreenshot("After sort");
             } catch (Exception e) {
                 logWarning("Sort not available or failed: " + e.getMessage());
@@ -255,9 +283,9 @@ public class IssuesSmokeTestNG extends BaseTest {
             issuePage.navigateToIssues();
             logStep("Navigated to Issues page");
 
-            int beforeCount = issuePage.getCardCount();
+            int beforeCount = issuePage.getRowCount();
             Assert.assertTrue(beforeCount > 0, "No issues to delete");
-            logStep("Card count before delete: " + beforeCount);
+            logStep("Row count before delete: " + beforeCount);
 
             String firstTitle = issuePage.getFirstCardTitle();
             logStep("Target issue for deletion: " + firstTitle);
@@ -286,8 +314,8 @@ public class IssuesSmokeTestNG extends BaseTest {
 
             boolean deleted = false;
             for (int attempt = 0; attempt < 5; attempt++) {
-                int afterCount = issuePage.getCardCount();
-                logStep("Post-delete check " + (attempt + 1) + ": card count = " + afterCount);
+                int afterCount = issuePage.getRowCount();
+                logStep("Post-delete check " + (attempt + 1) + ": row count = " + afterCount);
                 if (afterCount < beforeCount) {
                     deleted = true;
                     break;

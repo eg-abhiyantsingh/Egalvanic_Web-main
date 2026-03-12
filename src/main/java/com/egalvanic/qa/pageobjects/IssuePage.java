@@ -17,12 +17,17 @@ import java.util.List;
  * Page Object Model for the Issues page.
  * Supports CRUD operations on issues.
  *
- * UI structure:
- *   - Supports both MUI DataGrid rows AND Card/Tile layout (auto-detected)
- *   - "Create Issue" button opens a side drawer/dialog
- *   - Create form has: Name, Asset (autocomplete), Priority (dropdown), Type (dropdown)
- *   - Issue detail page has: Activate Jobs button, Photo upload
- *   - Search input filters items
+ * UI structure (from live app):
+ *   - Issues list is a TABLE/GRID with columns: Title, Issue Class, Priority, Asset
+ *   - "+ Create Issue" button opens a right-side drawer titled "Add Issue"
+ *   - Add Issue form fields (BASIC INFO section):
+ *       1. Priority        — dropdown (default: "Medium")
+ *       2. Immediate Hazard — Yes/No toggle buttons
+ *       3. Customer Notified — Yes/No toggle buttons
+ *       4. Issue Class *    — required dropdown ("Select an issue class")
+ *       5. Asset            — dropdown ("Select an asset")
+ *   - Clicking a row opens issue detail page
+ *   - Detail page has: Activate Jobs button, Photo upload
  */
 public class IssuePage {
 
@@ -39,43 +44,41 @@ public class IssuePage {
     // Navigation
     private static final By ISSUES_NAV = By.xpath(
             "//a[normalize-space()='Issues'] | //span[normalize-space()='Issues']");
-    private static final By ASSETS_NAV = By.xpath(
-            "//a[normalize-space()='Assets'] | //span[normalize-space()='Assets']");
 
-    // Create Issue form
+    // Create Issue button (page header "+" button)
     private static final By CREATE_ISSUE_BTN = By.xpath(
             "//button[normalize-space()='Create Issue' or contains(normalize-space(),'Create Issue')]");
-    private static final By ISSUE_FORM_DIALOG = By.xpath(
-            "//*[contains(text(),'Add Issue') or contains(text(),'Create Issue') or contains(text(),'BASIC INFO') or contains(text(),'New Issue')]");
-    private static final By ISSUE_NAME_INPUT = By.xpath(
-            "//input[@placeholder='Enter Issue Name' or @placeholder='Enter issue name' or @placeholder='Issue Name' or @placeholder='Enter name'"
-            + " or @placeholder='Enter Issue name' or @placeholder='Issue name' or @placeholder='Name' or @placeholder='Enter Name'"
-            + " or @placeholder='Enter issue Name']"
-            + " | //label[contains(text(),'Name') or contains(text(),'name')]/following::input[1]"
-            + " | //div[contains(@class,'MuiDrawer-paper')]//input[@type='text' or not(@type)][1]");
-    private static final By ASSET_INPUT = By.xpath(
-            "//input[@placeholder='Select Asset' or @placeholder='Select asset' or @placeholder='Search asset'"
-            + " or @placeholder='Select Asset...' or @placeholder='Select an asset' or @placeholder='Asset'"
-            + " or @placeholder='Choose Asset' or @placeholder='Choose asset']"
-            + " | //label[contains(text(),'Asset')]/following::input[1]");
+
+    // Add Issue form header
+    private static final By ADD_ISSUE_HEADER = By.xpath(
+            "//*[normalize-space()='Add Issue']");
+
+    // Form fields — based on actual UI screenshot
+    // Priority dropdown (MUI Autocomplete with placeholder or label)
     private static final By PRIORITY_INPUT = By.xpath(
-            "//input[@placeholder='Select Priority' or @placeholder='Select priority' or @placeholder='Priority'"
-            + " or @placeholder='Choose Priority' or @placeholder='Choose priority'"
-            + " or @placeholder='Select a priority']"
-            + " | //label[contains(text(),'Priority')]/following::input[1]");
-    private static final By TYPE_INPUT = By.xpath(
-            "//input[@placeholder='Select Type' or @placeholder='Select type' or @placeholder='Select Issue Type'"
-            + " or @placeholder='Type' or @placeholder='Select issue type'"
-            + " or @placeholder='Choose Type' or @placeholder='Choose type']"
-            + " | //label[contains(text(),'Type') or contains(text(),'type')]/following::input[1]");
+            "//label[contains(text(),'Priority')]/following::input[1]"
+            + " | //input[@placeholder='Priority' or @placeholder='Select priority' or @placeholder='Select a priority']");
+
+    // Issue Class dropdown (required, placeholder = "Select an issue class")
+    private static final By ISSUE_CLASS_INPUT = By.xpath(
+            "//input[@placeholder='Select an issue class' or @placeholder='Select issue class'"
+            + " or @placeholder='Issue Class' or @placeholder='Select a class']"
+            + " | //label[contains(text(),'Issue Class')]/following::input[1]");
+
+    // Asset dropdown (placeholder = "Select an asset")
+    private static final By ASSET_INPUT = By.xpath(
+            "//input[@placeholder='Select an asset' or @placeholder='Select Asset'"
+            + " or @placeholder='Select asset' or @placeholder='Asset'"
+            + " or @placeholder='Search asset' or @placeholder='Choose Asset']"
+            + " | //label[contains(text(),'Asset')]/following::input[1]");
 
     // Search
     private static final By SEARCH_INPUT = By.xpath(
             "//input[contains(@placeholder,'Search') or contains(@placeholder,'search')]");
 
-    // Issue items — support both card/tile layout AND MUI DataGrid rows (consistent with AssetPage/ConnectionPage)
-    private static final By ISSUE_CARDS = By.cssSelector(
-            "[data-rowindex], [class*='MuiCard'], [class*='card'], [class*='issue-card'], [class*='tile']");
+    // Table rows (Issues list is a table — columns: Title, Issue Class, Priority, Asset)
+    private static final By TABLE_ROWS = By.xpath(
+            "//tbody//tr | //div[contains(@class,'MuiDataGrid-row') and @data-rowindex]");
 
     // Issue detail page
     private static final By ACTIVATE_JOBS_BTN = By.xpath(
@@ -85,8 +88,6 @@ public class IssuePage {
 
     // Photo upload
     private static final By PHOTO_UPLOAD_INPUT = By.xpath("//input[@type='file']");
-    private static final By PHOTOS_TAB = By.xpath(
-            "//button[normalize-space()='Photos'] | //*[contains(@class,'MuiTab')][contains(normalize-space(),'Photos')]");
     private static final By PHOTO_THUMBNAILS = By.xpath(
             "//img[contains(@class,'thumbnail') or contains(@class,'photo') or contains(@src,'blob:') or contains(@src,'upload')]");
 
@@ -95,10 +96,6 @@ public class IssuePage {
             "//button[normalize-space()='Delete Issue' or normalize-space()='Delete']");
     private static final By CONFIRM_DELETE_BTN = By.xpath(
             "//button[contains(@class,'MuiButton-containedError') and contains(.,'Delete')]");
-
-    // Submit
-    private static final By SUBMIT_CREATE_BTN = By.xpath(
-            "//button[normalize-space()='Create Issue' or normalize-space()='Create' or normalize-space()='Save']");
 
     // ================================================================
     // CONSTRUCTOR
@@ -127,7 +124,7 @@ public class IssuePage {
                 js.executeScript(
                     "var links = document.querySelectorAll('a');" +
                     "for (var el of links) {" +
-                    "  if (el.textContent.trim() === 'Assets') { el.click(); return; }" +
+                    "  if (el.textContent.trim() === 'Assets' || el.textContent.trim() === 'Locations') { el.click(); return; }" +
                     "}");
                 pause(1500);
             } catch (Exception e) {
@@ -158,13 +155,13 @@ public class IssuePage {
     // ================================================================
 
     /**
-     * Open the Create Issue form (drawer/dialog).
+     * Open the Create Issue form (right drawer "Add Issue").
      */
     public void openCreateIssueForm() {
         dismissAnyDialog();
         pause(300);
 
-        // Click the "Create Issue" button in page header
+        // Click the "+ Create Issue" button in page header
         js.executeScript(
             "var btns = document.querySelectorAll('button');" +
             "for (var b of btns) {" +
@@ -177,27 +174,27 @@ public class IssuePage {
         );
         pause(2000);
 
-        // Wait for form to appear
+        // Wait for "Add Issue" drawer to appear
         try {
-            wait.until(ExpectedConditions.visibilityOfElementLocated(ISSUE_FORM_DIALOG));
+            wait.until(ExpectedConditions.visibilityOfElementLocated(ADD_ISSUE_HEADER));
         } catch (Exception e) {
-            System.out.println("[IssuePage] Form dialog not found with primary selector, trying name input");
+            System.out.println("[IssuePage] Add Issue header not found, trying BASIC INFO section");
             try {
-                wait.until(ExpectedConditions.visibilityOfElementLocated(ISSUE_NAME_INPUT));
+                wait.until(ExpectedConditions.visibilityOfElementLocated(
+                    By.xpath("//*[contains(text(),'BASIC INFO')]")));
             } catch (Exception e2) {
-                System.out.println("[IssuePage] Name input not found either — logging drawer contents for diagnostics");
-                // Log available inputs in the drawer for debugging
+                // Log drawer contents for diagnostics
                 String diag = (String) js.executeScript(
                     "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"], [role=\"dialog\"], [role=\"presentation\"]');" +
                     "var info = 'Drawers: ' + drawers.length + '. ';" +
                     "for (var d of drawers) {" +
                     "  var inputs = d.querySelectorAll('input');" +
-                    "  info += 'Drawer inputs: ' + inputs.length + ' [';" +
+                    "  info += 'Inputs: ' + inputs.length + ' [';" +
                     "  for (var inp of inputs) {" +
-                    "    info += '{type=' + (inp.type||'') + ', placeholder=' + (inp.placeholder||'') + ', name=' + (inp.name||'') + '} ';" +
+                    "    info += '{type=' + (inp.type||'') + ', placeholder=' + (inp.placeholder||'') + '} ';" +
                     "  }" +
                     "  info += '] ';" +
-                    "  var labels = d.querySelectorAll('label');" +
+                    "  var labels = d.querySelectorAll('label, p, h6, h5');" +
                     "  info += 'Labels: [';" +
                     "  for (var l of labels) { info += l.textContent.trim() + ', '; }" +
                     "  info += '] ';" +
@@ -207,19 +204,84 @@ public class IssuePage {
                 throw e2;
             }
         }
-        System.out.println("[IssuePage] Create Issue form opened");
+        System.out.println("[IssuePage] Add Issue form opened");
     }
 
     /**
-     * Fill the issue name field.
+     * Select priority from the dropdown (default is "Medium").
+     * If desired priority matches default, skip selection.
      */
-    public void fillIssueName(String name) {
-        typeField(ISSUE_NAME_INPUT, name);
-        System.out.println("[IssuePage] Filled issue name: " + name);
+    public void selectPriority(String priority) {
+        // Check if priority is already set to the desired value
+        Boolean alreadySet = (Boolean) js.executeScript(
+            "var labels = document.querySelectorAll('label, p, span');" +
+            "for (var l of labels) {" +
+            "  if (l.textContent.trim() === 'Priority') {" +
+            "    var container = l.closest('.MuiFormControl-root') || l.parentElement;" +
+            "    if (container && container.textContent.includes(arguments[0])) return true;" +
+            "  }" +
+            "}" +
+            "return false;", priority);
+
+        if (Boolean.TRUE.equals(alreadySet)) {
+            System.out.println("[IssuePage] Priority already set to: " + priority);
+            return;
+        }
+
+        typeAndSelectDropdown(PRIORITY_INPUT, priority, priority);
+        System.out.println("[IssuePage] Selected priority: " + priority);
     }
 
     /**
-     * Select an asset from the autocomplete dropdown.
+     * Set the Immediate Hazard toggle (Yes/No buttons).
+     */
+    public void setImmediateHazard(boolean yes) {
+        String label = yes ? "Yes" : "No";
+        js.executeScript(
+            "var allLabels = document.querySelectorAll('label, p, span, h6');" +
+            "for (var l of allLabels) {" +
+            "  if (l.textContent.trim() === 'Immediate Hazard') {" +
+            "    var container = l.closest('.MuiFormControl-root') || l.closest('[class*=\"toggle\"]') || l.parentElement.parentElement;" +
+            "    var buttons = container.querySelectorAll('button');" +
+            "    for (var b of buttons) {" +
+            "      if (b.textContent.trim() === arguments[0]) { b.click(); return; }" +
+            "    }" +
+            "  }" +
+            "}", label);
+        pause(300);
+        System.out.println("[IssuePage] Set Immediate Hazard: " + label);
+    }
+
+    /**
+     * Set the Customer Notified toggle (Yes/No buttons).
+     */
+    public void setCustomerNotified(boolean yes) {
+        String label = yes ? "Yes" : "No";
+        js.executeScript(
+            "var allLabels = document.querySelectorAll('label, p, span, h6');" +
+            "for (var l of allLabels) {" +
+            "  if (l.textContent.trim() === 'Customer Notified') {" +
+            "    var container = l.closest('.MuiFormControl-root') || l.closest('[class*=\"toggle\"]') || l.parentElement.parentElement;" +
+            "    var buttons = container.querySelectorAll('button');" +
+            "    for (var b of buttons) {" +
+            "      if (b.textContent.trim() === arguments[0]) { b.click(); return; }" +
+            "    }" +
+            "  }" +
+            "}", label);
+        pause(300);
+        System.out.println("[IssuePage] Set Customer Notified: " + label);
+    }
+
+    /**
+     * Select an issue class from the dropdown (required field).
+     */
+    public void selectIssueClass(String issueClass) {
+        typeAndSelectDropdown(ISSUE_CLASS_INPUT, issueClass, issueClass);
+        System.out.println("[IssuePage] Selected issue class: " + issueClass);
+    }
+
+    /**
+     * Select an asset from the dropdown.
      */
     public void selectAsset(String assetName) {
         typeAndSelectDropdown(ASSET_INPUT, assetName, assetName);
@@ -227,33 +289,16 @@ public class IssuePage {
     }
 
     /**
-     * Select priority from the dropdown.
-     */
-    public void selectPriority(String priority) {
-        typeAndSelectDropdown(PRIORITY_INPUT, priority, priority);
-        System.out.println("[IssuePage] Selected priority: " + priority);
-    }
-
-    /**
-     * Select issue type from the dropdown.
-     */
-    public void selectType(String issueType) {
-        typeAndSelectDropdown(TYPE_INPUT, issueType, issueType);
-        System.out.println("[IssuePage] Selected type: " + issueType);
-    }
-
-    /**
-     * Submit the Create Issue form.
+     * Submit the Create Issue form (click Save/Create inside the drawer).
      */
     public void submitCreateIssue() {
-        // Find submit button inside the drawer (not the page-level Create Issue button)
         js.executeScript(
             "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"], [class*=\"MuiDialog-paper\"], [role=\"dialog\"], [role=\"presentation\"]');" +
             "for (var d of drawers) {" +
             "  var btns = d.querySelectorAll('button');" +
             "  for (var b of btns) {" +
             "    var text = b.textContent.trim();" +
-            "    if ((text === 'Create Issue' || text === 'Create' || text === 'Save') && b.getBoundingClientRect().width > 0) {" +
+            "    if ((text === 'Create Issue' || text === 'Create' || text === 'Save' || text === 'Submit') && b.getBoundingClientRect().width > 0) {" +
             "      b.scrollIntoView({block:'center'});" +
             "      b.click();" +
             "      return;" +
@@ -274,7 +319,7 @@ public class IssuePage {
             // Success indicator (toast message)
             try {
                 List<WebElement> success = driver.findElements(By.xpath(
-                    "//*[contains(text(),'created') or contains(text(),'Created') or contains(text(),'success')]"));
+                    "//*[contains(text(),'created') or contains(text(),'Created') or contains(text(),'success') or contains(text(),'Success')]"));
                 if (!success.isEmpty()) {
                     System.out.println("[IssuePage] Success indicator found");
                     closeDrawer();
@@ -284,118 +329,96 @@ public class IssuePage {
 
             // Panel closed = form submitted successfully
             if (driver.findElements(panelHeader).isEmpty()) {
-                System.out.println("[IssuePage] Create panel closed — creation successful");
+                System.out.println("[IssuePage] Add Issue panel closed — creation successful");
                 return true;
             }
             pause(1000);
         }
 
-        System.out.println("[IssuePage] Create panel still open after 25s — creation may have failed");
+        System.out.println("[IssuePage] Add Issue panel still open after 25s — creation may have failed");
         closeDrawer();
         return false;
     }
 
     // ================================================================
-    // CARDS / READ
+    // TABLE / READ
     // ================================================================
 
     /**
-     * Get the count of visible issue cards.
+     * Get the count of visible issue rows in the table/grid.
      */
-    public int getCardCount() {
+    public int getRowCount() {
         try {
-            // Use JS to find items — try DataGrid rows first (consistent with AssetPage/ConnectionPage), then cards
             Long count = (Long) js.executeScript(
-                "// Strategy 1: MUI DataGrid rows (like AssetPage and ConnectionPage)\n" +
-                "var gridRows = document.querySelectorAll('[data-rowindex]');" +
-                "if (gridRows.length > 0) return gridRows.length;" +
-                "// Strategy 2: table body rows\n" +
-                "var tableRows = document.querySelectorAll('tbody tr, [role=\"row\"]');" +
-                "var visibleRows = 0;" +
+                "// Strategy 1: table body rows\n" +
+                "var tableRows = document.querySelectorAll('tbody tr');" +
+                "var visible = 0;" +
                 "for (var r of tableRows) {" +
                 "  var rect = r.getBoundingClientRect();" +
-                "  if (rect.width > 50 && rect.height > 10) visibleRows++;" +
+                "  if (rect.width > 50 && rect.height > 10) visible++;" +
                 "}" +
-                "if (visibleRows > 0) return visibleRows;" +
-                "// Strategy 3: Card/tile layout (original)\n" +
-                "var cards = document.querySelectorAll('[class*=\"MuiCard\"], [class*=\"card\"], [class*=\"issue-card\"], [class*=\"tile\"]');" +
-                "var visible = 0;" +
-                "for (var c of cards) {" +
-                "  var r = c.getBoundingClientRect();" +
-                "  if (r.width > 50 && r.height > 50) visible++;" +
-                "}" +
-                "return visible;"
+                "if (visible > 0) return visible;" +
+                "// Strategy 2: MUI DataGrid rows\n" +
+                "var gridRows = document.querySelectorAll('[data-rowindex]');" +
+                "return gridRows.length;"
             );
             int result = count != null ? count.intValue() : 0;
-            System.out.println("[IssuePage] Card count: " + result);
+            System.out.println("[IssuePage] Row count: " + result);
             return result;
         } catch (Exception e) {
-            System.out.println("[IssuePage] Error counting cards: " + e.getMessage());
+            System.out.println("[IssuePage] Error counting rows: " + e.getMessage());
             return 0;
         }
     }
 
     /**
-     * Check if the issues page has any cards populated.
+     * Alias for backward compatibility.
+     */
+    public int getCardCount() {
+        return getRowCount();
+    }
+
+    /**
+     * Check if the issues table has any rows populated.
      */
     public boolean isCardsPopulated() {
         for (int i = 0; i < 10; i++) {
-            if (getCardCount() > 0) return true;
+            if (getRowCount() > 0) return true;
             pause(1000);
         }
         return false;
     }
 
     /**
-     * Get the title/name from the first issue card.
+     * Get the title from the first row in the issues table (first cell / Title column).
      */
     public String getFirstCardTitle() {
         try {
             String title = (String) js.executeScript(
-                "// Strategy 1: MUI DataGrid — get first row's name/title cell\n" +
-                "var gridRows = document.querySelectorAll('[data-rowindex]');" +
-                "if (gridRows.length > 0) {" +
-                "  var row = gridRows[0];" +
-                "  // Try common field names for issue name\n" +
-                "  var nameCell = row.querySelector('[data-field=\"name\"], [data-field=\"issueName\"], [data-field=\"title\"], [data-field=\"label\"]');" +
-                "  if (nameCell) return nameCell.textContent.trim();" +
-                "  // Fallback: first cell with text\n" +
-                "  var cells = row.querySelectorAll('[data-field]');" +
-                "  for (var cell of cells) {" +
-                "    var txt = cell.textContent.trim();" +
-                "    if (txt.length > 2 && txt.length < 100) return txt;" +
-                "  }" +
-                "  return row.textContent.trim().split('\\n')[0].trim();" +
-                "}" +
-                "// Strategy 2: table rows\n" +
+                "// Strategy 1: table body rows — first cell is Title column\n" +
                 "var tableRows = document.querySelectorAll('tbody tr');" +
                 "if (tableRows.length > 0) {" +
                 "  var cells = tableRows[0].querySelectorAll('td');" +
-                "  for (var c of cells) {" +
-                "    var txt = c.textContent.trim();" +
-                "    if (txt.length > 2 && txt.length < 100) return txt;" +
-                "  }" +
+                "  if (cells.length > 0) return cells[0].textContent.trim();" +
                 "}" +
-                "// Strategy 3: Card/tile layout (original)\n" +
-                "var cards = document.querySelectorAll('[class*=\"MuiCard\"], [class*=\"card\"], [class*=\"issue-card\"], [class*=\"tile\"]');" +
-                "for (var c of cards) {" +
-                "  var r = c.getBoundingClientRect();" +
-                "  if (r.width > 50 && r.height > 50) {" +
-                "    var heading = c.querySelector('h1, h2, h3, h4, h5, h6, [class*=\"title\"], [class*=\"Title\"], [class*=\"heading\"], [class*=\"name\"], [class*=\"Name\"]');" +
-                "    if (heading) return heading.textContent.trim();" +
-                "    var texts = c.querySelectorAll('p, span, div');" +
-                "    for (var t of texts) {" +
-                "      var txt = t.textContent.trim();" +
-                "      if (txt.length > 3 && txt.length < 100) return txt;" +
-                "    }" +
+                "// Strategy 2: MUI DataGrid rows\n" +
+                "var gridRows = document.querySelectorAll('[data-rowindex]');" +
+                "if (gridRows.length > 0) {" +
+                "  var row = gridRows[0];" +
+                "  var nameCell = row.querySelector('[data-field=\"title\"], [data-field=\"name\"], [data-field=\"issueName\"]');" +
+                "  if (nameCell) return nameCell.textContent.trim();" +
+                "  var cells = row.querySelectorAll('[data-field]');" +
+                "  for (var cell of cells) {" +
+                "    var txt = cell.textContent.trim();" +
+                "    if (txt.length > 1 && txt.length < 100) return txt;" +
                 "  }" +
                 "}" +
                 "return null;"
             );
-            System.out.println("[IssuePage] First card title: " + title);
+            System.out.println("[IssuePage] First row title: " + title);
             return title;
         } catch (Exception e) {
-            System.out.println("[IssuePage] Error getting first card title: " + e.getMessage());
+            System.out.println("[IssuePage] Error getting first row title: " + e.getMessage());
             return null;
         }
     }
@@ -406,22 +429,10 @@ public class IssuePage {
     public boolean isIssueVisible(String issueName) {
         try {
             Boolean found = (Boolean) js.executeScript(
-                "// Check DataGrid rows first\n" +
-                "var gridRows = document.querySelectorAll('[data-rowindex]');" +
-                "for (var r of gridRows) {" +
+                "var rows = document.querySelectorAll('tbody tr, [data-rowindex]');" +
+                "for (var r of rows) {" +
                 "  if (r.textContent.indexOf(arguments[0]) > -1) return true;" +
                 "}" +
-                "// Check table rows\n" +
-                "var tableRows = document.querySelectorAll('tbody tr');" +
-                "for (var r of tableRows) {" +
-                "  if (r.textContent.indexOf(arguments[0]) > -1) return true;" +
-                "}" +
-                "// Check cards\n" +
-                "var cards = document.querySelectorAll('[class*=\"MuiCard\"], [class*=\"card\"], [class*=\"issue-card\"], [class*=\"tile\"]');" +
-                "for (var c of cards) {" +
-                "  if (c.textContent.indexOf(arguments[0]) > -1) return true;" +
-                "}" +
-                // Also check plain page content as fallback
                 "return document.body.textContent.indexOf(arguments[0]) > -1;",
                 issueName);
             boolean result = Boolean.TRUE.equals(found);
@@ -443,7 +454,6 @@ public class IssuePage {
     public void searchIssues(String query) {
         try {
             WebElement searchInput = wait.until(ExpectedConditions.visibilityOfElementLocated(SEARCH_INPUT));
-            // Use JS to clear and type (avoids backdrop interception)
             js.executeScript(
                 "var el = arguments[0];" +
                 "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
@@ -481,26 +491,24 @@ public class IssuePage {
     }
 
     /**
-     * Click a sort option (e.g., "Name", "Date", "Priority").
-     * Sort UI varies — try common patterns: dropdown, button group, column headers.
+     * Click a sort option (column header click for table-based layout).
      */
     public void clickSortOption(String sortLabel) {
         Boolean sorted = (Boolean) js.executeScript(
             "var sortLabel = arguments[0];" +
-            // Strategy 1: Sort dropdown/select
-            "var sortBtns = document.querySelectorAll('[class*=\"sort\"], [class*=\"Sort\"], [aria-label*=\"sort\"], [aria-label*=\"Sort\"]');" +
+            // Strategy 1: Column header click (table has headers: Title, Issue Class, Priority, Asset)
+            "var headers = document.querySelectorAll('th, [role=\"columnheader\"], [class*=\"sortable\"], thead td');" +
+            "for (var h of headers) {" +
+            "  if (h.textContent.trim().includes(sortLabel)) { h.click(); return true; }" +
+            "}" +
+            // Strategy 2: Sort dropdown/menu
+            "var sortBtns = document.querySelectorAll('[class*=\"sort\"], [class*=\"Sort\"], [aria-label*=\"sort\"]');" +
             "for (var b of sortBtns) {" +
             "  if (b.tagName === 'BUTTON' || b.tagName === 'SELECT') { b.click(); break; }" +
             "}" +
-            // Strategy 2: Find option matching label
             "var opts = document.querySelectorAll('li[role=\"option\"], li[role=\"menuitem\"], [class*=\"MenuItem\"]');" +
             "for (var o of opts) {" +
             "  if (o.textContent.trim().includes(sortLabel)) { o.click(); return true; }" +
-            "}" +
-            // Strategy 3: Column header click
-            "var headers = document.querySelectorAll('th, [role=\"columnheader\"], [class*=\"sortable\"]');" +
-            "for (var h of headers) {" +
-            "  if (h.textContent.trim().includes(sortLabel)) { h.click(); return true; }" +
             "}" +
             "return false;",
             sortLabel);
@@ -508,17 +516,15 @@ public class IssuePage {
     }
 
     /**
-     * Click a filter option (e.g., "High", "Open", etc.).
+     * Click a filter option.
      */
     public void clickFilterOption(String filterLabel) {
         Boolean filtered = (Boolean) js.executeScript(
             "var label = arguments[0];" +
-            // Strategy 1: Filter buttons/chips
             "var chips = document.querySelectorAll('[class*=\"MuiChip\"], [class*=\"filter\"], [class*=\"Filter\"], button');" +
             "for (var c of chips) {" +
             "  if (c.textContent.trim() === label) { c.click(); return true; }" +
             "}" +
-            // Strategy 2: Dropdown menu items
             "var items = document.querySelectorAll('li[role=\"option\"], li[role=\"menuitem\"]');" +
             "for (var i of items) {" +
             "  if (i.textContent.trim() === label) { i.click(); return true; }" +
@@ -534,34 +540,23 @@ public class IssuePage {
     // ================================================================
 
     /**
-     * Click on the first issue card to open its detail page.
+     * Click on the first issue row to open its detail page.
      */
     public void openFirstIssueDetail() {
         js.executeScript(
-            "// Strategy 1: DataGrid row — click first row's link or the row itself\n" +
-            "var gridRows = document.querySelectorAll('[data-rowindex]');" +
-            "if (gridRows.length > 0) {" +
-            "  var row = gridRows[0];" +
-            "  var link = row.querySelector('a');" +
-            "  if (link) { link.click(); return; }" +
-            "  row.click(); return;" +
-            "}" +
-            "// Strategy 2: table rows\n" +
+            "// Strategy 1: table body rows — click first row or its link\n" +
             "var tableRows = document.querySelectorAll('tbody tr');" +
             "if (tableRows.length > 0) {" +
             "  var link = tableRows[0].querySelector('a');" +
             "  if (link) { link.click(); return; }" +
             "  tableRows[0].click(); return;" +
             "}" +
-            "// Strategy 3: Card/tile layout (original)\n" +
-            "var cards = document.querySelectorAll('[class*=\"MuiCard\"], [class*=\"card\"], [class*=\"issue-card\"], [class*=\"tile\"]');" +
-            "for (var c of cards) {" +
-            "  var r = c.getBoundingClientRect();" +
-            "  if (r.width > 50 && r.height > 50) {" +
-            "    var link = c.querySelector('a');" +
-            "    if (link) { link.click(); return; }" +
-            "    c.click(); return;" +
-            "  }" +
+            "// Strategy 2: MUI DataGrid rows\n" +
+            "var gridRows = document.querySelectorAll('[data-rowindex]');" +
+            "if (gridRows.length > 0) {" +
+            "  var link = gridRows[0].querySelector('a');" +
+            "  if (link) { link.click(); return; }" +
+            "  gridRows[0].click(); return;" +
             "}"
         );
         pause(3000);
@@ -570,35 +565,17 @@ public class IssuePage {
     }
 
     /**
-     * Click on a specific issue card by name to open its detail page.
+     * Click on a specific issue row by name to open its detail page.
      */
     public void openIssueDetail(String issueName) {
         js.executeScript(
-            "// Strategy 1: DataGrid rows\n" +
-            "var gridRows = document.querySelectorAll('[data-rowindex]');" +
-            "for (var r of gridRows) {" +
-            "  if (r.textContent.indexOf(arguments[0]) > -1) {" +
+            "var name = arguments[0];" +
+            "var rows = document.querySelectorAll('tbody tr, [data-rowindex]');" +
+            "for (var r of rows) {" +
+            "  if (r.textContent.indexOf(name) > -1) {" +
             "    var link = r.querySelector('a');" +
             "    if (link) { link.click(); return; }" +
             "    r.click(); return;" +
-            "  }" +
-            "}" +
-            "// Strategy 2: table rows\n" +
-            "var tableRows = document.querySelectorAll('tbody tr');" +
-            "for (var r of tableRows) {" +
-            "  if (r.textContent.indexOf(arguments[0]) > -1) {" +
-            "    var link = r.querySelector('a');" +
-            "    if (link) { link.click(); return; }" +
-            "    r.click(); return;" +
-            "  }" +
-            "}" +
-            "// Strategy 3: Card/tile layout (original)\n" +
-            "var cards = document.querySelectorAll('[class*=\"MuiCard\"], [class*=\"card\"], [class*=\"issue-card\"], [class*=\"tile\"]');" +
-            "for (var c of cards) {" +
-            "  if (c.textContent.indexOf(arguments[0]) > -1) {" +
-            "    var link = c.querySelector('a');" +
-            "    if (link) { link.click(); return; }" +
-            "    c.click(); return;" +
             "  }" +
             "}",
             issueName);
@@ -630,7 +607,6 @@ public class IssuePage {
      */
     public void clickActivateJobs() {
         try {
-            // Try finding the button directly
             Boolean clicked = (Boolean) js.executeScript(
                 "var btns = document.querySelectorAll('button');" +
                 "for (var b of btns) {" +
@@ -660,7 +636,6 @@ public class IssuePage {
 
     /**
      * Verify that jobs have been activated.
-     * Checks for: button text change, success toast, or status indicator.
      */
     public boolean isJobActivated() {
         for (int i = 0; i < 10; i++) {
@@ -710,7 +685,6 @@ public class IssuePage {
      */
     public void navigateToPhotosSection() {
         try {
-            // Click Photos tab if it exists
             Boolean clicked = (Boolean) js.executeScript(
                 "var tabs = document.querySelectorAll('[class*=\"MuiTab\"], [role=\"tab\"], button');" +
                 "for (var t of tabs) {" +
@@ -749,12 +723,11 @@ public class IssuePage {
                 "}");
             pause(500);
 
-            // Find file input and send the file path
             List<WebElement> fileInputs = driver.findElements(PHOTO_UPLOAD_INPUT);
             if (!fileInputs.isEmpty()) {
                 fileInputs.get(0).sendKeys(absolutePath);
                 System.out.println("[IssuePage] Photo file sent to file input");
-                pause(3000); // Wait for upload to process
+                pause(3000);
             } else {
                 // Try clicking an upload button to trigger file dialog
                 js.executeScript(
@@ -766,7 +739,6 @@ public class IssuePage {
                     "  }" +
                     "}");
                 pause(1000);
-                // Retry finding file input
                 fileInputs = driver.findElements(PHOTO_UPLOAD_INPUT);
                 if (!fileInputs.isEmpty()) {
                     fileInputs.get(0).sendKeys(absolutePath);
@@ -822,7 +794,6 @@ public class IssuePage {
      * Delete the current issue from its detail page via kebab menu or delete button.
      */
     public void deleteCurrentIssue() {
-        // Strategy 1: Look for a direct Delete button
         Boolean clicked = (Boolean) js.executeScript(
             "var btns = document.querySelectorAll('button');" +
             "for (var b of btns) {" +
@@ -834,7 +805,7 @@ public class IssuePage {
             "return false;");
 
         if (!Boolean.TRUE.equals(clicked)) {
-            // Strategy 2: Kebab menu (small icon buttons in header)
+            // Try kebab menu (icon button)
             js.executeScript(
                 "var iconBtns = document.querySelectorAll('[class*=\"MuiIconButton\"]');" +
                 "for (var b of iconBtns) {" +
@@ -845,7 +816,6 @@ public class IssuePage {
                 "}");
             pause(500);
 
-            // Click Delete in menu
             js.executeScript(
                 "var items = document.querySelectorAll('li[role=\"menuitem\"], [class*=\"MuiMenuItem\"]');" +
                 "for (var i of items) {" +
@@ -872,7 +842,6 @@ public class IssuePage {
                 "    return true;" +
                 "  }" +
                 "}" +
-                // Fallback: dialog Delete button
                 "var dialogs = document.querySelectorAll('[role=\"dialog\"], [class*=\"MuiDialog-paper\"]');" +
                 "for (var d of dialogs) {" +
                 "  var text = (d.textContent||'').toLowerCase();" +
@@ -898,12 +867,10 @@ public class IssuePage {
      */
     public boolean waitForDeleteSuccess() {
         for (int i = 0; i < 15; i++) {
-            // If redirected back to issues list
             if (driver.getCurrentUrl().matches(".*/issues/?$")) {
                 System.out.println("[IssuePage] Delete success — redirected to issues list");
                 return true;
             }
-            // Check for success toast
             Boolean hasToast = (Boolean) js.executeScript(
                 "return document.body.textContent.includes('deleted') || " +
                 "document.body.textContent.includes('Deleted') || " +
@@ -922,9 +889,6 @@ public class IssuePage {
     // CLOSE / DISMISS
     // ================================================================
 
-    /**
-     * Close any open drawer or side panel.
-     */
     public void closeDrawer() {
         try {
             js.executeScript(
@@ -941,9 +905,6 @@ public class IssuePage {
         } catch (Exception ignored) {}
     }
 
-    /**
-     * Dismiss any open MUI Drawer, Backdrop, or side panel.
-     */
     private void dismissAnyDrawerOrBackdrop() {
         try {
             Boolean hasBackdrop = (Boolean) js.executeScript(
@@ -952,7 +913,6 @@ public class IssuePage {
                 System.out.println("[IssuePage] Backdrop/drawer detected — pressing Escape to dismiss");
                 new Actions(driver).sendKeys(Keys.ESCAPE).perform();
                 pause(800);
-                // Press Escape again for nested overlays
                 Boolean stillPresent = (Boolean) js.executeScript(
                     "return document.querySelectorAll('.MuiBackdrop-root').length > 0;");
                 if (Boolean.TRUE.equals(stillPresent)) {
@@ -965,9 +925,6 @@ public class IssuePage {
         }
     }
 
-    /**
-     * Dismiss any open dialog (role=dialog).
-     */
     public void dismissAnyDialog() {
         try {
             js.executeScript(
@@ -1021,6 +978,17 @@ public class IssuePage {
             "arguments[0].click();", input);
         pause(300);
 
+        // Try opening dropdown via popup indicator on this specific autocomplete
+        js.executeScript(
+            "var wrapper = arguments[0].closest('.MuiAutocomplete-root');" +
+            "if (wrapper) {" +
+            "  var btn = wrapper.querySelector('.MuiAutocomplete-popupIndicator');" +
+            "  if (btn) btn.click();" +
+            "}",
+            input);
+        pause(1000);
+
+        // Clear and type
         js.executeScript(
             "var input = arguments[0];" +
             "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
@@ -1073,7 +1041,11 @@ public class IssuePage {
                     WebElement option = driver.findElement(opt);
                     js.executeScript("arguments[0].scrollIntoView({block:'center'});", option);
                     pause(150);
-                    js.executeScript("arguments[0].click();", option);
+                    try {
+                        new Actions(driver).moveToElement(option).click().perform();
+                    } catch (Exception e) {
+                        js.executeScript("arguments[0].click();", option);
+                    }
                     pause(300);
                     System.out.println("[IssuePage] Selected dropdown option: " + optionText);
                     return;

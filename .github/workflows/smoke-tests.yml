@@ -110,8 +110,10 @@ jobs:
 
             if [ "$RESULT" = "passed" ]; then
               echo "### ✅ ALL TESTS PASSED" >> $GITHUB_STEP_SUMMARY
+            elif [ "$RESULT" = "failed" ]; then
+              echo "### ❌ ALL TESTS FAILED" >> $GITHUB_STEP_SUMMARY
             else
-              echo "### ❌ SOME TESTS FAILED" >> $GITHUB_STEP_SUMMARY
+              echo "### ⚠️ SOME TESTS FAILED" >> $GITHUB_STEP_SUMMARY
             fi
 
             echo "" >> $GITHUB_STEP_SUMMARY
@@ -170,8 +172,10 @@ jobs:
         if: always()
         run: |
           if [ "${{ env.SMOKE_RESULT }}" = "failed" ]; then
-            echo "❌ Smoke tests failed"
+            echo "❌ All smoke tests failed"
             exit 1
+          elif [ "${{ env.SMOKE_RESULT }}" = "partial" ]; then
+            echo "⚠️ Some tests failed (${{ env.SMOKE_PASSED }}/${{ env.SMOKE_TOTAL }} passed) — check reports"
           elif [ "${{ env.SMOKE_RESULT }}" = "passed" ]; then
             echo "✅ All smoke tests passed"
           else

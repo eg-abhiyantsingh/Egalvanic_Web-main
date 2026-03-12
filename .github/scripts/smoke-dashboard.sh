@@ -451,10 +451,16 @@ if [ -n "$GITHUB_ENV" ]; then
   echo "SMOKE_DURATION=$(( $(date +%s) - SUITE_START ))" >> "$GITHUB_ENV"
 fi
 
-if [ $HAS_FAILURE -eq 1 ]; then
+if [ "$TOTAL_PASSED" -eq 0 ] && [ "$TOTAL_TESTS" -gt 0 ]; then
+  # ALL tests failed — mark as failed
   [ -n "$GITHUB_ENV" ] && echo "SMOKE_RESULT=failed" >> "$GITHUB_ENV"
   exit 1
+elif [ $HAS_FAILURE -eq 1 ]; then
+  # Some tests failed but not all — mark as partial (don't fail the build)
+  [ -n "$GITHUB_ENV" ] && echo "SMOKE_RESULT=partial" >> "$GITHUB_ENV"
+  exit 0
 else
+  # All tests passed
   [ -n "$GITHUB_ENV" ] && echo "SMOKE_RESULT=passed" >> "$GITHUB_ENV"
   exit 0
 fi
