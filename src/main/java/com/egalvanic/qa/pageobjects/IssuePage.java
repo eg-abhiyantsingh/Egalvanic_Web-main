@@ -228,8 +228,47 @@ public class IssuePage {
             return;
         }
 
-        typeAndSelectDropdown(PRIORITY_INPUT, priority, priority);
-        System.out.println("[IssuePage] Selected priority: " + priority);
+        // Try input-based approach first (MUI Autocomplete)
+        try {
+            if (driver.findElements(PRIORITY_INPUT).size() > 0) {
+                typeAndSelectDropdown(PRIORITY_INPUT, priority, priority);
+                System.out.println("[IssuePage] Selected priority via input: " + priority);
+                return;
+            }
+        } catch (Exception ignored) {}
+
+        // Fallback: find Priority field by label and click to open dropdown (MUI Select or custom)
+        Boolean selected = (Boolean) js.executeScript(
+            "var drawer = document.querySelector('[class*=\"MuiDrawer-paper\"]') || document;" +
+            "var labels = drawer.querySelectorAll('label, p, span, h6, div');" +
+            "for (var l of labels) {" +
+            "  var text = l.textContent.trim();" +
+            "  if (text === 'Priority' || text === 'Priority *') {" +
+            "    var container = l.closest('.MuiFormControl-root') || l.parentElement;" +
+            "    // Try MUI Select (div role=button)\n" +
+            "    var select = container.querySelector('[role=\"button\"], [role=\"combobox\"], select');" +
+            "    if (select) { select.click(); }" +
+            "    else { container.click(); }" +
+            "    return true;" +
+            "  }" +
+            "}" +
+            "return false;");
+
+        if (Boolean.TRUE.equals(selected)) {
+            pause(500);
+            // Click matching option in dropdown
+            js.executeScript(
+                "var items = document.querySelectorAll('li[role=\"option\"], [role=\"menuitem\"], [data-value]');" +
+                "for (var item of items) {" +
+                "  if (item.textContent.trim() === arguments[0] || item.getAttribute('data-value') === arguments[0]) {" +
+                "    item.click(); return;" +
+                "  }" +
+                "}", priority);
+            pause(500);
+            System.out.println("[IssuePage] Selected priority via label click: " + priority);
+        } else {
+            System.out.println("[IssuePage] WARNING: Could not find Priority field");
+        }
     }
 
     /**
