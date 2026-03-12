@@ -369,26 +369,43 @@ public class ConnectionPage {
      */
     public void clickDeleteOnRow(int rowIndex) {
         int idx = rowIndex >= 0 ? rowIndex : 0;
+        // Log available buttons in the row for debugging
+        String debug = (String) js.executeScript(
+            "var rows = document.querySelectorAll('[data-rowindex]');" +
+            "if (rows.length <= arguments[0]) return 'no rows';" +
+            "var row = rows[arguments[0]];" +
+            "var info = 'Row ' + arguments[0] + ' buttons: ';" +
+            "var btns = row.querySelectorAll('button');" +
+            "for (var b of btns) {" +
+            "  info += '[title=\"' + (b.getAttribute('title')||'') + '\" aria=\"' + (b.getAttribute('aria-label')||'') + '\" text=\"' + b.textContent.trim().substring(0,20) + '\"] ';" +
+            "}" +
+            "var actionCell = row.querySelector('[data-field=\"actions\"]');" +
+            "if (actionCell) info += ' | actions cell btns: ' + actionCell.querySelectorAll('button').length;" +
+            "return info;", idx);
+        System.out.println("[ConnectionPage] " + debug);
+
         Boolean clicked = (Boolean) js.executeScript(
             "var rows = document.querySelectorAll('[data-rowindex]');" +
             "if (rows.length <= arguments[0]) return false;" +
             "var row = rows[arguments[0]];" +
-            "// Strategy 1: title attribute\n" +
+            "// Strategy 1: title attribute (exact)\n" +
             "var btns = row.querySelectorAll('button[title=\"Delete connection\"], button[title=\"Delete\"]');" +
             "if (btns.length > 0) { btns[0].click(); return true; }" +
-            "// Strategy 2: look for trash/delete icon (SVG path) in action buttons\n" +
+            "// Strategy 2: aria-label containing delete\n" +
+            "btns = row.querySelectorAll('button[aria-label*=\"delete\" i], button[aria-label*=\"Delete\"]');" +
+            "if (btns.length > 0) { btns[0].click(); return true; }" +
+            "// Strategy 3: action cell — last button (usually delete)\n" +
             "var actionCell = row.querySelector('[data-field=\"actions\"]');" +
             "if (actionCell) {" +
             "  var allBtns = actionCell.querySelectorAll('button');" +
-            "  console.log('Action buttons in row: ' + allBtns.length);" +
-            "  // Last button in actions is usually delete\n" +
             "  if (allBtns.length > 0) { allBtns[allBtns.length - 1].click(); return true; }" +
             "}" +
-            "// Strategy 3: any button with delete-like SVG\n" +
-            "var allBtns = row.querySelectorAll('button');" +
-            "for (var b of allBtns) {" +
-            "  var svg = b.querySelector('svg');" +
-            "  if (svg && (b.getAttribute('aria-label')||'').toLowerCase().includes('delete')) {" +
+            "// Strategy 4: any button with red/error color (delete buttons are often red)\n" +
+            "btns = row.querySelectorAll('button');" +
+            "for (var b of btns) {" +
+            "  var style = window.getComputedStyle(b);" +
+            "  var color = style.color;" +
+            "  if (color.includes('244') || color.includes('239') || color.includes('211')) {" +
             "    b.click(); return true;" +
             "  }" +
             "}" +
@@ -401,35 +418,69 @@ public class ConnectionPage {
      * Confirm the delete operation in the confirmation dialog.
      */
     public void confirmDelete() {
-        // Try dialog-scoped delete first
-        Boolean clicked = (Boolean) js.executeScript(
-            "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"presentation\"]');" +
-            "for (var d of dialogs) {" +
-            "  var r = d.getBoundingClientRect();" +
-            "  if (r.width < 50 || r.height < 50) continue;" +
-            "  var text = (d.textContent||'').toLowerCase();" +
-            "  if (text.includes('delete') || text.includes('confirm') || text.includes('remove')) {" +
-            "    var btns = d.querySelectorAll('button');" +
-            "    for (var b of btns) {" +
-            "      var t = b.textContent.trim();" +
-            "      if (t === 'Delete' || t === 'Confirm' || t === 'Yes' || t === 'OK') {" +
-            "        b.click(); return true;" +
-            "      }" +
-            "    }" +
-            "  }" +
-            "}" +
-            "// Fallback: find any visible Delete button\n" +
-            "var btns = document.querySelectorAll('button');" +
-            "for (var b of btns) {" +
-            "  var t = b.textContent.trim();" +
-            "  var r2 = b.getBoundingClientRect();" +
-            "  if (t === 'Delete' && r2.width > 0 && r2.height > 0) {" +
-            "    b.click(); return true;" +
-            "  }" +
-            "}" +
-            "return false;"
-        );
-        System.out.println("[ConnectionPage] Delete confirmed: " + clicked);
+        // Wait for confirmation dialog to appear (up to 5s)
+        boolean dialogFound = false;
+        for (int i = 0; i < 10; i++) {
+            String dialogInfo = (String) js.executeScript(
+                "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"presentation\"], [class*=\"MuiDialog\"], [class*=\"MuiModal\"]');" +
+                "var info = 'dialogs: ' + dialogs.length;" +
+                "for (var d of dialogs) {" +
+                "  var r = d.getBoundingClientRect();" +
+                "  if (r.width < 50 || r.height < 50) continue;" +
+                "  var text = (d.textContent||'').substring(0, 200);" +
+                "  info += ' | [' + r.width + 'x' + r.height + '] text=\"' + text + '\"';" +
+                "  var btns = d.querySelectorAll('button');" +
+                "  info += ' btns=' + btns.length;" +
+                "  for (var b of btns) info += ' btn=\"' + b.textContent.trim() + '\"';" +
+                "}" +
+                "return info;"
+            );
+            System.out.println("[ConnectionPage] Dialog scan " + i + ": " + dialogInfo);
+
+            // Look for a dialog with delete-related text and a confirm button
+            Boolean clicked = (Boolean) js.executeScript(
+                "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"presentation\"], [class*=\"MuiDialog\"], [class*=\"MuiModal\"]');" +
+                "for (var d of dialogs) {" +
+                "  var r = d.getBoundingClientRect();" +
+                "  if (r.width < 50 || r.height < 50) continue;" +
+                "  var text = (d.textContent||'').toLowerCase();" +
+                "  if (text.includes('delete') || text.includes('confirm') || text.includes('remove') || text.includes('sure')) {" +
+                "    var btns = d.querySelectorAll('button');" +
+                "    for (var b of btns) {" +
+                "      var t = b.textContent.trim();" +
+                "      if (t === 'Delete' || t === 'Confirm' || t === 'Yes' || t === 'OK' || t === 'Remove') {" +
+                "        b.click(); return true;" +
+                "      }" +
+                "    }" +
+                "    // Click last button in dialog (usually the destructive action)\n" +
+                "    if (btns.length >= 2) { btns[btns.length - 1].click(); return true; }" +
+                "  }" +
+                "}" +
+                "return false;"
+            );
+            if (clicked != null && clicked) {
+                System.out.println("[ConnectionPage] Delete confirmed via dialog button");
+                dialogFound = true;
+                break;
+            }
+            pause(500);
+        }
+
+        if (!dialogFound) {
+            System.out.println("[ConnectionPage] WARNING: No delete confirmation dialog found — trying fallback");
+            // Fallback: find any visible button with error/delete styling
+            js.executeScript(
+                "var btns = document.querySelectorAll('button');" +
+                "for (var b of btns) {" +
+                "  var t = b.textContent.trim();" +
+                "  var r = b.getBoundingClientRect();" +
+                "  var cls = (b.className||'');" +
+                "  if (t === 'Delete' && r.width > 0 && r.height > 0 && (cls.includes('error') || cls.includes('danger') || cls.includes('contained'))) {" +
+                "    b.click(); return;" +
+                "  }" +
+                "}"
+            );
+        }
         pause(3000);
     }
 
@@ -437,12 +488,16 @@ public class ConnectionPage {
      * Wait for delete to complete (row count decreased or grid refreshed).
      */
     public boolean waitForDeleteSuccess() {
-        // Wait for dialog to close
-        for (int i = 0; i < 10; i++) {
+        // Wait for any dialog/modal to close
+        for (int i = 0; i < 15; i++) {
             Boolean dialogOpen = (Boolean) js.executeScript(
-                "var dialogs = document.querySelectorAll('[role=\"dialog\"]');" +
+                "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"presentation\"], [class*=\"MuiDialog\"]');" +
                 "for (var d of dialogs) {" +
-                "  if (d.textContent.includes('Delete Connection') && d.getBoundingClientRect().width > 0) return true;" +
+                "  var r = d.getBoundingClientRect();" +
+                "  if (r.width > 100 && r.height > 100) {" +
+                "    var text = (d.textContent||'').toLowerCase();" +
+                "    if (text.includes('delete') || text.includes('confirm') || text.includes('remove')) return true;" +
+                "  }" +
                 "}" +
                 "return false;"
             );
@@ -452,6 +507,7 @@ public class ConnectionPage {
             }
             pause(1000);
         }
+        System.out.println("[ConnectionPage] Delete dialog still open after 15s");
         return false;
     }
 
@@ -498,35 +554,32 @@ public class ConnectionPage {
      * Uses JS for all interactions to avoid MuiBackdrop and MuiAutocomplete-noOptions interception.
      */
     private void selectAutocomplete(By inputLocator, String searchText) {
-        WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(inputLocator));
-
         // Dismiss any "No Options" overlay or open listbox from a previous autocomplete
         js.executeScript(
             "var noOpts = document.querySelector('.MuiAutocomplete-noOptions');" +
-            "if (noOpts) noOpts.remove();" +
+            "if (noOpts) noOpts.style.display = 'none';" +
             "var lb = document.querySelector('[role=\"listbox\"]');" +
-            "if (lb) lb.remove();"
+            "if (lb) lb.style.display = 'none';"
         );
-        pause(200);
-
-        // Use JS for scroll, focus, click — avoids backdrop/overlay interception
-        js.executeScript(
-            "arguments[0].scrollIntoView({block:'center'});" +
-            "arguments[0].focus();" +
-            "arguments[0].click();", input);
         pause(300);
 
-        // Clear via React native setter + dispatch events
-        js.executeScript(
-            "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
-            "setter.call(arguments[0], '');" +
-            "arguments[0].dispatchEvent(new Event('input', {bubbles: true}));" +
-            "arguments[0].dispatchEvent(new Event('change', {bubbles: true}));",
-            input);
-        pause(200);
+        // Re-find element fresh each time to avoid stale references
+        WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(inputLocator));
 
-        // Type to trigger autocomplete filtering
-        input.sendKeys(searchText);
+        // Use JS for scroll, focus, click — avoids backdrop/overlay interception
+        // Also clear and type using JS to avoid "element not interactable"
+        js.executeScript(
+            "var el = arguments[0]; var text = arguments[1];" +
+            "el.scrollIntoView({block:'center'});" +
+            "el.focus(); el.click();" +
+            "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+            "setter.call(el, '');" +
+            "el.dispatchEvent(new Event('input', {bubbles: true}));" +
+            "el.dispatchEvent(new Event('change', {bubbles: true}));" +
+            "setter.call(el, text);" +
+            "el.dispatchEvent(new Event('input', {bubbles: true}));" +
+            "el.dispatchEvent(new Event('change', {bubbles: true}));",
+            input, searchText);
         pause(1000);
 
         // Wait for listbox and click matching option
@@ -534,15 +587,12 @@ public class ConnectionPage {
             Boolean selected = (Boolean) js.executeScript(
                 "var items = document.querySelectorAll('li[role=\"option\"]');" +
                 "var searchText = arguments[0];" +
-                "// Try exact match first\n" +
                 "for (var item of items) {" +
                 "  if (item.textContent.trim() === searchText) { item.click(); return true; }" +
                 "}" +
-                "// Try contains match\n" +
                 "for (var item of items) {" +
                 "  if (item.textContent.trim().includes(searchText)) { item.click(); return true; }" +
                 "}" +
-                "// Click first if any available\n" +
                 "if (items.length > 0) { items[0].click(); return true; }" +
                 "return false;", searchText);
             if (selected != null && selected) {
@@ -551,22 +601,22 @@ public class ConnectionPage {
                 return;
             }
 
-            // If "No Options" appeared, clear and retry with shorter text or popup indicator
+            // If "No Options" appeared, clear and retry via popup indicator
             Boolean noOptions = (Boolean) js.executeScript(
                 "return !!document.querySelector('.MuiAutocomplete-noOptions');");
             if (noOptions != null && noOptions) {
-                System.out.println("[ConnectionPage] 'No Options' overlay detected, retrying...");
+                System.out.println("[ConnectionPage] 'No Options' detected on attempt " + attempt + ", retrying...");
+                // Re-find input to avoid stale reference after DOM changes
+                input = driver.findElement(inputLocator);
                 js.executeScript(
-                    "var noOpts = document.querySelector('.MuiAutocomplete-noOptions');" +
-                    "if (noOpts) noOpts.remove();");
-                // Clear and click popup indicator to get full list
-                js.executeScript(
+                    "var el = arguments[0];" +
                     "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
-                    "setter.call(arguments[0], '');" +
-                    "arguments[0].dispatchEvent(new Event('input', {bubbles: true}));",
+                    "setter.call(el, '');" +
+                    "el.dispatchEvent(new Event('input', {bubbles: true}));" +
+                    "el.dispatchEvent(new Event('change', {bubbles: true}));",
                     input);
                 pause(300);
-                // Try popup indicator button (the dropdown arrow)
+                // Click popup indicator to get full list
                 js.executeScript(
                     "var wrapper = arguments[0].closest('.MuiAutocomplete-root');" +
                     "if (wrapper) {" +
@@ -576,7 +626,13 @@ public class ConnectionPage {
                     input);
                 pause(800);
                 // Re-type
-                input.sendKeys(searchText);
+                js.executeScript(
+                    "var el = arguments[0]; var text = arguments[1];" +
+                    "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+                    "setter.call(el, text);" +
+                    "el.dispatchEvent(new Event('input', {bubbles: true}));" +
+                    "el.dispatchEvent(new Event('change', {bubbles: true}));",
+                    input, searchText);
                 pause(1000);
                 continue;
             }

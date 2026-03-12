@@ -2559,17 +2559,19 @@ public class AssetPage {
 
     private void typeField(By by, String text) {
         WebElement el = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
-        // Use JS for all interactions to avoid MuiBackdrop interception
+        // Use JS for all interactions to avoid MuiBackdrop "element not interactable"
         js.executeScript(
-            "arguments[0].scrollIntoView({block:'center'});" +
-            "arguments[0].focus();" +
-            "arguments[0].click();" +
+            "var el = arguments[0]; var text = arguments[1];" +
+            "el.scrollIntoView({block:'center'});" +
+            "el.focus(); el.click();" +
             "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
-            "setter.call(arguments[0], '');" +
-            "arguments[0].dispatchEvent(new Event('input', {bubbles: true}));",
-            el);
+            "setter.call(el, '');" +
+            "el.dispatchEvent(new Event('input', {bubbles: true}));" +
+            "setter.call(el, text);" +
+            "el.dispatchEvent(new Event('input', {bubbles: true}));" +
+            "el.dispatchEvent(new Event('change', {bubbles: true}));",
+            el, text);
         pause(100);
-        el.sendKeys(text);
     }
 
     private void typeAndSelectDropdown(By inputLocator, String textToType, String optionText) {
@@ -2592,8 +2594,18 @@ public class AssetPage {
             input);
         pause(200);
 
-        // Type using sendKeys (triggers React's synthetic events in MUI Autocomplete)
-        input.sendKeys(textToType);
+        // Type to trigger autocomplete filtering — try sendKeys, fallback to JS
+        try {
+            input.sendKeys(textToType);
+        } catch (Exception e) {
+            System.out.println("[AssetPage] sendKeys failed, using JS to type: " + e.getMessage());
+            js.executeScript(
+                "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+                "setter.call(arguments[0], arguments[1]);" +
+                "arguments[0].dispatchEvent(new Event('input', {bubbles: true}));" +
+                "arguments[0].dispatchEvent(new Event('change', {bubbles: true}));",
+                input, textToType);
+        }
         pause(800);
 
         // Wait for the listbox dropdown to appear
@@ -2612,16 +2624,17 @@ public class AssetPage {
                 } catch (Exception ignored) {}
             }
 
-            // Re-focus, re-clear, re-type via JS + sendKeys
+            // Re-focus, re-clear, re-type via JS
             js.executeScript(
                 "var input = arguments[0];" +
                 "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
                 "setter.call(input, '');" +
                 "input.dispatchEvent(new Event('input', {bubbles: true}));" +
-                "input.focus(); input.click();",
-                input);
-            pause(300);
-            input.sendKeys(textToType);
+                "input.focus(); input.click();" +
+                "setter.call(input, arguments[1]);" +
+                "input.dispatchEvent(new Event('input', {bubbles: true}));" +
+                "input.dispatchEvent(new Event('change', {bubbles: true}));",
+                input, textToType);
             pause(800);
         }
 
