@@ -29,10 +29,6 @@ public class ConnectionPage {
 
     private static final int TIMEOUT = 25;
 
-    // Navigation
-    private static final By ASSETS_NAV = By.xpath(
-            "//a[normalize-space()='Assets'] | //span[normalize-space()='Assets']");
-
     // Drawer form fields (placeholder-based — confirmed by exploration)
     private static final By SOURCE_NODE_INPUT = By.xpath(
             "//input[@placeholder='Select source node']");
@@ -63,17 +59,22 @@ public class ConnectionPage {
      * If already on connections, navigate away and back for fresh data.
      */
     public void navigateToConnections() {
+        // Dismiss any open drawers/modals/backdrops first — they block all clicks
+        dismissOverlays();
+
         if (isOnConnectionsPage()) {
             System.out.println("[ConnectionPage] Already on Connections — navigating away and back");
-            try {
-                driver.findElement(ASSETS_NAV).click();
-                pause(1500);
-            } catch (Exception e) {
-                System.out.println("[ConnectionPage] Nav away failed: " + e.getMessage());
-            }
+            // Use JS click to avoid backdrop interception on sidebar links
+            js.executeScript(
+                "var links = document.querySelectorAll('a');" +
+                "for (var el of links) {" +
+                "  if (el.textContent.trim() === 'Assets') { el.click(); return; }" +
+                "}"
+            );
+            pause(1500);
         }
 
-        // Click Connections in sidebar
+        // Click Connections in sidebar via JS
         js.executeScript(
             "var links = document.querySelectorAll('a');" +
             "for (var el of links) {" +
@@ -494,25 +495,42 @@ public class ConnectionPage {
 
     /**
      * Select an option from an MUI Autocomplete field.
+     * Uses JS for all interactions to avoid MuiBackdrop and MuiAutocomplete-noOptions interception.
      */
     private void selectAutocomplete(By inputLocator, String searchText) {
         WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(inputLocator));
-        // Use JS click to avoid "element click intercepted" when overlays exist
-        try {
-            input.click();
-        } catch (Exception e) {
-            System.out.println("[ConnectionPage] Standard click failed, using JS click: " + e.getMessage());
-            js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", input);
-        }
-        pause(500);
 
-        // Type to filter
-        try { input.clear(); } catch (Exception ignored) {}
+        // Dismiss any "No Options" overlay or open listbox from a previous autocomplete
+        js.executeScript(
+            "var noOpts = document.querySelector('.MuiAutocomplete-noOptions');" +
+            "if (noOpts) noOpts.remove();" +
+            "var lb = document.querySelector('[role=\"listbox\"]');" +
+            "if (lb) lb.remove();"
+        );
+        pause(200);
+
+        // Use JS for scroll, focus, click — avoids backdrop/overlay interception
+        js.executeScript(
+            "arguments[0].scrollIntoView({block:'center'});" +
+            "arguments[0].focus();" +
+            "arguments[0].click();", input);
+        pause(300);
+
+        // Clear via React native setter + dispatch events
+        js.executeScript(
+            "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+            "setter.call(arguments[0], '');" +
+            "arguments[0].dispatchEvent(new Event('input', {bubbles: true}));" +
+            "arguments[0].dispatchEvent(new Event('change', {bubbles: true}));",
+            input);
+        pause(200);
+
+        // Type to trigger autocomplete filtering
         input.sendKeys(searchText);
-        pause(1500);
+        pause(1000);
 
         // Wait for listbox and click matching option
-        for (int attempt = 0; attempt < 5; attempt++) {
+        for (int attempt = 0; attempt < 6; attempt++) {
             Boolean selected = (Boolean) js.executeScript(
                 "var items = document.querySelectorAll('li[role=\"option\"]');" +
                 "var searchText = arguments[0];" +
@@ -527,7 +545,42 @@ public class ConnectionPage {
                 "// Click first if any available\n" +
                 "if (items.length > 0) { items[0].click(); return true; }" +
                 "return false;", searchText);
-            if (selected != null && selected) return;
+            if (selected != null && selected) {
+                System.out.println("[ConnectionPage] Selected autocomplete option: " + searchText);
+                pause(500);
+                return;
+            }
+
+            // If "No Options" appeared, clear and retry with shorter text or popup indicator
+            Boolean noOptions = (Boolean) js.executeScript(
+                "return !!document.querySelector('.MuiAutocomplete-noOptions');");
+            if (noOptions != null && noOptions) {
+                System.out.println("[ConnectionPage] 'No Options' overlay detected, retrying...");
+                js.executeScript(
+                    "var noOpts = document.querySelector('.MuiAutocomplete-noOptions');" +
+                    "if (noOpts) noOpts.remove();");
+                // Clear and click popup indicator to get full list
+                js.executeScript(
+                    "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+                    "setter.call(arguments[0], '');" +
+                    "arguments[0].dispatchEvent(new Event('input', {bubbles: true}));",
+                    input);
+                pause(300);
+                // Try popup indicator button (the dropdown arrow)
+                js.executeScript(
+                    "var wrapper = arguments[0].closest('.MuiAutocomplete-root');" +
+                    "if (wrapper) {" +
+                    "  var btn = wrapper.querySelector('.MuiAutocomplete-popupIndicator');" +
+                    "  if (btn) btn.click();" +
+                    "}",
+                    input);
+                pause(800);
+                // Re-type
+                input.sendKeys(searchText);
+                pause(1000);
+                continue;
+            }
+
             pause(500);
         }
         System.out.println("[ConnectionPage] WARNING: Could not select autocomplete option: " + searchText);
@@ -564,6 +617,33 @@ public class ConnectionPage {
             if (hasSpinner == null || !hasSpinner) return;
             pause(1000);
         }
+    }
+
+    /**
+     * Dismiss any open drawers, modals, and backdrops that block interaction.
+     */
+    private void dismissOverlays() {
+        // Close any open drawers via Cancel/X button
+        js.executeScript(
+            "// Click Cancel in any open drawer\n" +
+            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+            "for (var d of drawers) {" +
+            "  var btns = d.querySelectorAll('button');" +
+            "  for (var b of btns) {" +
+            "    if (b.textContent.trim() === 'Cancel') { b.click(); return; }" +
+            "  }" +
+            "}" +
+            "// Press Escape to close modals\n" +
+            "document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true}));"
+        );
+        pause(500);
+
+        // Remove any remaining backdrops
+        js.executeScript(
+            "var backdrops = document.querySelectorAll('.MuiBackdrop-root, .MuiModal-backdrop');" +
+            "for (var b of backdrops) { b.click(); }"
+        );
+        pause(500);
     }
 
     private void pause(long ms) {
