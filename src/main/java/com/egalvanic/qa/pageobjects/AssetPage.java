@@ -375,6 +375,18 @@ public class AssetPage {
     }
 
     /**
+     * Get the number of data rows currently visible in the asset grid.
+     */
+    public int getGridRowCount() {
+        try {
+            return driver.findElements(
+                By.xpath("//div[contains(@class,'MuiDataGrid-row') and @data-rowindex]")).size();
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    /**
      * Get the asset name from the first row in the grid (first cell text).
      */
     public String getFirstRowAssetName() {

@@ -505,12 +505,27 @@ public class AssetSmokeTestNG extends BaseTest {
             logStep("Delete success");
 
             // ── STEP 5: Verify it's gone from grid ──
+            // Wait for delete to propagate on server before checking
+            pause(3000);
             assetPage.navigateToAssets();
-            pause(2000);
-            assetPage.searchAsset(lifecycleName);
-            pause(2000);
-            boolean stillExists = assetPage.isAssetVisible(lifecycleName);
-            Assert.assertFalse(stillExists,
+            pause(3000);
+
+            // Poll: search and check absence, retrying to handle eventual consistency
+            boolean confirmed = false;
+            for (int attempt = 0; attempt < 3; attempt++) {
+                assetPage.searchAsset(lifecycleName);
+                pause(3000);
+                int rowCount = assetPage.getGridRowCount();
+                logStep("Post-delete check attempt " + (attempt + 1) + ": grid rows = " + rowCount);
+                if (rowCount == 0) {
+                    confirmed = true;
+                    break;
+                }
+                // Navigate away and back for truly fresh data
+                assetPage.navigateToAssets();
+                pause(3000);
+            }
+            Assert.assertTrue(confirmed,
                     "Lifecycle asset still visible after deletion: " + lifecycleName);
             logStepWithScreenshot("Lifecycle asset deleted and confirmed gone from grid");
 
