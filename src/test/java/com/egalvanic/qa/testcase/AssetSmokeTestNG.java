@@ -263,9 +263,13 @@ public class AssetSmokeTestNG extends BaseTest {
             // 6. Select Asset Class in the Quick Add dialog (e.g., "Fuse")
             assetPage.selectOCPAssetClass("Fuse");
             logStep("Selected OCP child class: Fuse");
-            logStepWithScreenshot("OCP class selected");
 
-            // 7. Submit the Quick Add form (Qty defaults to 1)
+            // 6b. Set quantity to 2
+            assetPage.setOCPQuantity(2);
+            logStep("Set OCP quantity to 2");
+            logStepWithScreenshot("OCP class and qty set");
+
+            // 7. Submit the Quick Add form
             assetPage.submitOCPChildForm();
             assetPage.waitForOCPDialogClose();
             logStep("OCP child added via Quick Add");

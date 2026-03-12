@@ -2186,111 +2186,53 @@ public class AssetPage {
      * @param className e.g. "Fuse", "Disconnect Switch", etc.
      */
     public void selectOCPAssetClass(String className) {
-        // First, log all visible dialogs/modals and their content for debugging
-        String debugInfo = (String) js.executeScript(
-            "var info = '';" +
-            "// Check for MUI Dialogs\n" +
-            "var dialogs = document.querySelectorAll('[role=\"dialog\"], [class*=\"MuiDialog-root\"], [class*=\"MuiModal-root\"]');" +
-            "info += 'Dialogs found: ' + dialogs.length + '\\n';" +
-            "for (var d of dialogs) {" +
-            "  var r = d.getBoundingClientRect();" +
-            "  var vis = (r.width > 0 && r.height > 0);" +
-            "  info += '  dialog: vis=' + vis + ' class=' + (d.className||'').substring(0,80) + ' text=' + (d.textContent||'').substring(0,100) + '\\n';" +
-            "}" +
-            "// Check for any element containing 'Quick Add' or 'Child Assets'\n" +
-            "var all = document.querySelectorAll('*');" +
-            "for (var el of all) {" +
-            "  var t = (el.textContent||'');" +
-            "  if (el.children.length < 3 && (t.includes('Quick Add') || t.includes('Child Assets'))) {" +
-            "    var r2 = el.getBoundingClientRect();" +
-            "    if (r2.width > 0 && r2.height > 0) {" +
-            "      info += '  quickadd: tag=' + el.tagName + ' class=' + (el.className||'').substring(0,60) + ' text=' + t.substring(0,80) + '\\n';" +
-            "    }" +
-            "  }" +
-            "}" +
-            "// List all visible inputs with placeholder containing 'class' or 'select'\n" +
-            "var inputs = document.querySelectorAll('input');" +
-            "var classInputs = 0;" +
-            "for (var inp of inputs) {" +
-            "  var ph = (inp.placeholder||'').toLowerCase();" +
-            "  if (ph.includes('class') || ph.includes('select')) {" +
-            "    var r3 = inp.getBoundingClientRect();" +
-            "    info += '  classInput: ph=\"' + inp.placeholder + '\" val=\"' + inp.value + '\" vis=' + (r3.width > 0) + ' at(' + Math.round(r3.x) + ',' + Math.round(r3.y) + ')\\n';" +
-            "    classInputs++;" +
-            "  }" +
-            "}" +
-            "info += 'Total class/select inputs: ' + classInputs + '\\n';" +
-            "return info;"
-        );
-        System.out.println("[AssetPage] OCP Dialog Debug:\n" + debugInfo);
-
-        // Strategy: find the Quick Add dialog container, then its class input
-        // Try multiple approaches to locate the dialog
+        // The Quick Add dialog has a "Select class" input with empty value.
+        // The main edit form also has a "Select Class" input but it has a value (e.g., "Panelboard").
+        // Strategy: find the input with placeholder "Select class" that has NO value set.
         Boolean opened = (Boolean) js.executeScript(
-            "var dialog = null;" +
-            "// Strategy 1: Find by role='dialog' that is visible\n" +
-            "var dialogs = document.querySelectorAll('[role=\"dialog\"]');" +
-            "for (var d of dialogs) {" +
-            "  var r = d.getBoundingClientRect();" +
-            "  if (r.width > 100 && r.height > 100) { dialog = d; break; }" +
-            "}" +
-            "// Strategy 2: Find visible MuiDialog-container or MuiDialog-paper\n" +
-            "if (!dialog) {" +
-            "  var papers = document.querySelectorAll('[class*=\"MuiDialog-paper\"], [class*=\"MuiDialog-container\"]');" +
-            "  for (var p of papers) {" +
-            "    var r = p.getBoundingClientRect();" +
-            "    if (r.width > 100 && r.height > 100) { dialog = p; break; }" +
+            "var allInputs = document.querySelectorAll('input[placeholder]');" +
+            "var info = 'All placeholder inputs: ';" +
+            "for (var inp of allInputs) {" +
+            "  var ph = inp.placeholder.toLowerCase();" +
+            "  if (ph.includes('class') || ph.includes('select')) {" +
+            "    var r = inp.getBoundingClientRect();" +
+            "    info += '\\n  ph=\"' + inp.placeholder + '\" val=\"' + inp.value + '\" vis=' + (r.width>0) + ' at(' + Math.round(r.x) + ',' + Math.round(r.y) + ')';" +
             "  }" +
             "}" +
-            "// Strategy 3: Find any heading with 'Quick Add' or 'Child' and go up\n" +
-            "if (!dialog) {" +
-            "  var allEls = document.querySelectorAll('h1,h2,h3,h4,h5,h6,p,span,div');" +
-            "  for (var el of allEls) {" +
-            "    var t = el.textContent||'';" +
-            "    if (el.children.length === 0 && (t.includes('Quick Add') || t.includes('Child Asset'))) {" +
-            "      dialog = el.closest('[role=\"dialog\"], [class*=\"MuiDialog\"], [class*=\"MuiModal\"], [class*=\"MuiPaper\"], [class*=\"MuiPopover\"]');" +
-            "      if (dialog) break;" +
+            "console.log(info);" +
+            "// Find the 'Select class' input with empty value (the dialog's input)\n" +
+            "for (var inp of allInputs) {" +
+            "  if (inp.placeholder === 'Select class' && !inp.value) {" +
+            "    var r = inp.getBoundingClientRect();" +
+            "    if (r.width > 10 && r.height > 10) {" +
+            "      inp.scrollIntoView({block:'center'});" +
+            "      inp.focus();" +
+            "      inp.click();" +
+            "      return true;" +
             "    }" +
             "  }" +
             "}" +
-            "// If we found a dialog, search for class input within it\n" +
-            "if (dialog) {" +
-            "  var inputs = dialog.querySelectorAll('input');" +
-            "  for (var inp of inputs) {" +
-            "    var ph = (inp.placeholder||'').toLowerCase();" +
-            "    if (ph.includes('class') || ph.includes('select')) {" +
+            "// Fallback: try any empty 'Select Class' (capital C) input\n" +
+            "for (var inp of allInputs) {" +
+            "  if (inp.placeholder === 'Select Class' && !inp.value) {" +
+            "    var r = inp.getBoundingClientRect();" +
+            "    if (r.width > 10 && r.height > 10) {" +
             "      inp.focus(); inp.click(); return true;" +
             "    }" +
             "  }" +
-            "  // Fallback: click first input in dialog\n" +
-            "  if (inputs.length > 0) { inputs[0].focus(); inputs[0].click(); return true; }" +
-            "}" +
-            "// Strategy 4 (last resort): Find the LAST 'Select class' input — dialog overlays on top\n" +
-            "var classInputs = [];" +
-            "var allInputs = document.querySelectorAll('input');" +
-            "for (var inp of allInputs) {" +
-            "  var ph = (inp.placeholder||'').toLowerCase();" +
-            "  if (ph.includes('select class') || ph === 'select class') {" +
-            "    var r = inp.getBoundingClientRect();" +
-            "    if (r.width > 10 && r.height > 10 && !inp.value) {" +
-            "      classInputs.push(inp);" +
-            "    }" +
-            "  }" +
-            "}" +
-            "if (classInputs.length > 0) {" +
-            "  var last = classInputs[classInputs.length - 1];" +
-            "  last.focus(); last.click(); return true;" +
             "}" +
             "return false;"
         );
-        pause(1000);
+        pause(1500);
         System.out.println("[AssetPage] OCP class dropdown opened: " + opened);
 
         // Select the class from the dropdown listbox
         Boolean selected = (Boolean) js.executeScript(
             "var options = document.querySelectorAll('[role=\"option\"], li[role=\"option\"]');" +
+            "console.log('OCP dropdown options: ' + options.length);" +
             "for (var opt of options) {" +
             "  var txt = (opt.textContent||'').trim();" +
+            "  console.log('  option: ' + txt);" +
             "  if (txt === arguments[0]) { opt.click(); return true; }" +
             "}" +
             "// Try partial match\n" +
@@ -2305,6 +2247,33 @@ public class AssetPage {
         );
         pause(1000);
         System.out.println("[AssetPage] OCP class selected '" + className + "': " + selected);
+    }
+
+    /**
+     * Set the Qty field in the Quick Add Child Assets dialog.
+     * The Qty field is a number input; default is 1.
+     * @param qty the number of child assets to add
+     */
+    public void setOCPQuantity(int qty) {
+        Boolean set = (Boolean) js.executeScript(
+            "var inputs = document.querySelectorAll('input[type=\"number\"]');" +
+            "// Find the Qty input — it's in the Quick Add dialog, visible and with small width\n" +
+            "for (var inp of inputs) {" +
+            "  var r = inp.getBoundingClientRect();" +
+            "  if (r.width > 10 && r.height > 10) {" +
+            "    var nativeInputValueSetter = Object.getOwnPropertyDescriptor(" +
+            "      window.HTMLInputElement.prototype, 'value').set;" +
+            "    nativeInputValueSetter.call(inp, arguments[0]);" +
+            "    inp.dispatchEvent(new Event('input', {bubbles: true}));" +
+            "    inp.dispatchEvent(new Event('change', {bubbles: true}));" +
+            "    return true;" +
+            "  }" +
+            "}" +
+            "return false;",
+            String.valueOf(qty)
+        );
+        pause(500);
+        System.out.println("[AssetPage] OCP quantity set to " + qty + ": " + set);
     }
 
     /**
