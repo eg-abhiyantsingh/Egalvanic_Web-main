@@ -146,10 +146,12 @@ public class ConnectionSmokeTestNG extends BaseTest {
             boolean deleteSuccess = connectionPage.waitForDeleteSuccess();
             logStep("Delete result: " + deleteSuccess);
 
-            // 5. Wait for server to process, then navigate away and back for fresh grid
+            // 5. Wait for server to process, then hard refresh for truly fresh data
             pause(5000);
-            connectionPage.navigateToConnections();
-            pause(3000);
+
+            // Use hard page refresh to bypass SPA caching
+            driver.navigate().refresh();
+            pause(5000);
 
             // 6. Poll for count decrease (handles eventual consistency)
             boolean deleted = false;
@@ -161,7 +163,8 @@ public class ConnectionSmokeTestNG extends BaseTest {
                     logStep("Grid rows after delete: " + afterCount);
                     break;
                 }
-                connectionPage.navigateToConnections();
+                // Hard refresh each retry
+                driver.navigate().refresh();
                 pause(5000);
             }
             logStepWithScreenshot("Grid after deletion");

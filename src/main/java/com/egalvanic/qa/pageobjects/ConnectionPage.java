@@ -384,6 +384,43 @@ public class ConnectionPage {
      */
     public void clickDeleteOnRow(int rowIndex) {
         int idx = rowIndex >= 0 ? rowIndex : 0;
+
+        // Install network interceptor to monitor DELETE requests
+        js.executeScript(
+            "window._deleteApiCalls = [];" +
+            "var _origFetch = window.fetch;" +
+            "window.fetch = function() {" +
+            "  var url = arguments[0]; var opts = arguments[1] || {};" +
+            "  var method = (opts.method || 'GET').toUpperCase();" +
+            "  if (method === 'DELETE') {" +
+            "    return _origFetch.apply(this, arguments).then(function(resp) {" +
+            "      window._deleteApiCalls.push({url: url, status: resp.status, ok: resp.ok});" +
+            "      return resp;" +
+            "    }).catch(function(err) {" +
+            "      window._deleteApiCalls.push({url: url, error: err.message});" +
+            "      throw err;" +
+            "    });" +
+            "  }" +
+            "  return _origFetch.apply(this, arguments);" +
+            "};" +
+            "// Also intercept XMLHttpRequest\n" +
+            "var _origOpen = XMLHttpRequest.prototype.open;" +
+            "var _origSend = XMLHttpRequest.prototype.send;" +
+            "XMLHttpRequest.prototype.open = function(method, url) {" +
+            "  this._deleteMethod = method; this._deleteUrl = url;" +
+            "  return _origOpen.apply(this, arguments);" +
+            "};" +
+            "XMLHttpRequest.prototype.send = function() {" +
+            "  if (this._deleteMethod && this._deleteMethod.toUpperCase() === 'DELETE') {" +
+            "    var self = this;" +
+            "    this.addEventListener('load', function() {" +
+            "      window._deleteApiCalls.push({url: self._deleteUrl, status: self.status, xhr: true});" +
+            "    });" +
+            "  }" +
+            "  return _origSend.apply(this, arguments);" +
+            "};"
+        );
+
         // Log available buttons in the row for debugging
         String debug = (String) js.executeScript(
             "var rows = document.querySelectorAll('[data-rowindex]');" +
@@ -435,7 +472,6 @@ public class ConnectionPage {
     public void confirmDelete() {
         // Wait for confirmation dialog to appear (up to 5s)
         for (int i = 0; i < 10; i++) {
-            // Find the red Delete confirmation button (MuiButton-containedError) via Selenium
             try {
                 java.util.List<WebElement> errorBtns = driver.findElements(
                     By.cssSelector("button[class*='containedError']"));
@@ -443,20 +479,31 @@ public class ConnectionPage {
                     if (btn.isDisplayed() && "Delete".equals(btn.getText().trim())) {
                         System.out.println("[ConnectionPage] Found Delete confirmation button");
 
-                        // CRITICAL: Disable pointer-events on ALL backdrops BEFORE clicking.
-                        // MUI Dialog renders a backdrop at the same z-level as the dialog.
-                        // Actions.moveToElement().click() can hit the backdrop instead of the button,
-                        // which closes the dialog via onClose (backdrop click) WITHOUT triggering Delete.
+                        // COMPLETELY HIDE all backdrops — they intercept clicks even with pointer-events:none
+                        // in some Selenium/Chrome configurations
                         js.executeScript(
                             "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"]').forEach(" +
-                            "  function(b) { b.style.pointerEvents = 'none'; }" +
+                            "  function(b) { b.style.display = 'none'; }" +
                             ");"
                         );
                         pause(200);
 
-                        // Now click the button — backdrop won't intercept
-                        new Actions(driver).moveToElement(btn).click().perform();
-                        System.out.println("[ConnectionPage] Delete confirmed via Selenium click (backdrop disabled)");
+                        // Use WebElement.click() — the most straightforward trusted click
+                        try {
+                            btn.click();
+                            System.out.println("[ConnectionPage] Delete confirmed via WebElement.click()");
+                        } catch (Exception e1) {
+                            System.out.println("[ConnectionPage] WebElement.click() failed: " + e1.getMessage());
+                            // Fallback: Actions click
+                            try {
+                                new Actions(driver).moveToElement(btn).click().perform();
+                                System.out.println("[ConnectionPage] Delete confirmed via Actions click");
+                            } catch (Exception e2) {
+                                // Last resort: JS click
+                                js.executeScript("arguments[0].click();", btn);
+                                System.out.println("[ConnectionPage] Delete confirmed via JS click");
+                            }
+                        }
                         pause(3000);
                         return;
                     }
@@ -467,10 +514,10 @@ public class ConnectionPage {
             pause(500);
         }
 
-        System.out.println("[ConnectionPage] WARNING: No delete confirmation button found — trying JS fallback");
-        // Last resort: disable backdrop and use JS to find and click the Delete button
+        System.out.println("[ConnectionPage] WARNING: No delete confirmation button found");
+        // Fallback: JS click
         js.executeScript(
-            "document.querySelectorAll('.MuiBackdrop-root').forEach(function(b) { b.style.pointerEvents = 'none'; });" +
+            "document.querySelectorAll('.MuiBackdrop-root').forEach(function(b) { b.style.display = 'none'; });" +
             "var btns = document.querySelectorAll('button[class*=\"containedError\"]');" +
             "for (var b of btns) {" +
             "  if (b.textContent.trim() === 'Delete' && b.getBoundingClientRect().width > 0) {" +
@@ -500,6 +547,22 @@ public class ConnectionPage {
             );
             if (dialogOpen == null || !dialogOpen) {
                 System.out.println("[ConnectionPage] Delete dialog closed — success");
+
+                // Check intercepted network calls to see if DELETE API was actually called
+                String apiInfo = (String) js.executeScript(
+                    "var calls = window._deleteApiCalls || [];" +
+                    "if (calls.length === 0) return 'NO DELETE API CALLS DETECTED';" +
+                    "var result = '';" +
+                    "for (var c of calls) {" +
+                    "  result += 'DELETE ' + c.url + ' → status=' + c.status + ' ok=' + c.ok;" +
+                    "  if (c.error) result += ' error=' + c.error;" +
+                    "  if (c.xhr) result += ' (xhr)';" +
+                    "  result += ' | ';" +
+                    "}" +
+                    "return result;"
+                );
+                System.out.println("[ConnectionPage] API calls after delete: " + apiInfo);
+
                 return true;
             }
             pause(1000);
