@@ -1220,9 +1220,9 @@ public class AssetPage {
         System.out.println("[AssetPage] Asset class cleared: " + cleared);
         pause(800);
 
-        // Step 2: Click the input, type the class name, wait for options, select
+        // Step 2: Click the input (via JS to avoid backdrop interception), type the class name
         WebElement classInput = driver.findElement(ASSET_CLASS_INPUT);
-        classInput.click();
+        js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].focus(); arguments[0].click();", classInput);
         pause(300);
 
         // Use React native setter to properly trigger filtering
@@ -2527,13 +2527,17 @@ public class AssetPage {
     private void typeField(By by, String text) {
         WebElement el = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
         try { el.clear(); } catch (Exception ignored) {}
-        el.click();
+        try { el.click(); } catch (Exception e) {
+            js.executeScript("arguments[0].focus(); arguments[0].click();", el);
+        }
         el.sendKeys(text);
     }
 
     private void typeAndSelectDropdown(By inputLocator, String textToType, String optionText) {
         WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(inputLocator));
-        input.click();
+        try { input.click(); } catch (Exception e) {
+            js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].focus(); arguments[0].click();", input);
+        }
         pause(300);
 
         // Clear and type to trigger autocomplete filtering
@@ -2554,7 +2558,9 @@ public class AssetPage {
                 pause(500);
             } catch (Exception ignored) {
                 // Re-click input and retype
-                input.click();
+                try { input.click(); } catch (Exception e3) {
+                    js.executeScript("arguments[0].focus(); arguments[0].click();", input);
+                }
                 pause(200);
                 try { input.clear(); } catch (Exception e2) {}
                 input.sendKeys(textToType);
