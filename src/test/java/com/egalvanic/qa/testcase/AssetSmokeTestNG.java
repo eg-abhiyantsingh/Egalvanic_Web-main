@@ -194,15 +194,15 @@ public class AssetSmokeTestNG extends BaseTest {
                 logStep("Clicked '+' on OCP");
 
                 assetPage.selectCreateNewChild();
-                logStep("Selected 'Create New Child'");
+                logStep("Selected 'Create New Child' — Quick Add dialog opened");
 
-                String ocpChildName = "OCP_Smoke_" + System.currentTimeMillis();
-                assetPage.fillOCPChildForm(ocpChildName);
-                logStep("Filled OCP child name: " + ocpChildName);
+                // Quick Add dialog: select Asset Class (names auto-generated), Qty defaults to 1
+                assetPage.selectOCPAssetClass("Fuse");
+                logStep("Selected OCP class: Fuse");
 
                 assetPage.submitOCPChildForm();
                 assetPage.waitForOCPDialogClose();
-                logStep("OCP child created");
+                logStep("OCP child added via Quick Add");
                 ocpAdded = true;
             } catch (Exception e) {
                 logStep("OCP child creation skipped: " + e.getMessage());

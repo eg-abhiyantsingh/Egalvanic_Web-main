@@ -2180,173 +2180,96 @@ public class AssetPage {
     }
 
     /**
-     * Diagnostic: dump the OCP dialog/form UI to understand what opened after "Create New Child".
+     * Select an OCP Asset Class in the "Quick Add Child Assets" dialog.
+     * The dialog has: Asset Class* (Select class), Subtype (Optional), Qty (1).
+     * Names are auto-generated. Available classes: Disconnect Switch, Fuse, MCC Bucket, Other (OCP), Relay.
+     * @param className e.g. "Fuse", "Disconnect Switch", etc.
      */
-    public void dumpOCPFormDiagnostic() {
-        String diag = (String) js.executeScript(
-            "var result = '--- OCP FORM DIAGNOSTIC ---\\n';" +
-            "result += 'URL: ' + window.location.href + '\\n';" +
-
-            "// Dialogs\n" +
-            "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"presentation\"], [class*=\"MuiDialog\"], [class*=\"MuiModal\"]');" +
-            "result += 'Dialogs: ' + dialogs.length + '\\n';" +
-            "for (var d of dialogs) {" +
-            "  var r = d.getBoundingClientRect();" +
-            "  result += '  ' + d.tagName + ' role=' + (d.getAttribute('role')||'') + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + '\\n';" +
-            "}" +
-
-            "// Inputs (all visible)\n" +
-            "var inputs = document.querySelectorAll('input[type=\"text\"], input:not([type]), textarea');" +
-            "result += 'Visible inputs: ' + inputs.length + '\\n';" +
+    public void selectOCPAssetClass(String className) {
+        // Click the "Select class" dropdown input to open it
+        Boolean opened = (Boolean) js.executeScript(
+            "var inputs = document.querySelectorAll('input');" +
             "for (var inp of inputs) {" +
-            "  var r = inp.getBoundingClientRect();" +
-            "  if (r.width < 10) continue;" +
-            "  result += '  tag=' + inp.tagName + ' placeholder=\"' + (inp.placeholder||'') + '\"'" +
-            "    + ' value=\"' + (inp.value||'').substring(0,30) + '\"'" +
-            "    + ' at(' + Math.round(r.left) + ',' + Math.round(r.top) + ') ' + Math.round(r.width) + 'x' + Math.round(r.height) + '\\n';" +
-            "}" +
-
-            "// Buttons (visible)\n" +
-            "var btns = document.querySelectorAll('button');" +
-            "result += 'Buttons:\\n';" +
-            "for (var b of btns) {" +
-            "  var r = b.getBoundingClientRect();" +
-            "  if (r.width < 20 || r.height < 15) continue;" +
-            "  var txt = (b.textContent||'').trim().substring(0,40);" +
-            "  result += '  \"' + txt + '\" disabled=' + b.disabled + ' at(' + Math.round(r.left) + ',' + Math.round(r.top) + ') ' + Math.round(r.width) + 'x' + Math.round(r.height) + '\\n';" +
-            "}" +
-
-            "result += '--- END OCP FORM DIAGNOSTIC ---';" +
-            "return result;"
-        );
-        System.out.println("[AssetPage] " + diag);
-    }
-
-    /**
-     * Fill the OCP child creation form with a name.
-     * After "Create New Child", a dialog or inline form may appear.
-     * This runs a diagnostic first to understand the UI, then fills the form.
-     */
-    public void fillOCPChildForm(String childName) {
-        dumpOCPFormDiagnostic();
-
-        // Try to find a name input that appeared AFTER the "Create New Child" click.
-        // Look for inputs with placeholder containing name/label, or new inputs in a dialog.
-        Boolean filled = (Boolean) js.executeScript(
-            "// Look for a dialog or modal that appeared\n" +
-            "var dialogs = document.querySelectorAll('[role=\"dialog\"], [class*=\"MuiDialog-paper\"]');" +
-            "for (var d of dialogs) {" +
-            "  var r = d.getBoundingClientRect();" +
-            "  if (r.width < 50 || r.height < 50) continue;" +
-            "  var inputs = d.querySelectorAll('input[type=\"text\"], input:not([type])');" +
-            "  for (var inp of inputs) {" +
-            "    if (inp.getBoundingClientRect().width < 10) continue;" +
-            "    var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
-            "    nativeInputValueSetter.call(inp, arguments[0]);" +
-            "    inp.dispatchEvent(new Event('input', { bubbles: true }));" +
-            "    inp.dispatchEvent(new Event('change', { bubbles: true }));" +
-            "    return true;" +
-            "  }" +
-            "}" +
-            "return false;",
-            childName
-        );
-        if (filled != null && filled) {
-            System.out.println("[AssetPage] Filled OCP dialog input with: " + childName);
-            return;
-        }
-
-        // Fallback: if no dialog, the form may be inline in the OCP section.
-        // Look for a NEW input near the OCP area (y > 1400 based on OCP section position)
-        System.out.println("[AssetPage] No dialog found for OCP. Looking for inline input...");
-        js.executeScript(
-            "var h6s = document.querySelectorAll('h6');" +
-            "for (var el of h6s) {" +
-            "  if (el.textContent.trim() !== 'OCP') continue;" +
-            "  var accordion = el.closest('[class*=\"MuiAccordion\"]');" +
-            "  if (!accordion) continue;" +
-            "  var inputs = accordion.querySelectorAll('input[type=\"text\"], input:not([type])');" +
-            "  for (var inp of inputs) {" +
-            "    if (inp.getBoundingClientRect().width < 10) continue;" +
-            "    var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
-            "    nativeInputValueSetter.call(inp, arguments[0]);" +
-            "    inp.dispatchEvent(new Event('input', { bubbles: true }));" +
-            "    inp.dispatchEvent(new Event('change', { bubbles: true }));" +
-            "    return;" +
-            "  }" +
-            "}",
-            childName
-        );
-        pause(1000);
-        System.out.println("[AssetPage] Attempted inline OCP form fill with: " + childName);
-    }
-
-    /**
-     * Submit the OCP child creation form by clicking any Create/Save/Add button.
-     */
-    public void submitOCPChildForm() {
-        // Diagnostic: what buttons are currently visible?
-        String btnList = (String) js.executeScript(
-            "var result = 'OCP submit candidates: ';" +
-            "var btns = document.querySelectorAll('button');" +
-            "for (var b of btns) {" +
-            "  var r = b.getBoundingClientRect();" +
-            "  if (r.width < 30 || r.height < 15) continue;" +
-            "  var txt = (b.textContent||'').trim().toLowerCase();" +
-            "  if (txt.includes('create') || txt.includes('save') || txt.includes('add') || txt.includes('submit') || txt.includes('confirm') || txt.includes('ok')) {" +
-            "    result += '\"' + txt + '\" disabled=' + b.disabled + ' | ';" +
-            "  }" +
-            "}" +
-            "return result;"
-        );
-        System.out.println("[AssetPage] " + btnList);
-
-        Boolean clicked = (Boolean) js.executeScript(
-            "var btns = document.querySelectorAll('button');" +
-            "// First try buttons in dialogs\n" +
-            "var dialogs = document.querySelectorAll('[role=\"dialog\"], [class*=\"MuiDialog-paper\"]');" +
-            "for (var d of dialogs) {" +
-            "  var r = d.getBoundingClientRect();" +
-            "  if (r.width < 50) continue;" +
-            "  var dBtns = d.querySelectorAll('button');" +
-            "  for (var b of dBtns) {" +
-            "    var txt = (b.textContent||'').trim().toLowerCase();" +
-            "    if (!b.disabled && (txt === 'create' || txt === 'save' || txt === 'add' || txt === 'submit' " +
-            "        || txt === 'confirm' || txt === 'ok' || txt.includes('create'))) {" +
-            "      b.click(); return true;" +
+            "  if ((inp.placeholder||'').toLowerCase().includes('select class') || " +
+            "      (inp.placeholder||'').toLowerCase().includes('class')) {" +
+            "    var r = inp.getBoundingClientRect();" +
+            "    // Only match inputs in the dialog area (not the main edit form's Select Class)\n" +
+            "    // The Quick Add dialog appears as an overlay, typically centered\n" +
+            "    if (r.width > 10 && r.height > 10) {" +
+            "      inp.focus();" +
+            "      inp.click();" +
+            "      return true;" +
             "    }" +
-            "  }" +
-            "}" +
-            "// Fallback: any visible create/add button\n" +
-            "for (var b of btns) {" +
-            "  var r = b.getBoundingClientRect();" +
-            "  if (r.width < 30 || r.height < 15) continue;" +
-            "  var txt = (b.textContent||'').trim().toLowerCase();" +
-            "  if (!b.disabled && (txt === 'create' || txt === 'add' || txt === 'submit' || txt === 'confirm')) {" +
-            "    b.click(); return true;" +
             "  }" +
             "}" +
             "return false;"
         );
-        pause(2000);
-        System.out.println("[AssetPage] OCP child form submitted: " + clicked);
+        pause(1000);
+        System.out.println("[AssetPage] OCP class dropdown opened: " + opened);
+
+        // Select the class from the dropdown listbox
+        Boolean selected = (Boolean) js.executeScript(
+            "var options = document.querySelectorAll('[role=\"option\"], li[role=\"option\"]');" +
+            "for (var opt of options) {" +
+            "  var txt = (opt.textContent||'').trim();" +
+            "  if (txt === arguments[0]) { opt.click(); return true; }" +
+            "}" +
+            "// Try partial match\n" +
+            "for (var opt of options) {" +
+            "  var txt = (opt.textContent||'').trim();" +
+            "  if (txt.indexOf(arguments[0]) > -1) { opt.click(); return true; }" +
+            "}" +
+            "// Select first available option if specific not found\n" +
+            "if (options.length > 0) { options[0].click(); return true; }" +
+            "return false;",
+            className
+        );
+        pause(1000);
+        System.out.println("[AssetPage] OCP class selected '" + className + "': " + selected);
     }
 
     /**
-     * Wait for the OCP dialog/form to close after creation.
+     * Click the "Add X Assets" button in the Quick Add Child Assets dialog.
+     * The button text is "Add 0 Assets" when no class is selected, "Add 1 Assets" after.
+     */
+    public void submitOCPChildForm() {
+        Boolean clicked = (Boolean) js.executeScript(
+            "var btns = document.querySelectorAll('button');" +
+            "for (var b of btns) {" +
+            "  var txt = (b.textContent||'').trim();" +
+            "  var r = b.getBoundingClientRect();" +
+            "  if (r.width < 30) continue;" +
+            "  // Match 'Add N Assets' button\n" +
+            "  if (txt.match(/Add \\d+ Asset/)) {" +
+            "    if (!b.disabled) { b.click(); return true; }" +
+            "    // If disabled (0 assets), log and return false\n" +
+            "    return false;" +
+            "  }" +
+            "}" +
+            "return false;"
+        );
+        pause(3000);
+        System.out.println("[AssetPage] OCP 'Add Assets' clicked: " + clicked);
+    }
+
+    /**
+     * Wait for the Quick Add Child Assets dialog to close after adding.
      */
     public void waitForOCPDialogClose() {
         for (int i = 0; i < 10; i++) {
+            // Check if "Quick Add Child Assets" heading is still visible
             Boolean dialogOpen = (Boolean) js.executeScript(
-                "var dialogs = document.querySelectorAll('[role=\"dialog\"]');" +
-                "for (var d of dialogs) {" +
-                "  var r = d.getBoundingClientRect();" +
-                "  if (r.width > 100 && r.height > 100) return true;" +
+                "var all = document.querySelectorAll('h2, h3, h4, h5, h6, [class*=\"MuiDialogTitle\"]');" +
+                "for (var el of all) {" +
+                "  if ((el.textContent||'').trim().includes('Quick Add Child Assets')) {" +
+                "    var r = el.getBoundingClientRect();" +
+                "    if (r.width > 0 && r.height > 0) return true;" +
+                "  }" +
                 "}" +
                 "return false;"
             );
             if (dialogOpen == null || !dialogOpen) {
-                System.out.println("[AssetPage] OCP dialog closed after " + i + "s");
+                System.out.println("[AssetPage] OCP Quick Add dialog closed after " + i + "s");
                 return;
             }
             pause(1000);
