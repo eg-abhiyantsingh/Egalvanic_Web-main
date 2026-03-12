@@ -2127,7 +2127,7 @@ public class AssetPage {
         if (clicked == null || !clicked) {
             throw new RuntimeException("Could not find 'Create New Child' menu item");
         }
-        pause(2000);
+        pause(3000); // Dialog needs time to render fully
         System.out.println("[AssetPage] Selected 'Create New Child'");
     }
 
@@ -2186,31 +2186,101 @@ public class AssetPage {
      * @param className e.g. "Fuse", "Disconnect Switch", etc.
      */
     public void selectOCPAssetClass(String className) {
-        // Click the "Select class" dropdown input INSIDE the Quick Add dialog only
-        Boolean opened = (Boolean) js.executeScript(
-            "// Find the Quick Add Child Assets dialog first\n" +
-            "var dialog = null;" +
-            "var headings = document.querySelectorAll('h2, h3, h4, h5, h6, [class*=\"MuiDialogTitle\"], [class*=\"MuiTypography\"]');" +
-            "for (var h of headings) {" +
-            "  if ((h.textContent||'').trim().includes('Quick Add Child Assets')) {" +
-            "    dialog = h.closest('[role=\"dialog\"], [class*=\"MuiDialog\"], [class*=\"MuiModal\"], [class*=\"MuiPaper\"]');" +
-            "    break;" +
+        // First, log all visible dialogs/modals and their content for debugging
+        String debugInfo = (String) js.executeScript(
+            "var info = '';" +
+            "// Check for MUI Dialogs\n" +
+            "var dialogs = document.querySelectorAll('[role=\"dialog\"], [class*=\"MuiDialog-root\"], [class*=\"MuiModal-root\"]');" +
+            "info += 'Dialogs found: ' + dialogs.length + '\\n';" +
+            "for (var d of dialogs) {" +
+            "  var r = d.getBoundingClientRect();" +
+            "  var vis = (r.width > 0 && r.height > 0);" +
+            "  info += '  dialog: vis=' + vis + ' class=' + (d.className||'').substring(0,80) + ' text=' + (d.textContent||'').substring(0,100) + '\\n';" +
+            "}" +
+            "// Check for any element containing 'Quick Add' or 'Child Assets'\n" +
+            "var all = document.querySelectorAll('*');" +
+            "for (var el of all) {" +
+            "  var t = (el.textContent||'');" +
+            "  if (el.children.length < 3 && (t.includes('Quick Add') || t.includes('Child Assets'))) {" +
+            "    var r2 = el.getBoundingClientRect();" +
+            "    if (r2.width > 0 && r2.height > 0) {" +
+            "      info += '  quickadd: tag=' + el.tagName + ' class=' + (el.className||'').substring(0,60) + ' text=' + t.substring(0,80) + '\\n';" +
+            "    }" +
             "  }" +
             "}" +
-            "if (!dialog) { console.log('Quick Add dialog not found'); return false; }" +
-            "// Now find the class input ONLY within this dialog\n" +
-            "var inputs = dialog.querySelectorAll('input');" +
+            "// List all visible inputs with placeholder containing 'class' or 'select'\n" +
+            "var inputs = document.querySelectorAll('input');" +
+            "var classInputs = 0;" +
             "for (var inp of inputs) {" +
             "  var ph = (inp.placeholder||'').toLowerCase();" +
-            "  if (ph.includes('select class') || ph.includes('class')) {" +
-            "    inp.focus();" +
-            "    inp.click();" +
-            "    return true;" +
+            "  if (ph.includes('class') || ph.includes('select')) {" +
+            "    var r3 = inp.getBoundingClientRect();" +
+            "    info += '  classInput: ph=\"' + inp.placeholder + '\" val=\"' + inp.value + '\" vis=' + (r3.width > 0) + ' at(' + Math.round(r3.x) + ',' + Math.round(r3.y) + ')\\n';" +
+            "    classInputs++;" +
             "  }" +
             "}" +
-            "// Fallback: click first autocomplete input in dialog\n" +
-            "var autoInputs = dialog.querySelectorAll('[class*=\"MuiAutocomplete\"] input');" +
-            "if (autoInputs.length > 0) { autoInputs[0].focus(); autoInputs[0].click(); return true; }" +
+            "info += 'Total class/select inputs: ' + classInputs + '\\n';" +
+            "return info;"
+        );
+        System.out.println("[AssetPage] OCP Dialog Debug:\n" + debugInfo);
+
+        // Strategy: find the Quick Add dialog container, then its class input
+        // Try multiple approaches to locate the dialog
+        Boolean opened = (Boolean) js.executeScript(
+            "var dialog = null;" +
+            "// Strategy 1: Find by role='dialog' that is visible\n" +
+            "var dialogs = document.querySelectorAll('[role=\"dialog\"]');" +
+            "for (var d of dialogs) {" +
+            "  var r = d.getBoundingClientRect();" +
+            "  if (r.width > 100 && r.height > 100) { dialog = d; break; }" +
+            "}" +
+            "// Strategy 2: Find visible MuiDialog-container or MuiDialog-paper\n" +
+            "if (!dialog) {" +
+            "  var papers = document.querySelectorAll('[class*=\"MuiDialog-paper\"], [class*=\"MuiDialog-container\"]');" +
+            "  for (var p of papers) {" +
+            "    var r = p.getBoundingClientRect();" +
+            "    if (r.width > 100 && r.height > 100) { dialog = p; break; }" +
+            "  }" +
+            "}" +
+            "// Strategy 3: Find any heading with 'Quick Add' or 'Child' and go up\n" +
+            "if (!dialog) {" +
+            "  var allEls = document.querySelectorAll('h1,h2,h3,h4,h5,h6,p,span,div');" +
+            "  for (var el of allEls) {" +
+            "    var t = el.textContent||'';" +
+            "    if (el.children.length === 0 && (t.includes('Quick Add') || t.includes('Child Asset'))) {" +
+            "      dialog = el.closest('[role=\"dialog\"], [class*=\"MuiDialog\"], [class*=\"MuiModal\"], [class*=\"MuiPaper\"], [class*=\"MuiPopover\"]');" +
+            "      if (dialog) break;" +
+            "    }" +
+            "  }" +
+            "}" +
+            "// If we found a dialog, search for class input within it\n" +
+            "if (dialog) {" +
+            "  var inputs = dialog.querySelectorAll('input');" +
+            "  for (var inp of inputs) {" +
+            "    var ph = (inp.placeholder||'').toLowerCase();" +
+            "    if (ph.includes('class') || ph.includes('select')) {" +
+            "      inp.focus(); inp.click(); return true;" +
+            "    }" +
+            "  }" +
+            "  // Fallback: click first input in dialog\n" +
+            "  if (inputs.length > 0) { inputs[0].focus(); inputs[0].click(); return true; }" +
+            "}" +
+            "// Strategy 4 (last resort): Find the LAST 'Select class' input — dialog overlays on top\n" +
+            "var classInputs = [];" +
+            "var allInputs = document.querySelectorAll('input');" +
+            "for (var inp of allInputs) {" +
+            "  var ph = (inp.placeholder||'').toLowerCase();" +
+            "  if (ph.includes('select class') || ph === 'select class') {" +
+            "    var r = inp.getBoundingClientRect();" +
+            "    if (r.width > 10 && r.height > 10 && !inp.value) {" +
+            "      classInputs.push(inp);" +
+            "    }" +
+            "  }" +
+            "}" +
+            "if (classInputs.length > 0) {" +
+            "  var last = classInputs[classInputs.length - 1];" +
+            "  last.focus(); last.click(); return true;" +
+            "}" +
             "return false;"
         );
         pause(1000);
