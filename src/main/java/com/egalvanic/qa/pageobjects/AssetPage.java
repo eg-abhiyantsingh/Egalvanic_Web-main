@@ -155,11 +155,12 @@ public class AssetPage {
                 try {
                     String val = sel.getAttribute("value");
                     if (val == null || val.isEmpty()) {
-                        sel.click();
+                        js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].focus(); arguments[0].click();", sel);
                         pause(400);
                         By firstOption = By.xpath("(//li[@role='option'])[1]");
                         if (driver.findElements(firstOption).size() > 0) {
-                            driver.findElement(firstOption).click();
+                            WebElement opt = driver.findElement(firstOption);
+                            js.executeScript("arguments[0].click();", opt);
                             pause(300);
                             System.out.println("[AssetPage] Filled dropdown in core attributes");
                         }
@@ -179,7 +180,7 @@ public class AssetPage {
                     // Skip search inputs and already-filled inputs
                     if ((val == null || val.isEmpty())
                             && (placeholder == null || !placeholder.contains("Search"))) {
-                        input.click();
+                        js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].focus(); arguments[0].click();", input);
                         input.sendKeys("SmokeTest");
                         pause(200);
                         System.out.println("[AssetPage] Filled text input in core attributes: placeholder=" + placeholder);
@@ -2345,14 +2346,20 @@ public class AssetPage {
                 return;
             }
 
-            // Click the input to open dropdown
-            js.executeScript("arguments[0].scrollIntoView({block:'center'});", target);
+            // Click the input to open dropdown — use JS to avoid backdrop interception
+            js.executeScript(
+                "arguments[0].scrollIntoView({block:'center'});" +
+                "arguments[0].focus();" +
+                "arguments[0].click();", target);
             pause(500);
-            target.click();
-            pause(1500);
-            System.out.println("[AssetPage] OCP class dropdown opened via Selenium click");
+            System.out.println("[AssetPage] OCP class dropdown opened via JS click");
 
-            // Type the class name to filter options
+            // Clear and type the class name to filter options
+            js.executeScript(
+                "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+                "setter.call(arguments[0], '');" +
+                "arguments[0].dispatchEvent(new Event('input', {bubbles: true}));",
+                target);
             target.sendKeys(className);
             pause(1500);
             System.out.println("[AssetPage] Typed '" + className + "' into class input");
@@ -2370,7 +2377,7 @@ public class AssetPage {
                 String txt = opt.getText().trim();
                 System.out.println("[AssetPage]   option: '" + txt + "'");
                 if (txt.equals(className) || txt.contains(className)) {
-                    opt.click();
+                    js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", opt);
                     pause(1000);
                     System.out.println("[AssetPage] OCP class selected: " + className);
                     return;
@@ -2378,7 +2385,7 @@ public class AssetPage {
             }
             // If exact match not found, click first option
             if (!options.isEmpty()) {
-                options.get(0).click();
+                js.executeScript("arguments[0].click();", options.get(0));
                 pause(1000);
                 System.out.println("[AssetPage] Selected first available option: " + options.get(0).getText());
             }
@@ -2397,19 +2404,33 @@ public class AssetPage {
         // Find it by locating the dialog first (contains "Quick Add" text), then its number input.
         Boolean set = (Boolean) js.executeScript(
             "// Find the Quick Add dialog by looking for its heading text\n" +
-            "var allEls = document.querySelectorAll('*');" +
             "var dialogContainer = null;" +
-            "for (var el of allEls) {" +
+            "// Strategy 1: Find heading containing 'Quick Add' text\n" +
+            "var headings = document.querySelectorAll('h1,h2,h3,h4,h5,h6,p,span,div');" +
+            "for (var el of headings) {" +
             "  var t = (el.textContent||'').trim();" +
-            "  if (el.children.length === 0 && t === 'Quick Add Child Assets') {" +
-            "    // Walk up to find the dialog container\n" +
+            "  if (t.indexOf('Quick Add') > -1 && t.indexOf('Child') > -1) {" +
             "    var parent = el.parentElement;" +
-            "    for (var i = 0; i < 10 && parent; i++) {" +
+            "    for (var i = 0; i < 15 && parent; i++) {" +
             "      var numInputs = parent.querySelectorAll('input[type=\"number\"]');" +
             "      if (numInputs.length > 0) { dialogContainer = parent; break; }" +
             "      parent = parent.parentElement;" +
             "    }" +
-            "    break;" +
+            "    if (dialogContainer) break;" +
+            "  }" +
+            "}" +
+            "// Strategy 2: Find any visible number input near 'Add' button with 'Asset' text\n" +
+            "if (!dialogContainer) {" +
+            "  var btns = document.querySelectorAll('button');" +
+            "  for (var b of btns) {" +
+            "    if ((b.textContent||'').match(/Add \\d+ Asset/)) {" +
+            "      var p = b.parentElement;" +
+            "      for (var i = 0; i < 10 && p; i++) {" +
+            "        if (p.querySelectorAll('input[type=\"number\"]').length > 0) { dialogContainer = p; break; }" +
+            "        p = p.parentElement;" +
+            "      }" +
+            "      break;" +
+            "    }" +
             "  }" +
             "}" +
             "if (!dialogContainer) { console.log('OCP dialog container not found for Qty'); return false; }" +
@@ -2526,47 +2547,73 @@ public class AssetPage {
 
     private void typeField(By by, String text) {
         WebElement el = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
-        try { el.clear(); } catch (Exception ignored) {}
-        try { el.click(); } catch (Exception e) {
-            js.executeScript("arguments[0].focus(); arguments[0].click();", el);
-        }
+        // Use JS for all interactions to avoid MuiBackdrop interception
+        js.executeScript(
+            "arguments[0].scrollIntoView({block:'center'});" +
+            "arguments[0].focus();" +
+            "arguments[0].click();" +
+            "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+            "setter.call(arguments[0], '');" +
+            "arguments[0].dispatchEvent(new Event('input', {bubbles: true}));",
+            el);
+        pause(100);
         el.sendKeys(text);
     }
 
     private void typeAndSelectDropdown(By inputLocator, String textToType, String optionText) {
         WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(inputLocator));
-        try { input.click(); } catch (Exception e) {
-            js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].focus(); arguments[0].click();", input);
-        }
+
+        // Use JS to scroll, focus, and click — avoids MuiBackdrop interception
+        js.executeScript(
+            "arguments[0].scrollIntoView({block:'center'});" +
+            "arguments[0].focus();" +
+            "arguments[0].click();", input);
         pause(300);
 
-        // Clear and type to trigger autocomplete filtering
-        try { input.clear(); } catch (Exception ignored) {}
+        // Clear existing value via React native setter, then set new value
+        js.executeScript(
+            "var input = arguments[0];" +
+            "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+            "setter.call(input, '');" +
+            "input.dispatchEvent(new Event('input', {bubbles: true}));" +
+            "input.dispatchEvent(new Event('change', {bubbles: true}));",
+            input);
+        pause(200);
+
+        // Type using sendKeys (triggers React's synthetic events in MUI Autocomplete)
         input.sendKeys(textToType);
-        pause(600);
+        pause(800);
 
         // Wait for the listbox dropdown to appear
         By listbox = By.xpath("//ul[@role='listbox']");
-        for (int attempt = 0; attempt < 3; attempt++) {
+        for (int attempt = 0; attempt < 5; attempt++) {
             if (driver.findElements(listbox).size() > 0) break;
 
-            // Try clicking the popup indicator to open dropdown
-            try {
-                WebElement popup = driver.findElement(
-                        By.xpath("//button[contains(@class,'MuiAutocomplete-popupIndicator')]"));
-                js.executeScript("arguments[0].click();", popup);
-                pause(500);
-            } catch (Exception ignored) {
-                // Re-click input and retype
-                try { input.click(); } catch (Exception e3) {
-                    js.executeScript("arguments[0].focus(); arguments[0].click();", input);
-                }
-                pause(200);
-                try { input.clear(); } catch (Exception e2) {}
-                input.sendKeys(textToType);
-                pause(500);
+            if (attempt == 1) {
+                // Try clicking the popup indicator to open dropdown
+                try {
+                    WebElement popup = driver.findElement(
+                            By.xpath("//button[contains(@class,'MuiAutocomplete-popupIndicator')]"));
+                    js.executeScript("arguments[0].click();", popup);
+                    pause(500);
+                    continue;
+                } catch (Exception ignored) {}
             }
+
+            // Re-focus, re-clear, re-type via JS + sendKeys
+            js.executeScript(
+                "var input = arguments[0];" +
+                "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+                "setter.call(input, '');" +
+                "input.dispatchEvent(new Event('input', {bubbles: true}));" +
+                "input.focus(); input.click();",
+                input);
+            pause(300);
+            input.sendKeys(textToType);
+            pause(800);
         }
+
+        System.out.println("[AssetPage] Listbox visible: " + (driver.findElements(listbox).size() > 0));
 
         // Find and click the matching option
         By exactOption = By.xpath("//li[@role='option'][normalize-space()='" + optionText + "']");
@@ -2581,6 +2628,7 @@ public class AssetPage {
                     pause(150);
                     js.executeScript("arguments[0].click();", option);
                     pause(300);
+                    System.out.println("[AssetPage] Selected dropdown option: " + optionText);
                     return;
                 }
             }
