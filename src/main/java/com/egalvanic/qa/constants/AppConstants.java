@@ -108,6 +108,9 @@ public class AppConstants {
     public static final String FEATURE_CREATE_ISSUE = "Create Issue";
     public static final String FEATURE_EDIT_ISSUE = "Edit Issue";
     public static final String FEATURE_DELETE_ISSUE = "Delete Issue";
+    public static final String FEATURE_ACTIVATE_JOBS = "Activate Jobs";
+    public static final String FEATURE_SEARCH_ISSUE = "Search Issue";
+    public static final String FEATURE_ISSUE_PHOTOS = "Issue Photos";
 
     // ============================================
     // EMAIL CONFIGURATION

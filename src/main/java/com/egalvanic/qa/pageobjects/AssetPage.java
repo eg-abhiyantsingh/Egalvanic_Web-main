@@ -1,6 +1,7 @@
 package com.egalvanic.qa.pageobjects;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -59,6 +60,7 @@ public class AssetPage {
 
     public void navigateToAssets() {
         recoverFromErrorOverlay();
+        dismissAnyDrawerOrBackdrop();
 
         // If already on Assets page, navigate away then back to force fresh data.
         // driver.navigate().refresh() loses SPA state (site selector resets).
@@ -100,6 +102,9 @@ public class AssetPage {
     // --- CREATE ---
 
     public void openCreateAssetForm() {
+        // Dismiss any residual drawer/dialog left open by a previous test
+        dismissAnyDialog();
+        pause(300);
         click(CREATE_ASSET_BTN);
         wait.until(ExpectedConditions.visibilityOfElementLocated(ASSET_FORM_DIALOG));
     }
@@ -210,23 +215,6 @@ public class AssetPage {
         // We need the LAST one (the form's submit button inside the panel).
         java.util.List<WebElement> btns = driver.findElements(SUBMIT_CREATE_BTN);
         System.out.println("[AssetPage] Found " + btns.size() + " 'Create Asset' buttons");
-
-        if (btns.isEmpty()) {
-            // Try finding submit button via JS inside the drawer panel
-            Boolean clicked = (Boolean) js.executeScript(
-                "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
-                "for (var d of drawers) {" +
-                "  var btns = d.querySelectorAll('button');" +
-                "  for (var b of btns) {" +
-                "    if (b.textContent.trim() === 'Create Asset' && !b.disabled) {" +
-                "      b.scrollIntoView({block:'center'}); b.click(); return true;" +
-                "    }" +
-                "  }" +
-                "}" +
-                "return false;");
-            System.out.println("[AssetPage] JS fallback Create Asset click: " + clicked);
-            return;
-        }
 
         WebElement submitBtn = btns.get(btns.size() - 1); // last one = panel's submit button
         js.executeScript("arguments[0].scrollIntoView({block:'center'});", submitBtn);
@@ -389,18 +377,6 @@ public class AssetPage {
         } catch (Exception e) {
             System.out.println("[AssetPage] Error checking grid: " + e.getMessage());
             return false;
-        }
-    }
-
-    /**
-     * Get the number of data rows currently visible in the asset grid.
-     */
-    public int getGridRowCount() {
-        try {
-            return driver.findElements(
-                By.xpath("//div[contains(@class,'MuiDataGrid-row') and @data-rowindex]")).size();
-        } catch (Exception e) {
-            return 0;
         }
     }
 
@@ -1859,6 +1835,33 @@ public class AssetPage {
     /**
      * Dismiss any open dialog (press Escape or click Cancel/Close).
      */
+    /**
+     * Dismiss any open MUI Drawer, Backdrop, or side panel that may linger from a previous test.
+     * MUI Drawers/Backdrops close on Escape by default.
+     * This prevents "element not interactable" errors when a previous test leaves a drawer open.
+     */
+    private void dismissAnyDrawerOrBackdrop() {
+        try {
+            // Check for MUI Backdrops (present when drawers/dialogs are open)
+            Boolean hasBackdrop = (Boolean) js.executeScript(
+                "return document.querySelectorAll('.MuiBackdrop-root, .MuiDrawer-root, [role=\"presentation\"]').length > 0;");
+            if (Boolean.TRUE.equals(hasBackdrop)) {
+                System.out.println("[AssetPage] Backdrop/drawer detected — pressing Escape to dismiss");
+                new Actions(driver).sendKeys(Keys.ESCAPE).perform();
+                pause(800);
+                // Press Escape again in case there are nested overlays
+                Boolean stillPresent = (Boolean) js.executeScript(
+                    "return document.querySelectorAll('.MuiBackdrop-root').length > 0;");
+                if (Boolean.TRUE.equals(stillPresent)) {
+                    new Actions(driver).sendKeys(Keys.ESCAPE).perform();
+                    pause(800);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("[AssetPage] dismissAnyDrawerOrBackdrop: " + e.getMessage());
+        }
+    }
+
     public void dismissAnyDialog() {
         try {
             js.executeScript(
@@ -2577,135 +2580,130 @@ public class AssetPage {
 
     private void typeField(By by, String text) {
         WebElement el = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
-        // Use JS for all interactions to avoid MuiBackdrop "element not interactable"
+        // Use JS for all interactions to avoid MuiBackdrop interception
         js.executeScript(
-            "var el = arguments[0]; var text = arguments[1];" +
-            "el.scrollIntoView({block:'center'});" +
-            "el.focus(); el.click();" +
+            "arguments[0].scrollIntoView({block:'center'});" +
+            "arguments[0].focus();" +
+            "arguments[0].click();" +
             "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
-            "setter.call(el, '');" +
-            "el.dispatchEvent(new Event('input', {bubbles: true}));" +
-            "setter.call(el, text);" +
-            "el.dispatchEvent(new Event('input', {bubbles: true}));" +
-            "el.dispatchEvent(new Event('change', {bubbles: true}));",
-            el, text);
+            "setter.call(arguments[0], '');" +
+            "arguments[0].dispatchEvent(new Event('input', {bubbles: true}));",
+            el);
         pause(100);
+        try {
+            el.sendKeys(text);
+        } catch (Exception e) {
+            // Fallback: use JS to set value when native sendKeys is blocked by MUI Backdrop
+            System.out.println("[AssetPage] Native sendKeys blocked, using JS fallback for: " + by);
+            js.executeScript(
+                "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+                "setter.call(arguments[0], arguments[1]);" +
+                "arguments[0].dispatchEvent(new Event('input', {bubbles: true}));" +
+                "arguments[0].dispatchEvent(new Event('change', {bubbles: true}));",
+                el, text);
+        }
     }
 
     private void typeAndSelectDropdown(By inputLocator, String textToType, String optionText) {
         WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(inputLocator));
 
-        // ── PRIMARY STRATEGY: Open dropdown via popup indicator on the CORRECT autocomplete field ──
-        // This avoids all sendKeys/Actions issues where keystrokes go to wrong field behind MuiBackdrop
+        // Use JS to scroll, focus, and click — avoids MuiBackdrop interception
         js.executeScript(
             "arguments[0].scrollIntoView({block:'center'});" +
             "arguments[0].focus();" +
             "arguments[0].click();", input);
         pause(300);
 
-        // Click popup indicator on THIS specific autocomplete to show all options
+        // Clear existing value via React native setter, then set new value
         js.executeScript(
-            "var wrapper = arguments[0].closest('.MuiAutocomplete-root');" +
-            "if (wrapper) {" +
-            "  var btn = wrapper.querySelector('.MuiAutocomplete-popupIndicator');" +
-            "  if (btn) btn.click();" +
-            "}",
-            input);
-        pause(1000);
-
-        // Log available options for debugging
-        String listboxDebug = (String) js.executeScript(
-            "var lb = document.querySelector('ul[role=\"listbox\"]');" +
-            "if (!lb) return 'no listbox';" +
-            "var opts = lb.querySelectorAll('li[role=\"option\"]');" +
-            "var texts = [];" +
-            "for (var o of opts) texts.push(o.textContent.trim());" +
-            "return 'listbox has ' + opts.length + ' options: [' + texts.slice(0,10).join(', ') + (opts.length > 10 ? '...' : '') + ']';");
-        System.out.println("[AssetPage] " + listboxDebug);
-
-        // Search through options and click using Selenium's native click (trusted events)
-        for (int attempt = 0; attempt < 3; attempt++) {
-            // Try exact match first, then partial match
-            By exactOption = By.xpath("//li[@role='option'][normalize-space()='" + optionText + "']");
-            By partialOption = By.xpath("//li[@role='option'][contains(normalize-space(),'" + optionText + "')]");
-
-            for (By optBy : new By[]{exactOption, partialOption}) {
-                java.util.List<WebElement> options = driver.findElements(optBy);
-                if (!options.isEmpty()) {
-                    WebElement option = options.get(0);
-                    js.executeScript("arguments[0].scrollIntoView({block:'center'});", option);
-                    pause(150);
-                    try {
-                        // Use Selenium Actions for trusted click — MUI Autocomplete requires trusted events
-                        new Actions(driver).moveToElement(option).click().perform();
-                    } catch (Exception e) {
-                        // Fallback to direct Selenium click
-                        option.click();
-                    }
-                    System.out.println("[AssetPage] Selected dropdown option: " + optionText);
-                    pause(500);
-                    return;
-                }
-            }
-            pause(500);
-        }
-
-        // ── FALLBACK: Try typing to filter, then select ──
-        System.out.println("[AssetPage] Popup indicator approach failed — trying keyboard input");
-
-        // Close any open listbox via Escape
-        js.executeScript("document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true}));");
-        pause(500);
-
-        // Re-find and focus the input
-        input = driver.findElement(inputLocator);
-        js.executeScript(
-            "arguments[0].scrollIntoView({block:'center'});" +
-            "arguments[0].focus();" +
-            "arguments[0].click();", input);
-        pause(300);
-
-        // Clear and type using per-character keyboard events directly on the target input
-        js.executeScript(
-            "var el = arguments[0]; var text = arguments[1];" +
+            "var input = arguments[0];" +
             "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
-            "setter.call(el, '');" +
-            "el.dispatchEvent(new Event('input', {bubbles: true}));" +
-            "for (var i = 0; i < text.length; i++) {" +
-            "  var partial = text.substring(0, i + 1);" +
-            "  setter.call(el, partial);" +
-            "  el.dispatchEvent(new Event('input', {bubbles: true}));" +
-            "  el.dispatchEvent(new KeyboardEvent('keydown', {key: text[i], bubbles: true}));" +
-            "  el.dispatchEvent(new KeyboardEvent('keyup', {key: text[i], bubbles: true}));" +
-            "}" +
-            "el.dispatchEvent(new Event('change', {bubbles: true}));",
-            input, textToType);
-        pause(1000);
+            "setter.call(input, '');" +
+            "input.dispatchEvent(new Event('input', {bubbles: true}));" +
+            "input.dispatchEvent(new Event('change', {bubbles: true}));",
+            input);
+        pause(200);
 
-        // Try to find and click the option
-        By exactOpt = By.xpath("//li[@role='option'][normalize-space()='" + optionText + "']");
-        By partialOpt = By.xpath("//li[@role='option'][contains(normalize-space(),'" + optionText + "')]");
+        // Type using sendKeys — fall back to JS if blocked by MUI Backdrop
+        sendKeysWithJsFallback(input, textToType, inputLocator);
+        pause(800);
+
+        // Wait for the listbox dropdown to appear
+        By listbox = By.xpath("//ul[@role='listbox']");
         for (int attempt = 0; attempt < 5; attempt++) {
-            for (By opt : new By[]{exactOpt, partialOpt}) {
-                java.util.List<WebElement> opts = driver.findElements(opt);
-                if (!opts.isEmpty()) {
-                    WebElement option = opts.get(0);
+            if (driver.findElements(listbox).size() > 0) break;
+
+            if (attempt == 1) {
+                // Try clicking the popup indicator to open dropdown
+                try {
+                    WebElement popup = driver.findElement(
+                            By.xpath("//button[contains(@class,'MuiAutocomplete-popupIndicator')]"));
+                    js.executeScript("arguments[0].click();", popup);
+                    pause(500);
+                    continue;
+                } catch (Exception ignored) {}
+            }
+
+            // Re-focus, re-clear, re-type via JS + sendKeys
+            js.executeScript(
+                "var input = arguments[0];" +
+                "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+                "setter.call(input, '');" +
+                "input.dispatchEvent(new Event('input', {bubbles: true}));" +
+                "input.focus(); input.click();",
+                input);
+            pause(300);
+            sendKeysWithJsFallback(input, textToType, inputLocator);
+            pause(800);
+        }
+
+        System.out.println("[AssetPage] Listbox visible: " + (driver.findElements(listbox).size() > 0));
+
+        // Find and click the matching option
+        By exactOption = By.xpath("//li[@role='option'][normalize-space()='" + optionText + "']");
+        By partialOption = By.xpath("//li[@role='option'][contains(normalize-space(),'" + optionText + "')]");
+        By anyOption = By.xpath("//li[contains(@id,'option') or @role='option'][contains(normalize-space(),'" + optionText + "')]");
+
+        for (int attempt = 0; attempt < 5; attempt++) {
+            for (By opt : new By[]{exactOption, partialOption, anyOption}) {
+                if (driver.findElements(opt).size() > 0) {
+                    WebElement option = driver.findElement(opt);
                     js.executeScript("arguments[0].scrollIntoView({block:'center'});", option);
                     pause(150);
-                    try {
-                        new Actions(driver).moveToElement(option).click().perform();
-                    } catch (Exception e) {
-                        option.click();
-                    }
-                    System.out.println("[AssetPage] Selected dropdown option (keyboard fallback): " + optionText);
+                    js.executeScript("arguments[0].click();", option);
                     pause(300);
+                    System.out.println("[AssetPage] Selected dropdown option: " + optionText);
                     return;
                 }
             }
-            pause(500);
+            pause(400);
         }
-
         System.out.println("WARNING: Could not select dropdown option '" + optionText + "' for " + inputLocator);
+    }
+
+    /**
+     * Attempt native sendKeys; if blocked by MUI Backdrop, fall back to JS-based input
+     * with synthetic React events so MUI Autocomplete recognizes the value change.
+     */
+    private void sendKeysWithJsFallback(WebElement el, String text, By locator) {
+        try {
+            el.sendKeys(text);
+        } catch (Exception e) {
+            System.out.println("[AssetPage] Native sendKeys blocked, using JS fallback for: " + locator);
+            js.executeScript(
+                "var el = arguments[0];" +
+                "var text = arguments[1];" +
+                "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+                "setter.call(el, text);" +
+                "el.dispatchEvent(new Event('input', {bubbles: true}));" +
+                "el.dispatchEvent(new Event('change', {bubbles: true}));" +
+                // Dispatch keydown/keyup events to trigger MUI Autocomplete filtering
+                "for (var i = 0; i < text.length; i++) {" +
+                "  el.dispatchEvent(new KeyboardEvent('keydown', {key: text[i], bubbles: true}));" +
+                "  el.dispatchEvent(new KeyboardEvent('keyup', {key: text[i], bubbles: true}));" +
+                "}",
+                el, text);
+        }
     }
 
     private void pause(long ms) {

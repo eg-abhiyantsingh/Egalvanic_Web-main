@@ -36,4 +36,10 @@
         </classes>
     </test>
 
+    <test name="Issues-CRUD-Smoke">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.IssuesSmokeTestNG"/>
+        </classes>
+    </test>
+
 </suite>
