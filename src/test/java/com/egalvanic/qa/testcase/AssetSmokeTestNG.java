@@ -45,8 +45,17 @@ public class AssetSmokeTestNG extends BaseTest {
 
             boolean success = assetPage.waitForCreateSuccess();
             Assert.assertTrue(success, "Asset creation did not complete successfully");
+            logStep("Create success confirmed");
 
-            ExtentReportManager.logPass("Asset created successfully: " + name);
+            // Verify asset appears in the grid
+            assetPage.navigateToAssets();
+            pause(2000);
+            assetPage.searchAsset(name);
+            boolean found = assetPage.isAssetVisible(name);
+            Assert.assertTrue(found, "Newly created asset not found in grid: " + name);
+            logStepWithScreenshot("Asset verified in grid: " + name);
+
+            ExtentReportManager.logPass("Asset created and verified in grid: " + name);
 
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("asset_create_error");
