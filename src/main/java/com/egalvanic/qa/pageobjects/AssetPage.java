@@ -381,6 +381,18 @@ public class AssetPage {
     }
 
     /**
+     * Get the number of data rows currently visible in the asset grid.
+     */
+    public int getGridRowCount() {
+        try {
+            By gridRow = By.xpath("//div[contains(@class,'MuiDataGrid-row') and @data-rowindex]");
+            return driver.findElements(gridRow).size();
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    /**
      * Get the asset name from the first row in the grid (first cell text).
      */
     public String getFirstRowAssetName() {
@@ -2607,76 +2619,120 @@ public class AssetPage {
     private void typeAndSelectDropdown(By inputLocator, String textToType, String optionText) {
         WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(inputLocator));
 
-        // Use JS to scroll, focus, and click — avoids MuiBackdrop interception
+        // ── PRIMARY: Open dropdown via THIS field's popup indicator (avoids sendKeys going to wrong field) ──
+        // Disable backdrops first — MUI Drawer backdrop intercepts both sendKeys and option clicks
+        js.executeScript(
+            "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"]').forEach(" +
+            "  function(b) { b.style.pointerEvents = 'none'; }" +
+            ");"
+        );
+
         js.executeScript(
             "arguments[0].scrollIntoView({block:'center'});" +
             "arguments[0].focus();" +
             "arguments[0].click();", input);
         pause(300);
 
-        // Clear existing value via React native setter, then set new value
+        // Click popup indicator on THIS specific autocomplete to show all options
         js.executeScript(
-            "var input = arguments[0];" +
-            "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
-            "setter.call(input, '');" +
-            "input.dispatchEvent(new Event('input', {bubbles: true}));" +
-            "input.dispatchEvent(new Event('change', {bubbles: true}));",
+            "var wrapper = arguments[0].closest('.MuiAutocomplete-root');" +
+            "if (wrapper) {" +
+            "  var btn = wrapper.querySelector('.MuiAutocomplete-popupIndicator');" +
+            "  if (btn) btn.click();" +
+            "}",
             input);
-        pause(200);
+        pause(1000);
 
-        // Type using sendKeys — fall back to JS if blocked by MUI Backdrop
-        sendKeysWithJsFallback(input, textToType, inputLocator);
-        pause(800);
+        // Log available options for debugging
+        String listboxDebug = (String) js.executeScript(
+            "var lb = document.querySelector('ul[role=\"listbox\"]');" +
+            "if (!lb) return 'no listbox';" +
+            "var opts = lb.querySelectorAll('li[role=\"option\"]');" +
+            "var texts = [];" +
+            "for (var o of opts) texts.push(o.textContent.trim());" +
+            "return 'listbox has ' + opts.length + ' options: [' + texts.slice(0,10).join(', ') + (opts.length > 10 ? '...' : '') + ']';");
+        System.out.println("[AssetPage] " + listboxDebug);
 
-        // Wait for the listbox dropdown to appear
-        By listbox = By.xpath("//ul[@role='listbox']");
-        for (int attempt = 0; attempt < 5; attempt++) {
-            if (driver.findElements(listbox).size() > 0) break;
-
-            if (attempt == 1) {
-                // Try clicking the popup indicator to open dropdown
-                try {
-                    WebElement popup = driver.findElement(
-                            By.xpath("//button[contains(@class,'MuiAutocomplete-popupIndicator')]"));
-                    js.executeScript("arguments[0].click();", popup);
-                    pause(500);
-                    continue;
-                } catch (Exception ignored) {}
-            }
-
-            // Re-focus, re-clear, re-type via JS + sendKeys
-            js.executeScript(
-                "var input = arguments[0];" +
-                "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
-                "setter.call(input, '');" +
-                "input.dispatchEvent(new Event('input', {bubbles: true}));" +
-                "input.focus(); input.click();",
-                input);
-            pause(300);
-            sendKeysWithJsFallback(input, textToType, inputLocator);
-            pause(800);
-        }
-
-        System.out.println("[AssetPage] Listbox visible: " + (driver.findElements(listbox).size() > 0));
-
-        // Find and click the matching option
+        // Find and click the matching option using Selenium trusted click
         By exactOption = By.xpath("//li[@role='option'][normalize-space()='" + optionText + "']");
         By partialOption = By.xpath("//li[@role='option'][contains(normalize-space(),'" + optionText + "')]");
-        By anyOption = By.xpath("//li[contains(@id,'option') or @role='option'][contains(normalize-space(),'" + optionText + "')]");
 
-        for (int attempt = 0; attempt < 5; attempt++) {
-            for (By opt : new By[]{exactOption, partialOption, anyOption}) {
-                if (driver.findElements(opt).size() > 0) {
-                    WebElement option = driver.findElement(opt);
+        for (int attempt = 0; attempt < 3; attempt++) {
+            for (By optBy : new By[]{exactOption, partialOption}) {
+                java.util.List<WebElement> options = driver.findElements(optBy);
+                if (!options.isEmpty()) {
+                    WebElement option = options.get(0);
                     js.executeScript("arguments[0].scrollIntoView({block:'center'});", option);
                     pause(150);
-                    js.executeScript("arguments[0].click();", option);
-                    pause(300);
+                    // Use Selenium Actions for trusted click — MUI Autocomplete requires trusted events
+                    try {
+                        new Actions(driver).moveToElement(option).click().perform();
+                    } catch (Exception e) {
+                        option.click();
+                    }
                     System.out.println("[AssetPage] Selected dropdown option: " + optionText);
+                    pause(500);
+
+                    // Verify the selection took effect by checking input value
+                    String val = (String) js.executeScript(
+                        "return arguments[0].value;", driver.findElement(inputLocator));
+                    System.out.println("[AssetPage] Input value after selection: '" + val + "'");
+
                     return;
                 }
             }
-            pause(400);
+            pause(500);
+        }
+
+        // ── FALLBACK: Type to filter, then select ──
+        System.out.println("[AssetPage] Popup indicator approach failed — trying keyboard input");
+
+        // Close listbox via Escape
+        js.executeScript("document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true}));");
+        pause(500);
+
+        input = driver.findElement(inputLocator);
+        js.executeScript(
+            "arguments[0].scrollIntoView({block:'center'});" +
+            "arguments[0].focus();" +
+            "arguments[0].click();", input);
+        pause(300);
+
+        // Type using per-character keyboard events on the target input
+        js.executeScript(
+            "var el = arguments[0]; var text = arguments[1];" +
+            "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+            "setter.call(el, '');" +
+            "el.dispatchEvent(new Event('input', {bubbles: true}));" +
+            "for (var i = 0; i < text.length; i++) {" +
+            "  var partial = text.substring(0, i + 1);" +
+            "  setter.call(el, partial);" +
+            "  el.dispatchEvent(new Event('input', {bubbles: true}));" +
+            "  el.dispatchEvent(new KeyboardEvent('keydown', {key: text[i], bubbles: true}));" +
+            "  el.dispatchEvent(new KeyboardEvent('keyup', {key: text[i], bubbles: true}));" +
+            "}" +
+            "el.dispatchEvent(new Event('change', {bubbles: true}));",
+            input, textToType);
+        pause(1000);
+
+        for (int attempt = 0; attempt < 5; attempt++) {
+            for (By optBy : new By[]{exactOption, partialOption}) {
+                java.util.List<WebElement> opts = driver.findElements(optBy);
+                if (!opts.isEmpty()) {
+                    WebElement option = opts.get(0);
+                    js.executeScript("arguments[0].scrollIntoView({block:'center'});", option);
+                    pause(150);
+                    try {
+                        new Actions(driver).moveToElement(option).click().perform();
+                    } catch (Exception e) {
+                        option.click();
+                    }
+                    System.out.println("[AssetPage] Selected dropdown option (keyboard fallback): " + optionText);
+                    pause(300);
+                    return;
+                }
+            }
+            pause(500);
         }
         System.out.println("WARNING: Could not select dropdown option '" + optionText + "' for " + inputLocator);
     }
