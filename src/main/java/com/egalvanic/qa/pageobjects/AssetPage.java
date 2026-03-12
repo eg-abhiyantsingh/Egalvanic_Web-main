@@ -2,8 +2,10 @@ package com.egalvanic.qa.pageobjects;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -2594,17 +2596,35 @@ public class AssetPage {
             input);
         pause(200);
 
-        // Type to trigger autocomplete filtering — try sendKeys, fallback to JS
+        // Type to trigger autocomplete filtering.
+        // MUI Autocomplete needs actual keystroke events, not just value changes.
+        // Try: sendKeys → Actions API → JS keyboard events (in order of reliability).
         try {
             input.sendKeys(textToType);
-        } catch (Exception e) {
-            System.out.println("[AssetPage] sendKeys failed, using JS to type: " + e.getMessage());
-            js.executeScript(
-                "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
-                "setter.call(arguments[0], arguments[1]);" +
-                "arguments[0].dispatchEvent(new Event('input', {bubbles: true}));" +
-                "arguments[0].dispatchEvent(new Event('change', {bubbles: true}));",
-                input, textToType);
+        } catch (Exception e1) {
+            System.out.println("[AssetPage] sendKeys failed, trying Actions API...");
+            try {
+                new Actions(driver).moveToElement(input).click()
+                    .sendKeys(Keys.chord(Keys.CONTROL, "a")).sendKeys(Keys.DELETE)
+                    .sendKeys(textToType).perform();
+
+            } catch (Exception e2) {
+                System.out.println("[AssetPage] Actions failed, using JS keyboard events...");
+                // Dispatch individual keyboard events per character for MUI Autocomplete
+                js.executeScript(
+                    "var el = arguments[0]; var text = arguments[1];" +
+                    "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+                    "for (var i = 0; i < text.length; i++) {" +
+                    "  var partial = text.substring(0, i + 1);" +
+                    "  setter.call(el, partial);" +
+                    "  el.dispatchEvent(new Event('input', {bubbles: true}));" +
+                    "  el.dispatchEvent(new KeyboardEvent('keydown', {key: text[i], bubbles: true}));" +
+                    "  el.dispatchEvent(new KeyboardEvent('keyup', {key: text[i], bubbles: true}));" +
+                    "}" +
+                    "el.dispatchEvent(new Event('change', {bubbles: true}));",
+                    input, textToType);
+
+            }
         }
         pause(800);
 
@@ -2624,17 +2644,21 @@ public class AssetPage {
                 } catch (Exception ignored) {}
             }
 
-            // Re-focus, re-clear, re-type via JS
-            js.executeScript(
-                "var input = arguments[0];" +
-                "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
-                "setter.call(input, '');" +
-                "input.dispatchEvent(new Event('input', {bubbles: true}));" +
-                "input.focus(); input.click();" +
-                "setter.call(input, arguments[1]);" +
-                "input.dispatchEvent(new Event('input', {bubbles: true}));" +
-                "input.dispatchEvent(new Event('change', {bubbles: true}));",
-                input, textToType);
+            // Re-focus and retry typing via Actions
+            js.executeScript("arguments[0].focus(); arguments[0].click();", input);
+            pause(200);
+            try {
+                new Actions(driver).sendKeys(Keys.chord(Keys.CONTROL, "a"))
+                    .sendKeys(Keys.DELETE).sendKeys(textToType).perform();
+            } catch (Exception e) {
+                js.executeScript(
+                    "var el = arguments[0]; var text = arguments[1];" +
+                    "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+                    "setter.call(el, text);" +
+                    "el.dispatchEvent(new Event('input', {bubbles: true}));" +
+                    "el.dispatchEvent(new Event('change', {bubbles: true}));",
+                    input, textToType);
+            }
             pause(800);
         }
 

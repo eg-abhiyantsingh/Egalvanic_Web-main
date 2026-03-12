@@ -136,6 +136,20 @@ public class ConnectionPage {
     }
 
     /**
+     * Open the Source Node dropdown and select the first available option.
+     */
+    public void selectFirstAvailableSource() {
+        selectFirstAvailableOption(SOURCE_NODE_INPUT, "Source node");
+    }
+
+    /**
+     * Open the Target Node dropdown and select the first available option.
+     */
+    public void selectFirstAvailableTarget() {
+        selectFirstAvailableOption(TARGET_NODE_INPUT, "Target node");
+    }
+
+    /**
      * Select the Connection Type from the autocomplete dropdown.
      * Valid options: "Cable", "Busway"
      */
@@ -640,6 +654,49 @@ public class ConnectionPage {
             pause(500);
         }
         System.out.println("[ConnectionPage] WARNING: Could not select autocomplete option: " + searchText);
+    }
+
+    /**
+     * Open an autocomplete dropdown and select the first available option.
+     * Used when we don't know which nodes are available.
+     */
+    private void selectFirstAvailableOption(By inputLocator, String fieldLabel) {
+        WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(inputLocator));
+
+        // Click to open the dropdown via JS
+        js.executeScript(
+            "arguments[0].scrollIntoView({block:'center'});" +
+            "arguments[0].focus(); arguments[0].click();", input);
+        pause(500);
+
+        // Click the popup indicator to show all options
+        js.executeScript(
+            "var wrapper = arguments[0].closest('.MuiAutocomplete-root');" +
+            "if (wrapper) {" +
+            "  var btn = wrapper.querySelector('.MuiAutocomplete-popupIndicator');" +
+            "  if (btn) btn.click();" +
+            "}",
+            input);
+        pause(1000);
+
+        // Select the first available option
+        for (int attempt = 0; attempt < 5; attempt++) {
+            String result = (String) js.executeScript(
+                "var items = document.querySelectorAll('li[role=\"option\"]');" +
+                "if (items.length > 0) {" +
+                "  var text = items[0].textContent.trim();" +
+                "  items[0].click();" +
+                "  return text;" +
+                "}" +
+                "return null;");
+            if (result != null) {
+                System.out.println("[ConnectionPage] " + fieldLabel + " selected: " + result);
+                pause(500);
+                return;
+            }
+            pause(500);
+        }
+        System.out.println("[ConnectionPage] WARNING: No options available for " + fieldLabel);
     }
 
     /**
