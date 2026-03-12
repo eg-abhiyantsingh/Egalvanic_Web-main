@@ -451,23 +451,39 @@ public class ConnectionPage {
             );
             System.out.println("[ConnectionPage] Dialog scan " + i + ": " + dialogInfo);
 
-            // Look for a dialog with delete-related text and a confirm button
+            // Find the most specific delete dialog (smallest container with exactly 2 buttons: Cancel + Delete)
             Boolean clicked = (Boolean) js.executeScript(
                 "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"presentation\"], [class*=\"MuiDialog\"], [class*=\"MuiModal\"]');" +
+                "var bestDialog = null; var bestArea = Infinity;" +
                 "for (var d of dialogs) {" +
                 "  var r = d.getBoundingClientRect();" +
                 "  if (r.width < 50 || r.height < 50) continue;" +
                 "  var text = (d.textContent||'').toLowerCase();" +
-                "  if (text.includes('delete') || text.includes('confirm') || text.includes('remove') || text.includes('sure')) {" +
+                "  var btns = d.querySelectorAll('button');" +
+                "  // Find dialog with delete text AND exactly 2 buttons (Cancel + Delete)\n" +
+                "  if ((text.includes('delete') || text.includes('sure')) && btns.length === 2) {" +
+                "    var area = r.width * r.height;" +
+                "    if (area < bestArea) { bestArea = area; bestDialog = d; }" +
+                "  }" +
+                "}" +
+                "if (bestDialog) {" +
+                "  var btns = bestDialog.querySelectorAll('button');" +
+                "  for (var b of btns) {" +
+                "    if (b.textContent.trim() === 'Delete') { b.click(); return true; }" +
+                "  }" +
+                "  // Fallback: click last button\n" +
+                "  btns[btns.length - 1].click(); return true;" +
+                "}" +
+                "// Wider search: any dialog with delete text\n" +
+                "for (var d of dialogs) {" +
+                "  var r = d.getBoundingClientRect();" +
+                "  if (r.width < 50 || r.height < 50) continue;" +
+                "  var text = (d.textContent||'').toLowerCase();" +
+                "  if (text.includes('delete') || text.includes('sure')) {" +
                 "    var btns = d.querySelectorAll('button');" +
                 "    for (var b of btns) {" +
-                "      var t = b.textContent.trim();" +
-                "      if (t === 'Delete' || t === 'Confirm' || t === 'Yes' || t === 'OK' || t === 'Remove') {" +
-                "        b.click(); return true;" +
-                "      }" +
+                "      if (b.textContent.trim() === 'Delete') { b.click(); return true; }" +
                 "    }" +
-                "    // Click last button in dialog (usually the destructive action)\n" +
-                "    if (btns.length >= 2) { btns[btns.length - 1].click(); return true; }" +
                 "  }" +
                 "}" +
                 "return false;"

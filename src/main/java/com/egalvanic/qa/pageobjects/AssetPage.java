@@ -212,6 +212,23 @@ public class AssetPage {
         java.util.List<WebElement> btns = driver.findElements(SUBMIT_CREATE_BTN);
         System.out.println("[AssetPage] Found " + btns.size() + " 'Create Asset' buttons");
 
+        if (btns.isEmpty()) {
+            // Try finding submit button via JS inside the drawer panel
+            Boolean clicked = (Boolean) js.executeScript(
+                "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+                "for (var d of drawers) {" +
+                "  var btns = d.querySelectorAll('button');" +
+                "  for (var b of btns) {" +
+                "    if (b.textContent.trim() === 'Create Asset' && !b.disabled) {" +
+                "      b.scrollIntoView({block:'center'}); b.click(); return true;" +
+                "    }" +
+                "  }" +
+                "}" +
+                "return false;");
+            System.out.println("[AssetPage] JS fallback Create Asset click: " + clicked);
+            return;
+        }
+
         WebElement submitBtn = btns.get(btns.size() - 1); // last one = panel's submit button
         js.executeScript("arguments[0].scrollIntoView({block:'center'});", submitBtn);
         pause(300);
@@ -2597,20 +2614,19 @@ public class AssetPage {
         pause(200);
 
         // Type to trigger autocomplete filtering.
-        // MUI Autocomplete needs actual keystroke events, not just value changes.
-        // Try: sendKeys → Actions API → JS keyboard events (in order of reliability).
+        // MUI Autocomplete needs actual keystroke events for filtering.
+        // Strategy: JS focus → Actions sendKeys (sends to focused element, bypasses interactability check)
+        // Fallback: sendKeys directly on element if Actions fails
         try {
             input.sendKeys(textToType);
         } catch (Exception e1) {
-            System.out.println("[AssetPage] sendKeys failed, trying Actions API...");
+            System.out.println("[AssetPage] sendKeys failed, trying Actions on focused element...");
+            // JS already focused the input above. Actions.sendKeys() sends to the active element.
             try {
-                new Actions(driver).moveToElement(input).click()
-                    .sendKeys(Keys.chord(Keys.CONTROL, "a")).sendKeys(Keys.DELETE)
-                    .sendKeys(textToType).perform();
-
+                new Actions(driver).sendKeys(textToType).perform();
             } catch (Exception e2) {
-                System.out.println("[AssetPage] Actions failed, using JS keyboard events...");
-                // Dispatch individual keyboard events per character for MUI Autocomplete
+                System.out.println("[AssetPage] Actions failed too: " + e2.getMessage());
+                // Last resort: set value via JS and dispatch per-character events
                 js.executeScript(
                     "var el = arguments[0]; var text = arguments[1];" +
                     "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
@@ -2623,7 +2639,6 @@ public class AssetPage {
                     "}" +
                     "el.dispatchEvent(new Event('change', {bubbles: true}));",
                     input, textToType);
-
             }
         }
         pause(800);
