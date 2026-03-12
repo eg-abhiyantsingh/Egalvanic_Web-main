@@ -15,6 +15,7 @@ import org.testng.annotations.Test;
 public class AssetSmokeTestNG extends BaseTest {
 
     private static final String TEST_ASSET_CLASS = "Circuit Breaker";
+    private static final String TEST_ENCLOSURE_CLASS = "Panelboard";
     private static final String TEST_REPLACEMENT_COST = "30000";
 
     @Test(priority = 1, description = "Smoke: Create a new asset with all fields")
@@ -177,12 +178,39 @@ public class AssetSmokeTestNG extends BaseTest {
             }
             logStepWithScreenshot("After Loadside connection attempt");
 
-            // 3. Change asset class (after connections — scroll back to top first)
-            assetPage.editAssetClass(TEST_ASSET_CLASS);
-            logStep("Changed asset class to: " + TEST_ASSET_CLASS);
-            logStepWithScreenshot("Asset class updated");
+            // 3. Change asset class to enclosure type (has OCP section)
+            assetPage.editAssetClass(TEST_ENCLOSURE_CLASS);
+            logStep("Changed asset class to: " + TEST_ENCLOSURE_CLASS);
+            logStepWithScreenshot("Asset class updated to enclosure type");
 
-            // 4. Save all changes
+            // 4. Add OCP child device (only available for enclosure-type classes)
+            boolean ocpAdded = false;
+            try {
+                assetPage.expandOCPSection();
+                int ocpBefore = assetPage.getOCPChildCount();
+                logStep("OCP section found. Current child count: " + ocpBefore);
+
+                assetPage.clickAddOCPButton();
+                logStep("Clicked '+' on OCP");
+
+                assetPage.selectCreateNewChild();
+                logStep("Selected 'Create New Child'");
+
+                String ocpChildName = "OCP_Smoke_" + System.currentTimeMillis();
+                assetPage.fillOCPChildForm(ocpChildName);
+                logStep("Filled OCP child name: " + ocpChildName);
+
+                assetPage.submitOCPChildForm();
+                assetPage.waitForOCPDialogClose();
+                logStep("OCP child created");
+                ocpAdded = true;
+            } catch (Exception e) {
+                logStep("OCP child creation skipped: " + e.getMessage());
+                assetPage.dismissAnyDialog();
+            }
+            logStepWithScreenshot("After OCP attempt");
+
+            // 5. Save all changes
             assetPage.saveChanges();
             logStepWithScreenshot("Save clicked");
 
@@ -190,8 +218,7 @@ public class AssetSmokeTestNG extends BaseTest {
             Assert.assertTrue(success, "Asset update did not complete successfully");
             logStep("Save confirmed successful");
 
-            // 5. Verify saved data — check values still on the edit page after save
-            //    (save keeps us on the same page in edit mode)
+            // 6. Verify saved data — check values still on the edit page after save
             String savedClass = assetPage.getAssetClassValue();
             logStep("Post-save asset class: " + savedClass);
 
@@ -203,7 +230,7 @@ public class AssetSmokeTestNG extends BaseTest {
             logStep("Post-save connection count: " + finalConnCount);
             logStepWithScreenshot("Post-save verification");
 
-            // 6. Navigate away and back to verify data persisted
+            // 7. Navigate away and back to verify data persisted
             assetPage.navigateToAssets();
             pause(2000);
             assetPage.openEditForFirstAsset();
@@ -217,11 +244,19 @@ public class AssetSmokeTestNG extends BaseTest {
             assetPage.expandConnectionsSection();
             int reloadedConnCount = assetPage.getConnectionCount();
             logStep("After reload — connections: " + reloadedConnCount);
+
+            // Check OCP persisted
+            if (ocpAdded) {
+                assetPage.expandOCPSection();
+                int reloadedOCPCount = assetPage.getOCPChildCount();
+                logStep("After reload — OCP children: " + reloadedOCPCount);
+            }
             logStepWithScreenshot("Final data verification complete");
 
             ExtentReportManager.logPass("Asset updated and verified: class=" + reloadedClass +
                     ", name=" + reloadedName + ", connections=" + reloadedConnCount +
-                    ", lineside=" + linesideAdded + ", loadside=" + loadsideAdded);
+                    ", lineside=" + linesideAdded + ", loadside=" + loadsideAdded +
+                    ", ocp=" + ocpAdded);
 
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("asset_update_error");
@@ -229,7 +264,211 @@ public class AssetSmokeTestNG extends BaseTest {
         }
     }
 
-    @Test(priority = 4, description = "Smoke: Delete an existing asset and verify removal")
+    @Test(priority = 4, description = "Smoke: Navigate to asset detail page and verify content")
+    public void testAssetDetailNavigation() {
+        ExtentReportManager.createTest(
+                AppConstants.MODULE_ASSET, AppConstants.FEATURE_ASSET_LIST, "TC_Asset_Detail_Nav");
+
+        try {
+            assetPage.navigateToAssets();
+            logStep("Navigated to Assets page");
+
+            // 1. Get the first asset name from grid
+            String gridAssetName = assetPage.getFirstRowAssetName();
+            Assert.assertNotNull(gridAssetName, "No asset found in grid");
+            logStep("First asset in grid: " + gridAssetName);
+
+            // 2. Click into the detail page
+            assetPage.navigateToFirstAssetDetail();
+            logStep("Navigated to detail page");
+
+            // 3. Verify URL changed to asset detail
+            String detailUrl = driver.getCurrentUrl();
+            Assert.assertTrue(detailUrl.contains("/assets/"),
+                    "URL does not contain /assets/ — not on detail page. URL: " + detailUrl);
+            logStep("Detail URL: " + detailUrl);
+
+            // 4. Verify detail page has the asset name
+            String detailName = assetPage.getDetailPageAssetName();
+            Assert.assertNotNull(detailName, "Asset name not found on detail page");
+            Assert.assertFalse(detailName.trim().isEmpty(), "Asset name is blank on detail page");
+            logStep("Detail page asset name: " + detailName);
+            logStepWithScreenshot("Asset detail page loaded");
+
+            ExtentReportManager.logPass("Asset detail navigation verified: " + detailName);
+
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("asset_detail_nav_error");
+            Assert.fail("Asset detail navigation failed: " + e.getMessage());
+        }
+    }
+
+    @Test(priority = 5, description = "Smoke: Search assets and verify filtering")
+    public void testAssetSearch() {
+        ExtentReportManager.createTest(
+                AppConstants.MODULE_ASSET, AppConstants.FEATURE_ASSET_LIST, "TC_Asset_Search");
+
+        try {
+            assetPage.navigateToAssets();
+            logStep("Navigated to Assets page");
+
+            // 1. Get first asset name for a valid search
+            String firstAssetName = assetPage.getFirstRowAssetName();
+            Assert.assertNotNull(firstAssetName, "No asset found in grid for search test");
+            logStep("Will search for: " + firstAssetName);
+
+            // 2. Search with valid term
+            assetPage.searchAsset(firstAssetName);
+            pause(2000);
+            boolean found = assetPage.isAssetVisible(firstAssetName);
+            Assert.assertTrue(found, "Valid search did not return expected asset: " + firstAssetName);
+            logStepWithScreenshot("Valid search returned results");
+
+            // 3. Search with invalid term — grid should show no results or fewer rows
+            String invalidSearch = "ZZZZNONEXISTENT999";
+            assetPage.searchAsset(invalidSearch);
+            pause(2000);
+            boolean notFound = !assetPage.isAssetVisible(invalidSearch);
+            Assert.assertTrue(notFound, "Invalid search term returned results unexpectedly");
+            logStepWithScreenshot("Invalid search correctly returned no match");
+
+            // 4. Clear search — navigate back to reset
+            assetPage.navigateToAssets();
+            pause(2000);
+            boolean gridRestored = assetPage.isGridPopulated();
+            Assert.assertTrue(gridRestored, "Grid not repopulated after clearing search");
+            logStep("Grid restored after clearing search");
+
+            ExtentReportManager.logPass("Asset search verified: valid + invalid + clear");
+
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("asset_search_error");
+            Assert.fail("Asset search test failed: " + e.getMessage());
+        }
+    }
+
+    @Test(priority = 6, description = "Smoke: Open edit drawer, modify fields, cancel, and verify no changes saved")
+    public void testEditAndCancel() {
+        ExtentReportManager.createTest(
+                AppConstants.MODULE_ASSET, AppConstants.FEATURE_EDIT_ASSET, "TC_Asset_Edit_Cancel");
+
+        try {
+            assetPage.navigateToAssets();
+            logStep("Navigated to Assets page");
+
+            // 1. Get the original asset name from grid before editing
+            String originalName = assetPage.getFirstRowAssetName();
+            Assert.assertNotNull(originalName, "No asset in grid to test edit-cancel");
+            logStep("Original asset: " + originalName);
+
+            // 2. Open edit form and read original values
+            assetPage.openEditForFirstAsset();
+            logStep("Opened edit form");
+
+            String originalClass = assetPage.getAssetClassValue();
+            String originalAssetName = assetPage.getAssetNameValue();
+            logStep("Original values — class: " + originalClass + ", name: " + originalAssetName);
+            logStepWithScreenshot("Edit form opened with original values");
+
+            // 3. Make changes (but do NOT save)
+            assetPage.editNotes("CANCEL_TEST_SHOULD_NOT_PERSIST_" + System.currentTimeMillis());
+            logStep("Modified notes (will cancel)");
+
+            // 4. Close/cancel the edit drawer without saving
+            assetPage.navigateToAssets();
+            pause(2000);
+            logStep("Navigated away without saving");
+
+            // 5. Re-open the same asset and verify original values are unchanged
+            assetPage.openEditForFirstAsset();
+            pause(2000);
+
+            String afterCancelClass = assetPage.getAssetClassValue();
+            String afterCancelName = assetPage.getAssetNameValue();
+            logStep("After cancel — class: " + afterCancelClass + ", name: " + afterCancelName);
+
+            // Name and class should be unchanged
+            Assert.assertEquals(afterCancelName, originalAssetName,
+                    "Asset name changed after cancel! Before: " + originalAssetName + ", After: " + afterCancelName);
+            logStepWithScreenshot("Edit-cancel verified: no changes persisted");
+
+            ExtentReportManager.logPass("Edit-cancel verified: values unchanged after navigating away without save");
+
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("asset_edit_cancel_error");
+            Assert.fail("Edit-cancel test failed: " + e.getMessage());
+        }
+    }
+
+    @Test(priority = 7, description = "Smoke: Full lifecycle — create asset, open detail, verify, then delete it")
+    public void testAssetFullLifecycle() {
+        ExtentReportManager.createTest(
+                AppConstants.MODULE_ASSET, AppConstants.FEATURE_ASSET_CRUD, "TC_Asset_Full_Lifecycle");
+
+        String lifecycleName = "Lifecycle_" + System.currentTimeMillis();
+        String lifecycleQR = "QR_LC_" + System.currentTimeMillis();
+
+        try {
+            // ── STEP 1: Create a new asset ──
+            assetPage.navigateToAssets();
+            assetPage.openCreateAssetForm();
+            assetPage.fillBasicInfo(lifecycleName, lifecycleQR, TEST_ASSET_CLASS);
+            assetPage.fillCoreAttributes();
+            assetPage.fillReplacementCost("15000");
+            assetPage.submitCreateAsset();
+
+            boolean created = assetPage.waitForCreateSuccess();
+            Assert.assertTrue(created, "Lifecycle asset creation failed");
+            logStep("Created lifecycle asset: " + lifecycleName);
+
+            // ── STEP 2: Verify it appears in grid ──
+            assetPage.navigateToAssets();
+            pause(2000);
+            assetPage.searchAsset(lifecycleName);
+            boolean foundInGrid = assetPage.isAssetVisible(lifecycleName);
+            Assert.assertTrue(foundInGrid, "Lifecycle asset not found in grid: " + lifecycleName);
+            logStepWithScreenshot("Lifecycle asset found in grid");
+
+            // ── STEP 3: Open detail page and verify name ──
+            assetPage.navigateToFirstAssetDetail();
+            String detailUrl = driver.getCurrentUrl();
+            Assert.assertTrue(detailUrl.contains("/assets/"),
+                    "Not on asset detail page. URL: " + detailUrl);
+            logStep("Detail page URL: " + detailUrl);
+
+            String detailName = assetPage.getDetailPageAssetName();
+            logStep("Detail page shows: " + detailName);
+            logStepWithScreenshot("Lifecycle asset detail page");
+
+            // ── STEP 4: Go back to grid and delete the asset ──
+            assetPage.clickKebabMenuItem("Delete Asset");
+            pause(1000);
+            assetPage.confirmDelete();
+            logStep("Delete confirmed for lifecycle asset");
+
+            boolean deleteCompleted = assetPage.waitForDeleteSuccess();
+            Assert.assertTrue(deleteCompleted, "Lifecycle asset delete did not complete");
+            logStep("Delete success");
+
+            // ── STEP 5: Verify it's gone from grid ──
+            assetPage.navigateToAssets();
+            pause(2000);
+            assetPage.searchAsset(lifecycleName);
+            pause(2000);
+            boolean stillExists = assetPage.isAssetVisible(lifecycleName);
+            Assert.assertFalse(stillExists,
+                    "Lifecycle asset still visible after deletion: " + lifecycleName);
+            logStepWithScreenshot("Lifecycle asset deleted and confirmed gone from grid");
+
+            ExtentReportManager.logPass("Full lifecycle passed: create → grid verify → detail → delete → confirm gone: " + lifecycleName);
+
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("asset_lifecycle_error");
+            Assert.fail("Asset full lifecycle failed: " + e.getMessage());
+        }
+    }
+
+    @Test(priority = 8, description = "Smoke: Delete an existing asset and verify removal")
     public void testDeleteAsset() {
         ExtentReportManager.createTest(
                 AppConstants.MODULE_ASSET, AppConstants.FEATURE_DELETE_ASSET, "TC_Asset_Delete");

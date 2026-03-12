@@ -66,10 +66,20 @@ public class AssetPage {
         if (driver.findElements(CREATE_ASSET_BTN).size() > 0 && isOnAssetsPage()) {
             System.out.println("[AssetPage] Already on Assets page — navigating away and back for fresh data");
             try {
-                driver.findElement(LOCATIONS_NAV).click();
+                // Use JS click to avoid "element not interactable" when drawer is open
+                WebElement locNav = driver.findElement(LOCATIONS_NAV);
+                js.executeScript("arguments[0].click();", locNav);
                 pause(1500);
             } catch (Exception e) {
-                System.out.println("[AssetPage] Could not navigate to Locations: " + e.getMessage());
+                System.out.println("[AssetPage] Could not navigate to Locations via JS: " + e.getMessage());
+                // Fallback: use direct URL navigation
+                try {
+                    String baseUrl = driver.getCurrentUrl().replaceAll("/assets.*", "");
+                    driver.get(baseUrl + "/connections");
+                    pause(1500);
+                } catch (Exception e2) {
+                    System.out.println("[AssetPage] URL fallback also failed: " + e2.getMessage());
+                }
             }
         }
 
@@ -481,9 +491,11 @@ public class AssetPage {
 
             // Step 2: Navigate to Locations then back (avoids SPA state loss from page refresh)
             try {
-                driver.findElement(LOCATIONS_NAV).click();
+                WebElement loc = driver.findElement(LOCATIONS_NAV);
+                js.executeScript("arguments[0].click();", loc);
                 pause(1500);
-                driver.findElement(ASSETS_NAV).click();
+                WebElement ast = driver.findElement(ASSETS_NAV);
+                js.executeScript("arguments[0].click();", ast);
                 pause(2000);
             } catch (Exception ignored) {}
 
@@ -1259,94 +1271,28 @@ public class AssetPage {
     }
 
     public void editModel(String newModel) {
-        // After "Edit Asset" is clicked, the UI may show:
-        // 1. A side panel/drawer with form fields
-        // 2. Inline editable fields on the detail page
-        // 3. A full-page edit form
-        // We try multiple strategies to find and edit a text input field.
+        System.out.println("[AssetPage] editModel — looking for QR code field to update...");
 
-        System.out.println("[AssetPage] editModel — looking for any editable text input...");
-
-        // Strategy 1: Find input with placeholder containing model/name related text
-        String[] placeholders = {"Model", "model", "Name", "name", "Enter", "Asset"};
-        for (String ph : placeholders) {
-            try {
-                By field = By.xpath("//input[contains(@placeholder,'" + ph + "')]");
-                java.util.List<WebElement> els = driver.findElements(field);
-                for (WebElement el : els) {
-                    if (el.isDisplayed() && el.isEnabled() && !el.getDomAttribute("readonly").equals("true")) {
-                        System.out.println("[AssetPage] Found editable input with placeholder containing '" + ph + "'");
-                        try { el.clear(); } catch (Exception ignored) {}
-                        el.click();
-                        el.sendKeys(newModel);
-                        return;
-                    }
-                }
-            } catch (Exception ignored) {}
-        }
-
-        // Strategy 2: Find any visible, enabled text input in the main content area (x > 80)
+        // The edit form has: Asset Name, QR Code, Class, Subtype, Serviceability, Shortcut.
+        // There is no dedicated "Model" field. Use QR Code as a safe editable field.
         try {
-            @SuppressWarnings("unchecked")
-            java.util.List<WebElement> inputs = (java.util.List<WebElement>) js.executeScript(
-                    "var result = [];" +
-                    "var inputs = document.querySelectorAll('input[type=\"text\"], input:not([type])');" +
-                    "for (var inp of inputs) {" +
-                    "  var r = inp.getBoundingClientRect();" +
-                    "  if (r.width < 20 || r.height < 10 || r.left < 80) continue;" +
-                    "  if (inp.disabled || inp.readOnly) continue;" +
-                    "  if (inp.type === 'hidden') continue;" +
-                    "  result.push(inp);" +
-                    "}" +
-                    "return result;");
-            System.out.println("[AssetPage] Strategy 2 — editable text inputs in main area: " + inputs.size());
-            if (!inputs.isEmpty()) {
-                WebElement first = inputs.get(0);
-                String info = (String) js.executeScript(
-                        "var e=arguments[0]; var r=e.getBoundingClientRect();" +
-                        "return 'placeholder=\"'+(e.placeholder||'')+'\" name=\"'+(e.name||'')+'\"'" +
-                        "+' at('+Math.round(r.left)+','+Math.round(r.top)+') '+Math.round(r.width)+'x'+Math.round(r.height);",
-                        first);
-                System.out.println("[AssetPage]   Editing first editable input: " + info);
-                js.executeScript("arguments[0].focus(); arguments[0].value = '';", first);
-                first.sendKeys(newModel);
-                // Trigger React onChange
+            By qrField = By.xpath("//input[@placeholder='Add QR code']");
+            WebElement qrInput = driver.findElement(qrField);
+            if (qrInput.isDisplayed() && qrInput.isEnabled()) {
                 js.executeScript(
-                        "var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
-                        "nativeInputValueSetter.call(arguments[0], arguments[1]);" +
-                        "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));" +
-                        "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
-                        first, newModel);
+                    "var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+                    "nativeInputValueSetter.call(arguments[0], arguments[1]);" +
+                    "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));" +
+                    "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
+                    qrInput, newModel);
+                System.out.println("[AssetPage] Updated QR code field with: " + newModel);
                 return;
             }
         } catch (Exception e) {
-            System.out.println("[AssetPage] Strategy 2 error: " + e.getMessage());
+            System.out.println("[AssetPage] QR code field not found: " + e.getMessage());
         }
 
-        // Strategy 3: Look for contenteditable elements
-        try {
-            @SuppressWarnings("unchecked")
-            java.util.List<WebElement> editables = (java.util.List<WebElement>) js.executeScript(
-                    "var result = [];" +
-                    "var all = document.querySelectorAll('[contenteditable=\"true\"]');" +
-                    "for (var el of all) {" +
-                    "  var r = el.getBoundingClientRect();" +
-                    "  if (r.width < 20 || r.left < 80) continue;" +
-                    "  result.push(el);" +
-                    "}" +
-                    "return result;");
-            if (!editables.isEmpty()) {
-                System.out.println("[AssetPage] Found contenteditable element, typing model...");
-                WebElement el = editables.get(0);
-                el.click();
-                el.clear();
-                el.sendKeys(newModel);
-                return;
-            }
-        } catch (Exception ignored) {}
-
-        System.out.println("WARNING: Could not find any editable field for model. " +
-                "Check the EDIT UI DIAGNOSTIC output above for available form elements.");
+        System.out.println("WARNING: Could not find QR code or model field to edit.");
     }
 
     public void editNotes(String newNotes) {
@@ -2084,6 +2030,329 @@ public class AssetPage {
         );
         pause(2000);
         System.out.println("[AssetPage] Clicked Connections tab: " + clicked);
+    }
+
+    // --- OCP (Overcurrent Protection) ---
+
+    /**
+     * Scroll the edit drawer to the OCP accordion and expand it if collapsed.
+     * OCP section appears for enclosure-type assets (Panelboard, Switchboard, MCC, etc.).
+     */
+    public void expandOCPSection() {
+        // Scroll all scrollable containers in the edit drawer
+        js.executeScript(
+            "var containers = document.querySelectorAll('[class*=\"MuiDrawer\"] > div, [class*=\"MuiPaper\"]');" +
+            "for (var c of containers) {" +
+            "  if (c.scrollHeight > c.clientHeight + 100) c.scrollTop = c.scrollHeight * 0.6;" +
+            "}"
+        );
+        pause(1000);
+
+        // Find OCP accordion and expand if collapsed
+        Boolean found = (Boolean) js.executeScript(
+            "var h6s = document.querySelectorAll('h6');" +
+            "for (var el of h6s) {" +
+            "  if (el.textContent.trim() === 'OCP') {" +
+            "    var accordion = el.closest('[class*=\"MuiAccordion\"]');" +
+            "    if (accordion && !accordion.classList.contains('Mui-expanded')) {" +
+            "      var summary = accordion.querySelector('[class*=\"MuiAccordionSummary\"]');" +
+            "      if (summary) summary.click();" +
+            "    }" +
+            "    el.scrollIntoView({block:'center'});" +
+            "    return true;" +
+            "  }" +
+            "}" +
+            "return false;"
+        );
+        pause(1000);
+        System.out.println("[AssetPage] OCP section expanded: " + found);
+    }
+
+    /**
+     * Check if the OCP section is present in the edit drawer.
+     * Returns true if the OCP accordion header exists.
+     */
+    public boolean isOCPSectionPresent() {
+        Boolean present = (Boolean) js.executeScript(
+            "var h6s = document.querySelectorAll('h6');" +
+            "for (var el of h6s) {" +
+            "  if (el.textContent.trim() === 'OCP') return true;" +
+            "}" +
+            "return false;"
+        );
+        boolean result = present != null && present;
+        System.out.println("[AssetPage] OCP section present: " + result);
+        return result;
+    }
+
+    /**
+     * Click the "+" IconButton in the OCP header.
+     * Opens a menu with "Create New Child" and "Link Existing Node".
+     */
+    public void clickAddOCPButton() {
+        js.executeScript(
+            "var h6s = document.querySelectorAll('h6');" +
+            "for (var el of h6s) {" +
+            "  if (el.textContent.trim() === 'OCP') {" +
+            "    var parent = el.parentElement;" +
+            "    for (var i = 0; i < 4; i++) {" +
+            "      var btns = parent.querySelectorAll('button[class*=\"MuiIconButton\"]');" +
+            "      for (var btn of btns) {" +
+            "        var paths = btn.querySelectorAll('path');" +
+            "        for (var p of paths) {" +
+            "          if ((p.getAttribute('d')||'').indexOf('M19 13') > -1) { btn.click(); return; }" +
+            "        }" +
+            "      }" +
+            "      if (parent.parentElement) parent = parent.parentElement;" +
+            "    }" +
+            "  }" +
+            "}"
+        );
+        pause(1000);
+        System.out.println("[AssetPage] Clicked '+' button on OCP");
+    }
+
+    /**
+     * Click "Create New Child" from the OCP menu.
+     * Must be called after clickAddOCPButton().
+     */
+    public void selectCreateNewChild() {
+        Boolean clicked = (Boolean) js.executeScript(
+            "var items = document.querySelectorAll('[role=\"menuitem\"]');" +
+            "for (var item of items) {" +
+            "  if (item.textContent.trim().indexOf('Create New Child') > -1) { item.click(); return true; }" +
+            "}" +
+            "return false;"
+        );
+        if (clicked == null || !clicked) {
+            throw new RuntimeException("Could not find 'Create New Child' menu item");
+        }
+        pause(2000);
+        System.out.println("[AssetPage] Selected 'Create New Child'");
+    }
+
+    /**
+     * Click "Link Existing Node" from the OCP menu.
+     * Must be called after clickAddOCPButton().
+     */
+    public void selectLinkExistingNode() {
+        Boolean clicked = (Boolean) js.executeScript(
+            "var items = document.querySelectorAll('[role=\"menuitem\"]');" +
+            "for (var item of items) {" +
+            "  if (item.textContent.trim().indexOf('Link Existing Node') > -1) { item.click(); return true; }" +
+            "}" +
+            "return false;"
+        );
+        if (clicked == null || !clicked) {
+            throw new RuntimeException("Could not find 'Link Existing Node' menu item");
+        }
+        pause(2000);
+        System.out.println("[AssetPage] Selected 'Link Existing Node'");
+    }
+
+    /**
+     * Get the count of OCP child devices currently listed in the OCP section.
+     */
+    public int getOCPChildCount() {
+        Long count = (Long) js.executeScript(
+            "var h6s = document.querySelectorAll('h6');" +
+            "for (var el of h6s) {" +
+            "  if (el.textContent.trim() === 'OCP') {" +
+            "    var accordion = el.closest('[class*=\"MuiAccordion\"]');" +
+            "    if (!accordion) continue;" +
+            "    // Count data rows or list items inside the accordion\n" +
+            "    var rows = accordion.querySelectorAll('[data-rowindex], tr[class*=\"MuiTableRow\"], [class*=\"MuiListItem\"]');" +
+            "    if (rows.length > 0) return rows.length;" +
+            "    // Check badge on the header\n" +
+            "    var badge = el.parentElement ? el.parentElement.querySelector('[class*=\"MuiBadge-badge\"]') : null;" +
+            "    if (badge) { var n = parseInt(badge.textContent); if (!isNaN(n)) return n; }" +
+            "    // Check for 'No child assets' text\n" +
+            "    var text = accordion.textContent || '';" +
+            "    if (text.indexOf('No child assets') > -1) return 0;" +
+            "    return 0;" +
+            "  }" +
+            "}" +
+            "return -1;"
+        );
+        int result = count != null ? count.intValue() : -1;
+        System.out.println("[AssetPage] OCP child count: " + result);
+        return result;
+    }
+
+    /**
+     * Diagnostic: dump the OCP dialog/form UI to understand what opened after "Create New Child".
+     */
+    public void dumpOCPFormDiagnostic() {
+        String diag = (String) js.executeScript(
+            "var result = '--- OCP FORM DIAGNOSTIC ---\\n';" +
+            "result += 'URL: ' + window.location.href + '\\n';" +
+
+            "// Dialogs\n" +
+            "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"presentation\"], [class*=\"MuiDialog\"], [class*=\"MuiModal\"]');" +
+            "result += 'Dialogs: ' + dialogs.length + '\\n';" +
+            "for (var d of dialogs) {" +
+            "  var r = d.getBoundingClientRect();" +
+            "  result += '  ' + d.tagName + ' role=' + (d.getAttribute('role')||'') + ' ' + Math.round(r.width) + 'x' + Math.round(r.height) + '\\n';" +
+            "}" +
+
+            "// Inputs (all visible)\n" +
+            "var inputs = document.querySelectorAll('input[type=\"text\"], input:not([type]), textarea');" +
+            "result += 'Visible inputs: ' + inputs.length + '\\n';" +
+            "for (var inp of inputs) {" +
+            "  var r = inp.getBoundingClientRect();" +
+            "  if (r.width < 10) continue;" +
+            "  result += '  tag=' + inp.tagName + ' placeholder=\"' + (inp.placeholder||'') + '\"'" +
+            "    + ' value=\"' + (inp.value||'').substring(0,30) + '\"'" +
+            "    + ' at(' + Math.round(r.left) + ',' + Math.round(r.top) + ') ' + Math.round(r.width) + 'x' + Math.round(r.height) + '\\n';" +
+            "}" +
+
+            "// Buttons (visible)\n" +
+            "var btns = document.querySelectorAll('button');" +
+            "result += 'Buttons:\\n';" +
+            "for (var b of btns) {" +
+            "  var r = b.getBoundingClientRect();" +
+            "  if (r.width < 20 || r.height < 15) continue;" +
+            "  var txt = (b.textContent||'').trim().substring(0,40);" +
+            "  result += '  \"' + txt + '\" disabled=' + b.disabled + ' at(' + Math.round(r.left) + ',' + Math.round(r.top) + ') ' + Math.round(r.width) + 'x' + Math.round(r.height) + '\\n';" +
+            "}" +
+
+            "result += '--- END OCP FORM DIAGNOSTIC ---';" +
+            "return result;"
+        );
+        System.out.println("[AssetPage] " + diag);
+    }
+
+    /**
+     * Fill the OCP child creation form with a name.
+     * After "Create New Child", a dialog or inline form may appear.
+     * This runs a diagnostic first to understand the UI, then fills the form.
+     */
+    public void fillOCPChildForm(String childName) {
+        dumpOCPFormDiagnostic();
+
+        // Try to find a name input that appeared AFTER the "Create New Child" click.
+        // Look for inputs with placeholder containing name/label, or new inputs in a dialog.
+        Boolean filled = (Boolean) js.executeScript(
+            "// Look for a dialog or modal that appeared\n" +
+            "var dialogs = document.querySelectorAll('[role=\"dialog\"], [class*=\"MuiDialog-paper\"]');" +
+            "for (var d of dialogs) {" +
+            "  var r = d.getBoundingClientRect();" +
+            "  if (r.width < 50 || r.height < 50) continue;" +
+            "  var inputs = d.querySelectorAll('input[type=\"text\"], input:not([type])');" +
+            "  for (var inp of inputs) {" +
+            "    if (inp.getBoundingClientRect().width < 10) continue;" +
+            "    var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+            "    nativeInputValueSetter.call(inp, arguments[0]);" +
+            "    inp.dispatchEvent(new Event('input', { bubbles: true }));" +
+            "    inp.dispatchEvent(new Event('change', { bubbles: true }));" +
+            "    return true;" +
+            "  }" +
+            "}" +
+            "return false;",
+            childName
+        );
+        if (filled != null && filled) {
+            System.out.println("[AssetPage] Filled OCP dialog input with: " + childName);
+            return;
+        }
+
+        // Fallback: if no dialog, the form may be inline in the OCP section.
+        // Look for a NEW input near the OCP area (y > 1400 based on OCP section position)
+        System.out.println("[AssetPage] No dialog found for OCP. Looking for inline input...");
+        js.executeScript(
+            "var h6s = document.querySelectorAll('h6');" +
+            "for (var el of h6s) {" +
+            "  if (el.textContent.trim() !== 'OCP') continue;" +
+            "  var accordion = el.closest('[class*=\"MuiAccordion\"]');" +
+            "  if (!accordion) continue;" +
+            "  var inputs = accordion.querySelectorAll('input[type=\"text\"], input:not([type])');" +
+            "  for (var inp of inputs) {" +
+            "    if (inp.getBoundingClientRect().width < 10) continue;" +
+            "    var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+            "    nativeInputValueSetter.call(inp, arguments[0]);" +
+            "    inp.dispatchEvent(new Event('input', { bubbles: true }));" +
+            "    inp.dispatchEvent(new Event('change', { bubbles: true }));" +
+            "    return;" +
+            "  }" +
+            "}",
+            childName
+        );
+        pause(1000);
+        System.out.println("[AssetPage] Attempted inline OCP form fill with: " + childName);
+    }
+
+    /**
+     * Submit the OCP child creation form by clicking any Create/Save/Add button.
+     */
+    public void submitOCPChildForm() {
+        // Diagnostic: what buttons are currently visible?
+        String btnList = (String) js.executeScript(
+            "var result = 'OCP submit candidates: ';" +
+            "var btns = document.querySelectorAll('button');" +
+            "for (var b of btns) {" +
+            "  var r = b.getBoundingClientRect();" +
+            "  if (r.width < 30 || r.height < 15) continue;" +
+            "  var txt = (b.textContent||'').trim().toLowerCase();" +
+            "  if (txt.includes('create') || txt.includes('save') || txt.includes('add') || txt.includes('submit') || txt.includes('confirm') || txt.includes('ok')) {" +
+            "    result += '\"' + txt + '\" disabled=' + b.disabled + ' | ';" +
+            "  }" +
+            "}" +
+            "return result;"
+        );
+        System.out.println("[AssetPage] " + btnList);
+
+        Boolean clicked = (Boolean) js.executeScript(
+            "var btns = document.querySelectorAll('button');" +
+            "// First try buttons in dialogs\n" +
+            "var dialogs = document.querySelectorAll('[role=\"dialog\"], [class*=\"MuiDialog-paper\"]');" +
+            "for (var d of dialogs) {" +
+            "  var r = d.getBoundingClientRect();" +
+            "  if (r.width < 50) continue;" +
+            "  var dBtns = d.querySelectorAll('button');" +
+            "  for (var b of dBtns) {" +
+            "    var txt = (b.textContent||'').trim().toLowerCase();" +
+            "    if (!b.disabled && (txt === 'create' || txt === 'save' || txt === 'add' || txt === 'submit' " +
+            "        || txt === 'confirm' || txt === 'ok' || txt.includes('create'))) {" +
+            "      b.click(); return true;" +
+            "    }" +
+            "  }" +
+            "}" +
+            "// Fallback: any visible create/add button\n" +
+            "for (var b of btns) {" +
+            "  var r = b.getBoundingClientRect();" +
+            "  if (r.width < 30 || r.height < 15) continue;" +
+            "  var txt = (b.textContent||'').trim().toLowerCase();" +
+            "  if (!b.disabled && (txt === 'create' || txt === 'add' || txt === 'submit' || txt === 'confirm')) {" +
+            "    b.click(); return true;" +
+            "  }" +
+            "}" +
+            "return false;"
+        );
+        pause(2000);
+        System.out.println("[AssetPage] OCP child form submitted: " + clicked);
+    }
+
+    /**
+     * Wait for the OCP dialog/form to close after creation.
+     */
+    public void waitForOCPDialogClose() {
+        for (int i = 0; i < 10; i++) {
+            Boolean dialogOpen = (Boolean) js.executeScript(
+                "var dialogs = document.querySelectorAll('[role=\"dialog\"]');" +
+                "for (var d of dialogs) {" +
+                "  var r = d.getBoundingClientRect();" +
+                "  if (r.width > 100 && r.height > 100) return true;" +
+                "}" +
+                "return false;"
+            );
+            if (dialogOpen == null || !dialogOpen) {
+                System.out.println("[AssetPage] OCP dialog closed after " + i + "s");
+                return;
+            }
+            pause(1000);
+        }
+        System.out.println("[AssetPage] OCP dialog still open after 10s — dismissing");
+        dismissAnyDialog();
     }
 
     // --- Helpers ---

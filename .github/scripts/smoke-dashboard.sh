@@ -5,7 +5,7 @@
 # Runs 5 modules individually with LIVE per-test progress updates.
 #   Module 1: Auth & Login (Admin → PM → Technician → FM → CP → Invalid)
 #   Module 2: Site Selection (Selector Present → Dropdown Options → Select Site → Context Persists)
-#   Module 3: Asset CRUD (Create → Read → Update → Delete)
+#   Module 3: Asset CRUD (Create → Read → Update → Detail → Search → EditCancel → Lifecycle → Delete)
 #   Module 4: Connection CRUD (Add Loadside → Verify → Delete)
 #   Module 5: Location CRUD (Create Hierarchy → Read → Update → Delete)
 #
@@ -27,7 +27,7 @@ set +e  # Don't exit on error — we handle failures ourselves
 # ─────────────────────────────────────────────────────
 MODULES=("auth-login" "site-selection" "asset-crud" "connection-crud" "location-crud")
 MODULE_NAMES=("Auth & Login" "Site Selection" "Asset CRUD" "Connection CRUD" "Location CRUD")
-MODULE_TESTS=(6 4 4 3 4)
+MODULE_TESTS=(6 4 8 3 4)
 MODULE_XMLS=(
   "smoke-auth-testng.xml"
   "smoke-site-testng.xml"
@@ -36,7 +36,7 @@ MODULE_XMLS=(
   "smoke-location-testng.xml"
 )
 
-TOTAL_TESTS=21
+TOTAL_TESTS=25
 TOTAL_MODULES=5
 
 # ─────────────────────────────────────────────────────
@@ -203,7 +203,7 @@ draw_final_banner() {
     echo "  ║"
     echo "  ║     ${TOTAL_PASSED}/${TOTAL_TESTS} tests passed in ${elapsed_fmt}"
     echo "  ║     All ${TOTAL_MODULES} modules verified successfully"
-    echo "  ║     (Auth [6] ✅ + Site [4] ✅ + Asset [4] ✅ + Connection [3] ✅ + Location [4] ✅)"
+    echo "  ║     (Auth [6] ✅ + Site [4] ✅ + Asset [8] ✅ + Connection [3] ✅ + Location [4] ✅)"
     echo "  ║"
     echo "  ║   🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉"
     echo "  ║"
@@ -257,7 +257,7 @@ echo "  │  🌐  Chrome (headless) · eGalvanic Web App"
 echo "  │  📦  ${TOTAL_TESTS} tests across ${TOTAL_MODULES} modules"
 echo "  │  📋  Module 1: Auth & Login (Admin → PM → Technician → FM → CP → Invalid)"
 echo "  │  📋  Module 2: Site Selection (Selector → Dropdown → Select → Persist)"
-echo "  │  📋  Module 3: Asset CRUD (Create → Read → Update → Delete)"
+echo "  │  📋  Module 3: Asset CRUD (Create → Read → Update → Detail → Search → EditCancel → Lifecycle → Delete)"
 echo "  │  📋  Module 4: Connection CRUD (Add Loadside → Verify → Delete)"
 echo "  │  📋  Module 5: Location CRUD (Building → Floor → Room → Read → Update → Delete)"
 echo "  │  ⏰  $(date '+%Y-%m-%d %H:%M:%S')"
