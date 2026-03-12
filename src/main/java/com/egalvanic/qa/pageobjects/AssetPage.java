@@ -2186,22 +2186,31 @@ public class AssetPage {
      * @param className e.g. "Fuse", "Disconnect Switch", etc.
      */
     public void selectOCPAssetClass(String className) {
-        // Click the "Select class" dropdown input to open it
+        // Click the "Select class" dropdown input INSIDE the Quick Add dialog only
         Boolean opened = (Boolean) js.executeScript(
-            "var inputs = document.querySelectorAll('input');" +
-            "for (var inp of inputs) {" +
-            "  if ((inp.placeholder||'').toLowerCase().includes('select class') || " +
-            "      (inp.placeholder||'').toLowerCase().includes('class')) {" +
-            "    var r = inp.getBoundingClientRect();" +
-            "    // Only match inputs in the dialog area (not the main edit form's Select Class)\n" +
-            "    // The Quick Add dialog appears as an overlay, typically centered\n" +
-            "    if (r.width > 10 && r.height > 10) {" +
-            "      inp.focus();" +
-            "      inp.click();" +
-            "      return true;" +
-            "    }" +
+            "// Find the Quick Add Child Assets dialog first\n" +
+            "var dialog = null;" +
+            "var headings = document.querySelectorAll('h2, h3, h4, h5, h6, [class*=\"MuiDialogTitle\"], [class*=\"MuiTypography\"]');" +
+            "for (var h of headings) {" +
+            "  if ((h.textContent||'').trim().includes('Quick Add Child Assets')) {" +
+            "    dialog = h.closest('[role=\"dialog\"], [class*=\"MuiDialog\"], [class*=\"MuiModal\"], [class*=\"MuiPaper\"]');" +
+            "    break;" +
             "  }" +
             "}" +
+            "if (!dialog) { console.log('Quick Add dialog not found'); return false; }" +
+            "// Now find the class input ONLY within this dialog\n" +
+            "var inputs = dialog.querySelectorAll('input');" +
+            "for (var inp of inputs) {" +
+            "  var ph = (inp.placeholder||'').toLowerCase();" +
+            "  if (ph.includes('select class') || ph.includes('class')) {" +
+            "    inp.focus();" +
+            "    inp.click();" +
+            "    return true;" +
+            "  }" +
+            "}" +
+            "// Fallback: click first autocomplete input in dialog\n" +
+            "var autoInputs = dialog.querySelectorAll('[class*=\"MuiAutocomplete\"] input');" +
+            "if (autoInputs.length > 0) { autoInputs[0].focus(); autoInputs[0].click(); return true; }" +
             "return false;"
         );
         pause(1000);

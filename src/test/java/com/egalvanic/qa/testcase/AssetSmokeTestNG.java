@@ -178,39 +178,7 @@ public class AssetSmokeTestNG extends BaseTest {
             }
             logStepWithScreenshot("After Loadside connection attempt");
 
-            // 3. Change asset class to enclosure type (has OCP section)
-            assetPage.editAssetClass(TEST_ENCLOSURE_CLASS);
-            logStep("Changed asset class to: " + TEST_ENCLOSURE_CLASS);
-            logStepWithScreenshot("Asset class updated to enclosure type");
-
-            // 4. Add OCP child device (only available for enclosure-type classes)
-            boolean ocpAdded = false;
-            try {
-                assetPage.expandOCPSection();
-                int ocpBefore = assetPage.getOCPChildCount();
-                logStep("OCP section found. Current child count: " + ocpBefore);
-
-                assetPage.clickAddOCPButton();
-                logStep("Clicked '+' on OCP");
-
-                assetPage.selectCreateNewChild();
-                logStep("Selected 'Create New Child' — Quick Add dialog opened");
-
-                // Quick Add dialog: select Asset Class (names auto-generated), Qty defaults to 1
-                assetPage.selectOCPAssetClass("Fuse");
-                logStep("Selected OCP class: Fuse");
-
-                assetPage.submitOCPChildForm();
-                assetPage.waitForOCPDialogClose();
-                logStep("OCP child added via Quick Add");
-                ocpAdded = true;
-            } catch (Exception e) {
-                logStep("OCP child creation skipped: " + e.getMessage());
-                assetPage.dismissAnyDialog();
-            }
-            logStepWithScreenshot("After OCP attempt");
-
-            // 5. Save all changes
+            // 3. Save all changes
             assetPage.saveChanges();
             logStepWithScreenshot("Save clicked");
 
@@ -245,18 +213,11 @@ public class AssetSmokeTestNG extends BaseTest {
             int reloadedConnCount = assetPage.getConnectionCount();
             logStep("After reload — connections: " + reloadedConnCount);
 
-            // Check OCP persisted
-            if (ocpAdded) {
-                assetPage.expandOCPSection();
-                int reloadedOCPCount = assetPage.getOCPChildCount();
-                logStep("After reload — OCP children: " + reloadedOCPCount);
-            }
             logStepWithScreenshot("Final data verification complete");
 
             ExtentReportManager.logPass("Asset updated and verified: class=" + reloadedClass +
                     ", name=" + reloadedName + ", connections=" + reloadedConnCount +
-                    ", lineside=" + linesideAdded + ", loadside=" + loadsideAdded +
-                    ", ocp=" + ocpAdded);
+                    ", lineside=" + linesideAdded + ", loadside=" + loadsideAdded);
 
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("asset_update_error");
@@ -264,7 +225,87 @@ public class AssetSmokeTestNG extends BaseTest {
         }
     }
 
-    @Test(priority = 4, description = "Smoke: Navigate to asset detail page and verify content")
+    @Test(priority = 4, description = "Smoke: Add OCP child device to enclosure-type asset")
+    public void testAddOCPChild() {
+        ExtentReportManager.createTest(
+                AppConstants.MODULE_ASSET, AppConstants.FEATURE_EDIT_ASSET, "TC_Asset_OCP");
+
+        try {
+            // 1. Navigate to assets and open edit for the first asset
+            assetPage.navigateToAssets();
+            assetPage.openEditForFirstAsset();
+            logStep("Opened edit form for first asset");
+
+            // 2. Change asset class to enclosure type (required for OCP section)
+            assetPage.editAssetClass(TEST_ENCLOSURE_CLASS);
+            logStep("Changed asset class to: " + TEST_ENCLOSURE_CLASS);
+            pause(2000);
+            logStepWithScreenshot("Asset class set to enclosure type");
+
+            // 3. Verify OCP section is present
+            boolean ocpPresent = assetPage.isOCPSectionPresent();
+            Assert.assertTrue(ocpPresent, "OCP section not visible for enclosure type: " + TEST_ENCLOSURE_CLASS);
+            logStep("OCP section is present");
+
+            // 4. Expand OCP and get initial child count
+            assetPage.expandOCPSection();
+            int ocpBefore = assetPage.getOCPChildCount();
+            logStep("OCP child count before: " + ocpBefore);
+
+            // 5. Click "+" → "Create New Child" to open Quick Add dialog
+            assetPage.clickAddOCPButton();
+            logStep("Clicked '+' on OCP header");
+
+            assetPage.selectCreateNewChild();
+            logStep("Selected 'Create New Child' — Quick Add dialog opened");
+            logStepWithScreenshot("Quick Add Child Assets dialog");
+
+            // 6. Select Asset Class in the Quick Add dialog (e.g., "Fuse")
+            assetPage.selectOCPAssetClass("Fuse");
+            logStep("Selected OCP child class: Fuse");
+            logStepWithScreenshot("OCP class selected");
+
+            // 7. Submit the Quick Add form (Qty defaults to 1)
+            assetPage.submitOCPChildForm();
+            assetPage.waitForOCPDialogClose();
+            logStep("OCP child added via Quick Add");
+            logStepWithScreenshot("After OCP child creation");
+
+            // 8. Verify OCP child count increased
+            assetPage.expandOCPSection();
+            int ocpAfter = assetPage.getOCPChildCount();
+            logStep("OCP child count after: " + ocpAfter);
+            Assert.assertTrue(ocpAfter > ocpBefore,
+                    "OCP child count did not increase. Before: " + ocpBefore + ", After: " + ocpAfter);
+
+            // 9. Save changes
+            assetPage.saveChanges();
+            boolean success = assetPage.waitForEditSuccess();
+            Assert.assertTrue(success, "Save after OCP addition did not complete");
+            logStep("Save confirmed");
+
+            // 10. Navigate away and back to verify OCP persisted
+            assetPage.navigateToAssets();
+            pause(2000);
+            assetPage.openEditForFirstAsset();
+            pause(2000);
+
+            assetPage.expandOCPSection();
+            int persistedCount = assetPage.getOCPChildCount();
+            logStep("OCP child count after reload: " + persistedCount);
+            Assert.assertTrue(persistedCount >= ocpAfter,
+                    "OCP children did not persist. Expected >= " + ocpAfter + ", got: " + persistedCount);
+            logStepWithScreenshot("OCP persistence verified");
+
+            ExtentReportManager.logPass("OCP child added and persisted. Count: " + persistedCount);
+
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("asset_ocp_error");
+            Assert.fail("OCP test failed: " + e.getMessage());
+        }
+    }
+
+    @Test(priority = 5, description = "Smoke: Navigate to asset detail page and verify content")
     public void testAssetDetailNavigation() {
         ExtentReportManager.createTest(
                 AppConstants.MODULE_ASSET, AppConstants.FEATURE_ASSET_LIST, "TC_Asset_Detail_Nav");
@@ -303,7 +344,7 @@ public class AssetSmokeTestNG extends BaseTest {
         }
     }
 
-    @Test(priority = 5, description = "Smoke: Search assets and verify filtering")
+    @Test(priority = 6, description = "Smoke: Search assets and verify filtering")
     public void testAssetSearch() {
         ExtentReportManager.createTest(
                 AppConstants.MODULE_ASSET, AppConstants.FEATURE_ASSET_LIST, "TC_Asset_Search");
@@ -347,7 +388,7 @@ public class AssetSmokeTestNG extends BaseTest {
         }
     }
 
-    @Test(priority = 6, description = "Smoke: Open edit drawer, modify fields, cancel, and verify no changes saved")
+    @Test(priority = 7, description = "Smoke: Open edit drawer, modify fields, cancel, and verify no changes saved")
     public void testEditAndCancel() {
         ExtentReportManager.createTest(
                 AppConstants.MODULE_ASSET, AppConstants.FEATURE_EDIT_ASSET, "TC_Asset_Edit_Cancel");
@@ -400,7 +441,7 @@ public class AssetSmokeTestNG extends BaseTest {
         }
     }
 
-    @Test(priority = 7, description = "Smoke: Full lifecycle — create asset, open detail, verify, then delete it")
+    @Test(priority = 8, description = "Smoke: Full lifecycle — create asset, open detail, verify, then delete it")
     public void testAssetFullLifecycle() {
         ExtentReportManager.createTest(
                 AppConstants.MODULE_ASSET, AppConstants.FEATURE_ASSET_CRUD, "TC_Asset_Full_Lifecycle");
@@ -468,7 +509,7 @@ public class AssetSmokeTestNG extends BaseTest {
         }
     }
 
-    @Test(priority = 8, description = "Smoke: Delete an existing asset and verify removal")
+    @Test(priority = 9, description = "Smoke: Delete an existing asset and verify removal")
     public void testDeleteAsset() {
         ExtentReportManager.createTest(
                 AppConstants.MODULE_ASSET, AppConstants.FEATURE_DELETE_ASSET, "TC_Asset_Delete");
