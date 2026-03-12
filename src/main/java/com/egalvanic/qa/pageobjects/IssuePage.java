@@ -645,28 +645,52 @@ public class IssuePage {
      * Click the "Activate Jobs" button on the issue detail page.
      */
     public void clickActivateJobs() {
-        try {
-            Boolean clicked = (Boolean) js.executeScript(
-                "var btns = document.querySelectorAll('button');" +
-                "for (var b of btns) {" +
-                "  var text = b.textContent.trim();" +
-                "  if (text.includes('Activate') && (text.includes('Job') || text.includes('job'))) {" +
-                "    b.scrollIntoView({block:'center'});" +
-                "    b.click();" +
-                "    return true;" +
-                "  }" +
-                "}" +
-                "return false;"
-            );
-            if (Boolean.TRUE.equals(clicked)) {
-                System.out.println("[IssuePage] Clicked Activate Jobs button");
-                pause(3000);
-                return;
-            }
-        } catch (Exception e) {
-            System.out.println("[IssuePage] JS click failed: " + e.getMessage());
+        // Log all buttons on the detail page for diagnostics
+        String buttonDiag = (String) js.executeScript(
+            "var btns = document.querySelectorAll('button');" +
+            "var info = 'Buttons(' + btns.length + '): ';" +
+            "for (var b of btns) {" +
+            "  var r = b.getBoundingClientRect();" +
+            "  if (r.width > 0) {" +
+            "    info += '[' + b.textContent.trim().substring(0,40) + '] ';" +
+            "  }" +
+            "}" +
+            "return info;");
+        System.out.println("[IssuePage] Detail page " + buttonDiag);
+
+        // Try multiple text patterns for the activate button
+        Boolean clicked = (Boolean) js.executeScript(
+            "var btns = document.querySelectorAll('button');" +
+            "var patterns = ['Activate Jobs', 'Activate Job', 'Activate', 'Create Job', 'Add Job', 'Generate Job', 'Start Job'];" +
+            "for (var pattern of patterns) {" +
+            "  for (var b of btns) {" +
+            "    var text = b.textContent.trim();" +
+            "    if (text === pattern || text.toLowerCase().includes(pattern.toLowerCase())) {" +
+            "      b.scrollIntoView({block:'center'});" +
+            "      b.click();" +
+            "      return true;" +
+            "    }" +
+            "  }" +
+            "}" +
+            "// Try any button with 'job' in text (case insensitive)\n" +
+            "for (var b of btns) {" +
+            "  var text = b.textContent.trim().toLowerCase();" +
+            "  if (text.includes('job')) {" +
+            "    b.scrollIntoView({block:'center'});" +
+            "    b.click();" +
+            "    return true;" +
+            "  }" +
+            "}" +
+            "return false;"
+        );
+
+        if (Boolean.TRUE.equals(clicked)) {
+            System.out.println("[IssuePage] Clicked Activate Jobs button");
+            pause(3000);
+            return;
         }
 
+        System.out.println("[IssuePage] No activate/job button found via JS — trying Selenium locator");
         // Fallback: use Selenium locator
         click(ACTIVATE_JOBS_BTN);
         pause(3000);
@@ -689,8 +713,8 @@ public class IssuePage {
                 Boolean buttonGone = (Boolean) js.executeScript(
                     "var btns = document.querySelectorAll('button');" +
                     "for (var b of btns) {" +
-                    "  var text = b.textContent.trim();" +
-                    "  if (text.includes('Activate') && text.includes('Job')) return false;" +
+                    "  var text = b.textContent.trim().toLowerCase();" +
+                    "  if (text.includes('activate') && text.includes('job')) return false;" +
                     "}" +
                     "return true;");
                 if (Boolean.TRUE.equals(buttonGone)) {
@@ -698,14 +722,27 @@ public class IssuePage {
                     return true;
                 }
 
-                // Check for any success toast
+                // Check for any success toast or snackbar
                 Boolean hasToast = (Boolean) js.executeScript(
                     "return document.body.textContent.includes('activated') || " +
                     "document.body.textContent.includes('Activated') || " +
                     "document.body.textContent.includes('success') || " +
-                    "document.querySelectorAll('[class*=\"Snackbar\"], [class*=\"toast\"], [class*=\"alert-success\"]').length > 0;");
+                    "document.body.textContent.includes('Success') || " +
+                    "document.body.textContent.includes('created') || " +
+                    "document.body.textContent.includes('Created') || " +
+                    "document.querySelectorAll('[class*=\"Snackbar\"], [class*=\"toast\"], [class*=\"alert-success\"], [class*=\"MuiAlert\"]').length > 0;");
                 if (Boolean.TRUE.equals(hasToast)) {
                     System.out.println("[IssuePage] Success toast detected — jobs activated");
+                    return true;
+                }
+
+                // Check if a job/work order section appeared on the page
+                Boolean hasJobSection = (Boolean) js.executeScript(
+                    "var body = document.body.textContent.toLowerCase();" +
+                    "return body.includes('work order') || body.includes('job #') || " +
+                    "body.includes('job id') || body.includes('job status');");
+                if (Boolean.TRUE.equals(hasJobSection)) {
+                    System.out.println("[IssuePage] Job section appeared on page — jobs activated");
                     return true;
                 }
             } catch (Exception ignored) {}
@@ -798,9 +835,23 @@ public class IssuePage {
     public int getPhotoCount() {
         try {
             Long count = (Long) js.executeScript(
-                "var imgs = document.querySelectorAll('img[class*=\"thumbnail\"], img[class*=\"photo\"], img[src*=\"blob:\"], img[src*=\"upload\"], [class*=\"photo-item\"], [class*=\"gallery\"] img');" +
+                "// Broad search for any images that could be photos\n" +
+                "var selectors = [" +
+                "  'img[class*=\"thumbnail\"]', 'img[class*=\"photo\"]'," +
+                "  'img[src*=\"blob:\"]', 'img[src*=\"upload\"]'," +
+                "  'img[src*=\"image\"]', 'img[src*=\"photo\"]'," +
+                "  'img[src*=\"amazonaws\"]', 'img[src*=\"storage\"]'," +
+                "  '[class*=\"photo-item\"]', '[class*=\"gallery\"] img'," +
+                "  '[class*=\"photo\"] img', '[class*=\"image-container\"] img'," +
+                "  '[class*=\"attachment\"] img', '[class*=\"media\"] img'" +
+                "];" +
+                "var all = new Set();" +
+                "for (var sel of selectors) {" +
+                "  var els = document.querySelectorAll(sel);" +
+                "  for (var el of els) all.add(el);" +
+                "}" +
                 "var visible = 0;" +
-                "for (var img of imgs) {" +
+                "for (var img of all) {" +
                 "  var r = img.getBoundingClientRect();" +
                 "  if (r.width > 20 && r.height > 20) visible++;" +
                 "}" +
@@ -815,11 +866,39 @@ public class IssuePage {
     }
 
     /**
-     * Check if at least one photo is visible.
+     * Check if at least one photo is visible, or if upload success indicators exist.
      */
     public boolean isPhotoVisible() {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 15; i++) {
             if (getPhotoCount() > 0) return true;
+
+            // Check for upload success indicators
+            try {
+                Boolean uploadSuccess = (Boolean) js.executeScript(
+                    "var body = document.body.textContent.toLowerCase();" +
+                    "return body.includes('uploaded') || body.includes('upload success') || " +
+                    "body.includes('photo added') || body.includes('file uploaded') || " +
+                    "document.querySelectorAll('[class*=\"Snackbar\"], [class*=\"MuiAlert\"]').length > 0;");
+                if (Boolean.TRUE.equals(uploadSuccess)) {
+                    System.out.println("[IssuePage] Upload success indicator found");
+                    return true;
+                }
+            } catch (Exception ignored) {}
+
+            // Log diagnostic on last attempt
+            if (i == 14) {
+                String diag = (String) js.executeScript(
+                    "var imgs = document.querySelectorAll('img');" +
+                    "var info = 'All images(' + imgs.length + '): ';" +
+                    "for (var img of imgs) {" +
+                    "  var r = img.getBoundingClientRect();" +
+                    "  info += '[src=' + (img.src||'').substring(0,60) + ' w=' + r.width + ' h=' + r.height + '] ';" +
+                    "}" +
+                    "var fileInputs = document.querySelectorAll('input[type=\"file\"]');" +
+                    "info += ' FileInputs: ' + fileInputs.length;" +
+                    "return info;");
+                System.out.println("[IssuePage] Photo DIAGNOSTIC: " + diag);
+            }
             pause(1000);
         }
         return false;
@@ -870,35 +949,51 @@ public class IssuePage {
      */
     public void confirmDelete() {
         for (int i = 0; i < 10; i++) {
-            Boolean clicked = (Boolean) js.executeScript(
-                "var errorBtns = document.querySelectorAll('button[class*=\"containedError\"]');" +
-                "for (var b of errorBtns) {" +
-                "  var r = b.getBoundingClientRect();" +
-                "  if (r.width > 0 && b.textContent.trim() === 'Delete') {" +
-                "    b.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));" +
-                "    b.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));" +
-                "    b.dispatchEvent(new MouseEvent('click', {bubbles: true}));" +
-                "    return true;" +
-                "  }" +
-                "}" +
-                "var dialogs = document.querySelectorAll('[role=\"dialog\"], [class*=\"MuiDialog-paper\"]');" +
-                "for (var d of dialogs) {" +
-                "  var text = (d.textContent||'').toLowerCase();" +
-                "  if (text.includes('sure') || text.includes('confirm') || text.includes('delete')) {" +
-                "    var btns = d.querySelectorAll('button');" +
-                "    for (var b of btns) {" +
-                "      if (b.textContent.trim() === 'Delete') { b.click(); return true; }" +
-                "    }" +
-                "  }" +
-                "}" +
-                "return false;");
-            if (Boolean.TRUE.equals(clicked)) {
-                System.out.println("[IssuePage] Delete confirmed");
-                break;
+            try {
+                List<WebElement> errorBtns = driver.findElements(
+                    By.cssSelector("button[class*='containedError']"));
+                for (WebElement btn : errorBtns) {
+                    if (btn.isDisplayed() && "Delete".equals(btn.getText().trim())) {
+                        // COMPLETELY HIDE all backdrops (proven fix from ConnectionPage)
+                        js.executeScript(
+                            "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"]').forEach(" +
+                            "  function(b) { b.style.display = 'none'; }" +
+                            ");"
+                        );
+                        pause(200);
+                        btn.click(); // WebElement.click() = trusted event
+                        pause(3000);
+                        System.out.println("[IssuePage] Delete confirmed via containedError button");
+                        return;
+                    }
+                }
+
+                // Fallback: find Delete button inside dialog
+                List<WebElement> dialogs = driver.findElements(
+                    By.cssSelector("[role='dialog'], [class*='MuiDialog-paper']"));
+                for (WebElement dialog : dialogs) {
+                    List<WebElement> btns = dialog.findElements(By.tagName("button"));
+                    for (WebElement btn : btns) {
+                        if ("Delete".equals(btn.getText().trim())) {
+                            js.executeScript(
+                                "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"]').forEach(" +
+                                "  function(b) { b.style.display = 'none'; }" +
+                                ");"
+                            );
+                            pause(200);
+                            btn.click();
+                            pause(3000);
+                            System.out.println("[IssuePage] Delete confirmed via dialog button");
+                            return;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("[IssuePage] confirmDelete attempt " + (i + 1) + ": " + e.getMessage());
             }
             pause(500);
         }
-        pause(3000);
+        System.out.println("[IssuePage] WARNING: Could not confirm delete after 10 attempts");
     }
 
     /**

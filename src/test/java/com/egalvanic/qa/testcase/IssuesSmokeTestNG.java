@@ -308,10 +308,14 @@ public class IssuesSmokeTestNG extends BaseTest {
             boolean deleteSuccess = issuePage.waitForDeleteSuccess();
             logStep("Delete result: " + deleteSuccess);
 
-            // 6. Verify removal — navigate back and check count decreased
-            issuePage.navigateToIssues();
-            pause(3000);
+            // 6. Wait for server to process, then hard refresh for truly fresh data
+            pause(5000);
 
+            // Use hard page refresh to bypass SPA caching (proven fix from ConnectionDelete)
+            driver.navigate().refresh();
+            pause(5000);
+
+            // Poll for count decrease (handles eventual consistency)
             boolean deleted = false;
             for (int attempt = 0; attempt < 5; attempt++) {
                 int afterCount = issuePage.getRowCount();
@@ -320,8 +324,9 @@ public class IssuesSmokeTestNG extends BaseTest {
                     deleted = true;
                     break;
                 }
-                issuePage.navigateToIssues();
-                pause(3000);
+                // Hard refresh each retry
+                driver.navigate().refresh();
+                pause(5000);
             }
             logStepWithScreenshot("Issues page after deletion");
 
