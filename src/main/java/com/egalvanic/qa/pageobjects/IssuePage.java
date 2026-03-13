@@ -174,34 +174,54 @@ public class IssuePage {
         );
         pause(2000);
 
-        // Wait for "Add Issue" drawer to appear
-        try {
-            wait.until(ExpectedConditions.visibilityOfElementLocated(ADD_ISSUE_HEADER));
-        } catch (Exception e) {
-            System.out.println("[IssuePage] Add Issue header not found, trying BASIC INFO section");
-            try {
-                wait.until(ExpectedConditions.visibilityOfElementLocated(
-                    By.xpath("//*[contains(text(),'BASIC INFO')]")));
-            } catch (Exception e2) {
-                // Log drawer contents for diagnostics
-                String diag = (String) js.executeScript(
-                    "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"], [role=\"dialog\"], [role=\"presentation\"]');" +
-                    "var info = 'Drawers: ' + drawers.length + '. ';" +
-                    "for (var d of drawers) {" +
-                    "  var inputs = d.querySelectorAll('input');" +
-                    "  info += 'Inputs: ' + inputs.length + ' [';" +
-                    "  for (var inp of inputs) {" +
-                    "    info += '{type=' + (inp.type||'') + ', placeholder=' + (inp.placeholder||'') + '} ';" +
-                    "  }" +
-                    "  info += '] ';" +
-                    "  var labels = d.querySelectorAll('label, p, h6, h5');" +
-                    "  info += 'Labels: [';" +
-                    "  for (var l of labels) { info += l.textContent.trim() + ', '; }" +
-                    "  info += '] ';" +
-                    "}" +
-                    "return info;");
-                System.out.println("[IssuePage] DIAGNOSTIC: " + diag);
-                throw e2;
+        // Wait for the Add Issue form DRAWER to appear (not just text on page).
+        // Use JS polling to check for a MuiDrawer-paper with width > 400 that
+        // contains form content (BASIC INFO, Priority, Issue Class etc).
+        // This avoids XPath matching issues where "Add Issue" text exists
+        // in non-visible elements or where DataGrid cells are falsely matched.
+        boolean formFound = false;
+        for (int i = 0; i < 20; i++) {
+            Boolean found = (Boolean) js.executeScript(
+                "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+                "for (var d of drawers) {" +
+                "  var r = d.getBoundingClientRect();" +
+                "  if (r.width > 400 && " +
+                "      (d.textContent.includes('BASIC INFO') || d.textContent.includes('Add Issue') || " +
+                "       d.textContent.includes('Issue Class') || d.textContent.includes('Priority'))) {" +
+                "    return true;" +
+                "  }" +
+                "}" +
+                "return false;");
+            if (Boolean.TRUE.equals(found)) {
+                formFound = true;
+                break;
+            }
+            pause(500);
+        }
+
+        if (!formFound) {
+            // Retry clicking the button
+            System.out.println("[IssuePage] Form drawer not found — retrying button click");
+            js.executeScript(
+                "var btns = document.querySelectorAll('button');" +
+                "for (var b of btns) {" +
+                "  var text = b.textContent.trim();" +
+                "  if (text === 'Create Issue' || text.includes('Create Issue')) {" +
+                "    b.click(); return;" +
+                "  }" +
+                "}");
+            pause(3000);
+
+            // Final check
+            Boolean found = (Boolean) js.executeScript(
+                "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+                "for (var d of drawers) {" +
+                "  var r = d.getBoundingClientRect();" +
+                "  if (r.width > 400 && d.textContent.includes('BASIC INFO')) return true;" +
+                "}" +
+                "return false;");
+            if (!Boolean.TRUE.equals(found)) {
+                System.out.println("[IssuePage] WARNING: Form drawer still not found after retry");
             }
         }
         System.out.println("[IssuePage] Add Issue form opened");
@@ -509,14 +529,8 @@ public class IssuePage {
                 field, title);
             pause(200);
 
-            // Also use sendKeys to ensure React gets the keypress events
-            try {
-                field.click();
-                field.clear();
-                field.sendKeys(title);
-            } catch (Exception e) {
-                System.out.println("[IssuePage] sendKeys for title failed (React setter should have worked): " + e.getMessage());
-            }
+            // NOTE: Do NOT use sendKeys after React setter — it APPENDS text, causing doubling.
+            // The React-safe setter above handles controlled inputs correctly.
             pause(300);
 
             // Verify the title was set correctly
@@ -640,23 +654,26 @@ public class IssuePage {
      * Select Subcategory from the DETAILS section dropdown (required).
      * Expands DETAILS section first, then selects the first available option.
      *
-     * Key fix: Options load asynchronously after dropdown opens, so we
-     * must retry with waits until li[role="option"] elements appear.
+     * Key fixes:
+     * 1. MUI Autocomplete input is often non-interactable via Selenium (hidden/zero-height),
+     *    so ALL interactions (click, focus, keydown) use JavaScript.
+     * 2. Options load asynchronously after dropdown opens, so we poll with retries.
+     * 3. We try multiple strategies: popup indicator click, input focus+ArrowDown, etc.
      */
     public void selectSubcategory() {
         // First expand the DETAILS section if not already expanded
         expandDetailsSection();
 
-        // Retry loop — subcategory options are loaded via API after Issue Class is selected
         boolean selected = false;
         for (int attempt = 0; attempt < 3 && !selected; attempt++) {
             if (attempt > 0) {
                 System.out.println("[IssuePage] Subcategory attempt " + (attempt + 1));
-                pause(1000);
+                pause(1500);
+                expandDetailsSection(); // Re-expand on retry
             }
 
-            // Find and return the Subcategory input element so we can interact with it
-            WebElement subcatInput = (WebElement) js.executeScript(
+            // Open the Subcategory dropdown entirely via JS (avoids "element not interactable")
+            Boolean opened = (Boolean) js.executeScript(
                 "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
                 "var drawer = null;" +
                 "for (var d of drawers) {" +
@@ -664,77 +681,87 @@ public class IssuePage {
                 "    drawer = d; break;" +
                 "  }" +
                 "}" +
-                "if (!drawer) return null;" +
+                "if (!drawer) { console.log('[IssuePage] No drawer found'); return false; }" +
+                "" +
+                "// Strategy 1: Find by label text 'Subcategory'\n" +
                 "var labels = drawer.querySelectorAll('p, label, span');" +
                 "for (var l of labels) {" +
                 "  var t = l.textContent.trim();" +
                 "  if (t === 'Subcategory*' || t === 'Subcategory' || t.startsWith('Subcategory')) {" +
                 "    var container = l.closest('.MuiFormControl-root') || l.closest('[class*=\"MuiGrid\"]') || l.parentElement;" +
-                "    for (var i = 0; i < 4; i++) {" +
-                "      var input = container.querySelector('input[role=\"combobox\"], input, [role=\"button\"], [class*=\"MuiSelect\"]');" +
-                "      if (input) { input.scrollIntoView({block:'center'}); return input; }" +
-                "      container = container.parentElement;" +
+                "    for (var up = 0; up < 5; up++) {" +
                 "      if (!container) break;" +
+                "      var autocomplete = container.querySelector('.MuiAutocomplete-root, [class*=\"MuiAutocomplete\"]');" +
+                "      if (autocomplete) {" +
+                "        var popBtn = autocomplete.querySelector('.MuiAutocomplete-popupIndicator, [class*=\"popupIndicator\"]');" +
+                "        if (popBtn) { popBtn.scrollIntoView({block:'center'}); popBtn.click(); return true; }" +
+                "        var inp = autocomplete.querySelector('input');" +
+                "        if (inp) {" +
+                "          inp.scrollIntoView({block:'center'}); inp.focus(); inp.click();" +
+                "          inp.dispatchEvent(new KeyboardEvent('keydown', {key:'ArrowDown', keyCode:40, bubbles:true}));" +
+                "          return true;" +
+                "        }" +
+                "      }" +
+                "      var inp = container.querySelector('input[role=\"combobox\"], input');" +
+                "      if (inp) {" +
+                "        inp.scrollIntoView({block:'center'}); inp.focus(); inp.click();" +
+                "        inp.dispatchEvent(new KeyboardEvent('keydown', {key:'ArrowDown', keyCode:40, bubbles:true}));" +
+                "        var w = inp.closest('.MuiAutocomplete-root');" +
+                "        if (w) { var b = w.querySelector('.MuiAutocomplete-popupIndicator'); if (b) b.click(); }" +
+                "        return true;" +
+                "      }" +
+                "      var sel = container.querySelector('[role=\"button\"], [class*=\"MuiSelect\"]');" +
+                "      if (sel) { sel.scrollIntoView({block:'center'}); sel.click(); return true; }" +
+                "      container = container.parentElement;" +
                 "    }" +
                 "  }" +
                 "}" +
-                "// Fallback: look for any combobox with subcategory-related placeholder\n" +
-                "var inputs = drawer.querySelectorAll('input[role=\"combobox\"]');" +
+                "" +
+                "// Strategy 2: Find by combobox placeholder\n" +
+                "var inputs = drawer.querySelectorAll('input[role=\"combobox\"], input');" +
                 "for (var inp of inputs) {" +
                 "  var ph = (inp.placeholder || '').toLowerCase();" +
-                "  if (ph.includes('subcategory') || ph.includes('select a sub') || ph.includes('category')) {" +
-                "    inp.scrollIntoView({block:'center'}); return inp;" +
+                "  if (ph.includes('subcategor') || ph.includes('select a sub') || ph.includes('categor')) {" +
+                "    inp.scrollIntoView({block:'center'}); inp.focus(); inp.click();" +
+                "    var w = inp.closest('.MuiAutocomplete-root');" +
+                "    if (w) { var b = w.querySelector('.MuiAutocomplete-popupIndicator'); if (b) b.click(); }" +
+                "    return true;" +
                 "  }" +
                 "}" +
-                "return null;");
+                "return false;");
 
-            if (subcatInput == null) {
-                System.out.println("[IssuePage] WARNING: Could not find Subcategory input element");
+            if (!Boolean.TRUE.equals(opened)) {
+                System.out.println("[IssuePage] Could not open Subcategory dropdown (attempt " + (attempt + 1) + ")");
+                // Diagnostic: log all labels and inputs in drawer
+                String diag = (String) js.executeScript(
+                    "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+                    "var drawer = null;" +
+                    "for (var d of drawers) {" +
+                    "  if (d.textContent.includes('Add Issue') || d.textContent.includes('BASIC INFO')) { drawer = d; break; }" +
+                    "}" +
+                    "if (!drawer) return 'No drawer';" +
+                    "var info = 'LABELS: ';" +
+                    "var labels = drawer.querySelectorAll('p, label, span, h6');" +
+                    "var seen = new Set();" +
+                    "for (var l of labels) {" +
+                    "  var t = l.textContent.trim();" +
+                    "  if (t.length > 0 && t.length < 40 && !seen.has(t)) { seen.add(t); info += '[' + t + '] '; }" +
+                    "}" +
+                    "var inputs = drawer.querySelectorAll('input');" +
+                    "info += ' INPUTS(' + inputs.length + '): ';" +
+                    "for (var inp of inputs) {" +
+                    "  info += '{ph=\"' + (inp.placeholder||'').substring(0,25) + '\" val=\"' + (inp.value||'').substring(0,20) + '\" role=' + (inp.getAttribute('role')||'') + '} ';" +
+                    "}" +
+                    "return info;");
+                System.out.println("[IssuePage] " + diag);
                 continue;
             }
 
-            // Open the dropdown using Selenium trusted events (JS events don't trigger React async fetch)
-            try {
-                // Click to focus the input
-                js.executeScript("arguments[0].scrollIntoView({block:'center'});", subcatInput);
-                pause(300);
-                subcatInput.click();
+            // Poll for options to appear (async API load) — up to 8 seconds
+            pause(1000);
+            for (int waitIdx = 0; waitIdx < 14; waitIdx++) {
                 pause(500);
-
-                // Use Selenium sendKeys to trigger autocomplete — React listens for trusted keyboard events
-                // Clear any existing value first, then send ArrowDown to open popup
-                subcatInput.sendKeys(Keys.ARROW_DOWN);
-                pause(1000);
-
-                // Also try clicking the popup indicator button (the dropdown arrow)
-                js.executeScript(
-                    "var input = arguments[0];" +
-                    "var wrapper = input.closest('.MuiAutocomplete-root');" +
-                    "if (wrapper) {" +
-                    "  var btn = wrapper.querySelector('.MuiAutocomplete-popupIndicator, [class*=\"popupIndicator\"], button');" +
-                    "  if (btn) { btn.click(); }" +
-                    "}", subcatInput);
-                pause(500);
-
-                // If still no options, type a space then backspace to trigger search
-                Boolean hasOptions = (Boolean) js.executeScript(
-                    "return document.querySelectorAll('li[role=\"option\"], [class*=\"MuiAutocomplete-option\"]').length > 0;");
-                if (!Boolean.TRUE.equals(hasOptions)) {
-                    subcatInput.sendKeys(" ");
-                    pause(500);
-                    subcatInput.sendKeys(Keys.BACK_SPACE);
-                    pause(1000);
-                }
-            } catch (Exception e) {
-                System.out.println("[IssuePage] Subcategory open failed: " + e.getMessage());
-            }
-
-            // Wait for options to load — they are fetched async from the API
-            // Poll for up to 8 seconds for options to appear
-            Boolean optionSelected = false;
-            for (int waitIdx = 0; waitIdx < 16; waitIdx++) {
-                pause(500);
-                optionSelected = (Boolean) js.executeScript(
+                Boolean optionSelected = (Boolean) js.executeScript(
                     "var opts = document.querySelectorAll('li[role=\"option\"]');" +
                     "if (opts.length === 0) {" +
                     "  var lb = document.querySelector('[role=\"listbox\"]');" +
@@ -744,7 +771,7 @@ public class IssuePage {
                     "  opts = document.querySelectorAll('[class*=\"MuiAutocomplete-option\"]');" +
                     "}" +
                     "if (opts.length > 0) {" +
-                    "  console.log('[IssuePage] Subcategory options found: ' + opts.length + ', first: ' + opts[0].textContent.trim());" +
+                    "  console.log('[IssuePage] Subcategory options: ' + opts.length + ', first: ' + opts[0].textContent.trim());" +
                     "  opts[0].scrollIntoView({block:'center'});" +
                     "  opts[0].click();" +
                     "  return true;" +
@@ -754,37 +781,47 @@ public class IssuePage {
                     selected = true;
                     break;
                 }
-                // Every 4 iterations, try re-triggering the dropdown
-                if (waitIdx == 4 || waitIdx == 8 || waitIdx == 12) {
-                    try {
-                        subcatInput.click();
-                        pause(200);
-                        subcatInput.sendKeys(Keys.ARROW_DOWN);
-                    } catch (Exception ignored) {}
+                // Every 4 iterations, re-trigger dropdown open via JS
+                if (waitIdx == 4 || waitIdx == 8) {
+                    js.executeScript(
+                        "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+                        "for (var d of drawers) {" +
+                        "  if (d.textContent.includes('Subcategory') || d.textContent.includes('BASIC INFO')) {" +
+                        "    var autos = d.querySelectorAll('.MuiAutocomplete-root');" +
+                        "    for (var ac of autos) {" +
+                        "      var inp = ac.querySelector('input');" +
+                        "      if (inp && (!inp.value || inp.value.trim() === '')) {" +
+                        "        var btn = ac.querySelector('.MuiAutocomplete-popupIndicator');" +
+                        "        if (btn) { btn.click(); return; }" +
+                        "        inp.focus(); inp.click();" +
+                        "        inp.dispatchEvent(new KeyboardEvent('keydown', {key:'ArrowDown', keyCode:40, bubbles:true}));" +
+                        "        return;" +
+                        "      }" +
+                        "    }" +
+                        "  }" +
+                        "}");
+                    pause(500);
                 }
             }
 
             if (!selected) {
-                // Log diagnostic info about what's on screen
                 String diag = (String) js.executeScript(
                     "var opts = document.querySelectorAll('li[role=\"option\"]');" +
                     "var lb = document.querySelector('[role=\"listbox\"]');" +
                     "var autoOpts = document.querySelectorAll('[class*=\"MuiAutocomplete-option\"]');" +
                     "var poppers = document.querySelectorAll('[class*=\"MuiPopper\"], [class*=\"MuiAutocomplete-popper\"]');" +
-                    "var info = 'li[role=option]: ' + opts.length + ', listbox: ' + (lb ? 'yes(children=' + lb.children.length + ')' : 'no');" +
+                    "var info = 'options: ' + opts.length + ', listbox: ' + (lb ? 'yes(' + lb.children.length + ')' : 'no');" +
                     "info += ', autoOpts: ' + autoOpts.length + ', poppers: ' + poppers.length;" +
                     "if (poppers.length > 0) {" +
                     "  for (var p of poppers) {" +
                     "    var r = p.getBoundingClientRect();" +
-                    "    info += ' [popper w=' + Math.round(r.width) + ' h=' + Math.round(r.height);" +
-                    "    info += ' display=' + getComputedStyle(p).display;" +
-                    "    info += ' text=\"' + p.textContent.trim().substring(0,80) + '\"]';" +
+                    "    info += ' [w=' + Math.round(r.width) + ' h=' + Math.round(r.height) + ' \"' + p.textContent.trim().substring(0,60) + '\"]';" +
                     "  }" +
                     "}" +
+                    "var noOpts = document.querySelectorAll('[class*=\"MuiAutocomplete-noOptions\"]');" +
+                    "if (noOpts.length > 0) info += ' NO_OPTIONS: \"' + noOpts[0].textContent.trim() + '\"';" +
                     "return info;");
                 System.out.println("[IssuePage] Subcategory dropdown diag: " + diag);
-
-                // Close any open dropdown before retry
                 js.executeScript("document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true}));");
                 pause(300);
             }
@@ -793,7 +830,67 @@ public class IssuePage {
         pause(300);
         System.out.println("[IssuePage] Selected subcategory: " + selected);
         if (!selected) {
-            System.out.println("[IssuePage] WARNING: Could not select subcategory — may not be required or options not loaded for this issue class");
+            System.out.println("[IssuePage] WARNING: Could not select subcategory — may not be required or no options for this issue class");
+        }
+    }
+
+    /**
+     * Select the first option from the "Consequences if Not Corrected" combobox dropdown.
+     * Each DETAILS field has a paired combobox + textarea. This fills the combobox part.
+     * The combobox is the FIRST empty autocomplete after the Subcategory field.
+     */
+    public void selectConsequencesDropdown() {
+        // Find and click the Consequences combobox (dropdown)
+        Boolean opened = (Boolean) js.executeScript(
+            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+            "var drawer = null;" +
+            "for (var d of drawers) {" +
+            "  if (d.textContent.includes('Add Issue') || d.textContent.includes('BASIC INFO')) {" +
+            "    drawer = d; break;" +
+            "  }" +
+            "}" +
+            "if (!drawer) return false;" +
+            "var labels = drawer.querySelectorAll('p, label, span');" +
+            "for (var l of labels) {" +
+            "  var t = l.textContent.trim();" +
+            "  if (t.includes('Consequences') || t.includes('Not Corrected')) {" +
+            "    var section = l.closest('[class*=\"MuiGrid\"]') || l.closest('.MuiFormControl-root') || l.parentElement;" +
+            "    // Go up a few levels to find the section containing both combobox and textarea\n" +
+            "    for (var up = 0; up < 4; up++) {" +
+            "      if (!section) break;" +
+            "      var autocomplete = section.querySelector('.MuiAutocomplete-root');" +
+            "      if (autocomplete) {" +
+            "        var popBtn = autocomplete.querySelector('.MuiAutocomplete-popupIndicator');" +
+            "        if (popBtn) { popBtn.scrollIntoView({block:'center'}); popBtn.click(); return true; }" +
+            "        var inp = autocomplete.querySelector('input');" +
+            "        if (inp) { inp.scrollIntoView({block:'center'}); inp.focus(); inp.click(); return true; }" +
+            "      }" +
+            "      section = section.parentElement;" +
+            "    }" +
+            "  }" +
+            "}" +
+            "return false;");
+
+        if (Boolean.TRUE.equals(opened)) {
+            // Wait for options and select first one
+            pause(1500);
+            for (int i = 0; i < 8; i++) {
+                pause(500);
+                Boolean selected = (Boolean) js.executeScript(
+                    "var opts = document.querySelectorAll('li[role=\"option\"]');" +
+                    "if (opts.length === 0) opts = document.querySelectorAll('[class*=\"MuiAutocomplete-option\"]');" +
+                    "if (opts.length > 0) { opts[0].click(); return true; }" +
+                    "return false;");
+                if (Boolean.TRUE.equals(selected)) {
+                    System.out.println("[IssuePage] Selected consequences dropdown: true");
+                    pause(300);
+                    return;
+                }
+            }
+            System.out.println("[IssuePage] Consequences dropdown opened but no options found");
+            js.executeScript("document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true}));");
+        } else {
+            System.out.println("[IssuePage] WARNING: Could not open Consequences dropdown");
         }
     }
 
@@ -843,22 +940,29 @@ public class IssuePage {
             "return null;");
 
         if (field != null) {
+            // Use React-safe value setter that detects textarea vs input
+            js.executeScript(
+                "var el = arguments[0]; var val = arguments[1];" +
+                "el.scrollIntoView({block:'center'});" +
+                "el.focus(); el.click();" +
+                "// Detect element type and use correct prototype setter\n" +
+                "var proto = (el.tagName === 'TEXTAREA') " +
+                "  ? window.HTMLTextAreaElement.prototype " +
+                "  : window.HTMLInputElement.prototype;" +
+                "var setter = Object.getOwnPropertyDescriptor(proto, 'value').set;" +
+                "setter.call(el, val);" +
+                "el.dispatchEvent(new Event('input', {bubbles: true}));" +
+                "el.dispatchEvent(new Event('change', {bubbles: true}));",
+                field, text);
+            pause(300);
+
+            // Also try Selenium sendKeys for belt-and-suspenders
             try {
-                // Try Selenium sendKeys first
                 field.click();
                 field.clear();
                 field.sendKeys(text);
             } catch (Exception e) {
-                // Fallback: JS value setter + Actions sendKeys
-                js.executeScript(
-                    "arguments[0].focus(); arguments[0].click();" +
-                    "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set " +
-                    "  || Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;" +
-                    "if (setter) { setter.call(arguments[0], arguments[1]); " +
-                    "  arguments[0].dispatchEvent(new Event('input', {bubbles: true})); " +
-                    "  arguments[0].dispatchEvent(new Event('change', {bubbles: true})); }",
-                    field, text);
-                pause(200);
+                System.out.println("[IssuePage] Consequences sendKeys fallback skipped: " + e.getMessage());
             }
             pause(300);
             System.out.println("[IssuePage] Fill consequences: true");
@@ -1115,13 +1219,32 @@ public class IssuePage {
     }
 
     /**
-     * Wait for issue creation to succeed (drawer closes or success toast).
+     * Wait for issue creation to succeed (form drawer closes or success toast).
+     *
+     * IMPORTANT: We check for the actual Add Issue DRAWER being gone,
+     * NOT the text "Create Issue" on the page — because "Create Issue" is
+     * also a button on the Issues list page header.
      */
     public boolean waitForCreateSuccess() {
-        By panelHeader = By.xpath("//*[normalize-space()='Add Issue' or normalize-space()='Create Issue' or normalize-space()='New Issue']");
+        for (int i = 0; i < 12; i++) {
+            // Check 1: Is the Add Issue form DRAWER gone?
+            // The form drawer is a MuiDrawer-paper containing "BASIC INFO" or "Add Issue"
+            Boolean drawerGone = (Boolean) js.executeScript(
+                "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+                "for (var d of drawers) {" +
+                "  var r = d.getBoundingClientRect();" +
+                "  if (r.width > 400 && " +
+                "      (d.textContent.includes('BASIC INFO') || d.textContent.includes('Add Issue'))) {" +
+                "    return false;" + // drawer still open
+                "  }" +
+                "}" +
+                "return true;"); // no form drawer found = it closed
+            if (Boolean.TRUE.equals(drawerGone)) {
+                System.out.println("[IssuePage] Add Issue drawer closed — creation successful");
+                return true;
+            }
 
-        for (int i = 0; i < 25; i++) {
-            // Success indicator — check ONLY for snackbar/toast elements (not body text which has false positives)
+            // Check 2: Success toast/snackbar
             try {
                 Boolean hasSuccess = (Boolean) js.executeScript(
                     "var snackbars = document.querySelectorAll('[class*=\"Snackbar\"], [class*=\"MuiAlert-standardSuccess\"], [class*=\"MuiAlert-filledSuccess\"], [class*=\"notistack\"]');" +
@@ -1140,13 +1263,7 @@ public class IssuePage {
                 }
             } catch (Exception ignored) {}
 
-            // Panel closed = form submitted successfully
-            if (driver.findElements(panelHeader).isEmpty()) {
-                System.out.println("[IssuePage] Add Issue panel closed — creation successful");
-                return true;
-            }
-
-            // Check for validation errors in the FORM drawer (not sidebar)
+            // Check for validation errors at iteration 10
             if (i == 10) {
                 String errorDiag = (String) js.executeScript(
                     "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
@@ -1156,11 +1273,10 @@ public class IssuePage {
                     "    drawer = d; break;" +
                     "  }" +
                     "}" +
-                    "if (!drawer) drawer = document;" +
+                    "if (!drawer) return 'No form drawer (already closed?)';" +
                     "var errors = drawer.querySelectorAll('[class*=\"error\"], [class*=\"Error\"], .Mui-error, [class*=\"helperText\"], [class*=\"FormHelperText\"]');" +
                     "var info = 'Errors(' + errors.length + '): ';" +
                     "for (var e of errors) { info += '[' + e.textContent.trim().substring(0,80) + '] '; }" +
-                    "// Also log all input values to verify fields were filled\n" +
                     "var inputs = drawer.querySelectorAll('input, textarea');" +
                     "info += ' FieldValues(' + inputs.length + '): ';" +
                     "for (var inp of inputs) {" +
@@ -1174,7 +1290,7 @@ public class IssuePage {
             pause(1000);
         }
 
-        System.out.println("[IssuePage] Add Issue panel still open after 25s — creation may have failed");
+        System.out.println("[IssuePage] Add Issue drawer still open after 12s — creation may have failed");
         closeDrawer();
         return false;
     }

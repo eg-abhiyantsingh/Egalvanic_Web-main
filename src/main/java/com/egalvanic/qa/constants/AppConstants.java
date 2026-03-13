@@ -132,8 +132,8 @@ public class AppConstants {
     public static final String EMAIL_PASSWORD = getEnv("EMAIL_PASSWORD", "onmzhjxnacinjfun");
     public static final String EMAIL_TO = "abhiyant.singh@egalvanic.com ";
     public static final String EMAIL_SUBJECT = "eGalvanic Web Automation - Test Report";
-    //public static final boolean SEND_EMAIL_ENABLED = false;
-    public static final boolean SEND_EMAIL_ENABLED = true;
+    public static final boolean SEND_EMAIL_ENABLED = false;
+    //public static final boolean SEND_EMAIL_ENABLED = true;
 
     // ============================================
     // HELPER METHODS
