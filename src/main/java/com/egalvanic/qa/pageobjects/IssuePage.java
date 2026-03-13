@@ -212,36 +212,47 @@ public class IssuePage {
      * If desired priority matches default, skip selection.
      */
     public void selectPriority(String priority) {
-        // Log all form fields in the drawer for diagnostics
+        // Log all form fields in the FORM drawer (not sidebar) for diagnostics
         String formDiag = (String) js.executeScript(
-            "var drawer = document.querySelector('[class*=\"MuiDrawer-paper\"]') || document;" +
-            "var info = 'FORM FIELDS: ';" +
+            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+            "var drawer = null;" +
+            "for (var d of drawers) {" +
+            "  if (d.textContent.includes('Add Issue') || d.textContent.includes('BASIC INFO') || d.textContent.includes('Priority')) {" +
+            "    drawer = d; break;" +
+            "  }" +
+            "}" +
+            "if (!drawer) drawer = drawers[drawers.length - 1] || document;" +
+            "var info = 'FORM DRAWER: ';" +
             "// All labels and text elements\n" +
-            "var labels = drawer.querySelectorAll('label, p, span, h6, h5, div');" +
+            "var labels = drawer.querySelectorAll('label, p, span, h6, h5');" +
             "var seen = new Set();" +
             "for (var l of labels) {" +
             "  var text = l.textContent.trim();" +
             "  if (text.length > 0 && text.length < 30 && !seen.has(text)) {" +
+            "    seen.add(text);" +
             "    var tag = l.tagName;" +
-            "    var role = l.getAttribute('role') || '';" +
-            "    if (text.toLowerCase().includes('prior') || tag === 'LABEL' || role === 'button' || role === 'combobox') {" +
-            "      seen.add(text);" +
-            "      info += '{' + tag + ' role=' + role + ' text=\"' + text + '\"} ';" +
-            "    }" +
+            "    info += '{' + tag + ' \"' + text + '\"} ';" +
             "  }" +
             "}" +
             "// All inputs in drawer\n" +
             "var inputs = drawer.querySelectorAll('input, select, [role=\"button\"], [role=\"combobox\"]');" +
             "info += ' INPUTS(' + inputs.length + '): ';" +
             "for (var inp of inputs) {" +
-            "  info += '{' + inp.tagName + ' type=' + (inp.type||'') + ' placeholder=' + (inp.placeholder||'') + ' role=' + (inp.getAttribute('role')||'') + ' val=' + (inp.value||inp.textContent||'').substring(0,20) + '} ';" +
+            "  info += '{' + inp.tagName + ' type=' + (inp.type||'') + ' ph=' + (inp.placeholder||'') + ' role=' + (inp.getAttribute('role')||'') + ' val=' + (inp.value||inp.textContent||'').substring(0,20) + '} ';" +
             "}" +
             "return info;");
         System.out.println("[IssuePage] " + formDiag);
 
-        // Check if priority is already set to the desired value (search broadly)
+        // Check if priority is already set to the desired value (search in FORM drawer)
         Boolean alreadySet = (Boolean) js.executeScript(
-            "var drawer = document.querySelector('[class*=\"MuiDrawer-paper\"]') || document;" +
+            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+            "var drawer = null;" +
+            "for (var d of drawers) {" +
+            "  if (d.textContent.includes('Add Issue') || d.textContent.includes('BASIC INFO') || d.textContent.includes('Priority')) {" +
+            "    drawer = d; break;" +
+            "  }" +
+            "}" +
+            "if (!drawer) drawer = drawers[drawers.length - 1] || document;" +
             "var all = drawer.querySelectorAll('label, p, span, h6, div, [role=\"button\"]');" +
             "for (var el of all) {" +
             "  var text = el.textContent.trim();" +
@@ -269,7 +280,14 @@ public class IssuePage {
 
         // Fallback: find Priority field by label and click to open dropdown (MUI Select or custom)
         Boolean selected = (Boolean) js.executeScript(
-            "var drawer = document.querySelector('[class*=\"MuiDrawer-paper\"]') || document;" +
+            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+            "var drawer = null;" +
+            "for (var d of drawers) {" +
+            "  if (d.textContent.includes('Add Issue') || d.textContent.includes('BASIC INFO') || d.textContent.includes('Priority')) {" +
+            "    drawer = d; break;" +
+            "  }" +
+            "}" +
+            "if (!drawer) drawer = drawers[drawers.length - 1] || document;" +
             "var labels = drawer.querySelectorAll('label, p, span, h6, div');" +
             "for (var l of labels) {" +
             "  var text = l.textContent.trim();" +
@@ -382,38 +400,76 @@ public class IssuePage {
         );
         pause(200);
 
-        // Find and click the submit button using Selenium (trusted click)
-        String[] buttonTexts = {"Create Issue", "Create", "Save", "Submit"};
-        List<WebElement> drawerBtns = driver.findElements(By.cssSelector(
-            "[class*='MuiDrawer-paper'] button, [role='presentation'] button, [role='dialog'] button"));
+        // Find the RIGHT drawer (form drawer, not sidebar).
+        // The form drawer is the LAST/rightmost MuiDrawer-paper, or the modal one.
+        String btnDiag = (String) js.executeScript(
+            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+            "var info = 'Drawers(' + drawers.length + '): ';" +
+            "var formDrawer = null;" +
+            "for (var i = 0; i < drawers.length; i++) {" +
+            "  var d = drawers[i];" +
+            "  var r = d.getBoundingClientRect();" +
+            "  var hasForm = d.textContent.includes('Add Issue') || d.textContent.includes('BASIC INFO') || d.textContent.includes('Issue Class');" +
+            "  info += '{w=' + Math.round(r.width) + ' form=' + hasForm + '} ';" +
+            "  if (hasForm) formDrawer = d;" +
+            "}" +
+            "if (!formDrawer) return 'NO FORM DRAWER - ' + info;" +
+            "var btns = formDrawer.querySelectorAll('button');" +
+            "info += 'FormBtns(' + btns.length + '): ';" +
+            "for (var b of btns) {" +
+            "  var br = b.getBoundingClientRect();" +
+            "  var text = b.textContent.trim();" +
+            "  if (text.length > 0 && text.length < 30 && br.width > 0) {" +
+            "    info += '{\"' + text + '\" y=' + Math.round(br.top) + '} ';" +
+            "  }" +
+            "}" +
+            "return info;");
+        System.out.println("[IssuePage] " + btnDiag);
 
-        System.out.println("[IssuePage] Drawer buttons found: " + drawerBtns.size());
-        for (WebElement btn : drawerBtns) {
-            String text = btn.getText().trim();
-            for (String target : buttonTexts) {
-                if (text.equals(target) && btn.isDisplayed()) {
-                    System.out.println("[IssuePage] Found submit button: '" + text + "'");
-                    btn.click();
-                    System.out.println("[IssuePage] Clicked submit button (trusted)");
-                    return;
-                }
-            }
-        }
-
-        // Fallback: JS click
-        js.executeScript(
-            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"], [role=\"presentation\"]');" +
+        // Click the submit button in the FORM drawer (not sidebar)
+        Boolean clicked = (Boolean) js.executeScript(
+            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+            "var formDrawer = null;" +
             "for (var d of drawers) {" +
-            "  var btns = d.querySelectorAll('button');" +
-            "  for (var b of btns) {" +
-            "    var text = b.textContent.trim();" +
-            "    if ((text === 'Create Issue' || text === 'Create' || text === 'Save' || text === 'Submit') && b.getBoundingClientRect().width > 0) {" +
-            "      b.scrollIntoView({block:'center'}); b.click(); return;" +
+            "  if (d.textContent.includes('Add Issue') || d.textContent.includes('BASIC INFO') || d.textContent.includes('Issue Class')) {" +
+            "    formDrawer = d; break;" +
+            "  }" +
+            "}" +
+            "if (!formDrawer) {" +
+            "  // Try presentation role containers\n" +
+            "  var presentations = document.querySelectorAll('[role=\"presentation\"]');" +
+            "  for (var p of presentations) {" +
+            "    if (p.textContent.includes('Add Issue') || p.textContent.includes('BASIC INFO')) {" +
+            "      formDrawer = p; break;" +
             "    }" +
             "  }" +
-            "}"
-        );
-        System.out.println("[IssuePage] Clicked submit button (JS fallback)");
+            "}" +
+            "if (!formDrawer) return false;" +
+            "var btns = formDrawer.querySelectorAll('button');" +
+            "var submitTexts = ['Create Issue', 'Create', 'Save', 'Submit'];" +
+            "// Find submit at bottom of form (highest y)\n" +
+            "var bestBtn = null; var bestY = -1;" +
+            "for (var b of btns) {" +
+            "  var text = b.textContent.trim();" +
+            "  var r = b.getBoundingClientRect();" +
+            "  if (r.width > 0 && submitTexts.indexOf(text) >= 0 && r.top > bestY) {" +
+            "    bestBtn = b; bestY = r.top;" +
+            "  }" +
+            "}" +
+            "if (bestBtn) {" +
+            "  bestBtn.scrollIntoView({block:'center'});" +
+            "  bestBtn.click();" +
+            "  return true;" +
+            "}" +
+            "// Fallback: any button with contained class\n" +
+            "btns = formDrawer.querySelectorAll('button[class*=\"contained\"], button[class*=\"primary\"]');" +
+            "for (var b of btns) {" +
+            "  var text = b.textContent.trim();" +
+            "  if (text.includes('Create') || text.includes('Save')) { b.click(); return true; }" +
+            "}" +
+            "return false;");
+
+        System.out.println("[IssuePage] Submit clicked: " + clicked);
     }
 
     /**
