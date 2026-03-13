@@ -197,6 +197,15 @@ public class IssuesSmokeTestNG extends BaseTest {
             issuePage.fillProposedResolution(TEST_PROPOSED_RESOLUTION);
             logStep("Filled proposed resolution");
 
+            // DETAILS section required fields
+            // Subcategory (required dropdown in DETAILS section)
+            issuePage.selectSubcategory();
+            logStep("Selected subcategory");
+
+            // Consequences if Not Corrected (required in DETAILS section)
+            issuePage.fillConsequences("Potential safety hazard if not addressed");
+            logStep("Filled consequences");
+
             debugDrawerState("CREATE — Form filled, pre-submit");
             logStepWithScreenshot("Form filled — about to submit");
 

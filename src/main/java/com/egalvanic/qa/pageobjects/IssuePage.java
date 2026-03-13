@@ -526,6 +526,113 @@ public class IssuePage {
     }
 
     /**
+     * Select Subcategory from the DETAILS section dropdown (required).
+     * Clicks the "DETAILS" section header to expand it if needed,
+     * then selects the first available option.
+     */
+    public void selectSubcategory() {
+        // First, click the DETAILS section to make sure it's expanded/visible
+        js.executeScript(
+            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+            "var drawer = null;" +
+            "for (var d of drawers) {" +
+            "  if (d.textContent.includes('Add Issue') || d.textContent.includes('BASIC INFO')) {" +
+            "    drawer = d; break;" +
+            "  }" +
+            "}" +
+            "if (!drawer) return;" +
+            "var btns = drawer.querySelectorAll('button, span');" +
+            "for (var b of btns) {" +
+            "  if (b.textContent.trim() === 'DETAILS') {" +
+            "    b.scrollIntoView({block:'center'});" +
+            "    b.click(); break;" +
+            "  }" +
+            "}");
+        pause(1000);
+
+        // Find Subcategory label and its associated dropdown
+        WebElement subcatField = (WebElement) js.executeScript(
+            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+            "var drawer = null;" +
+            "for (var d of drawers) {" +
+            "  if (d.textContent.includes('Add Issue') || d.textContent.includes('Subcategory')) {" +
+            "    drawer = d; break;" +
+            "  }" +
+            "}" +
+            "if (!drawer) return null;" +
+            "var labels = drawer.querySelectorAll('p, label, span');" +
+            "for (var l of labels) {" +
+            "  var t = l.textContent.trim();" +
+            "  if (t === 'Subcategory*' || t === 'Subcategory') {" +
+            "    var container = l.closest('.MuiFormControl-root') || l.closest('[class*=\"MuiGrid\"]') || l.parentElement;" +
+            "    var input = container.querySelector('input[role=\"combobox\"], input, [role=\"button\"]');" +
+            "    if (!input) input = container.parentElement.querySelector('input[role=\"combobox\"], input');" +
+            "    if (input) { input.scrollIntoView({block:'center'}); return input; }" +
+            "  }" +
+            "}" +
+            "return null;");
+
+        if (subcatField != null) {
+            subcatField.click();
+            pause(500);
+            // Select first available option from the dropdown
+            try {
+                WebElement option = wait.until(ExpectedConditions.presenceOfElementLocated(
+                    By.xpath("//li[@role='option'][1]")));
+                String optText = option.getText().trim();
+                option.click();
+                pause(300);
+                System.out.println("[IssuePage] Selected subcategory: " + optText);
+            } catch (Exception e) {
+                // Try clicking any listbox option
+                js.executeScript(
+                    "var opts = document.querySelectorAll('li[role=\"option\"]');" +
+                    "if (opts.length > 0) { opts[0].click(); }");
+                pause(300);
+                System.out.println("[IssuePage] Selected subcategory (JS fallback)");
+            }
+        } else {
+            System.out.println("[IssuePage] WARNING: Could not find Subcategory field");
+        }
+    }
+
+    /**
+     * Fill the "Consequences if Not Corrected" textarea (required, in DETAILS section).
+     */
+    public void fillConsequences(String text) {
+        WebElement field = (WebElement) js.executeScript(
+            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+            "var drawer = null;" +
+            "for (var d of drawers) {" +
+            "  if (d.textContent.includes('Add Issue') || d.textContent.includes('Subcategory')) {" +
+            "    drawer = d; break;" +
+            "  }" +
+            "}" +
+            "if (!drawer) return null;" +
+            "var labels = drawer.querySelectorAll('p, label, span');" +
+            "for (var l of labels) {" +
+            "  var t = l.textContent.trim();" +
+            "  if (t.includes('Consequences') || t.includes('Not Corrected')) {" +
+            "    var container = l.closest('.MuiFormControl-root') || l.closest('[class*=\"MuiGrid\"]') || l.parentElement;" +
+            "    var field = container.querySelector('textarea') || container.parentElement.querySelector('textarea')" +
+            "      || container.querySelector('input') || container.parentElement.querySelector('input');" +
+            "    if (field) { field.scrollIntoView({block:'center'}); return field; }" +
+            "  }" +
+            "}" +
+            "return null;");
+
+        if (field != null) {
+            field.click();
+            field.clear();
+            field.sendKeys(text);
+            pause(300);
+            System.out.println("[IssuePage] Fill consequences: true");
+        } else {
+            System.out.println("[IssuePage] WARNING: Could not find Consequences field");
+        }
+    }
+
+    /**
      * Submit the Create Issue form (click Save/Create inside the drawer).
      */
     public void submitCreateIssue() {
