@@ -694,12 +694,14 @@ public class WorkOrderPage {
 
     /**
      * Edit the description field on the detail/edit page.
+     * Returns true if a field was found and edited, false otherwise.
      */
-    public void editDescription(String newDescription) {
-        // Strategy 1: Try XPath locator first
+    public boolean editDescription(String newDescription) {
+        // Strategy 1: Try XPath locator first (short timeout — 5s)
         WebElement el = null;
         try {
-            el = wait.until(ExpectedConditions.visibilityOfElementLocated(DESCRIPTION_INPUT));
+            WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(5));
+            el = shortWait.until(ExpectedConditions.visibilityOfElementLocated(DESCRIPTION_INPUT));
         } catch (Exception e) {
             System.out.println("[WorkOrderPage] Description XPath not found, trying JS approach");
         }
@@ -707,12 +709,10 @@ public class WorkOrderPage {
         // Strategy 2: Find via JS — look for textarea/input near "Description" label
         if (el == null) {
             el = (WebElement) js.executeScript(
-                "// Find description field by label proximity\n" +
                 "var labels = document.querySelectorAll('p, label, span, h6');" +
                 "for (var l of labels) {" +
                 "  var t = l.textContent.trim();" +
                 "  if (t === 'Description' || t === 'Description*') {" +
-                "    // Look for textarea or input in nearby containers\n" +
                 "    var container = l.closest('.MuiFormControl-root') || l.closest('[class*=\"MuiGrid\"]') || l.parentElement;" +
                 "    for (var up = 0; up < 5; up++) {" +
                 "      if (!container) break;" +
@@ -730,43 +730,19 @@ public class WorkOrderPage {
                 "  var r = ta.getBoundingClientRect();" +
                 "  if (r.width > 100 && r.height > 20) { ta.scrollIntoView({block:'center'}); return ta; }" +
                 "}" +
+                "// Fallback: contentEditable div\n" +
+                "var editables = document.querySelectorAll('[contenteditable=\"true\"]');" +
+                "for (var ed of editables) {" +
+                "  var r = ed.getBoundingClientRect();" +
+                "  if (r.width > 100 && r.height > 20) { ed.scrollIntoView({block:'center'}); return ed; }" +
+                "}" +
                 "return null;");
         }
 
         if (el != null) {
-            // Clear and type using Actions for trusted events
-            try {
-                js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].focus();", el);
-                pause(300);
-                Actions actions = new Actions(driver);
-                actions.moveToElement(el).click().perform();
-                pause(200);
-                actions.keyDown(Keys.CONTROL).sendKeys("a").keyUp(Keys.CONTROL).perform();
-                pause(100);
-                actions.sendKeys(Keys.DELETE).perform();
-                pause(100);
-                actions.sendKeys(newDescription).perform();
-                pause(300);
-                System.out.println("[WorkOrderPage] Edited description via Actions");
-            } catch (Exception e) {
-                // Fallback: JS setter + sendKeys
-                System.out.println("[WorkOrderPage] Actions failed for description: " + e.getMessage());
-                try {
-                    String tag = el.getTagName().toUpperCase();
-                    String proto = tag.equals("TEXTAREA") ? "HTMLTextAreaElement" : "HTMLInputElement";
-                    js.executeScript(
-                        "var el = arguments[0]; var val = arguments[1];" +
-                        "el.focus(); el.click();" +
-                        "var setter = Object.getOwnPropertyDescriptor(window." + proto + ".prototype, 'value').set;" +
-                        "setter.call(el, val);" +
-                        "el.dispatchEvent(new Event('input', {bubbles: true}));" +
-                        "el.dispatchEvent(new Event('change', {bubbles: true}));",
-                        el, newDescription);
-                    System.out.println("[WorkOrderPage] Edited description via JS setter");
-                } catch (Exception e2) {
-                    System.out.println("[WorkOrderPage] JS setter also failed: " + e2.getMessage());
-                }
-            }
+            editElementText(el, newDescription);
+            System.out.println("[WorkOrderPage] Edited description");
+            return true;
         } else {
             // Log diagnostic for debugging
             String diag = (String) js.executeScript(
@@ -783,9 +759,66 @@ public class WorkOrderPage {
                 "  var r = ta.getBoundingClientRect();" +
                 "  info += '{w=' + Math.round(r.width) + ' h=' + Math.round(r.height) + ' hidden=' + ta.getAttribute('aria-hidden') + '} ';" +
                 "}" +
+                "var editables = document.querySelectorAll('[contenteditable=\"true\"]');" +
+                "info += ' CEs(' + editables.length + '): ';" +
+                "for (var ed of editables) {" +
+                "  var r = ed.getBoundingClientRect();" +
+                "  info += '{w=' + Math.round(r.width) + ' h=' + Math.round(r.height) + '} ';" +
+                "}" +
+                "var inputs = document.querySelectorAll('input:not([type=\"hidden\"]):not([type=\"file\"])');" +
+                "info += ' INPUTS(' + inputs.length + '): ';" +
+                "for (var inp of inputs) {" +
+                "  var r = inp.getBoundingClientRect();" +
+                "  if (r.width > 50) info += '{ph=\"' + (inp.placeholder||'').substring(0,20) + '\" w=' + Math.round(r.width) + ' dis=' + inp.disabled + '} ';" +
+                "}" +
                 "return info;");
             System.out.println("[WorkOrderPage] Edit description failed — no field found. DIAG: " + diag);
+            return false;
         }
+    }
+
+    /**
+     * Edit any available text field on the edit page.
+     * Tries name/title first, then any visible text input.
+     * Returns true if a field was found and edited.
+     */
+    public boolean editAnyField(String newValue) {
+        WebElement el = (WebElement) js.executeScript(
+            "// Try to find name/title input\n" +
+            "var labels = document.querySelectorAll('p, label, span, h6');" +
+            "for (var l of labels) {" +
+            "  var t = l.textContent.trim();" +
+            "  if (t === 'Name' || t === 'Title' || t === 'Name*' || t === 'Title*' || t === 'Work Order Name' || t === 'Job Name') {" +
+            "    var container = l.closest('.MuiFormControl-root') || l.closest('[class*=\"MuiGrid\"]') || l.parentElement;" +
+            "    for (var up = 0; up < 5; up++) {" +
+            "      if (!container) break;" +
+            "      var inp = container.querySelector('input[type=\"text\"]:not([disabled])');" +
+            "      if (inp && inp.getBoundingClientRect().width > 50) { inp.scrollIntoView({block:'center'}); return inp; }" +
+            "      container = container.parentElement;" +
+            "    }" +
+            "  }" +
+            "}" +
+            "// Fallback: any enabled, visible text input\n" +
+            "var inputs = document.querySelectorAll('input[type=\"text\"]:not([disabled]):not([readonly])');" +
+            "for (var inp of inputs) {" +
+            "  var r = inp.getBoundingClientRect();" +
+            "  if (r.width > 100 && r.height > 10) { inp.scrollIntoView({block:'center'}); return inp; }" +
+            "}" +
+            "// Fallback: textarea\n" +
+            "var tas = document.querySelectorAll('textarea:not([aria-hidden=\"true\"]):not([disabled])');" +
+            "for (var ta of tas) {" +
+            "  var r = ta.getBoundingClientRect();" +
+            "  if (r.width > 100) { ta.scrollIntoView({block:'center'}); return ta; }" +
+            "}" +
+            "return null;");
+
+        if (el != null) {
+            editElementText(el, newValue);
+            System.out.println("[WorkOrderPage] Edited field with value: " + newValue.substring(0, Math.min(30, newValue.length())));
+            return true;
+        }
+        System.out.println("[WorkOrderPage] No editable field found on page");
+        return false;
     }
 
     /**
@@ -951,26 +984,21 @@ public class WorkOrderPage {
     public int getIRPhotoCount() {
         try {
             Long count = (Long) js.executeScript(
-                "var imgs = document.querySelectorAll(" +
-                "  'img[class*=\"thumbnail\"], img[class*=\"photo\"], img[class*=\"image\"]," +
-                "  img[src*=\"blob:\"], img[src*=\"upload\"], img[src*=\"photo\"], img[src*=\"image\"]," +
-                "  img[src*=\"amazonaws\"], img[src*=\"storage\"], img[src*=\"s3\"]," +
-                "  [class*=\"photo-item\"], [class*=\"gallery\"] img," +
-                "  [class*=\"ir-photo\"] img, [class*=\"IRPhoto\"] img," +
-                "  [class*=\"photo\"] img, [class*=\"Photo\"] img');" +
+                "// Count ALL visible img elements (excluding icons/logos which are tiny)\n" +
+                "var allImgs = document.querySelectorAll('img');" +
                 "var visible = 0;" +
-                "for (var img of imgs) {" +
+                "for (var img of allImgs) {" +
                 "  var r = img.getBoundingClientRect();" +
-                "  if (r.width > 20 && r.height > 20) visible++;" +
+                "  var src = (img.src || img.getAttribute('src') || '').toLowerCase();" +
+                "  // Skip tiny icons (< 40px) and SVG data URIs\n" +
+                "  if (r.width > 40 && r.height > 40 && !src.startsWith('data:image/svg')) visible++;" +
                 "}" +
-                "// Also check for background-image divs (some apps use div backgrounds)\n" +
-                "if (visible === 0) {" +
-                "  var divs = document.querySelectorAll('[class*=\"photo\"], [class*=\"Photo\"], [class*=\"thumbnail\"], [class*=\"image\"]');" +
-                "  for (var d of divs) {" +
-                "    var bg = window.getComputedStyle(d).backgroundImage;" +
-                "    var r = d.getBoundingClientRect();" +
-                "    if (bg && bg !== 'none' && r.width > 20 && r.height > 20) visible++;" +
-                "  }" +
+                "// Also check for background-image divs\n" +
+                "var divs = document.querySelectorAll('[class*=\"photo\"], [class*=\"Photo\"], [class*=\"thumbnail\"], [class*=\"image\"], [class*=\"Image\"], [class*=\"preview\"], [class*=\"Preview\"], [class*=\"gallery\"], [class*=\"Gallery\"]');" +
+                "for (var d of divs) {" +
+                "  var bg = window.getComputedStyle(d).backgroundImage;" +
+                "  var r = d.getBoundingClientRect();" +
+                "  if (bg && bg !== 'none' && r.width > 40 && r.height > 40) visible++;" +
                 "}" +
                 "return visible;");
             int result = count != null ? count.intValue() : 0;
@@ -1419,6 +1447,52 @@ public class WorkOrderPage {
     // ================================================================
     // HELPERS (PRIVATE)
     // ================================================================
+
+    /**
+     * Clear and type text into any element (input, textarea, or contentEditable).
+     */
+    private void editElementText(WebElement el, String text) {
+        try {
+            js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].focus();", el);
+            pause(300);
+            Actions actions = new Actions(driver);
+            actions.moveToElement(el).click().perform();
+            pause(200);
+            // Select all + delete (use platform-appropriate key)
+            String os = System.getProperty("os.name", "").toLowerCase();
+            Keys modifier = os.contains("mac") ? Keys.COMMAND : Keys.CONTROL;
+            actions.keyDown(modifier).sendKeys("a").keyUp(modifier).perform();
+            pause(100);
+            actions.sendKeys(Keys.DELETE).perform();
+            pause(100);
+            actions.sendKeys(text).perform();
+            pause(300);
+        } catch (Exception e) {
+            System.out.println("[WorkOrderPage] Actions failed, using JS fallback: " + e.getMessage());
+            try {
+                String tag = el.getTagName().toUpperCase();
+                if (tag.equals("DIV") || tag.equals("SPAN") || tag.equals("P")) {
+                    // contentEditable
+                    js.executeScript(
+                        "var el = arguments[0]; el.focus(); el.textContent = arguments[1];" +
+                        "el.dispatchEvent(new Event('input', {bubbles: true}));",
+                        el, text);
+                } else {
+                    String proto = tag.equals("TEXTAREA") ? "HTMLTextAreaElement" : "HTMLInputElement";
+                    js.executeScript(
+                        "var el = arguments[0]; var val = arguments[1];" +
+                        "el.focus(); el.click();" +
+                        "var setter = Object.getOwnPropertyDescriptor(window." + proto + ".prototype, 'value').set;" +
+                        "setter.call(el, val);" +
+                        "el.dispatchEvent(new Event('input', {bubbles: true}));" +
+                        "el.dispatchEvent(new Event('change', {bubbles: true}));",
+                        el, text);
+                }
+            } catch (Exception e2) {
+                System.out.println("[WorkOrderPage] JS fallback also failed: " + e2.getMessage());
+            }
+        }
+    }
 
     private void typeField(By by, String text) {
         WebElement el = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
