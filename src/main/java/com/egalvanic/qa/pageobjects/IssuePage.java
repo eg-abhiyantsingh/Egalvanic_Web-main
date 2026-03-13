@@ -481,15 +481,19 @@ public class IssuePage {
                 field);
             pause(300);
 
-            // Step 2: Triple-click to select all, then delete (belt and suspenders)
+            // Step 2: Select all text and delete (belt and suspenders)
             try {
-                new Actions(driver).tripleClick(field).perform();
+                String os = System.getProperty("os.name", "").toLowerCase();
+                Keys modifier = os.contains("mac") ? Keys.COMMAND : Keys.CONTROL;
+                field.sendKeys(Keys.chord(modifier, "a"));
                 pause(100);
                 field.sendKeys(Keys.DELETE);
                 field.sendKeys(Keys.BACK_SPACE);
             } catch (Exception e) {
-                // Fallback: Ctrl+A then Delete
-                field.sendKeys(Keys.chord(Keys.CONTROL, "a"));
+                // Fallback: JS select all + delete
+                js.executeScript(
+                    "arguments[0].select(); arguments[0].setSelectionRange(0, arguments[0].value.length);",
+                    field);
                 pause(100);
                 field.sendKeys(Keys.DELETE);
             }

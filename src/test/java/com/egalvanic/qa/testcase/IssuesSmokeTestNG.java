@@ -189,10 +189,6 @@ public class IssuesSmokeTestNG extends BaseTest {
             issuePage.selectAsset(TEST_ASSET_NAME);
             logStep("Selected asset: " + TEST_ASSET_NAME);
 
-            // Title (required)
-            issuePage.fillTitle(TEST_TITLE);
-            logStep("Filled title: " + TEST_TITLE);
-
             // Proposed Resolution (required)
             issuePage.fillProposedResolution(TEST_PROPOSED_RESOLUTION);
             logStep("Filled proposed resolution");
@@ -205,6 +201,12 @@ public class IssuesSmokeTestNG extends BaseTest {
             // Consequences if Not Corrected (required in DETAILS section)
             issuePage.fillConsequences("Potential safety hazard if not addressed");
             logStep("Filled consequences");
+
+            // Title (required) — filled LAST because the app auto-generates a title
+            // after selecting Issue Class + Asset (e.g., "NEC Violation on New ATS 1").
+            // Filling it last ensures our test title overrides the auto-generated one.
+            issuePage.fillTitle(TEST_TITLE);
+            logStep("Filled title (after all other fields): " + TEST_TITLE);
 
             debugDrawerState("CREATE — Form filled, pre-submit");
             logStepWithScreenshot("Form filled — about to submit");
