@@ -740,17 +740,55 @@ public class IssuePage {
             );
             pause(200);
 
-            // Click submit with Selenium trusted event
+            // Try multiple click approaches — the button type="button" relies on React onClick
+            // Approach 1: Selenium WebElement click (trusted event)
             try {
                 submitBtn.click();
-                System.out.println("[IssuePage] Submit clicked via Selenium WebElement");
+                System.out.println("[IssuePage] Submit: Selenium click done");
             } catch (Exception e) {
-                System.out.println("[IssuePage] Selenium click failed: " + e.getMessage());
-                new Actions(driver).moveToElement(submitBtn).click().perform();
-                System.out.println("[IssuePage] Submit clicked via Actions");
+                System.out.println("[IssuePage] Submit: Selenium click failed: " + e.getMessage());
+            }
+            pause(2000);
+
+            // Check if drawer closed after approach 1
+            boolean closed = driver.findElements(By.xpath("//*[normalize-space()='Add Issue']")).isEmpty();
+            if (!closed) {
+                // Approach 2: Send Enter key on the button
+                try {
+                    submitBtn.sendKeys(Keys.ENTER);
+                    System.out.println("[IssuePage] Submit: Enter key sent");
+                } catch (Exception e) {
+                    System.out.println("[IssuePage] Submit: Enter key failed: " + e.getMessage());
+                }
+                pause(2000);
+
+                closed = driver.findElements(By.xpath("//*[normalize-space()='Add Issue']")).isEmpty();
+                if (!closed) {
+                    // Approach 3: Actions moveToElement + click
+                    try {
+                        new Actions(driver).moveToElement(submitBtn).click().perform();
+                        System.out.println("[IssuePage] Submit: Actions click done");
+                    } catch (Exception e) {
+                        System.out.println("[IssuePage] Submit: Actions click failed: " + e.getMessage());
+                    }
+                    pause(2000);
+
+                    closed = driver.findElements(By.xpath("//*[normalize-space()='Add Issue']")).isEmpty();
+                    if (!closed) {
+                        // Approach 4: JS dispatchEvent with synthetic MouseEvent
+                        js.executeScript(
+                            "var evt = new MouseEvent('click', {bubbles: true, cancelable: true, view: window});" +
+                            "arguments[0].dispatchEvent(evt);", submitBtn);
+                        System.out.println("[IssuePage] Submit: JS MouseEvent dispatched");
+                    }
+                }
             }
 
-            // Wait 3s then check form state — did it submit or show errors?
+            if (closed) {
+                System.out.println("[IssuePage] Submit SUCCESS — drawer closed");
+            }
+
+            // Wait then check form state
             pause(3000);
             String postClickDiag = (String) js.executeScript(
                 "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
