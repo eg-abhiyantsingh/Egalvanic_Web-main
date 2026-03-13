@@ -526,11 +526,76 @@ public class IssuePage {
     }
 
     /**
+     * Expand the DETAILS section in the Add Issue form drawer.
+     * The form has collapsible sections (BASIC INFO, DETAILS).
+     * DETAILS must be expanded/scrolled to before its fields become visible.
+     */
+    public void expandDetailsSection() {
+        Boolean expanded = (Boolean) js.executeScript(
+            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+            "var drawer = null;" +
+            "for (var d of drawers) {" +
+            "  if (d.textContent.includes('Add Issue') || d.textContent.includes('BASIC INFO')) {" +
+            "    drawer = d; break;" +
+            "  }" +
+            "}" +
+            "if (!drawer) return false;" +
+            "// Find and click the DETAILS section header to expand it\n" +
+            "var allElements = drawer.querySelectorAll('button, span, div, h6, p, [role=\"button\"]');" +
+            "for (var el of allElements) {" +
+            "  var text = el.textContent.trim();" +
+            "  if (text === 'DETAILS' || text === 'Details') {" +
+            "    el.scrollIntoView({block:'center'});" +
+            "    el.click();" +
+            "    return true;" +
+            "  }" +
+            "}" +
+            "// Fallback: scroll the drawer to bottom to reveal DETAILS section\n" +
+            "drawer.scrollTop = drawer.scrollHeight;" +
+            "return false;");
+        pause(1500); // Wait for section expand animation
+
+        System.out.println("[IssuePage] Expand DETAILS section: " + expanded);
+
+        // Diagnostic: log what fields are now visible in the DETAILS section
+        String diag = (String) js.executeScript(
+            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+            "var drawer = null;" +
+            "for (var d of drawers) {" +
+            "  if (d.textContent.includes('Add Issue') || d.textContent.includes('BASIC INFO')) {" +
+            "    drawer = d; break;" +
+            "  }" +
+            "}" +
+            "if (!drawer) return 'No drawer found';" +
+            "var info = 'DETAILS SECTION fields: ';" +
+            "var labels = drawer.querySelectorAll('p, label, span');" +
+            "var seen = new Set();" +
+            "for (var l of labels) {" +
+            "  var t = l.textContent.trim();" +
+            "  if (t.length > 0 && t.length < 50 && !seen.has(t)) {" +
+            "    seen.add(t);" +
+            "    if (t.includes('Subcategory') || t.includes('Consequences') || t.includes('Corrective') || " +
+            "        t.includes('Component') || t.includes('DETAILS') || t.includes('Type') || " +
+            "        t.includes('Recommendation') || t.includes('Severity') || t.includes('Action')) {" +
+            "      info += '{' + t + '} ';" +
+            "    }" +
+            "  }" +
+            "}" +
+            "var inputs = drawer.querySelectorAll('input, textarea, select');" +
+            "info += ' | Total inputs: ' + inputs.length;" +
+            "return info;");
+        System.out.println("[IssuePage] " + diag);
+    }
+
+    /**
      * Select Subcategory from the DETAILS section dropdown (required).
-     * Scrolls to DETAILS section and selects the first available option.
+     * Expands DETAILS section first, then selects the first available option.
      */
     public void selectSubcategory() {
-        // Scroll to DETAILS section and open dropdown via JS (avoids element not interactable)
+        // First expand the DETAILS section if not already expanded
+        expandDetailsSection();
+
+        // Now find and open the Subcategory dropdown
         Boolean opened = (Boolean) js.executeScript(
             "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
             "var drawer = null;" +
@@ -543,22 +608,37 @@ public class IssuePage {
             "var labels = drawer.querySelectorAll('p, label, span');" +
             "for (var l of labels) {" +
             "  var t = l.textContent.trim();" +
-            "  if (t === 'Subcategory*' || t === 'Subcategory') {" +
+            "  if (t === 'Subcategory*' || t === 'Subcategory' || t.startsWith('Subcategory')) {" +
             "    var container = l.closest('.MuiFormControl-root') || l.closest('[class*=\"MuiGrid\"]') || l.parentElement;" +
-            "    var input = container.querySelector('input[role=\"combobox\"], input');" +
-            "    if (!input) input = container.parentElement.querySelector('input[role=\"combobox\"], input');" +
-            "    if (input) {" +
-            "      input.scrollIntoView({block:'center'});" +
-            "      input.focus();" +
-            "      input.click();" +
-            "      // Also try opening popup indicator\n" +
-            "      var wrapper = input.closest('.MuiAutocomplete-root');" +
-            "      if (wrapper) {" +
-            "        var btn = wrapper.querySelector('.MuiAutocomplete-popupIndicator');" +
-            "        if (btn) btn.click();" +
+            "    // Search up to 3 parent levels for the input\n" +
+            "    for (var i = 0; i < 3; i++) {" +
+            "      var input = container.querySelector('input[role=\"combobox\"], input, [role=\"button\"], [class*=\"MuiSelect\"]');" +
+            "      if (input) {" +
+            "        input.scrollIntoView({block:'center'});" +
+            "        input.focus();" +
+            "        input.click();" +
+            "        var wrapper = input.closest('.MuiAutocomplete-root');" +
+            "        if (wrapper) {" +
+            "          var btn = wrapper.querySelector('.MuiAutocomplete-popupIndicator');" +
+            "          if (btn) btn.click();" +
+            "        }" +
+            "        return true;" +
             "      }" +
-            "      return true;" +
+            "      container = container.parentElement;" +
+            "      if (!container) break;" +
             "    }" +
+            "  }" +
+            "}" +
+            "// Fallback: look for any combobox with subcategory-related placeholder\n" +
+            "var inputs = drawer.querySelectorAll('input[role=\"combobox\"]');" +
+            "for (var inp of inputs) {" +
+            "  var ph = (inp.placeholder || '').toLowerCase();" +
+            "  if (ph.includes('subcategory') || ph.includes('select a sub') || ph.includes('category')) {" +
+            "    inp.scrollIntoView({block:'center'});" +
+            "    inp.focus(); inp.click();" +
+            "    var w = inp.closest('.MuiAutocomplete-root');" +
+            "    if (w) { var b = w.querySelector('.MuiAutocomplete-popupIndicator'); if (b) b.click(); }" +
+            "    return true;" +
             "  }" +
             "}" +
             "return false;");
@@ -569,7 +649,7 @@ public class IssuePage {
             Boolean selected = (Boolean) js.executeScript(
                 "var opts = document.querySelectorAll('li[role=\"option\"]');" +
                 "if (opts.length > 0) {" +
-                "  var text = opts[0].textContent.trim();" +
+                "  console.log('[IssuePage] Subcategory option: ' + opts[0].textContent.trim());" +
                 "  opts[0].click();" +
                 "  return true;" +
                 "}" +
@@ -577,13 +657,13 @@ public class IssuePage {
             pause(300);
             System.out.println("[IssuePage] Selected subcategory: " + selected);
         } else {
-            System.out.println("[IssuePage] WARNING: Could not find Subcategory field");
+            System.out.println("[IssuePage] WARNING: Could not find Subcategory field — may not be required for this issue class");
         }
     }
 
     /**
      * Fill the "Consequences if Not Corrected" textarea (required, in DETAILS section).
-     * Finds element via JS, then types via Actions (handles element-not-interactable).
+     * Assumes DETAILS section is already expanded (call expandDetailsSection() or selectSubcategory() first).
      */
     public void fillConsequences(String text) {
         WebElement field = (WebElement) js.executeScript(
@@ -598,11 +678,15 @@ public class IssuePage {
             "var labels = drawer.querySelectorAll('p, label, span');" +
             "for (var l of labels) {" +
             "  var t = l.textContent.trim();" +
-            "  if (t.includes('Consequences') || t.includes('Not Corrected')) {" +
+            "  if (t.includes('Consequences') || t.includes('Not Corrected') || t.includes('consequences')) {" +
             "    var container = l.closest('.MuiFormControl-root') || l.closest('[class*=\"MuiGrid\"]') || l.parentElement;" +
-            "    var field = container.querySelector('textarea') || container.parentElement.querySelector('textarea')" +
-            "      || container.querySelector('input') || container.parentElement.querySelector('input');" +
-            "    if (field) { field.scrollIntoView({block:'center'}); return field; }" +
+            "    // Search up to 3 levels for the textarea/input\n" +
+            "    for (var i = 0; i < 3; i++) {" +
+            "      var f = container.querySelector('textarea') || container.querySelector('input[type=\"text\"]');" +
+            "      if (f) { f.scrollIntoView({block:'center'}); return f; }" +
+            "      container = container.parentElement;" +
+            "      if (!container) break;" +
+            "    }" +
             "  }" +
             "}" +
             "return null;");
@@ -614,10 +698,16 @@ public class IssuePage {
                 field.clear();
                 field.sendKeys(text);
             } catch (Exception e) {
-                // Fallback: JS focus + Actions sendKeys
-                js.executeScript("arguments[0].focus(); arguments[0].click();", field);
+                // Fallback: JS value setter + Actions sendKeys
+                js.executeScript(
+                    "arguments[0].focus(); arguments[0].click();" +
+                    "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set " +
+                    "  || Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;" +
+                    "if (setter) { setter.call(arguments[0], arguments[1]); " +
+                    "  arguments[0].dispatchEvent(new Event('input', {bubbles: true})); " +
+                    "  arguments[0].dispatchEvent(new Event('change', {bubbles: true})); }",
+                    field, text);
                 pause(200);
-                new Actions(driver).sendKeys(text).perform();
             }
             pause(300);
             System.out.println("[IssuePage] Fill consequences: true");
@@ -759,29 +849,14 @@ public class IssuePage {
                 "return info;", submitBtn);
             System.out.println("[IssuePage] " + hitTestDiag);
 
-            // Hide ALL possible overlays — backdrop, modal root, and presentation elements
+            // ONLY hide .MuiBackdrop-root — do NOT hide MuiModal-root or role=presentation
+            // because the drawer is INSIDE those containers and hiding them kills the drawer!
             js.executeScript(
-                "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"], [class*=\"MuiModal-root\"]').forEach(" +
-                "  function(b) { b.style.display = 'none'; b.style.pointerEvents = 'none'; }" +
-                ");" +
-                "// Also make all role=presentation elements non-blocking\n" +
-                "document.querySelectorAll('[role=\"presentation\"]').forEach(" +
-                "  function(p) { p.style.pointerEvents = 'none'; }" +
+                "document.querySelectorAll('.MuiBackdrop-root').forEach(" +
+                "  function(b) { b.style.pointerEvents = 'none'; }" +
                 ");"
             );
             pause(200);
-
-            // Scroll button into view within the drawer's scroll container
-            js.executeScript(
-                "var btn = arguments[0];" +
-                "var drawer = btn.closest('[class*=\"MuiDrawer-paper\"]');" +
-                "if (drawer) {" +
-                "  // Scroll drawer to show the button at center\n" +
-                "  var btnOffset = btn.offsetTop;" +
-                "  drawer.scrollTop = btnOffset - drawer.clientHeight / 2;" +
-                "}" +
-                "btn.scrollIntoView({block:'center', behavior:'instant'});", submitBtn);
-            pause(300);
 
             // Try multiple click approaches
             // Approach 1: Selenium WebElement click (trusted event)
