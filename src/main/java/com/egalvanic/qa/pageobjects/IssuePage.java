@@ -893,11 +893,38 @@ public class IssuePage {
 
                     closed = driver.findElements(By.xpath("//*[normalize-space()='Add Issue']")).isEmpty();
                     if (!closed) {
-                        // Approach 4: JS dispatchEvent with synthetic MouseEvent
-                        js.executeScript(
-                            "var evt = new MouseEvent('click', {bubbles: true, cancelable: true, view: window});" +
-                            "arguments[0].dispatchEvent(evt);", submitBtn);
-                        System.out.println("[IssuePage] Submit: JS MouseEvent dispatched");
+                        // Approach 4: Directly invoke React onClick via component fiber
+                        String reactResult = (String) js.executeScript(
+                            "var btn = arguments[0];" +
+                            "// Find React fiber\n" +
+                            "var fiberKey = Object.keys(btn).find(function(k) {" +
+                            "  return k.startsWith('__reactFiber$') || k.startsWith('__reactInternalInstance$') || k.startsWith('__reactProps$');" +
+                            "});" +
+                            "if (!fiberKey) return 'No React fiber found';" +
+                            "// Try __reactProps$ first (React 18)\n" +
+                            "var propsKey = Object.keys(btn).find(function(k) { return k.startsWith('__reactProps$'); });" +
+                            "if (propsKey) {" +
+                            "  var props = btn[propsKey];" +
+                            "  if (props && props.onClick) {" +
+                            "    props.onClick({preventDefault:function(){},stopPropagation:function(){},target:btn,currentTarget:btn,nativeEvent:new MouseEvent('click')});" +
+                            "    return 'React onClick invoked via __reactProps$';" +
+                            "  }" +
+                            "}" +
+                            "// Try fiber memoizedProps\n" +
+                            "var fiber = btn[fiberKey];" +
+                            "var current = fiber;" +
+                            "for (var i = 0; i < 10; i++) {" +
+                            "  if (!current) break;" +
+                            "  var p = current.memoizedProps || current.pendingProps;" +
+                            "  if (p && p.onClick) {" +
+                            "    p.onClick({preventDefault:function(){},stopPropagation:function(){},target:btn,currentTarget:btn,nativeEvent:new MouseEvent('click')});" +
+                            "    return 'React onClick invoked via fiber depth ' + i;" +
+                            "  }" +
+                            "  current = current.return;" +
+                            "}" +
+                            "return 'No onClick found in fiber tree. Keys: ' + Object.keys(btn).filter(function(k){return k.startsWith('__react');}).join(', ');",
+                            submitBtn);
+                        System.out.println("[IssuePage] Submit: React fiber — " + reactResult);
                     }
                 }
             }
