@@ -1,0 +1,283 @@
+name: Web Automation Test
+
+# ============================================================
+# DEVELOPER REPO - WEB SMOKE TEST SUITE
+# ============================================================
+# Runs web automation tests from the Egalvanic_Web-main QA repo
+# against the eGalvanic web application using Chrome headless.
+#
+# Architecture:
+#
+#   ── Run All ──
+#   smoke                     → Full Smoke Dashboard — all 7 modules with live progress (~35 min)
+#
+#   ── Individual Smoke CRUD Modules ──
+#   smoke-auth                → Auth & Login (6 tests)
+#   smoke-site-selection      → Site Selection (4 tests)
+#   smoke-asset-crud          → Asset CRUD (9 tests)
+#   smoke-connection-crud     → Connection CRUD (3 tests)
+#   smoke-location-crud       → Location CRUD (4 tests)
+#   smoke-issue-crud          → Issues CRUD (5 tests)
+#   smoke-workorder-crud      → Work Order CRUD (6 tests)
+#
+# Requirements:
+#   Secrets: QA_REPO_TOKEN, EMAIL_PASSWORD (optional)
+# ============================================================
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Which tests to run?'
+        required: true
+        default: 'smoke'
+        type: choice
+        options:
+          - 'smoke'
+          - 'smoke-auth'
+          - 'smoke-site-selection'
+          - 'smoke-asset-crud'
+          - 'smoke-connection-crud'
+          - 'smoke-location-crud'
+          - 'smoke-issue-crud'
+          - 'smoke-workorder-crud'
+
+jobs:
+  web-smoke-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      # ============================================================
+      # STEP 1: Checkout QA Automation Code
+      # ============================================================
+      - name: Checkout QA Automation Repository
+        uses: actions/checkout@v4
+        with:
+          repository: eg-abhiyantsingh/Egalvanic_Web-main
+          token: ${{ secrets.QA_REPO_TOKEN }}
+
+      # ============================================================
+      # STEP 2: Setup Build Environment
+      # ============================================================
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: 'stable'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      # ============================================================
+      # STEP 3: Pre-flight
+      # ============================================================
+      - name: Download dependencies
+        run: |
+          echo "Downloading Maven dependencies..."
+          mvn dependency:resolve -B -q 2>/dev/null || true
+          mvn dependency:resolve-plugins -B -q 2>/dev/null || true
+          echo "✅ Dependencies ready"
+
+      - name: Create output directories
+        run: |
+          mkdir -p test-output/screenshots
+          mkdir -p reports/detail-report
+          mkdir -p reports/client-report
+          mkdir -p reports/modules
+
+      # ============================================================
+      # STEP 4: Compile (quiet — only show errors)
+      # ============================================================
+      - name: Compile project
+        run: |
+          echo "Compiling project..."
+          mvn compile test-compile -B -q
+          echo "✅ Compilation successful"
+
+      # ============================================================
+      # STEP 5: Run Tests
+      # ============================================================
+      - name: Run Smoke Tests
+        id: smoke_tests
+        continue-on-error: true
+        env:
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          SEND_EMAIL_ENABLED: "false"
+        run: |
+          echo ""
+          echo "╔══════════════════════════════════════════════════════════════╗"
+          echo "║  🧪 Web Smoke Tests: ${{ github.event.inputs.test_suite }}"
+          echo "║  🌐 Chrome (headless) · eGalvanic Web App"
+          echo "║  📦 Repository: Egalvanic_Web-main"
+          echo "╚══════════════════════════════════════════════════════════════╝"
+          echo ""
+
+          # ─────────────────────────────────────────────────────────
+          # Shell function to run Maven for web tests.
+          # All web tests use -Dheadless=true for CI Chrome.
+          # ─────────────────────────────────────────────────────────
+          run_mvn() {
+            local SUITE_XML="$1"
+            mvn test -B -q \
+              -DsuiteXmlFile="$SUITE_XML" \
+              -Dheadless=true
+          }
+
+          case "${{ github.event.inputs.test_suite }}" in
+            smoke)
+              # ── Full Smoke Dashboard — all 7 modules with live progress ──
+              bash .github/scripts/smoke-dashboard.sh
+              ;;
+            # ── Individual Smoke CRUD Modules ──
+            smoke-auth)
+              run_mvn smoke-auth-testng.xml
+              ;;
+            smoke-site-selection)
+              run_mvn smoke-site-testng.xml
+              ;;
+            smoke-asset-crud)
+              run_mvn smoke-asset-testng.xml
+              ;;
+            smoke-connection-crud)
+              run_mvn smoke-connection-testng.xml
+              ;;
+            smoke-location-crud)
+              run_mvn smoke-location-testng.xml
+              ;;
+            smoke-issue-crud)
+              run_mvn smoke-issues-testng.xml
+              ;;
+            smoke-workorder-crud)
+              run_mvn smoke-workorder-testng.xml
+              ;;
+          esac
+
+      # ============================================================
+      # STEP 6: Test Summary
+      # ============================================================
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "## 🔥 Web Smoke Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -n "${{ env.SMOKE_PASSED }}" ]; then
+            RESULT="${{ env.SMOKE_RESULT }}"
+
+            if [ "$RESULT" = "passed" ]; then
+              echo "### ✅ ALL TESTS PASSED" >> $GITHUB_STEP_SUMMARY
+            elif [ "$RESULT" = "failed" ]; then
+              echo "### ❌ ALL TESTS FAILED" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "### ⚠️ SOME TESTS FAILED" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Metric  | Count |" >> $GITHUB_STEP_SUMMARY
+            echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
+            echo "| Total   | ${{ env.SMOKE_TOTAL }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Passed  | ${{ env.SMOKE_PASSED }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Failed  | ${{ env.SMOKE_FAILED }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Skipped | ${{ env.SMOKE_SKIPPED }} |" >> $GITHUB_STEP_SUMMARY
+            echo "| Duration | ${{ env.SMOKE_DURATION }}s |" >> $GITHUB_STEP_SUMMARY
+
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Reports" >> $GITHUB_STEP_SUMMARY
+            echo "- **Detailed Report** (QA Team): Download from \`detailed-test-reports\` artifact" >> $GITHUB_STEP_SUMMARY
+            echo "- **Client Report** (Presentation): Download from \`client-test-reports\` artifact" >> $GITHUB_STEP_SUMMARY
+          else
+            # Single module run — parse TestNG results XML
+            RESULTS_XML="target/surefire-reports/testng-results.xml"
+            if [ -f "$RESULTS_XML" ]; then
+              PASSED=$(grep -oP 'passed="\K[^"]+' "$RESULTS_XML" | head -1)
+              FAILED=$(grep -oP 'failed="\K[^"]+' "$RESULTS_XML" | head -1)
+              SKIPPED=$(grep -oP 'skipped="\K[^"]+' "$RESULTS_XML" | head -1)
+              echo "### Test Results: ${{ github.event.inputs.test_suite }}" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "| Metric  | Count |" >> $GITHUB_STEP_SUMMARY
+              echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
+              echo "| Passed  | ${PASSED:-0} |" >> $GITHUB_STEP_SUMMARY
+              echo "| Failed  | ${FAILED:-0} |" >> $GITHUB_STEP_SUMMARY
+              echo "| Skipped | ${SKIPPED:-0} |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "No test results available." >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+
+      # ============================================================
+      # STEP 7: Upload Artifacts
+      # ============================================================
+      - name: Upload Detailed Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: detailed-test-reports-${{ github.event.inputs.test_suite }}-${{ github.run_number }}
+          path: |
+            reports/detail-report/
+            test-output/screenshots/
+            reports/modules/
+          retention-days: 30
+
+      - name: Upload Client Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-test-reports-${{ github.event.inputs.test_suite }}-${{ github.run_number }}
+          path: reports/client-report/
+          retention-days: 30
+
+      - name: Upload Surefire Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports-${{ github.event.inputs.test_suite }}-${{ github.run_number }}
+          path: |
+            target/surefire-reports/
+            reports/modules/
+          retention-days: 14
+
+      # ============================================================
+      # STEP 8: Final Status
+      # ============================================================
+      - name: Check smoke test result
+        if: always()
+        run: |
+          echo ""
+          echo "╔══════════════════════════════════════════════════════════════╗"
+          echo "║  📊 TEST RESULTS                                             ║"
+          echo "╠══════════════════════════════════════════════════════════════╣"
+          echo "║  Suite:   ${{ github.event.inputs.test_suite }}"
+          echo "║  Runner:  Chrome (headless) on Ubuntu"
+          echo "║  Result:  ${{ steps.smoke_tests.outcome }}"
+          echo "╚══════════════════════════════════════════════════════════════╝"
+
+          if [ -n "${{ env.SMOKE_RESULT }}" ]; then
+            if [ "${{ env.SMOKE_RESULT }}" = "failed" ]; then
+              echo "❌ All smoke tests failed"
+              exit 1
+            elif [ "${{ env.SMOKE_RESULT }}" = "partial" ]; then
+              echo "⚠️ Some tests failed (${{ env.SMOKE_PASSED }}/${{ env.SMOKE_TOTAL }} passed) — check reports"
+            elif [ "${{ env.SMOKE_RESULT }}" = "passed" ]; then
+              echo "✅ All smoke tests passed"
+            fi
+          else
+            # Single module — use Maven exit code
+            if [ "${{ steps.smoke_tests.outcome }}" = "failure" ]; then
+              echo "❌ Tests failed"
+              exit 1
+            else
+              echo "✅ Tests passed"
+            fi
+          fi
