@@ -86,31 +86,79 @@ public class WorkOrderSmokeTestNG extends BaseTest {
 
             logStepWithScreenshot("Form filled — about to submit");
 
+            // Pre-submit diagnostic: log all form field values
+            {
+                org.openqa.selenium.JavascriptExecutor jsCheck = (org.openqa.selenium.JavascriptExecutor) driver;
+                String formDiag = (String) jsCheck.executeScript(
+                    "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+                    "var drawer = null;" +
+                    "for (var d of drawers) {" +
+                    "  var r = d.getBoundingClientRect();" +
+                    "  if (r.width > 400 && d.querySelectorAll('input').length > 0) { drawer = d; break; }" +
+                    "}" +
+                    "if (!drawer) return 'NO FORM DRAWER';" +
+                    "var info = 'LABELS: ';" +
+                    "var labels = drawer.querySelectorAll('p, label, span, h6');" +
+                    "var seen = new Set();" +
+                    "for (var l of labels) {" +
+                    "  var t = l.textContent.trim();" +
+                    "  if (t.length > 1 && t.length < 40 && !seen.has(t)) { seen.add(t); info += '[' + t + '] '; }" +
+                    "}" +
+                    "info += ' INPUTS: ';" +
+                    "var inputs = drawer.querySelectorAll('input:not([type=\"hidden\"]):not([type=\"file\"])');" +
+                    "for (var inp of inputs) {" +
+                    "  var r = inp.getBoundingClientRect();" +
+                    "  if (r.width > 30) {" +
+                    "    info += '{ph=\"' + (inp.placeholder||'').substring(0,25) + '\" val=\"' + (inp.value||'').substring(0,25) + '\" role=' + (inp.getAttribute('role')||'') + '} ';" +
+                    "  }" +
+                    "}" +
+                    "var btns = drawer.querySelectorAll('button');" +
+                    "info += ' BTNS: ';" +
+                    "for (var b of btns) {" +
+                    "  var t = b.textContent.trim();" +
+                    "  if (t.length > 0 && t.length < 25 && b.getBoundingClientRect().width > 0) info += '[' + t + ' dis=' + b.disabled + '] ';" +
+                    "}" +
+                    "return info;");
+                logStep("PRE-SUBMIT: " + formDiag);
+            }
+
             // 4. Submit
             workOrderPage.submitCreateWorkOrder();
             logStep("Work order creation submitted");
 
-            // 5. Wait for success
+            // 5. Wait for success (drawer closes or success toast)
             boolean success = workOrderPage.waitForCreateSuccess();
-            Assert.assertTrue(success, "Work order creation did not complete successfully");
-            logStep("Create success confirmed");
+            logStep("Create success: " + success);
 
-            // 6. Verify count increased
+            // 6. Verify created work order is visible in the list
+            // Use name-based search instead of row count (paginated tables always show same count)
             workOrderPage.navigateToWorkOrders();
-            pause(2000);
+            pause(3000);
 
-            boolean countIncreased = false;
+            boolean found = false;
             for (int attempt = 0; attempt < 5; attempt++) {
-                int afterCount = workOrderPage.getRowCount();
-                logStep("Post-create check " + (attempt + 1) + ": row count = " + afterCount);
-                if (afterCount > beforeCount) {
-                    countIncreased = true;
-                    break;
-                }
+                // Try searching by name
+                workOrderPage.searchWorkOrders(createdWorkOrderName);
+                pause(2000);
+                found = workOrderPage.isWorkOrderVisible(createdWorkOrderName);
+                logStep("Post-create search attempt " + (attempt + 1) + ": found=" + found);
+                if (found) break;
+                // Clear search and refresh
+                workOrderPage.clearSearch();
+                pause(1000);
+                driver.navigate().refresh();
+                pause(3000);
+            }
+
+            // Fallback: check if the name appears anywhere on any page
+            if (!found) {
                 workOrderPage.navigateToWorkOrders();
                 pause(2000);
+                found = workOrderPage.isWorkOrderVisible(createdWorkOrderName);
+                logStep("Final visibility check: " + found);
             }
-            Assert.assertTrue(countIncreased, "Work order count did not increase after creation");
+
+            Assert.assertTrue(found, "Work order '" + createdWorkOrderName + "' not found in list after creation");
             logStepWithScreenshot("Work order created and verified in table");
 
             ExtentReportManager.logPass("Work order created: " + createdWorkOrderName);

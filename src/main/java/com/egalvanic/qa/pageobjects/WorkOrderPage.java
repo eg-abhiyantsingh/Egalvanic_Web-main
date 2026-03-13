@@ -165,12 +165,12 @@ public class WorkOrderPage {
             }
         }
 
-        // Click Jobs/Work Orders in sidebar
+        // Click Jobs/Work Orders/Sessions in sidebar
         js.executeScript(
             "var links = document.querySelectorAll('a');" +
             "for (var el of links) {" +
             "  var text = el.textContent.trim();" +
-            "  if (text === 'Jobs' || text === 'Work Orders' || text === 'Job/Work Orders') { el.click(); return; }" +
+            "  if (text === 'Jobs' || text === 'Work Orders' || text === 'Job/Work Orders' || text === 'Sessions') { el.click(); return; }" +
             "}"
         );
         pause(2000);
@@ -182,7 +182,8 @@ public class WorkOrderPage {
 
     public boolean isOnWorkOrdersPage() {
         String url = driver.getCurrentUrl().toLowerCase();
-        return url.contains("/jobs") || url.contains("/work-orders") || url.contains("/workorders");
+        return url.contains("/jobs") || url.contains("/work-orders") || url.contains("/workorders")
+            || url.contains("/sessions");
     }
 
     // ================================================================
