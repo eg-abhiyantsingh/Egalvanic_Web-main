@@ -527,12 +527,11 @@ public class IssuePage {
 
     /**
      * Select Subcategory from the DETAILS section dropdown (required).
-     * Clicks the "DETAILS" section header to expand it if needed,
-     * then selects the first available option.
+     * Scrolls to DETAILS section and selects the first available option.
      */
     public void selectSubcategory() {
-        // First, click the DETAILS section to make sure it's expanded/visible
-        js.executeScript(
+        // Scroll to DETAILS section and open dropdown via JS (avoids element not interactable)
+        Boolean opened = (Boolean) js.executeScript(
             "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
             "var drawer = null;" +
             "for (var d of drawers) {" +
@@ -540,57 +539,43 @@ public class IssuePage {
             "    drawer = d; break;" +
             "  }" +
             "}" +
-            "if (!drawer) return;" +
-            "var btns = drawer.querySelectorAll('button, span');" +
-            "for (var b of btns) {" +
-            "  if (b.textContent.trim() === 'DETAILS') {" +
-            "    b.scrollIntoView({block:'center'});" +
-            "    b.click(); break;" +
-            "  }" +
-            "}");
-        pause(1000);
-
-        // Find Subcategory label and its associated dropdown
-        WebElement subcatField = (WebElement) js.executeScript(
-            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
-            "var drawer = null;" +
-            "for (var d of drawers) {" +
-            "  if (d.textContent.includes('Add Issue') || d.textContent.includes('Subcategory')) {" +
-            "    drawer = d; break;" +
-            "  }" +
-            "}" +
-            "if (!drawer) return null;" +
+            "if (!drawer) return false;" +
             "var labels = drawer.querySelectorAll('p, label, span');" +
             "for (var l of labels) {" +
             "  var t = l.textContent.trim();" +
             "  if (t === 'Subcategory*' || t === 'Subcategory') {" +
             "    var container = l.closest('.MuiFormControl-root') || l.closest('[class*=\"MuiGrid\"]') || l.parentElement;" +
-            "    var input = container.querySelector('input[role=\"combobox\"], input, [role=\"button\"]');" +
+            "    var input = container.querySelector('input[role=\"combobox\"], input');" +
             "    if (!input) input = container.parentElement.querySelector('input[role=\"combobox\"], input');" +
-            "    if (input) { input.scrollIntoView({block:'center'}); return input; }" +
+            "    if (input) {" +
+            "      input.scrollIntoView({block:'center'});" +
+            "      input.focus();" +
+            "      input.click();" +
+            "      // Also try opening popup indicator\n" +
+            "      var wrapper = input.closest('.MuiAutocomplete-root');" +
+            "      if (wrapper) {" +
+            "        var btn = wrapper.querySelector('.MuiAutocomplete-popupIndicator');" +
+            "        if (btn) btn.click();" +
+            "      }" +
+            "      return true;" +
+            "    }" +
             "  }" +
             "}" +
-            "return null;");
+            "return false;");
+        pause(1000);
 
-        if (subcatField != null) {
-            subcatField.click();
-            pause(500);
-            // Select first available option from the dropdown
-            try {
-                WebElement option = wait.until(ExpectedConditions.presenceOfElementLocated(
-                    By.xpath("//li[@role='option'][1]")));
-                String optText = option.getText().trim();
-                option.click();
-                pause(300);
-                System.out.println("[IssuePage] Selected subcategory: " + optText);
-            } catch (Exception e) {
-                // Try clicking any listbox option
-                js.executeScript(
-                    "var opts = document.querySelectorAll('li[role=\"option\"]');" +
-                    "if (opts.length > 0) { opts[0].click(); }");
-                pause(300);
-                System.out.println("[IssuePage] Selected subcategory (JS fallback)");
-            }
+        if (Boolean.TRUE.equals(opened)) {
+            // Select first available option
+            Boolean selected = (Boolean) js.executeScript(
+                "var opts = document.querySelectorAll('li[role=\"option\"]');" +
+                "if (opts.length > 0) {" +
+                "  var text = opts[0].textContent.trim();" +
+                "  opts[0].click();" +
+                "  return true;" +
+                "}" +
+                "return false;");
+            pause(300);
+            System.out.println("[IssuePage] Selected subcategory: " + selected);
         } else {
             System.out.println("[IssuePage] WARNING: Could not find Subcategory field");
         }
@@ -598,13 +583,14 @@ public class IssuePage {
 
     /**
      * Fill the "Consequences if Not Corrected" textarea (required, in DETAILS section).
+     * Finds element via JS, then types via Actions (handles element-not-interactable).
      */
     public void fillConsequences(String text) {
         WebElement field = (WebElement) js.executeScript(
             "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
             "var drawer = null;" +
             "for (var d of drawers) {" +
-            "  if (d.textContent.includes('Add Issue') || d.textContent.includes('Subcategory')) {" +
+            "  if (d.textContent.includes('Add Issue') || d.textContent.includes('Subcategory') || d.textContent.includes('BASIC INFO')) {" +
             "    drawer = d; break;" +
             "  }" +
             "}" +
@@ -622,9 +608,17 @@ public class IssuePage {
             "return null;");
 
         if (field != null) {
-            field.click();
-            field.clear();
-            field.sendKeys(text);
+            try {
+                // Try Selenium sendKeys first
+                field.click();
+                field.clear();
+                field.sendKeys(text);
+            } catch (Exception e) {
+                // Fallback: JS focus + Actions sendKeys
+                js.executeScript("arguments[0].focus(); arguments[0].click();", field);
+                pause(200);
+                new Actions(driver).sendKeys(text).perform();
+            }
             pause(300);
             System.out.println("[IssuePage] Fill consequences: true");
         } else {
