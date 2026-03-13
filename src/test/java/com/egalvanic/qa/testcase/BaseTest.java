@@ -7,6 +7,7 @@ import com.egalvanic.qa.pageobjects.DashboardPage;
 import com.egalvanic.qa.pageobjects.IssuePage;
 import com.egalvanic.qa.pageobjects.LocationPage;
 import com.egalvanic.qa.pageobjects.LoginPage;
+import com.egalvanic.qa.pageobjects.WorkOrderPage;
 import com.egalvanic.qa.utils.ExtentReportManager;
 import com.egalvanic.qa.utils.ScreenshotUtil;
 
@@ -60,6 +61,7 @@ public class BaseTest {
     protected ConnectionPage connectionPage;
     protected LocationPage locationPage;
     protected IssuePage issuePage;
+    protected WorkOrderPage workOrderPage;
 
     private long testStartTime;
 
@@ -149,6 +151,7 @@ public class BaseTest {
         connectionPage = new ConnectionPage(driver);
         locationPage = new LocationPage(driver);
         issuePage = new IssuePage(driver);
+        workOrderPage = new WorkOrderPage(driver);
 
         // Login and select site
         loginAndSelectSite();

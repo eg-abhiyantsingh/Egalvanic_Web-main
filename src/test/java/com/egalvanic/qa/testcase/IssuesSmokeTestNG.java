@@ -4,6 +4,7 @@ import com.egalvanic.qa.constants.AppConstants;
 import com.egalvanic.qa.utils.ExtentReportManager;
 import com.egalvanic.qa.utils.ScreenshotUtil;
 
+import org.openqa.selenium.JavascriptExecutor;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -43,6 +44,106 @@ public class IssuesSmokeTestNG extends BaseTest {
     private String createdIssueName;
 
     // ================================================================
+    // DEBUGGER — Enhanced diagnostic logging
+    // ================================================================
+
+    /**
+     * Log full page state for debugging: URL, page title, visible elements count,
+     * any error messages, spinner/loading state, and table row details.
+     */
+    private void debugPageState(String context) {
+        try {
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            String diag = (String) js.executeScript(
+                "var info = '\\n=== DEBUG [' + arguments[0] + '] ===\\n';" +
+                "info += 'URL: ' + window.location.href + '\\n';" +
+                "info += 'Title: ' + document.title + '\\n';" +
+                "info += 'ReadyState: ' + document.readyState + '\\n';" +
+                "// Table/grid rows\n" +
+                "var tbodyRows = document.querySelectorAll('tbody tr');" +
+                "var gridRows = document.querySelectorAll('[data-rowindex]');" +
+                "info += 'Table rows: ' + tbodyRows.length + ', Grid rows: ' + gridRows.length + '\\n';" +
+                "// Show first 3 row texts\n" +
+                "var allRows = tbodyRows.length > 0 ? tbodyRows : gridRows;" +
+                "for (var i = 0; i < Math.min(3, allRows.length); i++) {" +
+                "  info += '  Row ' + i + ': ' + allRows[i].textContent.trim().substring(0, 120) + '\\n';" +
+                "}" +
+                "// Spinners / loading\n" +
+                "var spinners = document.querySelectorAll('[class*=\"CircularProgress\"], [class*=\"spinner\"], [class*=\"loading\"], [class*=\"skeleton\"]');" +
+                "info += 'Spinners/Loading: ' + spinners.length + '\\n';" +
+                "// Errors on page\n" +
+                "var errors = document.querySelectorAll('[class*=\"error\"], [class*=\"Error\"], .Mui-error, [class*=\"alert-danger\"]');" +
+                "if (errors.length > 0) {" +
+                "  info += 'ERRORS(' + errors.length + '): ';" +
+                "  for (var e of errors) { info += '[' + e.textContent.trim().substring(0,60) + '] '; }" +
+                "  info += '\\n';" +
+                "}" +
+                "// Snackbars/toasts\n" +
+                "var toasts = document.querySelectorAll('[class*=\"Snackbar\"], [class*=\"toast\"], [class*=\"MuiAlert\"]');" +
+                "if (toasts.length > 0) {" +
+                "  info += 'TOASTS(' + toasts.length + '): ';" +
+                "  for (var t of toasts) { info += '[' + t.textContent.trim().substring(0,60) + '] '; }" +
+                "  info += '\\n';" +
+                "}" +
+                "// Drawers/dialogs open\n" +
+                "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+                "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"alertdialog\"]');" +
+                "info += 'Drawers: ' + drawers.length + ', Dialogs: ' + dialogs.length + '\\n';" +
+                "// Visible buttons (top 10)\n" +
+                "var btns = document.querySelectorAll('button');" +
+                "var visibleBtns = [];" +
+                "for (var b of btns) {" +
+                "  var r = b.getBoundingClientRect();" +
+                "  var text = b.textContent.trim();" +
+                "  if (r.width > 0 && text.length > 0 && text.length < 40) visibleBtns.push(text);" +
+                "}" +
+                "info += 'Buttons(' + visibleBtns.length + '): ' + visibleBtns.slice(0,10).join(', ') + '\\n';" +
+                "info += '=== END DEBUG ===';" +
+                "return info;", context);
+            System.out.println(diag);
+            logStep("[DEBUG] " + context + " — URL: " + driver.getCurrentUrl());
+        } catch (Exception e) {
+            System.out.println("[DEBUG] Failed to capture page state for '" + context + "': " + e.getMessage());
+        }
+    }
+
+    /**
+     * Log drawer/form state for debugging form fill operations.
+     */
+    private void debugDrawerState(String context) {
+        try {
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            String diag = (String) js.executeScript(
+                "var info = '\\n--- DRAWER DEBUG [' + arguments[0] + '] ---\\n';" +
+                "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+                "info += 'Open drawers: ' + drawers.length + '\\n';" +
+                "for (var i = 0; i < drawers.length; i++) {" +
+                "  var d = drawers[i];" +
+                "  var r = d.getBoundingClientRect();" +
+                "  info += '  Drawer ' + i + ': w=' + Math.round(r.width) + ' h=' + Math.round(r.height) + '\\n';" +
+                "  var inputs = d.querySelectorAll('input, textarea, select');" +
+                "  info += '  Inputs(' + inputs.length + '): ';" +
+                "  for (var inp of inputs) {" +
+                "    info += '{' + inp.tagName + ' type=' + (inp.type||'') + ' ph=\"' + (inp.placeholder||'') + '\" val=\"' + (inp.value||'').substring(0,20) + '\"} ';" +
+                "  }" +
+                "  info += '\\n';" +
+                "  var btns = d.querySelectorAll('button');" +
+                "  var btnTexts = [];" +
+                "  for (var b of btns) {" +
+                "    var text = b.textContent.trim();" +
+                "    if (text.length > 0 && text.length < 30) btnTexts.push(text);" +
+                "  }" +
+                "  info += '  Buttons: ' + btnTexts.join(', ') + '\\n';" +
+                "}" +
+                "info += '--- END DRAWER DEBUG ---';" +
+                "return info;", context);
+            System.out.println(diag);
+        } catch (Exception e) {
+            System.out.println("[DRAWER DEBUG] Failed for '" + context + "': " + e.getMessage());
+        }
+    }
+
+    // ================================================================
     // TEST 1: CREATE ISSUE
     // ================================================================
 
@@ -56,7 +157,7 @@ public class IssuesSmokeTestNG extends BaseTest {
             // 1. Navigate to Issues page
             issuePage.navigateToIssues();
             logStep("Navigated to Issues page");
-            logStepWithScreenshot("Issues page loaded");
+            debugPageState("CREATE — After navigation to Issues");
 
             int beforeCount = issuePage.getRowCount();
             logStep("Row count before create: " + beforeCount);
@@ -64,6 +165,7 @@ public class IssuesSmokeTestNG extends BaseTest {
             // 2. Open Add Issue form
             issuePage.openCreateIssueForm();
             logStep("Add Issue form opened");
+            debugDrawerState("CREATE — Add Issue form opened");
             logStepWithScreenshot("Add Issue drawer");
 
             // 3. Fill the form fields
@@ -95,43 +197,82 @@ public class IssuesSmokeTestNG extends BaseTest {
             issuePage.fillProposedResolution(TEST_PROPOSED_RESOLUTION);
             logStep("Filled proposed resolution");
 
+            debugDrawerState("CREATE — Form filled, pre-submit");
             logStepWithScreenshot("Form filled — about to submit");
 
             // 4. Submit
             issuePage.submitCreateIssue();
             logStep("Issue creation submitted");
+            debugPageState("CREATE — After submit");
 
             // 5. Wait for success
             boolean success = issuePage.waitForCreateSuccess();
             Assert.assertTrue(success, "Issue creation did not complete successfully");
             logStep("Create success confirmed");
+            debugPageState("CREATE — After waitForCreateSuccess");
 
-            // 6. Verify issue count increased
-            // Wait for server to process, then hard refresh for truly fresh data
-            pause(5000);
+            // 6. Verify the created issue exists in the issues list
+            // NOTE: MUI DataGrid uses pagination (e.g., 12 rows/page),
+            // so row count comparison fails when the grid is full.
+            // Instead, search for the newly created issue by title.
+            pause(3000);
 
-            // Use hard page refresh to bypass SPA caching (proven fix from delete test)
             issuePage.navigateToIssues();
             pause(2000);
             driver.navigate().refresh();
             pause(5000);
+            debugPageState("CREATE — After hard refresh on Issues page");
 
-            boolean countIncreased = false;
-            for (int attempt = 0; attempt < 5; attempt++) {
-                int afterCount = issuePage.getRowCount();
-                logStep("Post-create check " + (attempt + 1) + ": row count = " + afterCount);
-                if (afterCount > beforeCount) {
-                    countIncreased = true;
+            // Strategy 1: Search for the created issue title
+            boolean issueFound = false;
+            for (int attempt = 0; attempt < 3; attempt++) {
+                issuePage.searchIssues(TEST_TITLE);
+                pause(3000);
+                issueFound = issuePage.isIssueVisible(TEST_TITLE);
+                logStep("Post-create search attempt " + (attempt + 1) + ": found=" + issueFound);
+                if (issueFound) {
+                    createdIssueName = TEST_TITLE;
                     break;
                 }
-                // Hard refresh each retry
+                // Clear search and try with hard refresh
+                issuePage.clearSearch();
+                pause(1000);
                 driver.navigate().refresh();
                 pause(5000);
             }
-            Assert.assertTrue(countIncreased, "Issue count did not increase after creation");
+
+            // Strategy 2 (fallback): Check if row count increased (works when grid isn't full)
+            if (!issueFound) {
+                logStep("Search didn't find issue — checking row count as fallback");
+                issuePage.clearSearch();
+                pause(2000);
+                driver.navigate().refresh();
+                pause(5000);
+                int afterCount = issuePage.getRowCount();
+                logStep("Row count after create: " + afterCount + " (before: " + beforeCount + ")");
+                if (afterCount > beforeCount) {
+                    issueFound = true;
+                    logStep("Issue creation verified via row count increase");
+                }
+            }
+
+            // Strategy 3 (last resort): Check page text for the title on any page
+            if (!issueFound) {
+                logStep("Checking body text for title as last resort");
+                JavascriptExecutor js = (JavascriptExecutor) driver;
+                Boolean bodyHasTitle = (Boolean) js.executeScript(
+                    "return document.body.textContent.indexOf(arguments[0]) > -1;", TEST_TITLE);
+                if (Boolean.TRUE.equals(bodyHasTitle)) {
+                    issueFound = true;
+                    logStep("Issue title found in page body text");
+                }
+            }
+
+            debugPageState("CREATE — Final verification state");
+            Assert.assertTrue(issueFound, "Created issue '" + TEST_TITLE + "' not found in issues list");
             logStepWithScreenshot("Issue created and verified in table");
 
-            ExtentReportManager.logPass("Issue created successfully");
+            ExtentReportManager.logPass("Issue created: " + TEST_TITLE);
 
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("issue_create_error");
@@ -153,6 +294,7 @@ public class IssuesSmokeTestNG extends BaseTest {
             // 1. Navigate to Issues page
             issuePage.navigateToIssues();
             logStep("Navigated to Issues page");
+            debugPageState("SEARCH — After navigation");
 
             // 2. Verify rows are populated
             boolean hasIssues = issuePage.isCardsPopulated();
@@ -169,8 +311,9 @@ public class IssuesSmokeTestNG extends BaseTest {
             // 4. Search with valid term
             issuePage.searchIssues(firstTitle);
             pause(2000);
+            debugPageState("SEARCH — After valid search for: " + firstTitle);
             boolean found = issuePage.isIssueVisible(firstTitle);
-            Assert.assertTrue(found, "Valid search did not return expected issue");
+            Assert.assertTrue(found, "Valid search did not return expected issue: " + firstTitle);
             logStepWithScreenshot("Valid search returned results");
 
             // 5. Search with invalid term
@@ -219,10 +362,12 @@ public class IssuesSmokeTestNG extends BaseTest {
             // 1. Navigate to Issues page
             issuePage.navigateToIssues();
             logStep("Navigated to Issues page");
+            debugPageState("DETAIL_TABS — Issues list");
 
             // 2. Open the first issue detail
             issuePage.openFirstIssueDetail();
             logStep("Opened issue detail page");
+            debugPageState("DETAIL_TABS — Issue detail loaded");
             logStepWithScreenshot("Issue detail page");
 
             // 3. Verify detail page loaded with expected tabs
@@ -256,6 +401,7 @@ public class IssuesSmokeTestNG extends BaseTest {
             // 2. Open issue detail (use first issue)
             issuePage.openFirstIssueDetail();
             logStep("Opened issue detail page");
+            debugPageState("PHOTOS — Issue detail loaded");
 
             int photoBefore = issuePage.getPhotoCount();
             logStep("Photo count before upload: " + photoBefore);
@@ -264,6 +410,7 @@ public class IssuesSmokeTestNG extends BaseTest {
             issuePage.uploadPhoto(TEST_PHOTO_PATH);
             logStep("Photo upload initiated");
             pause(3000);
+            debugPageState("PHOTOS — After upload attempt");
 
             // 4. Verify photo appears
             boolean photoVisible = issuePage.isPhotoVisible();
@@ -295,6 +442,7 @@ public class IssuesSmokeTestNG extends BaseTest {
             // 1. Navigate to Issues page
             issuePage.navigateToIssues();
             logStep("Navigated to Issues page");
+            debugPageState("DELETE — Issues list");
 
             int beforeCount = issuePage.getRowCount();
             Assert.assertTrue(beforeCount > 0, "No issues to delete");
@@ -306,16 +454,19 @@ public class IssuesSmokeTestNG extends BaseTest {
             // 2. Open issue detail
             issuePage.openFirstIssueDetail();
             logStep("Opened issue detail page");
+            debugPageState("DELETE — Issue detail loaded");
             logStepWithScreenshot("Issue detail — before delete");
 
             // 3. Delete the issue
             issuePage.deleteCurrentIssue();
             logStep("Delete initiated");
+            debugPageState("DELETE — After deleteCurrentIssue()");
             logStepWithScreenshot("Delete confirmation dialog");
 
             // 4. Confirm deletion
             issuePage.confirmDelete();
             logStep("Delete confirmed");
+            debugPageState("DELETE — After confirmDelete()");
 
             // 5. Wait for delete success
             boolean deleteSuccess = issuePage.waitForDeleteSuccess();

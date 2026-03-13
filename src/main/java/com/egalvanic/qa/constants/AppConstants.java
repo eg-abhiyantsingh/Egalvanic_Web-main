@@ -113,6 +113,17 @@ public class AppConstants {
     public static final String FEATURE_ISSUE_PHOTOS = "Issue Photos";
 
     // ============================================
+    // MODULE & FEATURE NAMES - WORK ORDERS
+    // ============================================
+    public static final String MODULE_WORK_ORDERS = "Work Orders";
+    public static final String FEATURE_CREATE_WORK_ORDER = "Create Work Order";
+    public static final String FEATURE_EDIT_WORK_ORDER = "Edit Work Order";
+    public static final String FEATURE_WO_IR_PHOTOS = "IR Photos";
+    public static final String FEATURE_WO_LOCATIONS = "Locations";
+    public static final String FEATURE_WO_TASKS = "Tasks";
+    public static final String FEATURE_WO_FILTER = "Filter";
+
+    // ============================================
     // EMAIL CONFIGURATION
     // ============================================
     public static final String SMTP_HOST = "smtp.gmail.com";

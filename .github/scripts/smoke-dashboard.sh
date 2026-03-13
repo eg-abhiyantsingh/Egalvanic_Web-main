@@ -1,14 +1,15 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════════
-# WEB SMOKE TEST DASHBOARD v6 — Auth + Site + Asset + Connection + Location + Issues
+# WEB SMOKE TEST DASHBOARD v7 — Auth + Site + Asset + Connection + Location + Issues + Work Orders
 # ═══════════════════════════════════════════════════════════════════════
-# Runs 6 modules individually with LIVE per-test progress updates.
+# Runs 7 modules individually with LIVE per-test progress updates.
 #   Module 1: Auth & Login (Admin → PM → Technician → FM → CP → Invalid)
 #   Module 2: Site Selection (Selector Present → Dropdown Options → Select Site → Context Persists)
 #   Module 3: Asset CRUD (Create → Read → Update → OCP → Detail → Search → EditCancel → Lifecycle → Delete)
 #   Module 4: Connection CRUD (Add Loadside → Verify → Delete)
 #   Module 5: Location CRUD (Create Hierarchy → Read → Update → Delete)
 #   Module 6: Issues CRUD (Create → Search → ActivateJobs → Photos → Delete)
+#   Module 7: Work Order CRUD (Create → Edit → IRPhotos → Locations → Tasks → Filter)
 #
 # Architecture:
 #   1. Maven runs in background → output to temp log file
@@ -26,9 +27,9 @@ set +e  # Don't exit on error — we handle failures ourselves
 # ─────────────────────────────────────────────────────
 # MODULE DEFINITIONS
 # ─────────────────────────────────────────────────────
-MODULES=("auth-login" "site-selection" "asset-crud" "connection-crud" "location-crud" "issues-crud")
-MODULE_NAMES=("Auth & Login" "Site Selection" "Asset CRUD" "Connection CRUD" "Location CRUD" "Issues CRUD")
-MODULE_TESTS=(6 4 9 3 4 5)
+MODULES=("auth-login" "site-selection" "asset-crud" "connection-crud" "location-crud" "issues-crud" "workorder-crud")
+MODULE_NAMES=("Auth & Login" "Site Selection" "Asset CRUD" "Connection CRUD" "Location CRUD" "Issues CRUD" "Work Order CRUD")
+MODULE_TESTS=(6 4 9 3 4 5 6)
 MODULE_XMLS=(
   "smoke-auth-testng.xml"
   "smoke-site-testng.xml"
@@ -36,19 +37,20 @@ MODULE_XMLS=(
   "smoke-connection-testng.xml"
   "smoke-location-testng.xml"
   "smoke-issues-testng.xml"
+  "smoke-workorder-testng.xml"
 )
 
-TOTAL_TESTS=31
-TOTAL_MODULES=6
+TOTAL_TESTS=37
+TOTAL_MODULES=7
 
 # ─────────────────────────────────────────────────────
 # STATE TRACKING
 # ─────────────────────────────────────────────────────
-STATUS=("pending" "pending" "pending" "pending" "pending" "pending")
-M_PASSED=(0 0 0 0 0 0)
-M_FAILED=(0 0 0 0 0 0)
-M_SKIPPED=(0 0 0 0 0 0)
-M_DURATION=(0 0 0 0 0 0)
+STATUS=("pending" "pending" "pending" "pending" "pending" "pending" "pending")
+M_PASSED=(0 0 0 0 0 0 0)
+M_FAILED=(0 0 0 0 0 0 0)
+M_SKIPPED=(0 0 0 0 0 0 0)
+M_DURATION=(0 0 0 0 0 0 0)
 
 SUITE_START=$(date +%s)
 GLOBAL_COMPLETED=0
@@ -205,7 +207,7 @@ draw_final_banner() {
     echo "  ║"
     echo "  ║     ${TOTAL_PASSED}/${TOTAL_TESTS} tests passed in ${elapsed_fmt}"
     echo "  ║     All ${TOTAL_MODULES} modules verified successfully"
-    echo "  ║     (Auth [6] ✅ + Site [4] ✅ + Asset [9] ✅ + Connection [3] ✅ + Location [4] ✅ + Issues [5] ✅)"
+    echo "  ║     (Auth [6] ✅ + Site [4] ✅ + Asset [9] ✅ + Connection [3] ✅ + Location [4] ✅ + Issues [5] ✅ + WorkOrder [6] ✅)"
     echo "  ║"
     echo "  ║   🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉"
     echo "  ║"
@@ -254,7 +256,7 @@ parse_results_xml() {
 # ── Print Header ──
 echo ""
 echo "  ┌──────────────────────────────────────────────────────────────────────────"
-echo "  │  🚀  Web Smoke Test Dashboard v1"
+echo "  │  🚀  Web Smoke Test Dashboard v2"
 echo "  │  🌐  Chrome (headless) · eGalvanic Web App"
 echo "  │  📦  ${TOTAL_TESTS} tests across ${TOTAL_MODULES} modules"
 echo "  │  📋  Module 1: Auth & Login (Admin → PM → Technician → FM → CP → Invalid)"
@@ -263,6 +265,7 @@ echo "  │  📋  Module 3: Asset CRUD (Create → Read → Update → OCP → 
 echo "  │  📋  Module 4: Connection CRUD (Add Loadside → Verify → Delete)"
 echo "  │  📋  Module 5: Location CRUD (Building → Floor → Room → Read → Update → Delete)"
 echo "  │  📋  Module 6: Issues CRUD (Create → Search → ActivateJobs → Photos → Delete)"
+echo "  │  📋  Module 7: Work Order CRUD (Create → Edit → IRPhotos → Locations → Tasks → Filter)"
 echo "  │  ⏰  $(date '+%Y-%m-%d %H:%M:%S')"
 echo "  └──────────────────────────────────────────────────────────────────────────"
 echo ""

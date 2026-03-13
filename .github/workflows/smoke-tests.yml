@@ -1,9 +1,9 @@
-name: Web Smoke Tests - Asset, Connection, Location & Issues CRUD
+name: Web Smoke Tests - Asset, Connection, Location, Issues & Work Order CRUD
 
 # ============================================================
 # WEB SMOKE TEST SUITE - Quick Critical Path Validation
 # ============================================================
-# Tests: 31 tests across 6 modules
+# Tests: 37 tests across 7 modules
 #
 # Modules:
 #   Module 1: Auth & Login      (6 tests) — Admin → PM → Technician → FM → Client Portal → Invalid
@@ -12,6 +12,7 @@ name: Web Smoke Tests - Asset, Connection, Location & Issues CRUD
 #   Module 4: Connection CRUD   (3 tests) — Add Loadside → Verify → Delete
 #   Module 5: Location CRUD     (4 tests) — Create Hierarchy → Read → Update → Delete
 #   Module 6: Issues CRUD       (5 tests) — Create → Search → ActivateJobs → Photos → Delete
+#   Module 7: Work Order CRUD   (6 tests) — Create → Edit → IRPhotos → Locations → Tasks → Filter
 #
 # Per-module TestNG XMLs:
 #   smoke-auth-testng.xml
@@ -20,6 +21,7 @@ name: Web Smoke Tests - Asset, Connection, Location & Issues CRUD
 #   smoke-connection-testng.xml
 #   smoke-location-testng.xml
 #   smoke-issues-testng.xml
+#   smoke-workorder-testng.xml
 #
 # Dashboard script: .github/scripts/smoke-dashboard.sh
 # ============================================================
@@ -29,7 +31,7 @@ on:
 jobs:
   smoke-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
 
     steps:
       # ============================================================
