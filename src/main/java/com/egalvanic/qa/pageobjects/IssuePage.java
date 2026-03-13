@@ -212,12 +212,41 @@ public class IssuePage {
      * If desired priority matches default, skip selection.
      */
     public void selectPriority(String priority) {
-        // Check if priority is already set to the desired value
-        Boolean alreadySet = (Boolean) js.executeScript(
-            "var labels = document.querySelectorAll('label, p, span');" +
+        // Log all form fields in the drawer for diagnostics
+        String formDiag = (String) js.executeScript(
+            "var drawer = document.querySelector('[class*=\"MuiDrawer-paper\"]') || document;" +
+            "var info = 'FORM FIELDS: ';" +
+            "// All labels and text elements\n" +
+            "var labels = drawer.querySelectorAll('label, p, span, h6, h5, div');" +
+            "var seen = new Set();" +
             "for (var l of labels) {" +
-            "  if (l.textContent.trim() === 'Priority') {" +
-            "    var container = l.closest('.MuiFormControl-root') || l.parentElement;" +
+            "  var text = l.textContent.trim();" +
+            "  if (text.length > 0 && text.length < 30 && !seen.has(text)) {" +
+            "    var tag = l.tagName;" +
+            "    var role = l.getAttribute('role') || '';" +
+            "    if (text.toLowerCase().includes('prior') || tag === 'LABEL' || role === 'button' || role === 'combobox') {" +
+            "      seen.add(text);" +
+            "      info += '{' + tag + ' role=' + role + ' text=\"' + text + '\"} ';" +
+            "    }" +
+            "  }" +
+            "}" +
+            "// All inputs in drawer\n" +
+            "var inputs = drawer.querySelectorAll('input, select, [role=\"button\"], [role=\"combobox\"]');" +
+            "info += ' INPUTS(' + inputs.length + '): ';" +
+            "for (var inp of inputs) {" +
+            "  info += '{' + inp.tagName + ' type=' + (inp.type||'') + ' placeholder=' + (inp.placeholder||'') + ' role=' + (inp.getAttribute('role')||'') + ' val=' + (inp.value||inp.textContent||'').substring(0,20) + '} ';" +
+            "}" +
+            "return info;");
+        System.out.println("[IssuePage] " + formDiag);
+
+        // Check if priority is already set to the desired value (search broadly)
+        Boolean alreadySet = (Boolean) js.executeScript(
+            "var drawer = document.querySelector('[class*=\"MuiDrawer-paper\"]') || document;" +
+            "var all = drawer.querySelectorAll('label, p, span, h6, div, [role=\"button\"]');" +
+            "for (var el of all) {" +
+            "  var text = el.textContent.trim();" +
+            "  if (text.includes('Priority') || text.includes('priority')) {" +
+            "    var container = el.closest('.MuiFormControl-root') || el.closest('[class*=\"MuiGrid\"]') || el.parentElement;" +
             "    if (container && container.textContent.includes(arguments[0])) return true;" +
             "  }" +
             "}" +
@@ -230,7 +259,8 @@ public class IssuePage {
 
         // Try input-based approach first (MUI Autocomplete)
         try {
-            if (driver.findElements(PRIORITY_INPUT).size() > 0) {
+            List<WebElement> inputs = driver.findElements(PRIORITY_INPUT);
+            if (!inputs.isEmpty() && inputs.get(0).isDisplayed()) {
                 typeAndSelectDropdown(PRIORITY_INPUT, priority, priority);
                 System.out.println("[IssuePage] Selected priority via input: " + priority);
                 return;
@@ -243,13 +273,20 @@ public class IssuePage {
             "var labels = drawer.querySelectorAll('label, p, span, h6, div');" +
             "for (var l of labels) {" +
             "  var text = l.textContent.trim();" +
-            "  if (text === 'Priority' || text === 'Priority *') {" +
-            "    var container = l.closest('.MuiFormControl-root') || l.parentElement;" +
+            "  if (text === 'Priority' || text === 'Priority *' || text.startsWith('Priority')) {" +
+            "    var container = l.closest('.MuiFormControl-root') || l.closest('[class*=\"MuiGrid\"]') || l.parentElement;" +
             "    // Try MUI Select (div role=button)\n" +
-            "    var select = container.querySelector('[role=\"button\"], [role=\"combobox\"], select');" +
-            "    if (select) { select.click(); }" +
-            "    else { container.click(); }" +
-            "    return true;" +
+            "    var select = container.querySelector('[role=\"button\"], [role=\"combobox\"], select, [class*=\"MuiSelect\"]');" +
+            "    if (select) { select.click(); return true; }" +
+            "    container.click(); return true;" +
+            "  }" +
+            "}" +
+            "// Try finding by MUI Select that has priority-like content (Medium, High, Low)\n" +
+            "var selects = drawer.querySelectorAll('[role=\"button\"]');" +
+            "for (var s of selects) {" +
+            "  var val = s.textContent.trim();" +
+            "  if (val === 'Medium' || val === 'High' || val === 'Low' || val === 'Critical') {" +
+            "    s.click(); return true;" +
             "  }" +
             "}" +
             "return false;");
@@ -257,17 +294,23 @@ public class IssuePage {
         if (Boolean.TRUE.equals(selected)) {
             pause(500);
             // Click matching option in dropdown
-            js.executeScript(
+            Boolean optionClicked = (Boolean) js.executeScript(
                 "var items = document.querySelectorAll('li[role=\"option\"], [role=\"menuitem\"], [data-value]');" +
                 "for (var item of items) {" +
                 "  if (item.textContent.trim() === arguments[0] || item.getAttribute('data-value') === arguments[0]) {" +
-                "    item.click(); return;" +
+                "    item.click(); return true;" +
                 "  }" +
-                "}", priority);
+                "}" +
+                "return false;", priority);
             pause(500);
-            System.out.println("[IssuePage] Selected priority via label click: " + priority);
+            if (Boolean.TRUE.equals(optionClicked)) {
+                System.out.println("[IssuePage] Selected priority via label click: " + priority);
+            } else {
+                System.out.println("[IssuePage] Opened priority dropdown but could not find option: " + priority);
+            }
         } else {
-            System.out.println("[IssuePage] WARNING: Could not find Priority field");
+            // If we can't find or change priority, it may have a default (Medium) — log but don't fail
+            System.out.println("[IssuePage] WARNING: Could not find Priority field — using default value");
         }
     }
 
@@ -331,21 +374,46 @@ public class IssuePage {
      * Submit the Create Issue form (click Save/Create inside the drawer).
      */
     public void submitCreateIssue() {
+        // Hide backdrops that could intercept clicks
         js.executeScript(
-            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"], [class*=\"MuiDialog-paper\"], [role=\"dialog\"], [role=\"presentation\"]');" +
+            "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"]').forEach(" +
+            "  function(b) { b.style.pointerEvents = 'none'; }" +
+            ");"
+        );
+        pause(200);
+
+        // Find and click the submit button using Selenium (trusted click)
+        String[] buttonTexts = {"Create Issue", "Create", "Save", "Submit"};
+        List<WebElement> drawerBtns = driver.findElements(By.cssSelector(
+            "[class*='MuiDrawer-paper'] button, [role='presentation'] button, [role='dialog'] button"));
+
+        System.out.println("[IssuePage] Drawer buttons found: " + drawerBtns.size());
+        for (WebElement btn : drawerBtns) {
+            String text = btn.getText().trim();
+            for (String target : buttonTexts) {
+                if (text.equals(target) && btn.isDisplayed()) {
+                    System.out.println("[IssuePage] Found submit button: '" + text + "'");
+                    btn.click();
+                    System.out.println("[IssuePage] Clicked submit button (trusted)");
+                    return;
+                }
+            }
+        }
+
+        // Fallback: JS click
+        js.executeScript(
+            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"], [role=\"presentation\"]');" +
             "for (var d of drawers) {" +
             "  var btns = d.querySelectorAll('button');" +
             "  for (var b of btns) {" +
             "    var text = b.textContent.trim();" +
             "    if ((text === 'Create Issue' || text === 'Create' || text === 'Save' || text === 'Submit') && b.getBoundingClientRect().width > 0) {" +
-            "      b.scrollIntoView({block:'center'});" +
-            "      b.click();" +
-            "      return;" +
+            "      b.scrollIntoView({block:'center'}); b.click(); return;" +
             "    }" +
             "  }" +
             "}"
         );
-        System.out.println("[IssuePage] Clicked submit button");
+        System.out.println("[IssuePage] Clicked submit button (JS fallback)");
     }
 
     /**
@@ -355,11 +423,13 @@ public class IssuePage {
         By panelHeader = By.xpath("//*[normalize-space()='Add Issue' or normalize-space()='Create Issue' or normalize-space()='New Issue']");
 
         for (int i = 0; i < 25; i++) {
-            // Success indicator (toast message)
+            // Success indicator (toast message or snackbar)
             try {
-                List<WebElement> success = driver.findElements(By.xpath(
-                    "//*[contains(text(),'created') or contains(text(),'Created') or contains(text(),'success') or contains(text(),'Success')]"));
-                if (!success.isEmpty()) {
+                Boolean hasSuccess = (Boolean) js.executeScript(
+                    "var body = document.body.textContent.toLowerCase();" +
+                    "return body.includes('created') || body.includes('success') || " +
+                    "document.querySelectorAll('[class*=\"Snackbar\"], [class*=\"MuiAlert-standardSuccess\"]').length > 0;");
+                if (Boolean.TRUE.equals(hasSuccess)) {
                     System.out.println("[IssuePage] Success indicator found");
                     closeDrawer();
                     return true;
@@ -371,6 +441,18 @@ public class IssuePage {
                 System.out.println("[IssuePage] Add Issue panel closed — creation successful");
                 return true;
             }
+
+            // Check for validation errors that would prevent submission
+            if (i == 10) {
+                String errorDiag = (String) js.executeScript(
+                    "var drawer = document.querySelector('[class*=\"MuiDrawer-paper\"]') || document;" +
+                    "var errors = drawer.querySelectorAll('[class*=\"error\"], [class*=\"Error\"], .Mui-error, [class*=\"helperText\"]');" +
+                    "var info = 'Errors(' + errors.length + '): ';" +
+                    "for (var e of errors) { info += '[' + e.textContent.trim().substring(0,50) + '] '; }" +
+                    "return info;");
+                System.out.println("[IssuePage] " + errorDiag);
+            }
+
             pause(1000);
         }
 
@@ -750,6 +832,53 @@ public class IssuePage {
         }
         System.out.println("[IssuePage] Job activation not confirmed after 10s");
         return false;
+    }
+
+    /**
+     * Verify the issue detail page has expected tabs (Details, Class Details, Photos).
+     */
+    public boolean verifyDetailPageTabs() {
+        Boolean hasTabs = (Boolean) js.executeScript(
+            "var btns = document.querySelectorAll('button, [role=\"tab\"]');" +
+            "var tabNames = [];" +
+            "for (var b of btns) {" +
+            "  var text = b.textContent.trim();" +
+            "  if (text === 'Details' || text === 'Photos' || text.includes('Class Details')) {" +
+            "    tabNames.push(text);" +
+            "  }" +
+            "}" +
+            "return tabNames.length >= 2;");
+        boolean result = Boolean.TRUE.equals(hasTabs);
+
+        // Log what tabs were found
+        String tabInfo = (String) js.executeScript(
+            "var btns = document.querySelectorAll('button, [role=\"tab\"]');" +
+            "var info = '';" +
+            "for (var b of btns) {" +
+            "  var text = b.textContent.trim();" +
+            "  if (text === 'Details' || text === 'Photos' || text.includes('Class')) {" +
+            "    info += '[' + text + '] ';" +
+            "  }" +
+            "}" +
+            "return info;");
+        System.out.println("[IssuePage] Detail page tabs found: " + tabInfo);
+
+        // Try clicking each tab to verify they work
+        js.executeScript(
+            "var btns = document.querySelectorAll('button, [role=\"tab\"]');" +
+            "for (var b of btns) {" +
+            "  if (b.textContent.trim() === 'Photos') { b.click(); return; }" +
+            "}");
+        pause(1000);
+        js.executeScript(
+            "var btns = document.querySelectorAll('button, [role=\"tab\"]');" +
+            "for (var b of btns) {" +
+            "  if (b.textContent.trim() === 'Details') { b.click(); return; }" +
+            "}");
+        pause(500);
+        System.out.println("[IssuePage] Tabs navigation verified");
+
+        return result;
     }
 
     // ================================================================

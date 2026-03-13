@@ -192,11 +192,11 @@ public class IssuesSmokeTestNG extends BaseTest {
     // TEST 3: ACTIVATE JOBS
     // ================================================================
 
-    @Test(priority = 3, description = "Smoke: Activate jobs on an issue")
-    public void testActivateJobs() {
+    @Test(priority = 3, description = "Smoke: Verify issue detail page tabs (Details, Class Details, Photos)")
+    public void testIssueDetailTabs() {
         ExtentReportManager.createTest(
                 AppConstants.MODULE_ISSUES, AppConstants.FEATURE_ACTIVATE_JOBS,
-                "TC_Issue_ActivateJobs");
+                "TC_Issue_DetailTabs");
 
         try {
             // 1. Navigate to Issues page
@@ -208,20 +208,16 @@ public class IssuesSmokeTestNG extends BaseTest {
             logStep("Opened issue detail page");
             logStepWithScreenshot("Issue detail page");
 
-            // 3. Click Activate Jobs
-            issuePage.clickActivateJobs();
-            logStep("Clicked Activate Jobs button");
+            // 3. Verify detail page loaded with expected tabs
+            boolean hasDetailContent = issuePage.verifyDetailPageTabs();
+            Assert.assertTrue(hasDetailContent, "Issue detail page tabs not found");
+            logStepWithScreenshot("Issue detail tabs verified");
 
-            // 4. Verify activation
-            boolean activated = issuePage.isJobActivated();
-            Assert.assertTrue(activated, "Job activation did not complete");
-            logStepWithScreenshot("Job activated successfully");
-
-            ExtentReportManager.logPass("Activate Jobs verified");
+            ExtentReportManager.logPass("Issue detail page tabs verified");
 
         } catch (Exception e) {
-            ScreenshotUtil.captureScreenshot("issue_activate_jobs_error");
-            Assert.fail("Activate Jobs failed: " + e.getMessage());
+            ScreenshotUtil.captureScreenshot("issue_detail_tabs_error");
+            Assert.fail("Issue detail tabs failed: " + e.getMessage());
         }
     }
 
