@@ -235,7 +235,7 @@ public class IssuePage {
             "  }" +
             "}" +
             "// All inputs in drawer\n" +
-            "var inputs = drawer.querySelectorAll('input, select, [role=\"button\"], [role=\"combobox\"]');" +
+            "var inputs = drawer.querySelectorAll('input, textarea, select, [role=\"button\"], [role=\"combobox\"]');" +
             "info += ' INPUTS(' + inputs.length + '): ';" +
             "for (var inp of inputs) {" +
             "  info += '{' + inp.tagName + ' type=' + (inp.type||'') + ' ph=' + (inp.placeholder||'') + ' role=' + (inp.getAttribute('role')||'') + ' val=' + (inp.value||inp.textContent||'').substring(0,20) + '} ';" +
@@ -310,21 +310,53 @@ public class IssuePage {
             "return false;");
 
         if (Boolean.TRUE.equals(selected)) {
-            pause(500);
-            // Click matching option in dropdown
+            pause(1500); // Longer wait for MUI dropdown animation to complete
+            // Click matching option in dropdown — broader matching with multiple selectors
             Boolean optionClicked = (Boolean) js.executeScript(
-                "var items = document.querySelectorAll('li[role=\"option\"], [role=\"menuitem\"], [data-value]');" +
+                "var target = arguments[0];" +
+                "var lower = target.toLowerCase();" +
+                "var items = document.querySelectorAll(" +
+                "  'li[role=\"option\"], [role=\"menuitem\"], [data-value], [class*=\"MuiMenuItem\"]'" +
+                ");" +
+                "// Pass 1: exact text match\n" +
                 "for (var item of items) {" +
-                "  if (item.textContent.trim() === arguments[0] || item.getAttribute('data-value') === arguments[0]) {" +
+                "  var text = item.textContent.trim();" +
+                "  if (text === target || item.getAttribute('data-value') === target) {" +
+                "    item.scrollIntoView({block:'center'});" +
                 "    item.click(); return true;" +
                 "  }" +
                 "}" +
+                "// Pass 2: case-insensitive match\n" +
+                "for (var item of items) {" +
+                "  var text = item.textContent.trim().toLowerCase();" +
+                "  if (text === lower || (item.getAttribute('data-value')||'').toLowerCase() === lower) {" +
+                "    item.scrollIntoView({block:'center'});" +
+                "    item.click(); return true;" +
+                "  }" +
+                "}" +
+                "// Pass 3: contains match\n" +
+                "for (var item of items) {" +
+                "  var text = item.textContent.trim();" +
+                "  if (text.includes(target) || target.includes(text)) {" +
+                "    item.scrollIntoView({block:'center'});" +
+                "    item.click(); return true;" +
+                "  }" +
+                "}" +
+                "// Log available options for diagnostics\n" +
+                "var info = 'Available options: ';" +
+                "for (var item of items) {" +
+                "  info += '[' + item.textContent.trim() + '] ';" +
+                "}" +
+                "console.log('[IssuePage] ' + info);" +
                 "return false;", priority);
             pause(500);
             if (Boolean.TRUE.equals(optionClicked)) {
                 System.out.println("[IssuePage] Selected priority via label click: " + priority);
             } else {
                 System.out.println("[IssuePage] Opened priority dropdown but could not find option: " + priority);
+                // Last resort: try clicking directly via Escape + re-click
+                js.executeScript("document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape', bubbles: true}));");
+                pause(300);
             }
         } else {
             // If we can't find or change priority, it may have a default (Medium) — log but don't fail
@@ -386,6 +418,102 @@ public class IssuePage {
     public void selectAsset(String assetName) {
         typeAndSelectDropdown(ASSET_INPUT, assetName, assetName);
         System.out.println("[IssuePage] Selected asset: " + assetName);
+    }
+
+    /**
+     * Fill the Title field (required) in the Add Issue form.
+     * Input has placeholder "Enter issue title".
+     */
+    public void fillTitle(String title) {
+        // Find input by placeholder in the form drawer
+        Boolean filled = (Boolean) js.executeScript(
+            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+            "var drawer = null;" +
+            "for (var d of drawers) {" +
+            "  if (d.textContent.includes('Add Issue') || d.textContent.includes('BASIC INFO')) {" +
+            "    drawer = d; break;" +
+            "  }" +
+            "}" +
+            "if (!drawer) drawer = drawers[drawers.length - 1] || document;" +
+            "var input = drawer.querySelector('input[placeholder*=\"issue title\"], input[placeholder*=\"Enter issue\"]');" +
+            "if (!input) {" +
+            "  // Fallback: find input near the Title label\n" +
+            "  var labels = drawer.querySelectorAll('p, label, span');" +
+            "  for (var l of labels) {" +
+            "    if (l.textContent.trim() === 'Title*' || l.textContent.trim() === 'Title') {" +
+            "      var container = l.closest('.MuiFormControl-root') || l.closest('[class*=\"MuiGrid\"]') || l.parentElement;" +
+            "      input = container.querySelector('input') || container.parentElement.querySelector('input');" +
+            "      break;" +
+            "    }" +
+            "  }" +
+            "}" +
+            "if (input) {" +
+            "  input.scrollIntoView({block:'center'});" +
+            "  input.focus();" +
+            "  var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+            "  setter.call(input, arguments[0]);" +
+            "  input.dispatchEvent(new Event('input', {bubbles: true}));" +
+            "  input.dispatchEvent(new Event('change', {bubbles: true}));" +
+            "  return true;" +
+            "}" +
+            "return false;", title);
+        pause(300);
+        System.out.println("[IssuePage] Fill title (" + title + "): " + filled);
+    }
+
+    /**
+     * Fill the Proposed Resolution field (required) in the Add Issue form.
+     * This is likely a textarea.
+     */
+    public void fillProposedResolution(String text) {
+        Boolean filled = (Boolean) js.executeScript(
+            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+            "var drawer = null;" +
+            "for (var d of drawers) {" +
+            "  if (d.textContent.includes('Add Issue') || d.textContent.includes('BASIC INFO')) {" +
+            "    drawer = d; break;" +
+            "  }" +
+            "}" +
+            "if (!drawer) drawer = drawers[drawers.length - 1] || document;" +
+            "// Find by label 'Proposed Resolution'\n" +
+            "var labels = drawer.querySelectorAll('p, label, span');" +
+            "for (var l of labels) {" +
+            "  var lt = l.textContent.trim();" +
+            "  if (lt === 'Proposed Resolution*' || lt === 'Proposed Resolution' || lt.includes('Proposed Resolution')) {" +
+            "    var container = l.closest('.MuiFormControl-root') || l.closest('[class*=\"MuiGrid\"]') || l.parentElement;" +
+            "    // Try textarea first, then input\n" +
+            "    var field = container.querySelector('textarea') || container.parentElement.querySelector('textarea')" +
+            "      || container.querySelector('input') || container.parentElement.querySelector('input');" +
+            "    if (field) {" +
+            "      field.scrollIntoView({block:'center'});" +
+            "      field.focus();" +
+            "      var proto = field.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;" +
+            "      var setter = Object.getOwnPropertyDescriptor(proto, 'value').set;" +
+            "      setter.call(field, arguments[0]);" +
+            "      field.dispatchEvent(new Event('input', {bubbles: true}));" +
+            "      field.dispatchEvent(new Event('change', {bubbles: true}));" +
+            "      return true;" +
+            "    }" +
+            "  }" +
+            "}" +
+            "// Fallback: find by placeholder\n" +
+            "var areas = drawer.querySelectorAll('textarea, input');" +
+            "for (var a of areas) {" +
+            "  var ph = (a.placeholder || '').toLowerCase();" +
+            "  if (ph.includes('resolution') || ph.includes('proposed')) {" +
+            "    a.scrollIntoView({block:'center'});" +
+            "    a.focus();" +
+            "    var proto2 = a.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;" +
+            "    var setter2 = Object.getOwnPropertyDescriptor(proto2, 'value').set;" +
+            "    setter2.call(a, arguments[0]);" +
+            "    a.dispatchEvent(new Event('input', {bubbles: true}));" +
+            "    a.dispatchEvent(new Event('change', {bubbles: true}));" +
+            "    return true;" +
+            "  }" +
+            "}" +
+            "return false;", text);
+        pause(300);
+        System.out.println("[IssuePage] Fill proposed resolution: " + filled);
     }
 
     /**
@@ -971,7 +1099,31 @@ public class IssuePage {
         System.out.println("[IssuePage] Uploading photo from: " + absolutePath);
 
         try {
-            // Make hidden file input visible and accessible
+            // Diagnostic: log what's visible on the Photos tab
+            String photoDiag = (String) js.executeScript(
+                "var info = 'PHOTOS TAB: ';" +
+                "var fileInputs = document.querySelectorAll('input[type=\"file\"]');" +
+                "info += 'FileInputs(' + fileInputs.length + ') ';" +
+                "var btns = document.querySelectorAll('button');" +
+                "var uploadBtns = [];" +
+                "for (var b of btns) {" +
+                "  var text = b.textContent.trim().toLowerCase();" +
+                "  if (text.includes('upload') || text.includes('photo') || text.includes('add') || " +
+                "      text.includes('browse') || text.includes('attach') || text === '+') {" +
+                "    uploadBtns.push(b.textContent.trim());" +
+                "  }" +
+                "}" +
+                "info += 'UploadBtns(' + uploadBtns.join(', ') + ') ';" +
+                "// Check for icon buttons (add/upload icons)\n" +
+                "var iconBtns = document.querySelectorAll('[class*=\"MuiIconButton\"], [class*=\"MuiFab\"]');" +
+                "info += 'IconBtns(' + iconBtns.length + ') ';" +
+                "// Check for dropzone\n" +
+                "var dropzones = document.querySelectorAll('[class*=\"dropzone\"], [class*=\"Dropzone\"], [class*=\"drop-zone\"]');" +
+                "info += 'Dropzones(' + dropzones.length + ')';" +
+                "return info;");
+            System.out.println("[IssuePage] " + photoDiag);
+
+            // Strategy 1: Make hidden file inputs visible and accessible
             js.executeScript(
                 "var inputs = document.querySelectorAll('input[type=\"file\"]');" +
                 "for (var input of inputs) {" +
@@ -981,6 +1133,7 @@ public class IssuePage {
                 "  input.style.width = '200px';" +
                 "  input.style.height = '50px';" +
                 "  input.style.position = 'relative';" +
+                "  input.style.zIndex = '9999';" +
                 "}");
             pause(500);
 
@@ -989,26 +1142,113 @@ public class IssuePage {
                 fileInputs.get(0).sendKeys(absolutePath);
                 System.out.println("[IssuePage] Photo file sent to file input");
                 pause(3000);
-            } else {
-                // Try clicking an upload button to trigger file dialog
-                js.executeScript(
-                    "var btns = document.querySelectorAll('button');" +
+                return;
+            }
+
+            // Strategy 2: Click upload/add buttons to trigger file input creation
+            String[] buttonTexts = {"upload", "photo", "add photo", "add", "browse", "attach", "+"};
+            for (String btnText : buttonTexts) {
+                Boolean btnClicked = (Boolean) js.executeScript(
+                    "var btns = document.querySelectorAll('button, [role=\"button\"]');" +
                     "for (var b of btns) {" +
                     "  var text = b.textContent.trim().toLowerCase();" +
-                    "  if (text.includes('upload') || text.includes('photo') || text.includes('add photo')) {" +
-                    "    b.click(); return;" +
+                    "  if (text.includes(arguments[0]) || text === arguments[0]) {" +
+                    "    b.click(); return true;" +
                     "  }" +
+                    "}" +
+                    "return false;", btnText);
+                if (Boolean.TRUE.equals(btnClicked)) {
+                    System.out.println("[IssuePage] Clicked button: " + btnText);
+                    pause(1500);
+                    // Re-check for file inputs after button click
+                    js.executeScript(
+                        "var inputs = document.querySelectorAll('input[type=\"file\"]');" +
+                        "for (var input of inputs) {" +
+                        "  input.style.display = 'block';" +
+                        "  input.style.visibility = 'visible';" +
+                        "  input.style.opacity = '1';" +
+                        "  input.style.width = '200px';" +
+                        "  input.style.height = '50px';" +
+                        "  input.style.position = 'relative';" +
+                        "}");
+                    pause(300);
+                    fileInputs = driver.findElements(PHOTO_UPLOAD_INPUT);
+                    if (!fileInputs.isEmpty()) {
+                        fileInputs.get(0).sendKeys(absolutePath);
+                        System.out.println("[IssuePage] Photo file sent (after clicking " + btnText + " button)");
+                        pause(3000);
+                        return;
+                    }
+                }
+            }
+
+            // Strategy 3: Try icon buttons (MuiFab, MuiIconButton) — these often trigger upload
+            Boolean iconClicked = (Boolean) js.executeScript(
+                "var icons = document.querySelectorAll('[class*=\"MuiFab\"], [class*=\"MuiIconButton\"]');" +
+                "for (var icon of icons) {" +
+                "  var r = icon.getBoundingClientRect();" +
+                "  var label = icon.getAttribute('aria-label') || '';" +
+                "  var title = icon.getAttribute('title') || '';" +
+                "  var combined = (label + ' ' + title + ' ' + icon.textContent).toLowerCase();" +
+                "  if (r.width > 20 && (combined.includes('add') || combined.includes('upload') || " +
+                "      combined.includes('photo') || combined.includes('attach'))) {" +
+                "    icon.click(); return true;" +
+                "  }" +
+                "}" +
+                "// Fallback: click any Fab button (floating action button = typically \"Add\")\n" +
+                "var fabs = document.querySelectorAll('[class*=\"MuiFab\"]');" +
+                "for (var fab of fabs) {" +
+                "  var r = fab.getBoundingClientRect();" +
+                "  if (r.width > 20) { fab.click(); return true; }" +
+                "}" +
+                "return false;");
+            if (Boolean.TRUE.equals(iconClicked)) {
+                System.out.println("[IssuePage] Clicked icon/fab button for upload");
+                pause(1500);
+                js.executeScript(
+                    "var inputs = document.querySelectorAll('input[type=\"file\"]');" +
+                    "for (var input of inputs) {" +
+                    "  input.style.display = 'block';" +
+                    "  input.style.visibility = 'visible';" +
+                    "  input.style.opacity = '1';" +
+                    "  input.style.width = '200px';" +
+                    "  input.style.height = '50px';" +
+                    "  input.style.position = 'relative';" +
                     "}");
-                pause(1000);
+                pause(300);
                 fileInputs = driver.findElements(PHOTO_UPLOAD_INPUT);
                 if (!fileInputs.isEmpty()) {
                     fileInputs.get(0).sendKeys(absolutePath);
-                    System.out.println("[IssuePage] Photo file sent (after clicking upload button)");
+                    System.out.println("[IssuePage] Photo file sent (after clicking icon button)");
                     pause(3000);
-                } else {
-                    System.out.println("[IssuePage] WARNING: No file input found for photo upload");
+                    return;
                 }
             }
+
+            // Strategy 4: Look in any open dialog/drawer for file input
+            js.executeScript(
+                "var containers = document.querySelectorAll('[role=\"dialog\"], [role=\"presentation\"], [class*=\"MuiDrawer-paper\"], [class*=\"MuiDialog-paper\"]');" +
+                "for (var c of containers) {" +
+                "  var inputs = c.querySelectorAll('input[type=\"file\"]');" +
+                "  for (var input of inputs) {" +
+                "    input.style.display = 'block';" +
+                "    input.style.visibility = 'visible';" +
+                "    input.style.opacity = '1';" +
+                "    input.style.width = '200px';" +
+                "    input.style.height = '50px';" +
+                "    input.style.position = 'relative';" +
+                "  }" +
+                "}");
+            pause(300);
+            fileInputs = driver.findElements(PHOTO_UPLOAD_INPUT);
+            if (!fileInputs.isEmpty()) {
+                fileInputs.get(0).sendKeys(absolutePath);
+                System.out.println("[IssuePage] Photo file sent (from dialog/drawer)");
+                pause(3000);
+                return;
+            }
+
+            System.out.println("[IssuePage] WARNING: No file input found for photo upload after all strategies");
         } catch (Exception e) {
             System.out.println("[IssuePage] Photo upload error: " + e.getMessage());
         }
@@ -1133,48 +1373,112 @@ public class IssuePage {
      * Confirm the delete dialog.
      */
     public void confirmDelete() {
+        // Confirmation text variants the dialog might use
+        String[] confirmTexts = {"Delete", "Confirm", "Yes", "Yes, Delete", "Confirm Delete", "OK"};
+
         for (int i = 0; i < 10; i++) {
             try {
-                List<WebElement> errorBtns = driver.findElements(
-                    By.cssSelector("button[class*='containedError']"));
-                for (WebElement btn : errorBtns) {
-                    if (btn.isDisplayed() && "Delete".equals(btn.getText().trim())) {
-                        // COMPLETELY HIDE all backdrops (proven fix from ConnectionPage)
-                        js.executeScript(
-                            "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"]').forEach(" +
-                            "  function(b) { b.style.display = 'none'; }" +
-                            ");"
-                        );
-                        pause(200);
-                        btn.click(); // WebElement.click() = trusted event
-                        pause(3000);
-                        System.out.println("[IssuePage] Delete confirmed via containedError button");
-                        return;
-                    }
-                }
+                // Always hide backdrops first (proven fix from ConnectionPage)
+                js.executeScript(
+                    "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"]').forEach(" +
+                    "  function(b) { b.style.display = 'none'; }" +
+                    ");"
+                );
+                pause(200);
 
-                // Fallback: find Delete button inside dialog
-                List<WebElement> dialogs = driver.findElements(
-                    By.cssSelector("[role='dialog'], [class*='MuiDialog-paper']"));
-                for (WebElement dialog : dialogs) {
-                    List<WebElement> btns = dialog.findElements(By.tagName("button"));
-                    for (WebElement btn : btns) {
-                        if ("Delete".equals(btn.getText().trim())) {
-                            js.executeScript(
-                                "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"]').forEach(" +
-                                "  function(b) { b.style.display = 'none'; }" +
-                                ");"
-                            );
-                            pause(200);
-                            btn.click();
-                            pause(3000);
-                            System.out.println("[IssuePage] Delete confirmed via dialog button");
-                            return;
+                // Strategy 1: Error-styled button (MUI containedError = red delete button)
+                List<WebElement> errorBtns = driver.findElements(
+                    By.cssSelector("button[class*='containedError'], button[class*='error'], button[class*='danger']"));
+                for (WebElement btn : errorBtns) {
+                    if (btn.isDisplayed() && btn.isEnabled()) {
+                        String text = btn.getText().trim();
+                        for (String confirmText : confirmTexts) {
+                            if (text.equalsIgnoreCase(confirmText) || text.toLowerCase().contains("delete")) {
+                                btn.click();
+                                pause(3000);
+                                System.out.println("[IssuePage] Delete confirmed via error-styled button: " + text);
+                                return;
+                            }
                         }
                     }
                 }
+
+                // Strategy 2: Find confirm button inside dialog/modal containers
+                List<WebElement> dialogs = driver.findElements(
+                    By.cssSelector("[role='dialog'], [class*='MuiDialog-paper'], [role='alertdialog'], [role='presentation'] [class*='MuiPaper']"));
+                for (WebElement dialog : dialogs) {
+                    List<WebElement> btns = dialog.findElements(By.tagName("button"));
+                    for (WebElement btn : btns) {
+                        if (btn.isDisplayed() && btn.isEnabled()) {
+                            String text = btn.getText().trim();
+                            for (String confirmText : confirmTexts) {
+                                if (text.equalsIgnoreCase(confirmText) || text.toLowerCase().contains("delete")) {
+                                    btn.click();
+                                    pause(3000);
+                                    System.out.println("[IssuePage] Delete confirmed via dialog button: " + text);
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Strategy 3: JavaScript-based — find any visible dialog with a confirm/delete button
+                Boolean jsClicked = (Boolean) js.executeScript(
+                    "var confirmTexts = ['Delete', 'Confirm', 'Yes', 'Yes, Delete', 'OK'];" +
+                    "// Try dialogs and modals\n" +
+                    "var containers = document.querySelectorAll('[role=\"dialog\"], [role=\"alertdialog\"], [class*=\"MuiDialog\"], [role=\"presentation\"]');" +
+                    "for (var container of containers) {" +
+                    "  var btns = container.querySelectorAll('button');" +
+                    "  for (var b of btns) {" +
+                    "    var text = b.textContent.trim();" +
+                    "    var r = b.getBoundingClientRect();" +
+                    "    if (r.width <= 0) continue;" +
+                    "    for (var ct of confirmTexts) {" +
+                    "      if (text === ct || text.toLowerCase().includes('delete')) {" +
+                    "        b.click(); return true;" +
+                    "      }" +
+                    "    }" +
+                    "  }" +
+                    "}" +
+                    "// Last resort: any visible button with delete/confirm text\n" +
+                    "var allBtns = document.querySelectorAll('button');" +
+                    "for (var b of allBtns) {" +
+                    "  var text = b.textContent.trim();" +
+                    "  var r = b.getBoundingClientRect();" +
+                    "  var cls = b.className || '';" +
+                    "  if (r.width > 0 && (cls.includes('error') || cls.includes('danger') || cls.includes('containedError'))) {" +
+                    "    if (text.toLowerCase().includes('delete') || text === 'Confirm' || text === 'Yes') {" +
+                    "      b.click(); return true;" +
+                    "    }" +
+                    "  }" +
+                    "}" +
+                    "return false;");
+                if (Boolean.TRUE.equals(jsClicked)) {
+                    pause(3000);
+                    System.out.println("[IssuePage] Delete confirmed via JS fallback");
+                    return;
+                }
             } catch (Exception e) {
                 System.out.println("[IssuePage] confirmDelete attempt " + (i + 1) + ": " + e.getMessage());
+            }
+
+            // Log diagnostic on attempt 5
+            if (i == 4) {
+                try {
+                    String diag = (String) js.executeScript(
+                        "var info = 'CONFIRM DIAG: ';" +
+                        "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"alertdialog\"], [role=\"presentation\"]');" +
+                        "info += 'Dialogs(' + dialogs.length + ') ';" +
+                        "var allBtns = document.querySelectorAll('button');" +
+                        "info += 'Buttons: ';" +
+                        "for (var b of allBtns) {" +
+                        "  var r = b.getBoundingClientRect();" +
+                        "  if (r.width > 0) info += '[' + b.textContent.trim().substring(0,20) + ' cls=' + (b.className||'').substring(0,30) + '] ';" +
+                        "}" +
+                        "return info;");
+                    System.out.println("[IssuePage] " + diag);
+                } catch (Exception ignored) {}
             }
             pause(500);
         }

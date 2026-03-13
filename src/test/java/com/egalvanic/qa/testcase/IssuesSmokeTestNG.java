@@ -35,6 +35,8 @@ public class IssuesSmokeTestNG extends BaseTest {
     private static final String TEST_ISSUE_CLASS = "NEC Violation";
     private static final String TEST_ASSET_NAME = "ATS";
     private static final String TEST_PRIORITY = "High";
+    private static final String TEST_TITLE = "Smoke Test Issue " + System.currentTimeMillis();
+    private static final String TEST_PROPOSED_RESOLUTION = "Inspect and repair as needed";
     private static final String TEST_PHOTO_PATH = "src/test/resources/test-photo.jpg";
 
     // Track created issue across tests
@@ -85,6 +87,14 @@ public class IssuesSmokeTestNG extends BaseTest {
             issuePage.selectAsset(TEST_ASSET_NAME);
             logStep("Selected asset: " + TEST_ASSET_NAME);
 
+            // Title (required)
+            issuePage.fillTitle(TEST_TITLE);
+            logStep("Filled title: " + TEST_TITLE);
+
+            // Proposed Resolution (required)
+            issuePage.fillProposedResolution(TEST_PROPOSED_RESOLUTION);
+            logStep("Filled proposed resolution");
+
             logStepWithScreenshot("Form filled — about to submit");
 
             // 4. Submit
@@ -97,8 +107,14 @@ public class IssuesSmokeTestNG extends BaseTest {
             logStep("Create success confirmed");
 
             // 6. Verify issue count increased
+            // Wait for server to process, then hard refresh for truly fresh data
+            pause(5000);
+
+            // Use hard page refresh to bypass SPA caching (proven fix from delete test)
             issuePage.navigateToIssues();
             pause(2000);
+            driver.navigate().refresh();
+            pause(5000);
 
             boolean countIncreased = false;
             for (int attempt = 0; attempt < 5; attempt++) {
@@ -108,8 +124,9 @@ public class IssuesSmokeTestNG extends BaseTest {
                     countIncreased = true;
                     break;
                 }
-                issuePage.navigateToIssues();
-                pause(2000);
+                // Hard refresh each retry
+                driver.navigate().refresh();
+                pause(5000);
             }
             Assert.assertTrue(countIncreased, "Issue count did not increase after creation");
             logStepWithScreenshot("Issue created and verified in table");
