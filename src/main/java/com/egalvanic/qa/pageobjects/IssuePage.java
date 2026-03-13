@@ -593,6 +593,44 @@ public class IssuePage {
             "return null;");
 
         if (submitBtn != null) {
+            // Log button state before clicking
+            String btnState = (String) js.executeScript(
+                "var b = arguments[0];" +
+                "return 'Button: text=\"' + b.textContent.trim() + '\" disabled=' + b.disabled + " +
+                "' class=\"' + b.className.substring(0,80) + '\" type=\"' + (b.type||'') + '\"';", submitBtn);
+            System.out.println("[IssuePage] " + btnState);
+
+            // Log DETAILS section to understand what fields exist there
+            String detailsDiag = (String) js.executeScript(
+                "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+                "var drawer = null;" +
+                "for (var d of drawers) {" +
+                "  if (d.textContent.includes('Add Issue') || d.textContent.includes('BASIC INFO')) {" +
+                "    drawer = d; break;" +
+                "  }" +
+                "}" +
+                "if (!drawer) return 'No drawer';" +
+                "// Find all labels (p elements) and their associated inputs\n" +
+                "var all = drawer.querySelectorAll('p, h6, span');" +
+                "var info = 'FULL FORM LABELS: ';" +
+                "var seen = new Set();" +
+                "for (var el of all) {" +
+                "  var t = el.textContent.trim();" +
+                "  if (t.length > 1 && t.length < 40 && !seen.has(t) && t !== '​') {" +
+                "    seen.add(t);" +
+                "    info += '[' + t + '] ';" +
+                "  }" +
+                "}" +
+                "// Count required fields (with *)\n" +
+                "var reqFields = [];" +
+                "for (var el of all) {" +
+                "  var t = el.textContent.trim();" +
+                "  if (t.endsWith('*') && t.length > 1) reqFields.push(t);" +
+                "}" +
+                "info += ' REQUIRED: ' + reqFields.join(', ');" +
+                "return info;");
+            System.out.println("[IssuePage] " + detailsDiag);
+
             // Hide backdrops before clicking
             js.executeScript(
                 "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"]').forEach(" +
@@ -600,15 +638,42 @@ public class IssuePage {
                 ");"
             );
             pause(200);
+
+            // Click submit with Selenium trusted event
             try {
                 submitBtn.click();
                 System.out.println("[IssuePage] Submit clicked via Selenium WebElement");
             } catch (Exception e) {
-                // If backdrop still intercepts, try Actions click
-                System.out.println("[IssuePage] Selenium click failed, trying Actions: " + e.getMessage());
+                System.out.println("[IssuePage] Selenium click failed: " + e.getMessage());
                 new Actions(driver).moveToElement(submitBtn).click().perform();
                 System.out.println("[IssuePage] Submit clicked via Actions");
             }
+
+            // Wait 3s then check form state — did it submit or show errors?
+            pause(3000);
+            String postClickDiag = (String) js.executeScript(
+                "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+                "var drawer = null;" +
+                "for (var d of drawers) {" +
+                "  if (d.textContent.includes('Add Issue') || d.textContent.includes('BASIC INFO')) {" +
+                "    drawer = d; break;" +
+                "  }" +
+                "}" +
+                "if (!drawer) return 'DRAWER CLOSED (form submitted!)';" +
+                "// Check for visible error messages (not zero-width spaces)\n" +
+                "var errors = drawer.querySelectorAll('.Mui-error');" +
+                "var errInfo = 'MuiErrors(' + errors.length + '): ';" +
+                "for (var e of errors) {" +
+                "  var parent = e.closest('.MuiFormControl-root');" +
+                "  var label = parent ? (parent.querySelector('p, label') || {}).textContent : '';" +
+                "  errInfo += '[field=\"' + (label||'').trim().substring(0,30) + '\"] ';" +
+                "}" +
+                "// Check for loading/spinner indicators\n" +
+                "var loading = drawer.querySelectorAll('[class*=\"CircularProgress\"], [class*=\"loading\"]');" +
+                "errInfo += ' Loading: ' + loading.length;" +
+                "return errInfo;");
+            System.out.println("[IssuePage] POST-CLICK: " + postClickDiag);
+
         } else {
             System.out.println("[IssuePage] WARNING: Could not find submit button");
         }
