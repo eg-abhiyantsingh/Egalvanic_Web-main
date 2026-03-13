@@ -422,11 +422,29 @@ public class IssuePage {
 
     /**
      * Fill the Title field (required) in the Add Issue form.
-     * Input has placeholder "Enter issue title".
+     * Uses Selenium sendKeys for proper React event handling.
      */
     public void fillTitle(String title) {
-        // Find input by placeholder in the form drawer
-        Boolean filled = (Boolean) js.executeScript(
+        // Try by placeholder first
+        By titleInput = By.xpath(
+            "//input[@placeholder='Enter issue title' or @placeholder='Issue title' or @placeholder='Title']");
+        try {
+            List<WebElement> inputs = driver.findElements(titleInput);
+            if (!inputs.isEmpty()) {
+                WebElement input = inputs.get(0);
+                js.executeScript("arguments[0].scrollIntoView({block:'center'});", input);
+                pause(200);
+                input.click();
+                input.clear();
+                input.sendKeys(title);
+                pause(300);
+                System.out.println("[IssuePage] Fill title via placeholder (" + title + "): true");
+                return;
+            }
+        } catch (Exception ignored) {}
+
+        // Fallback: find via JS in form drawer, return as WebElement
+        WebElement field = (WebElement) js.executeScript(
             "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
             "var drawer = null;" +
             "for (var d of drawers) {" +
@@ -434,10 +452,9 @@ public class IssuePage {
             "    drawer = d; break;" +
             "  }" +
             "}" +
-            "if (!drawer) drawer = drawers[drawers.length - 1] || document;" +
+            "if (!drawer) return null;" +
             "var input = drawer.querySelector('input[placeholder*=\"issue title\"], input[placeholder*=\"Enter issue\"]');" +
             "if (!input) {" +
-            "  // Fallback: find input near the Title label\n" +
             "  var labels = drawer.querySelectorAll('p, label, span');" +
             "  for (var l of labels) {" +
             "    if (l.textContent.trim() === 'Title*' || l.textContent.trim() === 'Title') {" +
@@ -447,26 +464,27 @@ public class IssuePage {
             "    }" +
             "  }" +
             "}" +
-            "if (input) {" +
-            "  input.scrollIntoView({block:'center'});" +
-            "  input.focus();" +
-            "  var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
-            "  setter.call(input, arguments[0]);" +
-            "  input.dispatchEvent(new Event('input', {bubbles: true}));" +
-            "  input.dispatchEvent(new Event('change', {bubbles: true}));" +
-            "  return true;" +
-            "}" +
-            "return false;", title);
-        pause(300);
-        System.out.println("[IssuePage] Fill title (" + title + "): " + filled);
+            "if (input) { input.scrollIntoView({block:'center'}); }" +
+            "return input;");
+
+        if (field != null) {
+            field.click();
+            field.clear();
+            field.sendKeys(title);
+            pause(300);
+            System.out.println("[IssuePage] Fill title via JS locate (" + title + "): true");
+        } else {
+            System.out.println("[IssuePage] WARNING: Could not find Title field");
+        }
     }
 
     /**
      * Fill the Proposed Resolution field (required) in the Add Issue form.
-     * This is likely a textarea.
+     * Uses Selenium sendKeys for proper React event handling.
      */
     public void fillProposedResolution(String text) {
-        Boolean filled = (Boolean) js.executeScript(
+        // Find the field via JS in the form drawer, return as WebElement
+        WebElement field = (WebElement) js.executeScript(
             "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
             "var drawer = null;" +
             "for (var d of drawers) {" +
@@ -474,26 +492,16 @@ public class IssuePage {
             "    drawer = d; break;" +
             "  }" +
             "}" +
-            "if (!drawer) drawer = drawers[drawers.length - 1] || document;" +
+            "if (!drawer) return null;" +
             "// Find by label 'Proposed Resolution'\n" +
             "var labels = drawer.querySelectorAll('p, label, span');" +
             "for (var l of labels) {" +
             "  var lt = l.textContent.trim();" +
-            "  if (lt === 'Proposed Resolution*' || lt === 'Proposed Resolution' || lt.includes('Proposed Resolution')) {" +
+            "  if (lt.includes('Proposed Resolution')) {" +
             "    var container = l.closest('.MuiFormControl-root') || l.closest('[class*=\"MuiGrid\"]') || l.parentElement;" +
-            "    // Try textarea first, then input\n" +
             "    var field = container.querySelector('textarea') || container.parentElement.querySelector('textarea')" +
             "      || container.querySelector('input') || container.parentElement.querySelector('input');" +
-            "    if (field) {" +
-            "      field.scrollIntoView({block:'center'});" +
-            "      field.focus();" +
-            "      var proto = field.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;" +
-            "      var setter = Object.getOwnPropertyDescriptor(proto, 'value').set;" +
-            "      setter.call(field, arguments[0]);" +
-            "      field.dispatchEvent(new Event('input', {bubbles: true}));" +
-            "      field.dispatchEvent(new Event('change', {bubbles: true}));" +
-            "      return true;" +
-            "    }" +
+            "    if (field) { field.scrollIntoView({block:'center'}); return field; }" +
             "  }" +
             "}" +
             "// Fallback: find by placeholder\n" +
@@ -501,19 +509,20 @@ public class IssuePage {
             "for (var a of areas) {" +
             "  var ph = (a.placeholder || '').toLowerCase();" +
             "  if (ph.includes('resolution') || ph.includes('proposed')) {" +
-            "    a.scrollIntoView({block:'center'});" +
-            "    a.focus();" +
-            "    var proto2 = a.tagName === 'TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;" +
-            "    var setter2 = Object.getOwnPropertyDescriptor(proto2, 'value').set;" +
-            "    setter2.call(a, arguments[0]);" +
-            "    a.dispatchEvent(new Event('input', {bubbles: true}));" +
-            "    a.dispatchEvent(new Event('change', {bubbles: true}));" +
-            "    return true;" +
+            "    a.scrollIntoView({block:'center'}); return a;" +
             "  }" +
             "}" +
-            "return false;", text);
-        pause(300);
-        System.out.println("[IssuePage] Fill proposed resolution: " + filled);
+            "return null;", text);
+
+        if (field != null) {
+            field.click();
+            field.clear();
+            field.sendKeys(text);
+            pause(300);
+            System.out.println("[IssuePage] Fill proposed resolution: true");
+        } else {
+            System.out.println("[IssuePage] WARNING: Could not find Proposed Resolution field");
+        }
     }
 
     /**
@@ -626,13 +635,27 @@ public class IssuePage {
                 return true;
             }
 
-            // Check for validation errors that would prevent submission
+            // Check for validation errors in the FORM drawer (not sidebar)
             if (i == 10) {
                 String errorDiag = (String) js.executeScript(
-                    "var drawer = document.querySelector('[class*=\"MuiDrawer-paper\"]') || document;" +
-                    "var errors = drawer.querySelectorAll('[class*=\"error\"], [class*=\"Error\"], .Mui-error, [class*=\"helperText\"]');" +
+                    "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+                    "var drawer = null;" +
+                    "for (var d of drawers) {" +
+                    "  if (d.textContent.includes('Add Issue') || d.textContent.includes('BASIC INFO')) {" +
+                    "    drawer = d; break;" +
+                    "  }" +
+                    "}" +
+                    "if (!drawer) drawer = document;" +
+                    "var errors = drawer.querySelectorAll('[class*=\"error\"], [class*=\"Error\"], .Mui-error, [class*=\"helperText\"], [class*=\"FormHelperText\"]');" +
                     "var info = 'Errors(' + errors.length + '): ';" +
-                    "for (var e of errors) { info += '[' + e.textContent.trim().substring(0,50) + '] '; }" +
+                    "for (var e of errors) { info += '[' + e.textContent.trim().substring(0,80) + '] '; }" +
+                    "// Also log all input values to verify fields were filled\n" +
+                    "var inputs = drawer.querySelectorAll('input, textarea');" +
+                    "info += ' FieldValues(' + inputs.length + '): ';" +
+                    "for (var inp of inputs) {" +
+                    "  var ph = inp.placeholder || inp.tagName;" +
+                    "  info += '{' + ph.substring(0,20) + '=\"' + (inp.value||'').substring(0,30) + '\"} ';" +
+                    "}" +
                     "return info;");
                 System.out.println("[IssuePage] " + errorDiag);
             }
