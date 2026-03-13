@@ -732,15 +732,58 @@ public class IssuePage {
                 "return info;");
             System.out.println("[IssuePage] " + detailsDiag);
 
-            // Hide backdrops before clicking
+            // CRITICAL: Check what element is at the button's coordinates
+            String hitTestDiag = (String) js.executeScript(
+                "var btn = arguments[0];" +
+                "var r = btn.getBoundingClientRect();" +
+                "var cx = r.left + r.width/2, cy = r.top + r.height/2;" +
+                "var topEl = document.elementFromPoint(cx, cy);" +
+                "var isBtn = topEl === btn || btn.contains(topEl) || (topEl && topEl.closest && topEl.closest('button') === btn);" +
+                "var drawer = btn.closest('[class*=\"MuiDrawer-paper\"]');" +
+                "var info = 'HitTest: btn@(' + Math.round(cx) + ',' + Math.round(cy) + ') ';" +
+                "info += Math.round(r.width) + 'x' + Math.round(r.height) + ' ';" +
+                "info += 'topEl=' + (topEl ? topEl.tagName + '.' + (topEl.className||'').substring(0,50) : 'null') + ' ';" +
+                "info += 'isBtn=' + isBtn + ' ';" +
+                "if (drawer) {" +
+                "  info += 'drawer.scroll=' + drawer.scrollTop + '/' + drawer.scrollHeight + '/' + drawer.clientHeight + ' ';" +
+                "}" +
+                "// Check for ANY overlays at that point\n" +
+                "var overlays = document.querySelectorAll('[class*=\"MuiBackdrop\"], [class*=\"MuiModal\"], [class*=\"overlay\"], [role=\"presentation\"]');" +
+                "info += 'overlays(' + overlays.length + '): ';" +
+                "for (var o of overlays) {" +
+                "  var or = o.getBoundingClientRect();" +
+                "  if (or.width > 0 && or.height > 0) {" +
+                "    info += '{' + o.tagName + '.' + (o.className||'').substring(0,30) + ' ' + Math.round(or.width) + 'x' + Math.round(or.height) + ' display=' + getComputedStyle(o).display + ' pointer=' + getComputedStyle(o).pointerEvents + '} ';" +
+                "  }" +
+                "}" +
+                "return info;", submitBtn);
+            System.out.println("[IssuePage] " + hitTestDiag);
+
+            // Hide ALL possible overlays — backdrop, modal root, and presentation elements
             js.executeScript(
-                "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"]').forEach(" +
-                "  function(b) { b.style.display = 'none'; }" +
+                "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"], [class*=\"MuiModal-root\"]').forEach(" +
+                "  function(b) { b.style.display = 'none'; b.style.pointerEvents = 'none'; }" +
+                ");" +
+                "// Also make all role=presentation elements non-blocking\n" +
+                "document.querySelectorAll('[role=\"presentation\"]').forEach(" +
+                "  function(p) { p.style.pointerEvents = 'none'; }" +
                 ");"
             );
             pause(200);
 
-            // Try multiple click approaches — the button type="button" relies on React onClick
+            // Scroll button into view within the drawer's scroll container
+            js.executeScript(
+                "var btn = arguments[0];" +
+                "var drawer = btn.closest('[class*=\"MuiDrawer-paper\"]');" +
+                "if (drawer) {" +
+                "  // Scroll drawer to show the button at center\n" +
+                "  var btnOffset = btn.offsetTop;" +
+                "  drawer.scrollTop = btnOffset - drawer.clientHeight / 2;" +
+                "}" +
+                "btn.scrollIntoView({block:'center', behavior:'instant'});", submitBtn);
+            pause(300);
+
+            // Try multiple click approaches
             // Approach 1: Selenium WebElement click (trusted event)
             try {
                 submitBtn.click();
