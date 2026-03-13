@@ -210,32 +210,46 @@ public class WorkOrderPage {
         );
         pause(2000);
 
-        // Wait for form drawer to appear
-        try {
-            wait.until(ExpectedConditions.visibilityOfElementLocated(ADD_WORK_ORDER_HEADER));
-        } catch (Exception e) {
-            System.out.println("[WorkOrderPage] Form header not found, checking for input fields");
-            try {
-                wait.until(ExpectedConditions.visibilityOfElementLocated(
-                    By.xpath("//*[contains(text(),'BASIC INFO')] | //div[contains(@class,'MuiDrawer-paper')]//input")));
-            } catch (Exception e2) {
-                String diag = (String) js.executeScript(
-                    "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"], [role=\"dialog\"], [role=\"presentation\"]');" +
-                    "var info = 'Drawers: ' + drawers.length + '. ';" +
-                    "for (var d of drawers) {" +
-                    "  var inputs = d.querySelectorAll('input');" +
-                    "  info += 'Inputs: ' + inputs.length + ' [';" +
-                    "  for (var inp of inputs) {" +
-                    "    info += '{type=' + (inp.type||'') + ', placeholder=' + (inp.placeholder||'') + '} ';" +
-                    "  }" +
-                    "  info += '] ';" +
-                    "}" +
-                    "return info;");
-                System.out.println("[WorkOrderPage] DIAGNOSTIC: " + diag);
-                throw e2;
+        // Wait for form drawer to appear using JS polling (more reliable than XPath waits)
+        boolean drawerFound = false;
+        for (int i = 0; i < 20; i++) {
+            Boolean found = (Boolean) js.executeScript(
+                "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+                "for (var d of drawers) {" +
+                "  var r = d.getBoundingClientRect();" +
+                "  if (r.width > 400 && d.querySelectorAll('input').length > 0) return true;" +
+                "}" +
+                "return false;");
+            if (Boolean.TRUE.equals(found)) {
+                drawerFound = true;
+                break;
             }
+            // Retry click at iteration 10
+            if (i == 10) {
+                js.executeScript(
+                    "var btns = document.querySelectorAll('button');" +
+                    "for (var b of btns) {" +
+                    "  var text = b.textContent.trim();" +
+                    "  if (text.includes('Create Work Order') || text.includes('Create Job')) {" +
+                    "    b.click(); return;" +
+                    "  }" +
+                    "}");
+            }
+            pause(1000);
         }
-        System.out.println("[WorkOrderPage] Create form opened");
+
+        if (!drawerFound) {
+            String diag = (String) js.executeScript(
+                "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+                "var info = 'Drawers(' + drawers.length + '): ';" +
+                "for (var d of drawers) {" +
+                "  var r = d.getBoundingClientRect();" +
+                "  info += '{w=' + Math.round(r.width) + ' inputs=' + d.querySelectorAll('input').length + '} ';" +
+                "}" +
+                "return info;");
+            System.out.println("[WorkOrderPage] DIAGNOSTIC: Form drawer not found. " + diag);
+        }
+        System.out.println("[WorkOrderPage] Create form opened: " + drawerFound);
     }
 
     /**
@@ -323,32 +337,59 @@ public class WorkOrderPage {
      * Wait for work order creation to succeed (drawer closes or success toast).
      */
     public boolean waitForCreateSuccess() {
-        By panelHeader = By.xpath(
-            "//*[normalize-space()='Add Work Order' or normalize-space()='Add Job'"
-            + " or normalize-space()='Create Work Order' or normalize-space()='Create Job'"
-            + " or normalize-space()='New Work Order' or normalize-space()='New Job']");
+        for (int i = 0; i < 20; i++) {
+            // Check 1: Is the form drawer gone?
+            // Look for any wide drawer containing form keywords
+            Boolean drawerGone = (Boolean) js.executeScript(
+                "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+                "for (var d of drawers) {" +
+                "  var r = d.getBoundingClientRect();" +
+                "  if (r.width > 400 && (" +
+                "    d.textContent.includes('Add Work Order') || d.textContent.includes('Add Job') ||" +
+                "    d.textContent.includes('Create Work Order') || d.textContent.includes('Create Job') ||" +
+                "    d.textContent.includes('BASIC INFO') || d.textContent.includes('New Work Order')" +
+                "  )) return false;" +
+                "}" +
+                "return true;");
+            if (Boolean.TRUE.equals(drawerGone)) {
+                System.out.println("[WorkOrderPage] Create form drawer closed — creation successful");
+                return true;
+            }
 
-        for (int i = 0; i < 25; i++) {
-            // Success indicator (toast message)
+            // Check 2: Success toast/snackbar (only check specific toast elements, not body text)
             try {
-                List<WebElement> success = driver.findElements(By.xpath(
-                    "//*[contains(text(),'created') or contains(text(),'Created') or contains(text(),'success') or contains(text(),'Success')]"));
-                if (!success.isEmpty()) {
-                    System.out.println("[WorkOrderPage] Success indicator found");
+                Boolean hasToast = (Boolean) js.executeScript(
+                    "var snackbars = document.querySelectorAll('[class*=\"Snackbar\"], [class*=\"MuiAlert\"], [class*=\"notistack\"], [class*=\"toast\"]');" +
+                    "for (var s of snackbars) {" +
+                    "  var text = s.textContent.toLowerCase();" +
+                    "  var r = s.getBoundingClientRect();" +
+                    "  if (r.width > 0 && (text.includes('created') || text.includes('success') || text.includes('saved'))) return true;" +
+                    "}" +
+                    "return false;");
+                if (Boolean.TRUE.equals(hasToast)) {
+                    System.out.println("[WorkOrderPage] Success toast found");
                     closeDrawer();
                     return true;
                 }
             } catch (Exception ignored) {}
 
-            // Panel closed = form submitted successfully
-            if (driver.findElements(panelHeader).isEmpty()) {
-                System.out.println("[WorkOrderPage] Create panel closed — creation successful");
-                return true;
-            }
             pause(1000);
         }
 
-        System.out.println("[WorkOrderPage] Create panel still open after 25s — creation may have failed");
+        System.out.println("[WorkOrderPage] Create form still open after 20s — creation may have failed");
+        // Log diagnostic
+        String diag = (String) js.executeScript(
+            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+            "var info = 'Drawers(' + drawers.length + '): ';" +
+            "for (var d of drawers) {" +
+            "  var r = d.getBoundingClientRect();" +
+            "  info += '{w=' + Math.round(r.width) + '} ';" +
+            "}" +
+            "var errors = document.querySelectorAll('.Mui-error, [class*=\"Mui-error\"], [class*=\"helperText\"][class*=\"error\"]');" +
+            "info += ' Errors(' + errors.length + '): ';" +
+            "for (var e of errors) info += '\"' + e.textContent.trim().substring(0,40) + '\" ';" +
+            "return info;");
+        System.out.println("[WorkOrderPage] DIAGNOSTIC: " + diag);
         closeDrawer();
         return false;
     }
@@ -654,22 +695,95 @@ public class WorkOrderPage {
      * Edit the description field on the detail/edit page.
      */
     public void editDescription(String newDescription) {
+        // Strategy 1: Try XPath locator first
+        WebElement el = null;
         try {
-            WebElement el = wait.until(ExpectedConditions.visibilityOfElementLocated(DESCRIPTION_INPUT));
-            js.executeScript(
-                "arguments[0].scrollIntoView({block:'center'});" +
-                "arguments[0].focus();" +
-                "var setter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set"
-                + " || Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
-                "setter.call(arguments[0], '');" +
-                "arguments[0].dispatchEvent(new Event('input', {bubbles: true}));",
-                el);
-            pause(200);
-            el.sendKeys(newDescription);
-            pause(300);
-            System.out.println("[WorkOrderPage] Edited description");
+            el = wait.until(ExpectedConditions.visibilityOfElementLocated(DESCRIPTION_INPUT));
         } catch (Exception e) {
-            System.out.println("[WorkOrderPage] Edit description failed: " + e.getMessage());
+            System.out.println("[WorkOrderPage] Description XPath not found, trying JS approach");
+        }
+
+        // Strategy 2: Find via JS — look for textarea/input near "Description" label
+        if (el == null) {
+            el = (WebElement) js.executeScript(
+                "// Find description field by label proximity\n" +
+                "var labels = document.querySelectorAll('p, label, span, h6');" +
+                "for (var l of labels) {" +
+                "  var t = l.textContent.trim();" +
+                "  if (t === 'Description' || t === 'Description*') {" +
+                "    // Look for textarea or input in nearby containers\n" +
+                "    var container = l.closest('.MuiFormControl-root') || l.closest('[class*=\"MuiGrid\"]') || l.parentElement;" +
+                "    for (var up = 0; up < 5; up++) {" +
+                "      if (!container) break;" +
+                "      var ta = container.querySelector('textarea:not([aria-hidden=\"true\"])');" +
+                "      if (ta && ta.getBoundingClientRect().width > 50) { ta.scrollIntoView({block:'center'}); return ta; }" +
+                "      var inp = container.querySelector('input[type=\"text\"]');" +
+                "      if (inp && inp.getBoundingClientRect().width > 50) { inp.scrollIntoView({block:'center'}); return inp; }" +
+                "      container = container.parentElement;" +
+                "    }" +
+                "  }" +
+                "}" +
+                "// Fallback: any visible textarea on the page\n" +
+                "var textareas = document.querySelectorAll('textarea:not([aria-hidden=\"true\"])');" +
+                "for (var ta of textareas) {" +
+                "  var r = ta.getBoundingClientRect();" +
+                "  if (r.width > 100 && r.height > 20) { ta.scrollIntoView({block:'center'}); return ta; }" +
+                "}" +
+                "return null;");
+        }
+
+        if (el != null) {
+            // Clear and type using Actions for trusted events
+            try {
+                js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].focus();", el);
+                pause(300);
+                Actions actions = new Actions(driver);
+                actions.moveToElement(el).click().perform();
+                pause(200);
+                actions.keyDown(Keys.CONTROL).sendKeys("a").keyUp(Keys.CONTROL).perform();
+                pause(100);
+                actions.sendKeys(Keys.DELETE).perform();
+                pause(100);
+                actions.sendKeys(newDescription).perform();
+                pause(300);
+                System.out.println("[WorkOrderPage] Edited description via Actions");
+            } catch (Exception e) {
+                // Fallback: JS setter + sendKeys
+                System.out.println("[WorkOrderPage] Actions failed for description: " + e.getMessage());
+                try {
+                    String tag = el.getTagName().toUpperCase();
+                    String proto = tag.equals("TEXTAREA") ? "HTMLTextAreaElement" : "HTMLInputElement";
+                    js.executeScript(
+                        "var el = arguments[0]; var val = arguments[1];" +
+                        "el.focus(); el.click();" +
+                        "var setter = Object.getOwnPropertyDescriptor(window." + proto + ".prototype, 'value').set;" +
+                        "setter.call(el, val);" +
+                        "el.dispatchEvent(new Event('input', {bubbles: true}));" +
+                        "el.dispatchEvent(new Event('change', {bubbles: true}));",
+                        el, newDescription);
+                    System.out.println("[WorkOrderPage] Edited description via JS setter");
+                } catch (Exception e2) {
+                    System.out.println("[WorkOrderPage] JS setter also failed: " + e2.getMessage());
+                }
+            }
+        } else {
+            // Log diagnostic for debugging
+            String diag = (String) js.executeScript(
+                "var info = 'LABELS: ';" +
+                "var labels = document.querySelectorAll('p, label, span, h6');" +
+                "var seen = new Set();" +
+                "for (var l of labels) {" +
+                "  var t = l.textContent.trim();" +
+                "  if (t.length > 1 && t.length < 40 && !seen.has(t)) { seen.add(t); info += '[' + t + '] '; }" +
+                "}" +
+                "var textareas = document.querySelectorAll('textarea');" +
+                "info += ' TAs(' + textareas.length + '): ';" +
+                "for (var ta of textareas) {" +
+                "  var r = ta.getBoundingClientRect();" +
+                "  info += '{w=' + Math.round(r.width) + ' h=' + Math.round(r.height) + ' hidden=' + ta.getAttribute('aria-hidden') + '} ';" +
+                "}" +
+                "return info;");
+            System.out.println("[WorkOrderPage] Edit description failed — no field found. DIAG: " + diag);
         }
     }
 
@@ -695,29 +809,52 @@ public class WorkOrderPage {
      */
     public boolean waitForEditSuccess() {
         for (int i = 0; i < 15; i++) {
+            // Check 1: Success toast/snackbar (specific elements only, not body text)
             try {
                 Boolean hasToast = (Boolean) js.executeScript(
-                    "return document.body.textContent.includes('updated') || " +
-                    "document.body.textContent.includes('Updated') || " +
-                    "document.body.textContent.includes('saved') || " +
-                    "document.body.textContent.includes('Saved') || " +
-                    "document.querySelectorAll('[class*=\"Snackbar\"], [class*=\"toast\"], [class*=\"alert-success\"]').length > 0;");
+                    "var snackbars = document.querySelectorAll('[class*=\"Snackbar\"], [class*=\"MuiAlert\"], [class*=\"notistack\"], [class*=\"toast\"], [class*=\"alert-success\"]');" +
+                    "for (var s of snackbars) {" +
+                    "  var text = s.textContent.toLowerCase();" +
+                    "  var r = s.getBoundingClientRect();" +
+                    "  if (r.width > 0 && (text.includes('updated') || text.includes('saved') || text.includes('success'))) return true;" +
+                    "}" +
+                    "return false;");
                 if (Boolean.TRUE.equals(hasToast)) {
                     System.out.println("[WorkOrderPage] Edit success — toast detected");
                     return true;
                 }
             } catch (Exception ignored) {}
 
-            // Check if we're back to view mode (edit form closed)
-            Boolean editBtnPresent = (Boolean) js.executeScript(
+            // Check 2: Save button is gone (replaced by Edit button) = back to view mode
+            Boolean saveGone = (Boolean) js.executeScript(
+                "var hasSave = false; var hasEdit = false;" +
                 "var btns = document.querySelectorAll('button');" +
                 "for (var b of btns) {" +
-                "  if (b.textContent.trim() === 'Edit' || b.textContent.trim() === 'Edit Work Order') return true;" +
+                "  var t = b.textContent.trim();" +
+                "  if (t === 'Save' || t === 'Update' || t === 'Save Changes') hasSave = true;" +
+                "  if (t === 'Edit' || t === 'Edit Work Order' || t === 'Edit Job') hasEdit = true;" +
                 "}" +
-                "return false;");
-            if (Boolean.TRUE.equals(editBtnPresent)) {
-                System.out.println("[WorkOrderPage] Edit success — back to view mode");
+                "return !hasSave && hasEdit;");
+            if (Boolean.TRUE.equals(saveGone)) {
+                System.out.println("[WorkOrderPage] Edit success — Save button gone, Edit button present");
                 return true;
+            }
+
+            // Check 3: No more editable form (no focused/active textareas)
+            if (i >= 5) {
+                Boolean noEditMode = (Boolean) js.executeScript(
+                    "var editIndicators = document.querySelectorAll('input:not([type=\"hidden\"]):not([type=\"file\"]):focus, textarea:focus');" +
+                    "return editIndicators.length === 0;");
+                Boolean editBtnPresent = (Boolean) js.executeScript(
+                    "var btns = document.querySelectorAll('button');" +
+                    "for (var b of btns) {" +
+                    "  if (b.textContent.trim() === 'Edit' || b.textContent.trim() === 'Edit Work Order') return true;" +
+                    "}" +
+                    "return false;");
+                if (Boolean.TRUE.equals(editBtnPresent)) {
+                    System.out.println("[WorkOrderPage] Edit success — Edit button visible (iteration " + i + ")");
+                    return true;
+                }
             }
             pause(1000);
         }
@@ -813,11 +950,26 @@ public class WorkOrderPage {
     public int getIRPhotoCount() {
         try {
             Long count = (Long) js.executeScript(
-                "var imgs = document.querySelectorAll('img[class*=\"thumbnail\"], img[class*=\"photo\"], img[src*=\"blob:\"], img[src*=\"upload\"], [class*=\"photo-item\"], [class*=\"gallery\"] img');" +
+                "var imgs = document.querySelectorAll(" +
+                "  'img[class*=\"thumbnail\"], img[class*=\"photo\"], img[class*=\"image\"]," +
+                "  img[src*=\"blob:\"], img[src*=\"upload\"], img[src*=\"photo\"], img[src*=\"image\"]," +
+                "  img[src*=\"amazonaws\"], img[src*=\"storage\"], img[src*=\"s3\"]," +
+                "  [class*=\"photo-item\"], [class*=\"gallery\"] img," +
+                "  [class*=\"ir-photo\"] img, [class*=\"IRPhoto\"] img," +
+                "  [class*=\"photo\"] img, [class*=\"Photo\"] img');" +
                 "var visible = 0;" +
                 "for (var img of imgs) {" +
                 "  var r = img.getBoundingClientRect();" +
                 "  if (r.width > 20 && r.height > 20) visible++;" +
+                "}" +
+                "// Also check for background-image divs (some apps use div backgrounds)\n" +
+                "if (visible === 0) {" +
+                "  var divs = document.querySelectorAll('[class*=\"photo\"], [class*=\"Photo\"], [class*=\"thumbnail\"], [class*=\"image\"]');" +
+                "  for (var d of divs) {" +
+                "    var bg = window.getComputedStyle(d).backgroundImage;" +
+                "    var r = d.getBoundingClientRect();" +
+                "    if (bg && bg !== 'none' && r.width > 20 && r.height > 20) visible++;" +
+                "  }" +
                 "}" +
                 "return visible;");
             int result = count != null ? count.intValue() : 0;

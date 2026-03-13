@@ -849,7 +849,7 @@ public class IssuePage {
      */
     public void selectConsequencesDropdown() {
         // Wait for dependent data to load after subcategory selection
-        pause(3000);
+        pause(2000);
 
         // Step 1: Find the Consequences combobox input element
         WebElement consInput = (WebElement) js.executeScript(
@@ -880,14 +880,52 @@ public class IssuePage {
             "return null;");
 
         if (consInput == null) {
-            System.out.println("[IssuePage] WARNING: Could not find Consequences combobox input");
+            System.out.println("[IssuePage] No Consequences combobox found — field may be textarea-only");
             return;
         }
 
         System.out.println("[IssuePage] Found Consequences combobox input, val=\"" +
             consInput.getAttribute("value") + "\"");
 
-        // Step 2: Open dropdown via popup indicator + ArrowDown
+        // Step 2: Make element interactable and scroll drawer to it
+        js.executeScript(
+            "var inp = arguments[0];" +
+            "inp.scrollIntoView({block:'center'});" +
+            "// Ensure the input is visible and interactable\n" +
+            "var style = window.getComputedStyle(inp);" +
+            "if (parseInt(style.height) < 5 || style.visibility === 'hidden') {" +
+            "  inp.style.height = '28px';" +
+            "  inp.style.visibility = 'visible';" +
+            "  inp.style.opacity = '1';" +
+            "}", consInput);
+        pause(500);
+
+        // Step 3: Try Selenium Actions (trusted events) to open dropdown + select option
+        boolean selected = false;
+        try {
+            Actions actions = new Actions(driver);
+            actions.moveToElement(consInput).click().perform();
+            pause(500);
+            // Send ArrowDown via trusted Selenium event to trigger async option load
+            actions.sendKeys(Keys.ARROW_DOWN).perform();
+            pause(2000);
+
+            // Check if options appeared
+            Boolean hasOpts = (Boolean) js.executeScript(
+                "var opts = document.querySelectorAll('li[role=\"option\"]');" +
+                "if (opts.length > 0) { opts[0].scrollIntoView({block:'center'}); opts[0].click(); return true; }" +
+                "return false;");
+            if (Boolean.TRUE.equals(hasOpts)) {
+                selected = true;
+                System.out.println("[IssuePage] Selected consequences dropdown option via Actions+ArrowDown");
+            }
+        } catch (Exception e) {
+            System.out.println("[IssuePage] Actions click on consequences failed: " + e.getMessage());
+        }
+
+        if (selected) { pause(300); return; }
+
+        // Step 4: Try popup indicator click via JS, then wait for options
         js.executeScript(
             "var inp = arguments[0];" +
             "var autocomplete = inp.closest('.MuiAutocomplete-root');" +
@@ -895,41 +933,11 @@ public class IssuePage {
             "  var popBtn = autocomplete.querySelector('.MuiAutocomplete-popupIndicator');" +
             "  if (popBtn) popBtn.click();" +
             "}" +
-            "inp.focus(); inp.click();" +
-            "inp.dispatchEvent(new KeyboardEvent('keydown', {key:'ArrowDown', keyCode:40, bubbles:true}));",
-            consInput);
+            "inp.focus(); inp.click();", consInput);
         pause(1500);
 
-        // Step 3: Wait up to 15 seconds for options to appear
-        boolean selected = false;
-        for (int i = 0; i < 20; i++) {
-            String diag = (String) js.executeScript(
-                "var opts = document.querySelectorAll('li[role=\"option\"]');" +
-                "var lb = document.querySelector('[role=\"listbox\"]');" +
-                "var noOpts = document.querySelectorAll('[class*=\"noOptions\"]');" +
-                "var poppers = document.querySelectorAll('[class*=\"MuiPopper\"], [class*=\"MuiAutocomplete-popper\"]');" +
-                "var info = 'opts=' + opts.length + ' listbox=' + (lb ? 'y(' + lb.children.length + ')' : 'n');" +
-                "info += ' noOpts=' + noOpts.length + ' poppers=' + poppers.length;" +
-                "if (noOpts.length > 0) info += ' noOptsText=\"' + noOpts[0].textContent.trim() + '\"';" +
-                "if (poppers.length > 0) {" +
-                "  for (var p of poppers) {" +
-                "    var r = p.getBoundingClientRect();" +
-                "    info += ' [popper w=' + Math.round(r.width) + ' h=' + Math.round(r.height) + ']';" +
-                "  }" +
-                "}" +
-                "return info;");
-            // Log diagnostic every 3rd iteration
-            if (i < 2 || i % 3 == 0) {
-                System.out.println("[IssuePage] Consequences wait " + i + ": " + diag);
-            }
-
-            // Check for "No options" message — means dropdown works but API returned empty
-            if (diag.contains("noOpts=") && !diag.contains("noOpts=0")) {
-                System.out.println("[IssuePage] Consequences dropdown shows 'No options' — will try typing");
-                break;
-            }
-
-            // Try to select an option if available
+        // Poll for up to 10 seconds for options
+        for (int i = 0; i < 13; i++) {
             Boolean optionClicked = (Boolean) js.executeScript(
                 "var opts = document.querySelectorAll('li[role=\"option\"]');" +
                 "if (opts.length === 0) opts = document.querySelectorAll('[class*=\"MuiAutocomplete-option\"]');" +
@@ -937,128 +945,84 @@ public class IssuePage {
                 "return false;");
             if (Boolean.TRUE.equals(optionClicked)) {
                 selected = true;
-                System.out.println("[IssuePage] Selected consequences dropdown option: true");
-                pause(300);
+                System.out.println("[IssuePage] Selected consequences dropdown option on poll " + i);
                 break;
             }
-
-            // Every 5 iterations, re-trigger dropdown open
-            if (i == 5 || i == 10 || i == 15) {
-                js.executeScript(
-                    "var inp = arguments[0];" +
-                    "inp.focus(); inp.click();" +
-                    "var ac = inp.closest('.MuiAutocomplete-root');" +
-                    "if (ac) { var b = ac.querySelector('.MuiAutocomplete-popupIndicator'); if (b) b.click(); }" +
-                    "inp.dispatchEvent(new KeyboardEvent('keydown', {key:'ArrowDown', keyCode:40, bubbles:true}));",
-                    consInput);
+            // Log diagnostic on first couple iterations
+            if (i < 2) {
+                String diag = (String) js.executeScript(
+                    "var opts = document.querySelectorAll('li[role=\"option\"]');" +
+                    "var lb = document.querySelector('[role=\"listbox\"]');" +
+                    "var noOpts = document.querySelectorAll('[class*=\"noOptions\"], [class*=\"MuiAutocomplete-noOptions\"]');" +
+                    "return 'opts=' + opts.length + ' listbox=' + (lb ? 'y(' + lb.children.length + ')' : 'n') +" +
+                    "  ' noOpts=' + noOpts.length + (noOpts.length > 0 ? ' \"' + noOpts[0].textContent.trim() + '\"' : '');");
+                System.out.println("[IssuePage] Consequences wait " + i + ": " + diag);
             }
-
             pause(750);
         }
 
-        if (selected) return;
+        if (selected) { pause(300); return; }
 
-        // Step 4: Close any open dropdown, then try typing to trigger search
-        js.executeScript(
-            "var inp = arguments[0];" +
-            "inp.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', keyCode:27, bubbles:true}));",
-            consInput);
+        // Step 5: No dropdown options available — try typing with Selenium Actions (trusted events)
+        System.out.println("[IssuePage] No dropdown options — typing 'Safety hazard' via Actions");
+        // Close any open dropdown first
+        js.executeScript("document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true}));");
         pause(500);
 
-        System.out.println("[IssuePage] No options from dropdown — trying type-ahead search");
-
-        // Clear any existing value and type search text
-        String[] searchTerms = {"Safety", "Fire", "Hazard", "Damage"};
-        for (String term : searchTerms) {
-            // Clear and type using React-safe setter
-            js.executeScript(
-                "var inp = arguments[0]; var term = arguments[1];" +
-                "inp.focus(); inp.click();" +
-                "var setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;" +
-                "setter.call(inp, '');" +
-                "inp.dispatchEvent(new Event('input', {bubbles:true}));" +
-                "setter.call(inp, term);" +
-                "inp.dispatchEvent(new Event('input', {bubbles:true}));" +
-                "inp.dispatchEvent(new Event('change', {bubbles:true}));",
-                consInput, term);
-            pause(2000);
+        try {
+            Actions actions = new Actions(driver);
+            // Click the input, clear it, type text
+            actions.moveToElement(consInput).click().perform();
+            pause(300);
+            // Select all and delete to clear
+            actions.keyDown(Keys.CONTROL).sendKeys("a").keyUp(Keys.CONTROL).perform();
+            pause(100);
+            actions.sendKeys(Keys.DELETE).perform();
+            pause(100);
+            actions.sendKeys("Safety hazard").perform();
+            pause(1500);
 
             // Check for filtered options
-            Boolean hasOptions = (Boolean) js.executeScript(
+            Boolean hasOpts = (Boolean) js.executeScript(
                 "var opts = document.querySelectorAll('li[role=\"option\"]');" +
                 "if (opts.length > 0) { opts[0].click(); return true; }" +
                 "return false;");
-            if (Boolean.TRUE.equals(hasOptions)) {
+            if (Boolean.TRUE.equals(hasOpts)) {
                 selected = true;
-                System.out.println("[IssuePage] Selected consequences via type-ahead: \"" + term + "\"");
+                System.out.println("[IssuePage] Selected consequences via type-ahead Actions");
+            } else {
+                // No options — press Enter to accept freetext, then Tab to blur
+                actions.sendKeys(Keys.ENTER).perform();
                 pause(300);
-                break;
+                actions.sendKeys(Keys.TAB).perform();
+                pause(300);
+                String val = consInput.getAttribute("value");
+                System.out.println("[IssuePage] Consequences combobox after Enter+Tab: \"" + val + "\"");
+                if (val != null && !val.isEmpty()) selected = true;
             }
+        } catch (Exception e) {
+            System.out.println("[IssuePage] Actions typing on consequences failed: " + e.getMessage());
         }
 
-        if (selected) return;
+        if (selected) { pause(300); return; }
 
-        // Step 5: Last resort — try to set the value directly via React internal state.
-        // Focus the input, type via keyboard events, then press Enter to accept.
-        System.out.println("[IssuePage] Type-ahead failed — trying direct keyboard input + Enter");
+        // Step 6: Last resort — React setter + Enter
+        System.out.println("[IssuePage] All Selenium approaches failed — using React setter");
         js.executeScript(
             "var inp = arguments[0];" +
             "inp.focus(); inp.click();" +
-            "// Clear first\n" +
             "var setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;" +
-            "setter.call(inp, '');" +
+            "setter.call(inp, 'Safety hazard');" +
             "inp.dispatchEvent(new Event('input', {bubbles:true}));" +
-            "// Type 'Safety hazard' using keyboard events\n" +
-            "var text = 'Safety hazard';" +
-            "for (var i = 0; i < text.length; i++) {" +
-            "  var ch = text.charAt(i);" +
-            "  inp.dispatchEvent(new KeyboardEvent('keydown', {key:ch, code:'Key'+ch.toUpperCase(), bubbles:true}));" +
-            "  setter.call(inp, text.substring(0, i+1));" +
-            "  inp.dispatchEvent(new Event('input', {bubbles:true}));" +
-            "  inp.dispatchEvent(new KeyboardEvent('keyup', {key:ch, code:'Key'+ch.toUpperCase(), bubbles:true}));" +
-            "}",
-            consInput);
-        pause(2000);
-
-        // Check for options one last time
-        Boolean lastCheck = (Boolean) js.executeScript(
-            "var opts = document.querySelectorAll('li[role=\"option\"]');" +
-            "if (opts.length > 0) { opts[0].click(); return true; }" +
-            "return false;");
-        if (Boolean.TRUE.equals(lastCheck)) {
-            selected = true;
-            System.out.println("[IssuePage] Selected consequences via keyboard typing");
-            pause(300);
-            return;
-        }
-
-        // Step 6: Accept whatever is in the input by pressing Enter then Tab
-        js.executeScript(
-            "var inp = arguments[0];" +
+            "inp.dispatchEvent(new Event('change', {bubbles:true}));" +
             "inp.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter', keyCode:13, bubbles:true}));" +
-            "inp.dispatchEvent(new KeyboardEvent('keyup', {key:'Enter', keyCode:13, bubbles:true}));",
+            "inp.dispatchEvent(new KeyboardEvent('keyup', {key:'Enter', keyCode:13, bubbles:true}));" +
+            "inp.dispatchEvent(new Event('blur', {bubbles:true}));",
             consInput);
         pause(500);
 
         String finalVal = consInput.getAttribute("value");
         System.out.println("[IssuePage] Consequences combobox final value: \"" + finalVal + "\"");
-
-        if (finalVal == null || finalVal.isEmpty()) {
-            // Absolute last resort: try using nativeInputValueSetter
-            System.out.println("[IssuePage] Consequences combobox still empty — using React setter fallback");
-            js.executeScript(
-                "var inp = arguments[0];" +
-                "var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
-                "nativeInputValueSetter.call(inp, 'Safety hazard');" +
-                "inp.dispatchEvent(new Event('input', {bubbles: true}));" +
-                "inp.dispatchEvent(new Event('change', {bubbles: true}));" +
-                "// Also try blur to commit\n" +
-                "inp.dispatchEvent(new Event('blur', {bubbles: true}));",
-                consInput);
-            pause(500);
-            finalVal = consInput.getAttribute("value");
-            System.out.println("[IssuePage] After React setter: \"" + finalVal + "\"");
-        }
     }
 
     /**
@@ -1107,29 +1071,60 @@ public class IssuePage {
             "return null;");
 
         if (field != null) {
-            // Use React-safe value setter that detects textarea vs input
-            js.executeScript(
-                "var el = arguments[0]; var val = arguments[1];" +
-                "el.scrollIntoView({block:'center'});" +
-                "el.focus(); el.click();" +
-                "// Detect element type and use correct prototype setter\n" +
-                "var proto = (el.tagName === 'TEXTAREA') " +
-                "  ? window.HTMLTextAreaElement.prototype " +
-                "  : window.HTMLInputElement.prototype;" +
-                "var setter = Object.getOwnPropertyDescriptor(proto, 'value').set;" +
-                "setter.call(el, val);" +
-                "el.dispatchEvent(new Event('input', {bubbles: true}));" +
-                "el.dispatchEvent(new Event('change', {bubbles: true}));",
-                field, text);
-            pause(300);
+            // Scroll the drawer to make the field visible
+            js.executeScript("arguments[0].scrollIntoView({block:'center'});", field);
+            pause(500);
 
-            // Also try Selenium sendKeys for belt-and-suspenders
+            // Primary: Use Selenium Actions for trusted events (React recognizes these)
+            boolean filled = false;
             try {
-                field.click();
-                field.clear();
-                field.sendKeys(text);
+                Actions actions = new Actions(driver);
+                actions.moveToElement(field).click().perform();
+                pause(300);
+                // Clear existing content
+                actions.keyDown(Keys.CONTROL).sendKeys("a").keyUp(Keys.CONTROL).perform();
+                pause(100);
+                actions.sendKeys(Keys.DELETE).perform();
+                pause(100);
+                // Type the text
+                actions.sendKeys(text).perform();
+                pause(300);
+                String val = field.getAttribute("value");
+                if (val != null && val.contains(text.substring(0, Math.min(10, text.length())))) {
+                    filled = true;
+                    System.out.println("[IssuePage] Fill consequences via Actions: true");
+                }
             } catch (Exception e) {
-                System.out.println("[IssuePage] Consequences sendKeys fallback skipped: " + e.getMessage());
+                System.out.println("[IssuePage] Consequences Actions typing failed: " + e.getMessage());
+            }
+
+            if (!filled) {
+                // Fallback: try direct sendKeys
+                try {
+                    field.click();
+                    field.clear();
+                    field.sendKeys(text);
+                    filled = true;
+                    System.out.println("[IssuePage] Fill consequences via sendKeys: true");
+                } catch (Exception e) {
+                    System.out.println("[IssuePage] Consequences sendKeys failed: " + e.getMessage());
+                }
+            }
+
+            if (!filled) {
+                // Last resort: React setter
+                js.executeScript(
+                    "var el = arguments[0]; var val = arguments[1];" +
+                    "el.focus(); el.click();" +
+                    "var proto = (el.tagName === 'TEXTAREA') " +
+                    "  ? window.HTMLTextAreaElement.prototype " +
+                    "  : window.HTMLInputElement.prototype;" +
+                    "var setter = Object.getOwnPropertyDescriptor(proto, 'value').set;" +
+                    "setter.call(el, val);" +
+                    "el.dispatchEvent(new Event('input', {bubbles: true}));" +
+                    "el.dispatchEvent(new Event('change', {bubbles: true}));",
+                    field, text);
+                System.out.println("[IssuePage] Fill consequences via React setter");
             }
             pause(300);
             System.out.println("[IssuePage] Fill consequences: true");
@@ -1246,12 +1241,39 @@ public class IssuePage {
                 "  }" +
                 "}" +
                 "if (!drawer) return 'DRAWER CLOSED (form submitted!)';" +
-                "var errors = drawer.querySelectorAll('.Mui-error');" +
+                "var errors = drawer.querySelectorAll('.Mui-error, [class*=\"Mui-error\"]');" +
                 "var errInfo = 'MuiErrors(' + errors.length + '): ';" +
                 "for (var e of errors) {" +
-                "  var parent = e.closest('.MuiFormControl-root');" +
+                "  var parent = e.closest('.MuiFormControl-root') || e.closest('[class*=\"MuiGrid\"]');" +
                 "  var label = parent ? (parent.querySelector('p, label') || {}).textContent : '';" +
-                "  errInfo += '[field=\"' + (label||'').trim().substring(0,30) + '\"] ';" +
+                "  errInfo += '[\"' + (label||'').trim().substring(0,30) + '\"] ';" +
+                "}" +
+                "// Check helper text errors\n" +
+                "var helpers = drawer.querySelectorAll('[class*=\"MuiFormHelperText-root\"][class*=\"error\"], p.Mui-error');" +
+                "if (helpers.length > 0) {" +
+                "  errInfo += ' HelperErrors(' + helpers.length + '): ';" +
+                "  for (var h of helpers) errInfo += '\"' + h.textContent.trim().substring(0,40) + '\" ';" +
+                "}" +
+                "// Show all required field values\n" +
+                "var autocompletes = drawer.querySelectorAll('.MuiAutocomplete-root');" +
+                "errInfo += ' FIELDS: ';" +
+                "for (var ac of autocompletes) {" +
+                "  var inp = ac.querySelector('input');" +
+                "  if (inp) {" +
+                "    var p = ac; var lbl = '';" +
+                "    for (var u = 0; u < 5; u++) {" +
+                "      if (!p) break; var l = p.querySelector('p, label');" +
+                "      if (l && l.textContent.trim().length > 2) { lbl = l.textContent.trim(); break; }" +
+                "      p = p.parentElement;" +
+                "    }" +
+                "    if (lbl) errInfo += '[' + lbl.substring(0,25) + '=\"' + (inp.value||'').substring(0,20) + '\"] ';" +
+                "  }" +
+                "}" +
+                "var textareas = drawer.querySelectorAll('textarea:not([aria-hidden])');" +
+                "errInfo += ' TAs(' + textareas.length + '): ';" +
+                "for (var ta of textareas) {" +
+                "  var r = ta.getBoundingClientRect();" +
+                "  if (r.width > 50 && r.height > 10) errInfo += '[h=' + Math.round(r.height) + ' val=\"' + (ta.value||'').substring(0,15) + '\"] ';" +
                 "}" +
                 "var loading = drawer.querySelectorAll('[class*=\"CircularProgress\"], [class*=\"loading\"]');" +
                 "errInfo += ' Loading: ' + loading.length;" +
