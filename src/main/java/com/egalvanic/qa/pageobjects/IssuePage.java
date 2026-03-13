@@ -563,8 +563,8 @@ public class IssuePage {
             "return info;");
         System.out.println("[IssuePage] " + btnDiag);
 
-        // Click the submit button in the FORM drawer (not sidebar)
-        Boolean clicked = (Boolean) js.executeScript(
+        // Find the submit button in the FORM drawer via JS, then click with Selenium (trusted event)
+        WebElement submitBtn = (WebElement) js.executeScript(
             "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
             "var formDrawer = null;" +
             "for (var d of drawers) {" +
@@ -572,19 +572,9 @@ public class IssuePage {
             "    formDrawer = d; break;" +
             "  }" +
             "}" +
-            "if (!formDrawer) {" +
-            "  // Try presentation role containers\n" +
-            "  var presentations = document.querySelectorAll('[role=\"presentation\"]');" +
-            "  for (var p of presentations) {" +
-            "    if (p.textContent.includes('Add Issue') || p.textContent.includes('BASIC INFO')) {" +
-            "      formDrawer = p; break;" +
-            "    }" +
-            "  }" +
-            "}" +
-            "if (!formDrawer) return false;" +
+            "if (!formDrawer) return null;" +
             "var btns = formDrawer.querySelectorAll('button');" +
             "var submitTexts = ['Create Issue', 'Create', 'Save', 'Submit'];" +
-            "// Find submit at bottom of form (highest y)\n" +
             "var bestBtn = null; var bestY = -1;" +
             "for (var b of btns) {" +
             "  var text = b.textContent.trim();" +
@@ -593,20 +583,35 @@ public class IssuePage {
             "    bestBtn = b; bestY = r.top;" +
             "  }" +
             "}" +
-            "if (bestBtn) {" +
-            "  bestBtn.scrollIntoView({block:'center'});" +
-            "  bestBtn.click();" +
-            "  return true;" +
-            "}" +
+            "if (bestBtn) { bestBtn.scrollIntoView({block:'center'}); return bestBtn; }" +
             "// Fallback: any button with contained class\n" +
             "btns = formDrawer.querySelectorAll('button[class*=\"contained\"], button[class*=\"primary\"]');" +
             "for (var b of btns) {" +
             "  var text = b.textContent.trim();" +
-            "  if (text.includes('Create') || text.includes('Save')) { b.click(); return true; }" +
+            "  if (text.includes('Create') || text.includes('Save')) { b.scrollIntoView({block:'center'}); return b; }" +
             "}" +
-            "return false;");
+            "return null;");
 
-        System.out.println("[IssuePage] Submit clicked: " + clicked);
+        if (submitBtn != null) {
+            // Hide backdrops before clicking
+            js.executeScript(
+                "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"]').forEach(" +
+                "  function(b) { b.style.display = 'none'; }" +
+                ");"
+            );
+            pause(200);
+            try {
+                submitBtn.click();
+                System.out.println("[IssuePage] Submit clicked via Selenium WebElement");
+            } catch (Exception e) {
+                // If backdrop still intercepts, try Actions click
+                System.out.println("[IssuePage] Selenium click failed, trying Actions: " + e.getMessage());
+                new Actions(driver).moveToElement(submitBtn).click().perform();
+                System.out.println("[IssuePage] Submit clicked via Actions");
+            }
+        } else {
+            System.out.println("[IssuePage] WARNING: Could not find submit button");
+        }
     }
 
     /**
