@@ -213,6 +213,50 @@ public class IssuesSmokeTestNG extends BaseTest {
             debugDrawerState("CREATE — Form filled, pre-submit");
             logStepWithScreenshot("Form filled — about to submit");
 
+            // Pre-submit: Check for empty required fields and log them
+            {
+                JavascriptExecutor jsCheck = (JavascriptExecutor) driver;
+                String reqCheck = (String) jsCheck.executeScript(
+                    "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+                    "var drawer = null;" +
+                    "for (var d of drawers) {" +
+                    "  var r = d.getBoundingClientRect();" +
+                    "  if (r.width > 400 && (d.textContent.includes('Add Issue') || d.textContent.includes('BASIC INFO')))" +
+                    "    { drawer = d; break; }" +
+                    "}" +
+                    "if (!drawer) return 'NO DRAWER';" +
+                    "// Check all combobox inputs in the form\n" +
+                    "var info = 'COMBOBOXES: ';" +
+                    "var autocompletes = drawer.querySelectorAll('.MuiAutocomplete-root');" +
+                    "for (var ac of autocompletes) {" +
+                    "  var inp = ac.querySelector('input');" +
+                    "  if (inp) {" +
+                    "    var label = ''; var parent = ac;" +
+                    "    for (var u = 0; u < 5; u++) {" +
+                    "      if (!parent) break;" +
+                    "      var lbl = parent.querySelector('p, label');" +
+                    "      if (lbl && lbl.textContent.trim().length > 2 && lbl.textContent.trim().length < 50) {" +
+                    "        label = lbl.textContent.trim(); break;" +
+                    "      }" +
+                    "      parent = parent.parentElement;" +
+                    "    }" +
+                    "    var hasError = ac.querySelector('.Mui-error') !== null;" +
+                    "    info += '[\"' + label.substring(0,30) + '\" val=\"' + (inp.value||'').substring(0,25) + '\"' +" +
+                    "      (hasError ? ' ERR' : '') + (inp.value ? '' : ' EMPTY') + '] ';" +
+                    "  }" +
+                    "}" +
+                    "// Check for disabled submit button\n" +
+                    "var btns = drawer.querySelectorAll('button');" +
+                    "for (var b of btns) {" +
+                    "  var t = b.textContent.trim();" +
+                    "  if (t === 'Create Issue' || t === 'Save') {" +
+                    "    info += ' SUBMIT_BTN: disabled=' + b.disabled + ' ariaDisabled=' + b.getAttribute('aria-disabled');" +
+                    "  }" +
+                    "}" +
+                    "return info;");
+                logStep("PRE-SUBMIT CHECK: " + reqCheck);
+            }
+
             // 4. Submit — try multiple times if drawer stays open
             issuePage.submitCreateIssue();
             logStep("Issue creation submitted");

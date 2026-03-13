@@ -835,13 +835,24 @@ public class IssuePage {
     }
 
     /**
-     * Select the first option from the "Consequences if Not Corrected" combobox dropdown.
+     * Select a value from the "Consequences if Not Corrected" combobox dropdown.
      * Each DETAILS field has a paired combobox + textarea. This fills the combobox part.
-     * The combobox is the FIRST empty autocomplete after the Subcategory field.
+     *
+     * Strategy:
+     *  1. Find the Consequences combobox input by locating the label then the nearest Autocomplete.
+     *  2. Open dropdown via popup indicator AND ArrowDown key.
+     *  3. Wait up to 15 seconds for async-loaded options (may depend on subcategory selection).
+     *  4. If options appear, click the first one.
+     *  5. If no options appear, try typing text into the input to trigger a search.
+     *  6. If that yields options, select the first one.
+     *  7. Final fallback: set value directly via React setter + events.
      */
     public void selectConsequencesDropdown() {
-        // Find and click the Consequences combobox (dropdown)
-        Boolean opened = (Boolean) js.executeScript(
+        // Wait for dependent data to load after subcategory selection
+        pause(3000);
+
+        // Step 1: Find the Consequences combobox input element
+        WebElement consInput = (WebElement) js.executeScript(
             "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
             "var drawer = null;" +
             "for (var d of drawers) {" +
@@ -849,48 +860,204 @@ public class IssuePage {
             "    drawer = d; break;" +
             "  }" +
             "}" +
-            "if (!drawer) return false;" +
+            "if (!drawer) return null;" +
             "var labels = drawer.querySelectorAll('p, label, span');" +
             "for (var l of labels) {" +
             "  var t = l.textContent.trim();" +
             "  if (t.includes('Consequences') || t.includes('Not Corrected')) {" +
             "    var section = l.closest('[class*=\"MuiGrid\"]') || l.closest('.MuiFormControl-root') || l.parentElement;" +
-            "    // Go up a few levels to find the section containing both combobox and textarea\n" +
-            "    for (var up = 0; up < 4; up++) {" +
+            "    for (var up = 0; up < 5; up++) {" +
             "      if (!section) break;" +
             "      var autocomplete = section.querySelector('.MuiAutocomplete-root');" +
             "      if (autocomplete) {" +
-            "        var popBtn = autocomplete.querySelector('.MuiAutocomplete-popupIndicator');" +
-            "        if (popBtn) { popBtn.scrollIntoView({block:'center'}); popBtn.click(); return true; }" +
             "        var inp = autocomplete.querySelector('input');" +
-            "        if (inp) { inp.scrollIntoView({block:'center'}); inp.focus(); inp.click(); return true; }" +
+            "        if (inp) { inp.scrollIntoView({block:'center'}); return inp; }" +
             "      }" +
             "      section = section.parentElement;" +
             "    }" +
             "  }" +
             "}" +
-            "return false;");
+            "return null;");
 
-        if (Boolean.TRUE.equals(opened)) {
-            // Wait for options and select first one
-            pause(1500);
-            for (int i = 0; i < 8; i++) {
-                pause(500);
-                Boolean selected = (Boolean) js.executeScript(
-                    "var opts = document.querySelectorAll('li[role=\"option\"]');" +
-                    "if (opts.length === 0) opts = document.querySelectorAll('[class*=\"MuiAutocomplete-option\"]');" +
-                    "if (opts.length > 0) { opts[0].click(); return true; }" +
-                    "return false;");
-                if (Boolean.TRUE.equals(selected)) {
-                    System.out.println("[IssuePage] Selected consequences dropdown: true");
-                    pause(300);
-                    return;
-                }
+        if (consInput == null) {
+            System.out.println("[IssuePage] WARNING: Could not find Consequences combobox input");
+            return;
+        }
+
+        System.out.println("[IssuePage] Found Consequences combobox input, val=\"" +
+            consInput.getAttribute("value") + "\"");
+
+        // Step 2: Open dropdown via popup indicator + ArrowDown
+        js.executeScript(
+            "var inp = arguments[0];" +
+            "var autocomplete = inp.closest('.MuiAutocomplete-root');" +
+            "if (autocomplete) {" +
+            "  var popBtn = autocomplete.querySelector('.MuiAutocomplete-popupIndicator');" +
+            "  if (popBtn) popBtn.click();" +
+            "}" +
+            "inp.focus(); inp.click();" +
+            "inp.dispatchEvent(new KeyboardEvent('keydown', {key:'ArrowDown', keyCode:40, bubbles:true}));",
+            consInput);
+        pause(1500);
+
+        // Step 3: Wait up to 15 seconds for options to appear
+        boolean selected = false;
+        for (int i = 0; i < 20; i++) {
+            String diag = (String) js.executeScript(
+                "var opts = document.querySelectorAll('li[role=\"option\"]');" +
+                "var lb = document.querySelector('[role=\"listbox\"]');" +
+                "var noOpts = document.querySelectorAll('[class*=\"noOptions\"]');" +
+                "var poppers = document.querySelectorAll('[class*=\"MuiPopper\"], [class*=\"MuiAutocomplete-popper\"]');" +
+                "var info = 'opts=' + opts.length + ' listbox=' + (lb ? 'y(' + lb.children.length + ')' : 'n');" +
+                "info += ' noOpts=' + noOpts.length + ' poppers=' + poppers.length;" +
+                "if (noOpts.length > 0) info += ' noOptsText=\"' + noOpts[0].textContent.trim() + '\"';" +
+                "if (poppers.length > 0) {" +
+                "  for (var p of poppers) {" +
+                "    var r = p.getBoundingClientRect();" +
+                "    info += ' [popper w=' + Math.round(r.width) + ' h=' + Math.round(r.height) + ']';" +
+                "  }" +
+                "}" +
+                "return info;");
+            // Log diagnostic every 3rd iteration
+            if (i < 2 || i % 3 == 0) {
+                System.out.println("[IssuePage] Consequences wait " + i + ": " + diag);
             }
-            System.out.println("[IssuePage] Consequences dropdown opened but no options found");
-            js.executeScript("document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', bubbles:true}));");
-        } else {
-            System.out.println("[IssuePage] WARNING: Could not open Consequences dropdown");
+
+            // Check for "No options" message — means dropdown works but API returned empty
+            if (diag.contains("noOpts=") && !diag.contains("noOpts=0")) {
+                System.out.println("[IssuePage] Consequences dropdown shows 'No options' — will try typing");
+                break;
+            }
+
+            // Try to select an option if available
+            Boolean optionClicked = (Boolean) js.executeScript(
+                "var opts = document.querySelectorAll('li[role=\"option\"]');" +
+                "if (opts.length === 0) opts = document.querySelectorAll('[class*=\"MuiAutocomplete-option\"]');" +
+                "if (opts.length > 0) { opts[0].scrollIntoView({block:'center'}); opts[0].click(); return true; }" +
+                "return false;");
+            if (Boolean.TRUE.equals(optionClicked)) {
+                selected = true;
+                System.out.println("[IssuePage] Selected consequences dropdown option: true");
+                pause(300);
+                break;
+            }
+
+            // Every 5 iterations, re-trigger dropdown open
+            if (i == 5 || i == 10 || i == 15) {
+                js.executeScript(
+                    "var inp = arguments[0];" +
+                    "inp.focus(); inp.click();" +
+                    "var ac = inp.closest('.MuiAutocomplete-root');" +
+                    "if (ac) { var b = ac.querySelector('.MuiAutocomplete-popupIndicator'); if (b) b.click(); }" +
+                    "inp.dispatchEvent(new KeyboardEvent('keydown', {key:'ArrowDown', keyCode:40, bubbles:true}));",
+                    consInput);
+            }
+
+            pause(750);
+        }
+
+        if (selected) return;
+
+        // Step 4: Close any open dropdown, then try typing to trigger search
+        js.executeScript(
+            "var inp = arguments[0];" +
+            "inp.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape', keyCode:27, bubbles:true}));",
+            consInput);
+        pause(500);
+
+        System.out.println("[IssuePage] No options from dropdown — trying type-ahead search");
+
+        // Clear any existing value and type search text
+        String[] searchTerms = {"Safety", "Fire", "Hazard", "Damage"};
+        for (String term : searchTerms) {
+            // Clear and type using React-safe setter
+            js.executeScript(
+                "var inp = arguments[0]; var term = arguments[1];" +
+                "inp.focus(); inp.click();" +
+                "var setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;" +
+                "setter.call(inp, '');" +
+                "inp.dispatchEvent(new Event('input', {bubbles:true}));" +
+                "setter.call(inp, term);" +
+                "inp.dispatchEvent(new Event('input', {bubbles:true}));" +
+                "inp.dispatchEvent(new Event('change', {bubbles:true}));",
+                consInput, term);
+            pause(2000);
+
+            // Check for filtered options
+            Boolean hasOptions = (Boolean) js.executeScript(
+                "var opts = document.querySelectorAll('li[role=\"option\"]');" +
+                "if (opts.length > 0) { opts[0].click(); return true; }" +
+                "return false;");
+            if (Boolean.TRUE.equals(hasOptions)) {
+                selected = true;
+                System.out.println("[IssuePage] Selected consequences via type-ahead: \"" + term + "\"");
+                pause(300);
+                break;
+            }
+        }
+
+        if (selected) return;
+
+        // Step 5: Last resort — try to set the value directly via React internal state.
+        // Focus the input, type via keyboard events, then press Enter to accept.
+        System.out.println("[IssuePage] Type-ahead failed — trying direct keyboard input + Enter");
+        js.executeScript(
+            "var inp = arguments[0];" +
+            "inp.focus(); inp.click();" +
+            "// Clear first\n" +
+            "var setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;" +
+            "setter.call(inp, '');" +
+            "inp.dispatchEvent(new Event('input', {bubbles:true}));" +
+            "// Type 'Safety hazard' using keyboard events\n" +
+            "var text = 'Safety hazard';" +
+            "for (var i = 0; i < text.length; i++) {" +
+            "  var ch = text.charAt(i);" +
+            "  inp.dispatchEvent(new KeyboardEvent('keydown', {key:ch, code:'Key'+ch.toUpperCase(), bubbles:true}));" +
+            "  setter.call(inp, text.substring(0, i+1));" +
+            "  inp.dispatchEvent(new Event('input', {bubbles:true}));" +
+            "  inp.dispatchEvent(new KeyboardEvent('keyup', {key:ch, code:'Key'+ch.toUpperCase(), bubbles:true}));" +
+            "}",
+            consInput);
+        pause(2000);
+
+        // Check for options one last time
+        Boolean lastCheck = (Boolean) js.executeScript(
+            "var opts = document.querySelectorAll('li[role=\"option\"]');" +
+            "if (opts.length > 0) { opts[0].click(); return true; }" +
+            "return false;");
+        if (Boolean.TRUE.equals(lastCheck)) {
+            selected = true;
+            System.out.println("[IssuePage] Selected consequences via keyboard typing");
+            pause(300);
+            return;
+        }
+
+        // Step 6: Accept whatever is in the input by pressing Enter then Tab
+        js.executeScript(
+            "var inp = arguments[0];" +
+            "inp.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter', keyCode:13, bubbles:true}));" +
+            "inp.dispatchEvent(new KeyboardEvent('keyup', {key:'Enter', keyCode:13, bubbles:true}));",
+            consInput);
+        pause(500);
+
+        String finalVal = consInput.getAttribute("value");
+        System.out.println("[IssuePage] Consequences combobox final value: \"" + finalVal + "\"");
+
+        if (finalVal == null || finalVal.isEmpty()) {
+            // Absolute last resort: try using nativeInputValueSetter
+            System.out.println("[IssuePage] Consequences combobox still empty — using React setter fallback");
+            js.executeScript(
+                "var inp = arguments[0];" +
+                "var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+                "nativeInputValueSetter.call(inp, 'Safety hazard');" +
+                "inp.dispatchEvent(new Event('input', {bubbles: true}));" +
+                "inp.dispatchEvent(new Event('change', {bubbles: true}));" +
+                "// Also try blur to commit\n" +
+                "inp.dispatchEvent(new Event('blur', {bubbles: true}));",
+                consInput);
+            pause(500);
+            finalVal = consInput.getAttribute("value");
+            System.out.println("[IssuePage] After React setter: \"" + finalVal + "\"");
         }
     }
 
@@ -1039,73 +1206,10 @@ public class IssuePage {
             "return null;");
 
         if (submitBtn != null) {
-            // Log button state before clicking
-            String btnState = (String) js.executeScript(
-                "var b = arguments[0];" +
-                "return 'Button: text=\"' + b.textContent.trim() + '\" disabled=' + b.disabled + " +
-                "' class=\"' + b.className.substring(0,80) + '\" type=\"' + (b.type||'') + '\"';", submitBtn);
-            System.out.println("[IssuePage] " + btnState);
+            System.out.println("[IssuePage] Submit button found: " + submitBtn.getText().trim()
+                + " disabled=" + submitBtn.getAttribute("disabled"));
 
-            // Log DETAILS section to understand what fields exist there
-            String detailsDiag = (String) js.executeScript(
-                "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
-                "var drawer = null;" +
-                "for (var d of drawers) {" +
-                "  if (d.textContent.includes('Add Issue') || d.textContent.includes('BASIC INFO')) {" +
-                "    drawer = d; break;" +
-                "  }" +
-                "}" +
-                "if (!drawer) return 'No drawer';" +
-                "// Find all labels (p elements) and their associated inputs\n" +
-                "var all = drawer.querySelectorAll('p, h6, span');" +
-                "var info = 'FULL FORM LABELS: ';" +
-                "var seen = new Set();" +
-                "for (var el of all) {" +
-                "  var t = el.textContent.trim();" +
-                "  if (t.length > 1 && t.length < 40 && !seen.has(t) && t !== '​') {" +
-                "    seen.add(t);" +
-                "    info += '[' + t + '] ';" +
-                "  }" +
-                "}" +
-                "// Count required fields (with *)\n" +
-                "var reqFields = [];" +
-                "for (var el of all) {" +
-                "  var t = el.textContent.trim();" +
-                "  if (t.endsWith('*') && t.length > 1) reqFields.push(t);" +
-                "}" +
-                "info += ' REQUIRED: ' + reqFields.join(', ');" +
-                "return info;");
-            System.out.println("[IssuePage] " + detailsDiag);
-
-            // CRITICAL: Check what element is at the button's coordinates
-            String hitTestDiag = (String) js.executeScript(
-                "var btn = arguments[0];" +
-                "var r = btn.getBoundingClientRect();" +
-                "var cx = r.left + r.width/2, cy = r.top + r.height/2;" +
-                "var topEl = document.elementFromPoint(cx, cy);" +
-                "var isBtn = topEl === btn || btn.contains(topEl) || (topEl && topEl.closest && topEl.closest('button') === btn);" +
-                "var drawer = btn.closest('[class*=\"MuiDrawer-paper\"]');" +
-                "var info = 'HitTest: btn@(' + Math.round(cx) + ',' + Math.round(cy) + ') ';" +
-                "info += Math.round(r.width) + 'x' + Math.round(r.height) + ' ';" +
-                "info += 'topEl=' + (topEl ? topEl.tagName + '.' + (topEl.className||'').substring(0,50) : 'null') + ' ';" +
-                "info += 'isBtn=' + isBtn + ' ';" +
-                "if (drawer) {" +
-                "  info += 'drawer.scroll=' + drawer.scrollTop + '/' + drawer.scrollHeight + '/' + drawer.clientHeight + ' ';" +
-                "}" +
-                "// Check for ANY overlays at that point\n" +
-                "var overlays = document.querySelectorAll('[class*=\"MuiBackdrop\"], [class*=\"MuiModal\"], [class*=\"overlay\"], [role=\"presentation\"]');" +
-                "info += 'overlays(' + overlays.length + '): ';" +
-                "for (var o of overlays) {" +
-                "  var or = o.getBoundingClientRect();" +
-                "  if (or.width > 0 && or.height > 0) {" +
-                "    info += '{' + o.tagName + '.' + (o.className||'').substring(0,30) + ' ' + Math.round(or.width) + 'x' + Math.round(or.height) + ' display=' + getComputedStyle(o).display + ' pointer=' + getComputedStyle(o).pointerEvents + '} ';" +
-                "  }" +
-                "}" +
-                "return info;", submitBtn);
-            System.out.println("[IssuePage] " + hitTestDiag);
-
-            // ONLY hide .MuiBackdrop-root — do NOT hide MuiModal-root or role=presentation
-            // because the drawer is INSIDE those containers and hiding them kills the drawer!
+            // Hide backdrops that could block clicks
             js.executeScript(
                 "document.querySelectorAll('.MuiBackdrop-root').forEach(" +
                 "  function(b) { b.style.pointerEvents = 'none'; }" +
@@ -1113,93 +1217,35 @@ public class IssuePage {
             );
             pause(200);
 
-            // Try multiple click approaches
-            // Approach 1: Selenium WebElement click (trusted event)
+            // SINGLE click approach — multiple clicks can cancel/restart the API call.
+            // Use Selenium click (trusted event), falling back to Actions click.
             try {
                 submitBtn.click();
                 System.out.println("[IssuePage] Submit: Selenium click done");
             } catch (Exception e) {
-                System.out.println("[IssuePage] Submit: Selenium click failed: " + e.getMessage());
-            }
-            pause(2000);
-
-            // Check if drawer closed after approach 1
-            boolean closed = driver.findElements(By.xpath("//*[normalize-space()='Add Issue']")).isEmpty();
-            if (!closed) {
-                // Approach 2: Send Enter key on the button
+                System.out.println("[IssuePage] Submit: Selenium click failed, trying Actions: " + e.getMessage());
                 try {
-                    submitBtn.sendKeys(Keys.ENTER);
-                    System.out.println("[IssuePage] Submit: Enter key sent");
-                } catch (Exception e) {
-                    System.out.println("[IssuePage] Submit: Enter key failed: " + e.getMessage());
-                }
-                pause(2000);
-
-                closed = driver.findElements(By.xpath("//*[normalize-space()='Add Issue']")).isEmpty();
-                if (!closed) {
-                    // Approach 3: Actions moveToElement + click
-                    try {
-                        new Actions(driver).moveToElement(submitBtn).click().perform();
-                        System.out.println("[IssuePage] Submit: Actions click done");
-                    } catch (Exception e) {
-                        System.out.println("[IssuePage] Submit: Actions click failed: " + e.getMessage());
-                    }
-                    pause(2000);
-
-                    closed = driver.findElements(By.xpath("//*[normalize-space()='Add Issue']")).isEmpty();
-                    if (!closed) {
-                        // Approach 4: Directly invoke React onClick via component fiber
-                        String reactResult = (String) js.executeScript(
-                            "var btn = arguments[0];" +
-                            "// Find React fiber\n" +
-                            "var fiberKey = Object.keys(btn).find(function(k) {" +
-                            "  return k.startsWith('__reactFiber$') || k.startsWith('__reactInternalInstance$') || k.startsWith('__reactProps$');" +
-                            "});" +
-                            "if (!fiberKey) return 'No React fiber found';" +
-                            "// Try __reactProps$ first (React 18)\n" +
-                            "var propsKey = Object.keys(btn).find(function(k) { return k.startsWith('__reactProps$'); });" +
-                            "if (propsKey) {" +
-                            "  var props = btn[propsKey];" +
-                            "  if (props && props.onClick) {" +
-                            "    props.onClick({preventDefault:function(){},stopPropagation:function(){},target:btn,currentTarget:btn,nativeEvent:new MouseEvent('click')});" +
-                            "    return 'React onClick invoked via __reactProps$';" +
-                            "  }" +
-                            "}" +
-                            "// Try fiber memoizedProps\n" +
-                            "var fiber = btn[fiberKey];" +
-                            "var current = fiber;" +
-                            "for (var i = 0; i < 10; i++) {" +
-                            "  if (!current) break;" +
-                            "  var p = current.memoizedProps || current.pendingProps;" +
-                            "  if (p && p.onClick) {" +
-                            "    p.onClick({preventDefault:function(){},stopPropagation:function(){},target:btn,currentTarget:btn,nativeEvent:new MouseEvent('click')});" +
-                            "    return 'React onClick invoked via fiber depth ' + i;" +
-                            "  }" +
-                            "  current = current.return;" +
-                            "}" +
-                            "return 'No onClick found in fiber tree. Keys: ' + Object.keys(btn).filter(function(k){return k.startsWith('__react');}).join(', ');",
-                            submitBtn);
-                        System.out.println("[IssuePage] Submit: React fiber — " + reactResult);
-                    }
+                    new Actions(driver).moveToElement(submitBtn).click().perform();
+                    System.out.println("[IssuePage] Submit: Actions click done");
+                } catch (Exception e2) {
+                    System.out.println("[IssuePage] Submit: Actions click also failed: " + e2.getMessage());
                 }
             }
 
-            if (closed) {
-                System.out.println("[IssuePage] Submit SUCCESS — drawer closed");
-            }
+            // Wait longer for the API call to complete (don't re-click!)
+            pause(5000);
 
-            // Wait then check form state
-            pause(3000);
+            // Check form state after waiting
             String postClickDiag = (String) js.executeScript(
                 "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
                 "var drawer = null;" +
                 "for (var d of drawers) {" +
-                "  if (d.textContent.includes('Add Issue') || d.textContent.includes('BASIC INFO')) {" +
+                "  var r = d.getBoundingClientRect();" +
+                "  if (r.width > 400 && (d.textContent.includes('Add Issue') || d.textContent.includes('BASIC INFO'))) {" +
                 "    drawer = d; break;" +
                 "  }" +
                 "}" +
                 "if (!drawer) return 'DRAWER CLOSED (form submitted!)';" +
-                "// Check for visible error messages (not zero-width spaces)\n" +
                 "var errors = drawer.querySelectorAll('.Mui-error');" +
                 "var errInfo = 'MuiErrors(' + errors.length + '): ';" +
                 "for (var e of errors) {" +
@@ -1207,7 +1253,6 @@ public class IssuePage {
                 "  var label = parent ? (parent.querySelector('p, label') || {}).textContent : '';" +
                 "  errInfo += '[field=\"' + (label||'').trim().substring(0,30) + '\"] ';" +
                 "}" +
-                "// Check for loading/spinner indicators\n" +
                 "var loading = drawer.querySelectorAll('[class*=\"CircularProgress\"], [class*=\"loading\"]');" +
                 "errInfo += ' Loading: ' + loading.length;" +
                 "return errInfo;");
