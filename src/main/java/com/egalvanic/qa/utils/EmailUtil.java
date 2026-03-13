@@ -23,9 +23,9 @@ import java.util.Properties;
  *
  * Email format matches the eGalvanic iOS Automation test report style:
  *   Subject: eGalvanic Web Automation - Test Report - yyyyMMdd_HHmmss
- *   Body: Execution Date, Browser, Platform, Results, Attached Reports
+ *   Body: Execution Date, Browser, Platform, Attached Client Report
  *
- * Attaches Client report as HTML file.
+ * Attaches Client report only (Detailed report stays internal for QA).
  * Controlled by AppConstants.SEND_EMAIL_ENABLED flag.
  *
  * Gmail requires an App Password (not your regular password).
@@ -40,11 +40,11 @@ public class EmailUtil {
     private EmailUtil() {}
 
     /**
-     * Send test report email with report files attached.
+     * Send test report email with Client report attached.
      * Matches the eGalvanic iOS Automation email format.
      *
-     * @param detailedReportPath path to the detailed HTML report
-     * @param clientReportPath   path to the client HTML report
+     * @param detailedReportPath path to the detailed HTML report (not attached)
+     * @param clientReportPath   path to the client HTML report (attached)
      * @param passed             number of passed tests
      * @param failed             number of failed tests
      * @param skipped            number of skipped tests
@@ -103,12 +103,10 @@ public class EmailUtil {
 
             // HTML body (matching iOS test report email format)
             MimeBodyPart htmlBody = new MimeBodyPart();
-            htmlBody.setContent(
-                    buildEmailBody(passed, failed, skipped, detailedReportPath, clientReportPath, reportTimestamp),
-                    "text/html; charset=utf-8");
+            htmlBody.setContent(buildEmailBody(reportTimestamp), "text/html; charset=utf-8");
             multipart.addBodyPart(htmlBody);
 
-            // Attach client report
+            // Attach client report only (detailed report is internal for QA)
             if (clientReportPath != null) {
                 File clientFile = new File(clientReportPath);
                 if (clientFile.exists()) {
@@ -117,18 +115,6 @@ public class EmailUtil {
                     attachment.setFileName("Client_Report_" + reportTimestamp + ".html");
                     multipart.addBodyPart(attachment);
                     System.out.println("[Email] Attached: " + clientFile.getName());
-                }
-            }
-
-            // Attach detailed report
-            if (detailedReportPath != null) {
-                File detailedFile = new File(detailedReportPath);
-                if (detailedFile.exists()) {
-                    MimeBodyPart attachment = new MimeBodyPart();
-                    attachment.attachFile(detailedFile);
-                    attachment.setFileName("Detailed_Report_" + reportTimestamp + ".html");
-                    multipart.addBodyPart(attachment);
-                    System.out.println("[Email] Attached: " + detailedFile.getName());
                 }
             }
 
@@ -154,27 +140,13 @@ public class EmailUtil {
      *   Execution Date: [date/time]
      *   Browser: [browser]
      *   Platform: [platform]
-     *   [Results Table]
      *   Please find the attached test reports:
      *   • Client Report
-     *   • Detailed Report
      */
-    private static String buildEmailBody(int passed, int failed, int skipped,
-                                         String detailedPath, String clientPath,
-                                         String reportTimestamp) {
-        int total = passed + failed + skipped;
-        String status = failed > 0 ? "SOME TESTS FAILED" : "ALL TESTS PASSED";
-        String statusColor = failed > 0 ? "#dc3545" : "#28a745";
-        String statusEmoji = failed > 0 ? "&#10060;" : "&#9989;";
+    private static String buildEmailBody(String reportTimestamp) {
         String executionDate = new SimpleDateFormat("MMMM dd, yyyy HH:mm").format(new Date());
         String browser = capitalize(AppConstants.BROWSER);
         String platform = System.getProperty("os.name") + " " + System.getProperty("os.arch");
-        String executedBy = System.getProperty("user.name");
-
-        // GitHub Actions info (if running in CI)
-        String repoUrl = System.getenv("GITHUB_SERVER_URL");
-        String repoName = System.getenv("GITHUB_REPOSITORY");
-        String runId = System.getenv("GITHUB_RUN_ID");
 
         StringBuilder sb = new StringBuilder();
         sb.append("<!DOCTYPE html><html><head><meta charset='utf-8'></head>");
@@ -194,85 +166,34 @@ public class EmailUtil {
         sb.append("</div>");
 
         // ============================================================
-        // STATUS BANNER
-        // ============================================================
-        sb.append("<div style='background:").append(statusColor);
-        sb.append(";color:#ffffff;padding:14px 30px;font-size:15px;font-weight:600;'>");
-        sb.append(statusEmoji).append(" ").append(status);
-        sb.append("</div>");
-
-        // ============================================================
         // EXECUTION INFO — Matches iOS format
         // ============================================================
-        sb.append("<div style='padding:24px 30px 0 30px;'>");
+        sb.append("<div style='padding:24px 30px;'>");
 
-        // Execution Date
         sb.append("<table style='width:100%;border-collapse:collapse;margin-bottom:20px;'>");
         appendInfoRow(sb, "Execution Date", executionDate);
         appendInfoRow(sb, "Browser", browser);
         appendInfoRow(sb, "Platform", platform);
-        appendInfoRow(sb, "Environment", AppConstants.BASE_URL);
-        appendInfoRow(sb, "Executed By", executedBy);
         sb.append("</table>");
-
-        // ============================================================
-        // RESULTS TABLE
-        // ============================================================
-        sb.append("<div style='background:#f8f9fa;border-radius:6px;padding:16px 20px;margin-bottom:20px;'>");
-        sb.append("<h3 style='margin:0 0 12px 0;font-size:14px;color:#2c3e50;font-weight:600;'>Test Results</h3>");
-        sb.append("<table style='width:100%;border-collapse:collapse;'>");
-
-        // Total
-        sb.append("<tr>");
-        sb.append("<td style='padding:8px 0;color:#333;font-size:14px;'>Total Tests</td>");
-        sb.append("<td style='padding:8px 0;font-weight:700;text-align:right;font-size:14px;color:#333;'>");
-        sb.append(total).append("</td></tr>");
-
-        // Passed
-        sb.append("<tr>");
-        sb.append("<td style='padding:8px 0;color:#28a745;font-size:14px;'>&#9989; Passed</td>");
-        sb.append("<td style='padding:8px 0;font-weight:700;text-align:right;font-size:14px;color:#28a745;'>");
-        sb.append(passed).append("</td></tr>");
-
-        // Failed
-        if (failed > 0) {
-            sb.append("<tr>");
-            sb.append("<td style='padding:8px 0;color:#dc3545;font-size:14px;'>&#10060; Failed</td>");
-            sb.append("<td style='padding:8px 0;font-weight:700;text-align:right;font-size:14px;color:#dc3545;'>");
-            sb.append(failed).append("</td></tr>");
-        }
-
-        // Skipped
-        if (skipped > 0) {
-            sb.append("<tr>");
-            sb.append("<td style='padding:8px 0;color:#ffc107;font-size:14px;'>&#9888; Skipped</td>");
-            sb.append("<td style='padding:8px 0;font-weight:700;text-align:right;font-size:14px;color:#ffc107;'>");
-            sb.append(skipped).append("</td></tr>");
-        }
-
-        sb.append("</table>");
-        sb.append("</div>"); // end results box
 
         // ============================================================
         // ATTACHED REPORTS — Matches iOS format
         // ============================================================
         sb.append("<p style='color:#333;font-size:14px;margin:20px 0 8px;font-weight:500;'>");
         sb.append("Please find the attached test reports:</p>");
-        sb.append("<ul style='color:#555;font-size:13px;margin:0 0 20px 0;padding-left:20px;line-height:1.8;'>");
-        if (clientPath != null) {
-            sb.append("<li><strong>Client Report</strong> — Pass/Fail summary for stakeholders</li>");
-        }
-        if (detailedPath != null) {
-            sb.append("<li><strong>Detailed Report</strong> — Full execution details with screenshots</li>");
-        }
+        sb.append("<ul style='color:#555;font-size:13px;margin:0 0 10px 0;padding-left:20px;line-height:1.8;'>");
+        sb.append("<li><strong>Client Report</strong></li>");
         sb.append("</ul>");
 
         // ============================================================
         // GITHUB ACTIONS LINK (CI only)
         // ============================================================
+        String repoUrl = System.getenv("GITHUB_SERVER_URL");
+        String repoName = System.getenv("GITHUB_REPOSITORY");
+        String runId = System.getenv("GITHUB_RUN_ID");
         if (repoUrl != null && repoName != null && runId != null) {
             String actionsUrl = repoUrl + "/" + repoName + "/actions/runs/" + runId;
-            sb.append("<p style='margin:10px 0 20px;'>");
+            sb.append("<p style='margin:10px 0 0;'>");
             sb.append("<a href='").append(actionsUrl).append("' ");
             sb.append("style='display:inline-block;background:#007bff;color:#ffffff;");
             sb.append("padding:10px 20px;border-radius:5px;text-decoration:none;font-size:13px;font-weight:500;'>");
@@ -286,8 +207,7 @@ public class EmailUtil {
         // ============================================================
         sb.append("<div style='background:#f8f9fa;padding:16px 30px;border-top:1px solid #e9ecef;");
         sb.append("font-size:11px;color:#999;text-align:center;'>");
-        sb.append("Sent by <strong>eGalvanic Web Automation Framework</strong><br>");
-        sb.append(AppConstants.BASE_URL);
+        sb.append("Sent by <strong>eGalvanic Web Automation Framework</strong>");
         sb.append("</div>");
 
         sb.append("</div>"); // end main container
