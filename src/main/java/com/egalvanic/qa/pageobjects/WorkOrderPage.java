@@ -975,7 +975,7 @@ public class WorkOrderPage {
      */
     public boolean waitForEditSuccess() {
         for (int i = 0; i < 15; i++) {
-            // Check 1: Success toast/snackbar (specific elements only, not body text)
+            // Check 1: Success toast/snackbar
             try {
                 Boolean hasToast = (Boolean) js.executeScript(
                     "var snackbars = document.querySelectorAll('[class*=\"Snackbar\"], [class*=\"MuiAlert\"], [class*=\"notistack\"], [class*=\"toast\"], [class*=\"alert-success\"]');" +
@@ -991,35 +991,33 @@ public class WorkOrderPage {
                 }
             } catch (Exception ignored) {}
 
-            // Check 2: Save button is gone (replaced by Edit button) = back to view mode
+            // Check 2: Save/Update/Cancel buttons are gone = exited edit mode
             Boolean saveGone = (Boolean) js.executeScript(
-                "var hasSave = false; var hasEdit = false;" +
+                "var hasSave = false;" +
                 "var btns = document.querySelectorAll('button');" +
                 "for (var b of btns) {" +
                 "  var t = b.textContent.trim();" +
-                "  if (t === 'Save' || t === 'Update' || t === 'Save Changes') hasSave = true;" +
-                "  if (t === 'Edit' || t === 'Edit Work Order' || t === 'Edit Job') hasEdit = true;" +
+                "  if (t === 'Save' || t === 'Update' || t === 'Save Changes' || t === 'Cancel') hasSave = true;" +
                 "}" +
-                "return !hasSave && hasEdit;");
+                "return !hasSave;");
             if (Boolean.TRUE.equals(saveGone)) {
-                System.out.println("[WorkOrderPage] Edit success — Save button gone, Edit button present");
+                System.out.println("[WorkOrderPage] Edit success — Save/Cancel buttons gone (back to view mode)");
                 return true;
             }
 
-            // Check 3: No more editable form (no focused/active textareas)
-            if (i >= 5) {
-                Boolean noEditMode = (Boolean) js.executeScript(
-                    "var editIndicators = document.querySelectorAll('input:not([type=\"hidden\"]):not([type=\"file\"]):focus, textarea:focus');" +
-                    "return editIndicators.length === 0;");
-                Boolean editBtnPresent = (Boolean) js.executeScript(
-                    "var btns = document.querySelectorAll('button');" +
-                    "for (var b of btns) {" +
-                    "  if (b.textContent.trim() === 'Edit' || b.textContent.trim() === 'Edit Work Order') return true;" +
-                    "}" +
-                    "return false;");
-                if (Boolean.TRUE.equals(editBtnPresent)) {
-                    System.out.println("[WorkOrderPage] Edit success — Edit button visible (iteration " + i + ")");
-                    return true;
+            // Check 3: No more editable form fields (textareas gone, no focused inputs)
+            if (i >= 3) {
+                Boolean noEditableFields = (Boolean) js.executeScript(
+                    "var tas = document.querySelectorAll('textarea:not([aria-hidden=\"true\"])');" +
+                    "var visibleTas = 0;" +
+                    "for (var ta of tas) { if (ta.getBoundingClientRect().width > 50) visibleTas++; }" +
+                    "return visibleTas === 0;");
+                if (Boolean.TRUE.equals(saveGone) || Boolean.TRUE.equals(noEditableFields)) {
+                    // Double-check: still on the detail page
+                    if (driver.getCurrentUrl().contains("/sessions/")) {
+                        System.out.println("[WorkOrderPage] Edit success — no editable fields, still on detail page (iteration " + i + ")");
+                        return true;
+                    }
                 }
             }
             pause(1000);
