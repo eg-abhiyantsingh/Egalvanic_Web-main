@@ -697,6 +697,41 @@ public class WorkOrderPage {
      * Returns true if a field was found and edited, false otherwise.
      */
     public boolean editDescription(String newDescription) {
+        // The description field in edit mode may use click-to-edit:
+        // The value is displayed as text, and clicking it activates an inline editor.
+
+        // Strategy 0: Click on the Description value text to activate inline editing
+        Boolean clickedDescValue = (Boolean) js.executeScript(
+            "var labels = document.querySelectorAll('p, label, span, h6, div');" +
+            "for (var l of labels) {" +
+            "  var t = l.textContent.trim();" +
+            "  if (t === 'Description' || t === 'Description*') {" +
+            "    // Look for the sibling/adjacent value element to click\n" +
+            "    var parent = l.parentElement;" +
+            "    for (var up = 0; up < 5; up++) {" +
+            "      if (!parent) break;" +
+            "      // Find all text-bearing siblings that aren't the label itself\n" +
+            "      var children = parent.querySelectorAll('p, span, div');" +
+            "      for (var c of children) {" +
+            "        if (c === l || c.contains(l) || l.contains(c)) continue;" +
+            "        var ct = c.textContent.trim();" +
+            "        var r = c.getBoundingClientRect();" +
+            "        if (ct.length > 0 && ct !== 'Description' && r.width > 50 && r.height > 10) {" +
+            "          c.scrollIntoView({block:'center'});" +
+            "          c.click();" +
+            "          return true;" +
+            "        }" +
+            "      }" +
+            "      parent = parent.parentElement;" +
+            "    }" +
+            "  }" +
+            "}" +
+            "return false;");
+        if (Boolean.TRUE.equals(clickedDescValue)) {
+            System.out.println("[WorkOrderPage] Clicked description value to activate inline edit");
+            try { Thread.sleep(1000); } catch (Exception ignored) {}
+        }
+
         // Strategy 1: Try XPath locator first (short timeout — 5s)
         WebElement el = null;
         try {
@@ -706,31 +741,33 @@ public class WorkOrderPage {
             System.out.println("[WorkOrderPage] Description XPath not found, trying JS approach");
         }
 
-        // Strategy 2: Find via JS — look for textarea/input near "Description" label
+        // Strategy 2: Find via JS — textarea, input, or contentEditable near "Description" label
         if (el == null) {
             el = (WebElement) js.executeScript(
-                "var labels = document.querySelectorAll('p, label, span, h6');" +
+                "var labels = document.querySelectorAll('p, label, span, h6, div');" +
                 "for (var l of labels) {" +
                 "  var t = l.textContent.trim();" +
                 "  if (t === 'Description' || t === 'Description*') {" +
                 "    var container = l.closest('.MuiFormControl-root') || l.closest('[class*=\"MuiGrid\"]') || l.parentElement;" +
-                "    for (var up = 0; up < 5; up++) {" +
+                "    for (var up = 0; up < 6; up++) {" +
                 "      if (!container) break;" +
                 "      var ta = container.querySelector('textarea:not([aria-hidden=\"true\"])');" +
                 "      if (ta && ta.getBoundingClientRect().width > 50) { ta.scrollIntoView({block:'center'}); return ta; }" +
-                "      var inp = container.querySelector('input[type=\"text\"]');" +
-                "      if (inp && inp.getBoundingClientRect().width > 50) { inp.scrollIntoView({block:'center'}); return inp; }" +
+                "      var inp = container.querySelector('input[type=\"text\"]:not([disabled])');" +
+                "      if (inp && inp.getBoundingClientRect().width > 50 && (inp.placeholder||'').indexOf('Search') === -1) { inp.scrollIntoView({block:'center'}); return inp; }" +
+                "      var ce = container.querySelector('[contenteditable=\"true\"]');" +
+                "      if (ce && ce.getBoundingClientRect().width > 50) { ce.scrollIntoView({block:'center'}); return ce; }" +
                 "      container = container.parentElement;" +
                 "    }" +
                 "  }" +
                 "}" +
-                "// Fallback: any visible textarea on the page\n" +
+                "// Fallback: any visible textarea\n" +
                 "var textareas = document.querySelectorAll('textarea:not([aria-hidden=\"true\"])');" +
                 "for (var ta of textareas) {" +
                 "  var r = ta.getBoundingClientRect();" +
                 "  if (r.width > 100 && r.height > 20) { ta.scrollIntoView({block:'center'}); return ta; }" +
                 "}" +
-                "// Fallback: contentEditable div\n" +
+                "// Fallback: contentEditable\n" +
                 "var editables = document.querySelectorAll('[contenteditable=\"true\"]');" +
                 "for (var ed of editables) {" +
                 "  var r = ed.getBoundingClientRect();" +
@@ -798,11 +835,12 @@ public class WorkOrderPage {
             "    }" +
             "  }" +
             "}" +
-            "// Fallback: any enabled, visible text input\n" +
+            "// Fallback: any enabled, visible text input (exclude search bars)\n" +
             "var inputs = document.querySelectorAll('input[type=\"text\"]:not([disabled]):not([readonly])');" +
             "for (var inp of inputs) {" +
             "  var r = inp.getBoundingClientRect();" +
-            "  if (r.width > 100 && r.height > 10) { inp.scrollIntoView({block:'center'}); return inp; }" +
+            "  var ph = (inp.placeholder||'').toLowerCase();" +
+            "  if (r.width > 100 && r.height > 10 && ph.indexOf('search') === -1) { inp.scrollIntoView({block:'center'}); return inp; }" +
             "}" +
             "// Fallback: textarea\n" +
             "var tas = document.querySelectorAll('textarea:not([aria-hidden=\"true\"]):not([disabled])');" +
