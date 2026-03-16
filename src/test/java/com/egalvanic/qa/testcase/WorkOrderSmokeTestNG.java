@@ -28,7 +28,7 @@ public class WorkOrderSmokeTestNG extends BaseTest {
     // Test data
     private static final String TEST_ASSET_NAME = "ATS";
     private static final String TEST_PRIORITY = "High";
-    private static final String TEST_PHOTO_PATH = "src/test/resources/test-photo.jpg";
+    private static final String TEST_PHOTO_PATH = "src/test/resources/s1.jpeg";
 
     // Track created work order across tests
     private String createdWorkOrderName;

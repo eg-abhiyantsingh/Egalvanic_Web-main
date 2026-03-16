@@ -1065,7 +1065,7 @@ public class WorkOrderPage {
         System.out.println("[WorkOrderPage] Uploading IR photo from: " + absolutePath);
 
         try {
-            // Make hidden file input visible
+            // Make hidden file inputs visible so we can send keys to them
             js.executeScript(
                 "var inputs = document.querySelectorAll('input[type=\"file\"]');" +
                 "for (var input of inputs) {" +
@@ -1081,28 +1081,38 @@ public class WorkOrderPage {
             List<WebElement> fileInputs = driver.findElements(PHOTO_UPLOAD_INPUT);
             if (!fileInputs.isEmpty()) {
                 fileInputs.get(0).sendKeys(absolutePath);
-                System.out.println("[WorkOrderPage] IR photo file sent to file input");
-                pause(3000);
+                System.out.println("[WorkOrderPage] File sent to input (" + fileInputs.size() + " file inputs found)");
+                pause(2000);
             } else {
-                // Try clicking an upload button
-                js.executeScript(
+                System.out.println("[WorkOrderPage] WARNING: No file input found for IR photo upload");
+                return;
+            }
+
+            // After file selection, the "Upload IR Photos" dialog appears
+            // Need to click the "Upload" button in the dialog to confirm
+            boolean uploaded = false;
+            for (int attempt = 0; attempt < 5; attempt++) {
+                Boolean clicked = (Boolean) js.executeScript(
                     "var btns = document.querySelectorAll('button');" +
                     "for (var b of btns) {" +
-                    "  var text = b.textContent.trim().toLowerCase();" +
-                    "  if (text.includes('upload') || text.includes('photo') || text.includes('add photo') || text.includes('ir photo')) {" +
-                    "    b.click(); return;" +
+                    "  var text = b.textContent.trim();" +
+                    "  var r = b.getBoundingClientRect();" +
+                    "  if (r.width > 0 && (text === 'Upload' || text === 'Confirm Upload' || text === 'Submit')) {" +
+                    "    b.click(); return true;" +
                     "  }" +
-                    "}");
-                pause(1000);
-                fileInputs = driver.findElements(PHOTO_UPLOAD_INPUT);
-                if (!fileInputs.isEmpty()) {
-                    fileInputs.get(0).sendKeys(absolutePath);
-                    System.out.println("[WorkOrderPage] IR photo file sent (after clicking upload button)");
-                    pause(3000);
-                } else {
-                    System.out.println("[WorkOrderPage] WARNING: No file input found for IR photo upload");
+                    "}" +
+                    "return false;");
+                if (Boolean.TRUE.equals(clicked)) {
+                    System.out.println("[WorkOrderPage] Clicked Upload button in dialog");
+                    uploaded = true;
+                    break;
                 }
+                pause(1000);
             }
+            if (!uploaded) {
+                System.out.println("[WorkOrderPage] WARNING: Upload confirmation button not found");
+            }
+            pause(3000);
         } catch (Exception e) {
             System.out.println("[WorkOrderPage] IR photo upload error: " + e.getMessage());
         }
