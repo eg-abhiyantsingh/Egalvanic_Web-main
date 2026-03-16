@@ -315,58 +315,85 @@ public class WorkOrderSmokeTestNG extends BaseTest {
 
             // 2. Open work order detail
             workOrderPage.openFirstWorkOrderDetail();
+            workOrderPage.dismissPopups();
             logStep("Opened work order detail page");
 
-            // 3. Navigate to IR Photos section first, then count
+            // 3. Click IR Photos tab
             workOrderPage.navigateToIRPhotosSection();
-            logStep("Navigated to IR Photos section");
+            logStep("Navigated to IR Photos tab");
             pause(2000);
+
+            // 4. Diagnostic: log what's visible on the IR Photos tab
+            org.openqa.selenium.JavascriptExecutor jsExec = (org.openqa.selenium.JavascriptExecutor) driver;
+            {
+                String tabDiag = (String) jsExec.executeScript(
+                    "var info = 'TABS: ';" +
+                    "var tabs = document.querySelectorAll('[class*=\"MuiTab\"], [role=\"tab\"]');" +
+                    "for (var t of tabs) {" +
+                    "  var text = t.textContent.trim();" +
+                    "  var selected = t.getAttribute('aria-selected') || t.classList.contains('Mui-selected');" +
+                    "  if (text.length > 0 && text.length < 30) info += '[' + text + (selected === 'true' ? '*' : '') + '] ';" +
+                    "}" +
+                    "info += ' FILE_INPUTS: ';" +
+                    "var fileInputs = document.querySelectorAll('input[type=\"file\"]');" +
+                    "info += fileInputs.length;" +
+                    "info += ' UPLOAD_BTNS: ';" +
+                    "var btns = document.querySelectorAll('button');" +
+                    "for (var b of btns) {" +
+                    "  var t = b.textContent.trim().toLowerCase();" +
+                    "  var r = b.getBoundingClientRect();" +
+                    "  if (r.width > 0 && (t.includes('upload') || t.includes('photo') || t.includes('add') || t.includes('import') || t.includes('browse'))) {" +
+                    "    info += '[' + b.textContent.trim() + '] ';" +
+                    "  }" +
+                    "}" +
+                    "info += ' VISIBLE_TEXT: ';" +
+                    "var mainContent = document.querySelector('[class*=\"tabpanel\"], [role=\"tabpanel\"]');" +
+                    "if (mainContent) info += mainContent.textContent.trim().substring(0, 200);" +
+                    "else info += document.body.textContent.substring(document.body.textContent.indexOf('IR Photo'), document.body.textContent.indexOf('IR Photo') + 200);" +
+                    "return info;");
+                logStep("IR PHOTOS TAB: " + tabDiag);
+            }
+            logStepWithScreenshot("IR Photos tab content");
 
             int photoBefore = workOrderPage.getIRPhotoCount();
             logStep("IR photo count before upload: " + photoBefore);
 
-            // 4. Upload IR photo
+            // 5. Upload IR photo
             workOrderPage.uploadIRPhoto(TEST_PHOTO_PATH);
             logStep("IR photo upload initiated");
 
-            // 5. Wait longer for upload to complete (file upload + API call + render)
+            // 6. Wait for upload to complete
             pause(5000);
 
-            // 6. Verify photo appears — check with extended retries
+            // 7. Verify photo appears
             int photoAfter = workOrderPage.getIRPhotoCount();
             logStep("IR photo count after upload: " + photoAfter);
             logStepWithScreenshot("After IR photo upload");
 
-            // Log page diagnostic for debugging if count didn't change
+            // If count didn't change, log more diagnostic info
             if (photoAfter <= photoBefore) {
-                org.openqa.selenium.JavascriptExecutor jsExec = (org.openqa.selenium.JavascriptExecutor) driver;
                 String diag = (String) jsExec.executeScript(
                     "var info = 'IMGS: ';" +
                     "var imgs = document.querySelectorAll('img');" +
                     "for (var img of imgs) {" +
                     "  var r = img.getBoundingClientRect();" +
-                    "  if (r.width > 20) info += '{src=\"' + (img.src||'').substring(0,50) + '\" w=' + Math.round(r.width) + 'x' + Math.round(r.height) + '} ';" +
+                    "  if (r.width > 20) info += '{src=\"' + (img.src||'').substring(0,60) + '\" w=' + Math.round(r.width) + 'x' + Math.round(r.height) + '} ';" +
                     "}" +
                     "var fileInputs = document.querySelectorAll('input[type=\"file\"]');" +
-                    "info += ' FILES(' + fileInputs.length + '): ';" +
-                    "for (var f of fileInputs) info += '{accept=\"' + (f.accept||'any') + '\" val=\"' + (f.value||'').substring(0,30) + '\"} ';" +
-                    "// Check for any upload-related buttons\n" +
-                    "var btns = document.querySelectorAll('button');" +
-                    "info += ' BTNS: ';" +
-                    "for (var b of btns) {" +
-                    "  var t = b.textContent.trim().toLowerCase();" +
-                    "  if (t.includes('upload') || t.includes('photo') || t.includes('save') || t.includes('add')) {" +
-                    "    info += '[' + b.textContent.trim() + '] ';" +
-                    "  }" +
-                    "}" +
+                    "info += ' FILES(' + fileInputs.length + ')';" +
                     "return info;");
                 logStep("IR Photo DIAGNOSTIC: " + diag);
+
+                // Retry: refresh and check again
+                workOrderPage.navigateToIRPhotosSection();
+                pause(3000);
+                photoAfter = workOrderPage.getIRPhotoCount();
+                logStep("IR photo count after re-navigate: " + photoAfter);
             }
 
-            // Accept: photo count increased OR at least one photo visible (may already have had photos)
+            // Accept: photo count increased OR at least one photo exists
             boolean photoVisible = photoAfter > photoBefore || photoAfter > 0;
             if (!photoVisible) {
-                // Final attempt: check if any new img appeared via broader check
                 photoVisible = workOrderPage.isIRPhotoVisible();
             }
             Assert.assertTrue(photoVisible, "Uploaded IR photo not visible (before=" + photoBefore + " after=" + photoAfter + ")");
@@ -375,7 +402,8 @@ public class WorkOrderSmokeTestNG extends BaseTest {
             ExtentReportManager.logPass("IR photo upload verified. Before: " + photoBefore + ", After: " + photoAfter);
 
         } catch (Exception e) {
-            ScreenshotUtil.captureScreenshot("workorder_irphotos_error");
+            ScreenshotUtil.captureScreenshot("testIRPhotos_FAIL_" +
+                new java.text.SimpleDateFormat("yyyyMMdd_HHmmss").format(new java.util.Date()));
             Assert.fail("IR Photos test failed: " + e.getMessage());
         }
     }
