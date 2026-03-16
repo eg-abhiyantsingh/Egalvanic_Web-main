@@ -647,9 +647,48 @@ public class WorkOrderPage {
     // ================================================================
 
     /**
+     * Dismiss any "What's new" or announcement popups that overlay the page.
+     */
+    public void dismissPopups() {
+        try {
+            Boolean dismissed = (Boolean) js.executeScript(
+                "// Close 'What's new on Z platform' or similar announcement modals\n" +
+                "var closeBtns = document.querySelectorAll('button, [role=\"button\"], svg');" +
+                "for (var b of closeBtns) {" +
+                "  var r = b.getBoundingClientRect();" +
+                "  // Look for X/close button inside a modal/popup\n" +
+                "  var text = (b.textContent || '').trim();" +
+                "  var ariaLabel = (b.getAttribute('aria-label') || '').toLowerCase();" +
+                "  if (ariaLabel.includes('close') || text === '✕' || text === '×' || text === 'X' || text === 'x') {" +
+                "    b.click(); return true;" +
+                "  }" +
+                "}" +
+                "// Also try clicking the X icon in any dialog/modal\n" +
+                "var dialogs = document.querySelectorAll('[class*=\"modal\"], [class*=\"Modal\"], [class*=\"dialog\"], [class*=\"Dialog\"], [class*=\"popup\"], [class*=\"Popup\"], [class*=\"whatsnew\"], [class*=\"announcement\"]');" +
+                "for (var d of dialogs) {" +
+                "  var r = d.getBoundingClientRect();" +
+                "  if (r.width > 100) {" +
+                "    var closeBtn = d.querySelector('[aria-label*=\"close\" i], [aria-label*=\"Close\"], button:last-child');" +
+                "    if (closeBtn) { closeBtn.click(); return true; }" +
+                "  }" +
+                "}" +
+                "return false;");
+            if (Boolean.TRUE.equals(dismissed)) {
+                System.out.println("[WorkOrderPage] Dismissed popup/modal");
+                pause(500);
+            }
+        } catch (Exception ignored) {}
+    }
+
+    /**
      * Click the Edit button on the detail page.
+     * Tries: 1) Direct Edit button  2) Kebab menu (⋮) → Edit menu item
      */
     public void clickEdit() {
+        // First dismiss any popups blocking the page
+        dismissPopups();
+
+        // Strategy 1: Direct Edit button
         Boolean clicked = (Boolean) js.executeScript(
             "var btns = document.querySelectorAll('button');" +
             "for (var b of btns) {" +
@@ -659,24 +698,79 @@ public class WorkOrderPage {
             "  }" +
             "}" +
             "return false;");
-        if (!Boolean.TRUE.equals(clicked)) {
-            // Try kebab/icon menu
-            js.executeScript(
-                "var iconBtns = document.querySelectorAll('[class*=\"MuiIconButton\"]');" +
-                "for (var b of iconBtns) {" +
-                "  var r = b.getBoundingClientRect();" +
-                "  if (r.width > 20 && r.width < 50 && r.top < 200) {" +
-                "    b.click(); break;" +
-                "  }" +
-                "}");
-            pause(500);
-            js.executeScript(
-                "var items = document.querySelectorAll('li[role=\"menuitem\"], [class*=\"MuiMenuItem\"]');" +
-                "for (var i of items) {" +
-                "  if (i.textContent.trim().includes('Edit')) { i.click(); return; }" +
-                "}");
+
+        if (Boolean.TRUE.equals(clicked)) {
+            System.out.println("[WorkOrderPage] Clicked direct Edit button");
+            pause(1500);
+            System.out.println("[WorkOrderPage] Edit mode entered");
+            return;
         }
-        pause(1500);
+
+        // Strategy 2: Click kebab menu (⋮) — the 3-dot icon in top-right of detail page
+        System.out.println("[WorkOrderPage] No direct Edit button, trying kebab menu (⋮)");
+        Boolean kebabClicked = (Boolean) js.executeScript(
+            "// Find the kebab/more icon button — usually near the top-right with aria-label or SVG\n" +
+            "var btns = document.querySelectorAll('button, [role=\"button\"]');" +
+            "var candidates = [];" +
+            "for (var b of btns) {" +
+            "  var r = b.getBoundingClientRect();" +
+            "  var text = b.textContent.trim();" +
+            "  var ariaLabel = (b.getAttribute('aria-label') || '').toLowerCase();" +
+            "  // Kebab menu: small button, near top, has MoreVert icon or aria-label\n" +
+            "  if (r.width > 15 && r.width < 60 && r.top < 300 && r.right > window.innerWidth - 200) {" +
+            "    // Check if it has SVG (icon button) or specific aria labels\n" +
+            "    var hasSvg = b.querySelector('svg') !== null;" +
+            "    if (hasSvg && (text.length === 0 || text === '⋮' || text === '...')) {" +
+            "      candidates.push({el: b, right: r.right});" +
+            "    }" +
+            "    if (ariaLabel.includes('more') || ariaLabel.includes('menu') || ariaLabel.includes('option')) {" +
+            "      candidates.push({el: b, right: r.right});" +
+            "    }" +
+            "  }" +
+            "}" +
+            "// Click the rightmost candidate (most likely the kebab)\n" +
+            "if (candidates.length > 0) {" +
+            "  candidates.sort(function(a,b) { return b.right - a.right; });" +
+            "  candidates[0].el.click();" +
+            "  return true;" +
+            "}" +
+            "return false;");
+
+        if (Boolean.TRUE.equals(kebabClicked)) {
+            System.out.println("[WorkOrderPage] Clicked kebab menu");
+            pause(1000);
+
+            // Now look for Edit in the dropdown menu
+            String menuItems = (String) js.executeScript(
+                "var items = document.querySelectorAll('li[role=\"menuitem\"], [class*=\"MuiMenuItem\"], [class*=\"menuitem\"], [role=\"option\"]');" +
+                "var info = '';" +
+                "for (var i of items) {" +
+                "  var r = i.getBoundingClientRect();" +
+                "  if (r.width > 0) info += '[' + i.textContent.trim() + '] ';" +
+                "}" +
+                "return info;");
+            System.out.println("[WorkOrderPage] Kebab menu items: " + menuItems);
+
+            Boolean editClicked = (Boolean) js.executeScript(
+                "var items = document.querySelectorAll('li[role=\"menuitem\"], [class*=\"MuiMenuItem\"], [class*=\"menuitem\"], [role=\"option\"]');" +
+                "for (var i of items) {" +
+                "  var text = i.textContent.trim();" +
+                "  if (text === 'Edit' || text === 'Edit Work Order' || text === 'Edit Job' || text.includes('Edit')) {" +
+                "    i.click(); return true;" +
+                "  }" +
+                "}" +
+                "return false;");
+
+            if (Boolean.TRUE.equals(editClicked)) {
+                System.out.println("[WorkOrderPage] Selected Edit from kebab menu");
+            } else {
+                System.out.println("[WorkOrderPage] No Edit option in kebab menu");
+            }
+        } else {
+            System.out.println("[WorkOrderPage] No kebab menu found");
+        }
+
+        pause(2000);
         System.out.println("[WorkOrderPage] Edit mode entered");
     }
 
