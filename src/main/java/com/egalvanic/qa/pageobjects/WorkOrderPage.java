@@ -91,6 +91,18 @@ public class WorkOrderPage {
             + " or @placeholder='Select an assignee' or @placeholder='Assign to']"
             + " | //label[contains(text(),'Assign')]/following::input[1]");
 
+    // Facility dropdown (required field on Create form)
+    private static final By FACILITY_INPUT = By.xpath(
+            "//label[contains(text(),'Facility')]/following::input[1]"
+            + " | //input[@placeholder='Select facility' or @placeholder='Facility'"
+            + " or @placeholder='Select a facility']");
+
+    // Photo Type dropdown (required field on Create form)
+    private static final By PHOTO_TYPE_INPUT = By.xpath(
+            "//label[contains(text(),'Photo Type')]/following::input[1]"
+            + " | //input[@placeholder='Photo Type' or @placeholder='Select photo type'"
+            + " or @placeholder='Select Photo Type']");
+
     // Search
     private static final By SEARCH_INPUT = By.xpath(
             "//input[contains(@placeholder,'Search') or contains(@placeholder,'search')]");
@@ -211,18 +223,20 @@ public class WorkOrderPage {
         );
         pause(2000);
 
-        // Wait for form drawer to appear using JS polling (more reliable than XPath waits)
-        boolean drawerFound = false;
+        // Wait for form to appear — could be a drawer (MuiDrawer) or dialog (MuiDialog)
+        boolean formFound = false;
         for (int i = 0; i < 20; i++) {
             Boolean found = (Boolean) js.executeScript(
-                "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
-                "for (var d of drawers) {" +
+                "var containers = document.querySelectorAll(" +
+                "  '[class*=\"MuiDrawer-paper\"], [class*=\"MuiDialog-paper\"], [role=\"dialog\"], [role=\"presentation\"]'" +
+                ");" +
+                "for (var d of containers) {" +
                 "  var r = d.getBoundingClientRect();" +
-                "  if (r.width > 400 && d.querySelectorAll('input').length > 0) return true;" +
+                "  if (r.width > 300 && d.querySelectorAll('input').length > 2) return true;" +
                 "}" +
                 "return false;");
             if (Boolean.TRUE.equals(found)) {
-                drawerFound = true;
+                formFound = true;
                 break;
             }
             // Retry click at iteration 10
@@ -239,18 +253,20 @@ public class WorkOrderPage {
             pause(1000);
         }
 
-        if (!drawerFound) {
+        if (!formFound) {
             String diag = (String) js.executeScript(
-                "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
-                "var info = 'Drawers(' + drawers.length + '): ';" +
-                "for (var d of drawers) {" +
+                "var containers = document.querySelectorAll(" +
+                "  '[class*=\"MuiDrawer-paper\"], [class*=\"MuiDialog-paper\"], [role=\"dialog\"], [role=\"presentation\"]'" +
+                ");" +
+                "var info = 'Containers(' + containers.length + '): ';" +
+                "for (var d of containers) {" +
                 "  var r = d.getBoundingClientRect();" +
-                "  info += '{w=' + Math.round(r.width) + ' inputs=' + d.querySelectorAll('input').length + '} ';" +
+                "  info += '{w=' + Math.round(r.width) + ' inputs=' + d.querySelectorAll('input').length + ' text=' + d.textContent.substring(0,50) + '} ';" +
                 "}" +
                 "return info;");
-            System.out.println("[WorkOrderPage] DIAGNOSTIC: Form drawer not found. " + diag);
+            System.out.println("[WorkOrderPage] DIAGNOSTIC: Form not found. " + diag);
         }
-        System.out.println("[WorkOrderPage] Create form opened: " + drawerFound);
+        System.out.println("[WorkOrderPage] Create form opened: " + formFound);
     }
 
     /**
@@ -313,25 +329,122 @@ public class WorkOrderPage {
     }
 
     /**
+     * Select facility from dropdown (required field).
+     */
+    public void selectFacility(String facilityName) {
+        typeAndSelectDropdown(FACILITY_INPUT, facilityName, facilityName);
+        System.out.println("[WorkOrderPage] Selected facility: " + facilityName);
+    }
+
+    /**
+     * Select photo type from dropdown (required field).
+     */
+    public void selectPhotoType(String photoType) {
+        typeAndSelectDropdown(PHOTO_TYPE_INPUT, photoType, photoType);
+        System.out.println("[WorkOrderPage] Selected photo type: " + photoType);
+    }
+
+    /**
      * Submit the Create Work Order form (click Save/Create inside the drawer).
      */
     public void submitCreateWorkOrder() {
-        js.executeScript(
-            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"], [class*=\"MuiDialog-paper\"], [role=\"dialog\"], [role=\"presentation\"]');" +
-            "for (var d of drawers) {" +
+        // Auto-fill any empty required fields (Facility, Photo Type) before submitting
+        autoFillRequiredFields();
+
+        // Check submit button state
+        String btnState = (String) js.executeScript(
+            "var containers = document.querySelectorAll(" +
+            "  '[class*=\"MuiDrawer-paper\"], [class*=\"MuiDialog-paper\"], [role=\"dialog\"], [role=\"presentation\"]'" +
+            ");" +
+            "for (var d of containers) {" +
             "  var btns = d.querySelectorAll('button');" +
             "  for (var b of btns) {" +
             "    var text = b.textContent.trim();" +
-            "    if ((text === 'Create Work Order' || text === 'Create Job' || text === 'Create' || text === 'Save' || text === 'Submit')" +
+            "    if (text === 'Create' || text === 'Create Work Order' || text === 'Create Job'" +
+            "        || text === 'Save' || text === 'Submit') {" +
+            "      return text + ':disabled=' + b.disabled;" +
+            "    }" +
+            "  }" +
+            "}" +
+            "return 'NO_SUBMIT_BTN_FOUND';");
+        System.out.println("[WorkOrderPage] Submit button state: " + btnState);
+
+        // If button is disabled, try auto-fill again and wait
+        if (btnState.contains("disabled=true")) {
+            System.out.println("[WorkOrderPage] Create button disabled — retrying auto-fill");
+            autoFillRequiredFields();
+            pause(2000);
+        }
+
+        // Click the submit button
+        String result = (String) js.executeScript(
+            "var containers = document.querySelectorAll(" +
+            "  '[class*=\"MuiDrawer-paper\"], [class*=\"MuiDialog-paper\"], [role=\"dialog\"], [role=\"presentation\"]'" +
+            ");" +
+            "for (var d of containers) {" +
+            "  var btns = d.querySelectorAll('button');" +
+            "  for (var b of btns) {" +
+            "    var text = b.textContent.trim();" +
+            "    if ((text === 'Create' || text === 'Create Work Order' || text === 'Create Job'" +
+            "        || text === 'Save' || text === 'Submit')" +
             "        && b.getBoundingClientRect().width > 0) {" +
             "      b.scrollIntoView({block:'center'});" +
             "      b.click();" +
-            "      return;" +
+            "      return 'CLICKED:' + text + ':disabled=' + b.disabled;" +
             "    }" +
             "  }" +
-            "}"
-        );
-        System.out.println("[WorkOrderPage] Clicked submit button");
+            "}" +
+            "return 'NOT_CLICKED';");
+        System.out.println("[WorkOrderPage] Submit result: " + result);
+    }
+
+    /**
+     * Auto-fill required fields that may be empty on the Create form.
+     * Fills Facility and Photo Type with defaults if they are blank.
+     */
+    private void autoFillRequiredFields() {
+        // Check which required fields are empty and fill them
+        try {
+            // Fill Facility if empty
+            Boolean facilityEmpty = (Boolean) js.executeScript(
+                "var labels = document.querySelectorAll('label');" +
+                "for (var l of labels) {" +
+                "  if (l.textContent.includes('Facility')) {" +
+                "    var fc = l.closest('.MuiFormControl-root') || l.parentElement;" +
+                "    var inp = fc.querySelector('input');" +
+                "    if (inp && !inp.value) return true;" +
+                "  }" +
+                "}" +
+                "return false;");
+            if (Boolean.TRUE.equals(facilityEmpty)) {
+                System.out.println("[WorkOrderPage] Facility is empty — auto-filling with 'test site'");
+                selectFacility("test site");
+                pause(500);
+            }
+        } catch (Exception e) {
+            System.out.println("[WorkOrderPage] Facility auto-fill skipped: " + e.getMessage());
+        }
+
+        try {
+            // Fill Photo Type if empty
+            Boolean photoTypeEmpty = (Boolean) js.executeScript(
+                "var labels = document.querySelectorAll('label');" +
+                "for (var l of labels) {" +
+                "  if (l.textContent.includes('Photo Type')) {" +
+                "    var fc = l.closest('.MuiFormControl-root') || l.parentElement;" +
+                "    var inp = fc.querySelector('input');" +
+                "    if (inp && !inp.value) return true;" +
+                "  }" +
+                "}" +
+                "return false;");
+            if (Boolean.TRUE.equals(photoTypeEmpty)) {
+                System.out.println("[WorkOrderPage] Photo Type is empty — auto-filling with 'FLIR-SEP'");
+                selectPhotoType("FLIR-SEP");
+                pause(500);
+            }
+        } catch (Exception e) {
+            System.out.println("[WorkOrderPage] Photo Type auto-fill skipped: " + e.getMessage());
+        }
     }
 
     /**
@@ -339,21 +452,24 @@ public class WorkOrderPage {
      */
     public boolean waitForCreateSuccess() {
         for (int i = 0; i < 20; i++) {
-            // Check 1: Is the form drawer gone?
-            // Look for any wide drawer containing form keywords
-            Boolean drawerGone = (Boolean) js.executeScript(
-                "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
-                "for (var d of drawers) {" +
+            // Check 1: Is the form (drawer OR dialog) gone?
+            Boolean formGone = (Boolean) js.executeScript(
+                "var containers = document.querySelectorAll(" +
+                "  '[class*=\"MuiDrawer-paper\"], [class*=\"MuiDialog-paper\"], [role=\"dialog\"]'" +
+                ");" +
+                "for (var d of containers) {" +
                 "  var r = d.getBoundingClientRect();" +
-                "  if (r.width > 400 && (" +
-                "    d.textContent.includes('Add Work Order') || d.textContent.includes('Add Job') ||" +
-                "    d.textContent.includes('Create Work Order') || d.textContent.includes('Create Job') ||" +
-                "    d.textContent.includes('BASIC INFO') || d.textContent.includes('New Work Order')" +
+                "  var t = d.textContent || '';" +
+                "  if (r.width > 300 && (" +
+                "    t.includes('Create New Work Order') || t.includes('Add Work Order') ||" +
+                "    t.includes('Add Job') || t.includes('Create Work Order') ||" +
+                "    t.includes('Create Job') || t.includes('BASIC INFO') ||" +
+                "    t.includes('New Work Order') || t.includes('WO Name')" +
                 "  )) return false;" +
                 "}" +
                 "return true;");
-            if (Boolean.TRUE.equals(drawerGone)) {
-                System.out.println("[WorkOrderPage] Create form drawer closed — creation successful");
+            if (Boolean.TRUE.equals(formGone)) {
+                System.out.println("[WorkOrderPage] Create form closed — creation successful");
                 return true;
             }
 
@@ -378,17 +494,23 @@ public class WorkOrderPage {
         }
 
         System.out.println("[WorkOrderPage] Create form still open after 20s — creation may have failed");
-        // Log diagnostic
+        // Log diagnostic — check both drawers and dialogs
         String diag = (String) js.executeScript(
-            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
-            "var info = 'Drawers(' + drawers.length + '): ';" +
-            "for (var d of drawers) {" +
+            "var containers = document.querySelectorAll(" +
+            "  '[class*=\"MuiDrawer-paper\"], [class*=\"MuiDialog-paper\"], [role=\"dialog\"]'" +
+            ");" +
+            "var info = 'Containers(' + containers.length + '): ';" +
+            "for (var d of containers) {" +
             "  var r = d.getBoundingClientRect();" +
-            "  info += '{w=' + Math.round(r.width) + '} ';" +
+            "  info += '{w=' + Math.round(r.width) + ' text=' + d.textContent.substring(0,60) + '} ';" +
             "}" +
             "var errors = document.querySelectorAll('.Mui-error, [class*=\"Mui-error\"], [class*=\"helperText\"][class*=\"error\"]');" +
             "info += ' Errors(' + errors.length + '): ';" +
             "for (var e of errors) info += '\"' + e.textContent.trim().substring(0,40) + '\" ';" +
+            "var createBtn = null;" +
+            "var btns = document.querySelectorAll('button');" +
+            "for (var b of btns) { if (b.textContent.trim() === 'Create') { createBtn = b; break; } }" +
+            "if (createBtn) info += ' CreateBtn: disabled=' + createBtn.disabled;" +
             "return info;");
         System.out.println("[WorkOrderPage] DIAGNOSTIC: " + diag);
         closeDrawer();
@@ -1276,56 +1398,106 @@ public class WorkOrderPage {
     }
 
     /**
-     * Click the "Add Task" button.
+     * Click "Add Tasks" via the Actions dropdown on the WO detail page.
+     * UI: Actions button → dropdown menu → "+ Add Tasks"
      */
     public void clickAddTask() {
-        js.executeScript(
+        // Step 1: Open the Actions dropdown
+        Boolean actionsClicked = (Boolean) js.executeScript(
             "var btns = document.querySelectorAll('button');" +
             "for (var b of btns) {" +
             "  var text = b.textContent.trim();" +
-            "  if (text === 'Add Task' || text.includes('Add Task') || text === 'Create Task' || text.includes('Create Task')) {" +
+            "  if (text === 'Actions' || text.startsWith('Actions')) {" +
             "    b.scrollIntoView({block:'center'});" +
-            "    b.click(); return;" +
+            "    b.click(); return true;" +
             "  }" +
-            "}");
-        pause(1500);
-        System.out.println("[WorkOrderPage] Clicked Add Task button");
+            "}" +
+            "return false;");
+        System.out.println("[WorkOrderPage] Actions dropdown clicked: " + actionsClicked);
+        pause(1000);
+
+        // Step 2: Click "Add Tasks" menu item
+        Boolean addTaskClicked = (Boolean) js.executeScript(
+            "var items = document.querySelectorAll('li[role=\"menuitem\"], [class*=\"MuiMenuItem\"], [class*=\"menuItem\"]');" +
+            "for (var item of items) {" +
+            "  var text = item.textContent.trim();" +
+            "  if (text.includes('Add Task')) {" +
+            "    item.click(); return true;" +
+            "  }" +
+            "}" +
+            "// Fallback: any clickable element in a popover/menu\n" +
+            "var allClickable = document.querySelectorAll('[role=\"menu\"] li, [class*=\"MuiPopover\"] li, [class*=\"MuiMenu\"] li');" +
+            "for (var c of allClickable) {" +
+            "  if (c.textContent.trim().includes('Add Task')) { c.click(); return true; }" +
+            "}" +
+            "return false;");
+        System.out.println("[WorkOrderPage] Add Tasks menu item clicked: " + addTaskClicked);
+        pause(2000);
+
+        // Diagnostic: what opened after clicking Add Tasks?
+        if (Boolean.TRUE.equals(addTaskClicked)) {
+            String diag = (String) js.executeScript(
+                "var containers = document.querySelectorAll(" +
+                "  '[class*=\"MuiDrawer-paper\"], [class*=\"MuiDialog-paper\"], [role=\"dialog\"]'" +
+                ");" +
+                "var info = 'Forms: ';" +
+                "for (var d of containers) {" +
+                "  var r = d.getBoundingClientRect();" +
+                "  if (r.width > 200) {" +
+                "    var inputs = d.querySelectorAll('input:not([type=\"hidden\"])');" +
+                "    var btns = d.querySelectorAll('button');" +
+                "    var btnTexts = [];" +
+                "    for (var b of btns) { var t = b.textContent.trim(); if (t.length > 0 && t.length < 25) btnTexts.push(t); }" +
+                "    info += '{w=' + Math.round(r.width) + ' inputs=' + inputs.length + ' btns=[' + btnTexts.join(',') + ']} ';" +
+                "  }" +
+                "}" +
+                "return info;");
+            System.out.println("[WorkOrderPage] Add Task form diagnostic: " + diag);
+        }
     }
 
     /**
-     * Fill the task name field.
+     * Fill the task title field in the Create Task form.
+     * Targets the input with placeholder "Enter task title".
      */
     public void fillTaskName(String taskName) {
         try {
-            // Try specific task name input first
-            List<WebElement> taskInputs = driver.findElements(TASK_NAME_INPUT);
-            if (!taskInputs.isEmpty()) {
-                WebElement el = taskInputs.get(taskInputs.size() - 1); // Use last (newest) task input
-                js.executeScript(
-                    "arguments[0].scrollIntoView({block:'center'});" +
-                    "arguments[0].focus(); arguments[0].click();", el);
-                pause(200);
-                el.sendKeys(taskName);
-            } else {
-                // Fallback: find input in the task dialog/drawer
-                js.executeScript(
-                    "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"], [class*=\"MuiDialog-paper\"], [role=\"dialog\"]');" +
-                    "for (var d of drawers) {" +
-                    "  var inputs = d.querySelectorAll('input[type=\"text\"]');" +
-                    "  if (inputs.length > 0) {" +
-                    "    var input = inputs[0];" +
-                    "    input.focus(); input.click();" +
-                    "    var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
-                    "    setter.call(input, arguments[0]);" +
-                    "    input.dispatchEvent(new Event('input', {bubbles: true}));" +
-                    "    input.dispatchEvent(new Event('change', {bubbles: true}));" +
-                    "    return;" +
-                    "  }" +
-                    "}",
-                    taskName);
+            // Target the exact "Enter task title" input inside the form
+            Boolean filled = (Boolean) js.executeScript(
+                "var containers = document.querySelectorAll(" +
+                "  '[class*=\"MuiDrawer-paper\"], [class*=\"MuiDialog-paper\"], [role=\"dialog\"]'" +
+                ");" +
+                "for (var d of containers) {" +
+                "  var r = d.getBoundingClientRect();" +
+                "  if (r.width > 400) {" +
+                "    var inputs = d.querySelectorAll('input');" +
+                "    for (var inp of inputs) {" +
+                "      var ph = (inp.placeholder || '').toLowerCase();" +
+                "      if (ph.includes('task title') || ph.includes('task name') || ph.includes('enter task')) {" +
+                "        inp.scrollIntoView({block:'center'});" +
+                "        inp.focus(); inp.click();" +
+                "        var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+                "        setter.call(inp, arguments[0]);" +
+                "        inp.dispatchEvent(new Event('input', {bubbles: true}));" +
+                "        inp.dispatchEvent(new Event('change', {bubbles: true}));" +
+                "        return true;" +
+                "      }" +
+                "    }" +
+                "  }" +
+                "}" +
+                "return false;",
+                taskName);
+
+            if (!Boolean.TRUE.equals(filled)) {
+                // Fallback: use Selenium to find and fill the input
+                WebElement titleInput = driver.findElement(
+                    By.xpath("//input[@placeholder='Enter task title' or @placeholder='Task title' or @placeholder='Task Name']"));
+                titleInput.clear();
+                titleInput.sendKeys(taskName);
+                filled = true;
             }
-            pause(300);
-            System.out.println("[WorkOrderPage] Filled task name: " + taskName);
+
+            System.out.println("[WorkOrderPage] Filled task title: " + taskName + " (success=" + filled + ")");
         } catch (Exception e) {
             System.out.println("[WorkOrderPage] Fill task name failed: " + e.getMessage());
         }
@@ -1335,27 +1507,61 @@ public class WorkOrderPage {
      * Submit the task form.
      */
     public void submitTask() {
-        js.executeScript(
-            "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"], [class*=\"MuiDialog-paper\"], [role=\"dialog\"], [role=\"presentation\"]');" +
-            "for (var d of drawers) {" +
-            "  var btns = d.querySelectorAll('button');" +
-            "  for (var b of btns) {" +
-            "    var text = b.textContent.trim();" +
-            "    if (text === 'Create' || text === 'Add' || text === 'Save' || text === 'Add Task' || text === 'Create Task') {" +
-            "      b.click(); return;" +
+        // Diagnostic: log all inputs and their values before submit
+        String formState = (String) js.executeScript(
+            "var containers = document.querySelectorAll(" +
+            "  '[class*=\"MuiDrawer-paper\"], [class*=\"MuiDialog-paper\"], [role=\"dialog\"]'" +
+            ");" +
+            "for (var d of containers) {" +
+            "  var r = d.getBoundingClientRect();" +
+            "  if (r.width > 400) {" +
+            "    var info = 'INPUTS: ';" +
+            "    var inputs = d.querySelectorAll('input:not([type=\"hidden\"]):not([type=\"file\"])');" +
+            "    for (var inp of inputs) {" +
+            "      var ir = inp.getBoundingClientRect();" +
+            "      if (ir.width > 30) {" +
+            "        var label = '';" +
+            "        var fc = inp.closest('.MuiFormControl-root');" +
+            "        if (fc) { var lbl = fc.querySelector('label'); if (lbl) label = lbl.textContent.trim(); }" +
+            "        info += '{' + label + ' val=\"' + (inp.value||'').substring(0,30) + '\" ph=\"' + (inp.placeholder||'').substring(0,20) + '\"} ';" +
+            "      }" +
+            "    }" +
+            "    var createBtn = null;" +
+            "    var btns = d.querySelectorAll('button');" +
+            "    for (var b of btns) {" +
+            "      if (b.textContent.trim() === 'Create Task') {" +
+            "        info += ' CreateTask: disabled=' + b.disabled;" +
+            "        createBtn = b;" +
+            "      }" +
+            "    }" +
+            "    return info;" +
+            "  }" +
+            "}" +
+            "return 'NO_FORM';");
+        System.out.println("[WorkOrderPage] Task form state before submit: " + formState);
+
+        // Click Create Task button
+        String result = (String) js.executeScript(
+            "var containers = document.querySelectorAll(" +
+            "  '[class*=\"MuiDrawer-paper\"], [class*=\"MuiDialog-paper\"], [role=\"dialog\"], [role=\"presentation\"]'" +
+            ");" +
+            "for (var d of containers) {" +
+            "  var r = d.getBoundingClientRect();" +
+            "  if (r.width > 400) {" +
+            "    var btns = d.querySelectorAll('button');" +
+            "    for (var b of btns) {" +
+            "      var text = b.textContent.trim();" +
+            "      if (text === 'Create Task' || text === 'Add Task' || text === 'Create' || text === 'Save') {" +
+            "        b.scrollIntoView({block:'center'});" +
+            "        b.click();" +
+            "        return 'CLICKED:' + text + ':disabled=' + b.disabled;" +
+            "      }" +
             "    }" +
             "  }" +
             "}" +
-            "// Fallback: click any save/create on page\n" +
-            "var btns = document.querySelectorAll('button');" +
-            "for (var b of btns) {" +
-            "  var text = b.textContent.trim();" +
-            "  if (text === 'Add Task' || text === 'Create Task') {" +
-            "    b.click(); return;" +
-            "  }" +
-            "}");
-        pause(2000);
-        System.out.println("[WorkOrderPage] Task submitted");
+            "return 'NOT_CLICKED';");
+        System.out.println("[WorkOrderPage] Task submit result: " + result);
+        pause(3000);
     }
 
     /**

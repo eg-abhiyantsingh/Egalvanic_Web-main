@@ -26,8 +26,9 @@ import org.testng.annotations.Test;
 public class WorkOrderSmokeTestNG extends BaseTest {
 
     // Test data
-    private static final String TEST_ASSET_NAME = "ATS";
     private static final String TEST_PRIORITY = "High";
+    private static final String TEST_FACILITY = "test site";
+    private static final String TEST_PHOTO_TYPE = "FLIR-SEP";
     private static final String TEST_PHOTO_PATH = "src/test/resources/s1.jpeg";
 
     // Track created work order across tests
@@ -55,118 +56,63 @@ public class WorkOrderSmokeTestNG extends BaseTest {
             // 2. Open Create form
             workOrderPage.openCreateWorkOrderForm();
             logStep("Create Work Order form opened");
-            logStepWithScreenshot("Create form drawer");
+            logStepWithScreenshot("Create form");
 
-            // 3. Fill form fields
+            // 3. Fill all required form fields
             createdWorkOrderName = "SmokeTest_WO_" + System.currentTimeMillis();
 
-            // Try filling name if available
-            try {
-                workOrderPage.fillName(createdWorkOrderName);
-                logStep("Filled name: " + createdWorkOrderName);
-            } catch (Exception e) {
-                logWarning("Name field not available: " + e.getMessage());
-            }
+            // Required: WO Name / # *
+            workOrderPage.fillName(createdWorkOrderName);
+            logStep("Filled name: " + createdWorkOrderName);
 
-            // Priority
-            try {
-                workOrderPage.selectPriority(TEST_PRIORITY);
-                logStep("Selected priority: " + TEST_PRIORITY);
-            } catch (Exception e) {
-                logWarning("Priority field not available: " + e.getMessage());
-            }
+            // Required: Priority *
+            workOrderPage.selectPriority(TEST_PRIORITY);
+            logStep("Selected priority: " + TEST_PRIORITY);
 
-            // Asset
-            try {
-                workOrderPage.selectAsset(TEST_ASSET_NAME);
-                logStep("Selected asset: " + TEST_ASSET_NAME);
-            } catch (Exception e) {
-                logWarning("Asset field not available: " + e.getMessage());
-            }
+            // Optional: Description
+            workOrderPage.fillDescription("Smoke test work order");
+            logStep("Filled description");
 
-            logStepWithScreenshot("Form filled — about to submit");
+            // Required: Facility *
+            workOrderPage.selectFacility(TEST_FACILITY);
+            logStep("Selected facility: " + TEST_FACILITY);
 
-            // Pre-submit diagnostic: log all form field values
-            {
-                org.openqa.selenium.JavascriptExecutor jsCheck = (org.openqa.selenium.JavascriptExecutor) driver;
-                String formDiag = (String) jsCheck.executeScript(
-                    "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
-                    "var drawer = null;" +
-                    "for (var d of drawers) {" +
-                    "  var r = d.getBoundingClientRect();" +
-                    "  if (r.width > 400 && d.querySelectorAll('input').length > 0) { drawer = d; break; }" +
-                    "}" +
-                    "if (!drawer) return 'NO FORM DRAWER';" +
-                    "var info = 'LABELS: ';" +
-                    "var labels = drawer.querySelectorAll('p, label, span, h6');" +
-                    "var seen = new Set();" +
-                    "for (var l of labels) {" +
-                    "  var t = l.textContent.trim();" +
-                    "  if (t.length > 1 && t.length < 40 && !seen.has(t)) { seen.add(t); info += '[' + t + '] '; }" +
-                    "}" +
-                    "info += ' INPUTS: ';" +
-                    "var inputs = drawer.querySelectorAll('input:not([type=\"hidden\"]):not([type=\"file\"])');" +
-                    "for (var inp of inputs) {" +
-                    "  var r = inp.getBoundingClientRect();" +
-                    "  if (r.width > 30) {" +
-                    "    info += '{ph=\"' + (inp.placeholder||'').substring(0,25) + '\" val=\"' + (inp.value||'').substring(0,25) + '\" role=' + (inp.getAttribute('role')||'') + '} ';" +
-                    "  }" +
-                    "}" +
-                    "var btns = drawer.querySelectorAll('button');" +
-                    "info += ' BTNS: ';" +
-                    "for (var b of btns) {" +
-                    "  var t = b.textContent.trim();" +
-                    "  if (t.length > 0 && t.length < 25 && b.getBoundingClientRect().width > 0) info += '[' + t + ' dis=' + b.disabled + '] ';" +
-                    "}" +
-                    "return info;");
-                logStep("PRE-SUBMIT: " + formDiag);
-            }
+            // Required: Photo Type *
+            workOrderPage.selectPhotoType(TEST_PHOTO_TYPE);
+            logStep("Selected photo type: " + TEST_PHOTO_TYPE);
+
+            logStepWithScreenshot("All required fields filled — about to submit");
 
             // 4. Submit
             workOrderPage.submitCreateWorkOrder();
             logStep("Work order creation submitted");
 
-            // 5. Wait for success (drawer closes or success toast)
+            // 5. Wait for success (form closes or success toast)
             boolean success = workOrderPage.waitForCreateSuccess();
             logStep("Create success: " + success);
+            Assert.assertTrue(success, "Work order creation failed — form did not close");
 
-            // 6. Verify creation succeeded
-            // Strategy A: If waitForCreateSuccess returned true, creation worked — verify in list
-            // Strategy B: Search by name in the work orders list
+            // 6. Verify by searching for the created work order
             workOrderPage.navigateToWorkOrders();
             pause(3000);
 
-            boolean found = false;
-            for (int attempt = 0; attempt < 3; attempt++) {
-                // Try searching by name
+            workOrderPage.searchWorkOrders(createdWorkOrderName);
+            pause(2000);
+            boolean found = workOrderPage.isWorkOrderVisible(createdWorkOrderName);
+            logStep("Search for '" + createdWorkOrderName + "': found=" + found);
+
+            if (!found) {
+                // Retry after refresh
+                workOrderPage.clearSearch();
+                driver.navigate().refresh();
+                pause(3000);
                 workOrderPage.searchWorkOrders(createdWorkOrderName);
                 pause(2000);
                 found = workOrderPage.isWorkOrderVisible(createdWorkOrderName);
-                logStep("Post-create search attempt " + (attempt + 1) + ": found=" + found);
-                if (found) break;
-                // Clear search and refresh
-                workOrderPage.clearSearch();
-                pause(1000);
-                driver.navigate().refresh();
-                pause(3000);
+                logStep("Retry search: found=" + found);
             }
 
-            // If name search fails but creation was reported as success, accept it
-            // (paginated/filtered views may hide the new item)
-            if (!found && success) {
-                logStep("Work order not found by search but create success was confirmed — accepting");
-                found = true;
-            }
-
-            // Fallback: check if the name appears anywhere on the page
-            if (!found) {
-                workOrderPage.navigateToWorkOrders();
-                pause(2000);
-                found = workOrderPage.isWorkOrderVisible(createdWorkOrderName);
-                logStep("Final visibility check: " + found);
-            }
-
-            Assert.assertTrue(found, "Work order creation failed — not found and no success indicator");
+            Assert.assertTrue(found, "Work order '" + createdWorkOrderName + "' not found in list after creation");
             logStepWithScreenshot("Work order created and verified in table");
 
             ExtentReportManager.logPass("Work order created: " + createdWorkOrderName);

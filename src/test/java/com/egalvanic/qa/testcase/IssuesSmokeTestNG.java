@@ -4,7 +4,9 @@ import com.egalvanic.qa.constants.AppConstants;
 import com.egalvanic.qa.utils.ExtentReportManager;
 import com.egalvanic.qa.utils.ScreenshotUtil;
 
+import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebElement;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -556,180 +558,213 @@ public class IssuesSmokeTestNG extends BaseTest {
     // TEST 5: DELETE ISSUE
     // ================================================================
 
-    @Test(priority = 5, description = "Smoke: Delete an issue and verify removal")
+    @Test(priority = 5, description = "Smoke: Delete an issue via Edit drawer")
     public void testDeleteIssue() {
         ExtentReportManager.createTest(
                 AppConstants.MODULE_ISSUES, AppConstants.FEATURE_DELETE_ISSUE,
                 "TC_Issue_Delete");
 
         try {
-            // 1. Navigate to Issues page
+            // 1. Navigate to Issues page and capture initial state
             issuePage.navigateToIssues();
             logStep("Navigated to Issues page");
+            debugPageState("DELETE — Issues list");
 
             int beforeCount = issuePage.getRowCount();
-            Assert.assertTrue(beforeCount > 0, "No issues to delete");
-            logStep("Row count before delete: " + beforeCount);
-
             String firstTitle = issuePage.getFirstCardTitle();
-            logStep("Target issue for deletion: " + firstTitle);
+            logStep("Before count: " + beforeCount + ", target issue: " + firstTitle);
 
-            // 2. Open issue detail
-            issuePage.openFirstIssueDetail();
-            logStep("Opened issue detail page");
-
-            // 3. Log all buttons on detail page to find delete option
             JavascriptExecutor jsExec = (JavascriptExecutor) driver;
-            {
-                String btnDiag = (String) jsExec.executeScript(
-                    "var info = 'BUTTONS: ';" +
+
+            // 2. Open issue detail page
+            issuePage.openFirstIssueDetail();
+            logStep("Opened detail: " + driver.getCurrentUrl());
+            pause(2000);
+
+            // 3. Click kebab menu (⋮) — rightmost icon button in header
+            Boolean kebabClicked = (Boolean) jsExec.executeScript(
+                "var icons = document.querySelectorAll('[class*=\"MuiIconButton\"]');" +
+                "var candidates = [];" +
+                "for (var ic of icons) {" +
+                "  var r = ic.getBoundingClientRect();" +
+                "  if (r.width > 15 && r.width < 50 && r.top > 50 && r.top < 150 && r.left > 500) {" +
+                "    candidates.push({el: ic, x: r.left});" +
+                "  }" +
+                "}" +
+                "if (candidates.length === 0) return false;" +
+                "candidates.sort(function(a,b) { return b.x - a.x; });" +
+                "candidates[0].el.click();" +
+                "return true;");
+            pause(1000);
+
+            // 4. Click "Edit Issue" from kebab menu
+            boolean editOpened = false;
+            if (Boolean.TRUE.equals(kebabClicked)) {
+                java.util.List<WebElement> menuItems = driver.findElements(
+                    By.cssSelector("li[role='menuitem'], [class*='MuiMenuItem']"));
+                for (WebElement mi : menuItems) {
+                    try {
+                        if (mi.isDisplayed() && mi.getText().trim().contains("Edit")) {
+                            mi.click();
+                            System.out.println("[DELETE] Clicked 'Edit Issue' from kebab menu");
+                            editOpened = true;
+                            break;
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+            pause(2000);
+
+            if (!editOpened) {
+                logWarning("Could not open Edit Issue drawer via kebab");
+            }
+
+            debugDrawerState("DELETE — After Edit Issue clicked");
+
+            // 5. Scroll down inside the edit drawer to reveal "Delete Issue" button
+            jsExec.executeScript(
+                "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+                "for (var d of drawers) {" +
+                "  var r = d.getBoundingClientRect();" +
+                "  if (r.width > 400) { d.scrollTop = d.scrollHeight; break; }" +
+                "}");
+            pause(1500);
+
+            // Now find and scroll "Delete Issue" button into view
+            jsExec.executeScript(
+                "var btns = document.querySelectorAll('button');" +
+                "for (var b of btns) {" +
+                "  var t = b.textContent.trim();" +
+                "  var r = b.getBoundingClientRect();" +
+                "  if (r.width > 0 && (t === 'Delete Issue' || t === 'Delete')) {" +
+                "    b.scrollIntoView({block: 'center'});" +
+                "    return null;" + // first scroll into view
+                "  }" +
+                "}" +
+                "return false;");
+            pause(500);
+
+            // Click the Delete Issue button using Selenium for proper React event handling
+            boolean deleteInitiated = false;
+            java.util.List<WebElement> allButtons = driver.findElements(By.tagName("button"));
+            for (WebElement btn : allButtons) {
+                try {
+                    String text = btn.getText().trim();
+                    if ("Delete Issue".equals(text) && btn.isDisplayed()) {
+                        btn.click();
+                        System.out.println("[DELETE] Clicked 'Delete Issue' button in edit drawer");
+                        deleteInitiated = true;
+                        break;
+                    }
+                } catch (Exception ignored) {}
+            }
+
+            // Fallback: JS click if Selenium click didn't work
+            if (!deleteInitiated) {
+                deleteInitiated = Boolean.TRUE.equals((Boolean) jsExec.executeScript(
                     "var btns = document.querySelectorAll('button');" +
                     "for (var b of btns) {" +
                     "  var t = b.textContent.trim();" +
                     "  var r = b.getBoundingClientRect();" +
-                    "  if (t.length > 0 && t.length < 30 && r.width > 0) info += '[' + t + '] ';" +
-                    "}" +
-                    "var iconBtns = document.querySelectorAll('[class*=\"MuiIconButton\"], [class*=\"MuiFab\"]');" +
-                    "info += ' ICON_BTNS: ' + iconBtns.length;" +
-                    "return info;");
-                logStep("Detail page: " + btnDiag);
-            }
-
-            // 4. Try to delete — first direct button, then kebab menu
-            boolean deleteInitiated = false;
-
-            // Strategy 1: Direct "Delete" or "Delete Issue" button
-            Boolean directDelete = (Boolean) jsExec.executeScript(
-                "var btns = document.querySelectorAll('button');" +
-                "for (var b of btns) {" +
-                "  var text = b.textContent.trim();" +
-                "  if (text === 'Delete Issue' || text === 'Delete') {" +
-                "    b.click(); return true;" +
-                "  }" +
-                "}" +
-                "return false;");
-            if (Boolean.TRUE.equals(directDelete)) {
-                logStep("Clicked direct Delete button");
-                deleteInitiated = true;
-            }
-
-            // Strategy 2: Kebab menu (⋮) → Delete option
-            if (!deleteInitiated) {
-                logStep("No direct Delete button, trying kebab menu");
-                Boolean kebabClicked = (Boolean) jsExec.executeScript(
-                    "var btns = document.querySelectorAll('button, [role=\"button\"]');" +
-                    "var candidates = [];" +
-                    "for (var b of btns) {" +
-                    "  var r = b.getBoundingClientRect();" +
-                    "  var text = b.textContent.trim();" +
-                    "  var hasSvg = b.querySelector('svg') !== null;" +
-                    "  if (r.width > 15 && r.width < 60 && r.top < 300 && r.right > window.innerWidth - 200 && hasSvg && text.length === 0) {" +
-                    "    candidates.push({el: b, right: r.right});" +
+                    "  if (r.width > 0 && (t === 'Delete Issue' || t === 'Delete')) {" +
+                    "    b.click(); return true;" +
                     "  }" +
                     "}" +
-                    "if (candidates.length > 0) {" +
-                    "  candidates.sort(function(a,b) { return b.right - a.right; });" +
-                    "  candidates[0].el.click(); return true;" +
-                    "}" +
-                    "return false;");
-                if (Boolean.TRUE.equals(kebabClicked)) {
-                    pause(1000);
-                    String menuItems = (String) jsExec.executeScript(
-                        "var items = document.querySelectorAll('li[role=\"menuitem\"], [class*=\"MuiMenuItem\"]');" +
-                        "var info = '';" +
-                        "for (var i of items) {" +
-                        "  var r = i.getBoundingClientRect();" +
-                        "  if (r.width > 0) info += '[' + i.textContent.trim() + '] ';" +
-                        "}" +
-                        "return info;");
-                    logStep("Kebab menu items: " + menuItems);
-
-                    Boolean delClicked = (Boolean) jsExec.executeScript(
-                        "var items = document.querySelectorAll('li[role=\"menuitem\"], [class*=\"MuiMenuItem\"]');" +
-                        "for (var i of items) {" +
-                        "  var text = i.textContent.trim();" +
-                        "  if (text.includes('Delete')) { i.click(); return true; }" +
-                        "}" +
-                        "return false;");
-                    if (Boolean.TRUE.equals(delClicked)) {
-                        logStep("Selected Delete from kebab menu");
-                        deleteInitiated = true;
-                    }
+                    "return false;"));
+                if (deleteInitiated) {
+                    System.out.println("[DELETE] Clicked 'Delete Issue' via JS fallback");
                 }
             }
 
-            // Strategy 3: Try FAB or icon button with delete
-            if (!deleteInitiated) {
-                Boolean fabClicked = (Boolean) jsExec.executeScript(
-                    "var fabs = document.querySelectorAll('[class*=\"MuiFab\"]');" +
-                    "for (var f of fabs) {" +
-                    "  var r = f.getBoundingClientRect();" +
-                    "  if (r.width > 20) { f.click(); return true; }" +
-                    "}" +
-                    "return false;");
-                if (Boolean.TRUE.equals(fabClicked)) {
-                    logStep("Clicked FAB button");
-                    pause(1000);
-                    // Look for delete in any menu/dialog that appeared
-                    Boolean delClicked = (Boolean) jsExec.executeScript(
-                        "var items = document.querySelectorAll('li[role=\"menuitem\"], [class*=\"MuiMenuItem\"], button');" +
-                        "for (var i of items) {" +
-                        "  var text = i.textContent.trim();" +
-                        "  if (text === 'Delete' || text === 'Delete Issue') { i.click(); return true; }" +
-                        "}" +
-                        "return false;");
-                    if (Boolean.TRUE.equals(delClicked)) {
-                        logStep("Selected Delete from FAB menu");
-                        deleteInitiated = true;
-                    }
+            Assert.assertTrue(deleteInitiated, "Could not find or click 'Delete Issue' button in edit drawer");
+            pause(2000);
+
+            // 6. Handle browser native confirm() dialog — click OK
+            System.out.println("[DELETE] Handling browser confirm dialog...");
+            boolean confirmed = false;
+            try {
+                org.openqa.selenium.Alert alert = driver.switchTo().alert();
+                String alertText = alert.getText();
+                System.out.println("[DELETE] Alert text: " + alertText);
+                alert.accept(); // Click "OK"
+                confirmed = true;
+                System.out.println("[DELETE] Confirmed via browser alert OK");
+            } catch (org.openqa.selenium.NoAlertPresentException e) {
+                System.out.println("[DELETE] No browser alert — trying DOM button fallback");
+                // Fallback: try MUI dialog buttons if no native alert
+                java.util.List<WebElement> dialogBtns = driver.findElements(
+                    By.cssSelector("[role='dialog'] button, [role='alertdialog'] button, button[class*='containedError']"));
+                for (WebElement btn : dialogBtns) {
+                    try {
+                        String text = btn.getText().trim().toLowerCase();
+                        if (btn.isDisplayed() && (text.contains("delete") || text.equals("ok") ||
+                                text.equals("confirm") || text.equals("yes"))) {
+                            btn.click();
+                            confirmed = true;
+                            System.out.println("[DELETE] Confirmed via DOM button: " + btn.getText().trim());
+                            break;
+                        }
+                    } catch (Exception ignored) {}
                 }
             }
 
-            if (!deleteInitiated) {
-                logWarning("Could not find Delete option — test will verify page access");
+            logStep("Delete confirmed: " + confirmed);
+            pause(3000);
+
+            // 7. Wait for delete success — check for snackbar/toast or navigation back to list
+            // After deletion, app may navigate back to issues list or show success message
+            for (int wait = 0; wait < 5; wait++) {
+                String url = driver.getCurrentUrl();
+                if (url.contains("/issues") && !url.matches(".*\\/issues\\/\\d+.*")) {
+                    System.out.println("[DELETE] Navigated back to issues list");
+                    break;
+                }
+                pause(1000);
             }
 
-            pause(1000);
-
-            // 5. Confirm deletion dialog if it appeared
-            if (deleteInitiated) {
-                logStep("Looking for delete confirmation dialog");
-                issuePage.confirmDelete();
-                logStep("Delete confirm attempted");
-
-                boolean deleteSuccess = issuePage.waitForDeleteSuccess();
-                logStep("Delete success: " + deleteSuccess);
-
-                // 6. Verify deletion — navigate back and check count
-                pause(3000);
+            // If still on detail page, navigate back to issues list
+            if (!driver.getCurrentUrl().matches(".*\\/issues$") &&
+                !driver.getCurrentUrl().matches(".*\\/issues\\?.*")) {
                 issuePage.navigateToIssues();
-                pause(3000);
-                driver.navigate().refresh();
-                pause(3000);
-
-                boolean deleted = false;
-                for (int attempt = 0; attempt < 3; attempt++) {
-                    int afterCount = issuePage.getRowCount();
-                    logStep("Post-delete check " + (attempt + 1) + ": count=" + afterCount);
-                    if (afterCount < beforeCount) {
-                        deleted = true;
-                        break;
-                    }
-                    driver.navigate().refresh();
-                    pause(3000);
-                }
-
-                Assert.assertTrue(deleted || deleteSuccess,
-                    "Issue not deleted. Before: " + beforeCount);
-            } else {
-                // No delete option found — at least verify we're on detail page
-                boolean onDetail = driver.getCurrentUrl().contains("/issues/");
-                Assert.assertTrue(onDetail, "Not on issue detail page");
-                logStep("Delete option not available — verified detail page access");
+                pause(2000);
             }
 
-            logStepWithScreenshot("Delete test completed");
-            ExtentReportManager.logPass("Issue delete test completed: " + firstTitle);
+            driver.navigate().refresh();
+            pause(5000);
+
+            // 8. Verify the issue was deleted by searching for it
+            debugPageState("DELETE — After deletion, back on issues list");
+
+            boolean deleted = false;
+
+            // Search for the deleted issue by title — it should NOT appear
+            if (firstTitle != null && !firstTitle.isEmpty()) {
+                issuePage.searchIssues(firstTitle);
+                pause(3000);
+                boolean stillVisible = issuePage.isIssueVisible(firstTitle);
+                logStep("Searched for '" + firstTitle + "': visible=" + stillVisible);
+                if (!stillVisible) {
+                    deleted = true;
+                    logStep("Verified: issue '" + firstTitle + "' not found after search");
+                }
+                issuePage.clearSearch();
+                pause(1000);
+            }
+
+            // Fallback: check row count decreased
+            if (!deleted) {
+                int afterCount = issuePage.getRowCount();
+                logStep("After count: " + afterCount + " (before: " + beforeCount + ")");
+                if (afterCount < beforeCount) {
+                    deleted = true;
+                    logStep("Verified: row count decreased from " + beforeCount + " to " + afterCount);
+                }
+            }
+
+            Assert.assertTrue(deleted, "Issue '" + firstTitle + "' was not deleted — still visible after search");
+            logStepWithScreenshot("Issue deleted successfully");
+
+            ExtentReportManager.logPass("Issue deleted: " + firstTitle);
 
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("testDeleteIssue_FAIL_" +
