@@ -58,6 +58,7 @@ public class BaseAPITest {
 
     /**
      * Perform login via API and return the auth token.
+     * Handles both JSON and non-JSON (HTML) responses gracefully.
      */
     protected String loginAndGetToken() {
         try {
@@ -73,21 +74,78 @@ public class BaseAPITest {
                     .then()
                     .extract().response();
 
+            String body = response.asString();
+            System.out.println("[API] Login status: " + response.getStatusCode()
+                    + ", Content-Type: " + response.getContentType());
+
             if (response.getStatusCode() == 200) {
-                String token = response.jsonPath().getString("token");
-                if (token == null) {
-                    token = response.jsonPath().getString("access_token");
+                // Check if response is JSON (not HTML)
+                if (body != null && !body.trim().startsWith("<")) {
+                    try {
+                        String token = response.jsonPath().getString("token");
+                        if (token == null) {
+                            token = response.jsonPath().getString("access_token");
+                        }
+                        if (token != null) {
+                            System.out.println("[API] Auth token obtained from JSON response");
+                            return token;
+                        }
+                    } catch (Exception jsonErr) {
+                        System.out.println("[API] Could not parse token from response: " + jsonErr.getMessage());
+                    }
                 }
-                System.out.println("[API] Auth token obtained successfully");
-                return token;
+
+                // Try extracting token from cookies
+                String cookieToken = response.getCookie("token");
+                if (cookieToken == null) cookieToken = response.getCookie("access_token");
+                if (cookieToken == null) cookieToken = response.getCookie("auth_token");
+                if (cookieToken != null) {
+                    System.out.println("[API] Auth token obtained from cookie");
+                    return cookieToken;
+                }
+
+                // Try extracting from response header
+                String headerToken = response.getHeader("Authorization");
+                if (headerToken != null && headerToken.startsWith("Bearer ")) {
+                    System.out.println("[API] Auth token obtained from header");
+                    return headerToken.substring(7);
+                }
+
+                System.out.println("[API] Login returned 200 but no token found in body/cookies/headers");
+                System.out.println("[API] Response body (first 200 chars): "
+                        + (body.length() > 200 ? body.substring(0, 200) : body));
             } else {
-                System.out.println("[API] Login returned status " + response.getStatusCode()
-                        + ": " + response.asString());
+                System.out.println("[API] Login returned status " + response.getStatusCode());
             }
         } catch (Exception e) {
             System.out.println("[API] Login failed: " + e.getMessage());
         }
         return null;
+    }
+
+    /**
+     * Check if auth token is available. Use in tests that require authentication.
+     */
+    protected boolean hasAuthToken() {
+        return authToken != null && !authToken.isEmpty();
+    }
+
+    /**
+     * Safely extract a token from a login response, handling HTML/non-JSON.
+     */
+    protected String extractTokenFromResponse(Response response) {
+        if (response.getStatusCode() != 200) return null;
+
+        String body = response.asString();
+        if (body == null || body.trim().startsWith("<")) return null;
+
+        try {
+            String token = response.jsonPath().getString("token");
+            if (token == null) token = response.jsonPath().getString("access_token");
+            return token;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**
