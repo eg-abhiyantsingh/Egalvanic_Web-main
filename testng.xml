@@ -2,9 +2,15 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 <suite name="eGalvanic Smoke Test Suite" verbose="1">
 
-    <test name="Auth Tests">
+    <test name="Auth Smoke Tests">
         <classes>
             <class name="com.egalvanic.qa.testcase.AuthSmokeTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Full Authentication Tests (38 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AuthenticationTestNG"/>
         </classes>
     </test>
 

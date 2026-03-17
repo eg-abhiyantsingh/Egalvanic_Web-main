@@ -13,9 +13,11 @@ name: Web Smoke Tests - Asset, Connection, Location, Issues & Work Order CRUD
 #   Module 5: Location CRUD     (4 tests) — Create Hierarchy → Read → Update → Delete
 #   Module 6: Issues CRUD       (5 tests) — Create → Search → ActivateJobs → Photos → Delete
 #   Module 7: Work Order CRUD   (6 tests) — Create → Edit → IRPhotos → Locations → Tasks → Filter
+#   Module 8: Auth Full         (38 tests) — Company Code (TC01-TC15) → Login (TC16-TC33) → Session (TC34-TC38)
 #
 # Per-module TestNG XMLs:
 #   smoke-auth-testng.xml
+#   smoke-auth-full-testng.xml
 #   smoke-site-testng.xml
 #   smoke-asset-testng.xml
 #   smoke-connection-testng.xml
@@ -42,6 +44,7 @@ on:
           - location
           - issues
           - workorder
+          - auth-full
 
 jobs:
   smoke-tests:

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="eGalvanic Full Authentication Test Suite (38 TCs)" verbose="1">
+
+    <test name="Company Code Validation (TC01-TC15)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AuthenticationTestNG">
+                <methods>
+                    <include name="testTC01_LoginPageLoadsForValidCompany"/>
+                    <include name="testTC02_CompanyCodeInUrl"/>
+                    <include name="testTC03_SignInButtonDisplayed"/>
+                    <include name="testTC04_NoDomainCompanyCode"/>
+                    <include name="testTC05_SignInButtonWithEmptyFields"/>
+                    <include name="testTC06_ValidCompanyUrlLoadsLogin"/>
+                    <include name="testTC07_InvalidCompanyUrl"/>
+                    <include name="testTC08_CompanyCodeDifferentiatesTenants"/>
+                    <include name="testTC09_CompanyCodeSpacesHandled"/>
+                    <include name="testTC10_LongCompanyCodeUrl"/>
+                    <include name="testTC11_SpecialCharsCompanyCode"/>
+                    <include name="testTC12_CompanyCodeCaseInsensitive"/>
+                    <include name="testTC13_BackNavigationFromLogin"/>
+                    <include name="testTC14_CompanyCodePersistsOnReload"/>
+                    <include name="testTC15_PlaceholderText"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="Login Functionality (TC16-TC33)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AuthenticationTestNG">
+                <methods>
+                    <include name="testTC16_LoginPageElementsDisplayed"/>
+                    <include name="testTC17_EmailFieldDisplayed"/>
+                    <include name="testTC18_PasswordFieldDisplayed"/>
+                    <include name="testTC19_SignInButtonDisplayed"/>
+                    <include name="testTC20_SignInWithEmptyFields"/>
+                    <include name="testTC21_SignInButtonStateEmpty"/>
+                    <include name="testTC22_LoginWithEmailOnly"/>
+                    <include name="testTC23_LoginWithPasswordOnly"/>
+                    <include name="testTC24_InvalidEmailFormat"/>
+                    <include name="testTC25_InvalidCredentials"/>
+                    <include name="testTC26_ValidCredentialsLogin"/>
+                    <include name="testTC27_ErrorMessageOnInvalidLogin"/>
+                    <include name="testTC28_ForgotPasswordDisplayed"/>
+                    <include name="testTC29_PasswordMasking"/>
+                    <include name="testTC30_ClearEmailField"/>
+                    <include name="testTC31_ClearPasswordField"/>
+                    <include name="testTC32_EmailTextRetrieval"/>
+                    <include name="testTC33_ChangeCompanyLink"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="Session Management (TC34-TC38)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AuthenticationTestNG">
+                <methods>
+                    <include name="testTC34_SessionPersistsDuringNavigation"/>
+                    <include name="testTC35_LogoutRedirectsToLogin"/>
+                    <include name="testTC36_SessionPersistsAfterRefresh"/>
+                    <include name="testTC37_DirectUrlAccessWhileLoggedIn"/>
+                    <include name="testTC38_ProtectedPageAfterLogout"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+</suite>

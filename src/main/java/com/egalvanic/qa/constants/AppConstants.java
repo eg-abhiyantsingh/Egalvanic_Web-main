@@ -25,6 +25,18 @@ public class AppConstants {
     public static final String INVALID_PASSWORD = "wrongpassword123";
 
     // ============================================
+    // COMPANY CODE / SUBDOMAIN CONFIGURATION
+    // ============================================
+    public static final String VALID_COMPANY_CODE = "acme";
+    public static final String INVALID_COMPANY_CODE = "invalidxyz999";
+    public static final String QA_DOMAIN = "qa.egalvanic.ai";
+
+    // ============================================
+    // FEATURE NAMES - COMPANY CODE
+    // ============================================
+    public static final String FEATURE_COMPANY_CODE = "Company Code";
+
+    // ============================================
     // ROLE-BASED CREDENTIALS
     // ============================================
     public static final String ADMIN_EMAIL = getEnv("ADMIN_EMAIL", "abhiyant.singh+acme@egalvanic.com");
