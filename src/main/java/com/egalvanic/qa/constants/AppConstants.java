@@ -32,9 +32,23 @@ public class AppConstants {
     public static final String QA_DOMAIN = "qa.egalvanic.ai";
 
     // ============================================
+    // API CONFIGURATION
+    // ============================================
+    public static final String API_BASE_URL = BASE_URL + "/api";
+
+    // ============================================
     // FEATURE NAMES - COMPANY CODE
     // ============================================
     public static final String FEATURE_COMPANY_CODE = "Company Code";
+
+    // ============================================
+    // MODULE & FEATURE NAMES - API
+    // ============================================
+    public static final String MODULE_API = "API Tests";
+    public static final String FEATURE_API_AUTH = "API Authentication";
+    public static final String FEATURE_API_USERS = "API Users";
+    public static final String FEATURE_API_SECURITY = "API Security";
+    public static final String FEATURE_API_PERFORMANCE = "API Performance";
 
     // ============================================
     // ROLE-BASED CREDENTIALS

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="eGalvanic API Test Suite (17 Tests)" verbose="1">
+
+    <test name="API Authentication Tests">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.AuthenticationAPITest"/>
+        </classes>
+    </test>
+
+    <test name="API User Endpoint Tests">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.UserAPITest"/>
+        </classes>
+    </test>
+
+    <test name="API Security Tests">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.APISecurityTest"/>
+        </classes>
+    </test>
+
+    <test name="API Performance Tests">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.APIPerformanceTest"/>
+        </classes>
+    </test>
+
+</suite>

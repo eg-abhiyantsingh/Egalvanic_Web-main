@@ -50,4 +50,28 @@
         </classes>
     </test>
 
+    <test name="API Authentication Tests">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.AuthenticationAPITest"/>
+        </classes>
+    </test>
+
+    <test name="API User Tests">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.UserAPITest"/>
+        </classes>
+    </test>
+
+    <test name="API Security Tests">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.APISecurityTest"/>
+        </classes>
+    </test>
+
+    <test name="API Performance Tests">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.APIPerformanceTest"/>
+        </classes>
+    </test>
+
 </suite>
