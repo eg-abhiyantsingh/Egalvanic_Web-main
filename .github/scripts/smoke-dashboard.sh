@@ -25,12 +25,12 @@
 set +e  # Don't exit on error — we handle failures ourselves
 
 # ─────────────────────────────────────────────────────
-# MODULE DEFINITIONS
+# MODULE DEFINITIONS (all available modules)
 # ─────────────────────────────────────────────────────
-MODULES=("auth-login" "site-selection" "asset-crud" "connection-crud" "location-crud" "issues-crud" "workorder-crud")
-MODULE_NAMES=("Auth & Login" "Site Selection" "Asset CRUD" "Connection CRUD" "Location CRUD" "Issues CRUD" "Work Order CRUD")
-MODULE_TESTS=(6 4 9 3 4 5 6)
-MODULE_XMLS=(
+ALL_MODULES=("auth-login" "site-selection" "asset-crud" "connection-crud" "location-crud" "issues-crud" "workorder-crud")
+ALL_MODULE_NAMES=("Auth & Login" "Site Selection" "Asset CRUD" "Connection CRUD" "Location CRUD" "Issues CRUD" "Work Order CRUD")
+ALL_MODULE_TESTS=(6 4 9 3 4 5 6)
+ALL_MODULE_XMLS=(
   "smoke-auth-testng.xml"
   "smoke-site-testng.xml"
   "smoke-asset-testng.xml"
@@ -40,17 +40,67 @@ MODULE_XMLS=(
   "smoke-workorder-testng.xml"
 )
 
-TOTAL_TESTS=37
-TOTAL_MODULES=7
+# ─────────────────────────────────────────────────────
+# MODULE SELECTION (via SMOKE_MODULE env var)
+# Accepts: all, auth, site-selection, asset, connection,
+#          location, issues, workorder
+# ─────────────────────────────────────────────────────
+get_module_index() {
+  case "$1" in
+    auth)            echo 0 ;;
+    site-selection)  echo 1 ;;
+    asset)           echo 2 ;;
+    connection)      echo 3 ;;
+    location)        echo 4 ;;
+    issues)          echo 5 ;;
+    workorder)       echo 6 ;;
+    *)               echo -1 ;;
+  esac
+}
+
+SELECTED="${SMOKE_MODULE:-all}"
+
+if [ "$SELECTED" = "all" ] || [ -z "$SELECTED" ]; then
+  MODULES=("${ALL_MODULES[@]}")
+  MODULE_NAMES=("${ALL_MODULE_NAMES[@]}")
+  MODULE_TESTS=("${ALL_MODULE_TESTS[@]}")
+  MODULE_XMLS=("${ALL_MODULE_XMLS[@]}")
+else
+  IDX=$(get_module_index "$SELECTED")
+  if [ "$IDX" -eq -1 ]; then
+    echo "❌ Unknown module: $SELECTED"
+    echo "   Valid options: all, auth, site-selection, asset, connection, location, issues, workorder"
+    exit 1
+  fi
+  MODULES=("${ALL_MODULES[$IDX]}")
+  MODULE_NAMES=("${ALL_MODULE_NAMES[$IDX]}")
+  MODULE_TESTS=("${ALL_MODULE_TESTS[$IDX]}")
+  MODULE_XMLS=("${ALL_MODULE_XMLS[$IDX]}")
+  echo "  🎯  Running single module: ${MODULE_NAMES[0]}"
+  echo ""
+fi
+
+TOTAL_TESTS=0
+for tc in "${MODULE_TESTS[@]}"; do
+  TOTAL_TESTS=$((TOTAL_TESTS + tc))
+done
+TOTAL_MODULES=${#MODULES[@]}
 
 # ─────────────────────────────────────────────────────
-# STATE TRACKING
+# STATE TRACKING (dynamically sized)
 # ─────────────────────────────────────────────────────
-STATUS=("pending" "pending" "pending" "pending" "pending" "pending" "pending")
-M_PASSED=(0 0 0 0 0 0 0)
-M_FAILED=(0 0 0 0 0 0 0)
-M_SKIPPED=(0 0 0 0 0 0 0)
-M_DURATION=(0 0 0 0 0 0 0)
+STATUS=()
+M_PASSED=()
+M_FAILED=()
+M_SKIPPED=()
+M_DURATION=()
+for i in $(seq 0 $((TOTAL_MODULES - 1))); do
+  STATUS+=("pending")
+  M_PASSED+=(0)
+  M_FAILED+=(0)
+  M_SKIPPED+=(0)
+  M_DURATION+=(0)
+done
 
 SUITE_START=$(date +%s)
 GLOBAL_COMPLETED=0

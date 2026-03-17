@@ -27,6 +27,21 @@ name: Web Smoke Tests - Asset, Connection, Location, Issues & Work Order CRUD
 # ============================================================
 on:
   workflow_dispatch:
+    inputs:
+      module:
+        description: 'Select module to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - auth
+          - site-selection
+          - asset
+          - connection
+          - location
+          - issues
+          - workorder
 
 jobs:
   smoke-tests:
@@ -95,6 +110,7 @@ jobs:
         env:
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           SEND_EMAIL_ENABLED: "true"
+          SMOKE_MODULE: ${{ github.event.inputs.module }}
         run: |
           bash .github/scripts/smoke-dashboard.sh
 

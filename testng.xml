@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="eGalvanic Smoke Test Suite" verbose="1">
+
+    <test name="Auth Tests">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AuthSmokeTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Connection Tests">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ConnectionSmokeTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Site Selection Tests">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.SiteSelectionSmokeTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Asset Tests">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetSmokeTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Work Order Tests">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkOrderSmokeTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Issues Tests">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.IssuesSmokeTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Location Tests">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.LocationSmokeTestNG"/>
+        </classes>
+    </test>
+
+</suite>
