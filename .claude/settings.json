@@ -8,7 +8,11 @@
       "Bash(chmod +x /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/.github/scripts/smoke-dashboard.sh)",
       "Bash(mvn clean compile test-compile -B -q)",
       "Bash(mvn compile test-compile -B -q)",
-      "Bash(mvn test -DsuiteXmlFile=smoke-testng.xml)"
+      "Bash(mvn test -DsuiteXmlFile=smoke-testng.xml)",
+      "Bash(git pull:*)",
+      "Bash(grep -v \"^\\\\s*$\")",
+      "Read(//Users/abhiyantsingh/Downloads/Egalvanic_Web-main/**)",
+      "Bash(java -cp target/classes -e)"
     ]
   }
 }
