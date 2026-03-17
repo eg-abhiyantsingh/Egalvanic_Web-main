@@ -33,11 +33,12 @@ public class APISecurityTest extends BaseAPITest {
         JSONObject loginPayload = new JSONObject();
         loginPayload.put("email", sqlInjectionPayload);
         loginPayload.put("password", AppConstants.VALID_PASSWORD);
+        loginPayload.put("subdomain", AppConstants.VALID_COMPANY_CODE);
 
         Response response = getRequestSpec()
                 .body(loginPayload.toString())
                 .when()
-                .post("/login")
+                .post("/auth/login")
                 .then()
                 .extract().response();
 
@@ -64,11 +65,12 @@ public class APISecurityTest extends BaseAPITest {
         JSONObject loginPayload = new JSONObject();
         loginPayload.put("email", xssPayload);
         loginPayload.put("password", AppConstants.VALID_PASSWORD);
+        loginPayload.put("subdomain", AppConstants.VALID_COMPANY_CODE);
 
         Response response = getRequestSpec()
                 .body(loginPayload.toString())
                 .when()
-                .post("/login")
+                .post("/auth/login")
                 .then()
                 .extract().response();
 

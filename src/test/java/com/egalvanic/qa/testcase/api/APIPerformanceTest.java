@@ -29,13 +29,14 @@ public class APIPerformanceTest extends BaseAPITest {
         JSONObject loginPayload = new JSONObject();
         loginPayload.put("email", AppConstants.VALID_EMAIL);
         loginPayload.put("password", AppConstants.VALID_PASSWORD);
+        loginPayload.put("subdomain", AppConstants.VALID_COMPANY_CODE);
 
         long startTime = System.currentTimeMillis();
 
         Response response = getRequestSpec()
                 .body(loginPayload.toString())
                 .when()
-                .post("/login")
+                .post("/auth/login")
                 .then()
                 .extract().response();
 
