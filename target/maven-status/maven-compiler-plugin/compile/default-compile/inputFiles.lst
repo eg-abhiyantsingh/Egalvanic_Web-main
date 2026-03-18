@@ -1,7 +1,11 @@
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/pageobjects/LoginPage.java
+/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/pageobjects/WorkOrderPage.java
+/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/pageobjects/ConnectionPage.java
+/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/pageobjects/IssuePage.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/pageobjects/DashboardPage.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/pageobjects/LocationPage.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/pageobjects/AssetPage.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/ScreenshotUtil.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/constants/AppConstants.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/ExtentReportManager.java
+/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/EmailUtil.java

@@ -12,7 +12,12 @@
       "Bash(git pull:*)",
       "Bash(grep -v \"^\\\\s*$\")",
       "Read(//Users/abhiyantsingh/Downloads/Egalvanic_Web-main/**)",
-      "Bash(java -cp target/classes -e)"
+      "Bash(java -cp target/classes -e)",
+      "Read(//Users/abhiyantsingh/Downloads/**)",
+      "Read(//Users/abhiyantsingh/**)",
+      "Read(//Users/abhiyantsingh/Documents/**)",
+      "Read(//Users/abhiyantsingh/Desktop/**)",
+      "Bash(grep -r \"RestAssured\\\\|rest-assured\\\\|given\\(\\).*when\\(\\)\" /Users/abhiyantsingh/Downloads/eGalvanic-Automation --include=*.java)"
     ]
   }
 }

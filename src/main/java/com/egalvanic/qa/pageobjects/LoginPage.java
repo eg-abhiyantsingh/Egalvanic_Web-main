@@ -27,8 +27,11 @@ public class LoginPage {
     @FindBy(id = "password")
     WebElement passwordField;
 
-    @FindBy(xpath = "//button[@type='submit' or contains(.,'Sign in') or contains(.,'Login')]")
+    @FindBy(xpath = "//button[@type='submit'][contains(.,'Sign In') or contains(.,'Sign in') or contains(.,'Login')]")
     WebElement loginButton;
+
+    @FindBy(xpath = "//label[contains(.,'Terms') or contains(.,'agree')]//input[@type='checkbox'] | //input[@type='checkbox'][ancestor::label[contains(.,'Terms') or contains(.,'agree')]]")
+    WebElement termsCheckbox;
 
     @FindBy(xpath = "//div[contains(@class,'error') or contains(@class,'alert') or contains(text(),'Incorrect')]")
     WebElement errorMessage;
@@ -46,34 +49,118 @@ public class LoginPage {
     // ================================================================
 
     /**
-     * Enter email in the email field
+     * Set a React-controlled input value using the native value setter
+     * so that React's internal state is updated properly.
+     */
+    private void setReactInputValue(WebElement element, String value) {
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        js.executeScript(
+                "var el = arguments[0]; "
+                + "el.focus(); "
+                + "var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set; "
+                + "nativeInputValueSetter.call(el, arguments[1]); "
+                + "el.dispatchEvent(new Event('input', { bubbles: true })); "
+                + "el.dispatchEvent(new Event('change', { bubbles: true }));",
+                element, value);
+    }
+
+    /**
+     * Enter email in the email field.
+     * Uses React-compatible native value setter to update React state.
      */
     public void enterEmail(String email) {
-        emailField.clear();
-        emailField.sendKeys(email);
+        try {
+            setReactInputValue(emailField, email);
+        } catch (Exception e) {
+            // Fallback to standard Selenium
+            emailField.click();
+            emailField.clear();
+            emailField.sendKeys(email);
+        }
     }
 
     /**
-     * Enter password in the password field
+     * Enter password in the password field.
+     * Uses React-compatible native value setter to update React state.
      */
     public void enterPassword(String password) {
-        passwordField.clear();
-        passwordField.sendKeys(password);
+        try {
+            setReactInputValue(passwordField, password);
+        } catch (Exception e) {
+            // Fallback to standard Selenium
+            passwordField.click();
+            passwordField.clear();
+            passwordField.sendKeys(password);
+        }
     }
 
     /**
-     * Click the login button
+     * Click the login button. Falls back to JS click if element not interactable.
      */
     public void clickLoginButton() {
-        loginButton.click();
+        try {
+            loginButton.click();
+        } catch (org.openqa.selenium.ElementNotInteractableException e) {
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            js.executeScript("arguments[0].click();", loginButton);
+        }
     }
 
     /**
-     * Perform login with email and password
+     * Accept Terms and Conditions checkbox if present and unchecked.
+     */
+    public void acceptTermsIfPresent() {
+        try {
+            List<WebElement> checkboxLabels = driver.findElements(By.xpath(
+                    "//label[contains(.,'Terms') or contains(.,'agree')]"));
+            for (WebElement label : checkboxLabels) {
+                if (label.isDisplayed()) {
+                    // Check if checkbox inside is already checked
+                    WebElement cb = label.findElement(By.cssSelector("input[type='checkbox']"));
+                    if (!cb.isSelected()) {
+                        // Click the label (more reliable than the hidden checkbox)
+                        label.click();
+                    }
+                    return;
+                }
+            }
+        } catch (Exception e) {
+            // No terms checkbox — proceed
+        }
+    }
+
+    /**
+     * Check if Terms and Conditions checkbox is displayed.
+     */
+    public boolean isTermsCheckboxDisplayed() {
+        try {
+            List<WebElement> labels = driver.findElements(By.xpath(
+                    "//label[contains(.,'Terms') or contains(.,'agree')]"));
+            for (WebElement label : labels) {
+                if (label.isDisplayed()) return true;
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Perform login with email and password.
+     * Automatically accepts Terms checkbox if present.
      */
     public void login(String email, String password) {
         enterEmail(email);
         enterPassword(password);
+        acceptTermsIfPresent();
+        // Wait for Sign In button to become enabled
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(5))
+                    .until(ExpectedConditions.elementToBeClickable(
+                            By.xpath("//button[@type='submit'][contains(.,'Sign In') or contains(.,'Sign in') or contains(.,'Login')]")));
+        } catch (Exception e) {
+            // Proceed anyway
+        }
         clickLoginButton();
     }
 
@@ -132,10 +219,22 @@ public class LoginPage {
      */
     public boolean isSignInButtonDisplayed() {
         try {
-            return loginButton.isDisplayed();
+            if (loginButton.isDisplayed()) return true;
         } catch (Exception e) {
-            return false;
+            // PageFactory element not found, try dynamic search
         }
+        try {
+            List<WebElement> btns = driver.findElements(By.xpath(
+                    "//button[@type='submit'][contains(.,'Sign In') or contains(.,'Sign in') or contains(.,'Login')]"));
+            for (WebElement btn : btns) {
+                // Scroll into view to ensure visibility in headless mode
+                ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", btn);
+                if (btn.isDisplayed()) return true;
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+        return false;
     }
 
     /**

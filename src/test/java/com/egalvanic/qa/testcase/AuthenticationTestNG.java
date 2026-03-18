@@ -6,7 +6,6 @@ import com.egalvanic.qa.utils.ExtentReportManager;
 import com.egalvanic.qa.utils.ScreenshotUtil;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -48,7 +47,6 @@ public class AuthenticationTestNG {
 
     private WebDriver driver;
     private LoginPage loginPage;
-    private JavascriptExecutor js;
     private long testStartTime;
 
     private static final int LOGIN_TIMEOUT = 25;
@@ -105,14 +103,11 @@ public class AuthenticationTestNG {
         opts.setExperimentalOption("prefs", prefs);
 
         if ("true".equals(System.getProperty("headless"))) {
-            opts.addArguments("--headless=new");
+            opts.addArguments("--headless=new", "--window-size=1920,1080");
         }
 
         driver = new ChromeDriver(opts);
         driver.manage().window().maximize();
-
-        js = (JavascriptExecutor) driver;
-        js.executeScript("document.body.style.zoom='80%';");
 
         ScreenshotUtil.setDriver(driver);
         loginPage = new LoginPage(driver);
@@ -640,18 +635,39 @@ public class AuthenticationTestNG {
             logStep("Email placeholder: '" + emailPlaceholder + "'");
             logStep("Password placeholder: '" + passwordPlaceholder + "'");
 
-            // Verify placeholders are not empty
-            Assert.assertNotNull(emailPlaceholder, "Email placeholder should not be null");
-            Assert.assertNotNull(passwordPlaceholder, "Password placeholder should not be null");
+            // This app uses MUI labels instead of placeholders — check for labels too
+            boolean emailHasHint = (emailPlaceholder != null && !emailPlaceholder.isEmpty());
+            boolean passwordHasHint = (passwordPlaceholder != null && !passwordPlaceholder.isEmpty());
 
-            // Email placeholder should contain email-related hint
-            boolean emailHasHint = emailPlaceholder.toLowerCase().contains("email")
-                    || emailPlaceholder.contains("@")
-                    || !emailPlaceholder.isEmpty();
-            Assert.assertTrue(emailHasHint, "Email field should have a meaningful placeholder");
+            // If no placeholders, check for MUI labels (label[for='email'] or label associated)
+            if (!emailHasHint) {
+                List<WebElement> emailLabels = driver.findElements(By.cssSelector(
+                        "label[for='email'], #email-label"));
+                for (WebElement lbl : emailLabels) {
+                    if (lbl.isDisplayed() && !lbl.getText().trim().isEmpty()) {
+                        emailHasHint = true;
+                        logStep("Email label found: '" + lbl.getText().trim() + "'");
+                        break;
+                    }
+                }
+            }
+            if (!passwordHasHint) {
+                List<WebElement> pwdLabels = driver.findElements(By.cssSelector(
+                        "label[for='password'], #password-label"));
+                for (WebElement lbl : pwdLabels) {
+                    if (lbl.isDisplayed() && !lbl.getText().trim().isEmpty()) {
+                        passwordHasHint = true;
+                        logStep("Password label found: '" + lbl.getText().trim() + "'");
+                        break;
+                    }
+                }
+            }
 
-            logStepWithScreenshot("Login page with placeholder text visible");
-            ExtentReportManager.logPass("TC15 PASSED: Placeholder text verified on login fields");
+            Assert.assertTrue(emailHasHint, "Email field should have placeholder or label hint");
+            Assert.assertTrue(passwordHasHint, "Password field should have placeholder or label hint");
+
+            logStepWithScreenshot("Login page with field labels/placeholders visible");
+            ExtentReportManager.logPass("TC15 PASSED: Field labels/placeholders verified on login fields");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("TC15_error");
             Assert.fail("TC15 failed: " + e.getMessage());
@@ -832,12 +848,18 @@ public class AuthenticationTestNG {
             // Enter password too
             loginPage.enterPassword(AppConstants.VALID_PASSWORD);
             pause(500);
-            boolean enabledBoth = loginPage.isSignInButtonEnabled();
-            logStep("Sign In button enabled with both fields: " + enabledBoth);
+            boolean enabledBothNoTerms = loginPage.isSignInButtonEnabled();
+            logStep("Sign In button enabled with both fields (no terms): " + enabledBothNoTerms);
 
-            // With both fields filled, button should be enabled
-            Assert.assertTrue(enabledBoth,
-                    "Sign In button should be enabled when both email and password are filled");
+            // Accept Terms checkbox if present
+            loginPage.acceptTermsIfPresent();
+            pause(500);
+            boolean enabledBothWithTerms = loginPage.isSignInButtonEnabled();
+            logStep("Sign In button enabled with both fields + terms: " + enabledBothWithTerms);
+
+            // With both fields filled and terms accepted, button should be enabled
+            Assert.assertTrue(enabledBothWithTerms,
+                    "Sign In button should be enabled when both fields filled and terms accepted");
 
             logStepWithScreenshot("Sign In button state with filled fields");
             ExtentReportManager.logPass("TC21 PASSED: Sign In button state changes verified");
@@ -1529,7 +1551,7 @@ public class AuthenticationTestNG {
             boolean hasEmailField = driver.findElements(By.id("email")).size() > 0;
             boolean hasPasswordField = driver.findElements(By.id("password")).size() > 0;
             boolean hasSubmitBtn = driver.findElements(
-                    By.xpath("//button[@type='submit' or contains(.,'Sign in') or contains(.,'Login')]")).size() > 0;
+                    By.xpath("//button[@type='submit'][contains(.,'Sign In') or contains(.,'Sign in') or contains(.,'Login')]")).size() > 0;
             return hasEmailField && (hasPasswordField || hasSubmitBtn);
         } catch (Exception e) {
             return false;
