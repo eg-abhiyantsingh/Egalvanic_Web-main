@@ -517,12 +517,23 @@ public class SiteSelectionTestNG {
 
         // Clear search
         clearFacilityInput();
-        pause(500);
+        pause(1000);
 
         // Open dropdown to see all sites
         openFacilityDropdown();
+        pause(1000);
         int fullCount = driver.findElements(OPTIONS).size();
         logStep("Full count after clearing: " + fullCount);
+
+        // If dropdown didn't populate, retry by clicking input and waiting
+        if (fullCount == 0) {
+            logStep("Dropdown empty — retrying with input click");
+            WebElement retryInput = driver.findElement(FACILITY_INPUT);
+            retryInput.click();
+            pause(1500);
+            fullCount = driver.findElements(OPTIONS).size();
+            logStep("Retry full count: " + fullCount);
+        }
 
         Assert.assertTrue(fullCount >= filteredCount,
                 "Full list (" + fullCount + ") should be >= filtered list (" + filteredCount + ")");

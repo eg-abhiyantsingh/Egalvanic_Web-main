@@ -19,7 +19,7 @@ public class AppConstants {
     // ============================================
     // TEST DATA - AUTHENTICATION
     // ============================================
-    public static final String VALID_EMAIL = getEnv("USER_EMAIL", "abhiyant.singh+acme@egalvanic.com");
+    public static final String VALID_EMAIL = getEnv("USER_EMAIL", "abhiyant.singh+admin@egalvanic.com");
     public static final String VALID_PASSWORD = getEnv("USER_PASSWORD", "RP@egalvanic123");
     public static final String INVALID_EMAIL = "invalidemail@test.com";
     public static final String INVALID_PASSWORD = "wrongpassword123";
