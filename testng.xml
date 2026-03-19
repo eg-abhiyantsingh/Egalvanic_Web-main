@@ -20,9 +20,15 @@
         </classes>
     </test>
 
-    <test name="Site Selection Tests">
+    <test name="Site Selection Smoke Tests">
         <classes>
             <class name="com.egalvanic.qa.testcase.SiteSelectionSmokeTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Full Site Selection Tests (52 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.SiteSelectionTestNG"/>
         </classes>
     </test>
 

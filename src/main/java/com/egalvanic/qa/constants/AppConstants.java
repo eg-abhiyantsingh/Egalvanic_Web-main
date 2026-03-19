@@ -96,6 +96,20 @@ public class AppConstants {
     public static final String MODULE_SMOKE_TEST = "Smoke Test";
 
     // ============================================
+    // FEATURE NAMES - SITE SELECTION
+    // ============================================
+    public static final String FEATURE_SELECT_SITE = "Select Site";
+    public static final String FEATURE_SEARCH_SITES = "Search Sites";
+    public static final String FEATURE_ONLINE_OFFLINE = "Online/Offline";
+    public static final String FEATURE_OFFLINE_SYNC = "Offline Sync";
+    public static final String FEATURE_DASHBOARD = "Dashboard";
+    public static final String FEATURE_DASHBOARD_BADGES = "Dashboard Badges";
+    public static final String FEATURE_DASHBOARD_HEADER = "Dashboard Header";
+    public static final String FEATURE_JOB_SELECTION = "Job Selection";
+    public static final String FEATURE_EDGE_CASES = "Edge Cases";
+    public static final String FEATURE_PERFORMANCE = "Performance";
+
+    // ============================================
     // FEATURE NAMES - AUTHENTICATION
     // ============================================
     public static final String FEATURE_LOGIN = "Login";
