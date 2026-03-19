@@ -53,7 +53,7 @@ public class AppConstants {
     // ============================================
     // ROLE-BASED CREDENTIALS
     // ============================================
-    public static final String ADMIN_EMAIL = getEnv("ADMIN_EMAIL", "abhiyant.singh+acme@egalvanic.com");
+    public static final String ADMIN_EMAIL = getEnv("ADMIN_EMAIL", "abhiyant.singh+admin@egalvanic.com");
     public static final String ADMIN_PASSWORD = getEnv("ADMIN_PASSWORD", "RP@egalvanic123");
     public static final String PM_EMAIL = getEnv("PM_EMAIL", "abhiyant.singh+pm@egalvanic.com");
     public static final String PM_PASSWORD = getEnv("PM_PASSWORD", "RP@egalvanic123");

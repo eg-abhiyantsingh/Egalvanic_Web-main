@@ -104,6 +104,24 @@
         </classes>
     </test>
 
+    <test name="Dashboard Bug Tests (45 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.DashboardBugTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Full Task Tests (55 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.TaskTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Full Work Order Tests (50 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkOrderTestNG"/>
+        </classes>
+    </test>
+
     <test name="Bug Hunt &amp; Security Tests (30 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.BugHuntTestNG"/>
