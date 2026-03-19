@@ -62,6 +62,12 @@
         </classes>
     </test>
 
+    <test name="Full Asset Tests Part 5 - Edit Details (65 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetPart5TestNG"/>
+        </classes>
+    </test>
+
     <test name="Work Order Tests">
         <classes>
             <class name="com.egalvanic.qa.testcase.WorkOrderSmokeTestNG"/>
