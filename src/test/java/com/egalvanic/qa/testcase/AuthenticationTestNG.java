@@ -282,9 +282,14 @@ public class AuthenticationTestNG {
 
             logStep("Login loaded: " + loginLoaded + ", Error page: " + isError + ", Redirected: " + wasRedirected);
 
-            // Base domain without company code should not show normal login
-            Assert.assertTrue(!loginLoaded || isError || wasRedirected,
-                    "Empty company code should not show a normal login page. URL: " + currentUrl);
+            // Base domain without company code should NOT show a normal login screen.
+            // It must either show an error page OR redirect away from the base domain.
+            // If loginLoaded is true and neither error nor redirect occurred, the test should fail.
+            boolean handledCorrectly = !loginLoaded || isError || wasRedirected;
+            Assert.assertTrue(handledCorrectly,
+                    "Empty company code should not show a normal login page without error/redirect. "
+                    + "loginLoaded=" + loginLoaded + ", isError=" + isError
+                    + ", wasRedirected=" + wasRedirected + ", URL: " + currentUrl);
 
             ExtentReportManager.logPass("TC04 PASSED: Empty company code handled — error/redirect shown");
         } catch (Exception e) {
@@ -576,10 +581,17 @@ public class AuthenticationTestNG {
             String activeId = activeElement.getAttribute("id");
             logStep("Active element after Tab: " + activeId);
 
-            // The active element should be password or toggle button
-            boolean focusMoved = "password".equals(activeId)
-                    || activeElement.getAttribute("type") != null;
-            Assert.assertTrue(focusMoved, "Tab should move focus from email to next field");
+            // The active element should be password field or the password toggle button
+            // Note: getAttribute("type") != null was always true (any element has a type) — fixed
+            boolean focusOnPassword = "password".equals(activeId);
+            boolean focusOnPasswordType = "password".equals(activeElement.getAttribute("type"));
+            boolean focusOnToggle = activeElement.getAttribute("aria-label") != null
+                    && activeElement.getAttribute("aria-label").contains("password");
+            boolean focusMoved = focusOnPassword || focusOnPasswordType || focusOnToggle;
+            logStep("Focus check: onPasswordById=" + focusOnPassword
+                    + ", onPasswordByType=" + focusOnPasswordType + ", onToggle=" + focusOnToggle);
+            Assert.assertTrue(focusMoved, "Tab should move focus from email to password field or toggle. "
+                    + "Active element id='" + activeId + "', tag='" + activeElement.getTagName() + "'");
 
             logStepWithScreenshot("After Tab key navigation");
             ExtentReportManager.logPass("TC13 PASSED: Keyboard tab navigation works correctly");

@@ -418,17 +418,22 @@ public class SiteSelectionTestNG {
         int filteredCount = filtered.isEmpty() ? 0 : filtered.size();
         logStep("Filtered sites for 'Test': " + filteredCount);
 
+        // Search for "Test" must return at least one result
+        Assert.assertTrue(filteredCount > 0,
+                "Search for 'Test' returned 0 results — search may be broken");
+
         if (totalCount > 1) {
-            // Verify filtering happened (fewer or equal results)
-            Assert.assertTrue(filteredCount <= totalCount,
-                    "Filtered count (" + filteredCount + ") should be <= total (" + totalCount + ")");
+            // Filtering should reduce results (strict less-than, not just <=)
+            Assert.assertTrue(filteredCount < totalCount,
+                    "Search did not filter: filteredCount (" + filteredCount
+                    + ") should be < totalCount (" + totalCount + "). Search may not be working.");
         }
 
         // Verify all filtered results contain "Test"
         for (WebElement opt : filtered) {
             String text = getElementText(opt).toLowerCase();
             Assert.assertTrue(text.contains("test"),
-                    "Filtered option does not contain 'Test': " + text);
+                    "Filtered option does not contain 'Test': '" + text + "'");
         }
         logStep("All filtered results contain 'Test'");
 

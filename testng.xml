@@ -32,9 +32,15 @@
         </classes>
     </test>
 
-    <test name="Asset Tests">
+    <test name="Asset Smoke Tests">
         <classes>
             <class name="com.egalvanic.qa.testcase.AssetSmokeTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Full Asset Tests Part 1 (30 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetPart1TestNG"/>
         </classes>
     </test>
 
@@ -53,6 +59,12 @@
     <test name="Location Tests">
         <classes>
             <class name="com.egalvanic.qa.testcase.LocationSmokeTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Bug Hunt &amp; Security Tests (30 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntTestNG"/>
         </classes>
     </test>
 

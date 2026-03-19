@@ -165,6 +165,18 @@ public class AppConstants {
     public static final String FEATURE_WO_FILTER = "Filter";
 
     // ============================================
+    // MODULE & FEATURE NAMES - BUG HUNT / SECURITY
+    // ============================================
+    public static final String MODULE_BUG_HUNT = "Bug Hunt & Security";
+    public static final String FEATURE_XSS_PROTECTION = "XSS Protection";
+    public static final String FEATURE_INPUT_VALIDATION = "Input Validation";
+    public static final String FEATURE_CONSOLE_ERRORS = "Console Errors";
+    public static final String FEATURE_LOGIN_UX = "Login UX";
+    public static final String FEATURE_SESSION_SECURITY = "Session Security";
+    public static final String FEATURE_HTTP_SECURITY = "HTTP Security Headers";
+    public static final String FEATURE_ERROR_HANDLING = "Error Handling";
+
+    // ============================================
     // EMAIL CONFIGURATION
     // ============================================
     public static final String SMTP_HOST = "smtp.gmail.com";
