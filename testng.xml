@@ -86,6 +86,12 @@
         </classes>
     </test>
 
+    <test name="Full Location Tests (55 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.LocationTestNG"/>
+        </classes>
+    </test>
+
     <test name="Bug Hunt &amp; Security Tests (30 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.BugHuntTestNG"/>
