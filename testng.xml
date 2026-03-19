@@ -86,6 +86,12 @@
         </classes>
     </test>
 
+    <test name="Full Issue Tests (70 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.IssueTestNG"/>
+        </classes>
+    </test>
+
     <test name="Location Tests">
         <classes>
             <class name="com.egalvanic.qa.testcase.LocationSmokeTestNG"/>
