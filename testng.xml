@@ -20,6 +20,12 @@
         </classes>
     </test>
 
+    <test name="Full Connection Tests (45 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ConnectionTestNG"/>
+        </classes>
+    </test>
+
     <test name="Site Selection Smoke Tests">
         <classes>
             <class name="com.egalvanic.qa.testcase.SiteSelectionSmokeTestNG"/>
