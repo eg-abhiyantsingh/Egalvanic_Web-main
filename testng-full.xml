@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="eGalvanic Full Test Suite (674 TCs)" verbose="1">
+
+    <!-- ============================================================ -->
+    <!-- FULL TEST SUITE — All Modules                                -->
+    <!-- 674 tests across 18 test classes + 4 API test classes        -->
+    <!--                                                              -->
+    <!-- Usage: mvn test -DsuiteXmlFile=testng-full.xml               -->
+    <!-- For smoke only (37 TCs), use default: mvn test               -->
+    <!-- ============================================================ -->
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <!-- ============================================================ -->
+    <!-- AUTHENTICATION (26 TCs)                                      -->
+    <!-- ============================================================ -->
+    <test name="Authentication Tests (26 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AuthenticationTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ============================================================ -->
+    <!-- SITE SELECTION (52 TCs)                                      -->
+    <!-- ============================================================ -->
+    <test name="Site Selection Tests (52 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.SiteSelectionTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ============================================================ -->
+    <!-- CONNECTIONS (31 TCs)                                         -->
+    <!-- ============================================================ -->
+    <test name="Connection Tests (31 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ConnectionTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ============================================================ -->
+    <!-- LOCATIONS (38 TCs)                                           -->
+    <!-- ============================================================ -->
+    <test name="Location Tests (38 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.LocationTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ============================================================ -->
+    <!-- TASKS (55 TCs)                                               -->
+    <!-- ============================================================ -->
+    <test name="Task Tests (55 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.TaskTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ============================================================ -->
+    <!-- WORK ORDERS (50 TCs)                                         -->
+    <!-- ============================================================ -->
+    <test name="Work Order Tests (50 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkOrderTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ============================================================ -->
+    <!-- ISSUES (44 TCs)                                              -->
+    <!-- ============================================================ -->
+    <test name="Issue Tests (44 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.IssueTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ============================================================ -->
+    <!-- ASSETS Part 1-5 (273 TCs)                                    -->
+    <!-- ============================================================ -->
+    <test name="Asset Tests Part 1 (29 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetPart1TestNG"/>
+        </classes>
+    </test>
+
+    <test name="Asset Tests Part 2 (40 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetPart2TestNG"/>
+        </classes>
+    </test>
+
+    <test name="Asset Tests Part 3 (76 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetPart3TestNG"/>
+        </classes>
+    </test>
+
+    <test name="Asset Tests Part 4 (65 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetPart4TestNG"/>
+        </classes>
+    </test>
+
+    <test name="Asset Tests Part 5 (63 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetPart5TestNG"/>
+        </classes>
+    </test>
+
+    <!-- ============================================================ -->
+    <!-- DASHBOARD + BUG HUNT (75 TCs)                                -->
+    <!-- ============================================================ -->
+    <test name="Dashboard Bug Tests (45 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.DashboardBugTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Bug Hunt &amp; Security Tests (30 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ============================================================ -->
+    <!-- API TESTS (17 TCs)                                           -->
+    <!-- ============================================================ -->
+    <test name="API Authentication Tests">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.AuthenticationAPITest"/>
+        </classes>
+    </test>
+
+    <test name="API User Tests">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.UserAPITest"/>
+        </classes>
+    </test>
+
+    <test name="API Security Tests">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.APISecurityTest"/>
+        </classes>
+    </test>
+
+    <test name="API Performance Tests">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.APIPerformanceTest"/>
+        </classes>
+    </test>
+
+</suite>

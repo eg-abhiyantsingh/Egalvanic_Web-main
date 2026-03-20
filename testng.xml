@@ -1,154 +1,58 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="eGalvanic Smoke Test Suite" verbose="1">
+<suite name="eGalvanic Smoke Test Suite (37 TCs)" verbose="1">
 
-    <test name="Auth Smoke Tests">
+    <!-- ============================================================ -->
+    <!-- SMOKE TESTS ONLY — Quick Critical Path Validation            -->
+    <!-- 37 tests across 7 modules                                    -->
+    <!--                                                              -->
+    <!-- For the full suite (674 TCs), use: testng-full.xml           -->
+    <!-- Usage: mvn test -DsuiteXmlFile=testng-full.xml               -->
+    <!-- ============================================================ -->
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <test name="Module 1: Auth &amp; Login (6 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.AuthSmokeTestNG"/>
         </classes>
     </test>
 
-    <test name="Full Authentication Tests (38 TCs)">
-        <classes>
-            <class name="com.egalvanic.qa.testcase.AuthenticationTestNG"/>
-        </classes>
-    </test>
-
-    <test name="Connection Tests">
-        <classes>
-            <class name="com.egalvanic.qa.testcase.ConnectionSmokeTestNG"/>
-        </classes>
-    </test>
-
-    <test name="Full Connection Tests (45 TCs)">
-        <classes>
-            <class name="com.egalvanic.qa.testcase.ConnectionTestNG"/>
-        </classes>
-    </test>
-
-    <test name="Site Selection Smoke Tests">
+    <test name="Module 2: Site Selection (4 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.SiteSelectionSmokeTestNG"/>
         </classes>
     </test>
 
-    <test name="Full Site Selection Tests (52 TCs)">
-        <classes>
-            <class name="com.egalvanic.qa.testcase.SiteSelectionTestNG"/>
-        </classes>
-    </test>
-
-    <test name="Asset Smoke Tests">
+    <test name="Module 3: Asset CRUD (9 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.AssetSmokeTestNG"/>
         </classes>
     </test>
 
-    <test name="Full Asset Tests Part 1 (30 TCs)">
+    <test name="Module 4: Connection CRUD (3 TCs)">
         <classes>
-            <class name="com.egalvanic.qa.testcase.AssetPart1TestNG"/>
+            <class name="com.egalvanic.qa.testcase.ConnectionSmokeTestNG"/>
         </classes>
     </test>
 
-    <test name="Full Asset Tests Part 2 - Edit Details (40 TCs)">
-        <classes>
-            <class name="com.egalvanic.qa.testcase.AssetPart2TestNG"/>
-        </classes>
-    </test>
-
-    <test name="Full Asset Tests Part 3 - Edit Details (76 TCs)">
-        <classes>
-            <class name="com.egalvanic.qa.testcase.AssetPart3TestNG"/>
-        </classes>
-    </test>
-
-    <test name="Full Asset Tests Part 4 - Edit Details (62 TCs)">
-        <classes>
-            <class name="com.egalvanic.qa.testcase.AssetPart4TestNG"/>
-        </classes>
-    </test>
-
-    <test name="Full Asset Tests Part 5 - Edit Details (65 TCs)">
-        <classes>
-            <class name="com.egalvanic.qa.testcase.AssetPart5TestNG"/>
-        </classes>
-    </test>
-
-    <test name="Work Order Tests">
-        <classes>
-            <class name="com.egalvanic.qa.testcase.WorkOrderSmokeTestNG"/>
-        </classes>
-    </test>
-
-    <test name="Issues Tests">
-        <classes>
-            <class name="com.egalvanic.qa.testcase.IssuesSmokeTestNG"/>
-        </classes>
-    </test>
-
-    <test name="Full Issue Tests (70 TCs)">
-        <classes>
-            <class name="com.egalvanic.qa.testcase.IssueTestNG"/>
-        </classes>
-    </test>
-
-    <test name="Location Tests">
+    <test name="Module 5: Location CRUD (4 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.LocationSmokeTestNG"/>
         </classes>
     </test>
 
-    <test name="Full Location Tests (55 TCs)">
+    <test name="Module 6: Issues CRUD (5 TCs)">
         <classes>
-            <class name="com.egalvanic.qa.testcase.LocationTestNG"/>
+            <class name="com.egalvanic.qa.testcase.IssuesSmokeTestNG"/>
         </classes>
     </test>
 
-    <test name="Dashboard Bug Tests (45 TCs)">
+    <test name="Module 7: Work Order CRUD (6 TCs)">
         <classes>
-            <class name="com.egalvanic.qa.testcase.DashboardBugTestNG"/>
-        </classes>
-    </test>
-
-    <test name="Full Task Tests (55 TCs)">
-        <classes>
-            <class name="com.egalvanic.qa.testcase.TaskTestNG"/>
-        </classes>
-    </test>
-
-    <test name="Full Work Order Tests (50 TCs)">
-        <classes>
-            <class name="com.egalvanic.qa.testcase.WorkOrderTestNG"/>
-        </classes>
-    </test>
-
-    <test name="Bug Hunt &amp; Security Tests (30 TCs)">
-        <classes>
-            <class name="com.egalvanic.qa.testcase.BugHuntTestNG"/>
-        </classes>
-    </test>
-
-    <test name="API Authentication Tests">
-        <classes>
-            <class name="com.egalvanic.qa.testcase.api.AuthenticationAPITest"/>
-        </classes>
-    </test>
-
-    <test name="API User Tests">
-        <classes>
-            <class name="com.egalvanic.qa.testcase.api.UserAPITest"/>
-        </classes>
-    </test>
-
-    <test name="API Security Tests">
-        <classes>
-            <class name="com.egalvanic.qa.testcase.api.APISecurityTest"/>
-        </classes>
-    </test>
-
-    <test name="API Performance Tests">
-        <classes>
-            <class name="com.egalvanic.qa.testcase.api.APIPerformanceTest"/>
+            <class name="com.egalvanic.qa.testcase.WorkOrderSmokeTestNG"/>
         </classes>
     </test>
 
