@@ -59,9 +59,9 @@ public class AppConstants {
     public static final String PM_PASSWORD = getEnv("PM_PASSWORD", "RP@egalvanic123");
     public static final String TECH_EMAIL = getEnv("TECH_EMAIL", "abhiyant.singh+technician@egalvanic.com");
     public static final String TECH_PASSWORD = getEnv("TECH_PASSWORD", "RP@egalvanic123");
-    public static final String FM_EMAIL = getEnv("FM_EMAIL", "abhiyant.singh+fm@egalvanic.com");
+    public static final String FM_EMAIL = getEnv("FM_EMAIL", "abhiyant.singh+facilitymanager@egalvanic.com");
     public static final String FM_PASSWORD = getEnv("FM_PASSWORD", "RP@egalvanic123");
-    public static final String CP_EMAIL = getEnv("CP_EMAIL", "abhiyant.singh+cp@egalvanic.com");
+    public static final String CP_EMAIL = getEnv("CP_EMAIL", "abhiyant.singh+clientportal@egalvanic.com");
     public static final String CP_PASSWORD = getEnv("CP_PASSWORD", "RP@egalvanic123");
 
     // ============================================

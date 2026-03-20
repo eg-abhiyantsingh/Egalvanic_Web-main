@@ -421,8 +421,8 @@ Work orders can be linked to:
 | Admin 2 | abhiyant.singh+admin@egalvanic.com | Admin |
 | Project Manager | abhiyant.singh+projectmanger@egalvanic.com | Project Manager |
 | Technician | abhiyant.singh+technician@egalvanic.com | Technician |
-| Facility Manager | abhiyant.singh+fm@egalvanic.com | Facility Manager |
-| Client Portal | abhiyant.singh+cp@egalvanic.com | Client Portal |
+| Facility Manager | abhiyant.singh+facilitymanager@egalvanic.com | Facility Manager |
+| Client Portal | abhiyant.singh+clientportal@egalvanic.com | Client Portal |
 
 **Password**: Stored in `AppConstants.VALID_PASSWORD` (currently `RP@egalvanic123` but may change — was invalid earlier and reset)
 
