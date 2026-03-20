@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Full Suite — Auth + Site Selection + Connection (109 TCs)" verbose="1">
+
+    <test name="Full Authentication Tests (26 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AuthenticationTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Full Site Selection Tests (52 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.SiteSelectionTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Full Connection Tests (31 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ConnectionTestNG"/>
+        </classes>
+    </test>
+
+</suite>

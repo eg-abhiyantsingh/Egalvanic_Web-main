@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Full Suite — Asset Parts 1-2 (69 TCs)" verbose="1">
+
+    <test name="Full Asset Tests Part 1 (29 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetPart1TestNG"/>
+        </classes>
+    </test>
+
+    <test name="Full Asset Tests Part 2 (40 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetPart2TestNG"/>
+        </classes>
+    </test>
+
+</suite>

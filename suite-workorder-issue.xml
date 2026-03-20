@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Full Suite — Work Order + Issue (94 TCs)" verbose="1">
+
+    <test name="Full Work Order Tests (50 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkOrderTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Full Issue Tests (44 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.IssueTestNG"/>
+        </classes>
+    </test>
+
+</suite>

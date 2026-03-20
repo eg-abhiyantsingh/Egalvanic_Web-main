@@ -1,4 +1,4 @@
-name: Web Smoke Tests - Asset, Connection, Location, Issues & Work Order CRUD
+name: Smoke Tests — Quick Critical Path (37 TCs)
 
 # ============================================================
 # WEB SMOKE TEST SUITE - Quick Critical Path Validation
@@ -115,7 +115,7 @@ jobs:
         continue-on-error: true
         env:
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-          SEND_EMAIL_ENABLED: "true"
+          SEND_EMAIL_ENABLED: "false"
           SMOKE_MODULE: ${{ github.event.inputs.module }}
         run: |
           bash .github/scripts/smoke-dashboard.sh
@@ -126,35 +126,33 @@ jobs:
       - name: Test Summary
         if: always()
         run: |
-          echo "## 🔥 Web Smoke Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Smoke Test Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
 
-          if [ -n "${{ env.SMOKE_PASSED }}" ]; then
-            RESULT="${{ env.SMOKE_RESULT }}"
-
-            if [ "$RESULT" = "passed" ]; then
-              echo "### ✅ ALL TESTS PASSED" >> $GITHUB_STEP_SUMMARY
-            elif [ "$RESULT" = "failed" ]; then
-              echo "### ❌ ALL TESTS FAILED" >> $GITHUB_STEP_SUMMARY
+          if [ -n "$SMOKE_PASSED" ]; then
+            if [ "$SMOKE_RESULT" = "passed" ]; then
+              echo "### ALL TESTS PASSED" >> "$GITHUB_STEP_SUMMARY"
+            elif [ "$SMOKE_RESULT" = "failed" ]; then
+              echo "### ALL TESTS FAILED" >> "$GITHUB_STEP_SUMMARY"
             else
-              echo "### ⚠️ SOME TESTS FAILED" >> $GITHUB_STEP_SUMMARY
+              echo "### SOME TESTS FAILED" >> "$GITHUB_STEP_SUMMARY"
             fi
 
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "| Metric  | Count |" >> $GITHUB_STEP_SUMMARY
-            echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
-            echo "| Total   | ${{ env.SMOKE_TOTAL }} |" >> $GITHUB_STEP_SUMMARY
-            echo "| Passed  | ${{ env.SMOKE_PASSED }} |" >> $GITHUB_STEP_SUMMARY
-            echo "| Failed  | ${{ env.SMOKE_FAILED }} |" >> $GITHUB_STEP_SUMMARY
-            echo "| Skipped | ${{ env.SMOKE_SKIPPED }} |" >> $GITHUB_STEP_SUMMARY
-            echo "| Duration | ${{ env.SMOKE_DURATION }}s |" >> $GITHUB_STEP_SUMMARY
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Metric | Count |" >> "$GITHUB_STEP_SUMMARY"
+            echo "|--------|-------|" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Total | $SMOKE_TOTAL |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Passed | $SMOKE_PASSED |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Failed | $SMOKE_FAILED |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Skipped | $SMOKE_SKIPPED |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Duration | ${SMOKE_DURATION}s |" >> "$GITHUB_STEP_SUMMARY"
 
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "### Reports" >> $GITHUB_STEP_SUMMARY
-            echo "- **Detailed Report** (QA Team): Download from \`detailed-test-reports\` artifact" >> $GITHUB_STEP_SUMMARY
-            echo "- **Client Report** (Presentation): Download from \`client-test-reports\` artifact" >> $GITHUB_STEP_SUMMARY
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "### Reports" >> "$GITHUB_STEP_SUMMARY"
+            echo "- **Detailed Report**: Download from \`detailed-test-reports\` artifact" >> "$GITHUB_STEP_SUMMARY"
+            echo "- **Client Report**: Download from \`client-test-reports\` artifact" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "No test results available." >> $GITHUB_STEP_SUMMARY
+            echo "No test results available." >> "$GITHUB_STEP_SUMMARY"
           fi
 
       # ============================================================
@@ -195,14 +193,14 @@ jobs:
       - name: Check smoke test result
         if: always()
         run: |
-          if [ "${{ env.SMOKE_RESULT }}" = "failed" ]; then
-            echo "❌ All smoke tests failed"
+          if [ "$SMOKE_RESULT" = "failed" ]; then
+            echo "All smoke tests failed"
             exit 1
-          elif [ "${{ env.SMOKE_RESULT }}" = "partial" ]; then
-            echo "⚠️ Some tests failed (${{ env.SMOKE_PASSED }}/${{ env.SMOKE_TOTAL }} passed) — check reports"
-          elif [ "${{ env.SMOKE_RESULT }}" = "passed" ]; then
-            echo "✅ All smoke tests passed"
+          elif [ "$SMOKE_RESULT" = "partial" ]; then
+            echo "Some tests failed ($SMOKE_PASSED/$SMOKE_TOTAL passed) — check reports"
+          elif [ "$SMOKE_RESULT" = "passed" ]; then
+            echo "All smoke tests passed"
           else
-            echo "⚠️ Smoke test result unknown — check logs"
+            echo "Smoke test result unknown — check logs"
             exit 1
           fi
