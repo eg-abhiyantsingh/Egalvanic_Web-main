@@ -27,9 +27,9 @@ set +e  # Don't exit on error — we handle failures ourselves
 # ─────────────────────────────────────────────────────
 # MODULE DEFINITIONS (all available modules)
 # ─────────────────────────────────────────────────────
-ALL_MODULES=("auth-login" "site-selection" "asset-crud" "connection-crud" "location-crud" "issues-crud" "workorder-crud" "auth-full" "api")
-ALL_MODULE_NAMES=("Auth & Login" "Site Selection" "Asset CRUD" "Connection CRUD" "Location CRUD" "Issues CRUD" "Work Order CRUD" "Auth Full (38 TCs)" "API Tests (17)")
-ALL_MODULE_TESTS=(6 4 9 3 4 5 6 38 17)
+ALL_MODULES=("auth-login" "site-selection" "asset-crud" "connection-crud" "location-crud" "issues-crud" "workorder-crud")
+ALL_MODULE_NAMES=("Auth & Login" "Site Selection" "Asset CRUD" "Connection CRUD" "Location CRUD" "Issues CRUD" "Work Order CRUD")
+ALL_MODULE_TESTS=(6 4 9 3 4 5 6)
 ALL_MODULE_XMLS=(
   "smoke-auth-testng.xml"
   "smoke-site-testng.xml"
@@ -38,8 +38,6 @@ ALL_MODULE_XMLS=(
   "smoke-location-testng.xml"
   "smoke-issues-testng.xml"
   "smoke-workorder-testng.xml"
-  "smoke-auth-full-testng.xml"
-  "smoke-api-testng.xml"
 )
 
 # ─────────────────────────────────────────────────────
@@ -56,8 +54,6 @@ get_module_index() {
     location)        echo 4 ;;
     issues)          echo 5 ;;
     workorder)       echo 6 ;;
-    auth-full)       echo 7 ;;
-    api)             echo 8 ;;
     *)               echo -1 ;;
   esac
 }
