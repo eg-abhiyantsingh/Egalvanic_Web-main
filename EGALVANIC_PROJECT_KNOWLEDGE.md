@@ -419,8 +419,8 @@ Work orders can be linked to:
 |---------|-------|------|
 | Primary (Admin) | abhiyant.singh+admin@egalvanic.com | Admin |
 | Admin 2 | abhiyant.singh+admin@egalvanic.com | Admin |
-| Project Manager | abhiyant.singh+pm@egalvanic.com | Project Manager |
-| Technician | abhiyant.singh+tech@egalvanic.com | Technician |
+| Project Manager | abhiyant.singh+projectmanger@egalvanic.com | Project Manager |
+| Technician | abhiyant.singh+technician@egalvanic.com | Technician |
 | Facility Manager | abhiyant.singh+fm@egalvanic.com | Facility Manager |
 | Client Portal | abhiyant.singh+cp@egalvanic.com | Client Portal |
 
