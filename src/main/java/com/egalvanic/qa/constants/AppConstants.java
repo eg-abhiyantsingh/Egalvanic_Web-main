@@ -183,7 +183,7 @@ public class AppConstants {
     public static final int SMTP_PORT = 587;
     public static final String EMAIL_FROM = getEnv("EMAIL_FROM", "abhiyant.singh@egalvanic.com");
     public static final String EMAIL_PASSWORD = getEnv("EMAIL_PASSWORD", "onmzhjxnacinjfun");
-    public static final String EMAIL_TO = "abhiyant.singh@egalvanic.com ";
+   public static final String EMAIL_TO = "dharmesh.avaiya@egalvanic.com, abhiyant.singh@egalvanic.com, ";
     public static final String EMAIL_SUBJECT = "eGalvanic Web Automation - Test Report";
     //public static final boolean SEND_EMAIL_ENABLED = false;
     public static final boolean SEND_EMAIL_ENABLED = true;
