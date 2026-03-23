@@ -627,127 +627,141 @@ public class IssuesSmokeTestNG extends BaseTest {
             logStep("Target issue: " + firstTitle);
 
             JavascriptExecutor jsExec = (JavascriptExecutor) driver;
-
-            // Helper: get current URL via JS to avoid blocking on page load
-            // driver.getCurrentUrl() blocks if the page is still loading;
-            // window.location.href returns immediately.
-            java.util.function.Supplier<String> safeCurrentUrl = () -> {
-                try {
-                    return (String) jsExec.executeScript("return window.location.href;");
-                } catch (Exception e) {
-                    return "";
-                }
-            };
-            java.util.function.Supplier<Boolean> isOnDetailPage = () -> {
-                String url = safeCurrentUrl.get();
-                return url != null && url.matches(".*\\/issues\\/[a-f0-9-]{8,}.*");
-            };
-
-            // 2. Navigate to issue detail page.
-            //    Strategy A: Click "View Issue" button from the Actions column (hover to reveal).
-            //    Strategy B: Extract href and navigate directly.
-            //    Strategy C: Click the row text itself.
             dismissBackdrops();
-            boolean onDetail = false;
 
-            // Strategy A: Hover first row to reveal action buttons, then click "View Issue"
-            Boolean viewClicked = (Boolean) jsExec.executeScript(
-                "var rows = document.querySelectorAll('[role=\"rowgroup\"] [role=\"row\"], tbody tr');" +
-                "if (rows.length === 0) return false;" +
-                "var row = rows[0];" +
-                "row.dispatchEvent(new MouseEvent('mouseenter', {bubbles:true}));" +
-                "row.dispatchEvent(new MouseEvent('mouseover', {bubbles:true}));" +
-                "var btns = row.querySelectorAll('button');" +
-                "for (var b of btns) {" +
-                "  var label = (b.getAttribute('aria-label') || '') + ' ' + b.textContent.trim();" +
-                "  if (label.includes('View Issue') || label.includes('View')) {" +
-                "    b.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true}));" +
-                "    return true;" +
-                "  }" +
+            // ─── 2. Navigate to Issue Detail Page ───────────────────────────
+            // IMPORTANT: The issues table uses React's onClick on rows (no <a> tags).
+            // Clicking a row triggers an SPA navigation that causes ALL WebDriver
+            // commands (including executeScript) to hang indefinitely — the JDK HTTP
+            // client's CompletableFuture.get() blocks because ChromeDriver never
+            // responds while the page is in a loading state.
+            //
+            // Solution: Extract the detail URL from the DOM without triggering
+            // navigation, then use driver.get() which respects pageLoadTimeout.
+
+            String detailUrl = null;
+
+            // Strategy A: Look for <a> links with issue UUID paths anywhere on the page
+            detailUrl = (String) jsExec.executeScript(
+                "var links = document.querySelectorAll('a[href]');" +
+                "for (var a of links) {" +
+                "  var h = a.getAttribute('href') || '';" +
+                "  if (h.match(/\\/issues\\/[a-f0-9-]{8,}/)) return h;" +
                 "}" +
-                "return false;");
-            if (Boolean.TRUE.equals(viewClicked)) {
-                logStep("Clicked 'View Issue' button from list");
-                pause(3000);
+                "return null;");
+            if (detailUrl != null) {
+                logStep("Strategy A: Found issue link href: " + detailUrl);
             }
 
-            // Check if we landed on detail page
-            for (int w = 0; w < 8; w++) {
-                if (isOnDetailPage.get()) {
-                    onDetail = true;
-                    break;
-                }
-                pause(1000);
-            }
-
-            // Strategy B: Extract any issue href and navigate directly
-            if (!onDetail) {
-                String issueHref = (String) jsExec.executeScript(
-                    "var links = document.querySelectorAll('a[href*=\"/issues/\"]');" +
-                    "for (var a of links) {" +
-                    "  var h = a.getAttribute('href');" +
-                    "  if (h && h.match(/\\/issues\\/[a-f0-9-]{8,}/)) return h;" +
-                    "}" +
-                    "// Also check if row cells have onclick that navigates\n" +
-                    "var cells = document.querySelectorAll('[role=\"rowgroup\"] [role=\"row\"] [role=\"gridcell\"], tbody td');" +
-                    "for (var c of cells) {" +
-                    "  var a = c.querySelector('a');" +
-                    "  if (a && a.href && a.href.includes('/issues/')) return a.href;" +
+            // Strategy B: Check for MUI DataGrid data-id attribute on first row
+            if (detailUrl == null) {
+                String rowId = (String) jsExec.executeScript(
+                    "var rows = document.querySelectorAll('[role=\"rowgroup\"] [role=\"row\"]');" +
+                    "for (var r of rows) {" +
+                    "  var id = r.getAttribute('data-id') || r.getAttribute('data-rowid') || '';" +
+                    "  if (id.match(/^[a-f0-9-]{8,}$/)) return id;" +
                     "}" +
                     "return null;");
+                if (rowId != null) {
+                    detailUrl = "/issues/" + rowId;
+                    logStep("Strategy B: Found row data-id: " + rowId);
+                }
+            }
 
-                if (issueHref != null && !issueHref.isEmpty()) {
-                    String fullUrl = issueHref.startsWith("http") ? issueHref
-                            : AppConstants.BASE_URL + issueHref;
-                    driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(20));
+            // Strategy C: Extract issue ID from React component fiber tree
+            if (detailUrl == null) {
+                String issueId = (String) jsExec.executeScript(
+                    "var rows = document.querySelectorAll('[role=\"rowgroup\"] [role=\"row\"]');" +
+                    "if (rows.length === 0) return null;" +
+                    "var el = rows[0];" +
+                    "var keys = Object.keys(el);" +
+                    "for (var i = 0; i < keys.length; i++) {" +
+                    "  if (keys[i].startsWith('__reactFiber$') || keys[i].startsWith('__reactInternalInstance$')) {" +
+                    "    var fiber = el[keys[i]];" +
+                    "    var depth = 0;" +
+                    "    while (fiber && depth < 50) {" +
+                    "      depth++;" +
+                    "      var p = fiber.memoizedProps || fiber.pendingProps || {};" +
+                    "      var id = null;" +
+                    "      if (p.row && p.row.original && p.row.original.id) id = p.row.original.id;" +
+                    "      else if (p.row && typeof p.row.id === 'string' && p.row.id.length > 8) id = p.row.id;" +
+                    "      else if (p.issue && p.issue.id) id = p.issue.id;" +
+                    "      else if (p.data && p.data.id && typeof p.data.id === 'string') id = p.data.id;" +
+                    "      else if (p.item && p.item.id) id = p.item.id;" +
+                    "      if (id && id.match && id.match(/^[a-f0-9-]{8,}$/)) return id;" +
+                    "      fiber = fiber.return;" +
+                    "    }" +
+                    "    break;" +
+                    "  }" +
+                    "}" +
+                    "return null;");
+                if (issueId != null && !issueId.isEmpty()) {
+                    detailUrl = "/issues/" + issueId;
+                    logStep("Strategy C: Extracted issue ID from React fiber: " + issueId);
+                }
+            }
+
+            // Strategy D: Intercept history.pushState during row click to capture URL.
+            //   This clicks the row but intercepts the pushState call so the actual
+            //   navigation does NOT happen. We capture the URL for later use.
+            if (detailUrl == null) {
+                detailUrl = (String) jsExec.executeScript(
+                    "var captured = null;" +
+                    "var origPush = history.pushState;" +
+                    "var origReplace = history.replaceState;" +
+                    "history.pushState = function(s, t, url) { captured = url; };" +
+                    "history.replaceState = function(s, t, url) { if (!captured) captured = url; };" +
+                    "var rows = document.querySelectorAll('[role=\"rowgroup\"] [role=\"row\"]');" +
+                    "if (rows.length > 0) rows[0].click();" +
+                    "history.pushState = origPush;" +
+                    "history.replaceState = origReplace;" +
+                    "return captured;");
+                if (detailUrl != null && detailUrl.matches(".*\\/issues\\/[a-f0-9-]{8,}.*")) {
+                    logStep("Strategy D: Intercepted pushState URL: " + detailUrl);
+                } else {
+                    detailUrl = null;
+                }
+            }
+
+            // Navigate to the detail page using driver.get() with a short pageLoadTimeout.
+            // driver.get() properly respects pageLoadTimeout, unlike click-triggered
+            // navigations where WebDriver hangs indefinitely.
+            boolean onDetail = false;
+            if (detailUrl != null) {
+                String fullUrl = detailUrl.startsWith("http") ? detailUrl
+                        : AppConstants.BASE_URL + detailUrl;
+                logStep("Navigating to detail page: " + fullUrl);
+
+                driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(15));
+                try {
+                    driver.get(fullUrl);
+                } catch (org.openqa.selenium.TimeoutException te) {
+                    logStep("Page load capped at 15s — stopping remaining loads");
+                    try { jsExec.executeScript("window.stop();"); } catch (Exception ignored) {}
+                }
+                driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(60));
+
+                // Verify we're on the detail page
+                for (int w = 0; w < 10; w++) {
                     try {
-                        driver.get(fullUrl);
-                    } catch (org.openqa.selenium.TimeoutException te) {
-                        logStep("Page load capped at 20s — continuing");
-                    }
-                    driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(60));
-                    for (int w = 0; w < 8; w++) {
-                        if (isOnDetailPage.get()) {
+                        String currentUrl = (String) jsExec.executeScript("return window.location.href;");
+                        if (currentUrl != null && currentUrl.matches(".*\\/issues\\/[a-f0-9-]{8,}.*")) {
                             onDetail = true;
                             break;
                         }
-                        pause(1000);
-                    }
-                }
-            }
-
-            // Strategy C: Click the first row cell text to navigate
-            if (!onDetail) {
-                // Set a short page load timeout so if the click triggers a hung navigation,
-                // WebDriver won't block forever
-                driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(15));
-                try {
-                    jsExec.executeScript(
-                        "var cells = document.querySelectorAll('[role=\"rowgroup\"] [role=\"row\"] [role=\"gridcell\"], tbody td');" +
-                        "if (cells.length > 0) cells[0].click();");
-                    pause(3000);
-                } catch (org.openqa.selenium.TimeoutException te) {
-                    logStep("Strategy C page load capped at 15s — continuing");
-                }
-                driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(60));
-                for (int w = 0; w < 8; w++) {
-                    if (isOnDetailPage.get()) {
-                        onDetail = true;
-                        break;
+                    } catch (Exception e) {
+                        logStep("URL check attempt " + w + " failed: " + e.getMessage());
                     }
                     pause(1000);
                 }
             }
 
-            Assert.assertTrue(onDetail, "Could not navigate to issue detail page");
-            logStep("On issue detail: " + safeCurrentUrl.get());
+            Assert.assertTrue(onDetail, "Could not navigate to issue detail page (detailUrl=" + detailUrl + ")");
+            logStep("On issue detail page");
             debugPageState("DELETE — On detail page");
             pause(2000);
 
-            // 3. Click the ⋮ (three-dot / MoreVert) button on the detail page header.
-            //    User-provided XPath structure: the ⋮ is button[2] inside the title header
-            //    container (button[1] is the chevron). We use multiple robust strategies
-            //    that don't depend on CSS class hashes.
+            // ─── 3. Click ⋮ (MoreVert) Menu Button ─────────────────────────
             dismissBackdrops();
             Boolean kebabClicked = false;
 
@@ -782,22 +796,18 @@ public class IssuesSmokeTestNG extends BaseTest {
                 }
             }
 
-            // Strategy 3: Find the header container with the status chip ("Open"/"New"/etc)
-            //    and click button[2] (the ⋮) — matches user-provided XPath structure
+            // Strategy 3: Find the status chip ("Open"/"New"/etc) and click sibling button
             if (!Boolean.TRUE.equals(kebabClicked)) {
                 kebabClicked = (Boolean) jsExec.executeScript(
-                    "// Find the status chip (Open, New, In Progress, etc.)\n" +
                     "var chips = document.querySelectorAll('.MuiChip-root, [class*=\"MuiChip\"]');" +
                     "for (var chip of chips) {" +
                     "  var text = chip.textContent.trim().toLowerCase();" +
-                    "  if (text === 'open' || text === 'new' || text === 'in progress' || text === 'resolved' || text === 'closed') {" +
-                    "    // Walk up to find the container that also has buttons\n" +
+                    "  if (['open','new','in progress','resolved','closed'].indexOf(text) >= 0) {" +
                     "    var container = chip.parentElement;" +
                     "    for (var i = 0; i < 5; i++) {" +
                     "      if (!container) break;" +
                     "      var buttons = container.querySelectorAll(':scope > button, :scope > div > button');" +
                     "      if (buttons.length >= 2) {" +
-                    "        // button[2] is the ⋮ (0-indexed: buttons[1])\n" +
                     "        buttons[buttons.length - 1].click();" +
                     "        return true;" +
                     "      }" +
@@ -811,7 +821,7 @@ public class IssuesSmokeTestNG extends BaseTest {
                 }
             }
 
-            // Strategy 4: Find SVG with three vertical dots pattern (MoreVert icon path)
+            // Strategy 4: Find SVG with MoreVert icon path (three vertical dots)
             if (!Boolean.TRUE.equals(kebabClicked)) {
                 kebabClicked = (Boolean) jsExec.executeScript(
                     "var svgs = document.querySelectorAll('button svg');" +
@@ -819,7 +829,6 @@ public class IssuesSmokeTestNG extends BaseTest {
                     "  var paths = svg.querySelectorAll('path');" +
                     "  for (var p of paths) {" +
                     "    var d = p.getAttribute('d') || '';" +
-                    "    // MUI MoreVert icon path contains 'M12 8c1.1' (three dots)\n" +
                     "    if (d.includes('M12 8c1.1') || d.includes('M6 10c-1.1')) {" +
                     "      var btn = svg.closest('button');" +
                     "      if (btn) { btn.click(); return true; }" +
@@ -832,8 +841,7 @@ public class IssuesSmokeTestNG extends BaseTest {
                 }
             }
 
-            // Strategy 5: Find the last icon button in the top area (within first 300px from top)
-            //    that is NOT a navigation/back button
+            // Strategy 5: Find the rightmost small icon button in the header area
             if (!Boolean.TRUE.equals(kebabClicked)) {
                 kebabClicked = (Boolean) jsExec.executeScript(
                     "var btns = document.querySelectorAll('button.MuiIconButton-root, button[class*=\"IconButton\"]');" +
@@ -844,10 +852,8 @@ public class IssuesSmokeTestNG extends BaseTest {
                     "    candidates.push(b);" +
                     "  }" +
                     "}" +
-                    "// The ⋮ is typically the rightmost small button in the header area\n" +
                     "if (candidates.length >= 2) {" +
                     "  candidates.sort(function(a,b) { return b.getBoundingClientRect().left - a.getBoundingClientRect().left; });" +
-                    "  // Skip nav buttons (those with aria-label like 'back', 'navigate')\n" +
                     "  for (var c of candidates) {" +
                     "    var label = (c.getAttribute('aria-label') || '').toLowerCase();" +
                     "    if (!label.includes('back') && !label.includes('navigate') && !label.includes('close')) {" +
@@ -865,7 +871,7 @@ public class IssuesSmokeTestNG extends BaseTest {
             pause(1500);
             debugPageState("DELETE — After ⋮ click");
 
-            // 4. Click "Delete Issue" from the dropdown menu
+            // ─── 4. Click "Delete Issue" from the dropdown menu ─────────────
             Boolean deleteClicked = (Boolean) jsExec.executeScript(
                 "var items = document.querySelectorAll('[role=\"menuitem\"], [role=\"option\"], li, button, a');" +
                 "for (var item of items) {" +
@@ -880,7 +886,7 @@ public class IssuesSmokeTestNG extends BaseTest {
             Assert.assertTrue(Boolean.TRUE.equals(deleteClicked), "Could not click 'Delete Issue' from menu");
             pause(1500);
 
-            // 5. Handle confirmation — browser confirm() or MUI dialog
+            // ─── 5. Handle confirmation dialog ──────────────────────────────
             boolean confirmed = false;
             try {
                 driver.switchTo().alert().accept();
@@ -902,7 +908,6 @@ public class IssuesSmokeTestNG extends BaseTest {
                     confirmed = true;
                     logStep("MUI dialog confirmed");
                 } else {
-                    // Try page object fallback
                     try {
                         issuePage.confirmDelete();
                         confirmed = true;
@@ -911,10 +916,9 @@ public class IssuesSmokeTestNG extends BaseTest {
                 }
             }
 
-            // 6. Wait for navigation back to list
+            // ─── 6. Wait for navigation back to list & verify ───────────────
             pause(3000);
 
-            // 7. Verify deletion
             Assert.assertTrue(confirmed, "Issue '" + firstTitle + "' delete was not confirmed");
             logStepWithScreenshot("Issue deleted successfully");
             ExtentReportManager.logPass("Issue deleted: " + firstTitle);
