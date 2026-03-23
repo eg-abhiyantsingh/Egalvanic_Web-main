@@ -758,8 +758,22 @@ public class IssuesSmokeTestNG extends BaseTest {
 
             Assert.assertTrue(onDetail, "Could not navigate to issue detail page (detailUrl=" + detailUrl + ")");
             logStep("On issue detail page");
+
+            // Wait for the detail page to fully render (spinners to disappear, buttons to appear).
+            // The page loads SPA content asynchronously — initial render shows spinners.
+            for (int loadWait = 0; loadWait < 15; loadWait++) {
+                Long btnCount = (Long) jsExec.executeScript(
+                    "return document.querySelectorAll('button').length;");
+                Long spinnerCount = (Long) jsExec.executeScript(
+                    "return document.querySelectorAll('[class*=\"CircularProgress\"], [class*=\"spinner\"], [class*=\"loading\"], [class*=\"skeleton\"]').length;");
+                logStep("Detail page load wait " + loadWait + ": buttons=" + btnCount + " spinners=" + spinnerCount);
+                if (btnCount != null && btnCount >= 3 && (spinnerCount == null || spinnerCount <= 1)) {
+                    break;
+                }
+                pause(1000);
+            }
             debugPageState("DELETE — On detail page");
-            pause(2000);
+            pause(1000);
 
             // ─── 3. Click ⋮ (MoreVert) Menu Button ─────────────────────────
             dismissBackdrops();
@@ -951,33 +965,65 @@ public class IssuesSmokeTestNG extends BaseTest {
             pause(1500);
 
             // ─── 5. Handle confirmation dialog ──────────────────────────────
+            //   IMPORTANT: Do NOT use driver.switchTo().alert() — it blocks
+            //   indefinitely when the page is navigating (after delete).
+            //   This app uses MUI dialogs, not browser alerts.
             boolean confirmed = false;
-            try {
-                driver.switchTo().alert().accept();
-                confirmed = true;
-                logStep("Browser confirm() accepted");
-            } catch (org.openqa.selenium.NoAlertPresentException e) {
-                // Try MUI confirmation dialog buttons
+            pause(1000);
+
+            // Try 1: Click confirmation button in MUI dialog via JS
+            for (int attempt = 0; attempt < 5 && !confirmed; attempt++) {
                 Boolean dialogConfirmed = (Boolean) jsExec.executeScript(
-                    "var btns = document.querySelectorAll('[role=\"dialog\"] button, .MuiDialog-root button, button');" +
+                    "var btns = document.querySelectorAll('[role=\"dialog\"] button, .MuiDialog-root button," +
+                    "  [class*=\"MuiDialog\"] button, [class*=\"modal\"] button, [class*=\"Modal\"] button');" +
                     "for (var b of btns) {" +
                     "  var text = b.textContent.trim().toLowerCase();" +
                     "  var r = b.getBoundingClientRect();" +
-                    "  if (r.width > 0 && (text === 'delete' || text === 'confirm' || text === 'yes' || text === 'ok' || text === 'yes, delete')) {" +
+                    "  if (r.width > 0 && (text === 'delete' || text === 'confirm' || text === 'yes'" +
+                    "      || text === 'ok' || text === 'yes, delete' || text === 'remove')) {" +
+                    "    b.click(); return true;" +
+                    "  }" +
+                    "}" +
+                    "// Also check for any red/danger button on page\n" +
+                    "var allBtns = document.querySelectorAll('button');" +
+                    "for (var b of allBtns) {" +
+                    "  var cls = (b.className || '').toLowerCase();" +
+                    "  var text = b.textContent.trim().toLowerCase();" +
+                    "  var r = b.getBoundingClientRect();" +
+                    "  if (r.width > 0 && (cls.includes('error') || cls.includes('danger'))" +
+                    "      && (text.includes('delete') || text.includes('confirm') || text.includes('yes'))) {" +
                     "    b.click(); return true;" +
                     "  }" +
                     "}" +
                     "return false;");
                 if (Boolean.TRUE.equals(dialogConfirmed)) {
                     confirmed = true;
-                    logStep("MUI dialog confirmed");
+                    logStep("MUI dialog confirmed (attempt " + attempt + ")");
                 } else {
-                    try {
-                        issuePage.confirmDelete();
-                        confirmed = true;
-                        logStep("confirmDelete() succeeded");
-                    } catch (Exception ignored) {}
+                    pause(1000);
                 }
+            }
+
+            // Try 2: Page object's confirmDelete()
+            if (!confirmed) {
+                try {
+                    issuePage.confirmDelete();
+                    confirmed = true;
+                    logStep("confirmDelete() succeeded");
+                } catch (Exception e) {
+                    logStep("confirmDelete() failed: " + e.getMessage());
+                }
+            }
+
+            // Try 3: Maybe no confirmation was needed (delete happened directly)
+            if (!confirmed) {
+                try {
+                    String postDeleteUrl = (String) jsExec.executeScript("return window.location.href;");
+                    if (postDeleteUrl != null && postDeleteUrl.matches(".*/issues/?$")) {
+                        confirmed = true;
+                        logStep("Delete confirmed — already back on issues list");
+                    }
+                } catch (Exception ignored) {}
             }
 
             // ─── 6. Wait for navigation back to list & verify ───────────────
