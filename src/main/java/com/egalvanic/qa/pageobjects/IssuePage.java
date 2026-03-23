@@ -1609,18 +1609,26 @@ public class IssuePage {
      * Wait for the issue detail page to fully load.
      */
     public void waitForDetailPageLoad() {
-        for (int i = 0; i < 16; i++) {
+        for (int i = 0; i < 10; i++) {
             try {
-                Long mainElements = (Long) js.executeScript(
-                    "return document.querySelectorAll('main *, [class*=\"detail\"] *, [class*=\"content\"] *').length;");
-                if (mainElements != null && mainElements > 10) {
-                    System.out.println("[IssuePage] Detail page loaded after " + (i + 1) + "s — " + mainElements + " elements");
+                // Lightweight check: URL changed to detail page OR page has enough buttons/headings
+                Boolean loaded = (Boolean) js.executeScript(
+                    "if (document.readyState !== 'complete') return false;" +
+                    "var url = window.location.href;" +
+                    "// Check if URL has a UUID (detail page pattern)\n" +
+                    "if (/\\/issues\\/[a-f0-9-]{8,}/.test(url)) return true;" +
+                    "// Check for detail page indicators\n" +
+                    "var headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');" +
+                    "var buttons = document.querySelectorAll('button');" +
+                    "return headings.length >= 1 && buttons.length >= 3;");
+                if (Boolean.TRUE.equals(loaded)) {
+                    System.out.println("[IssuePage] Detail page loaded after " + (i + 1) + "s");
                     return;
                 }
             } catch (Exception ignored) {}
-            pause(2000);
+            pause(1000);
         }
-        System.out.println("[IssuePage] Detail page may not have fully loaded after 32s");
+        System.out.println("[IssuePage] Detail page load check completed after 10s");
     }
 
     /**
