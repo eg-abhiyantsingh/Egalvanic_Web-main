@@ -217,7 +217,7 @@ public class TaskTestNG extends BaseTest {
             List<WebElement> cancelBtns = driver.findElements(CANCEL_BTN);
             for (WebElement btn : cancelBtns) {
                 if (btn.isDisplayed()) {
-                    btn.click();
+                    safeClick(btn);
                     pause(500);
                     return;
                 }
@@ -243,8 +243,7 @@ public class TaskTestNG extends BaseTest {
 
     private void openCreateTaskDrawer() {
         if (isDrawerOpen()) return;
-        WebElement btn = driver.findElement(CREATE_TASK_BTN);
-        btn.click();
+        safeClick(CREATE_TASK_BTN);
         pause(2000);
         // Wait for form to load
         new WebDriverWait(driver, Duration.ofSeconds(10))
@@ -275,8 +274,7 @@ public class TaskTestNG extends BaseTest {
     }
 
     private void selectAutocompleteOption(By inputLocator, String optionText) {
-        WebElement input = driver.findElement(inputLocator);
-        input.click();
+        safeClick(inputLocator);
         pause(500);
 
         // Wait for listbox
@@ -292,7 +290,7 @@ public class TaskTestNG extends BaseTest {
         List<WebElement> options = driver.findElements(LISTBOX_OPTION);
         for (WebElement opt : options) {
             if (opt.getText().toLowerCase().contains(optionText.toLowerCase())) {
-                opt.click();
+                safeClick(opt);
                 pause(500);
                 return;
             }
@@ -300,14 +298,14 @@ public class TaskTestNG extends BaseTest {
 
         // If not found by text, click first option
         if (!options.isEmpty()) {
-            options.get(0).click();
+            safeClick(options.get(0));
             pause(500);
         }
     }
 
     private void clearAndType(By locator, String text) {
         WebElement el = driver.findElement(locator);
-        el.click();
+        safeClick(el);
         el.sendKeys(Keys.chord(Keys.CONTROL, "a"));
         el.sendKeys(Keys.DELETE);
         pause(200);
@@ -328,14 +326,14 @@ public class TaskTestNG extends BaseTest {
         List<WebElement> rows = driver.findElements(GRID_ROWS);
         for (WebElement row : rows) {
             if (row.getText().contains(title)) {
-                row.click();
+                safeClick(row);
                 pause(3000);
                 return;
             }
         }
         // Fallback: click first row
         if (!rows.isEmpty()) {
-            rows.get(0).click();
+            safeClick(rows.get(0));
             pause(3000);
         }
         logStep("Could not find task row for: " + title);
@@ -352,7 +350,7 @@ public class TaskTestNG extends BaseTest {
             // Filter to buttons near the title area (first few)
             if (actionBtns.size() >= 2) {
                 // Second button is typically delete
-                actionBtns.get(1).click();
+                safeClick(actionBtns.get(1));
                 pause(1000);
             } else {
                 logStep("Could not identify delete button on detail page");
@@ -598,7 +596,7 @@ public class TaskTestNG extends BaseTest {
         List<WebElement> createBtns = driver.findElements(By.xpath("//button[normalize-space()='Create Task']"));
         // Click the last "Create Task" button (the submit one in drawer footer)
         WebElement submitBtn = createBtns.get(createBtns.size() - 1);
-        submitBtn.click();
+        safeClick(submitBtn);
         pause(3000);
 
         // Verify task appears — use search to find it (may not be on first page)
@@ -653,7 +651,7 @@ public class TaskTestNG extends BaseTest {
         // Fill Due Date
         try {
             WebElement dateInput = driver.findElement(DUE_DATE_INPUT);
-            dateInput.click();
+            safeClick(dateInput);
             dateInput.sendKeys(getTodayFormatted());
             pause(300);
         } catch (Exception e) {
@@ -671,7 +669,7 @@ public class TaskTestNG extends BaseTest {
 
         // Submit
         List<WebElement> createBtns = driver.findElements(By.xpath("//button[normalize-space()='Create Task']"));
-        createBtns.get(createBtns.size() - 1).click();
+        safeClick(createBtns.get(createBtns.size() - 1));
         pause(3000);
 
         // Verify
@@ -699,7 +697,7 @@ public class TaskTestNG extends BaseTest {
         clearAndType(TITLE_INPUT, "ShouldNotBeCreated_" + TS);
 
         // Click Cancel
-        driver.findElement(CANCEL_BTN).click();
+        safeClick(CANCEL_BTN);
         pause(1000);
 
         Assert.assertFalse(isDrawerOpen(), "Drawer should be closed after Cancel");
@@ -728,7 +726,7 @@ public class TaskTestNG extends BaseTest {
         if (isDisabled) {
             logStep("Submit button is disabled when title is empty — good validation");
         } else {
-            submitBtn.click();
+            safeClick(submitBtn);
             pause(1000);
             // Check for error message
             String pageText = getPageText();
@@ -782,7 +780,7 @@ public class TaskTestNG extends BaseTest {
 
         try {
             WebElement procInput = driver.findElement(PROCEDURE_INPUT);
-            procInput.click();
+            safeClick(procInput);
             pause(1000);
 
             List<WebElement> options = driver.findElements(LISTBOX_OPTION);
@@ -821,7 +819,7 @@ public class TaskTestNG extends BaseTest {
         logStep("Searching for task 'T1'");
 
         WebElement search = driver.findElement(SEARCH_INPUT);
-        search.click();
+        safeClick(search);
         search.sendKeys(Keys.chord(Keys.COMMAND, "a"));
         search.sendKeys("T1");
         pause(3000);
@@ -853,7 +851,7 @@ public class TaskTestNG extends BaseTest {
         logStep("Searching for non-existent task");
 
         WebElement search = driver.findElement(SEARCH_INPUT);
-        search.click();
+        safeClick(search);
         search.sendKeys(Keys.chord(Keys.COMMAND, "a"));
         search.sendKeys("ZZZZNONEXISTENT99999");
         pause(3000);
@@ -881,7 +879,7 @@ public class TaskTestNG extends BaseTest {
 
         // Search to filter
         WebElement search = driver.findElement(SEARCH_INPUT);
-        search.click();
+        safeClick(search);
         search.sendKeys(Keys.chord(Keys.COMMAND, "a"));
         search.sendKeys("offline");
         pause(3000);
@@ -913,12 +911,12 @@ public class TaskTestNG extends BaseTest {
             WebElement dueDateHeader = driver.findElement(By.xpath(
                     "//div[normalize-space()='Due Date']/ancestor::*[@role='columnheader']"
                     + " | //*[@role='columnheader'][contains(normalize-space(),'Due Date')]"));
-            dueDateHeader.click();
+            safeClick(dueDateHeader);
             pause(1500);
             logStepWithScreenshot("After sort by Due Date");
 
             // Click again for reverse sort
-            dueDateHeader.click();
+            safeClick(dueDateHeader);
             pause(1500);
 
             logStep("PASS: Due Date column sort toggled");
@@ -936,7 +934,7 @@ public class TaskTestNG extends BaseTest {
             WebElement titleHeader = driver.findElement(By.xpath(
                     "//div[normalize-space()='Title']/ancestor::*[@role='columnheader']"
                     + " | //*[@role='columnheader'][contains(normalize-space(),'Title')]"));
-            titleHeader.click();
+            safeClick(titleHeader);
             pause(1500);
             logStepWithScreenshot("After sort by Title");
 
@@ -959,7 +957,7 @@ public class TaskTestNG extends BaseTest {
         Assert.assertFalse(rows.isEmpty(), "Grid should have data rows to edit");
 
         // Click first row to open detail page
-        rows.get(0).click();
+        safeClick(rows.get(0));
         pause(3000);
 
         // Detail page should have action buttons (edit/delete icons)
@@ -988,7 +986,7 @@ public class TaskTestNG extends BaseTest {
             return;
         }
 
-        rows.get(0).click();
+        safeClick(rows.get(0));
         pause(3000);
 
         String pageText = getPageText();
@@ -1012,7 +1010,7 @@ public class TaskTestNG extends BaseTest {
         List<WebElement> rows = driver.findElements(GRID_ROWS);
         if (rows.isEmpty()) { logStep("No rows — skipping"); return; }
 
-        rows.get(0).click();
+        safeClick(rows.get(0));
         pause(3000);
 
         String pageText = getPageText();
@@ -1036,7 +1034,7 @@ public class TaskTestNG extends BaseTest {
         List<WebElement> rows = driver.findElements(GRID_ROWS);
         if (rows.isEmpty()) { logStep("No rows — skipping"); return; }
 
-        rows.get(0).click();
+        safeClick(rows.get(0));
         pause(3000);
 
         String pageText = getPageText();
@@ -1061,7 +1059,7 @@ public class TaskTestNG extends BaseTest {
         List<WebElement> rows = driver.findElements(GRID_ROWS);
         if (rows.isEmpty()) { logStep("No rows — skipping"); return; }
 
-        rows.get(0).click();
+        safeClick(rows.get(0));
         pause(3000);
 
         String pageText = getPageText();
@@ -1086,7 +1084,7 @@ public class TaskTestNG extends BaseTest {
         List<WebElement> rows = driver.findElements(GRID_ROWS);
         if (rows.isEmpty()) { logStep("No rows — skipping"); return; }
 
-        rows.get(0).click();
+        safeClick(rows.get(0));
         pause(3000);
 
         String pageText = getPageText();
@@ -1109,7 +1107,7 @@ public class TaskTestNG extends BaseTest {
         List<WebElement> rows = driver.findElements(GRID_ROWS);
         if (rows.isEmpty()) { logStep("No rows — skipping"); return; }
 
-        rows.get(0).click();
+        safeClick(rows.get(0));
         pause(3000);
 
         // Wait for detail page to fully render
@@ -1135,7 +1133,7 @@ public class TaskTestNG extends BaseTest {
         List<WebElement> rows = driver.findElements(GRID_ROWS);
         if (rows.isEmpty()) { logStep("No rows — skipping"); return; }
 
-        rows.get(0).click();
+        safeClick(rows.get(0));
         pause(3000);
 
         // Click back button (first button in the header area)
@@ -1143,7 +1141,7 @@ public class TaskTestNG extends BaseTest {
             List<WebElement> backBtns = driver.findElements(By.xpath(
                     "//main//button[position()=1]"));
             if (!backBtns.isEmpty()) {
-                backBtns.get(0).click();
+                safeClick(backBtns.get(0));
                 pause(2000);
             } else {
                 driver.navigate().back();
@@ -1172,7 +1170,7 @@ public class TaskTestNG extends BaseTest {
         List<WebElement> rows = driver.findElements(GRID_ROWS);
         if (rows.isEmpty()) { logStep("No rows — skipping"); return; }
 
-        rows.get(0).click();
+        safeClick(rows.get(0));
         pause(3000);
 
         // Detail page should have action buttons and show task info
@@ -1200,7 +1198,7 @@ public class TaskTestNG extends BaseTest {
         List<WebElement> rows = driver.findElements(GRID_ROWS);
         if (rows.isEmpty()) { logStep("No rows — skipping"); return; }
 
-        rows.get(0).click();
+        safeClick(rows.get(0));
         pause(3000);
 
         String pageText = getPageText();
@@ -1263,7 +1261,7 @@ public class TaskTestNG extends BaseTest {
         try {
             List<WebElement> confirmBtns = driver.findElements(DELETE_CONFIRM_BTN);
             if (!confirmBtns.isEmpty() && confirmBtns.get(0).isDisplayed()) {
-                confirmBtns.get(0).click();
+                safeClick(confirmBtns.get(0));
                 pause(2000);
             }
         } catch (Exception e) {
@@ -1320,14 +1318,14 @@ public class TaskTestNG extends BaseTest {
             int cleaned = 0;
             while (!rows.isEmpty() && cleaned < 5) {
                 // Click row to open detail, then delete
-                rows.get(0).click();
+                safeClick(rows.get(0));
                 pause(2000);
                 clickDeleteOnDetailPage();
                 pause(1000);
 
                 List<WebElement> confirmBtns = driver.findElements(DELETE_CONFIRM_BTN);
                 if (!confirmBtns.isEmpty() && confirmBtns.get(0).isDisplayed()) {
-                    confirmBtns.get(0).click();
+                    safeClick(confirmBtns.get(0));
                     pause(2000);
                 }
 
@@ -1378,7 +1376,7 @@ public class TaskTestNG extends BaseTest {
 
         List<WebElement> calBtns = driver.findElements(CALENDAR_VIEW_BTN);
         if (!calBtns.isEmpty()) {
-            calBtns.get(0).click();
+            safeClick(calBtns.get(0));
             pause(2000);
             logStepWithScreenshot("Calendar view");
 
@@ -1402,14 +1400,14 @@ public class TaskTestNG extends BaseTest {
         // Ensure on calendar first
         List<WebElement> calBtns = driver.findElements(CALENDAR_VIEW_BTN);
         if (!calBtns.isEmpty()) {
-            calBtns.get(0).click();
+            safeClick(calBtns.get(0));
             pause(1000);
         }
 
         // Toggle to list
         List<WebElement> listBtns = driver.findElements(LIST_VIEW_BTN);
         if (!listBtns.isEmpty()) {
-            listBtns.get(0).click();
+            safeClick(listBtns.get(0));
             pause(2000);
 
             boolean gridPresent = !driver.findElements(GRID).isEmpty();
@@ -1425,7 +1423,7 @@ public class TaskTestNG extends BaseTest {
 
         List<WebElement> calBtns = driver.findElements(CALENDAR_VIEW_BTN);
         if (!calBtns.isEmpty()) {
-            calBtns.get(0).click();
+            safeClick(calBtns.get(0));
             pause(3000);
 
             String pageText = getPageText();
@@ -1439,7 +1437,7 @@ public class TaskTestNG extends BaseTest {
         // Switch back to list for subsequent tests
         List<WebElement> listBtns = driver.findElements(LIST_VIEW_BTN);
         if (!listBtns.isEmpty()) {
-            listBtns.get(0).click();
+            safeClick(listBtns.get(0));
             pause(1500);
         }
 
@@ -1473,7 +1471,7 @@ public class TaskTestNG extends BaseTest {
 
         List<WebElement> nextBtns = driver.findElements(NEXT_PAGE_BTN);
         if (!nextBtns.isEmpty() && nextBtns.get(0).isEnabled()) {
-            nextBtns.get(0).click();
+            safeClick(nextBtns.get(0));
             pause(2000);
             logStepWithScreenshot("Page 2");
 
@@ -1495,13 +1493,13 @@ public class TaskTestNG extends BaseTest {
         // Go to page 2 first
         List<WebElement> nextBtns = driver.findElements(NEXT_PAGE_BTN);
         if (!nextBtns.isEmpty() && nextBtns.get(0).isEnabled()) {
-            nextBtns.get(0).click();
+            safeClick(nextBtns.get(0));
             pause(1500);
 
             // Go back
             List<WebElement> prevBtns = driver.findElements(PREV_PAGE_BTN);
             if (!prevBtns.isEmpty() && prevBtns.get(0).isEnabled()) {
-                prevBtns.get(0).click();
+                safeClick(prevBtns.get(0));
                 pause(1500);
 
                 int rows = countGridRows();
@@ -1540,7 +1538,7 @@ public class TaskTestNG extends BaseTest {
             // Click on the Title cell (first cell)
             try {
                 WebElement firstCell = rows.get(0).findElement(By.cssSelector("[role='gridcell']:first-child, td:first-child"));
-                firstCell.click();
+                safeClick(firstCell);
                 pause(2000);
                 logStepWithScreenshot("After clicking task row");
 
@@ -1640,7 +1638,7 @@ public class TaskTestNG extends BaseTest {
 
         // Submit
         List<WebElement> createBtns = driver.findElements(By.xpath("//button[normalize-space()='Create Task']"));
-        createBtns.get(createBtns.size() - 1).click();
+        safeClick(createBtns.get(createBtns.size() - 1));
         pause(2000);
 
         // Verify no alert dialog (XSS blocked)
@@ -1663,7 +1661,7 @@ public class TaskTestNG extends BaseTest {
                 clickDeleteOnDetailPage();
                 pause(1000);
                 List<WebElement> confirms = driver.findElements(DELETE_CONFIRM_BTN);
-                if (!confirms.isEmpty()) confirms.get(0).click();
+                if (!confirms.isEmpty()) safeClick(confirms.get(0));
                 pause(1000);
                 ensureOnTasksPage();
             } catch (Exception ignored) {}

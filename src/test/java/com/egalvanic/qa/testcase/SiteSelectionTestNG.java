@@ -143,6 +143,7 @@ public class SiteSelectionTestNG {
     @BeforeMethod
     public void testSetup() {
         testStartTime = System.currentTimeMillis();
+        dismissBackdrops();
     }
 
     @AfterMethod
@@ -529,7 +530,7 @@ public class SiteSelectionTestNG {
         if (fullCount == 0) {
             logStep("Dropdown empty — retrying with input click");
             WebElement retryInput = driver.findElement(FACILITY_INPUT);
-            retryInput.click();
+            safeClick(retryInput);
             pause(1500);
             fullCount = driver.findElements(OPTIONS).size();
             logStep("Retry full count: " + fullCount);
@@ -776,7 +777,7 @@ public class SiteSelectionTestNG {
 
         // Click the facility selector to open site selection
         WebElement facilityInput = driver.findElement(FACILITY_INPUT);
-        facilityInput.click();
+        safeClick(facilityInput);
         pause(500);
 
         boolean dropdownOpen = isDropdownOpen();
@@ -812,7 +813,7 @@ public class SiteSelectionTestNG {
             return;
         }
 
-        networkIcon.click();
+        safeClick(networkIcon);
         pause(500);
 
         // Look for Go Offline option in dropdown
@@ -842,7 +843,7 @@ public class SiteSelectionTestNG {
             return;
         }
 
-        networkIcon.click();
+        safeClick(networkIcon);
         pause(500);
 
         // Click Go Offline
@@ -856,7 +857,7 @@ public class SiteSelectionTestNG {
             return;
         }
 
-        offlineOptions.get(0).click();
+        safeClick(offlineOptions.get(0));
         pause(1000);
 
         logStepWithScreenshot("After switching to offline mode");
@@ -954,7 +955,7 @@ public class SiteSelectionTestNG {
 
         // Try clicking even if disabled
         try {
-            inputs.get(0).click();
+            safeClick(inputs.get(0));
             pause(500);
         } catch (Exception e) {
             logStep("Click intercepted or failed: " + e.getMessage());
@@ -989,7 +990,7 @@ public class SiteSelectionTestNG {
             return;
         }
 
-        networkIcon.click();
+        safeClick(networkIcon);
         pause(500);
 
         boolean hasGoOnline = !driver.findElements(By.xpath(
@@ -1016,14 +1017,14 @@ public class SiteSelectionTestNG {
             return;
         }
 
-        networkIcon.click();
+        safeClick(networkIcon);
         pause(500);
 
         List<WebElement> onlineOptions = driver.findElements(By.xpath(
                 "//*[contains(text(),'Go Online') or contains(text(),'Online')]"
                 + "[self::button or self::a or self::li or self::div or self::span]"));
         if (!onlineOptions.isEmpty()) {
-            onlineOptions.get(0).click();
+            safeClick(onlineOptions.get(0));
             pause(1000);
             logStep("Clicked Go Online");
         } else {
@@ -1108,7 +1109,7 @@ public class SiteSelectionTestNG {
             return;
         }
 
-        networkIcon.click();
+        safeClick(networkIcon);
         pause(500);
 
         boolean hasSyncOption = !driver.findElements(By.xpath(
@@ -1169,14 +1170,14 @@ public class SiteSelectionTestNG {
             return;
         }
 
-        networkIcon.click();
+        safeClick(networkIcon);
         pause(500);
 
         List<WebElement> syncOptions = driver.findElements(By.xpath(
                 "//*[contains(text(),'Sync')]"
                 + "[self::button or self::a or self::li or self::div or self::span]"));
         if (!syncOptions.isEmpty()) {
-            syncOptions.get(0).click();
+            safeClick(syncOptions.get(0));
             pause(2000);
             logStep("Clicked sync option");
 
@@ -1209,7 +1210,7 @@ public class SiteSelectionTestNG {
 
         // Try to open dropdown to confirm it works
         if (isEnabled) {
-            inputs.get(0).click();
+            safeClick(inputs.get(0));
             pause(500);
             boolean opened = isDropdownOpen();
             logStep("Dropdown opens: " + opened);
@@ -1473,7 +1474,7 @@ public class SiteSelectionTestNG {
         for (WebElement option : options) {
             String optionText = getElementText(option);
             if (!optionText.contains(currentSite) && !optionText.isEmpty()) {
-                option.click();
+                safeClick(option);
                 selectedDifferent = true;
                 logStep("Selected different site: " + optionText);
                 break;
@@ -1780,7 +1781,7 @@ public class SiteSelectionTestNG {
 
         if (!jobPrompts.isEmpty()) {
             try {
-                jobPrompts.get(0).click();
+                safeClick(jobPrompts.get(0));
                 pause(2000);
                 String urlAfter = driver.getCurrentUrl();
                 logStep("After clicking job prompt. URL: " + urlAfter);
@@ -1819,7 +1820,7 @@ public class SiteSelectionTestNG {
             return;
         }
 
-        networkIcon.click();
+        safeClick(networkIcon);
         pause(500);
 
         // Check for sync option with count
@@ -1971,8 +1972,9 @@ public class SiteSelectionTestNG {
 
     private void openFacilityDropdown() {
         try {
+            dismissBackdrops();
             WebElement input = driver.findElement(FACILITY_INPUT);
-            input.click();
+            safeClick(input);
             pause(800);
             if (!isDropdownOpen()) {
                 // Retry with JS click
@@ -2157,7 +2159,7 @@ public class SiteSelectionTestNG {
                 for (WebElement el : els) {
                     try {
                         if (el.isDisplayed()) {
-                            el.click();
+                            safeClick(el);
                             pause(1000);
                             return true;
                         }
@@ -2222,5 +2224,28 @@ public class SiteSelectionTestNG {
 
     private void pause(long ms) {
         try { Thread.sleep(ms); } catch (InterruptedException ignored) {}
+    }
+
+    // ================================================================
+    // MUI BACKDROP HANDLING — prevents ElementClickInterceptedException
+    // ================================================================
+
+    private void dismissBackdrops() {
+        try {
+            js.executeScript(
+                "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"], .MuiModal-backdrop').forEach(" +
+                "  function(b) { b.style.display = 'none'; b.style.pointerEvents = 'none'; }" +
+                ");"
+            );
+        } catch (Exception ignored) {}
+    }
+
+    private void safeClick(WebElement element) {
+        dismissBackdrops();
+        try {
+            element.click();
+        } catch (ElementClickInterceptedException e) {
+            js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", element);
+        }
     }
 }

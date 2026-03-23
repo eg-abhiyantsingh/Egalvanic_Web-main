@@ -178,6 +178,7 @@ public class BaseTest {
     public void testSetup() {
         testStartTime = System.currentTimeMillis();
         recoverFromErrorPage();
+        dismissBackdrops();
     }
 
     /**
@@ -403,4 +404,53 @@ public class BaseTest {
     protected void shortWait() { pause(200); }
     protected void mediumWait() { pause(400); }
     protected void longWait() { pause(800); }
+
+    // ================================================================
+    // MUI BACKDROP HANDLING — prevents ElementClickInterceptedException
+    // ================================================================
+
+    /**
+     * Remove all MUI backdrop overlays that intercept clicks in headless Chrome.
+     * Called automatically before every test via @BeforeMethod.
+     */
+    protected void dismissBackdrops() {
+        try {
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            js.executeScript(
+                "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"], .MuiModal-backdrop').forEach(" +
+                "  function(b) { b.style.display = 'none'; b.style.pointerEvents = 'none'; }" +
+                ");"
+            );
+        } catch (Exception ignored) {}
+    }
+
+    /**
+     * Safe click that removes MUI backdrops first, then tries Selenium click
+     * with JS click fallback. Use this instead of element.click() to avoid
+     * ElementClickInterceptedException in headless Chrome CI/CD.
+     */
+    protected void safeClick(WebElement element) {
+        dismissBackdrops();
+        try {
+            element.click();
+        } catch (ElementClickInterceptedException e) {
+            // Backdrop appeared between dismissal and click — use JS
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", element);
+        }
+    }
+
+    /**
+     * Safe click by locator — finds element, removes backdrops, clicks with fallback.
+     */
+    protected void safeClick(By locator) {
+        dismissBackdrops();
+        WebElement element = driver.findElement(locator);
+        try {
+            element.click();
+        } catch (ElementClickInterceptedException e) {
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", element);
+        }
+    }
 }
