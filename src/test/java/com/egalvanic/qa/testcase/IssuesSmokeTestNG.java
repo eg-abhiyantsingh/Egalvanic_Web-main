@@ -664,58 +664,91 @@ public class IssuesSmokeTestNG extends BaseTest {
             pause(1500);
             logStep("On detail page: " + driver.getCurrentUrl());
 
-            // 3. Open Edit drawer via kebab -> Edit Issue
+            // 3. Click the three-dot (⋮) kebab menu to reveal Delete option
+            //    The ⋮ icon is a MoreVert MUI icon button near the top-right of the detail page.
+            //    Try multiple selectors to find it reliably.
             Boolean kebabClicked = (Boolean) jsExec.executeScript(
-                "var icons = document.querySelectorAll('[class*=\"MuiIconButton\"]');" +
+                "// Strategy 1: aria-label containing 'more'\n" +
+                "var btn = document.querySelector('[aria-label*=\"more\" i], [aria-label*=\"option\" i], [aria-label*=\"menu\" i], [data-testid*=\"MoreVert\"]');" +
+                "if (btn) { btn.click(); return true; }" +
+                "// Strategy 2: Find button containing MoreVert SVG icon (3 vertical dots)\n" +
+                "var buttons = document.querySelectorAll('button, [class*=\"MuiIconButton\"]');" +
+                "for (var b of buttons) {" +
+                "  var svg = b.querySelector('svg');" +
+                "  if (!svg) continue;" +
+                "  var r = b.getBoundingClientRect();" +
+                "  // Must be visible, small (icon button), and in the top area of the page\n" +
+                "  if (r.width < 10 || r.width > 60 || r.height < 10 || r.height > 60) continue;" +
+                "  if (r.top > 250) continue;" +
+                "  // Check if SVG path looks like MoreVert (3 dots) — contains multiple circle-like paths\n" +
+                "  var paths = svg.querySelectorAll('path, circle');" +
+                "  var pathD = svg.innerHTML;" +
+                "  if (pathD.includes('12 8') || pathD.includes('M12') || paths.length >= 3) {" +
+                "    b.click(); return true;" +
+                "  }" +
+                "}" +
+                "// Strategy 3: Rightmost small icon button in the header area\n" +
                 "var candidates = [];" +
-                "for (var ic of icons) {" +
+                "for (var ic of buttons) {" +
                 "  var r = ic.getBoundingClientRect();" +
-                "  if (r.width > 15 && r.width < 50 && r.top > 50 && r.top < 200 && r.left > 400) {" +
+                "  if (r.width > 15 && r.width < 60 && r.top < 250 && r.left > 300) {" +
                 "    candidates.push({el: ic, x: r.left});" +
                 "  }" +
                 "}" +
-                "if (candidates.length === 0) return false;" +
-                "candidates.sort(function(a,b) { return b.x - a.x; });" +
-                "candidates[0].el.click();" +
-                "return true;");
-            pause(600);
+                "if (candidates.length > 0) {" +
+                "  candidates.sort(function(a,b) { return b.x - a.x; });" +
+                "  candidates[0].el.click(); return true;" +
+                "}" +
+                "return false;");
+            pause(1000);
+            logStep("Kebab menu clicked: " + kebabClicked);
+            debugPageState("DELETE — After kebab click");
 
-            if (Boolean.TRUE.equals(kebabClicked)) {
-                jsExec.executeScript(
-                    "var items = document.querySelectorAll('li[role=\"menuitem\"], [class*=\"MuiMenuItem\"]');" +
-                    "for (var i of items) {" +
-                    "  if (i.textContent.trim().includes('Edit')) { i.click(); return; }" +
-                    "}");
-                pause(1000);
-                logStep("Edit drawer opened via kebab");
-            }
+            // 4. Click "Delete Issue" or "Delete" from the dropdown menu
+            //    After clicking ⋮, a menu appears with options like Edit Issue, Delete Issue.
+            Boolean deleteClicked = false;
 
-            // 4. Scroll drawer to bottom and click "Delete Issue"
-            jsExec.executeScript(
-                "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
-                "for (var d of drawers) {" +
-                "  var r = d.getBoundingClientRect();" +
-                "  if (r.width > 300) { d.scrollTop = d.scrollHeight; break; }" +
-                "}");
-            pause(600);
-
-            Boolean deleteClicked = (Boolean) jsExec.executeScript(
+            // Try menu items first (dropdown from kebab)
+            deleteClicked = (Boolean) jsExec.executeScript(
+                "var items = document.querySelectorAll('li[role=\"menuitem\"], [class*=\"MuiMenuItem\"], [role=\"menu\"] li');" +
+                "for (var i of items) {" +
+                "  var t = i.textContent.trim();" +
+                "  if (t.includes('Delete')) { i.click(); return true; }" +
+                "}" +
+                "// Fallback: any visible button with Delete text\n" +
                 "var btns = document.querySelectorAll('button');" +
                 "for (var b of btns) {" +
                 "  var t = b.textContent.trim();" +
                 "  var r = b.getBoundingClientRect();" +
                 "  if (r.width > 0 && (t === 'Delete Issue' || t === 'Delete')) {" +
                 "    b.scrollIntoView({block: 'center'});" +
-                "    b.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true}));" +
-                "    return true;" +
+                "    b.click(); return true;" +
                 "  }" +
                 "}" +
                 "return false;");
 
             if (!Boolean.TRUE.equals(deleteClicked)) {
+                // If kebab didn't work, try Edit drawer approach as fallback
+                if (Boolean.TRUE.equals(kebabClicked)) {
+                    jsExec.executeScript(
+                        "var items = document.querySelectorAll('li[role=\"menuitem\"], [class*=\"MuiMenuItem\"]');" +
+                        "for (var i of items) {" +
+                        "  if (i.textContent.trim().includes('Edit')) { i.click(); return; }" +
+                        "}");
+                    pause(1000);
+                    // Scroll drawer to bottom for Delete button
+                    jsExec.executeScript(
+                        "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+                        "for (var d of drawers) {" +
+                        "  var r = d.getBoundingClientRect();" +
+                        "  if (r.width > 300) { d.scrollTop = d.scrollHeight; break; }" +
+                        "}");
+                    pause(600);
+                }
                 for (WebElement btn : driver.findElements(By.tagName("button"))) {
                     try {
-                        if ("Delete Issue".equals(btn.getText().trim()) && btn.isDisplayed()) {
+                        String txt = btn.getText().trim();
+                        if ((txt.equals("Delete Issue") || txt.equals("Delete")) && btn.isDisplayed()) {
                             safeClick(btn);
                             deleteClicked = true;
                             break;
