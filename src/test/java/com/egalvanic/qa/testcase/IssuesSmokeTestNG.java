@@ -765,114 +765,178 @@ public class IssuesSmokeTestNG extends BaseTest {
             dismissBackdrops();
             Boolean kebabClicked = false;
 
-            // Strategy 1: Find button with MoreVertIcon SVG (data-testid)
+            // Debug: dump ALL buttons (including icon-only) for diagnostics
+            String btnDebug = (String) jsExec.executeScript(
+                "var info = '';" +
+                "var btns = document.querySelectorAll('button');" +
+                "for (var i = 0; i < btns.length; i++) {" +
+                "  var b = btns[i];" +
+                "  var r = b.getBoundingClientRect();" +
+                "  if (r.width <= 0) continue;" +
+                "  var text = b.textContent.trim().substring(0, 30);" +
+                "  var label = b.getAttribute('aria-label') || '';" +
+                "  var testId = b.getAttribute('data-testid') || '';" +
+                "  var cls = (b.className || '').substring(0, 60);" +
+                "  var hasSvg = b.querySelector('svg') ? 'SVG' : '';" +
+                "  var svgPath = '';" +
+                "  var svgEl = b.querySelector('svg path');" +
+                "  if (svgEl) svgPath = (svgEl.getAttribute('d') || '').substring(0, 20);" +
+                "  info += 'BTN[' + i + '] pos=' + Math.round(r.left) + ',' + Math.round(r.top)" +
+                "    + ' size=' + Math.round(r.width) + 'x' + Math.round(r.height)" +
+                "    + ' text=\"' + text + '\"'" +
+                "    + ' aria=\"' + label + '\"'" +
+                "    + ' testid=\"' + testId + '\"'" +
+                "    + ' ' + hasSvg" +
+                "    + ' path=\"' + svgPath + '\"'" +
+                "    + ' class=\"' + cls + '\"'" +
+                "    + '\\n';" +
+                "}" +
+                "return info;");
+            System.out.println("[DELETE] All buttons on detail page:\n" + btnDebug);
+            logStep("[DEBUG] Buttons: " + (btnDebug != null ? btnDebug.substring(0, Math.min(500, btnDebug.length())) : "null"));
+
+            // Strategy 1: data-testid="MoreVertIcon" (standard MUI)
             kebabClicked = (Boolean) jsExec.executeScript(
                 "var icon = document.querySelector('[data-testid=\"MoreVertIcon\"]');" +
-                "if (icon) {" +
-                "  var btn = icon.closest('button');" +
-                "  if (btn) { btn.click(); return true; }" +
-                "}" +
+                "if (icon) { var btn = icon.closest('button'); if (btn) { btn.click(); return true; } }" +
                 "return false;");
-            if (Boolean.TRUE.equals(kebabClicked)) {
-                logStep("Clicked ⋮ via MoreVertIcon data-testid");
-            }
+            if (Boolean.TRUE.equals(kebabClicked)) logStep("Clicked ⋮ via MoreVertIcon data-testid");
 
-            // Strategy 2: Find button with aria-label containing "more" or "menu"
+            // Strategy 2: aria-label containing "more", "menu", "options", "actions", "kebab"
             if (!Boolean.TRUE.equals(kebabClicked)) {
                 kebabClicked = (Boolean) jsExec.executeScript(
                     "var btns = document.querySelectorAll('button');" +
                     "for (var b of btns) {" +
                     "  var label = (b.getAttribute('aria-label') || '').toLowerCase();" +
-                    "  if (label.includes('more') || label === 'menu' || label === 'options') {" +
+                    "  if (label.includes('more') || label.includes('menu') || label.includes('option')" +
+                    "      || label.includes('action') || label.includes('kebab') || label.includes('dots')) {" +
                     "    var r = b.getBoundingClientRect();" +
-                    "    if (r.width > 0 && r.top < 300) {" +
-                    "      b.click(); return true;" +
+                    "    if (r.width > 0 && r.top < 400) { b.click(); return true; }" +
+                    "  }" +
+                    "}" +
+                    "return false;");
+                if (Boolean.TRUE.equals(kebabClicked)) logStep("Clicked ⋮ via aria-label");
+            }
+
+            // Strategy 3: SVG with MoreVert icon path (multiple known d-path prefixes)
+            if (!Boolean.TRUE.equals(kebabClicked)) {
+                kebabClicked = (Boolean) jsExec.executeScript(
+                    "var svgs = document.querySelectorAll('button svg path');" +
+                    "for (var p of svgs) {" +
+                    "  var d = p.getAttribute('d') || '';" +
+                    "  if (d.includes('M12 8c1.1') || d.includes('M6 10c-1.1')" +
+                    "      || d.includes('M12 7.5') || d.includes('M12 2C6.48')" +
+                    "      || (d.match(/c1\\.1/g) && d.match(/c1\\.1/g).length >= 2)) {" +
+                    "    var btn = p.closest('button');" +
+                    "    if (btn) { btn.click(); return true; }" +
+                    "  }" +
+                    "}" +
+                    "return false;");
+                if (Boolean.TRUE.equals(kebabClicked)) logStep("Clicked ⋮ via SVG path match");
+            }
+
+            // Strategy 4: Any small icon-only button (has SVG, no text, in top 400px)
+            //   that is NOT back/close/navigation — sorted by rightmost position
+            if (!Boolean.TRUE.equals(kebabClicked)) {
+                kebabClicked = (Boolean) jsExec.executeScript(
+                    "var btns = document.querySelectorAll('button');" +
+                    "var candidates = [];" +
+                    "for (var b of btns) {" +
+                    "  var r = b.getBoundingClientRect();" +
+                    "  var text = b.textContent.trim();" +
+                    "  var hasSvg = b.querySelector('svg');" +
+                    "  if (r.width > 0 && r.width < 60 && r.top > 30 && r.top < 400 && hasSvg && text.length < 3) {" +
+                    "    candidates.push(b);" +
+                    "  }" +
+                    "}" +
+                    "if (candidates.length >= 1) {" +
+                    "  candidates.sort(function(a,b) { return b.getBoundingClientRect().left - a.getBoundingClientRect().left; });" +
+                    "  for (var c of candidates) {" +
+                    "    var label = (c.getAttribute('aria-label') || '').toLowerCase();" +
+                    "    if (!label.includes('back') && !label.includes('navigate') && !label.includes('close')" +
+                    "        && !label.includes('open drawer') && !label.includes('release')) {" +
+                    "      c.click(); return true;" +
                     "    }" +
                     "  }" +
                     "}" +
                     "return false;");
-                if (Boolean.TRUE.equals(kebabClicked)) {
-                    logStep("Clicked ⋮ via aria-label");
-                }
+                if (Boolean.TRUE.equals(kebabClicked)) logStep("Clicked ⋮ via icon-only button (rightmost)");
             }
 
-            // Strategy 3: Find the status chip ("Open"/"New"/etc) and click sibling button
+            // Strategy 5: Status chip sibling — find chip then any nearby button
             if (!Boolean.TRUE.equals(kebabClicked)) {
                 kebabClicked = (Boolean) jsExec.executeScript(
-                    "var chips = document.querySelectorAll('.MuiChip-root, [class*=\"MuiChip\"]');" +
+                    "var chips = document.querySelectorAll('[class*=\"MuiChip\"], [class*=\"chip\"], [class*=\"badge\"], [class*=\"status\"]');" +
                     "for (var chip of chips) {" +
                     "  var text = chip.textContent.trim().toLowerCase();" +
-                    "  if (['open','new','in progress','resolved','closed'].indexOf(text) >= 0) {" +
+                    "  if (['open','new','in progress','resolved','closed','pending'].indexOf(text) >= 0) {" +
                     "    var container = chip.parentElement;" +
-                    "    for (var i = 0; i < 5; i++) {" +
+                    "    for (var i = 0; i < 6; i++) {" +
                     "      if (!container) break;" +
-                    "      var buttons = container.querySelectorAll(':scope > button, :scope > div > button');" +
-                    "      if (buttons.length >= 2) {" +
-                    "        buttons[buttons.length - 1].click();" +
-                    "        return true;" +
+                    "      var buttons = container.querySelectorAll('button');" +
+                    "      for (var b of buttons) {" +
+                    "        var r = b.getBoundingClientRect();" +
+                    "        var btext = b.textContent.trim();" +
+                    "        if (r.width > 0 && r.width < 60 && btext.length < 3 && b.querySelector('svg')) {" +
+                    "          b.click(); return true;" +
+                    "        }" +
                     "      }" +
                     "      container = container.parentElement;" +
                     "    }" +
                     "  }" +
                     "}" +
                     "return false;");
-                if (Boolean.TRUE.equals(kebabClicked)) {
-                    logStep("Clicked ⋮ via status chip sibling");
+                if (Boolean.TRUE.equals(kebabClicked)) logStep("Clicked ⋮ via status chip sibling");
+            }
+
+            // Strategy 6: Use page object's deleteCurrentIssue() which has its own kebab
+            //   strategies AND also clicks "Delete Issue" from the menu.
+            //   If this succeeds, we skip the separate "click Delete" step.
+            boolean deleteAlreadyClicked = false;
+            if (!Boolean.TRUE.equals(kebabClicked)) {
+                try {
+                    issuePage.deleteCurrentIssue();
+                    kebabClicked = true;
+                    deleteAlreadyClicked = true;
+                    logStep("Clicked ⋮ + Delete via page object deleteCurrentIssue()");
+                } catch (Exception e) {
+                    logStep("deleteCurrentIssue() failed: " + e.getMessage());
                 }
             }
 
-            // Strategy 4: Find SVG with MoreVert icon path (three vertical dots)
+            // Strategy 7: Any icon button matching MUI IconButton class (relaxed — >= 1 candidate)
             if (!Boolean.TRUE.equals(kebabClicked)) {
                 kebabClicked = (Boolean) jsExec.executeScript(
-                    "var svgs = document.querySelectorAll('button svg');" +
-                    "for (var svg of svgs) {" +
-                    "  var paths = svg.querySelectorAll('path');" +
-                    "  for (var p of paths) {" +
-                    "    var d = p.getAttribute('d') || '';" +
-                    "    if (d.includes('M12 8c1.1') || d.includes('M6 10c-1.1')) {" +
-                    "      var btn = svg.closest('button');" +
-                    "      if (btn) { btn.click(); return true; }" +
-                    "    }" +
-                    "  }" +
-                    "}" +
-                    "return false;");
-                if (Boolean.TRUE.equals(kebabClicked)) {
-                    logStep("Clicked ⋮ via SVG path match");
-                }
-            }
-
-            // Strategy 5: Find the rightmost small icon button in the header area
-            if (!Boolean.TRUE.equals(kebabClicked)) {
-                kebabClicked = (Boolean) jsExec.executeScript(
-                    "var btns = document.querySelectorAll('button.MuiIconButton-root, button[class*=\"IconButton\"]');" +
+                    "var btns = document.querySelectorAll('button[class*=\"IconButton\"], button[class*=\"iconButton\"]');" +
                     "var candidates = [];" +
                     "for (var b of btns) {" +
                     "  var r = b.getBoundingClientRect();" +
-                    "  if (r.width > 0 && r.width < 60 && r.top > 50 && r.top < 300) {" +
-                    "    candidates.push(b);" +
-                    "  }" +
+                    "  if (r.width > 0 && r.top > 30 && r.top < 400) candidates.push(b);" +
                     "}" +
-                    "if (candidates.length >= 2) {" +
+                    "if (candidates.length >= 1) {" +
                     "  candidates.sort(function(a,b) { return b.getBoundingClientRect().left - a.getBoundingClientRect().left; });" +
                     "  for (var c of candidates) {" +
                     "    var label = (c.getAttribute('aria-label') || '').toLowerCase();" +
-                    "    if (!label.includes('back') && !label.includes('navigate') && !label.includes('close')) {" +
+                    "    if (!label.includes('back') && !label.includes('navigate') && !label.includes('close')" +
+                    "        && !label.includes('drawer') && !label.includes('release') && !label.includes('search')) {" +
                     "      c.click(); return true;" +
                     "    }" +
                     "  }" +
                     "}" +
                     "return false;");
-                if (Boolean.TRUE.equals(kebabClicked)) {
-                    logStep("Clicked ⋮ via icon button position");
-                }
+                if (Boolean.TRUE.equals(kebabClicked)) logStep("Clicked ⋮ via MUI IconButton class");
             }
 
-            Assert.assertTrue(Boolean.TRUE.equals(kebabClicked), "Could not find or click the ⋮ menu button");
+            Assert.assertTrue(Boolean.TRUE.equals(kebabClicked), "Could not find or click the ⋮ menu button. Buttons dump:\n" + btnDebug);
             pause(1500);
             debugPageState("DELETE — After ⋮ click");
 
             // ─── 4. Click "Delete Issue" from the dropdown menu ─────────────
-            Boolean deleteClicked = (Boolean) jsExec.executeScript(
+            //   Skip if Strategy 6 (deleteCurrentIssue) already clicked it.
+            if (deleteAlreadyClicked) {
+                logStep("Delete already clicked by page object — skipping step 4");
+            }
+            Boolean deleteClicked = deleteAlreadyClicked ? Boolean.TRUE : (Boolean) jsExec.executeScript(
                 "var items = document.querySelectorAll('[role=\"menuitem\"], [role=\"option\"], li, button, a');" +
                 "for (var item of items) {" +
                 "  var text = item.textContent.trim();" +
