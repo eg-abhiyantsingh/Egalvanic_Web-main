@@ -628,6 +628,21 @@ public class IssuesSmokeTestNG extends BaseTest {
 
             JavascriptExecutor jsExec = (JavascriptExecutor) driver;
 
+            // Helper: get current URL via JS to avoid blocking on page load
+            // driver.getCurrentUrl() blocks if the page is still loading;
+            // window.location.href returns immediately.
+            java.util.function.Supplier<String> safeCurrentUrl = () -> {
+                try {
+                    return (String) jsExec.executeScript("return window.location.href;");
+                } catch (Exception e) {
+                    return "";
+                }
+            };
+            java.util.function.Supplier<Boolean> isOnDetailPage = () -> {
+                String url = safeCurrentUrl.get();
+                return url != null && url.matches(".*\\/issues\\/[a-f0-9-]{8,}.*");
+            };
+
             // 2. Navigate to issue detail page.
             //    Strategy A: Click "View Issue" button from the Actions column (hover to reveal).
             //    Strategy B: Extract href and navigate directly.
@@ -658,7 +673,7 @@ public class IssuesSmokeTestNG extends BaseTest {
 
             // Check if we landed on detail page
             for (int w = 0; w < 8; w++) {
-                if (driver.getCurrentUrl().matches(".*\\/issues\\/[a-f0-9-]{8,}.*")) {
+                if (isOnDetailPage.get()) {
                     onDetail = true;
                     break;
                 }
@@ -692,7 +707,7 @@ public class IssuesSmokeTestNG extends BaseTest {
                     }
                     driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(60));
                     for (int w = 0; w < 8; w++) {
-                        if (driver.getCurrentUrl().matches(".*\\/issues\\/[a-f0-9-]{8,}.*")) {
+                        if (isOnDetailPage.get()) {
                             onDetail = true;
                             break;
                         }
@@ -703,12 +718,20 @@ public class IssuesSmokeTestNG extends BaseTest {
 
             // Strategy C: Click the first row cell text to navigate
             if (!onDetail) {
-                jsExec.executeScript(
-                    "var cells = document.querySelectorAll('[role=\"rowgroup\"] [role=\"row\"] [role=\"gridcell\"], tbody td');" +
-                    "if (cells.length > 0) cells[0].click();");
-                pause(3000);
+                // Set a short page load timeout so if the click triggers a hung navigation,
+                // WebDriver won't block forever
+                driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(15));
+                try {
+                    jsExec.executeScript(
+                        "var cells = document.querySelectorAll('[role=\"rowgroup\"] [role=\"row\"] [role=\"gridcell\"], tbody td');" +
+                        "if (cells.length > 0) cells[0].click();");
+                    pause(3000);
+                } catch (org.openqa.selenium.TimeoutException te) {
+                    logStep("Strategy C page load capped at 15s — continuing");
+                }
+                driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(60));
                 for (int w = 0; w < 8; w++) {
-                    if (driver.getCurrentUrl().matches(".*\\/issues\\/[a-f0-9-]{8,}.*")) {
+                    if (isOnDetailPage.get()) {
                         onDetail = true;
                         break;
                     }
@@ -717,7 +740,7 @@ public class IssuesSmokeTestNG extends BaseTest {
             }
 
             Assert.assertTrue(onDetail, "Could not navigate to issue detail page");
-            logStep("On issue detail: " + driver.getCurrentUrl());
+            logStep("On issue detail: " + safeCurrentUrl.get());
             debugPageState("DELETE — On detail page");
             pause(2000);
 
