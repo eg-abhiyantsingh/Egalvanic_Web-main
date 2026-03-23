@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="Full Suite — Work Order + Issue (94 TCs)" verbose="1">
+<suite name="Full Suite — Work Order + Issue (234 TCs)" verbose="1">
 
     <test name="Full Work Order Tests (50 TCs)">
         <classes>
@@ -8,9 +8,21 @@
         </classes>
     </test>
 
+    <test name="Work Order Part 2 Tests (75 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkOrderPart2TestNG"/>
+        </classes>
+    </test>
+
     <test name="Full Issue Tests (44 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.IssueTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Issue Part 2 Tests (65 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.IssuePart2TestNG"/>
         </classes>
     </test>
 

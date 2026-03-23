@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="Full Suite — Dashboard + BugHunt (75 TCs)" verbose="1">
+<suite name="Full Suite — Dashboard + BugHunt (105 TCs)" verbose="1">
 
     <test name="Dashboard Bug Tests (45 TCs)">
         <classes>
@@ -8,7 +8,49 @@
         </classes>
     </test>
 
-    <test name="Bug Hunt &amp; Security Tests (30 TCs)">
+    <test name="Bug Hunt — Global (9 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntGlobalTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Bug Hunt — Dashboard (3 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntDashboardTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Bug Hunt — Tasks (3 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntTasksTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Bug Hunt — Connections (2 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntConnectionsTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Bug Hunt — Work Orders (2 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntWorkOrdersTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Bug Hunt — Locations (2 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntLocationsTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Bug Hunt — Pages (9 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntPagesTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Bug Hunt — Legacy (30 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.BugHuntTestNG"/>
         </classes>

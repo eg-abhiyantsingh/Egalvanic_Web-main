@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="Full Suite — Location + Task (93 TCs)" verbose="1">
+<suite name="Full Suite — Location + Task (135 TCs)" verbose="1">
 
     <test name="Full Location Tests (38 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.LocationTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Location Part 2 Tests (42 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.LocationPart2TestNG"/>
         </classes>
     </test>
 

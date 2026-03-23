@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Full Suite — Load + API (37 TCs)" verbose="1">
+
+    <test name="Load &amp; Performance Tests (20 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.LoadTestNG"/>
+        </classes>
+    </test>
+
+    <test name="API — Authentication (4 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.AuthenticationAPITest"/>
+        </classes>
+    </test>
+
+    <test name="API — Users (4 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.UserAPITest"/>
+        </classes>
+    </test>
+
+    <test name="API — Security (5 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.APISecurityTest"/>
+        </classes>
+    </test>
+
+    <test name="API — Performance (4 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.APIPerformanceTest"/>
+        </classes>
+    </test>
+
+</suite>
