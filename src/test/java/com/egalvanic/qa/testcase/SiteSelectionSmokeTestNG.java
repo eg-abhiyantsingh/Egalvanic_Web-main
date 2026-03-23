@@ -60,6 +60,9 @@ public class SiteSelectionSmokeTestNG {
 
     private static final By FACILITY_INPUT = By.xpath("//input[@placeholder='Select facility']");
     private static final By LISTBOX = By.xpath("//ul[@role='listbox']");
+    // MUI Autocomplete "Open" dropdown-arrow button — sibling of the input
+    private static final By OPEN_BUTTON = By.xpath(
+            "//input[@placeholder='Select facility']/ancestor::div[contains(@class,'MuiAutocomplete') or contains(@class,'MuiInputBase')]//button[contains(@aria-label,'Open') or @title='Open']");
 
     private static final DateTimeFormatter TIMESTAMP_FMT =
             DateTimeFormatter.ofPattern("h:mm a - dd MMM");
@@ -233,29 +236,10 @@ public class SiteSelectionSmokeTestNG {
             WebElement facilityInput = wait.until(
                     ExpectedConditions.presenceOfElementLocated(FACILITY_INPUT));
 
-            // Clear any existing value first using React-safe approach
-            js.executeScript(
-                    "var nativeSetter = Object.getOwnPropertyDescriptor("
-                    + "window.HTMLInputElement.prototype, 'value').set;"
-                    + "nativeSetter.call(arguments[0], '');"
-                    + "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));"
-                    + "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
-                    facilityInput);
-            pause(300);
-
-            // Click to open dropdown
-            facilityInput.click();
-            pause(500);
-
-            // Wait for listbox to appear
-            try {
-                wait.until(ExpectedConditions.visibilityOfElementLocated(LISTBOX));
-            } catch (Exception e) {
-                // Retry: click again
-                facilityInput.click();
-                pause(1000);
-                wait.until(ExpectedConditions.visibilityOfElementLocated(LISTBOX));
-            }
+            // Open the dropdown using robust helper
+            boolean dropdownOpened = openFacilityDropdown();
+            Assert.assertTrue(dropdownOpened,
+                    "Could not open facility dropdown after multiple strategies");
             logStep("Dropdown opened — listbox visible");
 
             // Get all options
@@ -323,25 +307,36 @@ public class SiteSelectionSmokeTestNG {
 
             // Check if already selected from a previous test state
             String currentValue = facilityInput.getAttribute("value");
-            if (currentValue != null && currentValue.contains(AppConstants.TEST_SITE_NAME)) {
+            if (currentValue == null || currentValue.isEmpty()) {
+                currentValue = (String) js.executeScript("return arguments[0].value || '';", facilityInput);
+            }
+            if (currentValue != null && currentValue.toLowerCase().contains(AppConstants.TEST_SITE_NAME.toLowerCase())) {
                 logStep("Site already selected: " + currentValue + " — clearing to re-test selection");
-                // Clear and re-select to actually test the flow
-                js.executeScript(
-                        "var nativeSetter = Object.getOwnPropertyDescriptor("
-                        + "window.HTMLInputElement.prototype, 'value').set;"
-                        + "nativeSetter.call(arguments[0], '');"
-                        + "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));"
-                        + "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
-                        facilityInput);
-                pause(500);
+                // Use MUI clear button (X icon) if available
+                Boolean cleared = (Boolean) js.executeScript(
+                        "var btn = document.querySelector('.MuiAutocomplete-clearIndicator, "
+                        + "[aria-label=\"Clear\"], [title=\"Clear\"]');"
+                        + "if (btn && btn.offsetWidth > 0) { btn.click(); return true; }"
+                        + "return false;");
+                if (Boolean.TRUE.equals(cleared)) {
+                    logStep("Cleared site via MUI clear button");
+                    pause(500);
+                } else {
+                    // Fallback: React value setter
+                    js.executeScript(
+                            "var nativeSetter = Object.getOwnPropertyDescriptor("
+                            + "window.HTMLInputElement.prototype, 'value').set;"
+                            + "nativeSetter.call(arguments[0], '');"
+                            + "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));"
+                            + "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
+                            facilityInput);
+                    pause(500);
+                }
             }
 
-            // Click to open dropdown
-            facilityInput.click();
-            pause(500);
-
-            // Wait for listbox
-            wait.until(ExpectedConditions.visibilityOfElementLocated(LISTBOX));
+            // Open the dropdown using robust helper
+            boolean dropdownOpened = openFacilityDropdown();
+            Assert.assertTrue(dropdownOpened, "Could not open facility dropdown");
             logStep("Dropdown opened");
 
             // Scroll dropdown to bottom (Test Site may be alphabetically at the end)
@@ -631,5 +626,90 @@ public class SiteSelectionSmokeTestNG {
 
     private void pause(long ms) {
         try { Thread.sleep(ms); } catch (InterruptedException ignored) {}
+    }
+
+    /**
+     * Reliably open the MUI Autocomplete facility dropdown.
+     * Uses multiple strategies because clicking the input alone doesn't
+     * always open the dropdown (especially when a value is already selected).
+     */
+    private boolean openFacilityDropdown() {
+        // Strategy 1: Click the "Open" dropdown arrow button
+        try {
+            List<WebElement> openBtns = driver.findElements(OPEN_BUTTON);
+            if (!openBtns.isEmpty() && openBtns.get(0).isDisplayed()) {
+                openBtns.get(0).click();
+                pause(800);
+                if (isDropdownOpen()) return true;
+            }
+        } catch (Exception ignored) {}
+
+        // Strategy 2: JS-click the Open button by aria-label
+        try {
+            Boolean clicked = (Boolean) js.executeScript(
+                    "var input = document.querySelector(\"input[placeholder='Select facility']\");"
+                    + "if (!input) return false;"
+                    + "var container = input.closest('.MuiAutocomplete-root') || input.parentElement.parentElement;"
+                    + "var btn = container.querySelector('button[aria-label=\"Open\"], button[title=\"Open\"]');"
+                    + "if (btn) { btn.click(); return true; }"
+                    + "return false;");
+            if (Boolean.TRUE.equals(clicked)) {
+                pause(800);
+                if (isDropdownOpen()) return true;
+            }
+        } catch (Exception ignored) {}
+
+        // Strategy 3: Click the input itself + ArrowDown to force open
+        try {
+            WebElement input = driver.findElement(FACILITY_INPUT);
+            input.click();
+            pause(300);
+            input.sendKeys(org.openqa.selenium.Keys.ARROW_DOWN);
+            pause(800);
+            if (isDropdownOpen()) return true;
+        } catch (Exception ignored) {}
+
+        // Strategy 4: Clear the input and click — empty autocomplete opens on click
+        try {
+            WebElement input = driver.findElement(FACILITY_INPUT);
+            js.executeScript(
+                    "var nativeSetter = Object.getOwnPropertyDescriptor("
+                    + "window.HTMLInputElement.prototype, 'value').set;"
+                    + "nativeSetter.call(arguments[0], '');"
+                    + "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));"
+                    + "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
+                    input);
+            pause(300);
+            input.click();
+            pause(800);
+            if (isDropdownOpen()) return true;
+        } catch (Exception ignored) {}
+
+        // Strategy 5: Click the MUI clear button (X icon) first, then click input
+        try {
+            Boolean cleared = (Boolean) js.executeScript(
+                    "var btn = document.querySelector('.MuiAutocomplete-clearIndicator, "
+                    + "[aria-label=\"Clear\"], [title=\"Clear\"]');"
+                    + "if (btn && btn.offsetWidth > 0) { btn.click(); return true; }"
+                    + "return false;");
+            if (Boolean.TRUE.equals(cleared)) {
+                pause(500);
+                WebElement input = driver.findElement(FACILITY_INPUT);
+                input.click();
+                pause(800);
+                if (isDropdownOpen()) return true;
+            }
+        } catch (Exception ignored) {}
+
+        return false;
+    }
+
+    private boolean isDropdownOpen() {
+        try {
+            List<WebElement> listboxes = driver.findElements(LISTBOX);
+            return !listboxes.isEmpty() && listboxes.get(0).isDisplayed();
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
