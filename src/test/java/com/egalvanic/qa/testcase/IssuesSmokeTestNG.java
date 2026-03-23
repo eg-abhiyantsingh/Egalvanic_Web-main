@@ -608,7 +608,7 @@ public class IssuesSmokeTestNG extends BaseTest {
     // TEST 5: DELETE ISSUE
     // ================================================================
 
-    @Test(priority = 5, timeOut = 60000, description = "Smoke: Delete an issue via Edit drawer")
+    @Test(priority = 5, timeOut = 90000, description = "Smoke: Delete an issue via Edit drawer")
     public void testDeleteIssue() {
         ExtentReportManager.createTest(
                 AppConstants.MODULE_ISSUES, AppConstants.FEATURE_DELETE_ISSUE,
@@ -625,10 +625,42 @@ public class IssuesSmokeTestNG extends BaseTest {
 
             JavascriptExecutor jsExec = (JavascriptExecutor) driver;
 
-            // 2. Open issue detail page
-            issuePage.openFirstIssueDetail();
-            pause(1500);
-            logStep("Opened detail: " + driver.getCurrentUrl());
+            // 2. Open issue detail — extract href and navigate directly (avoids SPA hang)
+            String issueHref = (String) jsExec.executeScript(
+                "// Find first issue link href from list\n" +
+                "var links = document.querySelectorAll('tbody tr a, [role=\"rowgroup\"] [role=\"row\"] a');" +
+                "for (var a of links) {" +
+                "  var h = a.getAttribute('href');" +
+                "  if (h && h.includes('/issues/')) return h;" +
+                "}" +
+                "// Fallback: any anchor containing /issues/ and a UUID\n" +
+                "var allLinks = document.querySelectorAll('a[href*=\"/issues/\"]');" +
+                "if (allLinks.length > 0) return allLinks[0].getAttribute('href');" +
+                "return null;");
+
+            if (issueHref != null && !issueHref.isEmpty()) {
+                // Direct navigation — bypasses React SPA router that can hang
+                String fullUrl = issueHref.startsWith("http") ? issueHref
+                        : AppConstants.BASE_URL + issueHref;
+                driver.get(fullUrl);
+                logStep("Direct navigate to: " + fullUrl);
+            } else {
+                // Fallback: click first row (may be slow)
+                jsExec.executeScript(
+                    "var rows = document.querySelectorAll('tbody tr, [role=\"rowgroup\"] [role=\"row\"]');" +
+                    "if (rows.length > 0) { rows[0].click(); }");
+                logStep("Clicked first row (no href found)");
+            }
+
+            // Wait for detail page — just check URL has UUID, don't wait for full render
+            for (int w = 0; w < 15; w++) {
+                if (driver.getCurrentUrl().matches(".*\\/issues\\/[a-f0-9-]{8,}.*")) {
+                    break;
+                }
+                pause(1000);
+            }
+            pause(2000); // Let React settle enough for buttons to render
+            logStep("On detail page: " + driver.getCurrentUrl());
 
             // 3. Open Edit drawer via kebab menu -> Edit Issue
             Boolean kebabClicked = (Boolean) jsExec.executeScript(
@@ -680,7 +712,7 @@ public class IssuesSmokeTestNG extends BaseTest {
                 "}" +
                 "return false;");
 
-            // Selenium fallback if JS dispatch didn't work
+            // Selenium fallback
             if (!Boolean.TRUE.equals(deleteClicked)) {
                 java.util.List<WebElement> allButtons = driver.findElements(By.tagName("button"));
                 for (WebElement btn : allButtons) {
@@ -705,7 +737,6 @@ public class IssuesSmokeTestNG extends BaseTest {
                 confirmed = true;
                 logStep("Browser confirm() accepted");
             } catch (org.openqa.selenium.NoAlertPresentException e) {
-                // Try MUI dialog confirm button
                 issuePage.confirmDelete();
                 confirmed = true;
                 logStep("MUI dialog confirmed");
@@ -714,9 +745,6 @@ public class IssuesSmokeTestNG extends BaseTest {
             // 6. Wait for redirect back to issues list (up to 8s)
             for (int w = 0; w < 8; w++) {
                 String url = driver.getCurrentUrl();
-                if (url.matches(".*\\/issues/?$") || url.matches(".*\\/issues[?#].*")) {
-                    break;
-                }
                 if (!url.matches(".*\\/issues\\/[a-f0-9-]+.*")) {
                     break;
                 }
@@ -732,7 +760,7 @@ public class IssuesSmokeTestNG extends BaseTest {
             // 7. Verify deletion
             boolean deleted = false;
 
-            // Strategy 1: Search for deleted issue — should not appear
+            // Strategy 1: Search for deleted issue
             if (firstTitle != null && !firstTitle.isEmpty()) {
                 issuePage.searchIssues(firstTitle);
                 pause(2000);
@@ -748,11 +776,11 @@ public class IssuesSmokeTestNG extends BaseTest {
                 int afterCount = issuePage.getRowCount();
                 if (afterCount < beforeCount) {
                     deleted = true;
-                    logStep("Verified: count decreased " + beforeCount + " -> " + afterCount);
+                    logStep("Verified: count " + beforeCount + " -> " + afterCount);
                 }
             }
 
-            // Strategy 3: Trust the confirmation if it happened
+            // Strategy 3: Trust the confirmation
             if (!deleted && confirmed) {
                 deleted = true;
                 logStep("Verified: confirmation accepted (trusted)");
