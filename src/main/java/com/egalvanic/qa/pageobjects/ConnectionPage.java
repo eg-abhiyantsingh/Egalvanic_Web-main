@@ -470,62 +470,68 @@ public class ConnectionPage {
      * Confirm the delete operation in the confirmation dialog.
      */
     public void confirmDelete() {
-        // Wait for confirmation dialog to appear (up to 5s)
-        for (int i = 0; i < 10; i++) {
+        // Wait for confirmation dialog to appear (up to 8s)
+        for (int i = 0; i < 16; i++) {
             try {
+                // Always nuke ALL backdrops first — they block clicks in headless Chrome CI/CD
+                js.executeScript(
+                    "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"]').forEach(" +
+                    "  function(b) { b.style.display = 'none'; b.style.pointerEvents = 'none'; }" +
+                    ");"
+                );
+
+                // Strategy 1: JS-level click on error-styled Delete button (most CI-reliable)
+                Boolean jsClicked = (Boolean) js.executeScript(
+                    "var btns = document.querySelectorAll('button[class*=\"containedError\"], button[class*=\"error\"]');" +
+                    "for (var b of btns) {" +
+                    "  var t = b.textContent.trim();" +
+                    "  var r = b.getBoundingClientRect();" +
+                    "  if (r.width > 0 && (t === 'Delete' || t === 'Confirm' || t === 'Yes')) {" +
+                    "    b.focus(); b.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true})); return true;" +
+                    "  }" +
+                    "}" +
+                    "// Also check dialog buttons\n" +
+                    "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"alertdialog\"], [class*=\"MuiDialog\"]');" +
+                    "for (var d of dialogs) {" +
+                    "  var dbtns = d.querySelectorAll('button');" +
+                    "  for (var b of dbtns) {" +
+                    "    var t = b.textContent.trim();" +
+                    "    var r = b.getBoundingClientRect();" +
+                    "    if (r.width > 0 && (t === 'Delete' || t === 'Confirm' || t === 'Yes')) {" +
+                    "      b.focus(); b.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true})); return true;" +
+                    "    }" +
+                    "  }" +
+                    "}" +
+                    "return false;");
+
+                if (Boolean.TRUE.equals(jsClicked)) {
+                    System.out.println("[ConnectionPage] Delete confirmed via JS dispatched click (attempt " + (i+1) + ")");
+                    pause(2000);
+                    return;
+                }
+
+                // Strategy 2: Selenium WebElement click (backup)
                 java.util.List<WebElement> errorBtns = driver.findElements(
                     By.cssSelector("button[class*='containedError']"));
                 for (WebElement btn : errorBtns) {
                     if (btn.isDisplayed() && "Delete".equals(btn.getText().trim())) {
-                        System.out.println("[ConnectionPage] Found Delete confirmation button");
-
-                        // COMPLETELY HIDE all backdrops — they intercept clicks even with pointer-events:none
-                        // in some Selenium/Chrome configurations
-                        js.executeScript(
-                            "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"]').forEach(" +
-                            "  function(b) { b.style.display = 'none'; }" +
-                            ");"
-                        );
-                        pause(200);
-
-                        // Use WebElement.click() — the most straightforward trusted click
                         try {
                             btn.click();
                             System.out.println("[ConnectionPage] Delete confirmed via WebElement.click()");
                         } catch (Exception e1) {
-                            System.out.println("[ConnectionPage] WebElement.click() failed: " + e1.getMessage());
-                            // Fallback: Actions click
-                            try {
-                                new Actions(driver).moveToElement(btn).click().perform();
-                                System.out.println("[ConnectionPage] Delete confirmed via Actions click");
-                            } catch (Exception e2) {
-                                // Last resort: JS click
-                                js.executeScript("arguments[0].click();", btn);
-                                System.out.println("[ConnectionPage] Delete confirmed via JS click");
-                            }
+                            new Actions(driver).moveToElement(btn).click().perform();
+                            System.out.println("[ConnectionPage] Delete confirmed via Actions click");
                         }
-                        pause(3000);
+                        pause(2000);
                         return;
                     }
                 }
             } catch (Exception e) {
-                System.out.println("[ConnectionPage] Selenium click attempt " + i + " failed: " + e.getMessage());
+                System.out.println("[ConnectionPage] confirmDelete attempt " + (i+1) + ": " + e.getMessage());
             }
             pause(500);
         }
-
-        System.out.println("[ConnectionPage] WARNING: No delete confirmation button found");
-        // Fallback: JS click
-        js.executeScript(
-            "document.querySelectorAll('.MuiBackdrop-root').forEach(function(b) { b.style.display = 'none'; });" +
-            "var btns = document.querySelectorAll('button[class*=\"containedError\"]');" +
-            "for (var b of btns) {" +
-            "  if (b.textContent.trim() === 'Delete' && b.getBoundingClientRect().width > 0) {" +
-            "    b.focus(); b.click(); return;" +
-            "  }" +
-            "}"
-        );
-        pause(3000);
+        System.out.println("[ConnectionPage] WARNING: No delete confirmation button found after 16 attempts");
     }
 
     /**
