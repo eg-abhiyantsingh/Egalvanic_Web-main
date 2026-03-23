@@ -1,0 +1,115 @@
+package com.egalvanic.qa.testcase;
+
+import com.egalvanic.qa.constants.AppConstants;
+import com.egalvanic.qa.utils.ExtentReportManager;
+import com.egalvanic.qa.utils.ScreenshotUtil;
+
+import org.openqa.selenium.JavascriptExecutor;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+/**
+ * Bug Hunt: Work Orders Page Bug Verification Tests
+ *
+ * Verifies bugs on the /sessions (Work Orders) page:
+ *   BUG-015: Work Orders Grid Missing Status Column
+ *   BUG-022: Scheduling Page Shows Only Test Work Orders
+ *
+ * Tests share a browser session (inherited from BaseTest).
+ */
+public class BugHuntWorkOrdersTestNG extends BaseTest {
+
+    private JavascriptExecutor js() {
+        return (JavascriptExecutor) driver;
+    }
+
+    // ================================================================
+    // BUG-015: Work Orders Grid Missing Status Column
+    // ================================================================
+
+    @Test(priority = 1, description = "BUG-015: Verify Work Orders grid has no Status column")
+    public void testBUG015_MissingStatusColumn() {
+        ExtentReportManager.createTest(
+                AppConstants.MODULE_BUG_HUNT, AppConstants.FEATURE_WO_GRID,
+                "BUG-015: Missing Status Column");
+
+        try {
+            driver.get(AppConstants.BASE_URL + "/sessions");
+            pause(6000);
+
+            logStep("Navigated to Work Orders page");
+
+            // Get all column headers
+            String headers = (String) js().executeScript(
+                "var cols = document.querySelectorAll('[role=\"columnheader\"]');" +
+                "var names = [];" +
+                "for (var i = 0; i < cols.length; i++) {" +
+                "  var text = cols[i].textContent.trim();" +
+                "  if (text) names.push(text);" +
+                "}" +
+                "return names.join(', ');");
+
+            logStep("Work Order columns: " + headers);
+            logStepWithScreenshot("Work Orders grid — column headers");
+
+            boolean hasStatusColumn = headers.toLowerCase().contains("status");
+            logStep("Status column present: " + hasStatusColumn);
+
+            Assert.assertFalse(hasStatusColumn,
+                    "BUG-015: Status column IS now present. Bug may be fixed. Columns: " + headers);
+
+            ExtentReportManager.logPass("BUG-015 confirmed: Work Orders grid columns are [" +
+                    headers + "] — no Status column");
+
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("BUG015_status_error");
+            Assert.fail("BUG-015 test failed: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // BUG-022: Scheduling Page Shows Only Test Work Orders
+    // ================================================================
+
+    @Test(priority = 2, description = "BUG-022: Verify scheduling page is dominated by test data")
+    public void testBUG022_SchedulingTestDataOnly() {
+        ExtentReportManager.createTest(
+                AppConstants.MODULE_BUG_HUNT, AppConstants.FEATURE_SCHEDULING,
+                "BUG-022: Scheduling Test Data");
+
+        try {
+            driver.get(AppConstants.BASE_URL + "/scheduling");
+            pause(6000);
+
+            logStep("Navigated to Scheduling page");
+
+            // Count entries that look like test data
+            String testDataStats = (String) js().executeScript(
+                "var allText = document.body.innerText;" +
+                "var smokeCount = (allText.match(/SmokeTest/gi) || []).length;" +
+                "var autoCount = (allText.match(/AutoTest/gi) || []).length;" +
+                "var testCount = smokeCount + autoCount;" +
+                "return 'smokeTest=' + smokeCount + ',autoTest=' + autoCount + ',total=' + testCount;");
+
+            logStep("Test data on Scheduling page: " + testDataStats);
+            logStepWithScreenshot("Scheduling page — test data check");
+
+            int testCount = 0;
+            for (String part : testDataStats.split(",")) {
+                if (part.startsWith("total=")) testCount = Integer.parseInt(part.split("=")[1]);
+            }
+
+            logStep("Test data entries found: " + testCount);
+
+            Assert.assertTrue(testCount > 0,
+                    "BUG-022: No test data found on Scheduling page. Bug may be fixed.");
+
+            ExtentReportManager.logPass("BUG-022 confirmed: " + testCount +
+                    " test data references found on Scheduling page. " + testDataStats);
+
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("BUG022_scheduling_error");
+            Assert.fail("BUG-022 test failed: " + e.getMessage());
+        }
+    }
+}

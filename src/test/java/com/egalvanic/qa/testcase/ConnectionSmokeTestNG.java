@@ -133,6 +133,11 @@ public class ConnectionSmokeTestNG extends BaseTest {
                     "No connections to delete. Grid rows: " + beforeCount);
             logStep("Grid rows before delete: " + beforeCount);
 
+            // Capture first row identity before delete
+            String firstRowSource = connectionPage.getFirstRowSourceNode();
+            String firstRowTarget = connectionPage.getFirstRowTargetNode();
+            logStep("First row before delete: " + firstRowSource + " → " + firstRowTarget);
+
             // 2. Click Delete on first row
             connectionPage.clickDeleteOnRow(0);
             logStep("Delete clicked on first row");
@@ -146,27 +151,52 @@ public class ConnectionSmokeTestNG extends BaseTest {
             boolean deleteSuccess = connectionPage.waitForDeleteSuccess();
             logStep("Delete result: " + deleteSuccess);
 
-            // 5. Wait for server to process, then hard refresh for truly fresh data
-            pause(5000);
-
-            // Use hard page refresh to bypass SPA caching
-            driver.navigate().refresh();
-            pause(5000);
-
-            // 6. Poll for count decrease (handles eventual consistency)
+            // 5. Check if the DELETE API returned 200 OK (intercepted by network monitor)
+            // The grid is paginated — deleting a row may not decrease visible count
+            // because the next page's row fills in. So we verify via:
+            //   (a) API response = 200 OK
+            //   (b) Row count decrease
+            //   (c) First row identity changed
             boolean deleted = false;
-            for (int attempt = 0; attempt < 5; attempt++) {
-                int afterCount = connectionPage.getGridRowCount();
-                logStep("Post-delete check " + (attempt + 1) + ": grid rows = " + afterCount);
-                if (afterCount < beforeCount) {
-                    deleted = true;
-                    logStep("Grid rows after delete: " + afterCount);
-                    break;
-                }
-                // Hard refresh each retry
+
+            // Strategy 1: Check intercepted DELETE API call
+            org.openqa.selenium.JavascriptExecutor jsExec = (org.openqa.selenium.JavascriptExecutor) driver;
+            String apiResult = (String) jsExec.executeScript(
+                "var calls = window._deleteApiCalls || [];" +
+                "for (var c of calls) {" +
+                "  if (c.status === 200 && c.ok === true) return 'OK';" +
+                "}" +
+                "return 'NONE';");
+            logStep("DELETE API result: " + apiResult);
+            if ("OK".equals(apiResult)) {
+                deleted = true;
+                logStep("Verified: DELETE API returned 200 OK");
+            }
+
+            // Strategy 2: Refresh and check row count or first row changed
+            if (!deleted) {
+                pause(3000);
                 driver.navigate().refresh();
                 pause(5000);
+
+                int afterCount = connectionPage.getGridRowCount();
+                logStep("Grid rows after delete: " + afterCount);
+                if (afterCount < beforeCount) {
+                    deleted = true;
+                    logStep("Verified: row count decreased");
+                } else {
+                    // Paginated grid — check if first row identity changed
+                    String newFirstSource = connectionPage.getFirstRowSourceNode();
+                    String newFirstTarget = connectionPage.getFirstRowTargetNode();
+                    logStep("First row after delete: " + newFirstSource + " → " + newFirstTarget);
+                    if (!String.valueOf(firstRowSource).equals(String.valueOf(newFirstSource)) ||
+                        !String.valueOf(firstRowTarget).equals(String.valueOf(newFirstTarget))) {
+                        deleted = true;
+                        logStep("Verified: first row identity changed after delete");
+                    }
+                }
             }
+
             logStepWithScreenshot("Grid after deletion");
 
             Assert.assertTrue(deleted,

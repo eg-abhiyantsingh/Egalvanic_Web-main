@@ -1,0 +1,67 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  Bug Hunt Test Suite — 30 Bug Verification Tests
+
+  Verifies all 30 bugs documented in eGalvanic_QA_Bug_Report.html
+  Each test navigates to the affected page, checks for the bug condition,
+  and captures screenshots + evidence for the Extent Report.
+
+  Run: mvn clean test -DsuiteXmlFile=bughunt-testng.xml
+-->
+<suite name="eGalvanic Bug Hunt Suite (30 Bugs)" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <!-- Global Bugs: DevRev, N+1, Sentry, URL State, Duplicate APIs, Beamer, Bundle Hash -->
+    <test name="1. Global / Cross-Page Bugs (9 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntGlobalTestNG"/>
+        </classes>
+    </test>
+
+    <!-- Dashboard Bugs: Update Banner, Company Info, Stat Card Layout -->
+    <test name="2. Dashboard Bugs (3 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntDashboardTestNG"/>
+        </classes>
+    </test>
+
+    <!-- Tasks Bugs: All Overdue, Date Format, Missing Type -->
+    <test name="3. Tasks Bugs (3 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntTasksTestNG"/>
+        </classes>
+    </test>
+
+    <!-- Connections Bugs: Identical Rows, Arc Flash Low -->
+    <test name="4. Connections Bugs (2 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntConnectionsTestNG"/>
+        </classes>
+    </test>
+
+    <!-- Work Orders Bugs: Missing Status Column, Scheduling Test Data -->
+    <test name="5. Work Orders Bugs (2 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntWorkOrdersTestNG"/>
+        </classes>
+    </test>
+
+    <!-- Locations Bugs: Name Concatenation, Test Data Pollution -->
+    <test name="6. Locations Bugs (2 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntLocationsTestNG"/>
+        </classes>
+    </test>
+
+    <!-- Misc Pages: Admin, Opportunities, Condition, Equipment, SLDs, Attachments, Audit Log, Z University -->
+    <test name="7. Misc Pages Bugs (9 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntPagesTestNG"/>
+        </classes>
+    </test>
+
+</suite>

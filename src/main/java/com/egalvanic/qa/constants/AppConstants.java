@@ -177,6 +177,38 @@ public class AppConstants {
     public static final String FEATURE_ERROR_HANDLING = "Error Handling";
 
     // ============================================
+    // FEATURE NAMES - BUG HUNT VERIFICATION
+    // ============================================
+    public static final String FEATURE_DEVREV_SDK = "DevRev SDK";
+    public static final String FEATURE_API_N_PLUS_1 = "N+1 API Pattern";
+    public static final String FEATURE_SENTRY_EXPOSURE = "Sentry Credentials Exposure";
+    public static final String FEATURE_UPDATE_BANNER = "Update Banner";
+    public static final String FEATURE_URL_STATE = "URL State Persistence";
+    public static final String FEATURE_DUPLICATE_API = "Duplicate API Calls";
+    public static final String FEATURE_SITE_SELECTOR = "Site Selector";
+    public static final String FEATURE_SENTRY_REPORTING = "Sentry Reporting";
+    public static final String FEATURE_BEAMER_LEAK = "Beamer Data Leak";
+    public static final String FEATURE_BUNDLE_HASH = "JS Bundle Consistency";
+    public static final String FEATURE_DASHBOARD_LAYOUT = "Dashboard Layout";
+    public static final String FEATURE_COMPANY_INFO = "Company Information";
+    public static final String FEATURE_TASKS_DATA = "Tasks Data Quality";
+    public static final String FEATURE_DATE_FORMAT = "Date Format Consistency";
+    public static final String FEATURE_CONNECTIONS_GRID = "Connections Grid";
+    public static final String FEATURE_ARC_FLASH = "Arc Flash Readiness";
+    public static final String FEATURE_WO_GRID = "Work Order Grid";
+    public static final String FEATURE_LOCATION_DATA = "Location Data";
+    public static final String FEATURE_TEST_DATA = "Test Data Pollution";
+    public static final String FEATURE_ADMIN_SETTINGS = "Admin Settings";
+    public static final String FEATURE_OPPORTUNITIES = "Opportunities";
+    public static final String FEATURE_SCHEDULING = "Scheduling";
+    public static final String FEATURE_CONDITION_ASSESSMENT = "Condition Assessment";
+    public static final String FEATURE_EQUIPMENT_INSIGHTS = "Equipment Insights";
+    public static final String FEATURE_SLDS_PAGE = "SLDs Page";
+    public static final String FEATURE_ATTACHMENTS = "Attachments";
+    public static final String FEATURE_AUDIT_LOG = "Audit Log";
+    public static final String FEATURE_Z_UNIVERSITY = "Z University";
+
+    // ============================================
     // EMAIL CONFIGURATION
     // ============================================
     public static final String SMTP_HOST = "smtp.gmail.com";
@@ -185,8 +217,8 @@ public class AppConstants {
     public static final String EMAIL_PASSWORD = getEnv("EMAIL_PASSWORD", "onmzhjxnacinjfun");
    public static final String EMAIL_TO = "dharmesh.avaiya@egalvanic.com, abhiyant.singh@egalvanic.com, ";
     public static final String EMAIL_SUBJECT = "eGalvanic Web Automation - Test Report";
-    //public static final boolean SEND_EMAIL_ENABLED = false;
-    public static final boolean SEND_EMAIL_ENABLED = true;
+    public static final boolean SEND_EMAIL_ENABLED = false;
+    //public static final boolean SEND_EMAIL_ENABLED = true;
 
     // ============================================
     // HELPER METHODS

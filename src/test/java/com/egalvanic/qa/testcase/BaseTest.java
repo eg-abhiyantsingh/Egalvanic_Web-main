@@ -131,12 +131,17 @@ public class BaseTest {
         prefs.put("profile.password_manager_enabled", false);
         opts.setExperimentalOption("prefs", prefs);
 
+        // Use "eager" page load strategy to avoid 300s hangs on SPA navigations
+        opts.setPageLoadStrategy(org.openqa.selenium.PageLoadStrategy.EAGER);
+
         if ("true".equals(System.getProperty("headless"))) {
             opts.addArguments("--headless=new");
         }
 
         driver = new ChromeDriver(opts);
         driver.manage().window().maximize();
+        // Reduce pageLoad timeout from default 300s to 60s to prevent browser death
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
 
         JavascriptExecutor js = (JavascriptExecutor) driver;
         js.executeScript("document.body.style.zoom='80%';");

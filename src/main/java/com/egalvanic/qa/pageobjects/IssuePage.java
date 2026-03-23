@@ -77,8 +77,7 @@ public class IssuePage {
             "//input[contains(@placeholder,'Search') or contains(@placeholder,'search')]");
 
     // Table rows (Issues list is a table — columns: Title, Issue Class, Priority, Asset)
-    private static final By TABLE_ROWS = By.xpath(
-            "//tbody//tr | //div[contains(@class,'MuiDataGrid-row') and @data-rowindex]");
+    private static final By TABLE_ROWS = By.cssSelector("[role='rowgroup'] [role='row'], tbody tr");
 
     // Issue detail page
     private static final By ACTIVATE_JOBS_BTN = By.xpath(
@@ -1381,7 +1380,7 @@ public class IssuePage {
                 "}" +
                 "if (visible > 0) return visible;" +
                 "// Strategy 2: MUI DataGrid rows\n" +
-                "var gridRows = document.querySelectorAll('[data-rowindex]');" +
+                "var gridRows = document.querySelectorAll(\"[role='rowgroup'] [role='row']\");" +
                 "return gridRows.length;"
             );
             int result = count != null ? count.intValue() : 0;
@@ -1424,7 +1423,7 @@ public class IssuePage {
                 "  if (cells.length > 0) return cells[0].textContent.trim();" +
                 "}" +
                 "// Strategy 2: MUI DataGrid rows\n" +
-                "var gridRows = document.querySelectorAll('[data-rowindex]');" +
+                "var gridRows = document.querySelectorAll(\"[role='rowgroup'] [role='row']\");" +
                 "if (gridRows.length > 0) {" +
                 "  var row = gridRows[0];" +
                 "  var nameCell = row.querySelector('[data-field=\"title\"], [data-field=\"name\"], [data-field=\"issueName\"]');" +
@@ -1451,7 +1450,7 @@ public class IssuePage {
     public boolean isIssueVisible(String issueName) {
         try {
             Boolean found = (Boolean) js.executeScript(
-                "var rows = document.querySelectorAll('tbody tr, [data-rowindex]');" +
+                "var rows = document.querySelectorAll(\"tbody tr, [role='rowgroup'] [role='row']\");" +
                 "for (var r of rows) {" +
                 "  if (r.textContent.indexOf(arguments[0]) > -1) return true;" +
                 "}" +
@@ -1574,7 +1573,7 @@ public class IssuePage {
             "  tableRows[0].click(); return;" +
             "}" +
             "// Strategy 2: MUI DataGrid rows\n" +
-            "var gridRows = document.querySelectorAll('[data-rowindex]');" +
+            "var gridRows = document.querySelectorAll(\"[role='rowgroup'] [role='row']\");" +
             "if (gridRows.length > 0) {" +
             "  var link = gridRows[0].querySelector('a');" +
             "  if (link) { link.click(); return; }" +
@@ -1592,7 +1591,7 @@ public class IssuePage {
     public void openIssueDetail(String issueName) {
         js.executeScript(
             "var name = arguments[0];" +
-            "var rows = document.querySelectorAll('tbody tr, [data-rowindex]');" +
+            "var rows = document.querySelectorAll(\"tbody tr, [role='rowgroup'] [role='row']\");" +
             "for (var r of rows) {" +
             "  if (r.textContent.indexOf(name) > -1) {" +
             "    var link = r.querySelector('a');" +

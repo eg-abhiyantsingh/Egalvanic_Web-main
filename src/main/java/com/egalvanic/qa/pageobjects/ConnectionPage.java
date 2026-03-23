@@ -43,7 +43,7 @@ public class ConnectionPage {
             "//input[@placeholder='Search connections...']");
 
     // Grid
-    private static final By GRID_ROWS = By.cssSelector("[data-rowindex]");
+    private static final By GRID_ROWS = By.cssSelector("[role='rowgroup'] [role='row']");
 
     public ConnectionPage(WebDriver driver) {
         this.driver = driver;
@@ -256,7 +256,7 @@ public class ConnectionPage {
      */
     public boolean isConnectionVisible(String sourceNode, String targetNode) {
         String result = (String) js.executeScript(
-            "var rows = document.querySelectorAll('[data-rowindex]');" +
+            "var rows = document.querySelectorAll(\"[role='rowgroup'] [role='row']\");" +
             "for (var row of rows) {" +
             "  var src = row.querySelector('[data-field=\"sourceLabel\"]');" +
             "  var tgt = row.querySelector('[data-field=\"targetLabel\"]');" +
@@ -309,7 +309,7 @@ public class ConnectionPage {
     public void clickEditOnRow(int rowIndex) {
         int idx = rowIndex >= 0 ? rowIndex : 0;
         js.executeScript(
-            "var rows = document.querySelectorAll('[data-rowindex]');" +
+            "var rows = document.querySelectorAll(\"[role='rowgroup'] [role='row']\");" +
             "if (rows.length > arguments[0]) {" +
             "  var row = rows[arguments[0]];" +
             "  var btns = row.querySelectorAll('button[title=\"Edit connection\"]');" +
@@ -423,7 +423,7 @@ public class ConnectionPage {
 
         // Log available buttons in the row for debugging
         String debug = (String) js.executeScript(
-            "var rows = document.querySelectorAll('[data-rowindex]');" +
+            "var rows = document.querySelectorAll(\"[role='rowgroup'] [role='row']\");" +
             "if (rows.length <= arguments[0]) return 'no rows';" +
             "var row = rows[arguments[0]];" +
             "var info = 'Row ' + arguments[0] + ' buttons: ';" +
@@ -437,7 +437,7 @@ public class ConnectionPage {
         System.out.println("[ConnectionPage] " + debug);
 
         Boolean clicked = (Boolean) js.executeScript(
-            "var rows = document.querySelectorAll('[data-rowindex]');" +
+            "var rows = document.querySelectorAll(\"[role='rowgroup'] [role='row']\");" +
             "if (rows.length <= arguments[0]) return false;" +
             "var row = rows[arguments[0]];" +
             "// Strategy 1: title attribute (exact)\n" +
@@ -751,7 +751,7 @@ public class ConnectionPage {
     private String getGridCellText(int rowIndex, String fieldName) {
         try {
             String text = (String) js.executeScript(
-                "var rows = document.querySelectorAll('[data-rowindex]');" +
+                "var rows = document.querySelectorAll(\"[role='rowgroup'] [role='row']\");" +
                 "if (rows.length > arguments[0]) {" +
                 "  var cell = rows[arguments[0]].querySelector('[data-field=\"' + arguments[1] + '\"]');" +
                 "  return cell ? cell.textContent.trim() : null;" +

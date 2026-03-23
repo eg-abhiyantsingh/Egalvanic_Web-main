@@ -1,0 +1,274 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  eGalvanic Full Test Suite — Comprehensive Automation
+  Covers all modules from QA Automation Plan.xlsx
+
+  Run: mvn clean test -DsuiteXmlFile=fullsuite-testng.xml
+
+  Test Count Summary:
+    Authentication:         32 TCs (26 + 6 smoke)
+    Site Selection:         56 TCs (52 + 4 smoke)
+    Assets:                295 TCs (Part1-5 + smoke)
+    Dashboard Bugs:         45 TCs
+    Tasks:                  55 TCs
+    Locations:              80 TCs (38 + 42 Part2)
+    SLDs:                   ~70 TCs (new)
+    Connections:            74 TCs (31 + 43 Part2)
+    Issues:                109 TCs (44 + 65 Part2)
+    Work Orders:           ~120 TCs (50 + ~70 Part2)
+    Bug Hunt:               60 TCs (7 files)
+    Load & Performance:     20 TCs
+    API Tests:              17 TCs
+    ────────────────────────────
+    TOTAL:              ~1,000+ TCs
+-->
+<suite name="eGalvanic Full Automation Suite" verbose="1" parallel="false">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- MODULE 1: AUTHENTICATION (32 TCs)                      -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <test name="01. Authentication Full (26 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AuthenticationTestNG"/>
+        </classes>
+    </test>
+    <test name="02. Authentication Smoke (6 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AuthSmokeTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- MODULE 2: SITE SELECTION (56 TCs)                      -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <test name="03. Site Selection Full (52 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.SiteSelectionTestNG"/>
+        </classes>
+    </test>
+    <test name="04. Site Selection Smoke (4 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.SiteSelectionSmokeTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- MODULE 3: DASHBOARD (45 TCs)                           -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <test name="05. Dashboard Bug Tests (45 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.DashboardBugTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- MODULE 4: ASSETS (295 TCs)                             -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <test name="06. Assets Part 1 (29 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetPart1TestNG"/>
+        </classes>
+    </test>
+    <test name="07. Assets Part 2 (40 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetPart2TestNG"/>
+        </classes>
+    </test>
+    <test name="08. Assets Part 3 (76 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetPart3TestNG"/>
+        </classes>
+    </test>
+    <test name="09. Assets Part 4 (65 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetPart4TestNG"/>
+        </classes>
+    </test>
+    <test name="10. Assets Part 5 (76 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetPart5TestNG"/>
+        </classes>
+    </test>
+    <test name="11. Assets Smoke (9 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetSmokeTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- MODULE 5: LOCATIONS (80 TCs)                           -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <test name="12. Locations Full (38 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.LocationTestNG"/>
+        </classes>
+    </test>
+    <test name="13. Locations Part 2 (42 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.LocationPart2TestNG"/>
+        </classes>
+    </test>
+    <test name="14. Locations Smoke (4 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.LocationSmokeTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- MODULE 6: SLDs (~70 TCs)                               -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <test name="15. SLDs Full (~70 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.SLDTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- MODULE 7: CONNECTIONS (74 TCs)                         -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <test name="16. Connections Full (31 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ConnectionTestNG"/>
+        </classes>
+    </test>
+    <test name="17. Connections Part 2 (43 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ConnectionPart2TestNG"/>
+        </classes>
+    </test>
+    <test name="18. Connections Smoke (3 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ConnectionSmokeTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- MODULE 8: ISSUES (109 TCs)                             -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <test name="19. Issues Full (44 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.IssueTestNG"/>
+        </classes>
+    </test>
+    <test name="20. Issues Part 2 (65 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.IssuePart2TestNG"/>
+        </classes>
+    </test>
+    <test name="21. Issues Smoke (5 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.IssuesSmokeTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- MODULE 9: TASKS (55 TCs)                               -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <test name="22. Tasks Full (55 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.TaskTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- MODULE 10: WORK ORDERS / SESSIONS (~120 TCs)           -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <test name="23. Work Orders Full (50 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkOrderTestNG"/>
+        </classes>
+    </test>
+    <test name="24. Work Orders Part 2 (~70 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkOrderPart2TestNG"/>
+        </classes>
+    </test>
+    <test name="25. Work Orders Smoke (6 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkOrderSmokeTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- MODULE 11: BUG HUNT & SECURITY (60 TCs)                -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <test name="26. Bug Hunt — Global (9 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntGlobalTestNG"/>
+        </classes>
+    </test>
+    <test name="27. Bug Hunt — Dashboard (3 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntDashboardTestNG"/>
+        </classes>
+    </test>
+    <test name="28. Bug Hunt — Tasks (3 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntTasksTestNG"/>
+        </classes>
+    </test>
+    <test name="29. Bug Hunt — Connections (2 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntConnectionsTestNG"/>
+        </classes>
+    </test>
+    <test name="30. Bug Hunt — Work Orders (2 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntWorkOrdersTestNG"/>
+        </classes>
+    </test>
+    <test name="31. Bug Hunt — Locations (2 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntLocationsTestNG"/>
+        </classes>
+    </test>
+    <test name="32. Bug Hunt — Pages (9 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntPagesTestNG"/>
+        </classes>
+    </test>
+    <test name="33. Bug Hunt — Legacy (30 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- MODULE 12: LOAD & PERFORMANCE (20 TCs)                 -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <test name="34. Load & Performance (20 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.LoadTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- MODULE 13: API TESTS (17 TCs)                          -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <test name="35. API — Authentication (4 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.AuthenticationAPITest"/>
+        </classes>
+    </test>
+    <test name="36. API — Users (4 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.UserAPITest"/>
+        </classes>
+    </test>
+    <test name="37. API — Security (5 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.APISecurityTest"/>
+        </classes>
+    </test>
+    <test name="38. API — Performance (4 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.APIPerformanceTest"/>
+        </classes>
+    </test>
+
+</suite>
