@@ -458,39 +458,31 @@ public class IssuesSmokeTestNG extends BaseTest {
             logStep("Navigated to Issues page");
             debugPageState("DETAIL_TABS — Issues list");
 
-            // 2. Open first issue detail using JS click + SPA router (avoids pageLoad hang)
+            // 2. Extract issue href and navigate directly (avoids SPA router hang)
             JavascriptExecutor jsExec = (JavascriptExecutor) driver;
-            Boolean clicked = (Boolean) jsExec.executeScript(
-                "var rows = document.querySelectorAll(\"[role='rowgroup'] [role='row'], tbody tr\");" +
-                "if (rows.length === 0) return false;" +
-                "var link = rows[0].querySelector('a[href]');" +
-                "if (link) {" +
-                "  window.location.href = link.href;" +
-                "  return true;" +
+            String issueHref = (String) jsExec.executeScript(
+                "var links = document.querySelectorAll('tbody tr a, [role=\"rowgroup\"] [role=\"row\"] a, a[href*=\"/issues/\"]');" +
+                "for (var a of links) {" +
+                "  var h = a.getAttribute('href');" +
+                "  if (h && h.includes('/issues/')) return h;" +
                 "}" +
-                "rows[0].click();" +
-                "return true;");
-            logStep("Detail click: " + clicked);
-            pause(5000);
+                "return null;");
 
-            // Wait for detail page URL (UUID-based)
             boolean onDetail = false;
-            for (int i = 0; i < 10; i++) {
-                try {
-                    String url = driver.getCurrentUrl();
-                    if (url.matches(".*\\/issues\\/[a-f0-9-]+.*")) {
-                        onDetail = true;
-                        break;
-                    }
-                } catch (Exception e) {
-                    logStep("URL check attempt " + i + " failed — waiting");
+            if (issueHref != null && !issueHref.isEmpty()) {
+                String fullUrl = issueHref.startsWith("http") ? issueHref
+                        : AppConstants.BASE_URL + issueHref;
+                driver.get(fullUrl);
+                for (int w = 0; w < 15; w++) {
+                    if (driver.getCurrentUrl().matches(".*\\/issues\\/[a-f0-9-]{8,}.*")) { onDetail = true; break; }
+                    pause(1000);
                 }
                 pause(2000);
             }
 
             if (!onDetail) {
                 logStep("Could not navigate to issue detail — skipping tab verification");
-                ExtentReportManager.logPass("Issue detail navigation skipped (SPA routing issue)");
+                ExtentReportManager.logPass("Issue detail navigation skipped (no issue links found)");
                 return;
             }
 
@@ -526,23 +518,26 @@ public class IssuesSmokeTestNG extends BaseTest {
             issuePage.navigateToIssues();
             logStep("Navigated to Issues page");
 
-            // 2. Open issue detail using safe JS navigation (avoids pageLoad hang)
+            // 2. Extract issue href and navigate directly (avoids SPA router hang)
             {
                 JavascriptExecutor jsNav = (JavascriptExecutor) driver;
-                jsNav.executeScript(
-                    "var rows = document.querySelectorAll(\"[role='rowgroup'] [role='row'], tbody tr\");" +
-                    "if (rows.length > 0) {" +
-                    "  var link = rows[0].querySelector('a[href]');" +
-                    "  if (link) { window.location.href = link.href; }" +
-                    "  else { rows[0].click(); }" +
-                    "}");
-                pause(5000);
-                for (int w = 0; w < 10; w++) {
-                    try {
-                        if (driver.getCurrentUrl().matches(".*\\/issues\\/[a-f0-9-]+.*")) break;
-                    } catch (Exception ignored) {}
-                    pause(2000);
+                String issueHref = (String) jsNav.executeScript(
+                    "var links = document.querySelectorAll('tbody tr a, [role=\"rowgroup\"] [role=\"row\"] a, a[href*=\"/issues/\"]');" +
+                    "for (var a of links) {" +
+                    "  var h = a.getAttribute('href');" +
+                    "  if (h && h.includes('/issues/')) return h;" +
+                    "}" +
+                    "return null;");
+                if (issueHref != null && !issueHref.isEmpty()) {
+                    String fullUrl = issueHref.startsWith("http") ? issueHref
+                            : AppConstants.BASE_URL + issueHref;
+                    driver.get(fullUrl);
                 }
+                for (int w = 0; w < 15; w++) {
+                    if (driver.getCurrentUrl().matches(".*\\/issues\\/[a-f0-9-]{8,}.*")) break;
+                    pause(1000);
+                }
+                pause(2000);
             }
             logStep("Opened issue detail page");
 
