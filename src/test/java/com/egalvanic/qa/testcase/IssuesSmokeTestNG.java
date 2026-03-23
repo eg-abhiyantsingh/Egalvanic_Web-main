@@ -665,39 +665,44 @@ public class IssuesSmokeTestNG extends BaseTest {
             logStep("On detail page: " + driver.getCurrentUrl());
 
             // 3. Click the three-dot (⋮) kebab menu to reveal Delete option
-            //    The ⋮ icon is a MoreVert MUI icon button near the top-right of the detail page.
-            //    Try multiple selectors to find it reliably.
+            //    The ⋮ is on the SAME ROW as the issue title and "Open" badge,
+            //    NOT in the top navigation bar (which has university/Z icons).
+            //    It's the rightmost icon button near the "Open" chip.
             Boolean kebabClicked = (Boolean) jsExec.executeScript(
-                "// Strategy 1: aria-label containing 'more'\n" +
-                "var btn = document.querySelector('[aria-label*=\"more\" i], [aria-label*=\"option\" i], [aria-label*=\"menu\" i], [data-testid*=\"MoreVert\"]');" +
-                "if (btn) { btn.click(); return true; }" +
-                "// Strategy 2: Find button containing MoreVert SVG icon (3 vertical dots)\n" +
+                "// Find the 'Open' chip/badge to locate the correct row\n" +
+                "var openChip = document.querySelector('[class*=\"MuiChip\"], [class*=\"chip\"], [class*=\"badge\"]');" +
+                "if (!openChip) {" +
+                "  // Fallback: find element with text 'Open' near top of page\n" +
+                "  var spans = document.querySelectorAll('span, div');" +
+                "  for (var s of spans) {" +
+                "    if (s.textContent.trim() === 'Open' && s.getBoundingClientRect().top < 300) {" +
+                "      openChip = s; break;" +
+                "    }" +
+                "  }" +
+                "}" +
+                "var chipTop = openChip ? openChip.getBoundingClientRect().top : 150;" +
+                "// The ⋮ button is on the same vertical level as the Open chip (within 40px)\n" +
                 "var buttons = document.querySelectorAll('button, [class*=\"MuiIconButton\"]');" +
-                "for (var b of buttons) {" +
-                "  var svg = b.querySelector('svg');" +
-                "  if (!svg) continue;" +
-                "  var r = b.getBoundingClientRect();" +
-                "  // Must be visible, small (icon button), and in the top area of the page\n" +
-                "  if (r.width < 10 || r.width > 60 || r.height < 10 || r.height > 60) continue;" +
-                "  if (r.top > 250) continue;" +
-                "  // Check if SVG path looks like MoreVert (3 dots) — contains multiple circle-like paths\n" +
-                "  var paths = svg.querySelectorAll('path, circle');" +
-                "  var pathD = svg.innerHTML;" +
-                "  if (pathD.includes('12 8') || pathD.includes('M12') || paths.length >= 3) {" +
-                "    b.click(); return true;" +
-                "  }" +
-                "}" +
-                "// Strategy 3: Rightmost small icon button in the header area\n" +
                 "var candidates = [];" +
-                "for (var ic of buttons) {" +
-                "  var r = ic.getBoundingClientRect();" +
-                "  if (r.width > 15 && r.width < 60 && r.top < 250 && r.left > 300) {" +
-                "    candidates.push({el: ic, x: r.left});" +
-                "  }" +
+                "for (var b of buttons) {" +
+                "  var r = b.getBoundingClientRect();" +
+                "  if (r.width < 10 || r.width > 55) continue;" +
+                "  if (r.height < 10 || r.height > 55) continue;" +
+                "  // Must be on the same row as the Open chip (within 40px vertically)\n" +
+                "  if (Math.abs(r.top - chipTop) > 40) continue;" +
+                "  // Must be to the right of the Open chip\n" +
+                "  if (openChip && r.left < openChip.getBoundingClientRect().right) continue;" +
+                "  candidates.push({el: b, x: r.left});" +
                 "}" +
+                "// Pick the rightmost candidate (the ⋮ is the last icon on that row)\n" +
                 "if (candidates.length > 0) {" +
                 "  candidates.sort(function(a,b) { return b.x - a.x; });" +
                 "  candidates[0].el.click(); return true;" +
+                "}" +
+                "// Fallback: look for MoreVert by aria-label, but ONLY near the title row\n" +
+                "var moreBtn = document.querySelector('[aria-label*=\"more\" i]');" +
+                "if (moreBtn && moreBtn.getBoundingClientRect().top > 100) {" +
+                "  moreBtn.click(); return true;" +
                 "}" +
                 "return false;");
             pause(1000);
