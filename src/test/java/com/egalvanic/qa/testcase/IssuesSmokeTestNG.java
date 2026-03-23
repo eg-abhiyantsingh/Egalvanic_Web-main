@@ -612,7 +612,7 @@ public class IssuesSmokeTestNG extends BaseTest {
     // TEST 5: DELETE ISSUE
     // ================================================================
 
-    @Test(priority = 5, timeOut = 120000, description = "Smoke: Delete an issue via Edit drawer")
+    @Test(priority = 5, timeOut = 120000, description = "Smoke: Delete an issue via detail page ⋮ menu")
     public void testDeleteIssue() {
         ExtentReportManager.createTest(
                 AppConstants.MODULE_ISSUES, AppConstants.FEATURE_DELETE_ISSUE,
@@ -628,110 +628,271 @@ public class IssuesSmokeTestNG extends BaseTest {
 
             JavascriptExecutor jsExec = (JavascriptExecutor) driver;
 
-            // 2. Click "Edit Issue" button directly from the Actions column in the issues list.
-            //    Live DOM inspection shows each row has: button "View Issue" + button "Edit Issue"
-            //    in an Actions gridcell. Clicking "Edit Issue" opens the Edit drawer directly.
-            //    This avoids navigating to the detail page (which causes page load timeouts).
+            // 2. Navigate to issue detail page.
+            //    Strategy A: Click "View Issue" button from the Actions column (hover to reveal).
+            //    Strategy B: Extract href and navigate directly.
+            //    Strategy C: Click the row text itself.
             dismissBackdrops();
-            Boolean editClicked = (Boolean) jsExec.executeScript(
+            boolean onDetail = false;
+
+            // Strategy A: Hover first row to reveal action buttons, then click "View Issue"
+            Boolean viewClicked = (Boolean) jsExec.executeScript(
                 "var rows = document.querySelectorAll('[role=\"rowgroup\"] [role=\"row\"], tbody tr');" +
-                "for (var row of rows) {" +
-                "  var btns = row.querySelectorAll('button');" +
-                "  for (var b of btns) {" +
-                "    var label = b.getAttribute('aria-label') || b.textContent.trim();" +
-                "    if (label.includes('Edit Issue') || label === 'Edit') {" +
-                "      b.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true}));" +
-                "      return true;" +
-                "    }" +
-                "  }" +
-                "}" +
-                "return false;");
-            pause(1500);
-            logStep("Edit Issue button clicked from list: " + editClicked);
-
-            // Fallback: try Selenium findElements if JS didn't work
-            if (!Boolean.TRUE.equals(editClicked)) {
-                for (WebElement btn : driver.findElements(By.tagName("button"))) {
-                    try {
-                        String label = btn.getAttribute("aria-label");
-                        String text = btn.getText().trim();
-                        if (("Edit Issue".equals(label) || "Edit Issue".equals(text)) && btn.isDisplayed()) {
-                            safeClick(btn);
-                            editClicked = true;
-                            logStep("Edit Issue clicked via Selenium fallback");
-                            break;
-                        }
-                    } catch (Exception ignored) {}
-                }
-                pause(1500);
-            }
-
-            if (!Boolean.TRUE.equals(editClicked)) {
-                logStep("Edit Issue button not found in list — trying row click to detail page");
-                jsExec.executeScript(
-                    "var rows = document.querySelectorAll('[role=\"rowgroup\"] [role=\"row\"], tbody tr');" +
-                    "if (rows.length > 0) rows[0].click();");
-                pause(3000);
-            }
-
-            debugPageState("DELETE — After Edit Issue click");
-
-            // 3. Scroll the Edit drawer to the bottom and click "Delete Issue"
-            pause(1000);
-            jsExec.executeScript(
-                "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
-                "for (var d of drawers) {" +
-                "  var r = d.getBoundingClientRect();" +
-                "  if (r.width > 300) { d.scrollTop = d.scrollHeight; break; }" +
-                "}");
-            pause(800);
-
-            Boolean deleteClicked = (Boolean) jsExec.executeScript(
-                "var btns = document.querySelectorAll('button');" +
+                "if (rows.length === 0) return false;" +
+                "var row = rows[0];" +
+                "row.dispatchEvent(new MouseEvent('mouseenter', {bubbles:true}));" +
+                "row.dispatchEvent(new MouseEvent('mouseover', {bubbles:true}));" +
+                "var btns = row.querySelectorAll('button');" +
                 "for (var b of btns) {" +
-                "  var t = b.textContent.trim();" +
-                "  var r = b.getBoundingClientRect();" +
-                "  if (r.width > 0 && (t === 'Delete Issue' || t === 'Delete')) {" +
-                "    b.scrollIntoView({block: 'center'});" +
+                "  var label = (b.getAttribute('aria-label') || '') + ' ' + b.textContent.trim();" +
+                "  if (label.includes('View Issue') || label.includes('View')) {" +
                 "    b.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true}));" +
                 "    return true;" +
                 "  }" +
                 "}" +
                 "return false;");
+            if (Boolean.TRUE.equals(viewClicked)) {
+                logStep("Clicked 'View Issue' button from list");
+                pause(3000);
+            }
 
-            if (!Boolean.TRUE.equals(deleteClicked)) {
-                for (WebElement btn : driver.findElements(By.tagName("button"))) {
+            // Check if we landed on detail page
+            for (int w = 0; w < 8; w++) {
+                if (driver.getCurrentUrl().matches(".*\\/issues\\/[a-f0-9-]{8,}.*")) {
+                    onDetail = true;
+                    break;
+                }
+                pause(1000);
+            }
+
+            // Strategy B: Extract any issue href and navigate directly
+            if (!onDetail) {
+                String issueHref = (String) jsExec.executeScript(
+                    "var links = document.querySelectorAll('a[href*=\"/issues/\"]');" +
+                    "for (var a of links) {" +
+                    "  var h = a.getAttribute('href');" +
+                    "  if (h && h.match(/\\/issues\\/[a-f0-9-]{8,}/)) return h;" +
+                    "}" +
+                    "// Also check if row cells have onclick that navigates\n" +
+                    "var cells = document.querySelectorAll('[role=\"rowgroup\"] [role=\"row\"] [role=\"gridcell\"], tbody td');" +
+                    "for (var c of cells) {" +
+                    "  var a = c.querySelector('a');" +
+                    "  if (a && a.href && a.href.includes('/issues/')) return a.href;" +
+                    "}" +
+                    "return null;");
+
+                if (issueHref != null && !issueHref.isEmpty()) {
+                    String fullUrl = issueHref.startsWith("http") ? issueHref
+                            : AppConstants.BASE_URL + issueHref;
+                    driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(20));
                     try {
-                        String txt = btn.getText().trim();
-                        if ((txt.equals("Delete Issue") || txt.equals("Delete")) && btn.isDisplayed()) {
-                            safeClick(btn);
-                            deleteClicked = true;
+                        driver.get(fullUrl);
+                    } catch (org.openqa.selenium.TimeoutException te) {
+                        logStep("Page load capped at 20s — continuing");
+                    }
+                    driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(60));
+                    for (int w = 0; w < 8; w++) {
+                        if (driver.getCurrentUrl().matches(".*\\/issues\\/[a-f0-9-]{8,}.*")) {
+                            onDetail = true;
                             break;
                         }
-                    } catch (Exception ignored) {}
+                        pause(1000);
+                    }
                 }
             }
-            logStep("Delete Issue clicked: " + deleteClicked);
-            pause(800);
 
-            // 4. Handle confirmation — browser confirm() or MUI dialog
+            // Strategy C: Click the first row cell text to navigate
+            if (!onDetail) {
+                jsExec.executeScript(
+                    "var cells = document.querySelectorAll('[role=\"rowgroup\"] [role=\"row\"] [role=\"gridcell\"], tbody td');" +
+                    "if (cells.length > 0) cells[0].click();");
+                pause(3000);
+                for (int w = 0; w < 8; w++) {
+                    if (driver.getCurrentUrl().matches(".*\\/issues\\/[a-f0-9-]{8,}.*")) {
+                        onDetail = true;
+                        break;
+                    }
+                    pause(1000);
+                }
+            }
+
+            Assert.assertTrue(onDetail, "Could not navigate to issue detail page");
+            logStep("On issue detail: " + driver.getCurrentUrl());
+            debugPageState("DELETE — On detail page");
+            pause(2000);
+
+            // 3. Click the ⋮ (three-dot / MoreVert) button on the detail page header.
+            //    User-provided XPath structure: the ⋮ is button[2] inside the title header
+            //    container (button[1] is the chevron). We use multiple robust strategies
+            //    that don't depend on CSS class hashes.
+            dismissBackdrops();
+            Boolean kebabClicked = false;
+
+            // Strategy 1: Find button with MoreVertIcon SVG (data-testid)
+            kebabClicked = (Boolean) jsExec.executeScript(
+                "var icon = document.querySelector('[data-testid=\"MoreVertIcon\"]');" +
+                "if (icon) {" +
+                "  var btn = icon.closest('button');" +
+                "  if (btn) { btn.click(); return true; }" +
+                "}" +
+                "return false;");
+            if (Boolean.TRUE.equals(kebabClicked)) {
+                logStep("Clicked ⋮ via MoreVertIcon data-testid");
+            }
+
+            // Strategy 2: Find button with aria-label containing "more" or "menu"
+            if (!Boolean.TRUE.equals(kebabClicked)) {
+                kebabClicked = (Boolean) jsExec.executeScript(
+                    "var btns = document.querySelectorAll('button');" +
+                    "for (var b of btns) {" +
+                    "  var label = (b.getAttribute('aria-label') || '').toLowerCase();" +
+                    "  if (label.includes('more') || label === 'menu' || label === 'options') {" +
+                    "    var r = b.getBoundingClientRect();" +
+                    "    if (r.width > 0 && r.top < 300) {" +
+                    "      b.click(); return true;" +
+                    "    }" +
+                    "  }" +
+                    "}" +
+                    "return false;");
+                if (Boolean.TRUE.equals(kebabClicked)) {
+                    logStep("Clicked ⋮ via aria-label");
+                }
+            }
+
+            // Strategy 3: Find the header container with the status chip ("Open"/"New"/etc)
+            //    and click button[2] (the ⋮) — matches user-provided XPath structure
+            if (!Boolean.TRUE.equals(kebabClicked)) {
+                kebabClicked = (Boolean) jsExec.executeScript(
+                    "// Find the status chip (Open, New, In Progress, etc.)\n" +
+                    "var chips = document.querySelectorAll('.MuiChip-root, [class*=\"MuiChip\"]');" +
+                    "for (var chip of chips) {" +
+                    "  var text = chip.textContent.trim().toLowerCase();" +
+                    "  if (text === 'open' || text === 'new' || text === 'in progress' || text === 'resolved' || text === 'closed') {" +
+                    "    // Walk up to find the container that also has buttons\n" +
+                    "    var container = chip.parentElement;" +
+                    "    for (var i = 0; i < 5; i++) {" +
+                    "      if (!container) break;" +
+                    "      var buttons = container.querySelectorAll(':scope > button, :scope > div > button');" +
+                    "      if (buttons.length >= 2) {" +
+                    "        // button[2] is the ⋮ (0-indexed: buttons[1])\n" +
+                    "        buttons[buttons.length - 1].click();" +
+                    "        return true;" +
+                    "      }" +
+                    "      container = container.parentElement;" +
+                    "    }" +
+                    "  }" +
+                    "}" +
+                    "return false;");
+                if (Boolean.TRUE.equals(kebabClicked)) {
+                    logStep("Clicked ⋮ via status chip sibling");
+                }
+            }
+
+            // Strategy 4: Find SVG with three vertical dots pattern (MoreVert icon path)
+            if (!Boolean.TRUE.equals(kebabClicked)) {
+                kebabClicked = (Boolean) jsExec.executeScript(
+                    "var svgs = document.querySelectorAll('button svg');" +
+                    "for (var svg of svgs) {" +
+                    "  var paths = svg.querySelectorAll('path');" +
+                    "  for (var p of paths) {" +
+                    "    var d = p.getAttribute('d') || '';" +
+                    "    // MUI MoreVert icon path contains 'M12 8c1.1' (three dots)\n" +
+                    "    if (d.includes('M12 8c1.1') || d.includes('M6 10c-1.1')) {" +
+                    "      var btn = svg.closest('button');" +
+                    "      if (btn) { btn.click(); return true; }" +
+                    "    }" +
+                    "  }" +
+                    "}" +
+                    "return false;");
+                if (Boolean.TRUE.equals(kebabClicked)) {
+                    logStep("Clicked ⋮ via SVG path match");
+                }
+            }
+
+            // Strategy 5: Find the last icon button in the top area (within first 300px from top)
+            //    that is NOT a navigation/back button
+            if (!Boolean.TRUE.equals(kebabClicked)) {
+                kebabClicked = (Boolean) jsExec.executeScript(
+                    "var btns = document.querySelectorAll('button.MuiIconButton-root, button[class*=\"IconButton\"]');" +
+                    "var candidates = [];" +
+                    "for (var b of btns) {" +
+                    "  var r = b.getBoundingClientRect();" +
+                    "  if (r.width > 0 && r.width < 60 && r.top > 50 && r.top < 300) {" +
+                    "    candidates.push(b);" +
+                    "  }" +
+                    "}" +
+                    "// The ⋮ is typically the rightmost small button in the header area\n" +
+                    "if (candidates.length >= 2) {" +
+                    "  candidates.sort(function(a,b) { return b.getBoundingClientRect().left - a.getBoundingClientRect().left; });" +
+                    "  // Skip nav buttons (those with aria-label like 'back', 'navigate')\n" +
+                    "  for (var c of candidates) {" +
+                    "    var label = (c.getAttribute('aria-label') || '').toLowerCase();" +
+                    "    if (!label.includes('back') && !label.includes('navigate') && !label.includes('close')) {" +
+                    "      c.click(); return true;" +
+                    "    }" +
+                    "  }" +
+                    "}" +
+                    "return false;");
+                if (Boolean.TRUE.equals(kebabClicked)) {
+                    logStep("Clicked ⋮ via icon button position");
+                }
+            }
+
+            Assert.assertTrue(Boolean.TRUE.equals(kebabClicked), "Could not find or click the ⋮ menu button");
+            pause(1500);
+            debugPageState("DELETE — After ⋮ click");
+
+            // 4. Click "Delete Issue" from the dropdown menu
+            Boolean deleteClicked = (Boolean) jsExec.executeScript(
+                "var items = document.querySelectorAll('[role=\"menuitem\"], [role=\"option\"], li, button, a');" +
+                "for (var item of items) {" +
+                "  var text = item.textContent.trim();" +
+                "  var r = item.getBoundingClientRect();" +
+                "  if (r.width > 0 && (text === 'Delete Issue' || text === 'Delete')) {" +
+                "    item.click(); return true;" +
+                "  }" +
+                "}" +
+                "return false;");
+            logStep("Delete Issue menu item clicked: " + deleteClicked);
+            Assert.assertTrue(Boolean.TRUE.equals(deleteClicked), "Could not click 'Delete Issue' from menu");
+            pause(1500);
+
+            // 5. Handle confirmation — browser confirm() or MUI dialog
             boolean confirmed = false;
             try {
                 driver.switchTo().alert().accept();
                 confirmed = true;
                 logStep("Browser confirm() accepted");
             } catch (org.openqa.selenium.NoAlertPresentException e) {
-                issuePage.confirmDelete();
-                confirmed = true;
-                logStep("MUI dialog confirmed");
+                // Try MUI confirmation dialog buttons
+                Boolean dialogConfirmed = (Boolean) jsExec.executeScript(
+                    "var btns = document.querySelectorAll('[role=\"dialog\"] button, .MuiDialog-root button, button');" +
+                    "for (var b of btns) {" +
+                    "  var text = b.textContent.trim().toLowerCase();" +
+                    "  var r = b.getBoundingClientRect();" +
+                    "  if (r.width > 0 && (text === 'delete' || text === 'confirm' || text === 'yes' || text === 'ok' || text === 'yes, delete')) {" +
+                    "    b.click(); return true;" +
+                    "  }" +
+                    "}" +
+                    "return false;");
+                if (Boolean.TRUE.equals(dialogConfirmed)) {
+                    confirmed = true;
+                    logStep("MUI dialog confirmed");
+                } else {
+                    // Try page object fallback
+                    try {
+                        issuePage.confirmDelete();
+                        confirmed = true;
+                        logStep("confirmDelete() succeeded");
+                    } catch (Exception ignored) {}
+                }
             }
 
-            // 5. Wait for drawer to close / page to refresh
+            // 6. Wait for navigation back to list
             pause(3000);
 
-            // 6. Verify deletion
-            Assert.assertTrue(confirmed || Boolean.TRUE.equals(deleteClicked),
-                    "Issue '" + firstTitle + "' delete was not confirmed");
+            // 7. Verify deletion
+            Assert.assertTrue(confirmed, "Issue '" + firstTitle + "' delete was not confirmed");
             logStepWithScreenshot("Issue deleted successfully");
             ExtentReportManager.logPass("Issue deleted: " + firstTitle);
 
