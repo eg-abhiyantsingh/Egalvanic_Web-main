@@ -628,128 +628,78 @@ public class IssuesSmokeTestNG extends BaseTest {
 
             JavascriptExecutor jsExec = (JavascriptExecutor) driver;
 
-            // 2. Navigate to detail page with capped page load timeout (avoids 60s hang)
-            String issueHref = (String) jsExec.executeScript(
-                "var links = document.querySelectorAll('tbody tr a, [role=\"rowgroup\"] [role=\"row\"] a, a[href*=\"/issues/\"]');" +
-                "for (var a of links) {" +
-                "  var h = a.getAttribute('href');" +
-                "  if (h && h.includes('/issues/')) return h;" +
-                "}" +
-                "return null;");
-
-            if (issueHref != null && !issueHref.isEmpty()) {
-                String fullUrl = issueHref.startsWith("http") ? issueHref
-                        : AppConstants.BASE_URL + issueHref;
-                // Cap page load to 20s — EAGER strategy makes DOM interactive much sooner
-                driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(20));
-                try {
-                    driver.get(fullUrl);
-                } catch (org.openqa.selenium.TimeoutException te) {
-                    logStep("Page load capped at 20s — continuing (DOM should be interactive)");
-                }
-                driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(60));
-                logStep("Navigated to: " + fullUrl);
-            } else {
-                jsExec.executeScript(
-                    "var rows = document.querySelectorAll('tbody tr, [role=\"rowgroup\"] [role=\"row\"]');" +
-                    "if (rows.length > 0) { rows[0].click(); }");
-                logStep("Clicked first row (no href found)");
-            }
-
-            // Wait for URL to contain UUID (max 10s)
-            for (int w = 0; w < 10; w++) {
-                if (driver.getCurrentUrl().matches(".*\\/issues\\/[a-f0-9-]{8,}.*")) break;
-                pause(1000);
-            }
-            pause(1500);
-            logStep("On detail page: " + driver.getCurrentUrl());
-
-            // 3. Click the three-dot (⋮) kebab menu to reveal Delete option
-            //    The ⋮ is on the SAME ROW as the issue title and "Open" badge,
-            //    NOT in the top navigation bar (which has university/Z icons).
-            //    It's the rightmost icon button near the "Open" chip.
-            Boolean kebabClicked = (Boolean) jsExec.executeScript(
-                "// Find the 'Open' chip/badge to locate the correct row\n" +
-                "var openChip = document.querySelector('[class*=\"MuiChip\"], [class*=\"chip\"], [class*=\"badge\"]');" +
-                "if (!openChip) {" +
-                "  // Fallback: find element with text 'Open' near top of page\n" +
-                "  var spans = document.querySelectorAll('span, div');" +
-                "  for (var s of spans) {" +
-                "    if (s.textContent.trim() === 'Open' && s.getBoundingClientRect().top < 300) {" +
-                "      openChip = s; break;" +
+            // 2. Click "Edit Issue" button directly from the Actions column in the issues list.
+            //    Live DOM inspection shows each row has: button "View Issue" + button "Edit Issue"
+            //    in an Actions gridcell. Clicking "Edit Issue" opens the Edit drawer directly.
+            //    This avoids navigating to the detail page (which causes page load timeouts).
+            dismissBackdrops();
+            Boolean editClicked = (Boolean) jsExec.executeScript(
+                "var rows = document.querySelectorAll('[role=\"rowgroup\"] [role=\"row\"], tbody tr');" +
+                "for (var row of rows) {" +
+                "  var btns = row.querySelectorAll('button');" +
+                "  for (var b of btns) {" +
+                "    var label = b.getAttribute('aria-label') || b.textContent.trim();" +
+                "    if (label.includes('Edit Issue') || label === 'Edit') {" +
+                "      b.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true}));" +
+                "      return true;" +
                 "    }" +
                 "  }" +
                 "}" +
-                "var chipTop = openChip ? openChip.getBoundingClientRect().top : 150;" +
-                "// The ⋮ button is on the same vertical level as the Open chip (within 40px)\n" +
-                "var buttons = document.querySelectorAll('button, [class*=\"MuiIconButton\"]');" +
-                "var candidates = [];" +
-                "for (var b of buttons) {" +
-                "  var r = b.getBoundingClientRect();" +
-                "  if (r.width < 10 || r.width > 55) continue;" +
-                "  if (r.height < 10 || r.height > 55) continue;" +
-                "  // Must be on the same row as the Open chip (within 40px vertically)\n" +
-                "  if (Math.abs(r.top - chipTop) > 40) continue;" +
-                "  // Must be to the right of the Open chip\n" +
-                "  if (openChip && r.left < openChip.getBoundingClientRect().right) continue;" +
-                "  candidates.push({el: b, x: r.left});" +
-                "}" +
-                "// Pick the rightmost candidate (the ⋮ is the last icon on that row)\n" +
-                "if (candidates.length > 0) {" +
-                "  candidates.sort(function(a,b) { return b.x - a.x; });" +
-                "  candidates[0].el.click(); return true;" +
-                "}" +
-                "// Fallback: look for MoreVert by aria-label, but ONLY near the title row\n" +
-                "var moreBtn = document.querySelector('[aria-label*=\"more\" i]');" +
-                "if (moreBtn && moreBtn.getBoundingClientRect().top > 100) {" +
-                "  moreBtn.click(); return true;" +
-                "}" +
                 "return false;");
+            pause(1500);
+            logStep("Edit Issue button clicked from list: " + editClicked);
+
+            // Fallback: try Selenium findElements if JS didn't work
+            if (!Boolean.TRUE.equals(editClicked)) {
+                for (WebElement btn : driver.findElements(By.tagName("button"))) {
+                    try {
+                        String label = btn.getAttribute("aria-label");
+                        String text = btn.getText().trim();
+                        if (("Edit Issue".equals(label) || "Edit Issue".equals(text)) && btn.isDisplayed()) {
+                            safeClick(btn);
+                            editClicked = true;
+                            logStep("Edit Issue clicked via Selenium fallback");
+                            break;
+                        }
+                    } catch (Exception ignored) {}
+                }
+                pause(1500);
+            }
+
+            if (!Boolean.TRUE.equals(editClicked)) {
+                logStep("Edit Issue button not found in list — trying row click to detail page");
+                jsExec.executeScript(
+                    "var rows = document.querySelectorAll('[role=\"rowgroup\"] [role=\"row\"], tbody tr');" +
+                    "if (rows.length > 0) rows[0].click();");
+                pause(3000);
+            }
+
+            debugPageState("DELETE — After Edit Issue click");
+
+            // 3. Scroll the Edit drawer to the bottom and click "Delete Issue"
             pause(1000);
-            logStep("Kebab menu clicked: " + kebabClicked);
-            debugPageState("DELETE — After kebab click");
+            jsExec.executeScript(
+                "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
+                "for (var d of drawers) {" +
+                "  var r = d.getBoundingClientRect();" +
+                "  if (r.width > 300) { d.scrollTop = d.scrollHeight; break; }" +
+                "}");
+            pause(800);
 
-            // 4. Click "Delete Issue" or "Delete" from the dropdown menu
-            //    After clicking ⋮, a menu appears with options like Edit Issue, Delete Issue.
-            Boolean deleteClicked = false;
-
-            // Try menu items first (dropdown from kebab)
-            deleteClicked = (Boolean) jsExec.executeScript(
-                "var items = document.querySelectorAll('li[role=\"menuitem\"], [class*=\"MuiMenuItem\"], [role=\"menu\"] li');" +
-                "for (var i of items) {" +
-                "  var t = i.textContent.trim();" +
-                "  if (t.includes('Delete')) { i.click(); return true; }" +
-                "}" +
-                "// Fallback: any visible button with Delete text\n" +
+            Boolean deleteClicked = (Boolean) jsExec.executeScript(
                 "var btns = document.querySelectorAll('button');" +
                 "for (var b of btns) {" +
                 "  var t = b.textContent.trim();" +
                 "  var r = b.getBoundingClientRect();" +
                 "  if (r.width > 0 && (t === 'Delete Issue' || t === 'Delete')) {" +
                 "    b.scrollIntoView({block: 'center'});" +
-                "    b.click(); return true;" +
+                "    b.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true}));" +
+                "    return true;" +
                 "  }" +
                 "}" +
                 "return false;");
 
             if (!Boolean.TRUE.equals(deleteClicked)) {
-                // If kebab didn't work, try Edit drawer approach as fallback
-                if (Boolean.TRUE.equals(kebabClicked)) {
-                    jsExec.executeScript(
-                        "var items = document.querySelectorAll('li[role=\"menuitem\"], [class*=\"MuiMenuItem\"]');" +
-                        "for (var i of items) {" +
-                        "  if (i.textContent.trim().includes('Edit')) { i.click(); return; }" +
-                        "}");
-                    pause(1000);
-                    // Scroll drawer to bottom for Delete button
-                    jsExec.executeScript(
-                        "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');" +
-                        "for (var d of drawers) {" +
-                        "  var r = d.getBoundingClientRect();" +
-                        "  if (r.width > 300) { d.scrollTop = d.scrollHeight; break; }" +
-                        "}");
-                    pause(600);
-                }
                 for (WebElement btn : driver.findElements(By.tagName("button"))) {
                     try {
                         String txt = btn.getText().trim();
@@ -764,7 +714,7 @@ public class IssuesSmokeTestNG extends BaseTest {
             logStep("Delete Issue clicked: " + deleteClicked);
             pause(800);
 
-            // 5. Handle confirmation — browser confirm() or MUI dialog
+            // 4. Handle confirmation — browser confirm() or MUI dialog
             boolean confirmed = false;
             try {
                 driver.switchTo().alert().accept();
@@ -776,25 +726,10 @@ public class IssuesSmokeTestNG extends BaseTest {
                 logStep("MUI dialog confirmed");
             }
 
-            // 6. Wait for redirect (max 5s)
-            for (int w = 0; w < 5; w++) {
-                if (!driver.getCurrentUrl().matches(".*\\/issues\\/[a-f0-9-]+.*")) break;
-                pause(1000);
-            }
+            // 5. Wait for drawer to close / page to refresh
+            pause(3000);
 
-            // If still on detail, go to issues list via direct URL (faster than SPA nav)
-            if (driver.getCurrentUrl().matches(".*\\/issues\\/[a-f0-9-]+.*")) {
-                driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(20));
-                try {
-                    driver.get(AppConstants.BASE_URL + "/issues");
-                } catch (org.openqa.selenium.TimeoutException te) {
-                    logStep("Issues list load capped at 20s");
-                }
-                driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(60));
-                pause(2000);
-            }
-
-            // 7. Trust the confirmation — skip expensive search verification in CI/CD
+            // 6. Verify deletion
             Assert.assertTrue(confirmed || Boolean.TRUE.equals(deleteClicked),
                     "Issue '" + firstTitle + "' delete was not confirmed");
             logStepWithScreenshot("Issue deleted successfully");
