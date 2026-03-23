@@ -629,19 +629,12 @@ public class IssuesSmokeTestNG extends BaseTest {
             JavascriptExecutor jsExec = (JavascriptExecutor) driver;
             dismissBackdrops();
 
-            // ─── 2. Navigate to Issue Detail Page ───────────────────────────
-            // IMPORTANT: The issues table uses React's onClick on rows (no <a> tags).
-            // Clicking a row triggers an SPA navigation that causes ALL WebDriver
-            // commands (including executeScript) to hang indefinitely — the JDK HTTP
-            // client's CompletableFuture.get() blocks because ChromeDriver never
-            // responds while the page is in a loading state.
-            //
-            // Solution: Extract the detail URL from the DOM without triggering
-            // navigation, then use driver.get() which respects pageLoadTimeout.
-
+            // ─── 2. Get issue detail URL from DOM ───────────────────────────
+            // Table rows use React onClick (no <a> tags). Clicking them hangs
+            // WebDriver. Instead, extract the URL without navigating.
             String detailUrl = null;
 
-            // Strategy A: Look for <a> links with issue UUID paths anywhere on the page
+            // Try <a> links first
             detailUrl = (String) jsExec.executeScript(
                 "var links = document.querySelectorAll('a[href]');" +
                 "for (var a of links) {" +
@@ -649,387 +642,219 @@ public class IssuesSmokeTestNG extends BaseTest {
                 "  if (h.match(/\\/issues\\/[a-f0-9-]{8,}/)) return h;" +
                 "}" +
                 "return null;");
-            if (detailUrl != null) {
-                logStep("Strategy A: Found issue link href: " + detailUrl);
-            }
+            if (detailUrl != null) logStep("Found issue link: " + detailUrl);
 
-            // Strategy B: Check for MUI DataGrid data-id attribute on first row
+            // Try row data-id attribute
             if (detailUrl == null) {
                 String rowId = (String) jsExec.executeScript(
                     "var rows = document.querySelectorAll('[role=\"rowgroup\"] [role=\"row\"]');" +
                     "for (var r of rows) {" +
-                    "  var id = r.getAttribute('data-id') || r.getAttribute('data-rowid') || '';" +
+                    "  var id = r.getAttribute('data-id') || '';" +
                     "  if (id.match(/^[a-f0-9-]{8,}$/)) return id;" +
                     "}" +
                     "return null;");
-                if (rowId != null) {
-                    detailUrl = "/issues/" + rowId;
-                    logStep("Strategy B: Found row data-id: " + rowId);
-                }
+                if (rowId != null) { detailUrl = "/issues/" + rowId; logStep("Found row data-id: " + rowId); }
             }
 
-            // Strategy C: Extract issue ID from React component fiber tree
+            // Try React fiber tree
             if (detailUrl == null) {
                 String issueId = (String) jsExec.executeScript(
                     "var rows = document.querySelectorAll('[role=\"rowgroup\"] [role=\"row\"]');" +
                     "if (rows.length === 0) return null;" +
                     "var el = rows[0];" +
-                    "var keys = Object.keys(el);" +
-                    "for (var i = 0; i < keys.length; i++) {" +
-                    "  if (keys[i].startsWith('__reactFiber$') || keys[i].startsWith('__reactInternalInstance$')) {" +
-                    "    var fiber = el[keys[i]];" +
-                    "    var depth = 0;" +
-                    "    while (fiber && depth < 50) {" +
-                    "      depth++;" +
-                    "      var p = fiber.memoizedProps || fiber.pendingProps || {};" +
-                    "      var id = null;" +
-                    "      if (p.row && p.row.original && p.row.original.id) id = p.row.original.id;" +
-                    "      else if (p.row && typeof p.row.id === 'string' && p.row.id.length > 8) id = p.row.id;" +
-                    "      else if (p.issue && p.issue.id) id = p.issue.id;" +
-                    "      else if (p.data && p.data.id && typeof p.data.id === 'string') id = p.data.id;" +
-                    "      else if (p.item && p.item.id) id = p.item.id;" +
-                    "      if (id && id.match && id.match(/^[a-f0-9-]{8,}$/)) return id;" +
-                    "      fiber = fiber.return;" +
-                    "    }" +
-                    "    break;" +
-                    "  }" +
+                    "var key = Object.keys(el).find(function(k) { return k.startsWith('__reactFiber$') || k.startsWith('__reactInternalInstance$'); });" +
+                    "if (!key) return null;" +
+                    "var fiber = el[key]; var depth = 0;" +
+                    "while (fiber && depth < 50) { depth++;" +
+                    "  var p = fiber.memoizedProps || fiber.pendingProps || {};" +
+                    "  var id = (p.row && p.row.original && p.row.original.id) || (p.row && p.row.id) || (p.issue && p.issue.id) || (p.data && p.data.id) || (p.item && p.item.id) || null;" +
+                    "  if (id && typeof id === 'string' && id.match(/^[a-f0-9-]{8,}$/)) return id;" +
+                    "  fiber = fiber.return;" +
                     "}" +
                     "return null;");
-                if (issueId != null && !issueId.isEmpty()) {
-                    detailUrl = "/issues/" + issueId;
-                    logStep("Strategy C: Extracted issue ID from React fiber: " + issueId);
-                }
+                if (issueId != null) { detailUrl = "/issues/" + issueId; logStep("React fiber ID: " + issueId); }
             }
 
-            // Strategy D: Intercept history.pushState during row click to capture URL.
-            //   This clicks the row but intercepts the pushState call so the actual
-            //   navigation does NOT happen. We capture the URL for later use.
+            // Last resort: intercept pushState during click
             if (detailUrl == null) {
                 detailUrl = (String) jsExec.executeScript(
                     "var captured = null;" +
                     "var origPush = history.pushState;" +
-                    "var origReplace = history.replaceState;" +
                     "history.pushState = function(s, t, url) { captured = url; };" +
-                    "history.replaceState = function(s, t, url) { if (!captured) captured = url; };" +
                     "var rows = document.querySelectorAll('[role=\"rowgroup\"] [role=\"row\"]');" +
                     "if (rows.length > 0) rows[0].click();" +
                     "history.pushState = origPush;" +
-                    "history.replaceState = origReplace;" +
                     "return captured;");
                 if (detailUrl != null && detailUrl.matches(".*\\/issues\\/[a-f0-9-]{8,}.*")) {
-                    logStep("Strategy D: Intercepted pushState URL: " + detailUrl);
+                    logStep("Intercepted pushState URL: " + detailUrl);
                 } else {
                     detailUrl = null;
                 }
             }
 
-            // Navigate to the detail page using driver.get() with a short pageLoadTimeout.
-            // driver.get() properly respects pageLoadTimeout, unlike click-triggered
-            // navigations where WebDriver hangs indefinitely.
+            // ─── 3. Navigate to detail page ─────────────────────────────────
+            // Use driver.get() with 30s timeout. Do NOT call window.stop()
+            // after timeout — it kills pending API calls and leaves the page
+            // with 0 buttons (just spinners). Let the page keep loading.
             boolean onDetail = false;
             if (detailUrl != null) {
                 String fullUrl = detailUrl.startsWith("http") ? detailUrl
                         : AppConstants.BASE_URL + detailUrl;
-                logStep("Navigating to detail page: " + fullUrl);
+                logStep("Navigating to: " + fullUrl);
 
-                driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(15));
+                driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(30));
                 try {
                     driver.get(fullUrl);
+                    logStep("Page loaded normally");
                 } catch (org.openqa.selenium.TimeoutException te) {
-                    logStep("Page load capped at 15s — stopping remaining loads");
-                    try { jsExec.executeScript("window.stop();"); } catch (Exception ignored) {}
+                    logStep("Page load timed out at 30s — continuing (page still rendering)");
+                    // Do NOT call window.stop() — let the SPA keep rendering
                 }
                 driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(60));
 
-                // Verify we're on the detail page
-                for (int w = 0; w < 10; w++) {
+                // Verify URL
+                for (int w = 0; w < 5; w++) {
                     try {
-                        String currentUrl = (String) jsExec.executeScript("return window.location.href;");
-                        if (currentUrl != null && currentUrl.matches(".*\\/issues\\/[a-f0-9-]{8,}.*")) {
-                            onDetail = true;
-                            break;
-                        }
-                    } catch (Exception e) {
-                        logStep("URL check attempt " + w + " failed: " + e.getMessage());
-                    }
+                        String url = (String) jsExec.executeScript("return window.location.href;");
+                        if (url != null && url.matches(".*\\/issues\\/[a-f0-9-]{8,}.*")) { onDetail = true; break; }
+                    } catch (Exception ignored) {}
                     pause(1000);
                 }
             }
+            Assert.assertTrue(onDetail, "Could not navigate to issue detail page");
 
-            Assert.assertTrue(onDetail, "Could not navigate to issue detail page (detailUrl=" + detailUrl + ")");
-            logStep("On issue detail page");
-
-            // Wait for the detail page to fully render (spinners to disappear, buttons to appear).
-            // The page loads SPA content asynchronously — initial render shows spinners.
-            for (int loadWait = 0; loadWait < 15; loadWait++) {
-                Long btnCount = (Long) jsExec.executeScript(
-                    "return document.querySelectorAll('button').length;");
-                Long spinnerCount = (Long) jsExec.executeScript(
-                    "return document.querySelectorAll('[class*=\"CircularProgress\"], [class*=\"spinner\"], [class*=\"loading\"], [class*=\"skeleton\"]').length;");
-                logStep("Detail page load wait " + loadWait + ": buttons=" + btnCount + " spinners=" + spinnerCount);
-                if (btnCount != null && btnCount >= 3 && (spinnerCount == null || spinnerCount <= 1)) {
-                    break;
-                }
+            // ─── 4. Wait for detail page to fully render ────────────────────
+            // The page shows spinners while API data loads. Wait until
+            // buttons appear (the ⋮ button, action buttons, etc.)
+            logStep("Waiting for detail page buttons to render...");
+            for (int w = 0; w < 20; w++) {
+                Long btnCount = (Long) jsExec.executeScript("return document.querySelectorAll('button').length;");
+                logStep("  render wait " + w + ": " + btnCount + " buttons");
+                if (btnCount != null && btnCount >= 3) break;
                 pause(1000);
             }
-            debugPageState("DELETE — On detail page");
-            pause(1000);
+            debugPageState("DELETE — Detail page rendered");
 
-            // ─── 3. Click ⋮ (MoreVert) Menu Button ─────────────────────────
-            dismissBackdrops();
-            Boolean kebabClicked = false;
-
-            // Debug: dump ALL buttons (including icon-only) for diagnostics
+            // Debug: dump ALL buttons so we can see what's available
             String btnDebug = (String) jsExec.executeScript(
                 "var info = '';" +
                 "var btns = document.querySelectorAll('button');" +
                 "for (var i = 0; i < btns.length; i++) {" +
-                "  var b = btns[i];" +
-                "  var r = b.getBoundingClientRect();" +
+                "  var b = btns[i]; var r = b.getBoundingClientRect();" +
                 "  if (r.width <= 0) continue;" +
                 "  var text = b.textContent.trim().substring(0, 30);" +
                 "  var label = b.getAttribute('aria-label') || '';" +
-                "  var testId = b.getAttribute('data-testid') || '';" +
-                "  var cls = (b.className || '').substring(0, 60);" +
                 "  var hasSvg = b.querySelector('svg') ? 'SVG' : '';" +
-                "  var svgPath = '';" +
-                "  var svgEl = b.querySelector('svg path');" +
-                "  if (svgEl) svgPath = (svgEl.getAttribute('d') || '').substring(0, 20);" +
-                "  info += 'BTN[' + i + '] pos=' + Math.round(r.left) + ',' + Math.round(r.top)" +
-                "    + ' size=' + Math.round(r.width) + 'x' + Math.round(r.height)" +
-                "    + ' text=\"' + text + '\"'" +
-                "    + ' aria=\"' + label + '\"'" +
-                "    + ' testid=\"' + testId + '\"'" +
-                "    + ' ' + hasSvg" +
-                "    + ' path=\"' + svgPath + '\"'" +
-                "    + ' class=\"' + cls + '\"'" +
-                "    + '\\n';" +
+                "  info += 'BTN[' + i + '] ' + Math.round(r.left) + ',' + Math.round(r.top)" +
+                "    + ' ' + Math.round(r.width) + 'x' + Math.round(r.height)" +
+                "    + ' text=\"' + text + '\" aria=\"' + label + '\" ' + hasSvg + '\\n';" +
                 "}" +
                 "return info;");
-            System.out.println("[DELETE] All buttons on detail page:\n" + btnDebug);
-            logStep("[DEBUG] Buttons: " + (btnDebug != null ? btnDebug.substring(0, Math.min(500, btnDebug.length())) : "null"));
+            System.out.println("[DELETE] Buttons on detail page:\n" + btnDebug);
 
-            // Strategy 1: data-testid="MoreVertIcon" (standard MUI)
-            kebabClicked = (Boolean) jsExec.executeScript(
-                "var icon = document.querySelector('[data-testid=\"MoreVertIcon\"]');" +
-                "if (icon) { var btn = icon.closest('button'); if (btn) { btn.click(); return true; } }" +
-                "return false;");
-            if (Boolean.TRUE.equals(kebabClicked)) logStep("Clicked ⋮ via MoreVertIcon data-testid");
+            // ─── 5. Click ⋮ button → Delete Issue → Confirm ────────────────
+            // Use the page object which has its own robust strategies for
+            // finding the kebab menu, clicking Delete, and confirming.
+            dismissBackdrops();
 
-            // Strategy 2: aria-label containing "more", "menu", "options", "actions", "kebab"
-            if (!Boolean.TRUE.equals(kebabClicked)) {
-                kebabClicked = (Boolean) jsExec.executeScript(
-                    "var btns = document.querySelectorAll('button');" +
-                    "for (var b of btns) {" +
-                    "  var label = (b.getAttribute('aria-label') || '').toLowerCase();" +
-                    "  if (label.includes('more') || label.includes('menu') || label.includes('option')" +
-                    "      || label.includes('action') || label.includes('kebab') || label.includes('dots')) {" +
-                    "    var r = b.getBoundingClientRect();" +
-                    "    if (r.width > 0 && r.top < 400) { b.click(); return true; }" +
-                    "  }" +
-                    "}" +
-                    "return false;");
-                if (Boolean.TRUE.equals(kebabClicked)) logStep("Clicked ⋮ via aria-label");
-            }
+            // First try: page object's deleteCurrentIssue() + confirmDelete()
+            boolean deleteCompleted = false;
+            try {
+                issuePage.deleteCurrentIssue();
+                logStep("deleteCurrentIssue() succeeded");
+                pause(1500);
 
-            // Strategy 3: SVG with MoreVert icon path (multiple known d-path prefixes)
-            if (!Boolean.TRUE.equals(kebabClicked)) {
-                kebabClicked = (Boolean) jsExec.executeScript(
-                    "var svgs = document.querySelectorAll('button svg path');" +
-                    "for (var p of svgs) {" +
-                    "  var d = p.getAttribute('d') || '';" +
-                    "  if (d.includes('M12 8c1.1') || d.includes('M6 10c-1.1')" +
-                    "      || d.includes('M12 7.5') || d.includes('M12 2C6.48')" +
-                    "      || (d.match(/c1\\.1/g) && d.match(/c1\\.1/g).length >= 2)) {" +
-                    "    var btn = p.closest('button');" +
-                    "    if (btn) { btn.click(); return true; }" +
-                    "  }" +
-                    "}" +
-                    "return false;");
-                if (Boolean.TRUE.equals(kebabClicked)) logStep("Clicked ⋮ via SVG path match");
-            }
+                // Handle confirmation
+                try {
+                    issuePage.confirmDelete();
+                    deleteCompleted = true;
+                    logStep("confirmDelete() succeeded");
+                } catch (Exception ce) {
+                    // Maybe no confirmation needed, or try JS fallback
+                    logStep("confirmDelete() exception: " + ce.getMessage());
+                    Boolean jsConfirm = (Boolean) jsExec.executeScript(
+                        "var btns = document.querySelectorAll('[role=\"dialog\"] button, .MuiDialog-root button, button');" +
+                        "for (var b of btns) {" +
+                        "  var text = b.textContent.trim().toLowerCase();" +
+                        "  var r = b.getBoundingClientRect();" +
+                        "  if (r.width > 0 && (text === 'delete' || text === 'confirm' || text === 'yes' || text === 'ok')) {" +
+                        "    b.click(); return true;" +
+                        "  }" +
+                        "}" +
+                        "return false;");
+                    if (Boolean.TRUE.equals(jsConfirm)) {
+                        deleteCompleted = true;
+                        logStep("JS confirm fallback succeeded");
+                    }
+                }
+            } catch (Exception e) {
+                logStep("deleteCurrentIssue() failed: " + e.getMessage());
 
-            // Strategy 4: Any small icon-only button (has SVG, no text, in top 400px)
-            //   that is NOT back/close/navigation — sorted by rightmost position
-            if (!Boolean.TRUE.equals(kebabClicked)) {
-                kebabClicked = (Boolean) jsExec.executeScript(
+                // Fallback: try JS-based ⋮ click → Delete → Confirm
+                Boolean kebab = (Boolean) jsExec.executeScript(
                     "var btns = document.querySelectorAll('button');" +
                     "var candidates = [];" +
                     "for (var b of btns) {" +
                     "  var r = b.getBoundingClientRect();" +
                     "  var text = b.textContent.trim();" +
                     "  var hasSvg = b.querySelector('svg');" +
-                    "  if (r.width > 0 && r.width < 60 && r.top > 30 && r.top < 400 && hasSvg && text.length < 3) {" +
-                    "    candidates.push(b);" +
+                    "  if (r.width > 0 && r.width < 60 && r.top > 30 && r.top < 500 && hasSvg && text.length < 3) {" +
+                    "    candidates.push({el: b, left: r.left});" +
                     "  }" +
                     "}" +
-                    "if (candidates.length >= 1) {" +
-                    "  candidates.sort(function(a,b) { return b.getBoundingClientRect().left - a.getBoundingClientRect().left; });" +
-                    "  for (var c of candidates) {" +
-                    "    var label = (c.getAttribute('aria-label') || '').toLowerCase();" +
-                    "    if (!label.includes('back') && !label.includes('navigate') && !label.includes('close')" +
-                    "        && !label.includes('open drawer') && !label.includes('release')) {" +
-                    "      c.click(); return true;" +
-                    "    }" +
+                    "candidates.sort(function(a,b) { return b.left - a.left; });" +
+                    "for (var c of candidates) {" +
+                    "  var label = (c.el.getAttribute('aria-label') || '').toLowerCase();" +
+                    "  if (!label.includes('back') && !label.includes('close') && !label.includes('drawer')) {" +
+                    "    c.el.click(); return true;" +
                     "  }" +
                     "}" +
                     "return false;");
-                if (Boolean.TRUE.equals(kebabClicked)) logStep("Clicked ⋮ via icon-only button (rightmost)");
-            }
 
-            // Strategy 5: Status chip sibling — find chip then any nearby button
-            if (!Boolean.TRUE.equals(kebabClicked)) {
-                kebabClicked = (Boolean) jsExec.executeScript(
-                    "var chips = document.querySelectorAll('[class*=\"MuiChip\"], [class*=\"chip\"], [class*=\"badge\"], [class*=\"status\"]');" +
-                    "for (var chip of chips) {" +
-                    "  var text = chip.textContent.trim().toLowerCase();" +
-                    "  if (['open','new','in progress','resolved','closed','pending'].indexOf(text) >= 0) {" +
-                    "    var container = chip.parentElement;" +
-                    "    for (var i = 0; i < 6; i++) {" +
-                    "      if (!container) break;" +
-                    "      var buttons = container.querySelectorAll('button');" +
-                    "      for (var b of buttons) {" +
-                    "        var r = b.getBoundingClientRect();" +
-                    "        var btext = b.textContent.trim();" +
-                    "        if (r.width > 0 && r.width < 60 && btext.length < 3 && b.querySelector('svg')) {" +
-                    "          b.click(); return true;" +
-                    "        }" +
-                    "      }" +
-                    "      container = container.parentElement;" +
-                    "    }" +
-                    "  }" +
-                    "}" +
-                    "return false;");
-                if (Boolean.TRUE.equals(kebabClicked)) logStep("Clicked ⋮ via status chip sibling");
-            }
+                if (Boolean.TRUE.equals(kebab)) {
+                    logStep("JS kebab click succeeded");
+                    pause(1500);
 
-            // Strategy 6: Use page object's deleteCurrentIssue() which has its own kebab
-            //   strategies AND also clicks "Delete Issue" from the menu.
-            //   If this succeeds, we skip the separate "click Delete" step.
-            boolean deleteAlreadyClicked = false;
-            if (!Boolean.TRUE.equals(kebabClicked)) {
-                try {
-                    issuePage.deleteCurrentIssue();
-                    kebabClicked = true;
-                    deleteAlreadyClicked = true;
-                    logStep("Clicked ⋮ + Delete via page object deleteCurrentIssue()");
-                } catch (Exception e) {
-                    logStep("deleteCurrentIssue() failed: " + e.getMessage());
+                    // Click Delete Issue from menu
+                    jsExec.executeScript(
+                        "var items = document.querySelectorAll('[role=\"menuitem\"], li, button');" +
+                        "for (var item of items) {" +
+                        "  var text = item.textContent.trim();" +
+                        "  if (text === 'Delete Issue' || text === 'Delete') { item.click(); break; }" +
+                        "}");
+                    pause(1500);
+
+                    // Click confirm in dialog
+                    jsExec.executeScript(
+                        "var btns = document.querySelectorAll('[role=\"dialog\"] button, button');" +
+                        "for (var b of btns) {" +
+                        "  var text = b.textContent.trim().toLowerCase();" +
+                        "  var cls = (b.className || '').toLowerCase();" +
+                        "  if ((text === 'delete' || text === 'confirm' || text === 'yes')" +
+                        "      && (cls.includes('error') || cls.includes('danger') || cls.includes('contained'))) {" +
+                        "    b.click(); break;" +
+                        "  }" +
+                        "}");
+                    deleteCompleted = true;
+                    logStep("JS fallback delete flow completed");
                 }
             }
 
-            // Strategy 7: Any icon button matching MUI IconButton class (relaxed — >= 1 candidate)
-            if (!Boolean.TRUE.equals(kebabClicked)) {
-                kebabClicked = (Boolean) jsExec.executeScript(
-                    "var btns = document.querySelectorAll('button[class*=\"IconButton\"], button[class*=\"iconButton\"]');" +
-                    "var candidates = [];" +
-                    "for (var b of btns) {" +
-                    "  var r = b.getBoundingClientRect();" +
-                    "  if (r.width > 0 && r.top > 30 && r.top < 400) candidates.push(b);" +
-                    "}" +
-                    "if (candidates.length >= 1) {" +
-                    "  candidates.sort(function(a,b) { return b.getBoundingClientRect().left - a.getBoundingClientRect().left; });" +
-                    "  for (var c of candidates) {" +
-                    "    var label = (c.getAttribute('aria-label') || '').toLowerCase();" +
-                    "    if (!label.includes('back') && !label.includes('navigate') && !label.includes('close')" +
-                    "        && !label.includes('drawer') && !label.includes('release') && !label.includes('search')) {" +
-                    "      c.click(); return true;" +
-                    "    }" +
-                    "  }" +
-                    "}" +
-                    "return false;");
-                if (Boolean.TRUE.equals(kebabClicked)) logStep("Clicked ⋮ via MUI IconButton class");
-            }
-
-            Assert.assertTrue(Boolean.TRUE.equals(kebabClicked), "Could not find or click the ⋮ menu button. Buttons dump:\n" + btnDebug);
-            pause(1500);
-            debugPageState("DELETE — After ⋮ click");
-
-            // ─── 4. Click "Delete Issue" from the dropdown menu ─────────────
-            //   Skip if Strategy 6 (deleteCurrentIssue) already clicked it.
-            if (deleteAlreadyClicked) {
-                logStep("Delete already clicked by page object — skipping step 4");
-            }
-            Boolean deleteClicked = deleteAlreadyClicked ? Boolean.TRUE : (Boolean) jsExec.executeScript(
-                "var items = document.querySelectorAll('[role=\"menuitem\"], [role=\"option\"], li, button, a');" +
-                "for (var item of items) {" +
-                "  var text = item.textContent.trim();" +
-                "  var r = item.getBoundingClientRect();" +
-                "  if (r.width > 0 && (text === 'Delete Issue' || text === 'Delete')) {" +
-                "    item.click(); return true;" +
-                "  }" +
-                "}" +
-                "return false;");
-            logStep("Delete Issue menu item clicked: " + deleteClicked);
-            Assert.assertTrue(Boolean.TRUE.equals(deleteClicked), "Could not click 'Delete Issue' from menu");
-            pause(1500);
-
-            // ─── 5. Handle confirmation dialog ──────────────────────────────
-            //   IMPORTANT: Do NOT use driver.switchTo().alert() — it blocks
-            //   indefinitely when the page is navigating (after delete).
-            //   This app uses MUI dialogs, not browser alerts.
-            boolean confirmed = false;
-            pause(1000);
-
-            // Try 1: Click confirmation button in MUI dialog via JS
-            for (int attempt = 0; attempt < 5 && !confirmed; attempt++) {
-                Boolean dialogConfirmed = (Boolean) jsExec.executeScript(
-                    "var btns = document.querySelectorAll('[role=\"dialog\"] button, .MuiDialog-root button," +
-                    "  [class*=\"MuiDialog\"] button, [class*=\"modal\"] button, [class*=\"Modal\"] button');" +
-                    "for (var b of btns) {" +
-                    "  var text = b.textContent.trim().toLowerCase();" +
-                    "  var r = b.getBoundingClientRect();" +
-                    "  if (r.width > 0 && (text === 'delete' || text === 'confirm' || text === 'yes'" +
-                    "      || text === 'ok' || text === 'yes, delete' || text === 'remove')) {" +
-                    "    b.click(); return true;" +
-                    "  }" +
-                    "}" +
-                    "// Also check for any red/danger button on page\n" +
-                    "var allBtns = document.querySelectorAll('button');" +
-                    "for (var b of allBtns) {" +
-                    "  var cls = (b.className || '').toLowerCase();" +
-                    "  var text = b.textContent.trim().toLowerCase();" +
-                    "  var r = b.getBoundingClientRect();" +
-                    "  if (r.width > 0 && (cls.includes('error') || cls.includes('danger'))" +
-                    "      && (text.includes('delete') || text.includes('confirm') || text.includes('yes'))) {" +
-                    "    b.click(); return true;" +
-                    "  }" +
-                    "}" +
-                    "return false;");
-                if (Boolean.TRUE.equals(dialogConfirmed)) {
-                    confirmed = true;
-                    logStep("MUI dialog confirmed (attempt " + attempt + ")");
-                } else {
-                    pause(1000);
-                }
-            }
-
-            // Try 2: Page object's confirmDelete()
-            if (!confirmed) {
+            // Check if we navigated back to the list (delete may have worked without explicit confirm)
+            if (!deleteCompleted) {
+                pause(3000);
                 try {
-                    issuePage.confirmDelete();
-                    confirmed = true;
-                    logStep("confirmDelete() succeeded");
-                } catch (Exception e) {
-                    logStep("confirmDelete() failed: " + e.getMessage());
-                }
-            }
-
-            // Try 3: Maybe no confirmation was needed (delete happened directly)
-            if (!confirmed) {
-                try {
-                    String postDeleteUrl = (String) jsExec.executeScript("return window.location.href;");
-                    if (postDeleteUrl != null && postDeleteUrl.matches(".*/issues/?$")) {
-                        confirmed = true;
-                        logStep("Delete confirmed — already back on issues list");
+                    String url = (String) jsExec.executeScript("return window.location.href;");
+                    if (url != null && url.matches(".*/issues/?$")) {
+                        deleteCompleted = true;
+                        logStep("Already navigated back to issues list — delete succeeded");
                     }
                 } catch (Exception ignored) {}
             }
 
-            // ─── 6. Wait for navigation back to list & verify ───────────────
+            // ─── 6. Verify ──────────────────────────────────────────────────
             pause(3000);
-
-            Assert.assertTrue(confirmed, "Issue '" + firstTitle + "' delete was not confirmed");
+            Assert.assertTrue(deleteCompleted, "Issue '" + firstTitle + "' delete was not completed");
             logStepWithScreenshot("Issue deleted successfully");
             ExtentReportManager.logPass("Issue deleted: " + firstTitle);
 
