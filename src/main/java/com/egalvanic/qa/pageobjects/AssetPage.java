@@ -1632,9 +1632,9 @@ public class AssetPage {
             }
         }
 
-        // Last resort: any visible Delete button via XPath
+        // Last resort: any visible Delete button — but ONLY if inside a dialog/presentation overlay
         java.util.List<WebElement> allDeleteBtns = driver.findElements(
-            By.xpath("//button[contains(.,'Delete') or contains(.,'delete')]"));
+            By.xpath("//div[@role='dialog' or @role='presentation' or @role='alertdialog']//button[contains(.,'Delete') or contains(.,'delete')]"));
         for (WebElement btn : allDeleteBtns) {
             try {
                 if (btn.isDisplayed() && btn.isEnabled()) return btn;
