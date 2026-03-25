@@ -787,26 +787,75 @@ public class IssuesSmokeTestNG extends BaseTest {
             logStep("⋮ menu button clicked");
             pause(1500);
 
-            // Step 5b: Click "Edit Issue" from the dropdown menu
-            logStep("Step 5b: Clicking 'Edit Issue' from menu...");
+            // Step 5b: Debug — dump what appeared after ⋮ click
+            logStep("Step 5b: Looking for menu items after ⋮ click...");
+            String menuDebug = (String) jsExec.executeScript(
+                "var info = '';" +
+                // Check for MUI menus/popovers
+                "var menus = document.querySelectorAll('[role=\"menu\"], .MuiMenu-root, .MuiPopover-root, .MuiPopper-root');" +
+                "info += 'Menus/Popovers: ' + menus.length + '\\n';" +
+                // Check menu items
+                "var items = document.querySelectorAll('[role=\"menuitem\"], .MuiMenuItem-root');" +
+                "info += 'MenuItems: ' + items.length + '\\n';" +
+                "for (var i = 0; i < items.length; i++) {" +
+                "  var it = items[i]; var r = it.getBoundingClientRect();" +
+                "  info += '  ITEM[' + i + '] text=\"' + it.textContent.trim().substring(0,50) + '\" visible=' + (r.width > 0) + '\\n';" +
+                "}" +
+                // Check any popover/dropdown content
+                "var pops = document.querySelectorAll('.MuiPopover-paper, .MuiMenu-paper, .MuiPopper-root, [role=\"presentation\"] .MuiPaper-root');" +
+                "info += 'Popover papers: ' + pops.length + '\\n';" +
+                "for (var p = 0; p < pops.length; p++) {" +
+                "  var el = pops[p]; var r = el.getBoundingClientRect();" +
+                "  info += '  POP[' + p + '] text=\"' + el.textContent.trim().substring(0,80) + '\" vis=' + (r.width > 0) + '\\n';" +
+                "}" +
+                // Check for any newly visible elements with 'edit' or 'delete' text
+                "var all = document.querySelectorAll('*');" +
+                "var found = [];" +
+                "for (var el of all) {" +
+                "  var t = el.textContent.trim().toLowerCase();" +
+                "  var r = el.getBoundingClientRect();" +
+                "  if (r.width > 0 && el.children.length === 0 && (t.includes('edit') || t.includes('delete'))) {" +
+                "    found.push(el.tagName + ': \"' + el.textContent.trim().substring(0,40) + '\"');" +
+                "  }" +
+                "}" +
+                "info += 'Elements with edit/delete: ' + found.length + '\\n';" +
+                "for (var f of found) info += '  ' + f + '\\n';" +
+                "return info;");
+            System.out.println("[DELETE] Menu state after ⋮ click:\n" + menuDebug);
+
+            // Now try to click "Edit Issue" from whatever appeared
             Boolean editClicked = (Boolean) jsExec.executeScript(
-                "var items = document.querySelectorAll('[role=\"menuitem\"], [role=\"menu\"] li, .MuiMenu-list li, .MuiMenuItem-root, .MuiPopover-root li');" +
+                // Strategy 1: MUI menu items
+                "var items = document.querySelectorAll('[role=\"menuitem\"], .MuiMenuItem-root, [role=\"menu\"] li, .MuiMenu-list li, .MuiPopover-root li');" +
                 "for (var item of items) {" +
                 "  var text = item.textContent.trim();" +
                 "  var r = item.getBoundingClientRect();" +
-                "  if (r.width > 0 && (text === 'Edit Issue' || text.startsWith('Edit Issue'))) {" +
+                "  if (r.width > 0 && (text === 'Edit Issue' || text.startsWith('Edit Issue') || text === 'Edit')) {" +
                 "    item.click(); return true;" +
                 "  }" +
                 "}" +
-                // Fallback: look for any element with 'Edit Issue' text
+                // Strategy 2: Any visible leaf element with exact text
                 "var all = document.querySelectorAll('*');" +
                 "for (var el of all) {" +
-                "  if (el.children.length === 0 && el.textContent.trim() === 'Edit Issue' && el.getBoundingClientRect().width > 0) {" +
+                "  var t = el.textContent.trim();" +
+                "  var r = el.getBoundingClientRect();" +
+                "  if (r.width > 0 && el.children.length === 0 && (t === 'Edit Issue' || t === 'Edit')) {" +
                 "    el.click(); return true;" +
                 "  }" +
                 "}" +
+                // Strategy 3: Click parent of SVG + text containing 'Edit'
+                "var pops = document.querySelectorAll('.MuiPopover-paper *, .MuiMenu-paper *, .MuiPopper-root *');" +
+                "for (var p of pops) {" +
+                "  var t = p.textContent.trim();" +
+                "  var r = p.getBoundingClientRect();" +
+                "  if (r.width > 0 && t.includes('Edit')) { p.click(); return true; }" +
+                "}" +
                 "return false;");
-            Assert.assertTrue(Boolean.TRUE.equals(editClicked), "Could not find or click 'Edit Issue' menu item");
+            if (!Boolean.TRUE.equals(editClicked)) {
+                // Take screenshot for debug and fail with helpful info
+                ScreenshotUtil.captureScreenshot("testDeleteIssue_NO_EDIT_MENU");
+                Assert.fail("Could not find 'Edit Issue' menu item. Menu debug:\n" + menuDebug);
+            }
             logStep("'Edit Issue' clicked — waiting for drawer to open");
             pause(2000);
 
