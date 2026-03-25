@@ -1022,50 +1022,27 @@ public class IssuesSmokeTestNG extends BaseTest {
             pause(2000);
 
             // ────────────────────────────────────────────────────────────────
-            // PART 4: Confirm deletion in the confirmation dialog
+            // PART 4: Confirm deletion
             // ────────────────────────────────────────────────────────────────
+            // The app uses a NATIVE browser confirm() dialog, not an MUI <Dialog>.
+            // Must handle with driver.switchTo().alert().accept().
             logStep("PART 4: Confirming deletion...");
-            for (int attempt = 0; attempt < 8; attempt++) {
-                // Check if a confirmation dialog appeared
-                Boolean confirmed = (Boolean) jsExec.executeScript(
-                    // Look in dialogs first
-                    "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"alertdialog\"], .MuiDialog-root');" +
-                    "for (var d of dialogs) {" +
-                    "  var btns = d.querySelectorAll('button');" +
-                    "  for (var b of btns) {" +
-                    "    var text = b.textContent.trim().toLowerCase();" +
-                    "    var r = b.getBoundingClientRect();" +
-                    "    if (r.width > 0 && (text === 'delete' || text === 'confirm' || text === 'yes'" +
-                    "        || text === 'ok' || text === 'delete issue' || text.includes('delete'))) {" +
-                    "      b.click(); return true;" +
-                    "    }" +
-                    "  }" +
-                    "}" +
-                    // Also look for error/danger styled buttons anywhere
-                    "var allBtns = document.querySelectorAll('button');" +
-                    "for (var b of allBtns) {" +
-                    "  var text = b.textContent.trim().toLowerCase();" +
-                    "  var cls = (b.className || '').toLowerCase();" +
-                    "  var r = b.getBoundingClientRect();" +
-                    "  if (r.width > 0 && (text === 'delete' || text === 'confirm')" +
-                    "      && (cls.includes('error') || cls.includes('danger') || cls.includes('warning') || cls.includes('contained'))) {" +
-                    "    b.click(); return true;" +
-                    "  }" +
-                    "}" +
-                    "return false;");
-                if (Boolean.TRUE.equals(confirmed)) {
+            for (int attempt = 0; attempt < 5; attempt++) {
+                try {
+                    org.openqa.selenium.Alert alert = driver.switchTo().alert();
+                    String alertText = alert.getText();
+                    logStep("Native alert found: \"" + alertText + "\"");
+                    alert.accept();
                     deleteCompleted = true;
-                    logStep("Delete confirmed on attempt " + (attempt + 1));
+                    logStep("Alert accepted — delete confirmed");
                     break;
+                } catch (org.openqa.selenium.NoAlertPresentException nape) {
+                    logStep("No alert on attempt " + (attempt + 1) + " — waiting...");
+                    pause(1000);
+                } catch (Exception alertEx) {
+                    logStep("Alert handling error: " + alertEx.getMessage());
+                    pause(1000);
                 }
-                // Maybe no confirmation needed — check if already navigated back
-                String url = (String) jsExec.executeScript("return window.location.href;");
-                if (url != null && url.matches(".*/issues/?$")) {
-                    deleteCompleted = true;
-                    logStep("Already back on issues list — delete completed without confirmation");
-                    break;
-                }
-                pause(1000);
             }
 
             // ────────────────────────────────────────────────────────────────
