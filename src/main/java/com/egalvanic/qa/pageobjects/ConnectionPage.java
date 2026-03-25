@@ -470,7 +470,24 @@ public class ConnectionPage {
      * Confirm the delete operation in the confirmation dialog.
      */
     public void confirmDelete() {
-        // Wait for confirmation dialog to appear (up to 8s)
+        // First check for native browser confirm() dialog (like Issues uses)
+        for (int a = 0; a < 3; a++) {
+            try {
+                org.openqa.selenium.Alert alert = driver.switchTo().alert();
+                String alertText = alert.getText();
+                System.out.println("[ConnectionPage] Native alert found: \"" + alertText + "\"");
+                alert.accept();
+                System.out.println("[ConnectionPage] Native alert accepted — delete confirmed");
+                return;
+            } catch (org.openqa.selenium.NoAlertPresentException ignored) {
+                // No native alert — fall through to MUI dialog handling
+            } catch (Exception e) {
+                System.out.println("[ConnectionPage] Alert check: " + e.getMessage());
+            }
+            pause(500);
+        }
+
+        // Wait for MUI confirmation dialog to appear (up to 8s)
         for (int i = 0; i < 16; i++) {
             try {
                 // Always nuke ALL backdrops first — they block clicks in headless Chrome CI/CD

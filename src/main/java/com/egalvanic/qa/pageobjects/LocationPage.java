@@ -2,8 +2,10 @@ package com.egalvanic.qa.pageobjects;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -22,8 +24,9 @@ public class LocationPage {
 
     private static final int TIMEOUT = 25;
 
-    // Navigation
-    private static final By LOCATIONS_TAB = By.xpath("//span[normalize-space()='Locations']");
+    // Navigation — match span, anchor, or button to cover all sidebar variants
+    private static final By LOCATIONS_TAB = By.xpath(
+        "//span[normalize-space()='Locations'] | //a[normalize-space()='Locations'] | //button[normalize-space()='Locations']");
 
     // Dialog / Form fields (scoped to MUI Dialog when open)
     private static final By DIALOG = By.xpath("//div[@role='dialog'] | //div[contains(@class,'MuiDialog-paper')]");
@@ -51,8 +54,39 @@ public class LocationPage {
     // --- Navigation ---
 
     public void navigateToLocations() {
-        click(LOCATIONS_TAB);
-        pause(800);
+        dismissAnyDrawerOrBackdrop();
+
+        // If already on Locations page, navigate away and back for fresh data
+        if (isOnLocationsPage()) {
+            System.out.println("[LocationPage] Already on Locations — navigating away and back");
+            try {
+                js.executeScript(
+                    "var links = document.querySelectorAll('a, span, button');" +
+                    "for (var el of links) {" +
+                    "  var t = el.textContent.trim();" +
+                    "  if (t === 'Assets' || t === 'Connections') { el.click(); return; }" +
+                    "}");
+                pause(1500);
+            } catch (Exception e) {
+                System.out.println("[LocationPage] Navigate-away failed: " + e.getMessage());
+            }
+        }
+
+        // Try Selenium click first, then JS fallback
+        try {
+            click(LOCATIONS_TAB);
+        } catch (Exception e) {
+            System.out.println("[LocationPage] Selenium click failed, trying JS: " + e.getMessage());
+            js.executeScript(
+                "var links = document.querySelectorAll('a, span, button');" +
+                "for (var el of links) {" +
+                "  if (el.textContent.trim() === 'Locations' && el.getBoundingClientRect().width > 0) {" +
+                "    el.click(); return;" +
+                "  }" +
+                "}");
+        }
+        pause(2000);
+        System.out.println("[LocationPage] On locations page: " + driver.getCurrentUrl());
     }
 
     public boolean isOnLocationsPage() {
@@ -570,6 +604,26 @@ public class LocationPage {
         try { el.clear(); } catch (Exception ignored) {}
         el.click();
         el.sendKeys(text);
+    }
+
+    private void dismissAnyDrawerOrBackdrop() {
+        try {
+            Boolean hasBackdrop = (Boolean) js.executeScript(
+                "return document.querySelectorAll('.MuiBackdrop-root, .MuiDrawer-root, [role=\"presentation\"]').length > 0;");
+            if (Boolean.TRUE.equals(hasBackdrop)) {
+                System.out.println("[LocationPage] Backdrop/drawer detected — pressing Escape");
+                new Actions(driver).sendKeys(Keys.ESCAPE).perform();
+                pause(800);
+                Boolean stillPresent = (Boolean) js.executeScript(
+                    "return document.querySelectorAll('.MuiBackdrop-root').length > 0;");
+                if (Boolean.TRUE.equals(stillPresent)) {
+                    new Actions(driver).sendKeys(Keys.ESCAPE).perform();
+                    pause(800);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("[LocationPage] dismissAnyDrawerOrBackdrop: " + e.getMessage());
+        }
     }
 
     private void pause(long ms) {

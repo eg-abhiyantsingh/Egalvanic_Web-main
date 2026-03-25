@@ -1498,6 +1498,23 @@ public class AssetPage {
     public void confirmDelete() {
         System.out.println("[AssetPage] confirmDelete — looking for confirmation button...");
 
+        // Strategy 0: Check for native browser confirm() dialog first
+        for (int a = 0; a < 3; a++) {
+            try {
+                org.openqa.selenium.Alert alert = driver.switchTo().alert();
+                String alertText = alert.getText();
+                System.out.println("[AssetPage] Native alert found: \"" + alertText + "\"");
+                alert.accept();
+                System.out.println("[AssetPage] Native alert accepted — delete confirmed");
+                return;
+            } catch (org.openqa.selenium.NoAlertPresentException ignored) {
+                // No native alert — fall through to MUI strategies
+            } catch (Exception e) {
+                System.out.println("[AssetPage] Alert check: " + e.getMessage());
+            }
+            pause(500);
+        }
+
         // Strategy 1: MUI error-colored Delete button (standard confirmation dialog)
         try {
             WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(10));

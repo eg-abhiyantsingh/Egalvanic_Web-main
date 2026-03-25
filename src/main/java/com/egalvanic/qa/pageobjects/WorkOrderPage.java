@@ -1187,7 +1187,7 @@ public class WorkOrderPage {
         System.out.println("[WorkOrderPage] Uploading IR photo from: " + absolutePath);
 
         try {
-            // Make hidden file inputs visible so we can send keys to them
+            // Strategy 1: Make hidden file inputs visible and interactable
             js.executeScript(
                 "var inputs = document.querySelectorAll('input[type=\"file\"]');" +
                 "for (var input of inputs) {" +
@@ -1197,16 +1197,71 @@ public class WorkOrderPage {
                 "  input.style.width = '200px';" +
                 "  input.style.height = '50px';" +
                 "  input.style.position = 'relative';" +
+                "  input.style.zIndex = '9999';" +
                 "}");
             pause(500);
 
             List<WebElement> fileInputs = driver.findElements(PHOTO_UPLOAD_INPUT);
+
+            // Strategy 2: If no file input exists, click upload/add buttons to trigger creation
+            if (fileInputs.isEmpty()) {
+                System.out.println("[WorkOrderPage] No file input yet — clicking upload buttons to create one");
+                js.executeScript(
+                    "var btns = document.querySelectorAll('button, .MuiFab-root, .MuiIconButton-root');" +
+                    "for (var b of btns) {" +
+                    "  var text = (b.textContent || '').trim().toLowerCase();" +
+                    "  var label = (b.getAttribute('aria-label') || '').toLowerCase();" +
+                    "  var r = b.getBoundingClientRect();" +
+                    "  if (r.width > 0 && (text.includes('upload') || text.includes('add') || text.includes('photo')" +
+                    "      || label.includes('upload') || label.includes('add') || label.includes('photo'))) {" +
+                    "    b.click(); break;" +
+                    "  }" +
+                    "}");
+                pause(2000);
+                // Re-reveal any newly created file inputs
+                js.executeScript(
+                    "var inputs = document.querySelectorAll('input[type=\"file\"]');" +
+                    "for (var input of inputs) {" +
+                    "  input.style.display = 'block';" +
+                    "  input.style.visibility = 'visible';" +
+                    "  input.style.opacity = '1';" +
+                    "  input.style.width = '200px';" +
+                    "  input.style.height = '50px';" +
+                    "  input.style.position = 'relative';" +
+                    "  input.style.zIndex = '9999';" +
+                    "}");
+                pause(500);
+                fileInputs = driver.findElements(PHOTO_UPLOAD_INPUT);
+            }
+
+            // Strategy 3: Click any FAB/icon button (some UIs use + button for uploads)
+            if (fileInputs.isEmpty()) {
+                System.out.println("[WorkOrderPage] Still no file input — clicking icon/fab buttons");
+                js.executeScript(
+                    "var btns = document.querySelectorAll('.MuiFab-root, .MuiIconButton-root');" +
+                    "for (var b of btns) {" +
+                    "  var r = b.getBoundingClientRect();" +
+                    "  if (r.width > 0 && r.top > 100) { b.click(); break; }" +
+                    "}");
+                pause(2000);
+                js.executeScript(
+                    "var inputs = document.querySelectorAll('input[type=\"file\"]');" +
+                    "for (var input of inputs) {" +
+                    "  input.style.display = 'block'; input.style.visibility = 'visible';" +
+                    "  input.style.opacity = '1'; input.style.width = '200px';" +
+                    "  input.style.height = '50px'; input.style.position = 'relative';" +
+                    "  input.style.zIndex = '9999';" +
+                    "}");
+                pause(500);
+                fileInputs = driver.findElements(PHOTO_UPLOAD_INPUT);
+            }
+
             if (!fileInputs.isEmpty()) {
                 fileInputs.get(0).sendKeys(absolutePath);
                 System.out.println("[WorkOrderPage] File sent to input (" + fileInputs.size() + " file inputs found)");
                 pause(2000);
             } else {
-                System.out.println("[WorkOrderPage] WARNING: No file input found for IR photo upload");
+                System.out.println("[WorkOrderPage] WARNING: No file input found for IR photo upload after all strategies");
                 return;
             }
 

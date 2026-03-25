@@ -512,7 +512,7 @@ public class AssetSmokeTestNG extends BaseTest {
 
             // Poll: search and check absence, retrying to handle eventual consistency
             boolean confirmed = false;
-            for (int attempt = 0; attempt < 3; attempt++) {
+            for (int attempt = 0; attempt < 5; attempt++) {
                 assetPage.searchAsset(lifecycleName);
                 pause(3000);
                 int rowCount = assetPage.getGridRowCount();
@@ -523,7 +523,7 @@ public class AssetSmokeTestNG extends BaseTest {
                 }
                 // Navigate away and back for truly fresh data
                 assetPage.navigateToAssets();
-                pause(3000);
+                pause(4000);
             }
             Assert.assertTrue(confirmed,
                     "Lifecycle asset still visible after deletion: " + lifecycleName);
