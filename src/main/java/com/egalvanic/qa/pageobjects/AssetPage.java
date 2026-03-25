@@ -1727,13 +1727,16 @@ public class AssetPage {
      */
     private boolean isAssetDeleteDialogGone() {
         try {
+            // IMPORTANT: Only check role="dialog" and role="alertdialog", NOT role="presentation".
+            // MUI DataGrid uses role="presentation" for structural elements, and their text content
+            // includes action button labels like "Delete Asset" — which would false-positive this check.
             Boolean dialogOpen = (Boolean) js.executeScript(
-                "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"presentation\"], [class*=\"MuiDialog\"]');" +
+                "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"alertdialog\"], .MuiDialog-paper');" +
                 "for (var d of dialogs) {" +
                 "  var r = d.getBoundingClientRect();" +
-                "  if (r.width > 100 && r.height > 100) {" +
+                "  if (r.width > 100 && r.height > 50) {" +
                 "    var text = (d.textContent||'').toLowerCase();" +
-                "    if (text.includes('delete') || text.includes('confirm') || text.includes('remove')) return true;" +
+                "    if (text.includes('delete') || text.includes('confirm') || text.includes('remove') || text.includes('sure')) return true;" +
                 "  }" +
                 "}" +
                 "return false;"
