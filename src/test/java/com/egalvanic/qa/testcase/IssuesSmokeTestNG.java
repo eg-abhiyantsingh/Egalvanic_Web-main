@@ -752,104 +752,123 @@ public class IssuesSmokeTestNG extends BaseTest {
                 "return info;");
             System.out.println("[DELETE] Buttons on detail page:\n" + btnDebug);
 
-            // ─── 5. Click ⋮ button → Delete Issue → Confirm ────────────────
-            // Use the page object which has its own robust strategies for
-            // finding the kebab menu, clicking Delete, and confirming.
+            // ─── 5. Delete flow: ⋮ → Edit Issue → Delete Issue button ─────
+            // The actual UI flow is:
+            //   1. Click ⋮ (three dots/kebab) button at top-right
+            //   2. Click "Edit Issue" from the dropdown menu
+            //   3. In the Edit Issue drawer, click "Delete Issue" (red button, bottom-left)
+            //   4. Confirm deletion in the confirmation dialog
             dismissBackdrops();
-
-            // First try: page object's deleteCurrentIssue() + confirmDelete()
             boolean deleteCompleted = false;
-            try {
-                issuePage.deleteCurrentIssue();
-                logStep("deleteCurrentIssue() succeeded");
-                pause(1500);
 
-                // Handle confirmation
-                try {
-                    issuePage.confirmDelete();
-                    deleteCompleted = true;
-                    logStep("confirmDelete() succeeded");
-                } catch (Exception ce) {
-                    // Maybe no confirmation needed, or try JS fallback
-                    logStep("confirmDelete() exception: " + ce.getMessage());
-                    Boolean jsConfirm = (Boolean) jsExec.executeScript(
-                        "var btns = document.querySelectorAll('[role=\"dialog\"] button, .MuiDialog-root button, button');" +
-                        "for (var b of btns) {" +
-                        "  var text = b.textContent.trim().toLowerCase();" +
-                        "  var r = b.getBoundingClientRect();" +
-                        "  if (r.width > 0 && (text === 'delete' || text === 'confirm' || text === 'yes' || text === 'ok')) {" +
-                        "    b.click(); return true;" +
-                        "  }" +
-                        "}" +
-                        "return false;");
-                    if (Boolean.TRUE.equals(jsConfirm)) {
-                        deleteCompleted = true;
-                        logStep("JS confirm fallback succeeded");
-                    }
-                }
-            } catch (Exception e) {
-                logStep("deleteCurrentIssue() failed: " + e.getMessage());
+            // Step 5a: Click the ⋮ (kebab) button — rightmost small icon button near the top
+            logStep("Step 5a: Clicking ⋮ menu button...");
+            Boolean kebabClicked = (Boolean) jsExec.executeScript(
+                "var btns = document.querySelectorAll('button');" +
+                "var candidates = [];" +
+                "for (var b of btns) {" +
+                "  var r = b.getBoundingClientRect();" +
+                "  var hasSvg = b.querySelector('svg');" +
+                "  var text = b.textContent.trim();" +
+                "  if (r.width > 0 && r.width < 60 && r.height < 60 && r.top < 300 && hasSvg && text.length < 3) {" +
+                "    candidates.push({el: b, left: r.left, top: r.top});" +
+                "  }" +
+                "}" +
+                // Sort by rightmost position — the ⋮ is the rightmost icon button
+                "candidates.sort(function(a,b) { return b.left - a.left; });" +
+                "for (var c of candidates) {" +
+                "  var label = (c.el.getAttribute('aria-label') || '').toLowerCase();" +
+                "  if (!label.includes('back') && !label.includes('close') && !label.includes('notification') && !label.includes('release')) {" +
+                "    c.el.click(); return true;" +
+                "  }" +
+                "}" +
+                "return false;");
+            Assert.assertTrue(Boolean.TRUE.equals(kebabClicked), "Could not find or click the ⋮ menu button");
+            logStep("⋮ menu button clicked");
+            pause(1500);
 
-                // Fallback: try JS-based ⋮ click → Delete → Confirm
-                Boolean kebab = (Boolean) jsExec.executeScript(
-                    "var btns = document.querySelectorAll('button');" +
-                    "var candidates = [];" +
+            // Step 5b: Click "Edit Issue" from the dropdown menu
+            logStep("Step 5b: Clicking 'Edit Issue' from menu...");
+            Boolean editClicked = (Boolean) jsExec.executeScript(
+                "var items = document.querySelectorAll('[role=\"menuitem\"], [role=\"menu\"] li, .MuiMenu-list li, .MuiMenuItem-root, .MuiPopover-root li');" +
+                "for (var item of items) {" +
+                "  var text = item.textContent.trim();" +
+                "  var r = item.getBoundingClientRect();" +
+                "  if (r.width > 0 && (text === 'Edit Issue' || text.startsWith('Edit Issue'))) {" +
+                "    item.click(); return true;" +
+                "  }" +
+                "}" +
+                // Fallback: look for any element with 'Edit Issue' text
+                "var all = document.querySelectorAll('*');" +
+                "for (var el of all) {" +
+                "  if (el.children.length === 0 && el.textContent.trim() === 'Edit Issue' && el.getBoundingClientRect().width > 0) {" +
+                "    el.click(); return true;" +
+                "  }" +
+                "}" +
+                "return false;");
+            Assert.assertTrue(Boolean.TRUE.equals(editClicked), "Could not find or click 'Edit Issue' menu item");
+            logStep("'Edit Issue' clicked — waiting for drawer to open");
+            pause(2000);
+
+            // Step 5c: Click "Delete Issue" button in the Edit Issue drawer
+            // It's a red button at the bottom-left of the drawer with text "Delete Issue"
+            logStep("Step 5c: Clicking 'Delete Issue' button in drawer...");
+            Boolean deleteClicked = (Boolean) jsExec.executeScript(
+                "var btns = document.querySelectorAll('button');" +
+                "for (var b of btns) {" +
+                "  var text = b.textContent.trim();" +
+                "  var r = b.getBoundingClientRect();" +
+                "  if (r.width > 0 && (text === 'Delete Issue' || text === '\\uD83D\\uDDD1 Delete Issue' || text.includes('Delete Issue'))) {" +
+                "    b.click(); return true;" +
+                "  }" +
+                "}" +
+                "return false;");
+            Assert.assertTrue(Boolean.TRUE.equals(deleteClicked), "Could not find 'Delete Issue' button in Edit drawer");
+            logStep("'Delete Issue' button clicked — waiting for confirmation dialog");
+            pause(2000);
+
+            // Step 5d: Confirm deletion in the confirmation dialog
+            logStep("Step 5d: Confirming deletion...");
+            // Try multiple times — dialog may take a moment to appear
+            for (int attempt = 0; attempt < 5; attempt++) {
+                Boolean confirmed = (Boolean) jsExec.executeScript(
+                    "var btns = document.querySelectorAll('[role=\"dialog\"] button, .MuiDialog-root button');" +
                     "for (var b of btns) {" +
+                    "  var text = b.textContent.trim().toLowerCase();" +
                     "  var r = b.getBoundingClientRect();" +
-                    "  var text = b.textContent.trim();" +
-                    "  var hasSvg = b.querySelector('svg');" +
-                    "  if (r.width > 0 && r.width < 60 && r.top > 30 && r.top < 500 && hasSvg && text.length < 3) {" +
-                    "    candidates.push({el: b, left: r.left});" +
+                    "  if (r.width > 0 && (text === 'delete' || text === 'confirm' || text === 'yes' || text === 'ok'" +
+                    "      || text === 'delete issue')) {" +
+                    "    b.click(); return true;" +
                     "  }" +
                     "}" +
-                    "candidates.sort(function(a,b) { return b.left - a.left; });" +
-                    "for (var c of candidates) {" +
-                    "  var label = (c.el.getAttribute('aria-label') || '').toLowerCase();" +
-                    "  if (!label.includes('back') && !label.includes('close') && !label.includes('drawer')) {" +
-                    "    c.el.click(); return true;" +
+                    // Also check for any red/error styled confirm button
+                    "btns = document.querySelectorAll('button');" +
+                    "for (var b of btns) {" +
+                    "  var text = b.textContent.trim().toLowerCase();" +
+                    "  var cls = (b.className || '').toLowerCase();" +
+                    "  var r = b.getBoundingClientRect();" +
+                    "  if (r.width > 0 && (text === 'delete' || text === 'confirm')" +
+                    "      && (cls.includes('error') || cls.includes('danger') || cls.includes('warning'))) {" +
+                    "    b.click(); return true;" +
                     "  }" +
                     "}" +
                     "return false;");
-
-                if (Boolean.TRUE.equals(kebab)) {
-                    logStep("JS kebab click succeeded");
-                    pause(1500);
-
-                    // Click Delete Issue from menu
-                    jsExec.executeScript(
-                        "var items = document.querySelectorAll('[role=\"menuitem\"], li, button');" +
-                        "for (var item of items) {" +
-                        "  var text = item.textContent.trim();" +
-                        "  if (text === 'Delete Issue' || text === 'Delete') { item.click(); break; }" +
-                        "}");
-                    pause(1500);
-
-                    // Click confirm in dialog
-                    jsExec.executeScript(
-                        "var btns = document.querySelectorAll('[role=\"dialog\"] button, button');" +
-                        "for (var b of btns) {" +
-                        "  var text = b.textContent.trim().toLowerCase();" +
-                        "  var cls = (b.className || '').toLowerCase();" +
-                        "  if ((text === 'delete' || text === 'confirm' || text === 'yes')" +
-                        "      && (cls.includes('error') || cls.includes('danger') || cls.includes('contained'))) {" +
-                        "    b.click(); break;" +
-                        "  }" +
-                        "}");
+                if (Boolean.TRUE.equals(confirmed)) {
                     deleteCompleted = true;
-                    logStep("JS fallback delete flow completed");
+                    logStep("Delete confirmed on attempt " + (attempt + 1));
+                    break;
                 }
+                pause(1000);
             }
 
-            // Check if we navigated back to the list (delete may have worked without explicit confirm)
+            // If no confirmation dialog appeared, maybe the delete went through directly
             if (!deleteCompleted) {
                 pause(3000);
-                try {
-                    String url = (String) jsExec.executeScript("return window.location.href;");
-                    if (url != null && url.matches(".*/issues/?$")) {
-                        deleteCompleted = true;
-                        logStep("Already navigated back to issues list — delete succeeded");
-                    }
-                } catch (Exception ignored) {}
+                String currentUrl = (String) jsExec.executeScript("return window.location.href;");
+                if (currentUrl != null && (currentUrl.matches(".*/issues/?$") || !currentUrl.contains("/issues/"))) {
+                    deleteCompleted = true;
+                    logStep("Delete completed — navigated away from detail page");
+                }
             }
 
             // ─── 6. Verify ──────────────────────────────────────────────────
