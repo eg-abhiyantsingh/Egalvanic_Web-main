@@ -628,14 +628,22 @@ public class ConnectionPage {
     /**
      * Try escalating click strategies on a button, verifying the dialog closes after each.
      * Returns true if the dialog closed (delete succeeded).
+     *
+     * IMPORTANT: After the FIRST click, poll for up to 8s before escalating.
+     * The delete API is async — rapid-fire clicking may restart the request,
+     * preventing it from ever completing. Only escalate if the first strategy
+     * truly didn't work after adequate wait time.
      */
     private boolean clickButtonWithVerification(WebElement btn, String text, String tag) {
-        // Strategy A: Selenium click
+        // Strategy A: Selenium click — most reliable, try first with long poll
         try {
             btn.click();
             System.out.println("[" + tag + "] Selenium-clicked: '" + text + "'");
-            pause(1500);
-            if (isDeleteDialogGone()) return true;
+            // Poll for up to 8s (the delete API may take a few seconds)
+            for (int poll = 0; poll < 16; poll++) {
+                pause(500);
+                if (isDeleteDialogGone()) return true;
+            }
         } catch (Exception e) {
             System.out.println("[" + tag + "] Selenium click failed: " + e.getMessage());
         }
@@ -644,8 +652,10 @@ public class ConnectionPage {
         try {
             new Actions(driver).moveToElement(btn).pause(java.time.Duration.ofMillis(200)).click().perform();
             System.out.println("[" + tag + "] Actions-clicked: '" + text + "'");
-            pause(1500);
-            if (isDeleteDialogGone()) return true;
+            for (int poll = 0; poll < 10; poll++) {
+                pause(500);
+                if (isDeleteDialogGone()) return true;
+            }
         } catch (Exception e) {
             System.out.println("[" + tag + "] Actions click failed: " + e.getMessage());
         }
@@ -654,8 +664,10 @@ public class ConnectionPage {
         try {
             new Actions(driver).moveToElement(btn).sendKeys(org.openqa.selenium.Keys.ENTER).perform();
             System.out.println("[" + tag + "] Enter-key on: '" + text + "'");
-            pause(1500);
-            if (isDeleteDialogGone()) return true;
+            for (int poll = 0; poll < 10; poll++) {
+                pause(500);
+                if (isDeleteDialogGone()) return true;
+            }
         } catch (Exception e) {
             System.out.println("[" + tag + "] Enter key failed: " + e.getMessage());
         }
@@ -664,15 +676,15 @@ public class ConnectionPage {
         try {
             js.executeScript("arguments[0].focus(); arguments[0].click();", btn);
             System.out.println("[" + tag + "] JS focus+click on: '" + text + "'");
-            pause(1500);
-            if (isDeleteDialogGone()) return true;
+            for (int poll = 0; poll < 10; poll++) {
+                pause(500);
+                if (isDeleteDialogGone()) return true;
+            }
         } catch (Exception e) {
             System.out.println("[" + tag + "] JS click failed: " + e.getMessage());
         }
 
         // Strategy E: Direct React fiber onClick invocation — bypasses event system entirely.
-        // When all UI click strategies fail, the React Portal's event delegation may be broken.
-        // This reaches into React's internal fiber tree to call the handler directly.
         try {
             String result = (String) js.executeScript(
                 "var btn = arguments[0];" +
@@ -694,8 +706,10 @@ public class ConnectionPage {
                 "return 'no-onClick-found';",
                 btn);
             System.out.println("[" + tag + "] React fiber invoke: " + result);
-            pause(2000);
-            if (isDeleteDialogGone()) return true;
+            for (int poll = 0; poll < 10; poll++) {
+                pause(500);
+                if (isDeleteDialogGone()) return true;
+            }
         } catch (Exception e) {
             System.out.println("[" + tag + "] React fiber invoke failed: " + e.getMessage());
         }

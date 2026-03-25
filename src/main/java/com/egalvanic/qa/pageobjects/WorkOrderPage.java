@@ -1229,23 +1229,33 @@ public class WorkOrderPage {
             boolean triggerClicked = false;
             List<WebElement> allButtons = driver.findElements(By.cssSelector(
                 "button, [role='button'], .MuiFab-root, .MuiIconButton-root, label[for]"));
+            System.out.println("[WorkOrderPage] Strategy1: checking " + allButtons.size() + " buttons");
             for (WebElement btn : allButtons) {
                 try {
-                    if (!btn.isDisplayed() || btn.getSize().getWidth() < 5) continue;
+                    boolean visible = btn.isDisplayed();
+                    int w = btn.getSize().getWidth();
                     String text = btn.getText().trim().replaceAll("\\s+", " ").toLowerCase();
+                    // Log any button mentioning "upload" for diagnostics
+                    if (text.contains("upload")) {
+                        System.out.println("[WorkOrderPage] Found 'upload' btn: '" + text + "' visible=" + visible + " w=" + w + " tag=" + btn.getTagName());
+                    }
+                    if (!visible || w < 5) continue;
+
                     String ariaLabel = btn.getDomAttribute("aria-label");
                     if (ariaLabel == null) ariaLabel = "";
                     ariaLabel = ariaLabel.toLowerCase();
 
                     if (text.matches(".*\\b(upload|add photo|add image|import)\\b.*")
                             || ariaLabel.matches(".*\\b(upload|add photo|add image)\\b.*")) {
-                        System.out.println("[WorkOrderPage] Clicking upload trigger: '" + text + "'");
+                        System.out.println("[WorkOrderPage] Clicking upload trigger: '" + text + "' tag=" + btn.getTagName());
                         btn.click();
                         triggerClicked = true;
                         pause(2000);
                         break;
                     }
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    System.out.println("[WorkOrderPage] Button check exception: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+                }
             }
 
             // Strategy 2: If no explicit upload button, click FAB/icon buttons near the IR section

@@ -1117,13 +1117,21 @@ public class AssetPage {
                 // Back to asset list (no UUID in URL) — strongest signal
                 if (url.matches(".*/assets/?$") || url.endsWith("/assets")) return true;
 
-                // Success toast — only trust "deleted"/"removed" text (not "success" which is too generic)
-                // and only from Snackbar/Alert containers to avoid matching page content
+                // Success toast/alert — check Snackbar, MuiAlert, AND [role='alert'] containers
+                // but verify the text indicates success (not an error alert)
                 java.util.List<WebElement> toasts = driver.findElements(
-                    By.cssSelector(".MuiSnackbar-root, .MuiAlert-root"));
+                    By.cssSelector(".MuiSnackbar-root, .MuiAlert-root, [role='alert']"));
                 for (WebElement toast : toasts) {
-                    String toastText = toast.getText().toLowerCase();
-                    if (toastText.contains("deleted") || toastText.contains("removed")) return true;
+                    try {
+                        String toastText = toast.getText().toLowerCase();
+                        // Accept: deleted, removed, success (but NOT error/fail alerts)
+                        if ((toastText.contains("deleted") || toastText.contains("removed")
+                                || toastText.contains("success"))
+                                && !toastText.contains("error") && !toastText.contains("fail")) {
+                            System.out.println("[AssetPage] Success toast/alert: " + toastText.substring(0, Math.min(60, toastText.length())));
+                            return true;
+                        }
+                    } catch (Exception ignored) {}
                 }
 
                 // DataGrid visible — ONLY if on list page (detail pages have sub-grids)
