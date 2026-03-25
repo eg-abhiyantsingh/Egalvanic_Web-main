@@ -487,8 +487,33 @@ public class ConnectionPage {
             pause(500);
         }
 
-        // Wait for MUI confirmation dialog — use escalating click strategies with post-click
-        // verification. A single Selenium click sometimes fires but React doesn't process it.
+        // Wait for the confirmation dialog to appear before looking for buttons.
+        // Without this, findDeleteButtonInDialog() may match a "Delete" button outside the dialog.
+        boolean dialogAppeared = false;
+        for (int w = 0; w < 10; w++) {
+            Boolean hasDialog = (Boolean) js.executeScript(
+                "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"alertdialog\"], [class*=\"MuiDialog\"]');" +
+                "for (var d of dialogs) {" +
+                "  var r = d.getBoundingClientRect();" +
+                "  if (r.width > 100 && r.height > 50) {" +
+                "    var text = (d.textContent||'').toLowerCase();" +
+                "    if (text.includes('delete') || text.includes('confirm') || text.includes('remove') || text.includes('sure')) return true;" +
+                "  }" +
+                "}" +
+                "return false;");
+            if (hasDialog != null && hasDialog) {
+                System.out.println("[ConnectionPage] Delete confirmation dialog detected after " + (w * 500) + "ms");
+                dialogAppeared = true;
+                break;
+            }
+            pause(500);
+        }
+        if (!dialogAppeared) {
+            System.out.println("[ConnectionPage] WARNING: No delete confirmation dialog appeared after 5s");
+        }
+
+        // Use escalating click strategies with post-click verification.
+        // A single Selenium click sometimes fires but React doesn't process it.
         // Limit to 5 retries to stay within TestNG timeout (90s).
         for (int i = 0; i < 5; i++) {
             try {

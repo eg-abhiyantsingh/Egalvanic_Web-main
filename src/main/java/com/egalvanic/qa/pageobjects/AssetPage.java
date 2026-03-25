@@ -1121,8 +1121,10 @@ public class AssetPage {
                 // MUI Snackbar/Alert
                 if (driver.findElements(By.cssSelector(".MuiSnackbar-root, .MuiAlert-root, [role='alert']")).size() > 0)
                     return true;
-                // DataGrid visible (we're back on the list)
-                if (driver.findElements(By.xpath("//div[contains(@class,'MuiDataGrid')]")).size() > 0) return true;
+                // DataGrid visible — but ONLY if on list page (detail pages have sub-grids too)
+                if (!url.matches(".*/assets/[a-f0-9-]+.*")
+                        && driver.findElements(By.xpath("//div[contains(@class,'MuiDataGrid')]")).size() > 0)
+                    return true;
                 return false;
             });
             System.out.println("[AssetPage] Delete success detected. URL: " + driver.getCurrentUrl());
@@ -1517,6 +1519,31 @@ public class AssetPage {
                 System.out.println("[AssetPage] Alert check: " + e.getMessage());
             }
             pause(500);
+        }
+
+        // Wait for the confirmation dialog to appear before looking for buttons.
+        // Without this, findAssetDeleteButton() may find a "Delete" button outside the dialog.
+        boolean dialogAppeared = false;
+        for (int w = 0; w < 10; w++) {
+            Boolean hasDialog = (Boolean) js.executeScript(
+                "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"alertdialog\"], [class*=\"MuiDialog\"]');" +
+                "for (var d of dialogs) {" +
+                "  var r = d.getBoundingClientRect();" +
+                "  if (r.width > 100 && r.height > 50) {" +
+                "    var text = (d.textContent||'').toLowerCase();" +
+                "    if (text.includes('delete') || text.includes('confirm') || text.includes('remove') || text.includes('sure')) return true;" +
+                "  }" +
+                "}" +
+                "return false;");
+            if (hasDialog != null && hasDialog) {
+                System.out.println("[AssetPage] Delete confirmation dialog detected after " + (w * 500) + "ms");
+                dialogAppeared = true;
+                break;
+            }
+            pause(500);
+        }
+        if (!dialogAppeared) {
+            System.out.println("[AssetPage] WARNING: No delete confirmation dialog appeared after 5s");
         }
 
         // Strategy 1: Dismiss backdrops, find the Delete button, then use escalating click
