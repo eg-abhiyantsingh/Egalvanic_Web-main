@@ -362,7 +362,10 @@ public class BaseTest {
             js.executeScript("document.querySelectorAll('ul[role=\"listbox\"]').forEach(e => e.scrollTop=e.scrollHeight);");
             pause(300);
 
-            By testSite = By.xpath("//li[@role='option'][contains(normalize-space(),'" + AppConstants.TEST_SITE_NAME + "')]");
+            String siteNameLower = AppConstants.TEST_SITE_NAME.toLowerCase();
+            By testSite = By.xpath("//li[@role='option'][contains("
+                + "translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),"
+                + "'" + siteNameLower + "')]");
             new FluentWait<>(driver)
                     .withTimeout(Duration.ofSeconds(10))
                     .pollingEvery(Duration.ofMillis(200))

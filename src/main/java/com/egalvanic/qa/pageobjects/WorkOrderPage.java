@@ -1257,16 +1257,47 @@ public class WorkOrderPage {
             }
 
             if (!fileInputs.isEmpty()) {
-                fileInputs.get(0).sendKeys(absolutePath);
-                System.out.println("[WorkOrderPage] File sent to input (" + fileInputs.size() + " file inputs found)");
-                pause(2000);
+                // Try EACH file input — the correct one for IR photos may not be index 0
+                boolean fileSent = false;
+                for (int fi = 0; fi < fileInputs.size(); fi++) {
+                    try {
+                        WebElement input = fileInputs.get(fi);
+                        input.sendKeys(absolutePath);
+                        // Dispatch change event to ensure React detects the file selection
+                        js.executeScript("arguments[0].dispatchEvent(new Event('change', {bubbles: true}));", input);
+                        System.out.println("[WorkOrderPage] File sent to input[" + fi + "] of " + fileInputs.size()
+                                + " — dispatched change event");
+                        pause(1500);
+
+                        // Check if file preview or name appeared (indicates React processed it)
+                        Boolean hasPreview = (Boolean) js.executeScript(
+                            "var imgs = document.querySelectorAll('img[src*=\"blob:\"], img[src*=\"data:\"], [class*=\"preview\"]');" +
+                            "if (imgs.length > 0) return true;" +
+                            "var fileNames = document.querySelectorAll('[class*=\"fileName\"], [class*=\"file-name\"]');" +
+                            "if (fileNames.length > 0) return true;" +
+                            "return false;"
+                        );
+                        if (hasPreview != null && hasPreview) {
+                            System.out.println("[WorkOrderPage] File preview detected after input[" + fi + "]");
+                            fileSent = true;
+                            break;
+                        }
+                    } catch (Exception e) {
+                        System.out.println("[WorkOrderPage] File input[" + fi + "] failed: " + e.getMessage());
+                    }
+                }
+                if (!fileSent) {
+                    // If no preview detected, still continue — the upload button might process it
+                    System.out.println("[WorkOrderPage] No file preview detected, but continuing to Upload button step");
+                }
+                pause(1000);
             } else {
                 System.out.println("[WorkOrderPage] WARNING: No file input found for IR photo upload after all strategies");
                 return;
             }
 
             // After file selection, click "Upload" button in dialog.
-            // Use Selenium click (not JS click) to trigger React event handlers.
+            // Use escalating click strategies with verification.
             boolean uploaded = false;
             for (int attempt = 0; attempt < 8; attempt++) {
                 try {
@@ -1278,7 +1309,7 @@ public class WorkOrderPage {
                     );
                     pause(200);
 
-                    // Strategy 1: Selenium click on visible Upload/Submit buttons
+                    // Find the Upload/Submit button
                     List<WebElement> allBtns = driver.findElements(By.tagName("button"));
                     for (WebElement btn : allBtns) {
                         try {
@@ -1286,20 +1317,33 @@ public class WorkOrderPage {
                                 String text = btn.getText().trim();
                                 if ("Upload".equalsIgnoreCase(text) || "Confirm Upload".equalsIgnoreCase(text)
                                         || "Submit".equalsIgnoreCase(text)) {
-                                    btn.click();
-                                    System.out.println("[WorkOrderPage] Selenium-clicked Upload button: '" + text + "'");
-                                    uploaded = true;
+                                    // Try escalating click strategies
+                                    // Strategy A: Selenium click
+                                    try {
+                                        btn.click();
+                                        System.out.println("[WorkOrderPage] Selenium-clicked Upload: '" + text + "'");
+                                        uploaded = true;
+                                    } catch (org.openqa.selenium.ElementClickInterceptedException e1) {
+                                        // Strategy B: Actions click
+                                        try {
+                                            new org.openqa.selenium.interactions.Actions(driver)
+                                                .moveToElement(btn).click().perform();
+                                            System.out.println("[WorkOrderPage] Actions-clicked Upload: '" + text + "'");
+                                            uploaded = true;
+                                        } catch (Exception e2) {
+                                            // Strategy C: Enter key
+                                            try {
+                                                new org.openqa.selenium.interactions.Actions(driver)
+                                                    .moveToElement(btn)
+                                                    .sendKeys(org.openqa.selenium.Keys.ENTER).perform();
+                                                System.out.println("[WorkOrderPage] Enter-key on Upload: '" + text + "'");
+                                                uploaded = true;
+                                            } catch (Exception ignored) {}
+                                        }
+                                    }
                                     break;
                                 }
                             }
-                        } catch (org.openqa.selenium.ElementClickInterceptedException e1) {
-                            // Backdrop still blocking — try Actions click
-                            try {
-                                new org.openqa.selenium.interactions.Actions(driver).moveToElement(btn).click().perform();
-                                System.out.println("[WorkOrderPage] Actions-clicked Upload button");
-                                uploaded = true;
-                                break;
-                            } catch (Exception ignored) {}
                         } catch (Exception ignored) {}
                     }
                     if (uploaded) break;

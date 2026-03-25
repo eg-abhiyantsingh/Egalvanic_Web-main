@@ -487,9 +487,9 @@ public class ConnectionPage {
             pause(500);
         }
 
-        // Wait for MUI confirmation dialog — Selenium click first (React-compatible),
-        // JS click as fallback. dispatchEvent(MouseEvent) does NOT trigger React 18+ handlers.
-        for (int i = 0; i < 16; i++) {
+        // Wait for MUI confirmation dialog — use escalating click strategies with post-click
+        // verification. A single Selenium click sometimes fires but React doesn't process it.
+        for (int i = 0; i < 10; i++) {
             try {
                 // Always nuke ALL backdrops first — they block clicks in headless Chrome CI/CD
                 js.executeScript(
@@ -499,56 +499,141 @@ public class ConnectionPage {
                 );
                 pause(200);
 
-                // Strategy 1: Selenium WebElement click on error-styled buttons (PREFERRED)
-                java.util.List<WebElement> errorBtns = driver.findElements(
-                    By.cssSelector("button[class*='containedError'], button[class*='error']"));
-                for (WebElement btn : errorBtns) {
-                    if (btn.isDisplayed() && btn.isEnabled()) {
-                        String text = btn.getText().trim();
-                        if ("Delete".equalsIgnoreCase(text) || "Confirm".equalsIgnoreCase(text)
-                                || "Yes".equalsIgnoreCase(text) || text.toLowerCase().contains("delete")) {
-                            try {
-                                btn.click();
-                                System.out.println("[ConnectionPage] Delete confirmed via Selenium click: '" + text + "' (attempt " + (i+1) + ")");
-                            } catch (Exception e1) {
-                                new Actions(driver).moveToElement(btn).click().perform();
-                                System.out.println("[ConnectionPage] Delete confirmed via Actions click: '" + text + "' (attempt " + (i+1) + ")");
-                            }
-                            pause(2000);
-                            return;
-                        }
+                // Find the delete button via error-styled CSS or dialog container
+                WebElement deleteBtn = findDeleteButtonInDialog();
+                if (deleteBtn != null) {
+                    String text = deleteBtn.getText().trim();
+                    if (clickButtonWithVerification(deleteBtn, text, "ConnectionPage")) {
+                        return;
                     }
-                }
-
-                // Strategy 2: Find buttons inside dialog containers
-                java.util.List<WebElement> dialogs = driver.findElements(
-                    By.cssSelector("[role='dialog'], [class*='MuiDialog-paper'], [role='alertdialog']"));
-                for (WebElement dialog : dialogs) {
-                    java.util.List<WebElement> dBtns = dialog.findElements(By.tagName("button"));
-                    for (WebElement btn : dBtns) {
-                        if (btn.isDisplayed() && btn.isEnabled()) {
-                            String text = btn.getText().trim();
-                            if ("Delete".equalsIgnoreCase(text) || "Confirm".equalsIgnoreCase(text)
-                                    || "Yes".equalsIgnoreCase(text) || text.toLowerCase().contains("delete")) {
-                                try {
-                                    btn.click();
-                                    System.out.println("[ConnectionPage] Delete confirmed via dialog Selenium click: '" + text + "'");
-                                } catch (Exception e1) {
-                                    new Actions(driver).moveToElement(btn).click().perform();
-                                    System.out.println("[ConnectionPage] Delete confirmed via dialog Actions click: '" + text + "'");
-                                }
-                                pause(2000);
-                                return;
-                            }
-                        }
-                    }
+                    // Button was found but click didn't close dialog — continue retry loop
+                    System.out.println("[ConnectionPage] Click on '" + text + "' didn't close dialog, retrying...");
                 }
             } catch (Exception e) {
                 System.out.println("[ConnectionPage] confirmDelete attempt " + (i+1) + ": " + e.getMessage());
             }
             pause(500);
         }
-        System.out.println("[ConnectionPage] WARNING: No delete confirmation button found after 16 attempts");
+        System.out.println("[ConnectionPage] WARNING: No delete confirmation button found after 10 attempts");
+    }
+
+    /**
+     * Find the Delete/Confirm button inside a visible MUI dialog.
+     */
+    private WebElement findDeleteButtonInDialog() {
+        // Strategy 1: error-styled buttons (red Delete/Confirm)
+        java.util.List<WebElement> errorBtns = driver.findElements(
+            By.cssSelector("button[class*='containedError'], button[class*='error']"));
+        for (WebElement btn : errorBtns) {
+            try {
+                if (btn.isDisplayed() && btn.isEnabled()) {
+                    String text = btn.getText().trim();
+                    if ("Delete".equalsIgnoreCase(text) || "Confirm".equalsIgnoreCase(text)
+                            || "Yes".equalsIgnoreCase(text) || text.toLowerCase().contains("delete")) {
+                        return btn;
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // Strategy 2: buttons inside dialog containers
+        java.util.List<WebElement> dialogs = driver.findElements(
+            By.cssSelector("[role='dialog'], [class*='MuiDialog-paper'], [role='alertdialog']"));
+        for (WebElement dialog : dialogs) {
+            java.util.List<WebElement> dBtns = dialog.findElements(By.tagName("button"));
+            for (WebElement btn : dBtns) {
+                try {
+                    if (btn.isDisplayed() && btn.isEnabled()) {
+                        String text = btn.getText().trim();
+                        if ("Delete".equalsIgnoreCase(text) || "Confirm".equalsIgnoreCase(text)
+                                || "Yes".equalsIgnoreCase(text) || text.toLowerCase().contains("delete")) {
+                            return btn;
+                        }
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+
+        // Strategy 3: any visible Delete button via XPath
+        java.util.List<WebElement> allDeleteBtns = driver.findElements(
+            By.xpath("//button[contains(.,'Delete') or contains(.,'delete')]"));
+        for (WebElement btn : allDeleteBtns) {
+            try {
+                if (btn.isDisplayed() && btn.isEnabled()) return btn;
+            } catch (Exception ignored) {}
+        }
+
+        return null;
+    }
+
+    /**
+     * Try escalating click strategies on a button, verifying the dialog closes after each.
+     * Returns true if the dialog closed (delete succeeded).
+     */
+    private boolean clickButtonWithVerification(WebElement btn, String text, String tag) {
+        // Strategy A: Selenium click
+        try {
+            btn.click();
+            System.out.println("[" + tag + "] Selenium-clicked: '" + text + "'");
+            pause(1500);
+            if (isDeleteDialogGone()) return true;
+        } catch (Exception e) {
+            System.out.println("[" + tag + "] Selenium click failed: " + e.getMessage());
+        }
+
+        // Strategy B: Actions moveToElement + click
+        try {
+            new Actions(driver).moveToElement(btn).pause(java.time.Duration.ofMillis(200)).click().perform();
+            System.out.println("[" + tag + "] Actions-clicked: '" + text + "'");
+            pause(1500);
+            if (isDeleteDialogGone()) return true;
+        } catch (Exception e) {
+            System.out.println("[" + tag + "] Actions click failed: " + e.getMessage());
+        }
+
+        // Strategy C: Focus button and press Enter key (keyboard events are always trusted)
+        try {
+            new Actions(driver).moveToElement(btn).sendKeys(org.openqa.selenium.Keys.ENTER).perform();
+            System.out.println("[" + tag + "] Enter-key on: '" + text + "'");
+            pause(1500);
+            if (isDeleteDialogGone()) return true;
+        } catch (Exception e) {
+            System.out.println("[" + tag + "] Enter key failed: " + e.getMessage());
+        }
+
+        // Strategy D: JS focus + programmatic click (last resort)
+        try {
+            js.executeScript("arguments[0].focus(); arguments[0].click();", btn);
+            System.out.println("[" + tag + "] JS focus+click on: '" + text + "'");
+            pause(1500);
+            if (isDeleteDialogGone()) return true;
+        } catch (Exception e) {
+            System.out.println("[" + tag + "] JS click failed: " + e.getMessage());
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if the delete confirmation dialog has been dismissed.
+     */
+    private boolean isDeleteDialogGone() {
+        try {
+            Boolean dialogOpen = (Boolean) js.executeScript(
+                "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"presentation\"], [class*=\"MuiDialog\"]');" +
+                "for (var d of dialogs) {" +
+                "  var r = d.getBoundingClientRect();" +
+                "  if (r.width > 100 && r.height > 100) {" +
+                "    var text = (d.textContent||'').toLowerCase();" +
+                "    if (text.includes('delete') || text.includes('confirm') || text.includes('remove')) return true;" +
+                "  }" +
+                "}" +
+                "return false;"
+            );
+            return dialogOpen == null || !dialogOpen;
+        } catch (Exception e) {
+            return true; // If we can't check, assume it's gone
+        }
     }
 
     /**

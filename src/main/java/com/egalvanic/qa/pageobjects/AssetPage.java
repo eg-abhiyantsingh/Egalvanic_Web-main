@@ -1128,11 +1128,15 @@ public class AssetPage {
             System.out.println("[AssetPage] Delete success detected. URL: " + driver.getCurrentUrl());
             return true;
         } catch (Exception e) {
-            System.out.println("[AssetPage] waitForDeleteSuccess — no indicator found after 15s. URL: " + driver.getCurrentUrl());
-            // If we're on assets page already, treat as success
-            if (driver.getCurrentUrl().contains("/assets")) {
+            String url = driver.getCurrentUrl();
+            System.out.println("[AssetPage] waitForDeleteSuccess — no indicator found after 15s. URL: " + url);
+            // Only treat as success if we're on the asset LIST page (not detail page with UUID)
+            if (url.matches(".*/assets/?$") || url.endsWith("/assets")) {
+                System.out.println("[AssetPage] On asset list page — treating as success");
                 return true;
             }
+            // If still on detail page (/assets/UUID), delete didn't work
+            System.out.println("[AssetPage] Still on detail page — delete did NOT succeed");
             return false;
         }
     }
@@ -1515,9 +1519,9 @@ public class AssetPage {
             pause(500);
         }
 
-        // Strategy 1: Dismiss backdrops then Selenium-click MUI error Delete button
-        // Selenium .click() triggers trusted browser events that React's synthetic event
-        // system captures reliably. JS .click() / dispatchEvent often fails with React 18+.
+        // Strategy 1: Dismiss backdrops, find the Delete button, then use escalating click
+        // strategies with post-click verification. A single click sometimes fires but React
+        // doesn't process it (especially in MUI Portal dialogs in headless Chrome).
         for (int attempt = 0; attempt < 10; attempt++) {
             try {
                 // Always nuke backdrops first
@@ -1528,54 +1532,14 @@ public class AssetPage {
                 );
                 pause(200);
 
-                // Try error-styled buttons (red Delete/Confirm)
-                java.util.List<WebElement> errorBtns = driver.findElements(
-                    By.cssSelector("button[class*='containedError'], button[class*='error']"));
-                for (WebElement btn : errorBtns) {
-                    if (btn.isDisplayed() && btn.isEnabled()) {
-                        String text = btn.getText().trim();
-                        if (text.equalsIgnoreCase("Delete") || text.equalsIgnoreCase("Confirm")
-                                || text.equalsIgnoreCase("Yes") || text.toLowerCase().contains("delete")) {
-                            System.out.println("[AssetPage] Selenium-clicking error button: '" + text + "'");
-                            btn.click();
-                            pause(2000);
-                            return;
-                        }
+                // Find the Delete/Confirm button
+                WebElement deleteBtn = findAssetDeleteButton();
+                if (deleteBtn != null) {
+                    String text = deleteBtn.getText().trim();
+                    if (clickDeleteWithVerification(deleteBtn, text)) {
+                        return;
                     }
-                }
-
-                // Try buttons inside dialog containers
-                java.util.List<WebElement> dialogs = driver.findElements(
-                    By.cssSelector("[role='dialog'], [class*='MuiDialog-paper'], [role='alertdialog'], [role='presentation'] [class*='MuiPaper']"));
-                for (WebElement dialog : dialogs) {
-                    java.util.List<WebElement> dBtns = dialog.findElements(By.tagName("button"));
-                    for (WebElement btn : dBtns) {
-                        if (btn.isDisplayed() && btn.isEnabled()) {
-                            String text = btn.getText().trim();
-                            if (text.equalsIgnoreCase("Delete") || text.equalsIgnoreCase("Confirm")
-                                    || text.equalsIgnoreCase("Yes") || text.toLowerCase().contains("delete")) {
-                                System.out.println("[AssetPage] Selenium-clicking dialog button: '" + text + "'");
-                                btn.click();
-                                pause(2000);
-                                return;
-                            }
-                        }
-                    }
-                }
-
-                // Last resort: any visible Delete button via XPath + Actions click
-                java.util.List<WebElement> allDeleteBtns = driver.findElements(
-                    By.xpath("//button[contains(.,'Delete') or contains(.,'delete')]"));
-                for (WebElement btn : allDeleteBtns) {
-                    try {
-                        if (btn.isDisplayed() && btn.isEnabled()) {
-                            String txt = btn.getText().trim();
-                            System.out.println("[AssetPage] Actions-clicking Delete button: '" + txt + "'");
-                            new org.openqa.selenium.interactions.Actions(driver).moveToElement(btn).click().perform();
-                            pause(2000);
-                            return;
-                        }
-                    } catch (Exception ignored) {}
+                    System.out.println("[AssetPage] Click on '" + text + "' didn't close dialog, retrying...");
                 }
             } catch (Exception e) {
                 System.out.println("[AssetPage] confirmDelete attempt " + (attempt + 1) + ": " + e.getMessage());
@@ -1602,6 +1566,127 @@ public class AssetPage {
         } catch (Exception ignored) {}
 
         throw new RuntimeException("No delete confirmation button found");
+    }
+
+    /**
+     * Find the Delete/Confirm button in a visible MUI dialog.
+     */
+    private WebElement findAssetDeleteButton() {
+        // Try error-styled buttons first (red Delete/Confirm)
+        java.util.List<WebElement> errorBtns = driver.findElements(
+            By.cssSelector("button[class*='containedError'], button[class*='error']"));
+        for (WebElement btn : errorBtns) {
+            try {
+                if (btn.isDisplayed() && btn.isEnabled()) {
+                    String text = btn.getText().trim();
+                    if (text.equalsIgnoreCase("Delete") || text.equalsIgnoreCase("Confirm")
+                            || text.equalsIgnoreCase("Yes") || text.toLowerCase().contains("delete")) {
+                        return btn;
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // Try buttons inside dialog containers
+        java.util.List<WebElement> dialogs = driver.findElements(
+            By.cssSelector("[role='dialog'], [class*='MuiDialog-paper'], [role='alertdialog'], [role='presentation'] [class*='MuiPaper']"));
+        for (WebElement dialog : dialogs) {
+            java.util.List<WebElement> dBtns = dialog.findElements(By.tagName("button"));
+            for (WebElement btn : dBtns) {
+                try {
+                    if (btn.isDisplayed() && btn.isEnabled()) {
+                        String text = btn.getText().trim();
+                        if (text.equalsIgnoreCase("Delete") || text.equalsIgnoreCase("Confirm")
+                                || text.equalsIgnoreCase("Yes") || text.toLowerCase().contains("delete")) {
+                            return btn;
+                        }
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+
+        // Last resort: any visible Delete button via XPath
+        java.util.List<WebElement> allDeleteBtns = driver.findElements(
+            By.xpath("//button[contains(.,'Delete') or contains(.,'delete')]"));
+        for (WebElement btn : allDeleteBtns) {
+            try {
+                if (btn.isDisplayed() && btn.isEnabled()) return btn;
+            } catch (Exception ignored) {}
+        }
+
+        return null;
+    }
+
+    /**
+     * Try escalating click strategies on a delete button, verifying the dialog closes after each.
+     * Returns true if the dialog closed (delete succeeded).
+     */
+    private boolean clickDeleteWithVerification(WebElement btn, String text) {
+        // Strategy A: Selenium click
+        try {
+            btn.click();
+            System.out.println("[AssetPage] Selenium-clicked: '" + text + "'");
+            pause(1500);
+            if (isAssetDeleteDialogGone()) return true;
+        } catch (Exception e) {
+            System.out.println("[AssetPage] Selenium click failed: " + e.getMessage());
+        }
+
+        // Strategy B: Actions moveToElement + click
+        try {
+            new org.openqa.selenium.interactions.Actions(driver)
+                .moveToElement(btn).pause(java.time.Duration.ofMillis(200)).click().perform();
+            System.out.println("[AssetPage] Actions-clicked: '" + text + "'");
+            pause(1500);
+            if (isAssetDeleteDialogGone()) return true;
+        } catch (Exception e) {
+            System.out.println("[AssetPage] Actions click failed: " + e.getMessage());
+        }
+
+        // Strategy C: Focus button and press Enter key (keyboard events are always trusted)
+        try {
+            new org.openqa.selenium.interactions.Actions(driver)
+                .moveToElement(btn).sendKeys(org.openqa.selenium.Keys.ENTER).perform();
+            System.out.println("[AssetPage] Enter-key on: '" + text + "'");
+            pause(1500);
+            if (isAssetDeleteDialogGone()) return true;
+        } catch (Exception e) {
+            System.out.println("[AssetPage] Enter key failed: " + e.getMessage());
+        }
+
+        // Strategy D: JS focus + programmatic click (last resort)
+        try {
+            js.executeScript("arguments[0].focus(); arguments[0].click();", btn);
+            System.out.println("[AssetPage] JS focus+click on: '" + text + "'");
+            pause(1500);
+            if (isAssetDeleteDialogGone()) return true;
+        } catch (Exception e) {
+            System.out.println("[AssetPage] JS click failed: " + e.getMessage());
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if the delete confirmation dialog has been dismissed.
+     */
+    private boolean isAssetDeleteDialogGone() {
+        try {
+            Boolean dialogOpen = (Boolean) js.executeScript(
+                "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"presentation\"], [class*=\"MuiDialog\"]');" +
+                "for (var d of dialogs) {" +
+                "  var r = d.getBoundingClientRect();" +
+                "  if (r.width > 100 && r.height > 100) {" +
+                "    var text = (d.textContent||'').toLowerCase();" +
+                "    if (text.includes('delete') || text.includes('confirm') || text.includes('remove')) return true;" +
+                "  }" +
+                "}" +
+                "return false;"
+            );
+            return dialogOpen == null || !dialogOpen;
+        } catch (Exception e) {
+            return true;
+        }
     }
 
     // --- CONNECTIONS ---

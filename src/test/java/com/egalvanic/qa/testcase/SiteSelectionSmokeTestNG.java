@@ -346,16 +346,31 @@ public class SiteSelectionSmokeTestNG {
             pause(300);
 
             // Find and click "Test Site" with FluentWait retry
+            // Use case-insensitive XPath (translate to lowercase) because the dropdown
+            // may show "test site" (lowercase) while TEST_SITE_NAME is "Test Site"
+            String siteNameLower = AppConstants.TEST_SITE_NAME.toLowerCase();
             By testSiteOption = By.xpath(
-                    "//li[@role='option'][contains(normalize-space(),'"
-                    + AppConstants.TEST_SITE_NAME + "')]");
+                    "//li[@role='option'][contains("
+                    + "translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),"
+                    + "'" + siteNameLower + "')]");
 
             new FluentWait<>(driver)
-                    .withTimeout(Duration.ofSeconds(10))
-                    .pollingEvery(Duration.ofMillis(200))
+                    .withTimeout(Duration.ofSeconds(15))
+                    .pollingEvery(Duration.ofMillis(300))
                     .ignoring(NoSuchElementException.class)
                     .ignoring(ElementClickInterceptedException.class)
                     .until(d -> {
+                        for (WebElement li : d.findElements(testSiteOption)) {
+                            try {
+                                // Prefer the most exact match (shortest text containing site name)
+                                String optText = li.getText().trim();
+                                if (optText.equalsIgnoreCase(AppConstants.TEST_SITE_NAME)) {
+                                    li.click();
+                                    return li;
+                                }
+                            } catch (Exception ignored) {}
+                        }
+                        // Fallback: click the first match
                         for (WebElement li : d.findElements(testSiteOption)) {
                             try { li.click(); return li; } catch (Exception ignored) {}
                         }
