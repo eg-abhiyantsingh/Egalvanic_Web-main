@@ -1187,160 +1187,148 @@ public class WorkOrderPage {
         System.out.println("[WorkOrderPage] Uploading IR photo from: " + absolutePath);
 
         try {
-            // Strategy 1: Make hidden file inputs visible and interactable
+            // Diagnostic: dump the IR Photos section content
+            String diag = (String) js.executeScript(
+                "var info = 'IR_SECTION: ';" +
+                "var fileInputs = document.querySelectorAll('input[type=\"file\"]');" +
+                "info += 'FileInputs(' + fileInputs.length + ') ';" +
+                "var btns = document.querySelectorAll('button, [role=\"button\"], .MuiFab-root, .MuiIconButton-root');" +
+                "var relevantBtns = [];" +
+                "for (var b of btns) {" +
+                "  var text = (b.textContent || '').trim();" +
+                "  var label = b.getAttribute('aria-label') || '';" +
+                "  var r = b.getBoundingClientRect();" +
+                "  if (r.width > 0 && (text.toLowerCase().match(/upload|photo|add|import|browse|attach/) || " +
+                "      label.toLowerCase().match(/upload|photo|add|import/))) {" +
+                "    relevantBtns.push('{\"' + text.substring(0,30) + '\" aria=\"' + label.substring(0,30) + '\" at(' + Math.round(r.left) + ',' + Math.round(r.top) + ')}');" +
+                "  }" +
+                "}" +
+                "info += 'UploadBtns[' + relevantBtns.join(', ') + '] ';" +
+                "var dropzones = document.querySelectorAll('[class*=\"dropzone\"], [class*=\"Dropzone\"], [class*=\"drop-zone\"], [class*=\"upload-area\"]');" +
+                "info += 'Dropzones(' + dropzones.length + ') ';" +
+                "var labels = document.querySelectorAll('label');" +
+                "var uploadLabels = [];" +
+                "for (var l of labels) {" +
+                "  var t = l.textContent.trim().toLowerCase();" +
+                "  if (t.match(/upload|photo|browse|file/) && l.getBoundingClientRect().width > 0) {" +
+                "    uploadLabels.push(l.textContent.trim().substring(0, 30));" +
+                "  }" +
+                "}" +
+                "info += 'Labels[' + uploadLabels.join(', ') + ']';" +
+                "return info;");
+            System.out.println("[WorkOrderPage] " + diag);
+
+            // Count existing file inputs BEFORE clicking anything
+            int inputsBefore = driver.findElements(PHOTO_UPLOAD_INPUT).size();
+            System.out.println("[WorkOrderPage] File inputs before: " + inputsBefore);
+
+            // Strategy 1: Find and Selenium-click upload/add/photo buttons to trigger
+            // the IR photo upload dialog. Use Selenium click (not JS) for React compatibility.
+            boolean triggerClicked = false;
+            List<WebElement> allButtons = driver.findElements(By.cssSelector(
+                "button, [role='button'], .MuiFab-root, .MuiIconButton-root, label[for]"));
+            for (WebElement btn : allButtons) {
+                try {
+                    if (!btn.isDisplayed() || btn.getSize().getWidth() < 5) continue;
+                    String text = btn.getText().trim().toLowerCase();
+                    String ariaLabel = btn.getDomAttribute("aria-label");
+                    if (ariaLabel == null) ariaLabel = "";
+                    ariaLabel = ariaLabel.toLowerCase();
+
+                    if (text.matches(".*\\b(upload|add photo|add image|import)\\b.*")
+                            || ariaLabel.matches(".*\\b(upload|add photo|add image)\\b.*")) {
+                        System.out.println("[WorkOrderPage] Clicking upload trigger: '" + btn.getText().trim() + "'");
+                        btn.click();
+                        triggerClicked = true;
+                        pause(2000);
+                        break;
+                    }
+                } catch (Exception ignored) {}
+            }
+
+            // Strategy 2: If no explicit upload button, click FAB/icon buttons near the IR section
+            if (!triggerClicked) {
+                System.out.println("[WorkOrderPage] No upload button found — trying FAB/icon buttons");
+                for (WebElement btn : allButtons) {
+                    try {
+                        String cls = btn.getDomAttribute("class");
+                        if (cls != null && (cls.contains("MuiFab") || cls.contains("MuiIconButton"))) {
+                            if (btn.isDisplayed()) {
+                                System.out.println("[WorkOrderPage] Clicking FAB/icon button");
+                                btn.click();
+                                pause(2000);
+                                break;
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+
+            // Check if a NEW file input appeared
+            pause(1000);
+            // Make all file inputs visible
             js.executeScript(
-                "var inputs = document.querySelectorAll('input[type=\"file\"]');" +
-                "for (var input of inputs) {" +
-                "  input.style.display = 'block';" +
-                "  input.style.visibility = 'visible';" +
-                "  input.style.opacity = '1';" +
-                "  input.style.width = '200px';" +
-                "  input.style.height = '50px';" +
-                "  input.style.position = 'relative';" +
-                "  input.style.zIndex = '9999';" +
-                "}");
+                "document.querySelectorAll('input[type=\"file\"]').forEach(function(input) {" +
+                "  input.style.display = 'block'; input.style.visibility = 'visible';" +
+                "  input.style.opacity = '1'; input.style.width = '200px'; input.style.height = '50px';" +
+                "  input.style.position = 'relative'; input.style.zIndex = '9999';" +
+                "});");
             pause(500);
 
             List<WebElement> fileInputs = driver.findElements(PHOTO_UPLOAD_INPUT);
+            int inputsAfter = fileInputs.size();
+            System.out.println("[WorkOrderPage] File inputs after trigger: " + inputsAfter);
 
-            // Strategy 2: If no file input exists, click upload/add buttons to trigger creation
-            if (fileInputs.isEmpty()) {
-                System.out.println("[WorkOrderPage] No file input yet — clicking upload buttons to create one");
-                js.executeScript(
-                    "var btns = document.querySelectorAll('button, .MuiFab-root, .MuiIconButton-root');" +
-                    "for (var b of btns) {" +
-                    "  var text = (b.textContent || '').trim().toLowerCase();" +
-                    "  var label = (b.getAttribute('aria-label') || '').toLowerCase();" +
-                    "  var r = b.getBoundingClientRect();" +
-                    "  if (r.width > 0 && (text.includes('upload') || text.includes('add') || text.includes('photo')" +
-                    "      || label.includes('upload') || label.includes('add') || label.includes('photo'))) {" +
-                    "    b.click(); break;" +
-                    "  }" +
-                    "}");
+            if (inputsAfter > inputsBefore) {
+                // New input appeared — send file to the LAST one (most recently created)
+                WebElement newInput = fileInputs.get(fileInputs.size() - 1);
+                newInput.sendKeys(absolutePath);
+                js.executeScript("arguments[0].dispatchEvent(new Event('change', {bubbles: true}));", newInput);
+                System.out.println("[WorkOrderPage] File sent to NEW input (last of " + inputsAfter + ")");
                 pause(2000);
-                // Re-reveal any newly created file inputs
-                js.executeScript(
-                    "var inputs = document.querySelectorAll('input[type=\"file\"]');" +
-                    "for (var input of inputs) {" +
-                    "  input.style.display = 'block';" +
-                    "  input.style.visibility = 'visible';" +
-                    "  input.style.opacity = '1';" +
-                    "  input.style.width = '200px';" +
-                    "  input.style.height = '50px';" +
-                    "  input.style.position = 'relative';" +
-                    "  input.style.zIndex = '9999';" +
-                    "}");
-                pause(500);
-                fileInputs = driver.findElements(PHOTO_UPLOAD_INPUT);
-            }
-
-            // Strategy 3: Click any FAB/icon button (some UIs use + button for uploads)
-            if (fileInputs.isEmpty()) {
-                System.out.println("[WorkOrderPage] Still no file input — clicking icon/fab buttons");
-                js.executeScript(
-                    "var btns = document.querySelectorAll('.MuiFab-root, .MuiIconButton-root');" +
-                    "for (var b of btns) {" +
-                    "  var r = b.getBoundingClientRect();" +
-                    "  if (r.width > 0 && r.top > 100) { b.click(); break; }" +
-                    "}");
-                pause(2000);
-                js.executeScript(
-                    "var inputs = document.querySelectorAll('input[type=\"file\"]');" +
-                    "for (var input of inputs) {" +
-                    "  input.style.display = 'block'; input.style.visibility = 'visible';" +
-                    "  input.style.opacity = '1'; input.style.width = '200px';" +
-                    "  input.style.height = '50px'; input.style.position = 'relative';" +
-                    "  input.style.zIndex = '9999';" +
-                    "}");
-                pause(500);
-                fileInputs = driver.findElements(PHOTO_UPLOAD_INPUT);
-            }
-
-            if (!fileInputs.isEmpty()) {
-                // Try EACH file input — the correct one for IR photos may not be index 0
-                boolean fileSent = false;
+            } else if (!fileInputs.isEmpty()) {
+                // Try each existing input
                 for (int fi = 0; fi < fileInputs.size(); fi++) {
                     try {
                         WebElement input = fileInputs.get(fi);
                         input.sendKeys(absolutePath);
-                        // Dispatch change event to ensure React detects the file selection
                         js.executeScript("arguments[0].dispatchEvent(new Event('change', {bubbles: true}));", input);
-                        System.out.println("[WorkOrderPage] File sent to input[" + fi + "] of " + fileInputs.size()
-                                + " — dispatched change event");
+                        System.out.println("[WorkOrderPage] File sent to existing input[" + fi + "] of " + fileInputs.size());
                         pause(1500);
-
-                        // Check if file preview or name appeared (indicates React processed it)
-                        Boolean hasPreview = (Boolean) js.executeScript(
-                            "var imgs = document.querySelectorAll('img[src*=\"blob:\"], img[src*=\"data:\"], [class*=\"preview\"]');" +
-                            "if (imgs.length > 0) return true;" +
-                            "var fileNames = document.querySelectorAll('[class*=\"fileName\"], [class*=\"file-name\"]');" +
-                            "if (fileNames.length > 0) return true;" +
-                            "return false;"
-                        );
-                        if (hasPreview != null && hasPreview) {
-                            System.out.println("[WorkOrderPage] File preview detected after input[" + fi + "]");
-                            fileSent = true;
-                            break;
-                        }
                     } catch (Exception e) {
-                        System.out.println("[WorkOrderPage] File input[" + fi + "] failed: " + e.getMessage());
+                        System.out.println("[WorkOrderPage] Input[" + fi + "] failed: " + e.getMessage());
                     }
                 }
-                if (!fileSent) {
-                    // If no preview detected, still continue — the upload button might process it
-                    System.out.println("[WorkOrderPage] No file preview detected, but continuing to Upload button step");
-                }
-                pause(1000);
             } else {
-                System.out.println("[WorkOrderPage] WARNING: No file input found for IR photo upload after all strategies");
+                System.out.println("[WorkOrderPage] WARNING: No file input found after all strategies");
                 return;
             }
 
-            // After file selection, click "Upload" button in dialog.
-            // Use escalating click strategies with verification.
+            // After file selection, click "Upload" button if one appears
             boolean uploaded = false;
-            for (int attempt = 0; attempt < 8; attempt++) {
+            for (int attempt = 0; attempt < 5; attempt++) {
                 try {
-                    // Dismiss any backdrops blocking the upload button
                     js.executeScript(
                         "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"]').forEach(" +
-                        "  function(b) { b.style.display = 'none'; b.style.pointerEvents = 'none'; }" +
-                        ");"
-                    );
+                        "  function(b) { b.style.display = 'none'; b.style.pointerEvents = 'none'; });");
                     pause(200);
 
-                    // Find the Upload/Submit button
                     List<WebElement> allBtns = driver.findElements(By.tagName("button"));
                     for (WebElement btn : allBtns) {
                         try {
                             if (btn.isDisplayed() && btn.isEnabled()) {
                                 String text = btn.getText().trim();
                                 if ("Upload".equalsIgnoreCase(text) || "Confirm Upload".equalsIgnoreCase(text)
-                                        || "Submit".equalsIgnoreCase(text)) {
-                                    // Try escalating click strategies
-                                    // Strategy A: Selenium click
+                                        || "Submit".equalsIgnoreCase(text) || "Save".equalsIgnoreCase(text)) {
                                     try {
                                         btn.click();
-                                        System.out.println("[WorkOrderPage] Selenium-clicked Upload: '" + text + "'");
-                                        uploaded = true;
+                                        System.out.println("[WorkOrderPage] Selenium-clicked: '" + text + "'");
                                     } catch (org.openqa.selenium.ElementClickInterceptedException e1) {
-                                        // Strategy B: Actions click
-                                        try {
-                                            new org.openqa.selenium.interactions.Actions(driver)
-                                                .moveToElement(btn).click().perform();
-                                            System.out.println("[WorkOrderPage] Actions-clicked Upload: '" + text + "'");
-                                            uploaded = true;
-                                        } catch (Exception e2) {
-                                            // Strategy C: Enter key
-                                            try {
-                                                new org.openqa.selenium.interactions.Actions(driver)
-                                                    .moveToElement(btn)
-                                                    .sendKeys(org.openqa.selenium.Keys.ENTER).perform();
-                                                System.out.println("[WorkOrderPage] Enter-key on Upload: '" + text + "'");
-                                                uploaded = true;
-                                            } catch (Exception ignored) {}
-                                        }
+                                        new org.openqa.selenium.interactions.Actions(driver)
+                                            .moveToElement(btn).click().perform();
+                                        System.out.println("[WorkOrderPage] Actions-clicked: '" + text + "'");
                                     }
+                                    uploaded = true;
                                     break;
                                 }
                             }
@@ -1353,7 +1341,7 @@ public class WorkOrderPage {
                 pause(1000);
             }
             if (!uploaded) {
-                System.out.println("[WorkOrderPage] WARNING: Upload confirmation button not found after 8 attempts");
+                System.out.println("[WorkOrderPage] No Upload button found — file may auto-upload on selection");
             }
             pause(3000);
         } catch (Exception e) {
