@@ -61,7 +61,7 @@ public class LocationPage {
             System.out.println("[LocationPage] Already on Locations — navigating away and back");
             try {
                 js.executeScript(
-                    "var links = document.querySelectorAll('a, span, button');" +
+                    "var links = document.querySelectorAll('a');" +
                     "for (var el of links) {" +
                     "  var t = el.textContent.trim();" +
                     "  if (t === 'Assets' || t === 'Connections') { el.click(); return; }" +
@@ -72,20 +72,65 @@ public class LocationPage {
             }
         }
 
-        // Try Selenium click first, then JS fallback
+        // Strategy 1: JS click on sidebar <a> tag (most reliable — matches IssuePage pattern)
+        try {
+            js.executeScript(
+                "var links = document.querySelectorAll('a');" +
+                "for (var el of links) {" +
+                "  if (el.textContent.trim() === 'Locations') { el.click(); return; }" +
+                "}");
+            pause(2000);
+            if (isOnLocationsPage()) {
+                System.out.println("[LocationPage] Navigated via JS <a> click. URL: " + driver.getCurrentUrl());
+                return;
+            }
+        } catch (Exception e) {
+            System.out.println("[LocationPage] JS <a> click failed: " + e.getMessage());
+        }
+
+        // Strategy 2: Selenium click on broader selector
         try {
             click(LOCATIONS_TAB);
+            pause(2000);
+            if (isOnLocationsPage()) {
+                System.out.println("[LocationPage] Navigated via Selenium click. URL: " + driver.getCurrentUrl());
+                return;
+            }
         } catch (Exception e) {
-            System.out.println("[LocationPage] Selenium click failed, trying JS: " + e.getMessage());
+            System.out.println("[LocationPage] Selenium click failed: " + e.getMessage());
+        }
+
+        // Strategy 3: JS click on any element with matching text (span, button, div)
+        try {
             js.executeScript(
-                "var links = document.querySelectorAll('a, span, button');" +
-                "for (var el of links) {" +
-                "  if (el.textContent.trim() === 'Locations' && el.getBoundingClientRect().width > 0) {" +
+                "var els = document.querySelectorAll('a, span, button, div');" +
+                "for (var el of els) {" +
+                "  if (el.textContent.trim() === 'Locations' && el.getBoundingClientRect().width > 0" +
+                "      && el.children.length === 0) {" +
                 "    el.click(); return;" +
                 "  }" +
                 "}");
+            pause(2000);
+            if (isOnLocationsPage()) {
+                System.out.println("[LocationPage] Navigated via JS text-match click. URL: " + driver.getCurrentUrl());
+                return;
+            }
+        } catch (Exception e) {
+            System.out.println("[LocationPage] JS text-match click failed: " + e.getMessage());
         }
-        pause(2000);
+
+        // Strategy 4: Direct URL navigation (last resort — works in all environments)
+        try {
+            String currentUrl = driver.getCurrentUrl();
+            String baseUrl = currentUrl.replaceAll("/(assets|connections|issues|workorders|locations|dashboard).*", "");
+            String locationsUrl = baseUrl + "/locations";
+            System.out.println("[LocationPage] Falling back to direct URL: " + locationsUrl);
+            driver.get(locationsUrl);
+            pause(3000);
+        } catch (Exception e) {
+            System.out.println("[LocationPage] URL navigation failed: " + e.getMessage());
+        }
+
         System.out.println("[LocationPage] On locations page: " + driver.getCurrentUrl());
     }
 

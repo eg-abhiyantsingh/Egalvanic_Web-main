@@ -1265,29 +1265,51 @@ public class WorkOrderPage {
                 return;
             }
 
-            // After file selection, the "Upload IR Photos" dialog appears
-            // Need to click the "Upload" button in the dialog to confirm
+            // After file selection, click "Upload" button in dialog.
+            // Use Selenium click (not JS click) to trigger React event handlers.
             boolean uploaded = false;
-            for (int attempt = 0; attempt < 5; attempt++) {
-                Boolean clicked = (Boolean) js.executeScript(
-                    "var btns = document.querySelectorAll('button');" +
-                    "for (var b of btns) {" +
-                    "  var text = b.textContent.trim();" +
-                    "  var r = b.getBoundingClientRect();" +
-                    "  if (r.width > 0 && (text === 'Upload' || text === 'Confirm Upload' || text === 'Submit')) {" +
-                    "    b.click(); return true;" +
-                    "  }" +
-                    "}" +
-                    "return false;");
-                if (Boolean.TRUE.equals(clicked)) {
-                    System.out.println("[WorkOrderPage] Clicked Upload button in dialog");
-                    uploaded = true;
-                    break;
+            for (int attempt = 0; attempt < 8; attempt++) {
+                try {
+                    // Dismiss any backdrops blocking the upload button
+                    js.executeScript(
+                        "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"]').forEach(" +
+                        "  function(b) { b.style.display = 'none'; b.style.pointerEvents = 'none'; }" +
+                        ");"
+                    );
+                    pause(200);
+
+                    // Strategy 1: Selenium click on visible Upload/Submit buttons
+                    List<WebElement> allBtns = driver.findElements(By.tagName("button"));
+                    for (WebElement btn : allBtns) {
+                        try {
+                            if (btn.isDisplayed() && btn.isEnabled()) {
+                                String text = btn.getText().trim();
+                                if ("Upload".equalsIgnoreCase(text) || "Confirm Upload".equalsIgnoreCase(text)
+                                        || "Submit".equalsIgnoreCase(text)) {
+                                    btn.click();
+                                    System.out.println("[WorkOrderPage] Selenium-clicked Upload button: '" + text + "'");
+                                    uploaded = true;
+                                    break;
+                                }
+                            }
+                        } catch (org.openqa.selenium.ElementClickInterceptedException e1) {
+                            // Backdrop still blocking — try Actions click
+                            try {
+                                new org.openqa.selenium.interactions.Actions(driver).moveToElement(btn).click().perform();
+                                System.out.println("[WorkOrderPage] Actions-clicked Upload button");
+                                uploaded = true;
+                                break;
+                            } catch (Exception ignored) {}
+                        } catch (Exception ignored) {}
+                    }
+                    if (uploaded) break;
+                } catch (Exception e) {
+                    System.out.println("[WorkOrderPage] Upload button attempt " + (attempt + 1) + ": " + e.getMessage());
                 }
                 pause(1000);
             }
             if (!uploaded) {
-                System.out.println("[WorkOrderPage] WARNING: Upload confirmation button not found");
+                System.out.println("[WorkOrderPage] WARNING: Upload confirmation button not found after 8 attempts");
             }
             pause(3000);
         } catch (Exception e) {

@@ -487,7 +487,8 @@ public class ConnectionPage {
             pause(500);
         }
 
-        // Wait for MUI confirmation dialog to appear (up to 8s)
+        // Wait for MUI confirmation dialog — Selenium click first (React-compatible),
+        // JS click as fallback. dispatchEvent(MouseEvent) does NOT trigger React 18+ handlers.
         for (int i = 0; i < 16; i++) {
             try {
                 // Always nuke ALL backdrops first — they block clicks in headless Chrome CI/CD
@@ -496,51 +497,50 @@ public class ConnectionPage {
                     "  function(b) { b.style.display = 'none'; b.style.pointerEvents = 'none'; }" +
                     ");"
                 );
+                pause(200);
 
-                // Strategy 1: JS-level click on error-styled Delete button (most CI-reliable)
-                Boolean jsClicked = (Boolean) js.executeScript(
-                    "var btns = document.querySelectorAll('button[class*=\"containedError\"], button[class*=\"error\"]');" +
-                    "for (var b of btns) {" +
-                    "  var t = b.textContent.trim();" +
-                    "  var r = b.getBoundingClientRect();" +
-                    "  if (r.width > 0 && (t === 'Delete' || t === 'Confirm' || t === 'Yes')) {" +
-                    "    b.focus(); b.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true})); return true;" +
-                    "  }" +
-                    "}" +
-                    "// Also check dialog buttons\n" +
-                    "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"alertdialog\"], [class*=\"MuiDialog\"]');" +
-                    "for (var d of dialogs) {" +
-                    "  var dbtns = d.querySelectorAll('button');" +
-                    "  for (var b of dbtns) {" +
-                    "    var t = b.textContent.trim();" +
-                    "    var r = b.getBoundingClientRect();" +
-                    "    if (r.width > 0 && (t === 'Delete' || t === 'Confirm' || t === 'Yes')) {" +
-                    "      b.focus(); b.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true})); return true;" +
-                    "    }" +
-                    "  }" +
-                    "}" +
-                    "return false;");
-
-                if (Boolean.TRUE.equals(jsClicked)) {
-                    System.out.println("[ConnectionPage] Delete confirmed via JS dispatched click (attempt " + (i+1) + ")");
-                    pause(2000);
-                    return;
+                // Strategy 1: Selenium WebElement click on error-styled buttons (PREFERRED)
+                java.util.List<WebElement> errorBtns = driver.findElements(
+                    By.cssSelector("button[class*='containedError'], button[class*='error']"));
+                for (WebElement btn : errorBtns) {
+                    if (btn.isDisplayed() && btn.isEnabled()) {
+                        String text = btn.getText().trim();
+                        if ("Delete".equalsIgnoreCase(text) || "Confirm".equalsIgnoreCase(text)
+                                || "Yes".equalsIgnoreCase(text) || text.toLowerCase().contains("delete")) {
+                            try {
+                                btn.click();
+                                System.out.println("[ConnectionPage] Delete confirmed via Selenium click: '" + text + "' (attempt " + (i+1) + ")");
+                            } catch (Exception e1) {
+                                new Actions(driver).moveToElement(btn).click().perform();
+                                System.out.println("[ConnectionPage] Delete confirmed via Actions click: '" + text + "' (attempt " + (i+1) + ")");
+                            }
+                            pause(2000);
+                            return;
+                        }
+                    }
                 }
 
-                // Strategy 2: Selenium WebElement click (backup)
-                java.util.List<WebElement> errorBtns = driver.findElements(
-                    By.cssSelector("button[class*='containedError']"));
-                for (WebElement btn : errorBtns) {
-                    if (btn.isDisplayed() && "Delete".equals(btn.getText().trim())) {
-                        try {
-                            btn.click();
-                            System.out.println("[ConnectionPage] Delete confirmed via WebElement.click()");
-                        } catch (Exception e1) {
-                            new Actions(driver).moveToElement(btn).click().perform();
-                            System.out.println("[ConnectionPage] Delete confirmed via Actions click");
+                // Strategy 2: Find buttons inside dialog containers
+                java.util.List<WebElement> dialogs = driver.findElements(
+                    By.cssSelector("[role='dialog'], [class*='MuiDialog-paper'], [role='alertdialog']"));
+                for (WebElement dialog : dialogs) {
+                    java.util.List<WebElement> dBtns = dialog.findElements(By.tagName("button"));
+                    for (WebElement btn : dBtns) {
+                        if (btn.isDisplayed() && btn.isEnabled()) {
+                            String text = btn.getText().trim();
+                            if ("Delete".equalsIgnoreCase(text) || "Confirm".equalsIgnoreCase(text)
+                                    || "Yes".equalsIgnoreCase(text) || text.toLowerCase().contains("delete")) {
+                                try {
+                                    btn.click();
+                                    System.out.println("[ConnectionPage] Delete confirmed via dialog Selenium click: '" + text + "'");
+                                } catch (Exception e1) {
+                                    new Actions(driver).moveToElement(btn).click().perform();
+                                    System.out.println("[ConnectionPage] Delete confirmed via dialog Actions click: '" + text + "'");
+                                }
+                                pause(2000);
+                                return;
+                            }
                         }
-                        pause(2000);
-                        return;
                     }
                 }
             } catch (Exception e) {
