@@ -1224,20 +1224,22 @@ public class WorkOrderPage {
 
             // Strategy 1: Find and Selenium-click upload/add/photo buttons to trigger
             // the IR photo upload dialog. Use Selenium click (not JS) for React compatibility.
+            // NOTE: normalize whitespace in getText() — MUI buttons often have newlines from
+            // icons/spans, and Java regex '.' doesn't match '\n' by default.
             boolean triggerClicked = false;
             List<WebElement> allButtons = driver.findElements(By.cssSelector(
                 "button, [role='button'], .MuiFab-root, .MuiIconButton-root, label[for]"));
             for (WebElement btn : allButtons) {
                 try {
                     if (!btn.isDisplayed() || btn.getSize().getWidth() < 5) continue;
-                    String text = btn.getText().trim().toLowerCase();
+                    String text = btn.getText().trim().replaceAll("\\s+", " ").toLowerCase();
                     String ariaLabel = btn.getDomAttribute("aria-label");
                     if (ariaLabel == null) ariaLabel = "";
                     ariaLabel = ariaLabel.toLowerCase();
 
                     if (text.matches(".*\\b(upload|add photo|add image|import)\\b.*")
                             || ariaLabel.matches(".*\\b(upload|add photo|add image)\\b.*")) {
-                        System.out.println("[WorkOrderPage] Clicking upload trigger: '" + btn.getText().trim() + "'");
+                        System.out.println("[WorkOrderPage] Clicking upload trigger: '" + text + "'");
                         btn.click();
                         triggerClicked = true;
                         pause(2000);

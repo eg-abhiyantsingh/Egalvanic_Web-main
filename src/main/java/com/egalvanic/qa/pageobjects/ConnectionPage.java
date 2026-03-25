@@ -574,6 +574,7 @@ public class ConnectionPage {
                     String text = btn.getText().trim();
                     if ("Delete".equalsIgnoreCase(text) || "Confirm".equalsIgnoreCase(text)
                             || "Yes".equalsIgnoreCase(text) || text.toLowerCase().contains("delete")) {
+                        System.out.println("[ConnectionPage] findBtn: Strategy1 found '" + text + "' class=" + btn.getAttribute("class"));
                         return btn;
                     }
                 }
@@ -583,6 +584,7 @@ public class ConnectionPage {
         // Strategy 2: buttons inside dialog containers
         java.util.List<WebElement> dialogs = driver.findElements(
             By.cssSelector("[role='dialog'], [class*='MuiDialog-paper'], [role='alertdialog']"));
+        System.out.println("[ConnectionPage] findBtn: Strategy2 dialog containers found: " + dialogs.size());
         for (WebElement dialog : dialogs) {
             java.util.List<WebElement> dBtns = dialog.findElements(By.tagName("button"));
             for (WebElement btn : dBtns) {
@@ -591,6 +593,16 @@ public class ConnectionPage {
                         String text = btn.getText().trim();
                         if ("Delete".equalsIgnoreCase(text) || "Confirm".equalsIgnoreCase(text)
                                 || "Yes".equalsIgnoreCase(text) || text.toLowerCase().contains("delete")) {
+                            String parentRole = (String) js.executeScript(
+                                "var el = arguments[0]; var path = '';" +
+                                "while (el && el !== document.body) {" +
+                                "  var r = el.getAttribute('role') || '';" +
+                                "  var cls = (el.className || '').substring(0,30);" +
+                                "  if (r || cls.includes('Mui')) path += el.tagName + '[' + r + '/' + cls + '] > ';" +
+                                "  el = el.parentElement;" +
+                                "}" +
+                                "return path;", btn);
+                            System.out.println("[ConnectionPage] findBtn: Strategy2 found '" + text + "' ancestry=" + parentRole);
                             return btn;
                         }
                     }
@@ -603,7 +615,10 @@ public class ConnectionPage {
             By.xpath("//div[@role='dialog' or @role='alertdialog' or contains(@class,'MuiDialog-paper')]//button[contains(.,'Delete') or contains(.,'delete')]"));
         for (WebElement btn : allDeleteBtns) {
             try {
-                if (btn.isDisplayed() && btn.isEnabled()) return btn;
+                if (btn.isDisplayed() && btn.isEnabled()) {
+                    System.out.println("[ConnectionPage] findBtn: Strategy3 found '" + btn.getText().trim() + "'");
+                    return btn;
+                }
             } catch (Exception ignored) {}
         }
 
@@ -696,18 +711,21 @@ public class ConnectionPage {
             // IMPORTANT: Only check role="dialog" and role="alertdialog", NOT role="presentation".
             // MUI DataGrid uses role="presentation" for structural elements, and their text content
             // includes action button labels like "Delete Connection" — which would false-positive this check.
-            Boolean dialogOpen = (Boolean) js.executeScript(
+            String result = (String) js.executeScript(
                 "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"alertdialog\"], .MuiDialog-paper');" +
+                "var info = 'isDialogGone: found=' + dialogs.length;" +
                 "for (var d of dialogs) {" +
                 "  var r = d.getBoundingClientRect();" +
+                "  var text = (d.textContent||'').toLowerCase().substring(0,80).replace(/\\n/g,' ');" +
+                "  info += ' | ' + d.tagName + '[role=' + (d.getAttribute('role')||'none') + ' class=' + (d.className||'').substring(0,40) + '] ' + Math.round(r.width) + 'x' + Math.round(r.height) + ' text=\"' + text + '\"';" +
                 "  if (r.width > 100 && r.height > 50) {" +
-                "    var text = (d.textContent||'').toLowerCase();" +
-                "    if (text.includes('delete') || text.includes('confirm') || text.includes('remove') || text.includes('sure')) return true;" +
+                "    if (text.includes('delete') || text.includes('confirm') || text.includes('remove') || text.includes('sure')) return 'OPEN:' + info;" +
                 "  }" +
                 "}" +
-                "return false;"
+                "return 'GONE:' + info;"
             );
-            return dialogOpen == null || !dialogOpen;
+            System.out.println("[ConnectionPage] " + result);
+            return result != null && result.startsWith("GONE:");
         } catch (Exception e) {
             return true; // If we can't check, assume it's gone
         }

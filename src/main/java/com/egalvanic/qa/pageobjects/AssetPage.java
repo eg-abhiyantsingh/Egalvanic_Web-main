@@ -1112,17 +1112,22 @@ public class AssetPage {
             WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(15));
             shortWait.until(driver -> {
                 String url = driver.getCurrentUrl();
-                // Back to asset list (no UUID in URL)
+                boolean onDetailPage = url.matches(".*/assets/[a-f0-9-]+.*");
+
+                // Back to asset list (no UUID in URL) — strongest signal
                 if (url.matches(".*/assets/?$") || url.endsWith("/assets")) return true;
-                // Success toast
-                if (driver.findElements(By.xpath(
-                        "//*[contains(text(),'deleted') or contains(text(),'Deleted') or contains(text(),'removed') or contains(text(),'success')]")).size() > 0)
-                    return true;
-                // MUI Snackbar/Alert
-                if (driver.findElements(By.cssSelector(".MuiSnackbar-root, .MuiAlert-root, [role='alert']")).size() > 0)
-                    return true;
-                // DataGrid visible — but ONLY if on list page (detail pages have sub-grids too)
-                if (!url.matches(".*/assets/[a-f0-9-]+.*")
+
+                // Success toast — only trust "deleted"/"removed" text (not "success" which is too generic)
+                // and only from Snackbar/Alert containers to avoid matching page content
+                java.util.List<WebElement> toasts = driver.findElements(
+                    By.cssSelector(".MuiSnackbar-root, .MuiAlert-root"));
+                for (WebElement toast : toasts) {
+                    String toastText = toast.getText().toLowerCase();
+                    if (toastText.contains("deleted") || toastText.contains("removed")) return true;
+                }
+
+                // DataGrid visible — ONLY if on list page (detail pages have sub-grids)
+                if (!onDetailPage
                         && driver.findElements(By.xpath("//div[contains(@class,'MuiDataGrid')]")).size() > 0)
                     return true;
                 return false;
@@ -1730,18 +1735,21 @@ public class AssetPage {
             // IMPORTANT: Only check role="dialog" and role="alertdialog", NOT role="presentation".
             // MUI DataGrid uses role="presentation" for structural elements, and their text content
             // includes action button labels like "Delete Asset" — which would false-positive this check.
-            Boolean dialogOpen = (Boolean) js.executeScript(
+            String result = (String) js.executeScript(
                 "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"alertdialog\"], .MuiDialog-paper');" +
+                "var info = 'isDialogGone: found=' + dialogs.length;" +
                 "for (var d of dialogs) {" +
                 "  var r = d.getBoundingClientRect();" +
+                "  var text = (d.textContent||'').toLowerCase().substring(0,80).replace(/\\n/g,' ');" +
+                "  info += ' | ' + d.tagName + '[role=' + (d.getAttribute('role')||'none') + ' class=' + (d.className||'').substring(0,40) + '] ' + Math.round(r.width) + 'x' + Math.round(r.height) + ' text=\"' + text + '\"';" +
                 "  if (r.width > 100 && r.height > 50) {" +
-                "    var text = (d.textContent||'').toLowerCase();" +
-                "    if (text.includes('delete') || text.includes('confirm') || text.includes('remove') || text.includes('sure')) return true;" +
+                "    if (text.includes('delete') || text.includes('confirm') || text.includes('remove') || text.includes('sure')) return 'OPEN:' + info;" +
                 "  }" +
                 "}" +
-                "return false;"
+                "return 'GONE:' + info;"
             );
-            return dialogOpen == null || !dialogOpen;
+            System.out.println("[AssetPage] " + result);
+            return result != null && result.startsWith("GONE:");
         } catch (Exception e) {
             return true;
         }
