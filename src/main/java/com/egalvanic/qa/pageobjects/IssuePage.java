@@ -2127,9 +2127,9 @@ public class IssuePage {
                     }
                 }
 
-                // Strategy 2: Find confirm button inside dialog/modal containers
+                // Strategy 2: Find confirm button inside dialog/modal containers (NOT role=presentation — DataGrid uses that)
                 List<WebElement> dialogs = driver.findElements(
-                    By.cssSelector("[role='dialog'], [class*='MuiDialog-paper'], [role='alertdialog'], [role='presentation'] [class*='MuiPaper']"));
+                    By.cssSelector("[role='dialog'], [class*='MuiDialog-paper'], [role='alertdialog']"));
                 for (WebElement dialog : dialogs) {
                     List<WebElement> btns = dialog.findElements(By.tagName("button"));
                     for (WebElement btn : btns) {
@@ -2151,7 +2151,7 @@ public class IssuePage {
                 Boolean jsClicked = (Boolean) js.executeScript(
                     "var confirmTexts = ['Delete', 'Confirm', 'Yes', 'Yes, Delete', 'OK'];" +
                     "// Try dialogs and modals\n" +
-                    "var containers = document.querySelectorAll('[role=\"dialog\"], [role=\"alertdialog\"], [class*=\"MuiDialog\"], [role=\"presentation\"]');" +
+                    "var containers = document.querySelectorAll('[role=\"dialog\"], [role=\"alertdialog\"], [class*=\"MuiDialog\"]');" +
                     "for (var container of containers) {" +
                     "  var btns = container.querySelectorAll('button');" +
                     "  for (var b of btns) {" +

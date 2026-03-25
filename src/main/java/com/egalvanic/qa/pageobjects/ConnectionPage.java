@@ -598,9 +598,9 @@ public class ConnectionPage {
             }
         }
 
-        // Strategy 3: any visible Delete button — but ONLY if inside a dialog/presentation overlay
+        // Strategy 3: any visible Delete button — ONLY inside actual dialog containers (NOT role=presentation — DataGrid uses that)
         java.util.List<WebElement> allDeleteBtns = driver.findElements(
-            By.xpath("//div[@role='dialog' or @role='presentation' or @role='alertdialog']//button[contains(.,'Delete') or contains(.,'delete')]"));
+            By.xpath("//div[@role='dialog' or @role='alertdialog' or contains(@class,'MuiDialog-paper')]//button[contains(.,'Delete') or contains(.,'delete')]"));
         for (WebElement btn : allDeleteBtns) {
             try {
                 if (btn.isDisplayed() && btn.isEnabled()) return btn;
@@ -720,7 +720,7 @@ public class ConnectionPage {
         // Wait for any dialog/modal to close
         for (int i = 0; i < 15; i++) {
             Boolean dialogOpen = (Boolean) js.executeScript(
-                "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"presentation\"], [class*=\"MuiDialog\"]');" +
+                "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"alertdialog\"], .MuiDialog-paper');" +
                 "for (var d of dialogs) {" +
                 "  var r = d.getBoundingClientRect();" +
                 "  if (r.width > 100 && r.height > 100) {" +

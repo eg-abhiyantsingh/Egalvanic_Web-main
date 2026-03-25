@@ -1614,9 +1614,9 @@ public class AssetPage {
             } catch (Exception ignored) {}
         }
 
-        // Try buttons inside dialog containers
+        // Try buttons inside dialog containers (NOT role=presentation — DataGrid uses that)
         java.util.List<WebElement> dialogs = driver.findElements(
-            By.cssSelector("[role='dialog'], [class*='MuiDialog-paper'], [role='alertdialog'], [role='presentation'] [class*='MuiPaper']"));
+            By.cssSelector("[role='dialog'], [class*='MuiDialog-paper'], [role='alertdialog']"));
         for (WebElement dialog : dialogs) {
             java.util.List<WebElement> dBtns = dialog.findElements(By.tagName("button"));
             for (WebElement btn : dBtns) {
@@ -1632,9 +1632,9 @@ public class AssetPage {
             }
         }
 
-        // Last resort: any visible Delete button — but ONLY if inside a dialog/presentation overlay
+        // Last resort: any visible Delete button — ONLY inside actual dialog containers (NOT role=presentation — DataGrid uses that)
         java.util.List<WebElement> allDeleteBtns = driver.findElements(
-            By.xpath("//div[@role='dialog' or @role='presentation' or @role='alertdialog']//button[contains(.,'Delete') or contains(.,'delete')]"));
+            By.xpath("//div[@role='dialog' or @role='alertdialog' or contains(@class,'MuiDialog-paper')]//button[contains(.,'Delete') or contains(.,'delete')]"));
         for (WebElement btn : allDeleteBtns) {
             try {
                 if (btn.isDisplayed() && btn.isEnabled()) return btn;
