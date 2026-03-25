@@ -1522,7 +1522,7 @@ public class AssetPage {
         // Strategy 1: Dismiss backdrops, find the Delete button, then use escalating click
         // strategies with post-click verification. A single click sometimes fires but React
         // doesn't process it (especially in MUI Portal dialogs in headless Chrome).
-        for (int attempt = 0; attempt < 10; attempt++) {
+        for (int attempt = 0; attempt < 5; attempt++) {
             try {
                 // Always nuke backdrops first
                 js.executeScript(
@@ -1654,7 +1654,7 @@ public class AssetPage {
             System.out.println("[AssetPage] Enter key failed: " + e.getMessage());
         }
 
-        // Strategy D: JS focus + programmatic click (last resort)
+        // Strategy D: JS focus + programmatic click
         try {
             js.executeScript("arguments[0].focus(); arguments[0].click();", btn);
             System.out.println("[AssetPage] JS focus+click on: '" + text + "'");
@@ -1662,6 +1662,34 @@ public class AssetPage {
             if (isAssetDeleteDialogGone()) return true;
         } catch (Exception e) {
             System.out.println("[AssetPage] JS click failed: " + e.getMessage());
+        }
+
+        // Strategy E: Direct React fiber onClick invocation
+        try {
+            String result = (String) js.executeScript(
+                "var btn = arguments[0];" +
+                "var keys = Object.keys(btn);" +
+                "var reactKey = keys.find(function(k) {" +
+                "  return k.startsWith('__reactFiber$') || k.startsWith('__reactInternalInstance$');" +
+                "});" +
+                "if (!reactKey) return 'no-react-key';" +
+                "var fiber = btn[reactKey];" +
+                "var maxDepth = 20;" +
+                "while (fiber && maxDepth-- > 0) {" +
+                "  var props = fiber.memoizedProps || fiber.pendingProps;" +
+                "  if (props && typeof props.onClick === 'function') {" +
+                "    props.onClick({preventDefault:function(){},stopPropagation:function(){},target:btn,currentTarget:btn});" +
+                "    return 'invoked-onClick';" +
+                "  }" +
+                "  fiber = fiber.return;" +
+                "}" +
+                "return 'no-onClick-found';",
+                btn);
+            System.out.println("[AssetPage] React fiber invoke: " + result);
+            pause(2000);
+            if (isAssetDeleteDialogGone()) return true;
+        } catch (Exception e) {
+            System.out.println("[AssetPage] React fiber invoke failed: " + e.getMessage());
         }
 
         return false;

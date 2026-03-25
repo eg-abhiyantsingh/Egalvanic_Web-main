@@ -489,7 +489,8 @@ public class ConnectionPage {
 
         // Wait for MUI confirmation dialog — use escalating click strategies with post-click
         // verification. A single Selenium click sometimes fires but React doesn't process it.
-        for (int i = 0; i < 10; i++) {
+        // Limit to 5 retries to stay within TestNG timeout (90s).
+        for (int i = 0; i < 5; i++) {
             try {
                 // Always nuke ALL backdrops first — they block clicks in headless Chrome CI/CD
                 js.executeScript(
@@ -503,10 +504,28 @@ public class ConnectionPage {
                 WebElement deleteBtn = findDeleteButtonInDialog();
                 if (deleteBtn != null) {
                     String text = deleteBtn.getText().trim();
+                    // On first attempt, dump dialog diagnostic for debugging
+                    if (i == 0) {
+                        try {
+                            String diag = (String) js.executeScript(
+                                "var result = 'Dialogs: ';" +
+                                "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"presentation\"], [class*=\"MuiDialog\"]');" +
+                                "result += dialogs.length + '\\n';" +
+                                "for (var d of dialogs) {" +
+                                "  var r = d.getBoundingClientRect();" +
+                                "  if (r.width < 10) continue;" +
+                                "  result += '  tag=' + d.tagName + ' role=\"' + (d.getAttribute('role')||'') + '\"'" +
+                                "    + ' text=\"' + (d.textContent||'').trim().substring(0,100).replace(/\\n/g,' ') + '\"'" +
+                                "    + ' at(' + Math.round(r.left) + ',' + Math.round(r.top) + ') ' + Math.round(r.width) + 'x' + Math.round(r.height) + '\\n';" +
+                                "}" +
+                                "return result;");
+                            System.out.println("[ConnectionPage] " + diag);
+                        } catch (Exception ignored) {}
+                    }
+
                     if (clickButtonWithVerification(deleteBtn, text, "ConnectionPage")) {
                         return;
                     }
-                    // Button was found but click didn't close dialog — continue retry loop
                     System.out.println("[ConnectionPage] Click on '" + text + "' didn't close dialog, retrying...");
                 }
             } catch (Exception e) {
@@ -514,7 +533,7 @@ public class ConnectionPage {
             }
             pause(500);
         }
-        System.out.println("[ConnectionPage] WARNING: No delete confirmation button found after 10 attempts");
+        System.out.println("[ConnectionPage] WARNING: No delete confirmation button found after 5 attempts");
     }
 
     /**
@@ -601,7 +620,7 @@ public class ConnectionPage {
             System.out.println("[" + tag + "] Enter key failed: " + e.getMessage());
         }
 
-        // Strategy D: JS focus + programmatic click (last resort)
+        // Strategy D: JS focus + programmatic click
         try {
             js.executeScript("arguments[0].focus(); arguments[0].click();", btn);
             System.out.println("[" + tag + "] JS focus+click on: '" + text + "'");
@@ -609,6 +628,36 @@ public class ConnectionPage {
             if (isDeleteDialogGone()) return true;
         } catch (Exception e) {
             System.out.println("[" + tag + "] JS click failed: " + e.getMessage());
+        }
+
+        // Strategy E: Direct React fiber onClick invocation — bypasses event system entirely.
+        // When all UI click strategies fail, the React Portal's event delegation may be broken.
+        // This reaches into React's internal fiber tree to call the handler directly.
+        try {
+            String result = (String) js.executeScript(
+                "var btn = arguments[0];" +
+                "var keys = Object.keys(btn);" +
+                "var reactKey = keys.find(function(k) {" +
+                "  return k.startsWith('__reactFiber$') || k.startsWith('__reactInternalInstance$');" +
+                "});" +
+                "if (!reactKey) return 'no-react-key';" +
+                "var fiber = btn[reactKey];" +
+                "var maxDepth = 20;" +
+                "while (fiber && maxDepth-- > 0) {" +
+                "  var props = fiber.memoizedProps || fiber.pendingProps;" +
+                "  if (props && typeof props.onClick === 'function') {" +
+                "    props.onClick({preventDefault:function(){},stopPropagation:function(){},target:btn,currentTarget:btn});" +
+                "    return 'invoked-onClick';" +
+                "  }" +
+                "  fiber = fiber.return;" +
+                "}" +
+                "return 'no-onClick-found';",
+                btn);
+            System.out.println("[" + tag + "] React fiber invoke: " + result);
+            pause(2000);
+            if (isDeleteDialogGone()) return true;
+        } catch (Exception e) {
+            System.out.println("[" + tag + "] React fiber invoke failed: " + e.getMessage());
         }
 
         return false;
