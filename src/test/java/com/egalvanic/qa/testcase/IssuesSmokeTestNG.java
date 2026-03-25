@@ -986,7 +986,7 @@ public class IssuesSmokeTestNG extends BaseTest {
                 Assert.fail("Could not find 'Edit Issue' menu item.\nMenu state:\n" + menuCheck);
             }
             logStep("'Edit Issue' clicked — waiting for drawer to open");
-            pause(3000);
+            pause(4000); // extra wait so user can see the drawer open
 
             // ────────────────────────────────────────────────────────────────
             // PART 3: Click "Delete Issue" in the Edit drawer
@@ -1001,7 +1001,7 @@ public class IssuesSmokeTestNG extends BaseTest {
 
             // Step A: Wait for drawer, find and dump all buttons, then click Delete Issue
             // Use a single executeScript that also dumps debug info BEFORE clicking
-            pause(2000); // let drawer render
+            pause(3000); // let drawer fully render so user can see it
             String drawerDebug = "";
             try {
                 drawerDebug = (String) jsExec.executeScript(
@@ -1072,7 +1072,7 @@ public class IssuesSmokeTestNG extends BaseTest {
             // ────────────────────────────────────────────────────────────────
             // PART 5: Verify deletion
             // ────────────────────────────────────────────────────────────────
-            pause(3000);
+            pause(4000); // wait so user can see the result
             if (!deleteCompleted) {
                 try {
                     String url = (String) jsExec.executeScript("return window.location.href;");
