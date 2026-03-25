@@ -724,30 +724,43 @@ public class IssuesSmokeTestNG extends BaseTest {
             Assert.assertTrue(onDetail, "Could not navigate to issue detail page");
 
             // ─── 4. Wait for detail page to fully render ────────────────────
-            // The page shows spinners while API data loads. Wait until
-            // buttons appear (the ⋮ button, action buttons, etc.)
-            logStep("Waiting for detail page buttons to render...");
-            for (int w = 0; w < 20; w++) {
-                Long btnCount = (Long) jsExec.executeScript("return document.querySelectorAll('button').length;");
-                logStep("  render wait " + w + ": " + btnCount + " buttons");
-                if (btnCount != null && btnCount >= 3) break;
+            // The page shows spinners while API data loads. We need the issue
+            // content to render (tabs like Details, Class Details, etc.) which
+            // means many more buttons than just 3. Also wait for spinners to decrease.
+            logStep("Waiting for detail page to fully render...");
+            for (int w = 0; w < 40; w++) {
+                String state = (String) jsExec.executeScript(
+                    "var btns = document.querySelectorAll('button');" +
+                    "var visible = 0; for (var b of btns) { if (b.getBoundingClientRect().width > 0) visible++; }" +
+                    "var spinners = document.querySelectorAll('.MuiCircularProgress-root, [role=\"progressbar\"]').length;" +
+                    "var tabs = document.querySelectorAll('[role=\"tab\"]').length;" +
+                    "return visible + '|' + spinners + '|' + tabs;");
+                String[] parts = state.split("\\|");
+                int visibleBtns = Integer.parseInt(parts[0]);
+                int spinners = Integer.parseInt(parts[1]);
+                int tabs = Integer.parseInt(parts[2]);
+                logStep("  render wait " + w + ": " + visibleBtns + " visible btns, " + spinners + " spinners, " + tabs + " tabs");
+                // We need tabs to appear (Details, Class Details, etc.) — that means content loaded
+                if (tabs >= 2 && visibleBtns >= 6) break;
                 pause(1000);
             }
             debugPageState("DELETE — Detail page rendered");
 
-            // Debug: dump ALL buttons so we can see what's available
+            // Debug: dump ALL visible buttons and clickable elements
             String btnDebug = (String) jsExec.executeScript(
                 "var info = '';" +
-                "var btns = document.querySelectorAll('button');" +
+                "var btns = document.querySelectorAll('button, [role=\"button\"], .MuiIconButton-root');" +
                 "for (var i = 0; i < btns.length; i++) {" +
                 "  var b = btns[i]; var r = b.getBoundingClientRect();" +
                 "  if (r.width <= 0) continue;" +
                 "  var text = b.textContent.trim().substring(0, 30);" +
                 "  var label = b.getAttribute('aria-label') || '';" +
                 "  var hasSvg = b.querySelector('svg') ? 'SVG' : '';" +
+                "  var cls = (b.className || '').toString().substring(0, 60);" +
                 "  info += 'BTN[' + i + '] ' + Math.round(r.left) + ',' + Math.round(r.top)" +
                 "    + ' ' + Math.round(r.width) + 'x' + Math.round(r.height)" +
-                "    + ' text=\"' + text + '\" aria=\"' + label + '\" ' + hasSvg + '\\n';" +
+                "    + ' text=\"' + text + '\" aria=\"' + label + '\" ' + hasSvg" +
+                "    + ' cls=\"' + cls + '\"\\n';" +
                 "}" +
                 "return info;");
             System.out.println("[DELETE] Buttons on detail page:\n" + btnDebug);
@@ -761,31 +774,55 @@ public class IssuesSmokeTestNG extends BaseTest {
             dismissBackdrops();
             boolean deleteCompleted = false;
 
-            // Step 5a: Click the ⋮ (kebab) button — rightmost small icon button near the top
+            // Step 5a: Click the ⋮ (kebab) button
+            // From screenshot: the ⋮ is at far right of the issue title row (~y:211)
+            // It's a small icon button with an SVG containing 3 vertical dots
             logStep("Step 5a: Clicking ⋮ menu button...");
             Boolean kebabClicked = (Boolean) jsExec.executeScript(
-                "var btns = document.querySelectorAll('button');" +
+                "var btns = document.querySelectorAll('button, [role=\"button\"], .MuiIconButton-root');" +
                 "var candidates = [];" +
                 "for (var b of btns) {" +
                 "  var r = b.getBoundingClientRect();" +
                 "  var hasSvg = b.querySelector('svg');" +
                 "  var text = b.textContent.trim();" +
-                "  if (r.width > 0 && r.width < 60 && r.height < 60 && r.top < 300 && hasSvg && text.length < 3) {" +
-                "    candidates.push({el: b, left: r.left, top: r.top});" +
+                "  if (r.width > 0 && r.width < 60 && r.height < 60 && hasSvg && text.length < 3) {" +
+                "    candidates.push({el: b, left: r.left, top: r.top, w: r.width, h: r.height," +
+                "      label: (b.getAttribute('aria-label') || '').toLowerCase()," +
+                "      cls: (b.className || '').toString().toLowerCase()});" +
                 "  }" +
                 "}" +
-                // Sort by rightmost position — the ⋮ is the rightmost icon button
+                // Strategy 1: Look for aria-label containing 'more' or 'options' or 'menu'
+                "for (var c of candidates) {" +
+                "  if (c.label.includes('more') || c.label.includes('option') || c.label.includes('menu') || c.label.includes('action')) {" +
+                "    c.el.click(); return true;" +
+                "  }" +
+                "}" +
+                // Strategy 2: Look for MoreVert SVG (3 vertical dots) — has a specific path
+                "for (var c of candidates) {" +
+                "  var paths = c.el.querySelectorAll('svg path');" +
+                "  for (var p of paths) {" +
+                "    var d = (p.getAttribute('d') || '');" +
+                // MUI MoreVert icon path starts with specific pattern
+                "    if (d.includes('12 8c1.1') || d.includes('12 4') || d.includes('M12') || d.includes('M6 10')) {" +
+                "      c.el.click(); return true;" +
+                "    }" +
+                "  }" +
+                "}" +
+                // Strategy 3: Rightmost small icon button in the title area (y between 100-300)
+                "var titleArea = candidates.filter(function(c) { return c.top > 100 && c.top < 300; });" +
+                "titleArea.sort(function(a,b) { return b.left - a.left; });" +
+                "if (titleArea.length > 0) { titleArea[0].el.click(); return true; }" +
+                // Strategy 4: Rightmost small icon button excluding known ones
                 "candidates.sort(function(a,b) { return b.left - a.left; });" +
                 "for (var c of candidates) {" +
-                "  var label = (c.el.getAttribute('aria-label') || '').toLowerCase();" +
-                "  if (!label.includes('back') && !label.includes('close') && !label.includes('notification') && !label.includes('release')) {" +
+                "  if (!c.label.includes('back') && !c.label.includes('close') && !c.label.includes('release') && !c.label.includes('notification')) {" +
                 "    c.el.click(); return true;" +
                 "  }" +
                 "}" +
                 "return false;");
             Assert.assertTrue(Boolean.TRUE.equals(kebabClicked), "Could not find or click the ⋮ menu button");
             logStep("⋮ menu button clicked");
-            pause(1500);
+            pause(2000);
 
             // Step 5b: Debug — dump what appeared after ⋮ click
             logStep("Step 5b: Looking for menu items after ⋮ click...");
