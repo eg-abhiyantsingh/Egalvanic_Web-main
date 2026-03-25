@@ -766,104 +766,193 @@ public class IssuesSmokeTestNG extends BaseTest {
             System.out.println("[DELETE] Buttons on detail page:\n" + btnDebug);
 
             // ─── 5. Delete flow: ⋮ → Edit Issue → Delete Issue button ─────
-            // The actual UI flow is:
-            //   1. Click ⋮ (three dots/kebab) button at top-right
-            //   2. Click "Edit Issue" from the dropdown menu
-            //   3. In the Edit Issue drawer, click "Delete Issue" (red button, bottom-left)
+            // The actual UI flow (from manual testing):
+            //   1. Click ⋮ (three dots/kebab) — rightmost icon button in issue header row
+            //   2. Click "Edit Issue" from the dropdown menu that appears
+            //   3. In the Edit Issue drawer, click "Delete Issue" red button (bottom-left)
             //   4. Confirm deletion in the confirmation dialog
+            //
+            // Key findings from debug output:
+            //   - Issue header row is at y≈80 (not 100-300 as previously assumed)
+            //   - BTN[22] (1278,82) = chevron/collapse, BTN[23] (1316,82) = ⋮ kebab
+            //   - Both are MuiIconButton-sizeSmall, no aria-label, no text, have SVG
+            //   - The ⋮ is the RIGHTMOST of the two
+            //   - Must exclude: back arrow (BTN[21] at 280,80), sort buttons, FAB, top bar buttons
             dismissBackdrops();
             boolean deleteCompleted = false;
 
-            // Step 5a: Click the ⋮ (kebab) button
-            // From screenshot: the ⋮ is at far right of the issue title row (~y:211)
-            // It's a small icon button with an SVG containing 3 vertical dots
-            logStep("Step 5a: Clicking ⋮ menu button...");
-            Boolean kebabClicked = (Boolean) jsExec.executeScript(
-                "var btns = document.querySelectorAll('button, [role=\"button\"], .MuiIconButton-root');" +
-                "var candidates = [];" +
+            // ────────────────────────────────────────────────────────────────
+            // PART 1: Click the ⋮ (kebab) button
+            // ────────────────────────────────────────────────────────────────
+            logStep("PART 1: Finding and clicking ⋮ menu button...");
+
+            // Identify the ⋮ precisely: it's a MuiIconButton-sizeSmall in the
+            // issue header (y 50-150), with SVG, no text, no aria-label, and
+            // it's the RIGHTMOST such button at that y level.
+            String kebabInfo = (String) jsExec.executeScript(
+                "var btns = document.querySelectorAll('button, [role=\"button\"]');" +
+                "var headerIcons = [];" +
                 "for (var b of btns) {" +
                 "  var r = b.getBoundingClientRect();" +
-                "  var hasSvg = b.querySelector('svg');" +
+                "  var hasSvg = b.querySelector('svg') ? true : false;" +
                 "  var text = b.textContent.trim();" +
-                "  if (r.width > 0 && r.width < 60 && r.height < 60 && hasSvg && text.length < 3) {" +
-                "    candidates.push({el: b, left: r.left, top: r.top, w: r.width, h: r.height," +
-                "      label: (b.getAttribute('aria-label') || '').toLowerCase()," +
-                "      cls: (b.className || '').toString().toLowerCase()});" +
+                "  var label = b.getAttribute('aria-label') || '';" +
+                "  var cls = (b.className || '').toString();" +
+                // Filter: small icon button, in header area (y 50-150), has SVG, minimal text
+                "  if (r.width > 0 && r.width <= 50 && r.height <= 50" +
+                "      && r.top >= 50 && r.top <= 150" +
+                "      && hasSvg && text.length < 3" +
+                "      && !label.toLowerCase().includes('back')" +
+                "      && !cls.includes('MuiFab')) {" +
+                "    headerIcons.push({el: b, left: r.left, top: r.top," +
+                "      label: label, cls: cls.substring(0,60)});" +
                 "  }" +
                 "}" +
-                // Strategy 1: Look for aria-label containing 'more' or 'options' or 'menu'
-                "for (var c of candidates) {" +
-                "  if (c.label.includes('more') || c.label.includes('option') || c.label.includes('menu') || c.label.includes('action')) {" +
-                "    c.el.click(); return true;" +
-                "  }" +
+                // Sort rightmost first
+                "headerIcons.sort(function(a,b) { return b.left - a.left; });" +
+                // Log what we found
+                "var info = 'Header icons found: ' + headerIcons.length + '\\n';" +
+                "for (var i = 0; i < headerIcons.length; i++) {" +
+                "  info += '  [' + i + '] left=' + Math.round(headerIcons[i].left)" +
+                "    + ' top=' + Math.round(headerIcons[i].top)" +
+                "    + ' label=\"' + headerIcons[i].label + '\"'" +
+                "    + ' cls=\"' + headerIcons[i].cls + '\"\\n';" +
                 "}" +
-                // Strategy 2: Look for MoreVert SVG (3 vertical dots) — has a specific path
-                "for (var c of candidates) {" +
-                "  var paths = c.el.querySelectorAll('svg path');" +
-                "  for (var p of paths) {" +
-                "    var d = (p.getAttribute('d') || '');" +
-                // MUI MoreVert icon path starts with specific pattern
-                "    if (d.includes('12 8c1.1') || d.includes('12 4') || d.includes('M12') || d.includes('M6 10')) {" +
-                "      c.el.click(); return true;" +
-                "    }" +
-                "  }" +
+                // Click the rightmost one (the ⋮)
+                "if (headerIcons.length > 0) {" +
+                "  headerIcons[0].el.click();" +
+                "  info += 'CLICKED: index 0 (rightmost) at left=' + Math.round(headerIcons[0].left);" +
+                "} else {" +
+                "  info += 'NO HEADER ICONS FOUND';" +
                 "}" +
-                // Strategy 3: Rightmost small icon button in the title area (y between 100-300)
-                "var titleArea = candidates.filter(function(c) { return c.top > 100 && c.top < 300; });" +
-                "titleArea.sort(function(a,b) { return b.left - a.left; });" +
-                "if (titleArea.length > 0) { titleArea[0].el.click(); return true; }" +
-                // Strategy 4: Rightmost small icon button excluding known ones
-                "candidates.sort(function(a,b) { return b.left - a.left; });" +
-                "for (var c of candidates) {" +
-                "  if (!c.label.includes('back') && !c.label.includes('close') && !c.label.includes('release') && !c.label.includes('notification')) {" +
-                "    c.el.click(); return true;" +
-                "  }" +
-                "}" +
-                "return false;");
-            Assert.assertTrue(Boolean.TRUE.equals(kebabClicked), "Could not find or click the ⋮ menu button");
-            logStep("⋮ menu button clicked");
+                "return info;");
+            System.out.println("[DELETE] Kebab search:\n" + kebabInfo);
+            Assert.assertTrue(kebabInfo != null && kebabInfo.contains("CLICKED"),
+                "Could not find ⋮ button in issue header. " + kebabInfo);
+            logStep("⋮ button clicked");
             pause(2000);
 
-            // Step 5b: Debug — dump what appeared after ⋮ click
-            logStep("Step 5b: Looking for menu items after ⋮ click...");
-            String menuDebug = (String) jsExec.executeScript(
+            // Verify a menu appeared — if not, the click hit the wrong button
+            String menuCheck = (String) jsExec.executeScript(
                 "var info = '';" +
-                // Check for MUI menus/popovers
-                "var menus = document.querySelectorAll('[role=\"menu\"], .MuiMenu-root, .MuiPopover-root, .MuiPopper-root');" +
-                "info += 'Menus/Popovers: ' + menus.length + '\\n';" +
-                // Check menu items
+                "var menus = document.querySelectorAll('[role=\"menu\"], .MuiMenu-root, .MuiPopover-root');" +
+                "var visMenus = 0;" +
+                "for (var m of menus) { if (m.getBoundingClientRect().width > 0) visMenus++; }" +
+                "info += 'Visible menus: ' + visMenus + '\\n';" +
                 "var items = document.querySelectorAll('[role=\"menuitem\"], .MuiMenuItem-root');" +
-                "info += 'MenuItems: ' + items.length + '\\n';" +
-                "for (var i = 0; i < items.length; i++) {" +
-                "  var it = items[i]; var r = it.getBoundingClientRect();" +
-                "  info += '  ITEM[' + i + '] text=\"' + it.textContent.trim().substring(0,50) + '\" visible=' + (r.width > 0) + '\\n';" +
+                "var visItems = 0;" +
+                "for (var it of items) { if (it.getBoundingClientRect().width > 0) visItems++; }" +
+                "info += 'Visible menu items: ' + visItems + '\\n';" +
+                // Dump all visible menu items
+                "for (var it of items) {" +
+                "  var r = it.getBoundingClientRect();" +
+                "  if (r.width > 0) info += '  \"' + it.textContent.trim().substring(0,50) + '\"\\n';" +
                 "}" +
-                // Check any popover/dropdown content
-                "var pops = document.querySelectorAll('.MuiPopover-paper, .MuiMenu-paper, .MuiPopper-root, [role=\"presentation\"] .MuiPaper-root');" +
-                "info += 'Popover papers: ' + pops.length + '\\n';" +
-                "for (var p = 0; p < pops.length; p++) {" +
-                "  var el = pops[p]; var r = el.getBoundingClientRect();" +
-                "  info += '  POP[' + p + '] text=\"' + el.textContent.trim().substring(0,80) + '\" vis=' + (r.width > 0) + '\\n';" +
+                // Also check for any new overlays/popovers that appeared
+                "var papers = document.querySelectorAll('.MuiPopover-paper, .MuiMenu-paper');" +
+                "var visPapers = 0;" +
+                "for (var p of papers) { if (p.getBoundingClientRect().width > 0) visPapers++; }" +
+                "info += 'Visible popover papers: ' + visPapers + '\\n';" +
+                "for (var p of papers) {" +
+                "  var r = p.getBoundingClientRect();" +
+                "  if (r.width > 0) info += '  Paper text: \"' + p.textContent.trim().substring(0,80) + '\"\\n';" +
                 "}" +
-                // Check for any newly visible elements with 'edit' or 'delete' text
-                "var all = document.querySelectorAll('*');" +
-                "var found = [];" +
-                "for (var el of all) {" +
-                "  var t = el.textContent.trim().toLowerCase();" +
+                // Check for any visible elements containing 'Edit'
+                "var edits = document.querySelectorAll('*');" +
+                "var editFound = [];" +
+                "for (var el of edits) {" +
+                "  var t = el.textContent.trim();" +
                 "  var r = el.getBoundingClientRect();" +
-                "  if (r.width > 0 && el.children.length === 0 && (t.includes('edit') || t.includes('delete'))) {" +
-                "    found.push(el.tagName + ': \"' + el.textContent.trim().substring(0,40) + '\"');" +
+                "  if (r.width > 0 && el.children.length === 0 && t.length < 30 && t.toLowerCase().includes('edit')) {" +
+                "    editFound.push(el.tagName + '[' + Math.round(r.left) + ',' + Math.round(r.top) + ']: \"' + t + '\"');" +
                 "  }" +
                 "}" +
-                "info += 'Elements with edit/delete: ' + found.length + '\\n';" +
-                "for (var f of found) info += '  ' + f + '\\n';" +
+                "info += 'Leaf elements with edit: ' + editFound.length + '\\n';" +
+                "for (var f of editFound) info += '  ' + f + '\\n';" +
                 "return info;");
-            System.out.println("[DELETE] Menu state after ⋮ click:\n" + menuDebug);
+            System.out.println("[DELETE] After ⋮ click — menu state:\n" + menuCheck);
 
-            // Now try to click "Edit Issue" from whatever appeared
+            // If no menu appeared, try clicking via Selenium Actions (dispatchEvent)
+            // JS .click() might not trigger React's synthetic event system properly
+            if (menuCheck.contains("Visible menus: 0") && menuCheck.contains("Visible menu items: 0")
+                    && menuCheck.contains("Visible popover papers: 0")) {
+                logStep("No menu appeared from JS click — trying dispatchEvent and Selenium click...");
+
+                // Re-find the ⋮ button and try dispatchEvent with bubbles
+                Boolean retryClick = (Boolean) jsExec.executeScript(
+                    "var btns = document.querySelectorAll('button, [role=\"button\"]');" +
+                    "var best = null; var bestLeft = -1;" +
+                    "for (var b of btns) {" +
+                    "  var r = b.getBoundingClientRect();" +
+                    "  var hasSvg = b.querySelector('svg') ? true : false;" +
+                    "  var text = b.textContent.trim();" +
+                    "  var label = b.getAttribute('aria-label') || '';" +
+                    "  var cls = (b.className || '').toString();" +
+                    "  if (r.width > 0 && r.width <= 50 && r.height <= 50" +
+                    "      && r.top >= 50 && r.top <= 150" +
+                    "      && hasSvg && text.length < 3" +
+                    "      && !label.toLowerCase().includes('back')" +
+                    "      && !cls.includes('MuiFab')" +
+                    "      && r.left > bestLeft) {" +
+                    "    best = b; bestLeft = r.left;" +
+                    "  }" +
+                    "}" +
+                    "if (!best) return false;" +
+                    // Try multiple click approaches
+                    "var r = best.getBoundingClientRect();" +
+                    "var cx = r.left + r.width/2; var cy = r.top + r.height/2;" +
+                    // Approach 1: MouseEvent with full event chain
+                    "best.dispatchEvent(new MouseEvent('mousedown', {bubbles:true, clientX:cx, clientY:cy}));" +
+                    "best.dispatchEvent(new MouseEvent('mouseup', {bubbles:true, clientX:cx, clientY:cy}));" +
+                    "best.dispatchEvent(new MouseEvent('click', {bubbles:true, clientX:cx, clientY:cy}));" +
+                    "return true;");
+                if (Boolean.TRUE.equals(retryClick)) {
+                    logStep("Retried ⋮ click via dispatchEvent");
+                    pause(2000);
+                }
+
+                // If still no menu, try Selenium WebElement click as last resort
+                String stillNoMenu = (String) jsExec.executeScript(
+                    "var menus = document.querySelectorAll('[role=\"menu\"]');" +
+                    "for (var m of menus) { if (m.getBoundingClientRect().width > 0) return 'found'; }" +
+                    "var items = document.querySelectorAll('[role=\"menuitem\"]');" +
+                    "for (var it of items) { if (it.getBoundingClientRect().width > 0) return 'found'; }" +
+                    "return 'none';");
+                if ("none".equals(stillNoMenu)) {
+                    logStep("Still no menu — trying Selenium WebElement.click()...");
+                    try {
+                        // Find the rightmost small icon button in header via Selenium
+                        java.util.List<org.openqa.selenium.WebElement> iconBtns = driver.findElements(
+                            org.openqa.selenium.By.cssSelector(".MuiIconButton-sizeSmall"));
+                        org.openqa.selenium.WebElement rightmost = null;
+                        int maxX = 0;
+                        for (org.openqa.selenium.WebElement btn : iconBtns) {
+                            org.openqa.selenium.Point loc = btn.getLocation();
+                            org.openqa.selenium.Dimension size = btn.getSize();
+                            if (loc.getY() >= 50 && loc.getY() <= 150 && size.getWidth() <= 50
+                                    && loc.getX() > maxX && btn.isDisplayed()) {
+                                maxX = loc.getX();
+                                rightmost = btn;
+                            }
+                        }
+                        if (rightmost != null) {
+                            rightmost.click();
+                            logStep("Selenium click on ⋮ at x=" + maxX);
+                            pause(2000);
+                        }
+                    } catch (Exception se) {
+                        logStep("Selenium click failed: " + se.getMessage());
+                    }
+                }
+            }
+
+            // ────────────────────────────────────────────────────────────────
+            // PART 2: Click "Edit Issue" from the dropdown menu
+            // ────────────────────────────────────────────────────────────────
+            logStep("PART 2: Finding 'Edit Issue' in menu...");
             Boolean editClicked = (Boolean) jsExec.executeScript(
-                // Strategy 1: MUI menu items
-                "var items = document.querySelectorAll('[role=\"menuitem\"], .MuiMenuItem-root, [role=\"menu\"] li, .MuiMenu-list li, .MuiPopover-root li');" +
+                // Strategy 1: Standard MUI menu items
+                "var items = document.querySelectorAll('[role=\"menuitem\"], .MuiMenuItem-root');" +
                 "for (var item of items) {" +
                 "  var text = item.textContent.trim();" +
                 "  var r = item.getBoundingClientRect();" +
@@ -871,7 +960,18 @@ public class IssuesSmokeTestNG extends BaseTest {
                 "    item.click(); return true;" +
                 "  }" +
                 "}" +
-                // Strategy 2: Any visible leaf element with exact text
+                // Strategy 2: Any list item in popover/menu containers
+                "var containers = document.querySelectorAll('.MuiPopover-paper, .MuiMenu-paper, .MuiPopper-root, [role=\"presentation\"] .MuiPaper-root');" +
+                "for (var c of containers) {" +
+                "  if (c.getBoundingClientRect().width <= 0) continue;" +
+                "  var children = c.querySelectorAll('li, div, span, a, button');" +
+                "  for (var ch of children) {" +
+                "    var t = ch.textContent.trim();" +
+                "    var r = ch.getBoundingClientRect();" +
+                "    if (r.width > 0 && (t === 'Edit Issue' || t === 'Edit')) { ch.click(); return true; }" +
+                "  }" +
+                "}" +
+                // Strategy 3: Any visible leaf element with 'Edit Issue' text
                 "var all = document.querySelectorAll('*');" +
                 "for (var el of all) {" +
                 "  var t = el.textContent.trim();" +
@@ -880,61 +980,75 @@ public class IssuesSmokeTestNG extends BaseTest {
                 "    el.click(); return true;" +
                 "  }" +
                 "}" +
-                // Strategy 3: Click parent of SVG + text containing 'Edit'
-                "var pops = document.querySelectorAll('.MuiPopover-paper *, .MuiMenu-paper *, .MuiPopper-root *');" +
-                "for (var p of pops) {" +
-                "  var t = p.textContent.trim();" +
-                "  var r = p.getBoundingClientRect();" +
-                "  if (r.width > 0 && t.includes('Edit')) { p.click(); return true; }" +
-                "}" +
                 "return false;");
             if (!Boolean.TRUE.equals(editClicked)) {
-                // Take screenshot for debug and fail with helpful info
                 ScreenshotUtil.captureScreenshot("testDeleteIssue_NO_EDIT_MENU");
-                Assert.fail("Could not find 'Edit Issue' menu item. Menu debug:\n" + menuDebug);
+                Assert.fail("Could not find 'Edit Issue' menu item.\nMenu state:\n" + menuCheck);
             }
             logStep("'Edit Issue' clicked — waiting for drawer to open");
-            pause(2000);
+            pause(3000);
 
-            // Step 5c: Click "Delete Issue" button in the Edit Issue drawer
-            // It's a red button at the bottom-left of the drawer with text "Delete Issue"
-            logStep("Step 5c: Clicking 'Delete Issue' button in drawer...");
+            // ────────────────────────────────────────────────────────────────
+            // PART 3: Click "Delete Issue" button in the Edit Issue drawer
+            // ────────────────────────────────────────────────────────────────
+            // From screenshot: red button at bottom-left with trash icon + "Delete Issue"
+            logStep("PART 3: Finding 'Delete Issue' button in drawer...");
+
+            // Wait for drawer to fully render
+            for (int dw = 0; dw < 10; dw++) {
+                Boolean found = (Boolean) jsExec.executeScript(
+                    "var btns = document.querySelectorAll('button');" +
+                    "for (var b of btns) {" +
+                    "  if (b.textContent.trim().includes('Delete Issue') && b.getBoundingClientRect().width > 0) return true;" +
+                    "}" +
+                    "return false;");
+                if (Boolean.TRUE.equals(found)) break;
+                pause(500);
+            }
+
             Boolean deleteClicked = (Boolean) jsExec.executeScript(
                 "var btns = document.querySelectorAll('button');" +
                 "for (var b of btns) {" +
                 "  var text = b.textContent.trim();" +
                 "  var r = b.getBoundingClientRect();" +
-                "  if (r.width > 0 && (text === 'Delete Issue' || text === '\\uD83D\\uDDD1 Delete Issue' || text.includes('Delete Issue'))) {" +
+                "  if (r.width > 0 && text.includes('Delete Issue')) {" +
                 "    b.click(); return true;" +
                 "  }" +
                 "}" +
                 "return false;");
-            Assert.assertTrue(Boolean.TRUE.equals(deleteClicked), "Could not find 'Delete Issue' button in Edit drawer");
-            logStep("'Delete Issue' button clicked — waiting for confirmation dialog");
+            Assert.assertTrue(Boolean.TRUE.equals(deleteClicked),
+                "Could not find 'Delete Issue' button in Edit drawer");
+            logStep("'Delete Issue' button clicked");
             pause(2000);
 
-            // Step 5d: Confirm deletion in the confirmation dialog
-            logStep("Step 5d: Confirming deletion...");
-            // Try multiple times — dialog may take a moment to appear
-            for (int attempt = 0; attempt < 5; attempt++) {
+            // ────────────────────────────────────────────────────────────────
+            // PART 4: Confirm deletion in the confirmation dialog
+            // ────────────────────────────────────────────────────────────────
+            logStep("PART 4: Confirming deletion...");
+            for (int attempt = 0; attempt < 8; attempt++) {
+                // Check if a confirmation dialog appeared
                 Boolean confirmed = (Boolean) jsExec.executeScript(
-                    "var btns = document.querySelectorAll('[role=\"dialog\"] button, .MuiDialog-root button');" +
-                    "for (var b of btns) {" +
-                    "  var text = b.textContent.trim().toLowerCase();" +
-                    "  var r = b.getBoundingClientRect();" +
-                    "  if (r.width > 0 && (text === 'delete' || text === 'confirm' || text === 'yes' || text === 'ok'" +
-                    "      || text === 'delete issue')) {" +
-                    "    b.click(); return true;" +
+                    // Look in dialogs first
+                    "var dialogs = document.querySelectorAll('[role=\"dialog\"], [role=\"alertdialog\"], .MuiDialog-root');" +
+                    "for (var d of dialogs) {" +
+                    "  var btns = d.querySelectorAll('button');" +
+                    "  for (var b of btns) {" +
+                    "    var text = b.textContent.trim().toLowerCase();" +
+                    "    var r = b.getBoundingClientRect();" +
+                    "    if (r.width > 0 && (text === 'delete' || text === 'confirm' || text === 'yes'" +
+                    "        || text === 'ok' || text === 'delete issue' || text.includes('delete'))) {" +
+                    "      b.click(); return true;" +
+                    "    }" +
                     "  }" +
                     "}" +
-                    // Also check for any red/error styled confirm button
-                    "btns = document.querySelectorAll('button');" +
-                    "for (var b of btns) {" +
+                    // Also look for error/danger styled buttons anywhere
+                    "var allBtns = document.querySelectorAll('button');" +
+                    "for (var b of allBtns) {" +
                     "  var text = b.textContent.trim().toLowerCase();" +
                     "  var cls = (b.className || '').toLowerCase();" +
                     "  var r = b.getBoundingClientRect();" +
                     "  if (r.width > 0 && (text === 'delete' || text === 'confirm')" +
-                    "      && (cls.includes('error') || cls.includes('danger') || cls.includes('warning'))) {" +
+                    "      && (cls.includes('error') || cls.includes('danger') || cls.includes('warning') || cls.includes('contained'))) {" +
                     "    b.click(); return true;" +
                     "  }" +
                     "}" +
@@ -944,21 +1058,28 @@ public class IssuesSmokeTestNG extends BaseTest {
                     logStep("Delete confirmed on attempt " + (attempt + 1));
                     break;
                 }
+                // Maybe no confirmation needed — check if already navigated back
+                String url = (String) jsExec.executeScript("return window.location.href;");
+                if (url != null && url.matches(".*/issues/?$")) {
+                    deleteCompleted = true;
+                    logStep("Already back on issues list — delete completed without confirmation");
+                    break;
+                }
                 pause(1000);
             }
 
-            // If no confirmation dialog appeared, maybe the delete went through directly
+            // ────────────────────────────────────────────────────────────────
+            // PART 5: Verify deletion
+            // ────────────────────────────────────────────────────────────────
+            pause(3000);
+            // Check if we're back on issues list
             if (!deleteCompleted) {
-                pause(3000);
-                String currentUrl = (String) jsExec.executeScript("return window.location.href;");
-                if (currentUrl != null && (currentUrl.matches(".*/issues/?$") || !currentUrl.contains("/issues/"))) {
+                String url = (String) jsExec.executeScript("return window.location.href;");
+                if (url != null && (url.matches(".*/issues/?$") || !url.contains("/issues/"))) {
                     deleteCompleted = true;
-                    logStep("Delete completed — navigated away from detail page");
+                    logStep("Navigated back to issues list after delete");
                 }
             }
-
-            // ─── 6. Verify ──────────────────────────────────────────────────
-            pause(3000);
             Assert.assertTrue(deleteCompleted, "Issue '" + firstTitle + "' delete was not completed");
             logStepWithScreenshot("Issue deleted successfully");
             ExtentReportManager.logPass("Issue deleted: " + firstTitle);
