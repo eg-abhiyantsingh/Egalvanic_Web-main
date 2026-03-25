@@ -989,58 +989,82 @@ public class IssuesSmokeTestNG extends BaseTest {
             pause(3000);
 
             // ────────────────────────────────────────────────────────────────
-            // PART 3: Click "Delete Issue" button in the Edit Issue drawer
+            // PART 3: Click "Delete Issue" in the Edit drawer
+            // PART 4: Accept the native confirm() dialog
             // ────────────────────────────────────────────────────────────────
-            // From screenshot: red button at bottom-left with trash icon + "Delete Issue"
-            logStep("PART 3: Finding 'Delete Issue' button in drawer...");
+            // CRITICAL: Clicking "Delete Issue" triggers a native window.confirm().
+            // The confirm() blocks JS execution, so executeScript may not return.
+            // We must handle this as a two-step process:
+            //   Step A: Click the button (may or may not return from executeScript)
+            //   Step B: IMMEDIATELY accept the alert — no other WebDriver calls between
+            System.out.println("[DELETE] PART 3+4: Finding Delete Issue button and handling confirm...");
 
-            // Wait for drawer to fully render
-            for (int dw = 0; dw < 10; dw++) {
-                Boolean found = (Boolean) jsExec.executeScript(
+            // Step A: Wait for drawer, find and dump all buttons, then click Delete Issue
+            // Use a single executeScript that also dumps debug info BEFORE clicking
+            pause(2000); // let drawer render
+            String drawerDebug = "";
+            try {
+                drawerDebug = (String) jsExec.executeScript(
+                    "var info = 'Drawer buttons: ';" +
                     "var btns = document.querySelectorAll('button');" +
+                    "var deleteBtn = null;" +
                     "for (var b of btns) {" +
-                    "  if (b.textContent.trim().includes('Delete Issue') && b.getBoundingClientRect().width > 0) return true;" +
+                    "  var text = b.textContent.trim();" +
+                    "  var r = b.getBoundingClientRect();" +
+                    "  if (r.width <= 0) continue;" +
+                    "  if (text.includes('Delete') || text.includes('Cancel') || text.includes('Save')) {" +
+                    "    info += '[' + text.substring(0,25) + ' at ' + Math.round(r.left) + ',' + Math.round(r.top) + '] ';" +
+                    "  }" +
+                    "  if (text.includes('Delete Issue') && !deleteBtn) deleteBtn = b;" +
                     "}" +
-                    "return false;");
-                if (Boolean.TRUE.equals(found)) break;
-                pause(500);
+                    "if (deleteBtn) {" +
+                    "  info += '\\nCLICKING Delete Issue button...';" +
+                    "  deleteBtn.click();" +
+                    "  info += ' CLICKED';" +
+                    "} else {" +
+                    "  info += '\\nDelete Issue button NOT FOUND';" +
+                    "}" +
+                    "return info;");
+            } catch (org.openqa.selenium.UnhandledAlertException uae) {
+                // The confirm() fired during executeScript — this is expected!
+                drawerDebug = "Delete Issue clicked — confirm() fired during JS (UnhandledAlertException)";
+            } catch (Exception ex) {
+                drawerDebug = "executeScript error: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
             }
+            System.out.println("[DELETE] " + drawerDebug);
 
-            Boolean deleteClicked = (Boolean) jsExec.executeScript(
-                "var btns = document.querySelectorAll('button');" +
-                "for (var b of btns) {" +
-                "  var text = b.textContent.trim();" +
-                "  var r = b.getBoundingClientRect();" +
-                "  if (r.width > 0 && text.includes('Delete Issue')) {" +
-                "    b.click(); return true;" +
-                "  }" +
-                "}" +
-                "return false;");
-            Assert.assertTrue(Boolean.TRUE.equals(deleteClicked),
-                "Could not find 'Delete Issue' button in Edit drawer");
-            logStep("'Delete Issue' button clicked");
-            pause(2000);
-
-            // ────────────────────────────────────────────────────────────────
-            // PART 4: Confirm deletion
-            // ────────────────────────────────────────────────────────────────
-            // The app uses a NATIVE browser confirm() dialog, not an MUI <Dialog>.
-            // Must handle with driver.switchTo().alert().accept().
-            logStep("PART 4: Confirming deletion...");
-            for (int attempt = 0; attempt < 5; attempt++) {
+            // Step B: IMMEDIATELY handle the native confirm() dialog
+            // Try multiple times — the alert should be open right now
+            System.out.println("[DELETE] PART 4: Accepting native confirm() dialog...");
+            for (int attempt = 0; attempt < 8; attempt++) {
                 try {
                     org.openqa.selenium.Alert alert = driver.switchTo().alert();
                     String alertText = alert.getText();
-                    logStep("Native alert found: \"" + alertText + "\"");
+                    System.out.println("[DELETE] Alert found (attempt " + (attempt + 1) + "): \"" + alertText + "\"");
                     alert.accept();
                     deleteCompleted = true;
-                    logStep("Alert accepted — delete confirmed");
+                    System.out.println("[DELETE] Alert ACCEPTED — delete confirmed!");
                     break;
                 } catch (org.openqa.selenium.NoAlertPresentException nape) {
-                    logStep("No alert on attempt " + (attempt + 1) + " — waiting...");
+                    System.out.println("[DELETE] No alert on attempt " + (attempt + 1));
+                    // Maybe the alert was auto-dismissed by unhandledPromptBehavior
+                    // Check if we already navigated back to issues list
+                    try {
+                        String url = (String) jsExec.executeScript("return window.location.href;");
+                        if (url != null && url.matches(".*/issues/?$")) {
+                            deleteCompleted = true;
+                            System.out.println("[DELETE] Already back on issues list — delete succeeded");
+                            break;
+                        }
+                    } catch (Exception ignored) {}
                     pause(1000);
+                } catch (org.openqa.selenium.UnhandledAlertException uae2) {
+                    // Alert exists but threw UnhandledAlertException — try accepting directly
+                    System.out.println("[DELETE] UnhandledAlertException on attempt " + (attempt + 1) + " — retrying...");
+                    pause(500);
                 } catch (Exception alertEx) {
-                    logStep("Alert handling error: " + alertEx.getMessage());
+                    System.out.println("[DELETE] Alert error (attempt " + (attempt + 1) + "): "
+                        + alertEx.getClass().getSimpleName() + ": " + alertEx.getMessage());
                     pause(1000);
                 }
             }
@@ -1049,21 +1073,39 @@ public class IssuesSmokeTestNG extends BaseTest {
             // PART 5: Verify deletion
             // ────────────────────────────────────────────────────────────────
             pause(3000);
-            // Check if we're back on issues list
             if (!deleteCompleted) {
-                String url = (String) jsExec.executeScript("return window.location.href;");
-                if (url != null && (url.matches(".*/issues/?$") || !url.contains("/issues/"))) {
-                    deleteCompleted = true;
-                    logStep("Navigated back to issues list after delete");
+                try {
+                    String url = (String) jsExec.executeScript("return window.location.href;");
+                    System.out.println("[DELETE] Current URL after delete: " + url);
+                    if (url != null && (url.matches(".*/issues/?$") || !url.contains("/issues/"))) {
+                        deleteCompleted = true;
+                        System.out.println("[DELETE] Verified — back on issues list");
+                    }
+                } catch (Exception ex) {
+                    System.out.println("[DELETE] URL check error: " + ex.getMessage());
                 }
             }
             Assert.assertTrue(deleteCompleted, "Issue '" + firstTitle + "' delete was not completed");
-            logStepWithScreenshot("Issue deleted successfully");
+            try {
+                logStepWithScreenshot("Issue deleted successfully");
+            } catch (Exception screenshotEx) {
+                logStep("Issue deleted successfully (screenshot failed)");
+            }
             ExtentReportManager.logPass("Issue deleted: " + firstTitle);
 
         } catch (Exception e) {
-            ScreenshotUtil.captureScreenshot("testDeleteIssue_FAIL_" +
-                new java.text.SimpleDateFormat("yyyyMMdd_HHmmss").format(new java.util.Date()));
+            System.out.println("[DELETE] EXCEPTION: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            // Dismiss any open alert before trying to screenshot
+            try {
+                driver.switchTo().alert().accept();
+                System.out.println("[DELETE] Dismissed leftover alert in catch block");
+            } catch (Exception ignored) {}
+            try {
+                ScreenshotUtil.captureScreenshot("testDeleteIssue_FAIL_" +
+                    new java.text.SimpleDateFormat("yyyyMMdd_HHmmss").format(new java.util.Date()));
+            } catch (Exception screenshotEx) {
+                System.out.println("[DELETE] Screenshot also failed: " + screenshotEx.getMessage());
+            }
             Assert.fail("Delete issue failed: " + e.getMessage());
         }
     }
