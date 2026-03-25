@@ -35,9 +35,12 @@ public class LocationPage {
     private static final By CREATE_BTN = By.xpath("//div[@role='dialog']//button[normalize-space()='Create'] | //button[normalize-space()='Create']");
 
     // Add buttons
-    private static final By ADD_BUILDING_BTN = By.xpath("//button[@aria-label='Add Building']");
-    private static final By ADD_FLOOR_BTN = By.xpath("//button[@aria-label='Add Floor']");
-    private static final By ADD_ROOM_BTN = By.xpath("//button[@aria-label='Add Room']");
+    private static final By ADD_BUILDING_BTN = By.xpath(
+        "//button[@aria-label='Add Building' or @title='Add Building' or contains(normalize-space(),'Add Building')]");
+    private static final By ADD_FLOOR_BTN = By.xpath(
+        "//button[@aria-label='Add Floor' or @title='Add Floor' or contains(normalize-space(),'Add Floor')]");
+    private static final By ADD_ROOM_BTN = By.xpath(
+        "//button[@aria-label='Add Room' or @title='Add Room' or contains(normalize-space(),'Add Room')]");
 
     // Delete / Edit
     private static final By DELETE_LOCATION_BTN = By.xpath("//button[@aria-label='Delete' or @title='Delete']");
@@ -145,7 +148,52 @@ public class LocationPage {
 
     // --- CREATE Building ---
 
+    /**
+     * Waits for the locations page content to fully render.
+     * Returns true if the Add Building button is found.
+     */
+    private boolean waitForLocationPageReady() {
+        // Wait up to 15s for the Add Building button to appear
+        for (int i = 0; i < 30; i++) {
+            if (!driver.findElements(ADD_BUILDING_BTN).isEmpty()) {
+                System.out.println("[LocationPage] Add Building button found after " + (i * 500) + "ms");
+                return true;
+            }
+            // Also check for any button with building-related icon/text via JS
+            Boolean found = (Boolean) js.executeScript(
+                "var btns = document.querySelectorAll('button, [role=\"button\"]');" +
+                "for (var b of btns) {" +
+                "  var label = (b.getAttribute('aria-label') || '').toLowerCase();" +
+                "  var title = (b.getAttribute('title') || '').toLowerCase();" +
+                "  var text = (b.textContent || '').toLowerCase().trim();" +
+                "  if (label.includes('add building') || title.includes('add building') || text.includes('add building')) return true;" +
+                "}" +
+                "return false;");
+            if (found != null && found) {
+                System.out.println("[LocationPage] Add Building button found via JS after " + (i * 500) + "ms");
+                return true;
+            }
+            pause(500);
+        }
+        // Dump what buttons ARE on the page for diagnostics
+        String dump = (String) js.executeScript(
+            "var info = 'BUTTONS: ';" +
+            "var btns = document.querySelectorAll('button, [role=\"button\"]');" +
+            "for (var i = 0; i < Math.min(btns.length, 20); i++) {" +
+            "  var b = btns[i]; var r = b.getBoundingClientRect();" +
+            "  if (r.width > 0) {" +
+            "    info += '[' + (b.getAttribute('aria-label')||'') + '|' + (b.getAttribute('title')||'') + '|\"' + b.textContent.trim().substring(0,25) + '\"] ';" +
+            "  }" +
+            "}" +
+            "return info;");
+        System.out.println("[LocationPage] " + dump);
+        return false;
+    }
+
     public void createBuilding(String name, String accessNotes) {
+        if (!waitForLocationPageReady()) {
+            System.out.println("[LocationPage] WARNING: Add Building button not found after wait — trying click anyway");
+        }
         click(ADD_BUILDING_BTN);
         waitForDialog();
         typeField(NAME_INPUT, name);
