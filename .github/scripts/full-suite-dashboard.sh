@@ -169,7 +169,7 @@ print_test_progress() {
   else
     printf "    %s  %-55s %ss\n" "$status_icon" "$test_name" "$duration"
   fi
-  printf "    %d/%d completed   %s\n\n" "$GLOBAL_COMPLETED" "$TOTAL_TESTS" "$elapsed_fmt"
+  printf "    %d/%d completed   ⏱️ %s\n\n" "$GLOBAL_COMPLETED" "$TOTAL_TESTS" "$elapsed_fmt"
 }
 
 # ─────────────────────────────────────────────────────
@@ -182,7 +182,7 @@ print_group_header() {
   local num=$((idx + 1))
 
   echo ""
-  echo "  -- Group ${num}/${TOTAL_GROUPS}: ${name} (${tc} tests) ------------------------------------"
+  echo "  ── Group ${num}/${TOTAL_GROUPS}: ${name} (${tc} tests) ──────────────────────────────────────"
   echo ""
 }
 
@@ -202,11 +202,11 @@ print_group_complete() {
   dur_fmt=$(fmt_duration $dur)
 
   if [ "$f" -gt 0 ]; then
-    echo "  -- FAIL Group ${num}: ${name}  ${p} passed, ${f} failed  (${dur_fmt}) -----"
+    echo "  ── ❌ Group ${num}: ${name}  ${p} passed, ${f} failed  (${dur_fmt}) ─────────────────"
   elif [ "$s" -gt 0 ]; then
-    echo "  -- WARN Group ${num}: ${name}  ${p}/${tc} passed, ${s} skipped  (${dur_fmt}) -----"
+    echo "  ── ⚠️  Group ${num}: ${name}  ${p}/${tc} passed, ${s} skipped  (${dur_fmt}) ─────────────"
   else
-    echo "  -- PASS Group ${num}: ${name}  ${p}/${tc} passed  (${dur_fmt}) -----"
+    echo "  ── ✅ Group ${num}: ${name}  ${p}/${tc} passed  (${dur_fmt}) ──────────────────────"
   fi
   echo ""
 }
@@ -219,18 +219,18 @@ draw_final_dashboard() {
   local elapsed_fmt
   elapsed_fmt=$(fmt_duration $elapsed)
   local completed=$((TOTAL_PASSED + TOTAL_FAILED + TOTAL_SKIPPED))
-  local LINE="=============================================================================="
+  local LINE="══════════════════════════════════════════════════════════════════════════════"
 
   echo ""
   echo ""
-  echo "  +${LINE}"
-  echo "  |"
-  echo "  |   FULL  TEST  SUITE  DASHBOARD  --  FINAL"
-  echo "  |"
-  echo "  |   Chrome (headless) - eGalvanic Web          ${TOTAL_TESTS} tests - ${TOTAL_GROUPS} groups"
-  echo "  |"
-  echo "  +${LINE}"
-  echo "  |"
+  echo "  ╔${LINE}"
+  echo "  ║"
+  echo "  ║   🔥  F U L L   T E S T   S U I T E   D A S H B O A R D   —   F I N A L"
+  echo "  ║"
+  echo "  ║   🌐  Chrome (headless) · eGalvanic Web          ${TOTAL_TESTS} tests · ${TOTAL_GROUPS} groups"
+  echo "  ║"
+  echo "  ╠${LINE}"
+  echo "  ║"
 
   for i in $(seq 0 $((TOTAL_GROUPS - 1))); do
     local num=$((i + 1))
@@ -242,29 +242,29 @@ draw_final_dashboard() {
 
     case "$st" in
       passed)
-        printf "  |   PASS  Group %2d | %-25s    %d/%d passed              %s\n" \
+        printf "  ║   ✅  Group %2d │ %-25s    %d/%d passed              %s\n" \
           "$num" "$name" "${M_PASSED[$i]}" "$tc" "$dur_fmt"
         ;;
       failed)
-        printf "  |   FAIL  Group %2d | %-25s    %d passed, %d failed     %s\n" \
+        printf "  ║   ❌  Group %2d │ %-25s    %d passed, %d failed     %s\n" \
           "$num" "$name" "${M_PASSED[$i]}" "${M_FAILED[$i]}" "$dur_fmt"
         ;;
       *)
-        printf "  |   ??    Group %2d | %-25s    Did not complete\n" \
+        printf "  ║   ⚠️   Group %2d │ %-25s    Did not complete\n" \
           "$num" "$name"
         ;;
     esac
   done
 
-  echo "  |"
-  echo "  +${LINE}"
-  echo "  |"
-  printf "  |   %d/%d tests completed\n" "$completed" "$TOTAL_TESTS"
-  echo "  |"
-  printf "  |   %d passed   %d failed   %d skipped    %s elapsed\n" \
+  echo "  ║"
+  echo "  ╠${LINE}"
+  echo "  ║"
+  printf "  ║   %d/%d tests completed\n" "$completed" "$TOTAL_TESTS"
+  echo "  ║"
+  printf "  ║   ✅ %d passed   ❌ %d failed   ⏭️  %d skipped    ⏱️  %s elapsed\n" \
     "$TOTAL_PASSED" "$TOTAL_FAILED" "$TOTAL_SKIPPED" "$elapsed_fmt"
-  echo "  |"
-  echo "  +${LINE}"
+  echo "  ║"
+  echo "  ╚${LINE}"
   echo ""
 }
 
@@ -275,34 +275,38 @@ draw_final_banner() {
   local elapsed=$(( $(date +%s) - SUITE_START ))
   local elapsed_fmt
   elapsed_fmt=$(fmt_duration $elapsed)
-  local LINE="=============================================================================="
+  local LINE="══════════════════════════════════════════════════════════════════════════════"
 
   echo ""
   if [ $HAS_FAILURE -eq 0 ]; then
-    echo "  +${LINE}"
-    echo "  |"
-    echo "  |     ALL  FULL  SUITE  TESTS  PASSED !"
-    echo "  |"
-    echo "  |     ${TOTAL_PASSED}/${TOTAL_TESTS} tests passed in ${elapsed_fmt}"
-    echo "  |     All ${TOTAL_GROUPS} groups verified successfully"
-    echo "  |"
-    echo "  +${LINE}"
+    echo "  ╔${LINE}"
+    echo "  ║"
+    echo "  ║   🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉"
+    echo "  ║"
+    echo "  ║     ✅  A L L   F U L L   S U I T E   T E S T S   P A S S E D  !"
+    echo "  ║"
+    echo "  ║     ${TOTAL_PASSED}/${TOTAL_TESTS} tests passed in ${elapsed_fmt}"
+    echo "  ║     All ${TOTAL_GROUPS} groups verified successfully"
+    echo "  ║"
+    echo "  ║   🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉"
+    echo "  ║"
+    echo "  ╚${LINE}"
   else
-    echo "  +${LINE}"
-    echo "  |"
-    echo "  |     SOME  TESTS  FAILED"
-    echo "  |"
-    printf "  |     %d/%d passed, %d failed, %d skipped in %s\n" \
+    echo "  ╔${LINE}"
+    echo "  ║"
+    echo "  ║     ❌  S O M E   T E S T S   F A I L E D"
+    echo "  ║"
+    printf "  ║     %d/%d passed, %d failed, %d skipped in %s\n" \
       "$TOTAL_PASSED" "$TOTAL_TESTS" "$TOTAL_FAILED" "$TOTAL_SKIPPED" "$elapsed_fmt"
-    echo "  |"
-    echo "  |     Failed groups:"
+    echo "  ║"
+    echo "  ║     Failed groups:"
     for i in $(seq 0 $((TOTAL_GROUPS - 1))); do
       if [ "${STATUS[$i]}" = "failed" ]; then
-        echo "  |       FAIL Group $((i + 1)): ${GROUP_NAMES[$i]} (${M_FAILED[$i]} failed)"
+        echo "  ║       ❌ Group $((i + 1)): ${GROUP_NAMES[$i]} (${M_FAILED[$i]} failed)"
       fi
     done
-    echo "  |"
-    echo "  +${LINE}"
+    echo "  ║"
+    echo "  ╚${LINE}"
   fi
   echo ""
 }
@@ -329,18 +333,18 @@ parse_results_xml() {
 
 # -- Print Header --
 echo ""
-echo "  +--------------------------------------------------------------------------"
-echo "  |  Full Test Suite Dashboard"
-echo "  |  Chrome (headless) - eGalvanic Web App"
-echo "  |  ${TOTAL_TESTS} tests across ${TOTAL_GROUPS} groups"
-echo "  |"
+echo "  ┌──────────────────────────────────────────────────────────────────────────"
+echo "  │  🚀  Full Test Suite Dashboard"
+echo "  │  🌐  Chrome (headless) · eGalvanic Web App"
+echo "  │  📦  ${TOTAL_TESTS} tests across ${TOTAL_GROUPS} groups"
+echo "  │"
 for i in $(seq 0 $((TOTAL_GROUPS - 1))); do
-  printf "  |  Group %2d: %-25s (%d TCs)  [%s]\n" \
-    "$((i + 1))" "${GROUP_NAMES[$i]}" "${GROUP_TESTS[$i]}" "${GROUP_XMLS[$i]}"
+  printf "  │  📋  Group %2d: %-25s (%d TCs)\n" \
+    "$((i + 1))" "${GROUP_NAMES[$i]}" "${GROUP_TESTS[$i]}"
 done
-echo "  |"
-echo "  |  $(date '+%Y-%m-%d %H:%M:%S')"
-echo "  +--------------------------------------------------------------------------"
+echo "  │"
+echo "  │  ⏰  $(date '+%Y-%m-%d %H:%M:%S')"
+echo "  └──────────────────────────────────────────────────────────────────────────"
 echo ""
 
 
@@ -395,11 +399,11 @@ for i in $(seq 0 $((TOTAL_GROUPS - 1))); do
         fi
 
         if echo "$LINE" | grep -q "PASSED:"; then
-          ICON="PASS"; MOD_PASSED=$((MOD_PASSED + 1)); TOTAL_PASSED=$((TOTAL_PASSED + 1))
+          ICON="✅"; MOD_PASSED=$((MOD_PASSED + 1)); TOTAL_PASSED=$((TOTAL_PASSED + 1))
         elif echo "$LINE" | grep -q "FAILED:"; then
-          ICON="FAIL"; MOD_FAILED=$((MOD_FAILED + 1)); TOTAL_FAILED=$((TOTAL_FAILED + 1))
+          ICON="❌"; MOD_FAILED=$((MOD_FAILED + 1)); TOTAL_FAILED=$((TOTAL_FAILED + 1))
         else
-          ICON="SKIP"; MOD_SKIPPED=$((MOD_SKIPPED + 1)); TOTAL_SKIPPED=$((TOTAL_SKIPPED + 1))
+          ICON="⏭️"; MOD_SKIPPED=$((MOD_SKIPPED + 1)); TOTAL_SKIPPED=$((TOTAL_SKIPPED + 1))
         fi
 
         GLOBAL_COMPLETED=$((GLOBAL_COMPLETED + 1))
@@ -409,7 +413,7 @@ for i in $(seq 0 $((TOTAL_GROUPS - 1))); do
         [ -z "$DURATION" ] || [ "$DURATION" = "$LINE" ] && DURATION="?"
 
         ERROR_REASON=""
-        if [ "$ICON" = "FAIL" ]; then
+        if [ "$ICON" = "❌" ]; then
           NEARBY=$(grep -F -A5 "$LINE" "$LOG_FILE" 2>/dev/null | tail -n +2)
           ERROR_REASON=$(echo "$NEARBY" | grep -i "Error:" | sed 's/.*Error: //' | head -1)
           [ -z "$ERROR_REASON" ] && ERROR_REASON=$(echo "$NEARBY" | grep -i "assert\|exception\|timeout\|not found\|not visible\|NoSuchElement\|could not be located" | sed 's/^[[:space:]]*//' | head -1)
@@ -436,11 +440,11 @@ for i in $(seq 0 $((TOTAL_GROUPS - 1))); do
     LINE=$(grep -E '(PASSED|FAILED|SKIPPED): [A-Za-z_0-9]+\.[A-Za-z_0-9]+ \([0-9]+s\)' "$LOG_FILE" | sed -n "${LAST_COUNT}p")
 
     if echo "$LINE" | grep -q "PASSED:"; then
-      ICON="PASS"; MOD_PASSED=$((MOD_PASSED + 1)); TOTAL_PASSED=$((TOTAL_PASSED + 1))
+      ICON="✅"; MOD_PASSED=$((MOD_PASSED + 1)); TOTAL_PASSED=$((TOTAL_PASSED + 1))
     elif echo "$LINE" | grep -q "FAILED:"; then
-      ICON="FAIL"; MOD_FAILED=$((MOD_FAILED + 1)); TOTAL_FAILED=$((TOTAL_FAILED + 1))
+      ICON="❌"; MOD_FAILED=$((MOD_FAILED + 1)); TOTAL_FAILED=$((TOTAL_FAILED + 1))
     else
-      ICON="SKIP"; MOD_SKIPPED=$((MOD_SKIPPED + 1)); TOTAL_SKIPPED=$((TOTAL_SKIPPED + 1))
+      ICON="⏭️"; MOD_SKIPPED=$((MOD_SKIPPED + 1)); TOTAL_SKIPPED=$((TOTAL_SKIPPED + 1))
     fi
 
     GLOBAL_COMPLETED=$((GLOBAL_COMPLETED + 1))
@@ -449,7 +453,7 @@ for i in $(seq 0 $((TOTAL_GROUPS - 1))); do
     [ -z "$DURATION" ] || [ "$DURATION" = "$LINE" ] && DURATION="?"
 
     ERROR_REASON=""
-    if [ "$ICON" = "FAIL" ]; then
+    if [ "$ICON" = "❌" ]; then
       NEARBY=$(grep -F -A5 "$LINE" "$LOG_FILE" 2>/dev/null | tail -n +2)
       ERROR_REASON=$(echo "$NEARBY" | grep -i "Error:" | sed 's/.*Error: //' | head -1)
       [ -z "$ERROR_REASON" ] && ERROR_REASON=$(echo "$NEARBY" | grep -i "assert\|exception\|timeout\|not found\|not visible\|NoSuchElement\|could not be located" | sed 's/^[[:space:]]*//' | head -1)
@@ -477,8 +481,8 @@ for i in $(seq 0 $((TOTAL_GROUPS - 1))); do
     if [ "$((P + F + S))" -gt 0 ]; then
       local_elapsed=$(( $(date +%s) - SUITE_START ))
       local_elapsed_fmt=$(fmt_duration $local_elapsed)
-      echo "    (parsed from results XML -- real-time output was not available)"
-      printf "    %d/%d completed   %s\n\n" "$GLOBAL_COMPLETED" "$TOTAL_TESTS" "$local_elapsed_fmt"
+      echo "    (parsed from results XML — real-time output was not available)"
+      printf "    %d/%d completed   ⏱️ %s\n\n" "$GLOBAL_COMPLETED" "$TOTAL_TESTS" "$local_elapsed_fmt"
     fi
   fi
 

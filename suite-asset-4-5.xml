@@ -2,6 +2,10 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 <suite name="Full Suite — Asset Parts 4-5 (141 TCs)" verbose="1">
 
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
     <test name="Full Asset Tests Part 4 (65 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.AssetPart4TestNG"/>

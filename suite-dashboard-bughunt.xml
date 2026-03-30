@@ -2,6 +2,10 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 <suite name="Full Suite — Dashboard + BugHunt (105 TCs)" verbose="1">
 
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
     <test name="Dashboard Bug Tests (45 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.DashboardBugTestNG"/>
