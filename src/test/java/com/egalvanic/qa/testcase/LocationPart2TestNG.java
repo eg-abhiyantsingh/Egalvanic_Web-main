@@ -572,10 +572,19 @@ public class LocationPart2TestNG extends BaseTest {
             boolean visible = locationPage.isLocationVisible(updatedName);
             logStep("Floor renamed: " + visible);
 
-            // Rename back
+            // Rename back — if this fails, update testFloorName so later tests still work
             if (visible) {
-                locationPage.selectAndEditLocation(updatedName, testFloorName);
-                pause(2000);
+                try {
+                    locationPage.selectAndEditLocation(updatedName, testFloorName);
+                    pause(2000);
+                    if (!locationPage.isLocationVisible(testFloorName)) {
+                        logStep("Rename-back not visible — updating testFloorName to: " + updatedName);
+                        testFloorName = updatedName;
+                    }
+                } catch (Exception renameBack) {
+                    logStep("Rename-back failed — updating testFloorName to: " + updatedName);
+                    testFloorName = updatedName;
+                }
             }
         } catch (Exception e) {
             logStep("Floor rename: " + e.getMessage());
