@@ -90,7 +90,8 @@ get_group_index() {
 SELECTED="${FULL_SUITE_GROUP:-all}"
 
 if [ "$SELECTED" = "all" ] || [ -z "$SELECTED" ]; then
-  GROUPS=("${ALL_GROUPS[@]}")
+  # NOTE: Cannot use 'GROUPS' — it is a bash built-in (user group IDs).
+  RUN_GROUPS=("${ALL_GROUPS[@]}")
   GROUP_NAMES=("${ALL_GROUP_NAMES[@]}")
   GROUP_TESTS=("${ALL_GROUP_TESTS[@]}")
   GROUP_XMLS=("${ALL_GROUP_XMLS[@]}")
@@ -101,7 +102,7 @@ else
     echo "   Valid: all, auth-site-connection, location-task, workorder-issue, asset-1-2, asset-3, asset-4-5, sld, dashboard-bughunt, load-api, smoke"
     exit 1
   fi
-  GROUPS=("${ALL_GROUPS[$IDX]}")
+  RUN_GROUPS=("${ALL_GROUPS[$IDX]}")
   GROUP_NAMES=("${ALL_GROUP_NAMES[$IDX]}")
   GROUP_TESTS=("${ALL_GROUP_TESTS[$IDX]}")
   GROUP_XMLS=("${ALL_GROUP_XMLS[$IDX]}")
@@ -113,7 +114,7 @@ TOTAL_TESTS=0
 for tc in "${GROUP_TESTS[@]}"; do
   TOTAL_TESTS=$((TOTAL_TESTS + tc))
 done
-TOTAL_GROUPS=${#GROUPS[@]}
+TOTAL_GROUPS=${#RUN_GROUPS[@]}
 
 # ─────────────────────────────────────────────────────
 # STATE TRACKING
@@ -346,7 +347,7 @@ echo ""
 # -- Run each group --
 for i in $(seq 0 $((TOTAL_GROUPS - 1))); do
   GROUP_IDX=$i
-  GROUP_KEY="${GROUPS[$i]}"
+  GROUP_KEY="${RUN_GROUPS[$i]}"
   GROUP_NAME="${GROUP_NAMES[$i]}"
   GROUP_XML="${GROUP_XMLS[$i]}"
   TEST_COUNT="${GROUP_TESTS[$i]}"
@@ -526,7 +527,11 @@ if [ -n "$GITHUB_ENV" ]; then
   echo "SUITE_DURATION=$(( $(date +%s) - SUITE_START ))" >> "$GITHUB_ENV"
 fi
 
-if [ "$TOTAL_PASSED" -eq 0 ] && [ "$TOTAL_TESTS" -gt 0 ]; then
+if [ "$TOTAL_TESTS" -eq 0 ]; then
+  echo "FATAL: No tests were configured to run (TOTAL_TESTS=0)"
+  [ -n "$GITHUB_ENV" ] && echo "SUITE_RESULT=failed" >> "$GITHUB_ENV"
+  exit 1
+elif [ "$TOTAL_PASSED" -eq 0 ] && [ "$TOTAL_TESTS" -gt 0 ]; then
   [ -n "$GITHUB_ENV" ] && echo "SUITE_RESULT=failed" >> "$GITHUB_ENV"
   exit 1
 elif [ $HAS_FAILURE -eq 1 ]; then
