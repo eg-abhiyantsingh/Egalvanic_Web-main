@@ -21,7 +21,7 @@ name: Web Automation Test
 #   smoke-workorder-crud      → Work Order CRUD (6 tests)
 #
 # Requirements:
-#   Secrets: QA_REPO_TOKEN, EMAIL_PASSWORD (optional)
+#   Secrets: EMAIL_PASSWORD (optional)
 # ============================================================
 
 on:
@@ -53,9 +53,6 @@ jobs:
       # ============================================================
       - name: Checkout QA Automation Repository
         uses: actions/checkout@v4
-        with:
-          repository: eg-abhiyantsingh/Egalvanic_Web-main
-          token: ${{ secrets.QA_REPO_TOKEN }}
 
       # ============================================================
       # STEP 2: Setup Build Environment
@@ -274,10 +271,17 @@ jobs:
             fi
           else
             # Single module — use Maven exit code
-            if [ "${{ steps.smoke_tests.outcome }}" = "failure" ]; then
+            OUTCOME="${{ steps.smoke_tests.outcome }}"
+            if [ "$OUTCOME" = "failure" ]; then
               echo "❌ Tests failed"
               exit 1
-            else
+            elif [ "$OUTCOME" = "skipped" ]; then
+              echo "❌ Tests were skipped (setup failure?) — treating as failure"
+              exit 1
+            elif [ "$OUTCOME" = "success" ]; then
               echo "✅ Tests passed"
+            else
+              echo "⚠️ Unexpected outcome: $OUTCOME"
+              exit 1
             fi
           fi
