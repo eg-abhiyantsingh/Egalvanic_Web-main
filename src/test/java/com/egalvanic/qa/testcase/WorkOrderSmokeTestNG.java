@@ -45,9 +45,12 @@ public class WorkOrderSmokeTestNG extends BaseTest {
                 "TC_WorkOrder_Create");
 
         try {
-            // 1. Navigate to Work Orders page
+            // 1. Navigate to Work Orders page and select the target site first
             workOrderPage.navigateToWorkOrders();
             logStep("Navigated to Work Orders page");
+            selectTestSite();
+            pause(2000);
+            logStep("Selected site: " + AppConstants.TEST_SITE_NAME);
             logStepWithScreenshot("Work Orders page loaded");
 
             int beforeCount = workOrderPage.getRowCount();
@@ -93,8 +96,13 @@ public class WorkOrderSmokeTestNG extends BaseTest {
             Assert.assertTrue(success, "Work order creation failed — form did not close");
 
             // 6. Verify by searching for the created work order
-            workOrderPage.navigateToWorkOrders();
+            // Already on /sessions after submit — just refresh. Do NOT call navigateToWorkOrders()
+            // here: it detects we're on the page and navigates away→back, resetting site context.
             pause(3000);
+            driver.navigate().refresh();
+            pause(3000);
+            selectTestSite();   // Re-select same site after refresh
+            pause(2000);
 
             workOrderPage.searchWorkOrders(createdWorkOrderName);
             pause(2000);
@@ -106,6 +114,8 @@ public class WorkOrderSmokeTestNG extends BaseTest {
                 workOrderPage.clearSearch();
                 driver.navigate().refresh();
                 pause(3000);
+                selectTestSite();
+                pause(2000);
                 workOrderPage.searchWorkOrders(createdWorkOrderName);
                 pause(2000);
                 found = workOrderPage.isWorkOrderVisible(createdWorkOrderName);

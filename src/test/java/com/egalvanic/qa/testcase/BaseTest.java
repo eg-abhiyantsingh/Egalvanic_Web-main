@@ -332,12 +332,16 @@ public class BaseTest {
             // The facility selector uses placeholder='Select facility'
             By facilityInput = By.xpath("//input[@placeholder='Select facility']");
 
-            // Check if already selected
+            // Check if correct site is already selected
             if (driver.findElements(facilityInput).size() > 0) {
                 String currentValue = driver.findElement(facilityInput).getAttribute("value");
-                if (currentValue != null && !currentValue.isEmpty()) {
-                    System.out.println("Site already selected: " + currentValue);
+                if (currentValue != null && currentValue.toLowerCase().contains(
+                        AppConstants.TEST_SITE_NAME.toLowerCase())) {
+                    System.out.println("Correct site already selected: " + currentValue);
                     return;
+                }
+                if (currentValue != null && !currentValue.isEmpty()) {
+                    System.out.println("Wrong site selected: " + currentValue + " — switching to " + AppConstants.TEST_SITE_NAME);
                 }
             } else {
                 System.out.println("Facility selector not found — skipping site selection");
