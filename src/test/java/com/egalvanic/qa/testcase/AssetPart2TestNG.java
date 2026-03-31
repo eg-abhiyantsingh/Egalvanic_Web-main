@@ -46,7 +46,7 @@ public class AssetPart2TestNG extends BaseTest {
     private static final String FEATURE = AppConstants.FEATURE_EDIT_ASSET;
 
     // Track state
-    private boolean navigatedToAssets = false;
+    // navigatedToAssets removed — ensureOnAssetsPage() now checks URL directly
     private boolean editFormOpen = false;
 
     // Core Attribute field locators — used within the edit drawer
@@ -95,9 +95,10 @@ public class AssetPart2TestNG extends BaseTest {
      * Ensures the browser is on the Assets list page.
      */
     private void ensureOnAssetsPage() {
-        if (!navigatedToAssets || !assetPage.isOnAssetsPage()) {
+        String url = driver.getCurrentUrl();
+        boolean onListPage = url.endsWith("/assets") || url.endsWith("/assets/");
+        if (!onListPage) {
             assetPage.navigateToAssets();
-            navigatedToAssets = true;
             pause(1000);
         }
     }

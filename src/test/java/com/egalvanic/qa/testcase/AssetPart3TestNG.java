@@ -40,7 +40,7 @@ public class AssetPart3TestNG extends BaseTest {
     private static final String MODULE = AppConstants.MODULE_ASSET;
     private static final String FEATURE = AppConstants.FEATURE_EDIT_ASSET;
 
-    private boolean navigatedToAssets = false;
+    // navigatedToAssets removed — ensureOnAssetsPage now checks URL directly
     private boolean editFormOpen = false;
 
     private static final String CORE_ATTRIBUTES_HEADER = "CORE ATTRIBUTES";
@@ -84,9 +84,12 @@ public class AssetPart3TestNG extends BaseTest {
     // ================================================================
 
     private void ensureOnAssetsPage() {
-        if (!navigatedToAssets || !assetPage.isOnAssetsPage()) {
+        // Always navigate back — detail/edit pages also contain "asset" in URL
+        // so isOnAssetsPage() alone is unreliable after navigating to detail
+        String url = driver.getCurrentUrl();
+        boolean onListPage = url.endsWith("/assets") || url.endsWith("/assets/");
+        if (!onListPage) {
             assetPage.navigateToAssets();
-            navigatedToAssets = true;
             pause(1000);
         }
     }

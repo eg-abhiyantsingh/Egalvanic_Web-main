@@ -46,7 +46,7 @@ public class AssetPart1TestNG extends BaseTest {
 
     // Shared state across tests
     private String createdAssetName;
-    private boolean navigatedToAssets = false;
+    // navigatedToAssets removed — ensureOnAssetsPage() now checks URL directly
 
     // Locators for create form elements not exposed by AssetPage
     private static final By ASSET_NAME_INPUT = By.xpath("//input[@placeholder='Enter Asset Name']");
@@ -366,7 +366,6 @@ public class AssetPart1TestNG extends BaseTest {
 
         // Navigate back to assets list
         assetPage.navigateToAssets();
-        navigatedToAssets = true;
 
         ExtentReportManager.logPass("Asset detail navigation works. Name: '" + detailName + "'");
     }
@@ -1220,10 +1219,12 @@ public class AssetPart1TestNG extends BaseTest {
     // ================================================================
 
     private void ensureOnAssetsPage() {
-        if (!navigatedToAssets || !assetPage.isOnAssetsPage()) {
+        String url = driver.getCurrentUrl();
+        boolean onListPage = url.endsWith("/assets") || url.endsWith("/assets/");
+        if (!onListPage) {
             try {
                 assetPage.navigateToAssets();
-                navigatedToAssets = true;
+                pause(1000);
             } catch (Exception e) {
                 System.out.println("[AssetPart1] Failed to navigate to Assets: " + e.getMessage());
             }
