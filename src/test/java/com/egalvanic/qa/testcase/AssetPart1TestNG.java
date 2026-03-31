@@ -966,7 +966,9 @@ public class AssetPart1TestNG extends BaseTest {
         }
 
         WebElement locInput = locInputs.get(0);
-        locInput.click();
+        // Location field is often below the fold in the MUI Drawer — scroll into view
+        JavascriptExecutor jsExec = (JavascriptExecutor) driver;
+        jsExec.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", locInput);
         pause(500);
 
         // Check for dropdown/picker
@@ -1001,13 +1003,18 @@ public class AssetPart1TestNG extends BaseTest {
         }
 
         WebElement locInput = locInputs.get(0);
+        // Scroll into view — location field is often below the fold in MUI Drawer
+        JavascriptExecutor jsExec = (JavascriptExecutor) driver;
+        jsExec.executeScript("arguments[0].scrollIntoView({block:'center'});", locInput);
+        pause(300);
+
         String initialValue = getReactInputValue(locInput);
         logStep("Initial location value: '" + initialValue + "'");
 
         // Try to clear and select a different location
         clearReactInput(locInput);
         pause(300);
-        locInput.click();
+        jsExec.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", locInput);
         pause(500);
 
         List<WebElement> options = driver.findElements(By.xpath("//li[@role='option' or @role='treeitem']"));
