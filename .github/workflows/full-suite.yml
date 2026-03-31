@@ -39,8 +39,6 @@ on:
           - dashboard-bughunt
           - load-api
           - smoke
-  schedule:
-    - cron: '0 2 * * *'  # Nightly at 2:00 AM UTC
 
 jobs:
   full-suite:
