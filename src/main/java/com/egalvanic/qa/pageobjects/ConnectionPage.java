@@ -38,9 +38,9 @@ public class ConnectionPage {
     private static final By CONNECTION_TYPE_INPUT = By.xpath(
             "//input[@placeholder='Select connection type']");
 
-    // Search
+    // Search (web uses capital "C" in "Connections")
     private static final By SEARCH_INPUT = By.xpath(
-            "//input[@placeholder='Search connections...']");
+            "//input[@placeholder='Search Connections...' or @placeholder='Search connections...']");
 
     // Grid
     private static final By GRID_ROWS = By.cssSelector("[role='rowgroup'] [role='row']");
@@ -312,7 +312,7 @@ public class ConnectionPage {
             "var rows = document.querySelectorAll(\"[role='rowgroup'] [role='row']\");" +
             "if (rows.length > arguments[0]) {" +
             "  var row = rows[arguments[0]];" +
-            "  var btns = row.querySelectorAll('button[title=\"Edit connection\"]');" +
+            "  var btns = row.querySelectorAll('button[title=\"Edit Connection\"], button[title=\"Edit connection\"]');" +
             "  if (btns.length > 0) { btns[0].click(); return; }" +
             "  // Fallback: click first icon button in actions cell\n" +
             "  var actionCell = row.querySelector('[data-field=\"actions\"]');" +
@@ -441,7 +441,7 @@ public class ConnectionPage {
             "if (rows.length <= arguments[0]) return false;" +
             "var row = rows[arguments[0]];" +
             "// Strategy 1: title attribute (exact)\n" +
-            "var btns = row.querySelectorAll('button[title=\"Delete connection\"], button[title=\"Delete\"]');" +
+            "var btns = row.querySelectorAll('button[title=\"Delete Connection\"], button[title=\"Delete connection\"], button[title=\"Delete\"]');" +
             "if (btns.length > 0) { btns[0].click(); return true; }" +
             "// Strategy 2: aria-label containing delete\n" +
             "btns = row.querySelectorAll('button[aria-label*=\"delete\" i], button[aria-label*=\"Delete\"]');" +

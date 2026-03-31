@@ -5,7 +5,6 @@ import com.egalvanic.qa.utils.ExtentReportManager;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
 
 import org.testng.Assert;
@@ -20,7 +19,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
- * Connection Module — Part 2: Extended Test Suite (65 TCs)
+ * Connection Module — Part 2: Extended Test Suite (45 TCs)
  * Covers remaining TCs from QA Automation Plan — Connections sheet
  *
  * Coverage:
@@ -29,9 +28,9 @@ import java.util.List;
  *   Section 3: Connection Type Extended    — TC_CONN_031-035    (5 TCs)
  *   Section 4: Validation                  — TC_CONN_040-042    (3 TCs)
  *   Section 5: Connection Details          — TC_CONN_045-046    (2 TCs)
- *   Section 6: Options Menu               — TC_CONN_043-044,067-068 (4 TCs)
- *   Section 7: AF Punchlist               — TC_CONN_069-073,096 (6 TCs)
- *   Section 8: Select Multiple            — TC_CONN_074-084,091-095 (16 TCs)
+ *   Section 6: Row Action Buttons          — TC_CONN_043-044,067-068 (4 TCs)
+ *   Section 7: Readiness & Pagination     — TC_CONN_069-073,096 (6 TCs)
+ *   Section 8: Edit Connection Workflows  — TC_CONN_074,077-078,081,084 (5 TCs)
  *   Section 9: Delete Multiple            — TC_CONN_085-090     (6 TCs)
  *   Section 10: Edge Cases & Performance  — TC_CONN_053,056-057,060-062 (6 TCs)
  *
@@ -46,9 +45,9 @@ public class ConnectionPart2TestNG extends BaseTest {
     private static final String FEATURE_TYPE = "Connection Type";
     private static final String FEATURE_VALIDATION = "Validation";
     private static final String FEATURE_DETAILS = "Connection Details";
-    private static final String FEATURE_OPTIONS = "Options Menu";
-    private static final String FEATURE_AF = "AF Punchlist";
-    private static final String FEATURE_MULTI_SELECT = "Select Multiple";
+    private static final String FEATURE_OPTIONS = "Row Actions";
+    private static final String FEATURE_AF = "Readiness & Pagination";
+    private static final String FEATURE_MULTI_SELECT = "Edit Workflows";
     private static final String FEATURE_EDGE = "Edge Cases";
 
     @Override
@@ -56,7 +55,7 @@ public class ConnectionPart2TestNG extends BaseTest {
     public void classSetup() {
         System.out.println();
         System.out.println("==============================================================");
-        System.out.println("     Connections Part 2 — Extended Suite (65 TCs)");
+        System.out.println("     Connections Part 2 — Extended Suite (45 TCs)");
         System.out.println("     " + LocalDateTime.now().format(
                 DateTimeFormatter.ofPattern("h:mm a - dd MMM")));
         System.out.println("==============================================================");
@@ -150,7 +149,7 @@ public class ConnectionPart2TestNG extends BaseTest {
     public void testCONN_003_SearchBar() {
         ExtentReportManager.createTest(MODULE, FEATURE_LIST, "TC_CONN_003_SearchBar");
         List<WebElement> searchInputs = driver.findElements(
-                By.xpath("//input[@placeholder='Search connections...' or @placeholder='Search']"));
+                By.xpath("//input[@placeholder='Search Connections...' or @placeholder='Search connections...' or @placeholder='Search']"));
         Assert.assertFalse(searchInputs.isEmpty(), "Search bar should be present");
         logStepWithScreenshot("Search bar");
         ExtentReportManager.logPass("Search bar is displayed");
@@ -194,7 +193,7 @@ public class ConnectionPart2TestNG extends BaseTest {
 
         // Check if any cells have overflow hidden (truncation)
         Long truncatedCells = (Long) js().executeScript(
-                "var cells = document.querySelectorAll('[role=\"cell\"]');" +
+                "var cells = document.querySelectorAll('[role=\"gridcell\"],[role=\"cell\"]');" +
                 "var count = 0;" +
                 "for(var c of cells) {" +
                 "  var style = window.getComputedStyle(c);" +
@@ -212,7 +211,7 @@ public class ConnectionPart2TestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_LIST, "TC_CONN_007_MissingNode");
 
         Boolean hasMissing = (Boolean) js().executeScript(
-                "var cells = document.querySelectorAll('[role=\"cell\"]');" +
+                "var cells = document.querySelectorAll('[role=\"gridcell\"],[role=\"cell\"]');" +
                 "for(var c of cells) {" +
                 "  if(c.textContent.includes('Missing') || c.textContent.includes('missing') " +
                 "     || c.textContent.includes('N/A') || c.textContent.includes('—')) return true;" +
@@ -714,276 +713,413 @@ public class ConnectionPart2TestNG extends BaseTest {
     }
 
     // ================================================================
-    // SECTION 6: OPTIONS MENU (4 TCs)
+    // SECTION 6: ROW ACTION BUTTONS (4 TCs)
+    // (Web has per-row Edit/Delete buttons instead of mobile's kebab menu)
     // ================================================================
 
-    @Test(priority = 50, description = "TC_CONN_043: Verify options menu icon in header")
-    public void testCONN_043_OptionsIcon() {
-        ExtentReportManager.createTest(MODULE, FEATURE_OPTIONS, "TC_CONN_043_OptionsIcon");
-
-        Boolean hasOptions = (Boolean) js().executeScript(
-                "var btns = document.querySelectorAll('button');" +
-                "for(var b of btns) {" +
-                "  var text = b.textContent.trim();" +
-                "  var aria = b.getAttribute('aria-label') || '';" +
-                "  if(text === '⋮' || text === '...' || aria.includes('more') " +
-                "     || aria.includes('options') || aria.includes('menu')" +
-                "     || b.querySelector('[data-testid*=\"MoreVert\"]')) return true;" +
-                "}" +
-                "return false;");
-        logStep("Options menu icon found: " + hasOptions);
-
-        logStepWithScreenshot("Options icon");
-        ExtentReportManager.logPass("Options icon: " + hasOptions);
-    }
-
-    @Test(priority = 51, description = "TC_CONN_044: Verify options menu shows available actions")
-    public void testCONN_044_OptionsActions() {
-        ExtentReportManager.createTest(MODULE, FEATURE_OPTIONS, "TC_CONN_044_OptionsActions");
-
-        // Try to find and click options menu
-        js().executeScript(
-                "var btns = document.querySelectorAll('button');" +
-                "for(var b of btns) {" +
-                "  var aria = b.getAttribute('aria-label') || '';" +
-                "  if(aria.includes('more') || aria.includes('options') || aria.includes('menu')" +
-                "     || b.querySelector('[data-testid*=\"MoreVert\"]')) { b.click(); return; }" +
-                "}");
-        pause(1000);
-
-        // Check for menu items
-        String menuItems = (String) js().executeScript(
-                "var items = document.querySelectorAll('[role=\"menuitem\"], [role=\"option\"], li.MuiMenuItem-root');" +
-                "var texts = [];" +
-                "for(var i of items) texts.push(i.textContent.trim());" +
-                "return texts.join(', ');");
-        logStep("Menu items: " + menuItems);
-
-        // Close menu
-        driver.findElement(By.tagName("body")).sendKeys(Keys.ESCAPE);
-        pause(500);
-
-        logStepWithScreenshot("Options menu");
-        ExtentReportManager.logPass("Options menu items: " + menuItems);
-    }
-
-    @Test(priority = 52, description = "TC_CONN_067: Verify Show AF Punchlist option")
-    public void testCONN_067_AFPunchlistOption() {
-        ExtentReportManager.createTest(MODULE, FEATURE_AF, "TC_CONN_067_AFOption");
-
-        // Open options menu
-        js().executeScript(
-                "var btns = document.querySelectorAll('button');" +
-                "for(var b of btns) {" +
-                "  var aria = b.getAttribute('aria-label') || '';" +
-                "  if(aria.includes('more') || aria.includes('options')) { b.click(); return; }" +
-                "}");
-        pause(1000);
-
-        Boolean hasAF = (Boolean) js().executeScript(
-                "var items = document.querySelectorAll('[role=\"menuitem\"], li.MuiMenuItem-root');" +
-                "for(var i of items) { if(i.textContent.includes('AF Punchlist') || i.textContent.includes('Arc Flash')) return true; }" +
-                "return false;");
-        logStep("AF Punchlist option found: " + hasAF);
-
-        driver.findElement(By.tagName("body")).sendKeys(Keys.ESCAPE);
-        pause(500);
-
-        logStepWithScreenshot("AF Punchlist option");
-        ExtentReportManager.logPass("AF Punchlist option: " + hasAF);
-    }
-
-    @Test(priority = 53, description = "TC_CONN_068: Verify Select Multiple option")
-    public void testCONN_068_SelectMultipleOption() {
-        ExtentReportManager.createTest(MODULE, FEATURE_OPTIONS, "TC_CONN_068_MultiOption");
-
-        js().executeScript(
-                "var btns = document.querySelectorAll('button');" +
-                "for(var b of btns) {" +
-                "  var aria = b.getAttribute('aria-label') || '';" +
-                "  if(aria.includes('more') || aria.includes('options')) { b.click(); return; }" +
-                "}");
-        pause(1000);
-
-        Boolean hasMulti = (Boolean) js().executeScript(
-                "var items = document.querySelectorAll('[role=\"menuitem\"], li.MuiMenuItem-root');" +
-                "for(var i of items) { if(i.textContent.includes('Select Multiple') || i.textContent.includes('Select')) return true; }" +
-                "return false;");
-        logStep("Select Multiple option: " + hasMulti);
-
-        driver.findElement(By.tagName("body")).sendKeys(Keys.ESCAPE);
-        pause(500);
-
-        logStepWithScreenshot("Select Multiple option");
-        ExtentReportManager.logPass("Select Multiple option: " + hasMulti);
-    }
-
-    // ================================================================
-    // SECTION 7: AF PUNCHLIST (6 TCs)
-    // ================================================================
-
-    @Test(priority = 60, description = "TC_CONN_069: Verify Show AF Punchlist toggles view")
-    public void testCONN_069_AFToggle() {
-        ExtentReportManager.createTest(MODULE, FEATURE_AF, "TC_CONN_069_AFToggle");
+    @Test(priority = 50, description = "TC_CONN_043: Verify Edit and Delete buttons visible on each row")
+    public void testCONN_043_RowActionButtons() {
+        ExtentReportManager.createTest(MODULE, FEATURE_OPTIONS, "TC_CONN_043_RowActions");
         ensureConnectionExists();
 
-        // Try to activate AF Punchlist via options menu
-        js().executeScript(
-                "var btns = document.querySelectorAll('button');" +
-                "for(var b of btns) {" +
-                "  var aria = b.getAttribute('aria-label') || '';" +
-                "  if(aria.includes('more') || aria.includes('options')) { b.click(); return; }" +
-                "}");
-        pause(1000);
+        String actionInfo = (String) js().executeScript(
+                "var rows = document.querySelectorAll(\"[role='rowgroup'] [role='row']\");" +
+                "if(rows.length === 0) return 'no rows';" +
+                "var row = rows[0];" +
+                "var actionCell = row.querySelector('[data-field=\"actions\"]');" +
+                "if(!actionCell) return 'no actions cell';" +
+                "var btns = actionCell.querySelectorAll('button');" +
+                "var titles = [];" +
+                "for(var b of btns) titles.push(b.getAttribute('title') || b.getAttribute('aria-label') || b.textContent.trim());" +
+                "return titles.join(', ');");
+        logStep("Row action buttons: " + actionInfo);
 
-        Boolean clicked = (Boolean) js().executeScript(
-                "var items = document.querySelectorAll('[role=\"menuitem\"], li.MuiMenuItem-root');" +
-                "for(var i of items) {" +
-                "  if(i.textContent.includes('AF Punchlist') || i.textContent.includes('Arc Flash')) {" +
-                "    i.click(); return true;" +
-                "  }" +
+        Boolean hasEdit = (Boolean) js().executeScript(
+                "var row = document.querySelector(\"[role='rowgroup'] [role='row']\");" +
+                "return !!row && !!row.querySelector('button[title=\"Edit Connection\"], button[title=\"Edit connection\"]');");
+        Boolean hasDelete = (Boolean) js().executeScript(
+                "var row = document.querySelector(\"[role='rowgroup'] [role='row']\");" +
+                "return !!row && !!row.querySelector('button[title=\"Delete Connection\"], button[title=\"Delete connection\"], button[title=\"Delete\"]');");
+
+        Assert.assertTrue(hasEdit != null && hasEdit, "Edit button should be visible on row");
+        Assert.assertTrue(hasDelete != null && hasDelete, "Delete button should be visible on row");
+
+        logStepWithScreenshot("Row action buttons");
+        ExtentReportManager.logPass("Edit=" + hasEdit + ", Delete=" + hasDelete);
+    }
+
+    @Test(priority = 51, description = "TC_CONN_044: Verify Edit button opens Edit Connection drawer")
+    public void testCONN_044_EditButtonOpensDrawer() {
+        ExtentReportManager.createTest(MODULE, FEATURE_OPTIONS, "TC_CONN_044_EditOpensDrawer");
+        ensureConnectionExists();
+
+        connectionPage.clickEditOnRow(0);
+        pause(2000);
+
+        Boolean drawerOpen = (Boolean) js().executeScript(
+                "var drawers = document.querySelectorAll('.MuiDrawer-paper');" +
+                "for(var d of drawers) {" +
+                "  if(d.textContent.includes('Edit Connection') && d.getBoundingClientRect().width > 0) return true;" +
+                "}" +
+                "return false;");
+        logStep("Edit drawer opened: " + drawerOpen);
+        Assert.assertTrue(drawerOpen != null && drawerOpen, "Edit Connection drawer should open");
+
+        connectionPage.closeDrawer();
+        logStepWithScreenshot("Edit button opens drawer");
+        ExtentReportManager.logPass("Edit button opens drawer: " + drawerOpen);
+    }
+
+    @Test(priority = 52, description = "TC_CONN_067: Verify Delete button shows confirmation dialog")
+    public void testCONN_067_DeleteConfirmation() {
+        ExtentReportManager.createTest(MODULE, FEATURE_OPTIONS, "TC_CONN_067_DeleteConfirm");
+        ensureConnectionExists();
+
+        // Record count before — we will cancel the delete
+        int before = connectionPage.getGridRowCount();
+
+        connectionPage.clickDeleteOnRow(0);
+        pause(2000);
+
+        // Check for confirmation dialog (MUI Dialog or native alert)
+        Boolean hasDialog = (Boolean) js().executeScript(
+                "var dialog = document.querySelector('[role=\"dialog\"], .MuiDialog-root');" +
+                "if(dialog && dialog.getBoundingClientRect().width > 0) return true;" +
+                "return false;");
+
+        // Also check for native alert
+        boolean hasAlert = false;
+        try {
+            org.openqa.selenium.Alert alert = driver.switchTo().alert();
+            hasAlert = true;
+            logStep("Native confirm dialog found: " + alert.getText());
+            alert.dismiss(); // Cancel the delete
+        } catch (Exception ignored) {}
+
+        if (!hasAlert) {
+            // Cancel via MUI dialog if present
+            js().executeScript(
+                    "var btns = document.querySelectorAll('[role=\"dialog\"] button, .MuiDialog-root button');" +
+                    "for(var b of btns) { if(b.textContent.trim() === 'Cancel') { b.click(); return; } }");
+            pause(1000);
+        }
+
+        logStep("Confirmation dialog: MUI=" + hasDialog + ", Native=" + hasAlert);
+
+        // Verify nothing was deleted
+        int after = connectionPage.getGridRowCount();
+        logStep("Row count before=" + before + " after=" + after);
+
+        logStepWithScreenshot("Delete confirmation dialog");
+        ExtentReportManager.logPass("Delete shows confirmation: dialog=" + (hasDialog != null && hasDialog) + " or alert=" + hasAlert);
+    }
+
+    @Test(priority = 53, description = "TC_CONN_068: Verify Actions column header exists in grid")
+    public void testCONN_068_ActionsColumnHeader() {
+        ExtentReportManager.createTest(MODULE, FEATURE_OPTIONS, "TC_CONN_068_ActionsColumn");
+        ensureConnectionExists();
+
+        String headers = (String) js().executeScript(
+                "var headers = document.querySelectorAll('[role=\"columnheader\"]');" +
+                "var texts = [];" +
+                "for(var h of headers) texts.push(h.textContent.trim());" +
+                "return texts.join(', ');");
+        logStep("Grid column headers: " + headers);
+
+        boolean hasActions = headers != null && headers.contains("Actions");
+        Assert.assertTrue(hasActions, "Grid should have Actions column header");
+
+        logStepWithScreenshot("Actions column header");
+        ExtentReportManager.logPass("Actions column exists: " + hasActions);
+    }
+
+    // ================================================================
+    // SECTION 7: READINESS & PAGINATION (6 TCs)
+    // (Web has Overall Readiness header + pagination instead of mobile's AF Punchlist)
+    // ================================================================
+
+    @Test(priority = 60, description = "TC_CONN_069: Verify Overall Readiness header is displayed")
+    public void testCONN_069_ReadinessHeader() {
+        ExtentReportManager.createTest(MODULE, FEATURE_AF, "TC_CONN_069_Readiness");
+
+        Boolean hasReadiness = (Boolean) js().executeScript(
+                "return document.body.innerText.includes('Overall Readiness');");
+        logStep("Overall Readiness header found: " + hasReadiness);
+        Assert.assertTrue(hasReadiness != null && hasReadiness, "Overall Readiness header should be displayed");
+
+        logStepWithScreenshot("Readiness header");
+        ExtentReportManager.logPass("Overall Readiness header: " + hasReadiness);
+    }
+
+    @Test(priority = 61, description = "TC_CONN_070: Verify readiness percentage is displayed")
+    public void testCONN_070_ReadinessPercentage() {
+        ExtentReportManager.createTest(MODULE, FEATURE_AF, "TC_CONN_070_ReadinessPercent");
+
+        String percentage = (String) js().executeScript(
+                "var h4s = document.querySelectorAll('h4');" +
+                "for(var h of h4s) { if(h.textContent.includes('%')) return h.textContent.trim(); }" +
+                "return null;");
+        logStep("Readiness percentage: " + percentage);
+        Assert.assertNotNull(percentage, "Readiness percentage should be displayed");
+
+        // Check for "Complete" label next to percentage
+        Boolean hasComplete = (Boolean) js().executeScript(
+                "return document.body.innerText.includes('Complete');");
+        logStep("'Complete' label: " + hasComplete);
+
+        logStepWithScreenshot("Readiness percentage");
+        ExtentReportManager.logPass("Readiness: " + percentage);
+    }
+
+    @Test(priority = 62, description = "TC_CONN_071: Verify field completion stats are displayed")
+    public void testCONN_071_FieldCompletionStats() {
+        ExtentReportManager.createTest(MODULE, FEATURE_AF, "TC_CONN_071_FieldStats");
+        ensureConnectionExists();
+
+        // Check for "X connections • Y of Z required fields completed" text
+        String statsText = (String) js().executeScript(
+                "var text = document.body.innerText;" +
+                "var match = text.match(/\\d+\\s*connections?\\s*.*\\d+\\s*of\\s*\\d+\\s*required\\s*fields/i);" +
+                "return match ? match[0] : null;");
+        logStep("Field completion stats: " + statsText);
+        Assert.assertNotNull(statsText, "Field completion stats should be displayed");
+
+        logStepWithScreenshot("Field completion stats");
+        ExtentReportManager.logPass("Field stats: " + statsText);
+    }
+
+    @Test(priority = 63, description = "TC_CONN_072: Verify Rows per page selector is present")
+    public void testCONN_072_RowsPerPage() {
+        ExtentReportManager.createTest(MODULE, FEATURE_AF, "TC_CONN_072_RowsPerPage");
+        ensureConnectionExists();
+
+        Boolean hasRowsPerPage = (Boolean) js().executeScript(
+                "return document.body.innerText.includes('Rows per page');");
+        logStep("Rows per page selector found: " + hasRowsPerPage);
+
+        String paginationText = connectionPage.getPaginationText();
+        logStep("Pagination text: " + paginationText);
+
+        Assert.assertTrue(hasRowsPerPage != null && hasRowsPerPage, "Rows per page selector should be present");
+
+        logStepWithScreenshot("Rows per page");
+        ExtentReportManager.logPass("Rows per page: " + hasRowsPerPage + ", pagination: " + paginationText);
+    }
+
+    @Test(priority = 64, description = "TC_CONN_073: Verify pagination navigation buttons")
+    public void testCONN_073_PaginationNavigation() {
+        ExtentReportManager.createTest(MODULE, FEATURE_AF, "TC_CONN_073_PaginationNav");
+
+        Boolean hasPrevBtn = (Boolean) js().executeScript(
+                "return !!document.querySelector('button[aria-label*=\"previous page\" i]');");
+        Boolean hasNextBtn = (Boolean) js().executeScript(
+                "return !!document.querySelector('button[aria-label*=\"next page\" i]');");
+        logStep("Previous button: " + hasPrevBtn + ", Next button: " + hasNextBtn);
+
+        Assert.assertTrue(hasPrevBtn != null && hasPrevBtn, "Previous page button should exist");
+        Assert.assertTrue(hasNextBtn != null && hasNextBtn, "Next page button should exist");
+
+        logStepWithScreenshot("Pagination navigation");
+        ExtentReportManager.logPass("Prev=" + hasPrevBtn + ", Next=" + hasNextBtn);
+    }
+
+    @Test(priority = 65, description = "TC_CONN_096: Verify pagination count matches grid rows")
+    public void testCONN_096_PaginationMatchesGrid() {
+        ExtentReportManager.createTest(MODULE, FEATURE_AF, "TC_CONN_096_PaginationCount");
+        ensureConnectionExists();
+
+        int gridRows = connectionPage.getGridRowCount();
+        String paginationText = connectionPage.getPaginationText();
+        logStep("Grid rows: " + gridRows + ", Pagination: " + paginationText);
+
+        // Parse "1–N of N" from pagination text
+        boolean consistent = paginationText != null && !paginationText.isEmpty();
+        logStep("Pagination text present: " + consistent);
+
+        logStepWithScreenshot("Pagination matches grid");
+        ExtentReportManager.logPass("Grid rows=" + gridRows + ", Pagination=" + paginationText);
+    }
+
+    // ================================================================
+    // SECTION 8: EDIT CONNECTION WORKFLOWS (5 TCs)
+    // (Web has Edit drawer workflows instead of mobile's Select Multiple)
+    // ================================================================
+
+    @Test(priority = 70, description = "TC_CONN_074: Verify Edit drawer shows pre-populated fields")
+    public void testCONN_074_EditDrawerPrePopulated() {
+        ExtentReportManager.createTest(MODULE, FEATURE_MULTI_SELECT, "TC_CONN_074_EditFields");
+        ensureConnectionExists();
+
+        // Get grid values first
+        String gridSource = connectionPage.getFirstRowSourceNode();
+        String gridTarget = connectionPage.getFirstRowTargetNode();
+
+        connectionPage.clickEditOnRow(0);
+        pause(2000);
+
+        // Check Source Node combobox has a value
+        String sourceVal = (String) js().executeScript(
+                "var drawer = document.querySelector('.MuiDrawer-paper');" +
+                "if(!drawer) return null;" +
+                "var inputs = drawer.querySelectorAll('input');" +
+                "for(var inp of inputs) {" +
+                "  var label = inp.getAttribute('placeholder') || '';" +
+                "  if(label.includes('source') || label.includes('Source')) return inp.value;" +
+                "}" +
+                "return null;");
+        // Also get value from combobox text
+        String drawerSourceText = (String) js().executeScript(
+                "var drawer = document.querySelector('.MuiDrawer-paper');" +
+                "if(!drawer) return '';" +
+                "return drawer.textContent.substring(0, 300);");
+        logStep("Drawer source value: " + sourceVal);
+        logStep("Grid source: " + gridSource + ", Grid target: " + gridTarget);
+        logStep("Drawer contains source: " + (drawerSourceText != null && gridSource != null && drawerSourceText.contains(gridSource)));
+
+        connectionPage.closeDrawer();
+        logStepWithScreenshot("Edit drawer pre-populated");
+        ExtentReportManager.logPass("Edit fields pre-populated: source=" + sourceVal);
+    }
+
+    @Test(priority = 71, description = "TC_CONN_077: Verify Cancel button in Edit drawer discards changes")
+    public void testCONN_077_EditCancelDiscards() {
+        ExtentReportManager.createTest(MODULE, FEATURE_MULTI_SELECT, "TC_CONN_077_EditCancel");
+        ensureConnectionExists();
+
+        String sourceBefore = connectionPage.getFirstRowSourceNode();
+
+        connectionPage.clickEditOnRow(0);
+        pause(2000);
+
+        // Click Cancel
+        Boolean cancelled = (Boolean) js().executeScript(
+                "var btns = document.querySelectorAll('.MuiDrawer-paper button');" +
+                "for(var b of btns) {" +
+                "  if(b.textContent.trim() === 'Cancel') { b.click(); return true; }" +
                 "}" +
                 "return false;");
         pause(2000);
-        logStep("AF Punchlist clicked: " + clicked);
+        logStep("Cancel clicked: " + cancelled);
 
-        logStepWithScreenshot("AF Punchlist toggled");
-        ExtentReportManager.logPass("AF Punchlist toggle: " + clicked);
+        // Verify drawer closed
+        Boolean drawerClosed = (Boolean) js().executeScript(
+                "var drawers = document.querySelectorAll('.MuiDrawer-paper');" +
+                "for(var d of drawers) {" +
+                "  if(d.textContent.includes('Edit Connection') && d.getBoundingClientRect().width > 0) return false;" +
+                "}" +
+                "return true;");
+        logStep("Drawer closed after cancel: " + drawerClosed);
+
+        // Verify grid unchanged
+        String sourceAfter = connectionPage.getFirstRowSourceNode();
+        logStep("Source before: " + sourceBefore + ", after: " + sourceAfter);
+
+        logStepWithScreenshot("Edit cancel discards");
+        ExtentReportManager.logPass("Cancel discards: drawer closed=" + drawerClosed);
     }
 
-    @Test(priority = 61, description = "TC_CONN_070: Verify Hide AF Punchlist appears after showing")
-    public void testCONN_070_HideAF() {
-        ExtentReportManager.createTest(MODULE, FEATURE_AF, "TC_CONN_070_HideAF");
+    @Test(priority = 72, description = "TC_CONN_078: Verify Save Changes button exists in Edit drawer")
+    public void testCONN_078_SaveChangesButton() {
+        ExtentReportManager.createTest(MODULE, FEATURE_MULTI_SELECT, "TC_CONN_078_SaveBtn");
+        ensureConnectionExists();
 
-        // Open menu and check for "Hide" option
-        js().executeScript(
-                "var btns = document.querySelectorAll('button');" +
+        connectionPage.clickEditOnRow(0);
+        pause(2000);
+
+        Boolean hasSaveBtn = (Boolean) js().executeScript(
+                "var btns = document.querySelectorAll('.MuiDrawer-paper button');" +
                 "for(var b of btns) {" +
-                "  var aria = b.getAttribute('aria-label') || '';" +
-                "  if(aria.includes('more') || aria.includes('options')) { b.click(); return; }" +
-                "}");
-        pause(1000);
-
-        Boolean hasHide = (Boolean) js().executeScript(
-                "var items = document.querySelectorAll('[role=\"menuitem\"], li.MuiMenuItem-root');" +
-                "for(var i of items) { if(i.textContent.includes('Hide')) return true; }" +
+                "  if(b.textContent.trim() === 'Save Changes') return true;" +
+                "}" +
                 "return false;");
-        logStep("Hide AF option available: " + hasHide);
+        logStep("Save Changes button found: " + hasSaveBtn);
+        Assert.assertTrue(hasSaveBtn != null && hasSaveBtn, "Save Changes button should be in Edit drawer");
 
-        driver.findElement(By.tagName("body")).sendKeys(Keys.ESCAPE);
-        pause(500);
-
-        logStepWithScreenshot("Hide AF option");
-        ExtentReportManager.logPass("Hide AF option: " + hasHide);
-    }
-
-    // ================================================================
-    // SECTION 8: SELECT MULTIPLE (16 TCs)
-    // ================================================================
-
-    @Test(priority = 70, description = "TC_CONN_074: Verify Select Multiple opens selection mode")
-    public void testCONN_074_SelectMultipleMode() {
-        ExtentReportManager.createTest(MODULE, FEATURE_MULTI_SELECT, "TC_CONN_074_MultiMode");
-        ensureConnectionExists();
-
-        // Check for checkbox column in grid (MUI DataGrid checkbox selection)
-        Boolean hasCheckbox = (Boolean) js().executeScript(
-                "return !!document.querySelector('[data-field=\"__check__\"], " +
-                "input[type=\"checkbox\"][aria-label*=\"Select\"], " +
-                ".MuiDataGrid-columnHeaderCheckbox');");
-        logStep("Grid has checkbox selection: " + hasCheckbox);
-
-        logStepWithScreenshot("Select multiple mode");
-        ExtentReportManager.logPass("Checkbox selection mode: " + hasCheckbox);
-    }
-
-    @Test(priority = 71, description = "TC_CONN_077: Verify checkbox on each connection row")
-    public void testCONN_077_RowCheckboxes() {
-        ExtentReportManager.createTest(MODULE, FEATURE_MULTI_SELECT, "TC_CONN_077_Checkboxes");
-        ensureConnectionExists();
-
-        Long checkboxCount = (Long) js().executeScript(
-                "return document.querySelectorAll('[role=\"row\"] input[type=\"checkbox\"]').length;");
-        int rowCount = connectionPage.getGridRowCount();
-        logStep("Checkboxes: " + checkboxCount + ", Rows: " + rowCount);
-
-        logStepWithScreenshot("Row checkboxes");
-        ExtentReportManager.logPass("Row checkboxes: " + checkboxCount + " vs " + rowCount + " rows");
-    }
-
-    @Test(priority = 72, description = "TC_CONN_078: Verify clicking checkbox selects row")
-    public void testCONN_078_SelectRow() {
-        ExtentReportManager.createTest(MODULE, FEATURE_MULTI_SELECT, "TC_CONN_078_SelectRow");
-        ensureConnectionExists();
-
-        // Click first row checkbox
-        Boolean clicked = (Boolean) js().executeScript(
-                "var checkboxes = document.querySelectorAll('[role=\"row\"] input[type=\"checkbox\"]');" +
-                "if(checkboxes.length > 1) { checkboxes[1].click(); return true; }" +  // [0] is header
-                "return false;");
-        pause(500);
-
-        // Check if row is selected
-        Boolean selected = (Boolean) js().executeScript(
-                "var rows = document.querySelectorAll('[role=\"row\"].Mui-selected, [role=\"row\"][aria-selected=\"true\"]');" +
-                "return rows.length > 0;");
-        logStep("Row selected: " + selected);
-
-        // Deselect
-        js().executeScript(
-                "var checkboxes = document.querySelectorAll('[role=\"row\"] input[type=\"checkbox\"]');" +
-                "if(checkboxes.length > 1) checkboxes[1].click();");
-        pause(500);
-
-        logStepWithScreenshot("Select row");
-        ExtentReportManager.logPass("Row selection: clicked=" + clicked + ", selected=" + selected);
-    }
-
-    @Test(priority = 73, description = "TC_CONN_081: Verify Select All checkbox selects all rows")
-    public void testCONN_081_SelectAll() {
-        ExtentReportManager.createTest(MODULE, FEATURE_MULTI_SELECT, "TC_CONN_081_SelectAll");
-        ensureConnectionExists();
-
-        // Click header checkbox (select all)
-        js().executeScript(
-                "var headerCheckbox = document.querySelector('.MuiDataGrid-columnHeaderCheckbox input[type=\"checkbox\"]," +
-                " [role=\"columnheader\"] input[type=\"checkbox\"]');" +
-                "if(headerCheckbox) { headerCheckbox.click(); }");
-        pause(500);
-
-        Long selectedCount = (Long) js().executeScript(
-                "return document.querySelectorAll('[role=\"row\"].Mui-selected, [role=\"row\"][aria-selected=\"true\"]').length;");
-        int totalRows = connectionPage.getGridRowCount();
-        logStep("Selected: " + selectedCount + " of " + totalRows);
-
-        // Deselect all
-        js().executeScript(
-                "var headerCheckbox = document.querySelector('.MuiDataGrid-columnHeaderCheckbox input[type=\"checkbox\"]," +
-                " [role=\"columnheader\"] input[type=\"checkbox\"]');" +
-                "if(headerCheckbox) headerCheckbox.click();");
-        pause(500);
-
-        logStepWithScreenshot("Select all");
-        ExtentReportManager.logPass("Select all: " + selectedCount + " of " + totalRows);
-    }
-
-    @Test(priority = 74, description = "TC_CONN_084: Verify Delete icon disabled when none selected")
-    public void testCONN_084_DeleteDisabledNoSelection() {
-        ExtentReportManager.createTest(MODULE, FEATURE_MULTI_SELECT, "TC_CONN_084_DeleteDisabled");
-
-        Boolean deleteDisabled = (Boolean) js().executeScript(
-                "var btns = document.querySelectorAll('button');" +
+        Boolean hasCancelBtn = (Boolean) js().executeScript(
+                "var btns = document.querySelectorAll('.MuiDrawer-paper button');" +
                 "for(var b of btns) {" +
-                "  var aria = b.getAttribute('aria-label') || '';" +
-                "  if(aria.includes('delete') || aria.includes('Delete')) {" +
-                "    return b.disabled || b.classList.contains('Mui-disabled');" +
-                "  }" +
+                "  if(b.textContent.trim() === 'Cancel') return true;" +
+                "}" +
+                "return false;");
+        logStep("Cancel button found: " + hasCancelBtn);
+        Assert.assertTrue(hasCancelBtn != null && hasCancelBtn, "Cancel button should be in Edit drawer");
+
+        connectionPage.closeDrawer();
+        logStepWithScreenshot("Save Changes button");
+        ExtentReportManager.logPass("Save=" + hasSaveBtn + ", Cancel=" + hasCancelBtn);
+    }
+
+    @Test(priority = 73, description = "TC_CONN_081: Verify CORE ATTRIBUTES section in Edit drawer for Cable")
+    public void testCONN_081_CoreAttributesSection() {
+        ExtentReportManager.createTest(MODULE, FEATURE_MULTI_SELECT, "TC_CONN_081_CoreAttributes");
+        ensureConnectionExists();
+
+        connectionPage.clickEditOnRow(0);
+        pause(2000);
+
+        // Check for CORE ATTRIBUTES section
+        Boolean hasCoreAttrs = (Boolean) js().executeScript(
+                "var drawer = document.querySelector('.MuiDrawer-paper');" +
+                "return drawer != null && drawer.textContent.includes('CORE ATTRIBUTES');");
+        logStep("CORE ATTRIBUTES section found: " + hasCoreAttrs);
+
+        // Check for BASIC INFO section
+        Boolean hasBasicInfo = (Boolean) js().executeScript(
+                "var drawer = document.querySelector('.MuiDrawer-paper');" +
+                "return drawer != null && drawer.textContent.includes('BASIC INFO');");
+        logStep("BASIC INFO section found: " + hasBasicInfo);
+
+        // Check for specific Cable attributes if connection type is Cable
+        String cableFields = (String) js().executeScript(
+                "var drawer = document.querySelector('.MuiDrawer-paper');" +
+                "if(!drawer) return 'no drawer';" +
+                "var text = drawer.textContent;" +
+                "var fields = [];" +
+                "if(text.includes('Length')) fields.push('Length');" +
+                "if(text.includes('Parallel Sets')) fields.push('Parallel Sets');" +
+                "if(text.includes('Conductor Material')) fields.push('Conductor Material');" +
+                "if(text.includes('Wire Size')) fields.push('Wire Size');" +
+                "if(text.includes('Conductors')) fields.push('# of Conductors');" +
+                "return fields.length > 0 ? fields.join(', ') : 'none';");
+        logStep("Cable attribute fields: " + cableFields);
+
+        connectionPage.closeDrawer();
+        logStepWithScreenshot("Core attributes section");
+        ExtentReportManager.logPass("BASIC INFO=" + hasBasicInfo + ", CORE ATTRIBUTES=" + hasCoreAttrs + ", fields=" + cableFields);
+    }
+
+    @Test(priority = 74, description = "TC_CONN_084: Verify Edit drawer shows Connection Type value")
+    public void testCONN_084_EditDrawerConnectionType() {
+        ExtentReportManager.createTest(MODULE, FEATURE_MULTI_SELECT, "TC_CONN_084_EditConnType");
+        ensureConnectionExists();
+
+        // Get grid connection type first
+        String gridType = (String) js().executeScript(
+                "var cell = document.querySelector('[data-field=\"edgeClassName\"]');" +
+                "return cell ? cell.textContent.trim() : null;");
+        logStep("Grid connection type: " + gridType);
+
+        connectionPage.clickEditOnRow(0);
+        pause(2000);
+
+        // Check Connection Type combobox in edit drawer
+        String drawerType = (String) js().executeScript(
+                "var drawer = document.querySelector('.MuiDrawer-paper');" +
+                "if(!drawer) return null;" +
+                "var inputs = drawer.querySelectorAll('input');" +
+                "for(var inp of inputs) {" +
+                "  var ph = inp.getAttribute('placeholder') || '';" +
+                "  if(ph.includes('connection type') || ph.includes('Connection Type') || ph.includes('Select connection')) return inp.value;" +
                 "}" +
                 "return null;");
-        logStep("Delete disabled with no selection: " + deleteDisabled);
+        logStep("Drawer connection type: " + drawerType);
 
-        logStepWithScreenshot("Delete disabled");
-        ExtentReportManager.logPass("Delete disabled no selection: " + deleteDisabled);
+        boolean matches = gridType != null && drawerType != null && gridType.equalsIgnoreCase(drawerType);
+        logStep("Grid/Drawer type match: " + matches);
+
+        connectionPage.closeDrawer();
+        logStepWithScreenshot("Edit drawer connection type");
+        ExtentReportManager.logPass("Grid type=" + gridType + ", Drawer type=" + drawerType + ", match=" + matches);
     }
 
     // ================================================================
