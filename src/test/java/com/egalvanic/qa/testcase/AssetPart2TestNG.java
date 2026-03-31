@@ -137,26 +137,47 @@ public class AssetPart2TestNG extends BaseTest {
 
     /**
      * Opens the Edit Asset form from the detail page via kebab menu.
-     * IMPORTANT: Caller must already be on the asset detail page.
-     * Uses clickKebabMenuItem directly — NOT openEditForFirstAsset()
-     * which would redundantly navigate to detail again and hang.
+     * After opening, ensures the Asset Class is selected so that
+     * core attribute fields render (they are dynamic per class).
+     *
+     * @param assetClassName the class name to ensure is selected (e.g. "Junction Box")
      */
-    private boolean openEditForm() {
+    private boolean openEditForm(String assetClassName) {
         logStep("Opening Edit Asset form via kebab menu");
         try {
             assetPage.clickKebabMenuItem("Edit Asset");
             pause(2000);
             editFormOpen = true;
 
-            // Verify edit form is open by checking for Save Changes button or Core Attributes
+            // Verify edit form is open by checking for Save Changes button
             List<WebElement> saveBtn = driver.findElements(SAVE_CHANGES_BTN);
             boolean formOpen = !saveBtn.isEmpty();
             logStep("Edit form open (Save Changes visible): " + formOpen);
+
+            if (formOpen) {
+                ensureAssetClassSelected(assetClassName);
+            }
+
             return formOpen;
         } catch (Exception e) {
             logStep("Failed to open edit form: " + e.getMessage());
             return false;
         }
+    }
+
+    /**
+     * If the "Select Class" field in the edit drawer is empty, select the
+     * given asset class so that core attribute fields render.
+     */
+    private void ensureAssetClassSelected(String assetClassName) {
+        String currentClass = assetPage.getAssetClassValue();
+        if (currentClass != null && !currentClass.isEmpty()) {
+            logStep("Asset class already set: " + currentClass);
+            return;
+        }
+        logStep("Asset class is empty — selecting: " + assetClassName);
+        assetPage.editAssetClass(assetClassName);
+        pause(1000);
     }
 
     /**
@@ -167,7 +188,7 @@ public class AssetPart2TestNG extends BaseTest {
         if (!navigateToAssetByClass(assetClassName)) {
             return false;
         }
-        return openEditForm();
+        return openEditForm(assetClassName);
     }
 
     /**
@@ -199,6 +220,22 @@ public class AssetPart2TestNG extends BaseTest {
                     + "if (drawer) drawer.scrollTop += 400;");
             pause(500);
         }
+        // Expand all nested sub-accordions (each core attribute field has its own accordion)
+        expandAllNestedAccordions();
+    }
+
+    /**
+     * Expand all collapsed MUI Accordions in the edit drawer.
+     */
+    private void expandAllNestedAccordions() {
+        try {
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            js.executeScript(
+                "var summaries = document.querySelectorAll('[class*=\"MuiAccordionSummary\"][aria-expanded=\"false\"]');" +
+                "summaries.forEach(function(s) { s.click(); });"
+            );
+            pause(800);
+        } catch (Exception ignored) {}
     }
 
     /**
@@ -240,22 +277,17 @@ public class AssetPart2TestNG extends BaseTest {
         js.executeScript("arguments[0].scrollIntoView({behavior:'smooth', block:'center'});", input);
         pause(300);
 
-        // Clear existing value using React-compatible method
-        js.executeScript(
-                "var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;"
-                + "nativeInputValueSetter.call(arguments[0], '');"
-                + "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));"
-                + "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
-                input);
+        // Use correct prototype setter for input vs textarea
+        String setterScript =
+                "var proto = arguments[0].tagName === 'TEXTAREA'"
+                + " ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;"
+                + "var s = Object.getOwnPropertyDescriptor(proto, 'value').set;"
+                + "s.call(arguments[0], arguments[1]);"
+                + "arguments[0].dispatchEvent(new Event('input',{bubbles:true}));"
+                + "arguments[0].dispatchEvent(new Event('change',{bubbles:true}));";
+        js.executeScript(setterScript, input, "");
         pause(200);
-
-        // Set new value
-        js.executeScript(
-                "var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;"
-                + "nativeInputValueSetter.call(arguments[0], arguments[1]);"
-                + "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));"
-                + "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
-                input, newValue);
+        js.executeScript(setterScript, input, newValue);
         pause(300);
 
         String actualValue = input.getAttribute("value");
@@ -341,36 +373,39 @@ public class AssetPart2TestNG extends BaseTest {
 
     private WebElement findInputByPlaceholder(String placeholder) {
         try {
-            // Try exact match
+            // Search both input and textarea elements
             List<WebElement> inputs = driver.findElements(By.xpath(
-                    "//input[contains(@placeholder,'" + placeholder + "')]"));
+                    "//input[contains(@placeholder,'" + placeholder + "')] | "
+                    + "//textarea[contains(@placeholder,'" + placeholder + "')]"));
             if (!inputs.isEmpty()) return inputs.get(0);
-
-            // Try partial match
-            String lowerPlaceholder = placeholder.toLowerCase().replace("'", "\\'");
+            // Case-insensitive fallback
+            String lower = placeholder.toLowerCase();
             inputs = driver.findElements(By.xpath(
-                    "//input[contains(translate(@placeholder,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'"
-                    + lowerPlaceholder + "')]"));
+                    "//input[contains(translate(@placeholder,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'" + lower + "')] | "
+                    + "//textarea[contains(translate(@placeholder,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'" + lower + "')]"));
             if (!inputs.isEmpty()) return inputs.get(0);
         } catch (Exception ignored) {}
         return null;
     }
 
     private WebElement findInputByLabel(String labelText) {
+        String lower = labelText.toLowerCase();
         try {
-            // Find label then look for associated input
-            List<WebElement> labels = driver.findElements(By.xpath(
-                    "//*[contains(normalize-space(),'" + labelText + "')]"
-                    + "/ancestor::div[contains(@class,'MuiFormControl') or contains(@class,'MuiTextField')]"
-                    + "//input"));
-            if (!labels.isEmpty()) return labels.get(0);
-
-            // Also try textarea
-            labels = driver.findElements(By.xpath(
-                    "//*[contains(normalize-space(),'" + labelText + "')]"
-                    + "/ancestor::div[contains(@class,'MuiFormControl') or contains(@class,'MuiTextField')]"
-                    + "//textarea"));
-            if (!labels.isEmpty()) return labels.get(0);
+            // Case-insensitive: find label text, then look for input/textarea in ancestor MuiFormControl
+            String ciXpath = "//*[contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'" + lower + "')]";
+            List<WebElement> els = driver.findElements(By.xpath(
+                    ciXpath + "/ancestor::div[contains(@class,'MuiFormControl') or contains(@class,'MuiTextField')]//input"));
+            if (!els.isEmpty()) return els.get(0);
+            els = driver.findElements(By.xpath(
+                    ciXpath + "/ancestor::div[contains(@class,'MuiFormControl') or contains(@class,'MuiTextField')]//textarea"));
+            if (!els.isEmpty()) return els.get(0);
+            // Fallback: label is sibling of MuiFormControl inside a shared parent (MuiBox)
+            els = driver.findElements(By.xpath(
+                    ciXpath + "/parent::div[contains(@class,'MuiBox')]//textarea"));
+            if (!els.isEmpty()) return els.get(0);
+            els = driver.findElements(By.xpath(
+                    ciXpath + "/parent::div[contains(@class,'MuiBox')]//input"));
+            if (!els.isEmpty()) return els.get(0);
         } catch (Exception ignored) {}
         return null;
     }
@@ -488,7 +523,7 @@ public class AssetPart2TestNG extends BaseTest {
             return;
         }
 
-        boolean editOpen = openEditForm();
+        boolean editOpen = openEditForm("Automatic Transfer Switch");
         if (!editOpen) {
             logStep("NOTE: Edit form did not open for ATS asset — kebab menu may not have responded");
             logStepWithScreenshot("ATS Edit form state");
@@ -704,7 +739,7 @@ public class AssetPart2TestNG extends BaseTest {
             return;
         }
 
-        boolean editOpen = openEditForm();
+        boolean editOpen = openEditForm("Capacitor");
         Assert.assertTrue(editOpen, "Edit screen should open for Capacitor");
 
         logStepWithScreenshot("Capacitor Edit screen");
@@ -1152,7 +1187,7 @@ public class AssetPart2TestNG extends BaseTest {
             return;
         }
 
-        boolean editOpen = openEditForm();
+        boolean editOpen = openEditForm("Circuit Breaker");
         Assert.assertTrue(editOpen, "Edit screen should open for Circuit Breaker");
 
         logStepWithScreenshot("Circuit Breaker Edit screen");

@@ -113,9 +113,12 @@ public class AssetPart4TestNG extends BaseTest {
 
     /**
      * Opens the Edit Asset form via kebab menu (three dots → Edit Asset).
-     * Caller must already be on the asset detail page.
+     * After opening, ensures the Asset Class is selected so that
+     * core attribute fields render (they are dynamic per class).
+     *
+     * @param assetClassName the class name to ensure is selected
      */
-    private boolean openEditForm() {
+    private boolean openEditForm(String assetClassName) {
         logStep("Opening Edit Asset form");
         try {
             assetPage.clickKebabMenuItem("Edit Asset");
@@ -124,6 +127,11 @@ public class AssetPart4TestNG extends BaseTest {
             List<WebElement> saveBtn = driver.findElements(SAVE_CHANGES_BTN);
             boolean formOpen = !saveBtn.isEmpty();
             logStep("Edit form open: " + formOpen);
+
+            if (formOpen) {
+                ensureAssetClassSelected(assetClassName);
+            }
+
             return formOpen;
         } catch (Exception e) {
             logStep("Failed to open edit form: " + e.getMessage());
@@ -131,15 +139,35 @@ public class AssetPart4TestNG extends BaseTest {
         }
     }
 
-    private boolean openEditForAssetClass(String assetClassName) {
-        if (!navigateToAssetByClass(assetClassName)) return false;
-        return openEditForm();
+    /**
+     * If the "Select Class" field in the edit drawer is empty, select the
+     * given asset class so that core attribute fields render.
+     */
+    private void ensureAssetClassSelected(String assetClassName) {
+        String currentClass = assetPage.getAssetClassValue();
+        if (currentClass != null && !currentClass.isEmpty()) {
+            logStep("Asset class already set: " + currentClass);
+            return;
+        }
+        logStep("Asset class is empty — selecting: " + assetClassName);
+        assetPage.editAssetClass(assetClassName);
+        pause(1000);
     }
 
+    private boolean openEditForAssetClass(String assetClassName) {
+        if (!navigateToAssetByClass(assetClassName)) return false;
+        return openEditForm(assetClassName);
+    }
+
+    /**
+     * Try primary name, then fallback abbreviation for grid search.
+     * Always uses the primary name for asset class selection in the edit form.
+     */
     private boolean openEditForAssetClass(String primary, String fallback) {
         if (openEditForAssetClass(primary)) return true;
         ensureOnAssetsPage();
-        return openEditForAssetClass(fallback);
+        if (!navigateToAssetByClass(fallback)) return false;
+        return openEditForm(primary);
     }
 
     private void expandCoreAttributes() {
@@ -162,6 +190,18 @@ public class AssetPart4TestNG extends BaseTest {
                     + "if(d)d.scrollTop+=400;");
             pause(500);
         }
+        expandAllNestedAccordions();
+    }
+
+    private void expandAllNestedAccordions() {
+        try {
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            js.executeScript(
+                "var summaries = document.querySelectorAll('[class*=\"MuiAccordionSummary\"][aria-expanded=\"false\"]');" +
+                "summaries.forEach(function(s) { s.click(); });"
+            );
+            pause(800);
+        } catch (Exception ignored) {}
     }
 
     private WebElement findElementByText(String text) {
@@ -184,17 +224,16 @@ public class AssetPart4TestNG extends BaseTest {
         }
         js.executeScript("arguments[0].scrollIntoView({behavior:'smooth',block:'center'});", input);
         pause(300);
-        js.executeScript(
-                "var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
-                + "s.call(arguments[0],'');"
+        String setterScript =
+                "var proto = arguments[0].tagName === 'TEXTAREA'"
+                + " ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;"
+                + "var s = Object.getOwnPropertyDescriptor(proto, 'value').set;"
+                + "s.call(arguments[0], arguments[1]);"
                 + "arguments[0].dispatchEvent(new Event('input',{bubbles:true}));"
-                + "arguments[0].dispatchEvent(new Event('change',{bubbles:true}));", input);
+                + "arguments[0].dispatchEvent(new Event('change',{bubbles:true}));";
+        js.executeScript(setterScript, input, "");
         pause(200);
-        js.executeScript(
-                "var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
-                + "s.call(arguments[0],arguments[1]);"
-                + "arguments[0].dispatchEvent(new Event('input',{bubbles:true}));"
-                + "arguments[0].dispatchEvent(new Event('change',{bubbles:true}));", input, newValue);
+        js.executeScript(setterScript, input, newValue);
         pause(300);
         String actual = input.getAttribute("value");
         logStep("Value set: '" + actual + "'");
@@ -253,23 +292,33 @@ public class AssetPart4TestNG extends BaseTest {
     private WebElement findInputByPlaceholder(String placeholder) {
         try {
             List<WebElement> inputs = driver.findElements(By.xpath(
-                    "//input[contains(@placeholder,'" + placeholder + "')]"));
+                    "//input[contains(@placeholder,'" + placeholder + "')] | "
+                    + "//textarea[contains(@placeholder,'" + placeholder + "')]"));
+            if (!inputs.isEmpty()) return inputs.get(0);
+            String lower = placeholder.toLowerCase();
+            inputs = driver.findElements(By.xpath(
+                    "//input[contains(translate(@placeholder,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'" + lower + "')] | "
+                    + "//textarea[contains(translate(@placeholder,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'" + lower + "')]"));
             if (!inputs.isEmpty()) return inputs.get(0);
         } catch (Exception ignored) {}
         return null;
     }
 
     private WebElement findInputByLabel(String labelText) {
+        String lower = labelText.toLowerCase();
         try {
+            String ciXpath = "//*[contains(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'" + lower + "')]";
             List<WebElement> els = driver.findElements(By.xpath(
-                    "//*[contains(normalize-space(),'" + labelText + "')]"
-                    + "/ancestor::div[contains(@class,'MuiFormControl') or contains(@class,'MuiTextField')]"
-                    + "//input"));
+                    ciXpath + "/ancestor::div[contains(@class,'MuiFormControl') or contains(@class,'MuiTextField')]//input"));
             if (!els.isEmpty()) return els.get(0);
             els = driver.findElements(By.xpath(
-                    "//*[contains(normalize-space(),'" + labelText + "')]"
-                    + "/ancestor::div[contains(@class,'MuiFormControl') or contains(@class,'MuiTextField')]"
-                    + "//textarea"));
+                    ciXpath + "/ancestor::div[contains(@class,'MuiFormControl') or contains(@class,'MuiTextField')]//textarea"));
+            if (!els.isEmpty()) return els.get(0);
+            els = driver.findElements(By.xpath(
+                    ciXpath + "/parent::div[contains(@class,'MuiBox')]//textarea"));
+            if (!els.isEmpty()) return els.get(0);
+            els = driver.findElements(By.xpath(
+                    ciXpath + "/parent::div[contains(@class,'MuiBox')]//input"));
             if (!els.isEmpty()) return els.get(0);
         } catch (Exception ignored) {}
         return null;
@@ -1019,7 +1068,7 @@ public class AssetPart4TestNG extends BaseTest {
         // Re-open edit to verify persistence
         if (saved) {
             pause(1000);
-            openEditForm();
+            openEditForm("Panelboard");
             expandCoreAttributes();
             WebElement sizeInput = findInputByPlaceholder("Size");
             if (sizeInput == null) sizeInput = findInputByLabel("Size");
@@ -1207,7 +1256,7 @@ public class AssetPart4TestNG extends BaseTest {
 
         if (saved) {
             pause(1000);
-            openEditForm();
+            openEditForm("Relay");
             expandCoreAttributes();
             WebElement modelInput = findInputByPlaceholder("Model");
             if (modelInput == null) modelInput = findInputByLabel("Model");
