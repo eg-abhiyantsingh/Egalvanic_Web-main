@@ -137,13 +137,15 @@ public class AssetPart2TestNG extends BaseTest {
 
     /**
      * Opens the Edit Asset form from the detail page via kebab menu.
-     * Returns true if the edit form opened successfully.
+     * IMPORTANT: Caller must already be on the asset detail page.
+     * Uses clickKebabMenuItem directly — NOT openEditForFirstAsset()
+     * which would redundantly navigate to detail again and hang.
      */
     private boolean openEditForm() {
         logStep("Opening Edit Asset form via kebab menu");
         try {
-            assetPage.openEditForFirstAsset();
-            pause(1500);
+            assetPage.clickKebabMenuItem("Edit Asset");
+            pause(2000);
             editFormOpen = true;
 
             // Verify edit form is open by checking for Save Changes button or Core Attributes
