@@ -332,20 +332,24 @@ public class BaseTest {
             // The facility selector uses placeholder='Select facility'
             By facilityInput = By.xpath("//input[@placeholder='Select facility']");
 
-            // Check if correct site is already selected
-            if (driver.findElements(facilityInput).size() > 0) {
-                String currentValue = driver.findElement(facilityInput).getAttribute("value");
-                if (currentValue != null && currentValue.toLowerCase().contains(
-                        AppConstants.TEST_SITE_NAME.toLowerCase())) {
-                    System.out.println("Correct site already selected: " + currentValue);
-                    return;
-                }
-                if (currentValue != null && !currentValue.isEmpty()) {
-                    System.out.println("Wrong site selected: " + currentValue + " — switching to " + AppConstants.TEST_SITE_NAME);
-                }
-            } else {
-                System.out.println("Facility selector not found — skipping site selection");
+            // Wait for facility input to appear (React may still be hydrating)
+            try {
+                new WebDriverWait(driver, Duration.ofSeconds(15))
+                        .until(ExpectedConditions.presenceOfElementLocated(facilityInput));
+            } catch (Exception waitTimeout) {
+                System.out.println("Facility selector not found after 15s — skipping site selection");
                 return;
+            }
+
+            // Check if correct site is already selected
+            String currentValue = driver.findElement(facilityInput).getAttribute("value");
+            if (currentValue != null && currentValue.toLowerCase().contains(
+                    AppConstants.TEST_SITE_NAME.toLowerCase())) {
+                System.out.println("Correct site already selected: " + currentValue);
+                return;
+            }
+            if (currentValue != null && !currentValue.isEmpty()) {
+                System.out.println("Wrong site selected: " + currentValue + " — switching to " + AppConstants.TEST_SITE_NAME);
             }
 
             // Click the facility input to open dropdown
