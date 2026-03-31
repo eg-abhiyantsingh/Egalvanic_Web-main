@@ -1,12 +1,12 @@
-name: Full Test Suite — All Modules (1,057 TCs)
+name: Full Test Suite — All Modules (1,035 TCs)
 
 # ============================================================
 # FULL TEST SUITE — Sequential Dashboard Execution
 # ============================================================
-# Total: 1,057 tests across 10 groups
+# Total: 1,035 tests across 10 groups
 #
 # Groups:
-#   Group  1: Auth + Site + Connection    (152 TCs)
+#   Group  1: Auth + Site + Connection    (130 TCs)
 #   Group  2: Location + Task             (135 TCs)
 #   Group  3: Work Order + Issue          (234 TCs)
 #   Group  4: Asset Parts 1-2             ( 69 TCs)

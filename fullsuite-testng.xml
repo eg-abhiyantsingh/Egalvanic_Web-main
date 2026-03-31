@@ -8,7 +8,7 @@
 
   Test Count Summary:
     Authentication:         32 TCs (26 + 6 smoke)
-    Site Selection:         56 TCs (52 + 4 smoke)
+    Site Selection:         34 TCs (30 + 4 smoke)
     Assets:                295 TCs (Part1-5 + smoke)
     Dashboard Bugs:         45 TCs
     Tasks:                  55 TCs
@@ -44,9 +44,9 @@
     </test>
 
     <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- MODULE 2: SITE SELECTION (56 TCs)                      -->
+    <!-- MODULE 2: SITE SELECTION (34 TCs)                      -->
     <!-- ═══════════════════════════════════════════════════════ -->
-    <test name="03. Site Selection Full (52 TCs)">
+    <test name="03. Site Selection Full (30 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.SiteSelectionTestNG"/>
         </classes>

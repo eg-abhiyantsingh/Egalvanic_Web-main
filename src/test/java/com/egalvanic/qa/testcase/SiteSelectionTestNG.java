@@ -35,9 +35,18 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
- * Full Site Selection Test Suite
+ * Full Site Selection Test Suite — Web Adapted
  * Aligned with QA Automation Plan — Site Selection sheet
- * 52 of 56 TCs automatable (4 skipped: TC_SS_035-037, TC_SS_042 — require network toggle / manual)
+ * 30 TCs (web-applicable only)
+ *
+ * Removed from mobile plan (22 TCs not applicable to web):
+ *   - TC_SS_019-026: Online/Offline toggle (mobile WiFi icon — no web equivalent)
+ *   - TC_SS_027-034: Offline Sync (mobile sync badges/records — no web equivalent)
+ *   - TC_SS_035-037: Network toggle (require manual network disconnect)
+ *   - TC_SS_042: Manual test
+ *   - TC_SS_051-052: Dashboard Header (broadcast/WiFi icons — mobile-only)
+ *   - TC_SS_053-054: Job Selection (mobile "Active Job" card — not on web)
+ *   - TC_SS_055-056: Offline Sync continued (mobile-only)
  *
  * Architecture: Single browser session. Login once in @BeforeClass.
  * Does NOT extend BaseTest because BaseTest auto-selects site in @BeforeClass —
@@ -794,466 +803,10 @@ public class SiteSelectionTestNG {
     }
 
     // ================================================================
-    // ONLINE / OFFLINE — TC_SS_019 to TC_SS_026
+    // PERFORMANCE — TC_SS_038 to TC_SS_041
     // ================================================================
 
-    @Test(priority = 19, description = "TC_SS_019: Verify Go Offline option")
-    public void testTC_SS_019_GoOfflineOption() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_ONLINE_OFFLINE, "TC_SS_019_GoOfflineOption");
-        logStep("Verifying Go Offline option is available");
-
-        ensureSiteSelected();
-
-        // Look for WiFi/network icon in header
-        WebElement networkIcon = findNetworkIcon();
-        if (networkIcon == null) {
-            logStep("Network/WiFi icon not found on web dashboard — feature may be mobile-only");
-            ExtentReportManager.logPass("Go Offline option: Network icon not found (web adaptation)");
-            return;
-        }
-
-        safeClick(networkIcon);
-        pause(500);
-
-        // Look for Go Offline option in dropdown
-        boolean hasGoOffline = !driver.findElements(By.xpath(
-                "//*[contains(text(),'Go Offline') or contains(text(),'Offline')]")).isEmpty();
-        logStep("Go Offline option found: " + hasGoOffline);
-
-        // Close the dropdown
-        driver.findElement(By.tagName("body")).click();
-        pause(300);
-
-        ExtentReportManager.logPass("Go Offline option: " + (hasGoOffline ? "Available" : "Not found"));
-    }
-
-    @Test(priority = 20, description = "TC_SS_020: Verify switching to offline mode")
-    public void testTC_SS_020_SwitchToOfflineMode() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_ONLINE_OFFLINE, "TC_SS_020_SwitchToOfflineMode");
-        logStep("Verifying switching to offline mode");
-
-        ensureSiteSelected();
-
-        WebElement networkIcon = findNetworkIcon();
-        if (networkIcon == null) {
-            logStep("Network icon not found — skipping offline mode test");
-            ExtentReportManager.logPass("Offline mode test: Network icon not available on web");
-            return;
-        }
-
-        safeClick(networkIcon);
-        pause(500);
-
-        // Click Go Offline
-        List<WebElement> offlineOptions = driver.findElements(By.xpath(
-                "//*[contains(text(),'Go Offline') or contains(text(),'Offline')]"
-                + "[self::button or self::a or self::li or self::div or self::span]"));
-        if (offlineOptions.isEmpty()) {
-            logStep("Go Offline option not found in dropdown");
-            driver.findElement(By.tagName("body")).click();
-            ExtentReportManager.logPass("Offline mode: Go Offline option not available");
-            return;
-        }
-
-        safeClick(offlineOptions.get(0));
-        pause(1000);
-
-        logStepWithScreenshot("After switching to offline mode");
-        ExtentReportManager.logPass("Switched to offline mode");
-    }
-
-    @Test(priority = 21, description = "TC_SS_021: Verify offline mode WiFi indicator (Partial)")
-    public void testTC_SS_021_OfflineWiFiIndicator() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_ONLINE_OFFLINE, "TC_SS_021_OfflineWiFiIndicator");
-        logStep("Verifying WiFi icon shows offline state (Partial — color verification limited)");
-
-        WebElement networkIcon = findNetworkIcon();
-        if (networkIcon == null) {
-            logStep("Network icon not found on web — skipping");
-            ExtentReportManager.logPass("WiFi indicator test: Not applicable on web");
-            return;
-        }
-
-        // Check for visual changes (crossed out, different class, aria-label)
-        String ariaLabel = networkIcon.getAttribute("aria-label");
-        String className = networkIcon.getAttribute("class");
-        logStep("Network icon aria-label: " + ariaLabel);
-        logStep("Network icon class: " + className);
-
-        boolean indicatesOffline = (ariaLabel != null && ariaLabel.toLowerCase().contains("offline"))
-                || (className != null && (className.contains("offline") || className.contains("disabled")));
-        logStep("Indicates offline: " + indicatesOffline);
-
-        ExtentReportManager.logPass("WiFi indicator check (Partial): " + (indicatesOffline ? "Shows offline" : "State unclear"));
-    }
-
-    @Test(priority = 22, description = "TC_SS_022: Verify Sites button disabled in offline mode")
-    public void testTC_SS_022_SitesDisabledOffline() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_ONLINE_OFFLINE, "TC_SS_022_SitesDisabledOffline");
-        logStep("Verifying Sites button is disabled when offline");
-
-        // Check if facility selector is disabled
-        List<WebElement> inputs = driver.findElements(FACILITY_INPUT);
-        if (inputs.isEmpty()) {
-            logStep("Facility selector not found");
-            ExtentReportManager.logPass("Sites button offline test: Facility selector not found");
-            return;
-        }
-
-        boolean isDisabled = !inputs.get(0).isEnabled()
-                || "true".equals(inputs.get(0).getAttribute("disabled"))
-                || "true".equals(inputs.get(0).getAttribute("aria-disabled"));
-
-        String parentClass = (String) js.executeScript(
-                "return arguments[0].closest('[class*=\"disabled\"]') ? 'has-disabled-parent' : 'no-disabled-parent';",
-                inputs.get(0));
-
-        logStep("Facility selector disabled: " + isDisabled);
-        logStep("Parent disabled class: " + parentClass);
-
-        ExtentReportManager.logPass("Sites button offline status: " + (isDisabled ? "Disabled" : "Still enabled (may not be in offline mode)"));
-    }
-
-    @Test(priority = 23, description = "TC_SS_023: Verify Refresh button disabled in offline mode")
-    public void testTC_SS_023_RefreshDisabledOffline() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_ONLINE_OFFLINE, "TC_SS_023_RefreshDisabledOffline");
-        logStep("Verifying Refresh button is disabled when offline");
-
-        List<WebElement> refreshButtons = driver.findElements(By.xpath(
-                "//button[contains(.,'Refresh') or contains(@aria-label,'refresh') or contains(@aria-label,'Refresh')]"
-                + " | //*[contains(@class,'refresh') or contains(@class,'Refresh')][self::button]"));
-
-        if (refreshButtons.isEmpty()) {
-            logStep("Refresh button not found on dashboard");
-            ExtentReportManager.logPass("Refresh button not found on web dashboard");
-            return;
-        }
-
-        boolean isDisabled = !refreshButtons.get(0).isEnabled()
-                || "true".equals(refreshButtons.get(0).getAttribute("disabled"));
-        logStep("Refresh button disabled: " + isDisabled);
-
-        ExtentReportManager.logPass("Refresh button offline status: " + (isDisabled ? "Disabled" : "Enabled"));
-    }
-
-    @Test(priority = 24, description = "TC_SS_024: Verify tapping disabled Sites button shows message")
-    public void testTC_SS_024_TapDisabledSitesMessage() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_ONLINE_OFFLINE, "TC_SS_024_TapDisabledSitesMessage");
-        logStep("Verifying feedback when tapping disabled Sites button offline");
-
-        List<WebElement> inputs = driver.findElements(FACILITY_INPUT);
-        if (inputs.isEmpty()) {
-            ExtentReportManager.logPass("Facility selector not found — skipping");
-            return;
-        }
-
-        // Try clicking even if disabled
-        try {
-            safeClick(inputs.get(0));
-            pause(500);
-        } catch (Exception e) {
-            logStep("Click intercepted or failed: " + e.getMessage());
-        }
-
-        // Check for toast/snackbar message
-        boolean hasMessage = !driver.findElements(By.cssSelector(
-                ".MuiSnackbar-root, .MuiAlert-root, [role='alert'], "
-                + "[class*='toast'], [class*='Toast']")).isEmpty();
-
-        // Check if dropdown opened (should NOT open if disabled)
-        boolean dropdownOpened = isDropdownOpen();
-        logStep("Dropdown opened: " + dropdownOpened + ", Message shown: " + hasMessage);
-
-        if (dropdownOpened) {
-            closeFacilityDropdown();
-        }
-
-        ExtentReportManager.logPass("Disabled Sites tap: Dropdown=" + (dropdownOpened ? "opened (not offline)" : "blocked") + ", Message=" + hasMessage);
-    }
-
-    @Test(priority = 25, description = "TC_SS_025: Verify Go Online option")
-    public void testTC_SS_025_GoOnlineOption() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_ONLINE_OFFLINE, "TC_SS_025_GoOnlineOption");
-        logStep("Verifying Go Online option is available in offline mode");
-
-        WebElement networkIcon = findNetworkIcon();
-        if (networkIcon == null) {
-            logStep("Network icon not found — skipping");
-            ExtentReportManager.logPass("Go Online option: Network icon not available on web");
-            return;
-        }
-
-        safeClick(networkIcon);
-        pause(500);
-
-        boolean hasGoOnline = !driver.findElements(By.xpath(
-                "//*[contains(text(),'Go Online') or contains(text(),'Online')]"
-                + "[self::button or self::a or self::li or self::div or self::span]")).isEmpty();
-        logStep("Go Online option found: " + hasGoOnline);
-
-        driver.findElement(By.tagName("body")).click();
-        pause(300);
-
-        ExtentReportManager.logPass("Go Online option: " + (hasGoOnline ? "Available" : "Not found"));
-    }
-
-    @Test(priority = 26, description = "TC_SS_026: Verify switching to online mode")
-    public void testTC_SS_026_SwitchToOnlineMode() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_ONLINE_OFFLINE, "TC_SS_026_SwitchToOnlineMode");
-        logStep("Verifying switching back to online mode");
-
-        WebElement networkIcon = findNetworkIcon();
-        if (networkIcon == null) {
-            logStep("Network icon not found — skipping");
-            ExtentReportManager.logPass("Online mode test: Network icon not available");
-            return;
-        }
-
-        safeClick(networkIcon);
-        pause(500);
-
-        List<WebElement> onlineOptions = driver.findElements(By.xpath(
-                "//*[contains(text(),'Go Online') or contains(text(),'Online')]"
-                + "[self::button or self::a or self::li or self::div or self::span]"));
-        if (!onlineOptions.isEmpty()) {
-            safeClick(onlineOptions.get(0));
-            pause(1000);
-            logStep("Clicked Go Online");
-        } else {
-            logStep("Go Online option not found — may already be online");
-            driver.findElement(By.tagName("body")).click();
-        }
-
-        logStepWithScreenshot("After switching to online mode");
-        ExtentReportManager.logPass("Online mode switch attempted");
-    }
-
-    // ================================================================
-    // OFFLINE SYNC — TC_SS_027 to TC_SS_034, TC_SS_055, TC_SS_056
-    // ================================================================
-
-    @Test(priority = 27, description = "TC_SS_027: Verify changes can be made offline")
-    public void testTC_SS_027_OfflineChanges() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_OFFLINE_SYNC, "TC_SS_027_OfflineChanges");
-        logStep("Verifying user can create/edit data while offline");
-
-        // This test requires offline mode + navigating to Locations + creating data
-        // On web, offline functionality may differ from mobile
-        // Check if we can navigate to Locations
-        boolean navigated = navigateViaSidebar("Locations");
-        if (!navigated) {
-            logStep("Could not navigate to Locations — skipping offline change test");
-            ExtentReportManager.logPass("Offline changes: Cannot navigate to Locations");
-            return;
-        }
-
-        pause(2000);
-        logStep("Navigated to Locations. URL: " + driver.getCurrentUrl());
-        logStepWithScreenshot("Locations page for offline changes test");
-
-        // Navigate back to dashboard
-        navigateViaSidebar("Dashboard");
-        pause(1000);
-
-        ExtentReportManager.logPass("Offline changes test: Navigation verified, data creation depends on offline mode availability");
-    }
-
-    @Test(priority = 28, description = "TC_SS_028: Verify pending sync indicator on WiFi icon (Partial)")
-    public void testTC_SS_028_PendingSyncIndicator() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_OFFLINE_SYNC, "TC_SS_028_PendingSyncIndicator");
-        logStep("Verifying WiFi icon shows badge when sync pending (Partial)");
-
-        WebElement networkIcon = findNetworkIcon();
-        if (networkIcon == null) {
-            ExtentReportManager.logPass("Sync indicator: Network icon not available on web");
-            return;
-        }
-
-        // Check for badge/count on network icon
-        List<WebElement> badges = driver.findElements(By.cssSelector(
-                ".MuiBadge-badge, [class*='badge'], [class*='Badge']"));
-        boolean hasBadge = false;
-        for (WebElement badge : badges) {
-            try {
-                // Check if badge is near the network icon
-                if (badge.isDisplayed() && !getElementText(badge).isEmpty()) {
-                    hasBadge = true;
-                    logStep("Badge found: " + getElementText(badge));
-                }
-            } catch (Exception ignored) {}
-        }
-
-        logStep("Sync badge present: " + hasBadge);
-        ExtentReportManager.logPass("Pending sync indicator (Partial): " + (hasBadge ? "Badge found" : "No badge"));
-    }
-
-    @Test(priority = 29, description = "TC_SS_029: Verify Sync records option appears")
-    public void testTC_SS_029_SyncRecordsOption() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_OFFLINE_SYNC, "TC_SS_029_SyncRecordsOption");
-        logStep("Verifying sync option shown when changes pending");
-
-        WebElement networkIcon = findNetworkIcon();
-        if (networkIcon == null) {
-            ExtentReportManager.logPass("Sync records: Network icon not available");
-            return;
-        }
-
-        safeClick(networkIcon);
-        pause(500);
-
-        boolean hasSyncOption = !driver.findElements(By.xpath(
-                "//*[contains(text(),'Sync') or contains(text(),'sync')]"
-                + "[contains(text(),'record') or contains(text(),'Record')]")).isEmpty();
-        logStep("Sync records option found: " + hasSyncOption);
-
-        driver.findElement(By.tagName("body")).click();
-        pause(300);
-
-        ExtentReportManager.logPass("Sync records option: " + (hasSyncOption ? "Present" : "Not found"));
-    }
-
-    @Test(priority = 30, description = "TC_SS_030: Verify Sites button disabled with pending sync")
-    public void testTC_SS_030_SitesDisabledPendingSync() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_OFFLINE_SYNC, "TC_SS_030_SitesDisabledPendingSync");
-        logStep("Verifying Sites button disabled until sync completes");
-
-        // Similar to TC_SS_022 but specifically when sync is pending
-        List<WebElement> inputs = driver.findElements(FACILITY_INPUT);
-        if (inputs.isEmpty()) {
-            ExtentReportManager.logPass("Facility selector not found");
-            return;
-        }
-
-        boolean isEnabled = inputs.get(0).isEnabled();
-        logStep("Facility selector enabled: " + isEnabled);
-
-        ExtentReportManager.logPass("Sites button with pending sync: " + (isEnabled ? "Enabled (no pending sync)" : "Disabled"));
-    }
-
-    @Test(priority = 31, description = "TC_SS_031: Verify Sites button badge shows pending (Partial)")
-    public void testTC_SS_031_SitesButtonBadge() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_OFFLINE_SYNC, "TC_SS_031_SitesButtonBadge");
-        logStep("Verifying Sites button shows indicator when sync blocks site change (Partial)");
-
-        // Check for badge on facility selector area
-        List<WebElement> badges = driver.findElements(By.xpath(
-                "//input[@placeholder='Select facility']/ancestor::div[1]"
-                + "//span[contains(@class,'badge') or contains(@class,'Badge')]"));
-        boolean hasBadge = !badges.isEmpty();
-        logStep("Sites area badge: " + hasBadge);
-
-        ExtentReportManager.logPass("Sites button badge (Partial): " + (hasBadge ? "Present" : "Not found"));
-    }
-
-    @Test(priority = 32, description = "TC_SS_032: Verify tapping Sync records initiates sync")
-    public void testTC_SS_032_TapSyncInitiatesSync() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_OFFLINE_SYNC, "TC_SS_032_TapSyncInitiatesSync");
-        logStep("Verifying sync process starts when tapping sync option");
-
-        WebElement networkIcon = findNetworkIcon();
-        if (networkIcon == null) {
-            ExtentReportManager.logPass("Sync test: Network icon not available");
-            return;
-        }
-
-        safeClick(networkIcon);
-        pause(500);
-
-        List<WebElement> syncOptions = driver.findElements(By.xpath(
-                "//*[contains(text(),'Sync')]"
-                + "[self::button or self::a or self::li or self::div or self::span]"));
-        if (!syncOptions.isEmpty()) {
-            safeClick(syncOptions.get(0));
-            pause(2000);
-            logStep("Clicked sync option");
-
-            // Check for sync progress
-            boolean hasSyncProgress = !driver.findElements(By.cssSelector(
-                    ".MuiCircularProgress-root, .MuiLinearProgress-root, [role='progressbar']")).isEmpty();
-            logStep("Sync progress indicator: " + hasSyncProgress);
-        } else {
-            logStep("No sync option found in dropdown");
-            driver.findElement(By.tagName("body")).click();
-        }
-
-        ExtentReportManager.logPass("Sync initiation test complete");
-    }
-
-    @Test(priority = 33, description = "TC_SS_033: Verify Sites button enabled after sync")
-    public void testTC_SS_033_SitesEnabledAfterSync() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_OFFLINE_SYNC, "TC_SS_033_SitesEnabledAfterSync");
-        logStep("Verifying Sites button becomes enabled after sync");
-
-        List<WebElement> inputs = driver.findElements(FACILITY_INPUT);
-        if (inputs.isEmpty()) {
-            ExtentReportManager.logPass("Facility selector not found");
-            return;
-        }
-
-        boolean isEnabled = inputs.get(0).isEnabled();
-        logStep("Facility selector enabled: " + isEnabled);
-
-        // Try to open dropdown to confirm it works
-        if (isEnabled) {
-            safeClick(inputs.get(0));
-            pause(500);
-            boolean opened = isDropdownOpen();
-            logStep("Dropdown opens: " + opened);
-            if (opened) closeFacilityDropdown();
-        }
-
-        ExtentReportManager.logPass("Sites button after sync: " + (isEnabled ? "Enabled" : "Still disabled"));
-    }
-
-    @Test(priority = 34, description = "TC_SS_034: Verify WiFi badge cleared after sync")
-    public void testTC_SS_034_WiFiBadgeClearedAfterSync() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_OFFLINE_SYNC, "TC_SS_034_WiFiBadgeClearedAfterSync");
-        logStep("Verifying WiFi badge removed after successful sync");
-
-        WebElement networkIcon = findNetworkIcon();
-        if (networkIcon == null) {
-            ExtentReportManager.logPass("WiFi badge test: Network icon not available");
-            return;
-        }
-
-        // Check that no sync badge is present
-        WebElement parent = (WebElement) js.executeScript("return arguments[0].parentElement;", networkIcon);
-        List<WebElement> badges = parent.findElements(By.cssSelector(
-                ".MuiBadge-badge, [class*='badge']"));
-        boolean hasBadge = false;
-        for (WebElement badge : badges) {
-            try {
-                if (badge.isDisplayed() && !getElementText(badge).isEmpty()) {
-                    hasBadge = true;
-                }
-            } catch (Exception ignored) {}
-        }
-
-        logStep("WiFi badge after sync: " + (hasBadge ? "Still present" : "Cleared"));
-        ExtentReportManager.logPass("WiFi badge after sync: " + (hasBadge ? "Still present" : "Cleared"));
-    }
-
-    // ================================================================
-    // PERFORMANCE — TC_SS_038 to TC_SS_041 (Partial)
-    // ================================================================
-
-    @Test(priority = 38, description = "TC_SS_038: Verify site list loads quickly (Partial)")
+    @Test(priority = 19, description = "TC_SS_038: Verify site list loads quickly")
     public void testTC_SS_038_SiteListLoadPerformance() {
         ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
                 AppConstants.FEATURE_PERFORMANCE, "TC_SS_038_SiteListLoadPerformance");
@@ -1272,7 +825,7 @@ public class SiteSelectionTestNG {
         ExtentReportManager.logPass("Site list loaded in " + loadTime + "ms (< 5s threshold)");
     }
 
-    @Test(priority = 39, description = "TC_SS_039: Verify large site loads within reasonable time (Partial)")
+    @Test(priority = 20, description = "TC_SS_039: Verify large site loads within reasonable time")
     public void testTC_SS_039_LargeSiteLoadPerformance() {
         ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
                 AppConstants.FEATURE_PERFORMANCE, "TC_SS_039_LargeSiteLoadPerformance");
@@ -1312,7 +865,7 @@ public class SiteSelectionTestNG {
         ExtentReportManager.logPass("Large site load time: " + loadTime + "ms, Rows: " + rowCount);
     }
 
-    @Test(priority = 40, description = "TC_SS_040: Verify small site loads quickly (Partial)")
+    @Test(priority = 21, description = "TC_SS_040: Verify small site loads quickly")
     public void testTC_SS_040_SmallSiteLoadPerformance() {
         ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
                 AppConstants.FEATURE_PERFORMANCE, "TC_SS_040_SmallSiteLoadPerformance");
@@ -1342,7 +895,7 @@ public class SiteSelectionTestNG {
         ExtentReportManager.logPass("Small site load performance test complete");
     }
 
-    @Test(priority = 41, description = "TC_SS_041: Verify search performance with many sites (Partial)")
+    @Test(priority = 22, description = "TC_SS_041: Verify search performance with many sites")
     public void testTC_SS_041_SearchPerformance() {
         ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
                 AppConstants.FEATURE_PERFORMANCE, "TC_SS_041_SearchPerformance");
@@ -1370,7 +923,7 @@ public class SiteSelectionTestNG {
     // DASHBOARD BADGES — TC_SS_043 to TC_SS_045
     // ================================================================
 
-    @Test(priority = 43, description = "TC_SS_043: Verify My Tasks badge count")
+    @Test(priority = 23, description = "TC_SS_043: Verify My Tasks badge count")
     public void testTC_SS_043_MyTasksBadge() {
         ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
                 AppConstants.FEATURE_DASHBOARD_BADGES, "TC_SS_043_MyTasksBadge");
@@ -1415,7 +968,7 @@ public class SiteSelectionTestNG {
         ExtentReportManager.logPass("My Tasks badge: " + (hasTaskInfo ? taskText : "Not found in expected format"));
     }
 
-    @Test(priority = 44, description = "TC_SS_044: Verify Issues badge count")
+    @Test(priority = 24, description = "TC_SS_044: Verify Issues badge count")
     public void testTC_SS_044_IssuesBadge() {
         ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
                 AppConstants.FEATURE_DASHBOARD_BADGES, "TC_SS_044_IssuesBadge");
@@ -1443,7 +996,7 @@ public class SiteSelectionTestNG {
         ExtentReportManager.logPass("Issues badge: " + (hasIssueInfo ? issueText : "Not found in expected format"));
     }
 
-    @Test(priority = 45, description = "TC_SS_045: Verify badge counts update on site change")
+    @Test(priority = 25, description = "TC_SS_045: Verify badge counts update on site change")
     public void testTC_SS_045_BadgeCountsUpdateOnSiteChange() {
         ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
                 AppConstants.FEATURE_DASHBOARD_BADGES, "TC_SS_045_BadgeCountsUpdateOnSiteChange");
@@ -1512,7 +1065,7 @@ public class SiteSelectionTestNG {
     // EDGE CASES — TC_SS_046 to TC_SS_050
     // ================================================================
 
-    @Test(priority = 46, description = "TC_SS_046: Verify behavior with single site access (Partial)")
+    @Test(priority = 26, description = "TC_SS_046: Verify behavior with single site access")
     public void testTC_SS_046_SingleSiteAccess() {
         ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
                 AppConstants.FEATURE_EDGE_CASES, "TC_SS_046_SingleSiteAccess");
@@ -1535,7 +1088,7 @@ public class SiteSelectionTestNG {
         ExtentReportManager.logPass("Single site access test (Partial): " + siteCount + " sites available");
     }
 
-    @Test(priority = 47, description = "TC_SS_047: Verify switching to same site already loaded")
+    @Test(priority = 27, description = "TC_SS_047: Verify switching to same site already loaded")
     public void testTC_SS_047_SameSiteReselect() {
         ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
                 AppConstants.FEATURE_EDGE_CASES, "TC_SS_047_SameSiteReselect");
@@ -1566,7 +1119,7 @@ public class SiteSelectionTestNG {
         ExtentReportManager.logPass("Same site re-select: No errors, time: " + reloadTime + "ms");
     }
 
-    @Test(priority = 48, description = "TC_SS_048: Verify site with long name displays correctly")
+    @Test(priority = 28, description = "TC_SS_048: Verify site with long name displays correctly")
     public void testTC_SS_048_LongSiteNameDisplay() {
         ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
                 AppConstants.FEATURE_EDGE_CASES, "TC_SS_048_LongSiteNameDisplay");
@@ -1602,7 +1155,7 @@ public class SiteSelectionTestNG {
         ExtentReportManager.logPass("Long name display: All sites visible, longest: " + longestNameLen + " chars");
     }
 
-    @Test(priority = 49, description = "TC_SS_049: Verify site with long address displays correctly")
+    @Test(priority = 29, description = "TC_SS_049: Verify site with long address displays correctly")
     public void testTC_SS_049_LongAddressDisplay() {
         ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
                 AppConstants.FEATURE_EDGE_CASES, "TC_SS_049_LongAddressDisplay");
@@ -1638,7 +1191,7 @@ public class SiteSelectionTestNG {
         ExtentReportManager.logPass("Long address display: Options properly contained");
     }
 
-    @Test(priority = 50, description = "TC_SS_050: Verify site with no address displays correctly")
+    @Test(priority = 30, description = "TC_SS_050: Verify site with no address displays correctly")
     public void testTC_SS_050_NoAddressDisplay() {
         ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
                 AppConstants.FEATURE_EDGE_CASES, "TC_SS_050_NoAddressDisplay");
@@ -1666,204 +1219,6 @@ public class SiteSelectionTestNG {
 
         closeFacilityDropdown();
         ExtentReportManager.logPass("No-address sites display correctly. Found: " + foundSiteWithoutAddress);
-    }
-
-    // ================================================================
-    // DASHBOARD HEADER — TC_SS_051 to TC_SS_052
-    // ================================================================
-
-    @Test(priority = 51, description = "TC_SS_051: Verify broadcast icon in header")
-    public void testTC_SS_051_BroadcastIcon() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_DASHBOARD_HEADER, "TC_SS_051_BroadcastIcon");
-        logStep("Verifying broadcast/signal icon displayed in dashboard header");
-
-        ensureSiteSelected();
-        ensureOnDashboard();
-
-        // Look for broadcast/signal icon in header area
-        List<WebElement> broadcastIcons = driver.findElements(By.cssSelector(
-                "header svg, [class*='header'] svg, [class*='toolbar'] svg, "
-                + "[class*='appbar'] svg, .MuiAppBar-root svg"));
-        logStep("SVG icons in header area: " + broadcastIcons.size());
-
-        // Check for specific broadcast/signal icons
-        List<WebElement> signalIcons = driver.findElements(By.xpath(
-                "//header//*[contains(@data-testid,'broadcast') or contains(@data-testid,'signal') "
-                + "or contains(@class,'broadcast') or contains(@class,'signal')]"
-                + " | //*[contains(@class,'AppBar')]//*[contains(@data-testid,'broadcast') "
-                + "or contains(@data-testid,'signal')]"));
-
-        logStep("Broadcast/signal icons found: " + signalIcons.size());
-        logStepWithScreenshot("Dashboard header icons");
-
-        ExtentReportManager.logPass("Header icons: " + broadcastIcons.size() + " SVGs, " + signalIcons.size() + " broadcast-specific");
-    }
-
-    @Test(priority = 52, description = "TC_SS_052: Verify WiFi icon shows connection status (Partial)")
-    public void testTC_SS_052_WiFiConnectionStatus() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_DASHBOARD_HEADER, "TC_SS_052_WiFiConnectionStatus");
-        logStep("Verifying WiFi icon indicates online/offline state (Partial)");
-
-        WebElement networkIcon = findNetworkIcon();
-        if (networkIcon == null) {
-            logStep("Network/WiFi icon not found in header");
-            ExtentReportManager.logPass("WiFi connection status (Partial): Icon not found on web");
-            return;
-        }
-
-        String ariaLabel = networkIcon.getAttribute("aria-label");
-        String title = networkIcon.getAttribute("title");
-        logStep("Network icon aria-label: " + ariaLabel + ", title: " + title);
-
-        boolean indicatesOnline = (ariaLabel != null && ariaLabel.toLowerCase().contains("online"))
-                || (title != null && title.toLowerCase().contains("online"));
-        logStep("Indicates online: " + indicatesOnline);
-
-        ExtentReportManager.logPass("WiFi status (Partial): " + (indicatesOnline ? "Online indicated" : "Status not explicitly shown"));
-    }
-
-    // ================================================================
-    // JOB SELECTION — TC_SS_053 to TC_SS_054
-    // ================================================================
-
-    @Test(priority = 53, description = "TC_SS_053: Verify No Active Job card on dashboard")
-    public void testTC_SS_053_NoActiveJobCard() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_JOB_SELECTION, "TC_SS_053_NoActiveJobCard");
-        logStep("Verifying 'No Active Job' card displayed on dashboard");
-
-        ensureSiteSelected();
-        ensureOnDashboard();
-
-        // Look for job-related card
-        List<WebElement> jobElements = driver.findElements(By.xpath(
-                "//*[contains(text(),'No Active Job') or contains(text(),'no active job') "
-                + "or contains(text(),'Select a Job') or contains(text(),'select a job') "
-                + "or contains(text(),'Tap to select') or contains(text(),'Active Job')]"));
-
-        boolean hasJobCard = !jobElements.isEmpty();
-        String jobText = hasJobCard ? getElementText(jobElements.get(0)) : "not found";
-        logStep("Job card found: " + hasJobCard + " — " + jobText);
-
-        // Also check for job-related sections
-        List<WebElement> jobSections = driver.findElements(By.xpath(
-                "//*[contains(@class,'job') or contains(@class,'Job')]"
-                + "[contains(@class,'card') or contains(@class,'Card') or contains(@class,'section')]"));
-        logStep("Job sections found: " + jobSections.size());
-
-        logStepWithScreenshot("Dashboard job card area");
-        ExtentReportManager.logPass("No Active Job card: " + (hasJobCard ? "Found — " + jobText : "Not found on web dashboard"));
-    }
-
-    @Test(priority = 54, description = "TC_SS_054: Verify tap to select job navigates to job selection")
-    public void testTC_SS_054_TapToSelectJob() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_JOB_SELECTION, "TC_SS_054_TapToSelectJob");
-        logStep("Verifying tapping job card opens job selection");
-
-        ensureSiteSelected();
-        ensureOnDashboard();
-
-        String urlBefore = driver.getCurrentUrl();
-
-        // Try to click the job card/prompt
-        List<WebElement> jobPrompts = driver.findElements(By.xpath(
-                "//*[contains(text(),'Tap to select') or contains(text(),'Select a Job') "
-                + "or contains(text(),'No Active Job') or contains(text(),'Active Job')]"));
-
-        if (jobPrompts.isEmpty()) {
-            // Also try nav sidebar
-            jobPrompts = driver.findElements(By.xpath(
-                    "//nav//*[contains(text(),'Job') or contains(text(),'job')]"));
-        }
-
-        if (!jobPrompts.isEmpty()) {
-            try {
-                safeClick(jobPrompts.get(0));
-                pause(2000);
-                String urlAfter = driver.getCurrentUrl();
-                logStep("After clicking job prompt. URL: " + urlAfter);
-
-                boolean navigatedAway = !urlBefore.equals(urlAfter);
-                logStep("Navigated to job selection: " + navigatedAway);
-
-                // Navigate back if needed
-                if (navigatedAway) {
-                    navigateViaSidebar("Dashboard");
-                    pause(1000);
-                }
-            } catch (Exception e) {
-                logStep("Could not click job prompt: " + e.getMessage());
-            }
-        } else {
-            logStep("No job prompt/card found on dashboard");
-        }
-
-        ExtentReportManager.logPass("Job selection navigation test complete");
-    }
-
-    // ================================================================
-    // OFFLINE SYNC (continued) — TC_SS_055, TC_SS_056
-    // ================================================================
-
-    @Test(priority = 55, description = "TC_SS_055: Verify sync with multiple pending records")
-    public void testTC_SS_055_SyncMultipleRecords() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_OFFLINE_SYNC, "TC_SS_055_SyncMultipleRecords");
-        logStep("Verifying sync handles multiple offline changes");
-
-        WebElement networkIcon = findNetworkIcon();
-        if (networkIcon == null) {
-            ExtentReportManager.logPass("Multiple sync test: Network icon not available");
-            return;
-        }
-
-        safeClick(networkIcon);
-        pause(500);
-
-        // Check for sync option with count
-        List<WebElement> syncOptions = driver.findElements(By.xpath(
-                "//*[contains(text(),'Sync') and contains(text(),'record')]"));
-        if (!syncOptions.isEmpty()) {
-            String syncText = getElementText(syncOptions.get(0));
-            logStep("Sync option text: " + syncText);
-
-            // Extract count
-            String count = syncText.replaceAll("[^0-9]", "");
-            if (!count.isEmpty()) {
-                logStep("Pending records: " + count);
-            }
-        } else {
-            logStep("No pending sync records");
-        }
-
-        driver.findElement(By.tagName("body")).click();
-        pause(300);
-
-        ExtentReportManager.logPass("Multiple sync records test complete");
-    }
-
-    @Test(priority = 56, description = "TC_SS_056: Verify partial sync failure handling (Partial)")
-    public void testTC_SS_056_PartialSyncFailure() {
-        ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
-                AppConstants.FEATURE_OFFLINE_SYNC, "TC_SS_056_PartialSyncFailure");
-        logStep("Verifying handling when some records fail to sync (Partial — requires simulating failure)");
-
-        // This test requires simulating sync failure which is difficult to automate
-        // We verify the UI has error handling elements available
-        boolean hasRetryUI = !driver.findElements(By.xpath(
-                "//*[contains(text(),'Retry') or contains(text(),'retry') "
-                + "or contains(text(),'Try Again') or contains(text(),'try again')]")).isEmpty();
-
-        boolean hasErrorHandling = !driver.findElements(By.cssSelector(
-                "[role='alert'], .MuiAlert-root, [class*='error'], [class*='Error']")).isEmpty();
-
-        logStep("Retry UI available: " + hasRetryUI);
-        logStep("Error handling UI available: " + hasErrorHandling);
-
-        ExtentReportManager.logPass("Partial sync failure handling (Partial): Retry=" + hasRetryUI + ", ErrorUI=" + hasErrorHandling);
     }
 
     // ================================================================
@@ -2121,27 +1476,6 @@ public class SiteSelectionTestNG {
                 + "[class*='spinner'], [class*='loading'], [role='progressbar']")).isEmpty()
                 || !driver.findElements(By.xpath(
                 "//*[contains(text(),'Loading') or contains(text(),'Fetching')]")).isEmpty();
-    }
-
-    private WebElement findNetworkIcon() {
-        // Try various selectors for WiFi/network icon in header
-        String[] selectors = {
-                "[data-testid*='wifi'], [data-testid*='network'], [data-testid*='Wifi']",
-                "[aria-label*='wifi'], [aria-label*='network'], [aria-label*='online'], [aria-label*='offline']",
-                "header [class*='wifi'], header [class*='network']",
-                ".MuiAppBar-root [class*='wifi'], .MuiAppBar-root [class*='network']",
-                "[class*='wifi-icon'], [class*='networkIcon'], [class*='WiFi']"
-        };
-
-        for (String selector : selectors) {
-            List<WebElement> elements = driver.findElements(By.cssSelector(selector));
-            for (WebElement el : elements) {
-                try {
-                    if (el.isDisplayed()) return el;
-                } catch (Exception ignored) {}
-            }
-        }
-        return null;
     }
 
     private boolean navigateViaSidebar(String pageName) {

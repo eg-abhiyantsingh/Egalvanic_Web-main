@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="Full Suite — Auth + Site + Connection (152 TCs)" verbose="1">
+<suite name="Full Suite — Auth + Site + Connection (130 TCs)" verbose="1">
 
     <listeners>
         <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
@@ -12,7 +12,7 @@
         </classes>
     </test>
 
-    <test name="Full Site Selection Tests (52 TCs)">
+    <test name="Full Site Selection Tests (30 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.SiteSelectionTestNG"/>
         </classes>

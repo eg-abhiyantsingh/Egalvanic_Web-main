@@ -1,9 +1,9 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════════
-# FULL TEST SUITE DASHBOARD — 1,057 TCs across 10 Groups
+# FULL TEST SUITE DASHBOARD — 1,035 TCs across 10 Groups
 # ═══════════════════════════════════════════════════════════════════════
 # Runs 10 module groups individually with LIVE per-test progress updates.
-#   Group 1:  Auth + Site + Connection    (152 TCs)
+#   Group 1:  Auth + Site + Connection    (130 TCs)
 #   Group 2:  Location + Task             (135 TCs)
 #   Group 3:  Work Order + Issue          (234 TCs)
 #   Group 4:  Asset Parts 1-2             ( 69 TCs)
@@ -54,7 +54,7 @@ ALL_GROUP_NAMES=(
   "Load + API"
   "Smoke Suites"
 )
-ALL_GROUP_TESTS=(152 135 234 69 76 141 71 105 37 37)
+ALL_GROUP_TESTS=(130 135 234 69 76 141 71 105 37 37)
 ALL_GROUP_XMLS=(
   "suite-auth-site-connection.xml"
   "suite-location-task.xml"

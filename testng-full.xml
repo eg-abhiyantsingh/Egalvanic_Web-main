@@ -24,9 +24,9 @@
     </test>
 
     <!-- ============================================================ -->
-    <!-- SITE SELECTION (52 TCs)                                      -->
+    <!-- SITE SELECTION (30 TCs)                                      -->
     <!-- ============================================================ -->
-    <test name="Site Selection Tests (52 TCs)">
+    <test name="Site Selection Tests (30 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.SiteSelectionTestNG"/>
         </classes>
