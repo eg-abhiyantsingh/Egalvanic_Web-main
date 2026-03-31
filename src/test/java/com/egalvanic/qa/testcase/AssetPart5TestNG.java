@@ -224,6 +224,11 @@ public class AssetPart5TestNG extends BaseTest {
         }
         js.executeScript("arguments[0].scrollIntoView({behavior:'smooth',block:'center'});", input);
         pause(300);
+        // Re-find the element after scroll — React may have re-rendered the DOM
+        WebElement freshInput = findInputByPlaceholder(fieldLabel);
+        if (freshInput == null) freshInput = findInputByLabel(fieldLabel);
+        if (freshInput == null) freshInput = findInputByAriaLabel(fieldLabel);
+        if (freshInput != null) input = freshInput;
         String setterScript =
                 "var proto = arguments[0].tagName === 'TEXTAREA'"
                 + " ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;"
@@ -235,6 +240,11 @@ public class AssetPart5TestNG extends BaseTest {
         pause(200);
         js.executeScript(setterScript, input, newValue);
         pause(300);
+        // Re-find again to read the value (avoid stale reference)
+        freshInput = findInputByPlaceholder(fieldLabel);
+        if (freshInput == null) freshInput = findInputByLabel(fieldLabel);
+        if (freshInput == null) freshInput = findInputByAriaLabel(fieldLabel);
+        if (freshInput != null) input = freshInput;
         String actual = input.getAttribute("value");
         logStep("Value set: '" + actual + "'");
         return actual;
@@ -252,6 +262,11 @@ public class AssetPart5TestNG extends BaseTest {
         }
         js.executeScript("arguments[0].scrollIntoView({behavior:'smooth',block:'center'});", input);
         pause(300);
+        // Re-find after scroll to avoid stale element
+        WebElement freshDD = findInputByPlaceholder(fieldLabel);
+        if (freshDD == null) freshDD = findInputByLabel(fieldLabel);
+        if (freshDD == null) freshDD = findInputByAriaLabel(fieldLabel);
+        if (freshDD != null) input = freshDD;
         input.click();
         pause(500);
         if (valueToSelect != null && !valueToSelect.isEmpty()) {

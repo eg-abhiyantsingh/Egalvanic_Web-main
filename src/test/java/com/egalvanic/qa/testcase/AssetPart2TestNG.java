@@ -278,6 +278,12 @@ public class AssetPart2TestNG extends BaseTest {
         js.executeScript("arguments[0].scrollIntoView({behavior:'smooth', block:'center'});", input);
         pause(300);
 
+        // Re-find the element after scroll — React may have re-rendered the DOM
+        WebElement freshInput = findInputByPlaceholder(fieldLabel);
+        if (freshInput == null) freshInput = findInputByLabel(fieldLabel);
+        if (freshInput == null) freshInput = findInputByAriaLabel(fieldLabel);
+        if (freshInput != null) input = freshInput;
+
         // Use correct prototype setter for input vs textarea
         String setterScript =
                 "var proto = arguments[0].tagName === 'TEXTAREA'"
@@ -291,6 +297,11 @@ public class AssetPart2TestNG extends BaseTest {
         js.executeScript(setterScript, input, newValue);
         pause(300);
 
+        // Re-find again to read the value (avoid stale reference)
+        freshInput = findInputByPlaceholder(fieldLabel);
+        if (freshInput == null) freshInput = findInputByLabel(fieldLabel);
+        if (freshInput == null) freshInput = findInputByAriaLabel(fieldLabel);
+        if (freshInput != null) input = freshInput;
         String actualValue = input.getAttribute("value");
         logStep("Field '" + fieldLabel + "' value set to: '" + actualValue + "'");
         return actualValue;
@@ -320,6 +331,11 @@ public class AssetPart2TestNG extends BaseTest {
         // Scroll into view and click to open dropdown
         js.executeScript("arguments[0].scrollIntoView({behavior:'smooth', block:'center'});", input);
         pause(300);
+        // Re-find after scroll to avoid stale element
+        WebElement freshInput2 = findInputByPlaceholder(fieldLabel);
+        if (freshInput2 == null) freshInput2 = findInputByLabel(fieldLabel);
+        if (freshInput2 == null) freshInput2 = findInputByAriaLabel(fieldLabel);
+        if (freshInput2 != null) input = freshInput2;
         input.click();
         pause(500);
 
