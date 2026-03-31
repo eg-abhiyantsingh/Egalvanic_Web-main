@@ -111,11 +111,15 @@ public class AssetPart4TestNG extends BaseTest {
         return onDetail;
     }
 
+    /**
+     * Opens the Edit Asset form via kebab menu (three dots → Edit Asset).
+     * Caller must already be on the asset detail page.
+     */
     private boolean openEditForm() {
         logStep("Opening Edit Asset form");
         try {
-            assetPage.openEditForFirstAsset();
-            pause(1500);
+            assetPage.clickKebabMenuItem("Edit Asset");
+            pause(2000);
             editFormOpen = true;
             List<WebElement> saveBtn = driver.findElements(SAVE_CHANGES_BTN);
             boolean formOpen = !saveBtn.isEmpty();
