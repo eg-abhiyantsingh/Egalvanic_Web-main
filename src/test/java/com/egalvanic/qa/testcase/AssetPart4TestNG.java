@@ -441,44 +441,50 @@ public class AssetPart4TestNG extends BaseTest {
         if (subtypeInput == null) subtypeInput = findInputByLabel("Subtype");
         if (subtypeInput == null) subtypeInput = findInputByLabel("Asset Subtype");
 
-        if (subtypeInput != null) {
-            String currentValue = subtypeInput.getAttribute("value");
-            logStep("Current subtype value: '" + currentValue + "'");
-            if (expectedDefault != null) {
-                Assert.assertTrue(
-                        currentValue == null || currentValue.isEmpty()
-                        || currentValue.equalsIgnoreCase(expectedDefault)
-                        || currentValue.equalsIgnoreCase("None"),
-                        "Default subtype should be '" + expectedDefault + "' but was '" + currentValue + "'");
-            }
+        Assert.assertNotNull(subtypeInput, "Subtype field should be present in edit form");
 
-            // Open dropdown and collect options
-            subtypeInput.click();
-            pause(800);
-            List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
-            List<String> actualOptions = new ArrayList<>();
-            for (WebElement opt : options) {
-                String text = opt.getText().trim();
-                actualOptions.add(text);
-                logStep("  Subtype option: " + text);
-            }
-            logStep("Total subtype options: " + actualOptions.size());
+        String currentValue = subtypeInput.getAttribute("value");
+        logStep("Current subtype value: '" + currentValue + "'");
 
-            // Verify expected options are present
-            if (expectedOptions != null && expectedOptions.length > 0) {
-                for (String expected : expectedOptions) {
-                    boolean found = actualOptions.stream()
-                            .anyMatch(a -> a.equalsIgnoreCase(expected) || a.contains(expected));
-                    logStep("  Expected '" + expected + "' → " + (found ? "FOUND" : "MISSING"));
-                }
-            }
-
-            // Close dropdown
-            subtypeInput.sendKeys(Keys.ESCAPE);
-            pause(300);
-        } else {
-            logStep("Subtype field not found in edit form");
+        // Open dropdown and collect options
+        subtypeInput.click();
+        pause(800);
+        List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
+        List<String> actualOptions = new ArrayList<>();
+        for (WebElement opt : options) {
+            String text = opt.getText().trim();
+            actualOptions.add(text);
+            logStep("  Subtype option: " + text);
         }
+        logStep("Total subtype options: " + actualOptions.size());
+
+        // Verify current value is either empty or one of the valid dropdown options.
+        // Assets are reused across CI runs, so the subtype may have been set by a prior run.
+        if (currentValue != null && !currentValue.isEmpty()) {
+            boolean isValidOption = actualOptions.stream()
+                    .anyMatch(a -> a.equalsIgnoreCase(currentValue));
+            Assert.assertTrue(isValidOption,
+                    "Subtype value '" + currentValue + "' should be a valid option. Available: " + actualOptions);
+            logStep("Current value '" + currentValue + "' is a valid subtype option");
+        } else {
+            logStep("Subtype is empty (not yet set)");
+        }
+
+        // Verify expected options are present in the dropdown
+        if (expectedOptions != null && expectedOptions.length > 0) {
+            for (String expected : expectedOptions) {
+                if ("None".equalsIgnoreCase(expected)) continue; // "None" is not a real option; empty = unset
+                boolean found = actualOptions.stream()
+                        .anyMatch(a -> a.equalsIgnoreCase(expected) || a.contains(expected));
+                Assert.assertTrue(found,
+                        "Expected subtype option '" + expected + "' not found. Available: " + actualOptions);
+                logStep("  Expected '" + expected + "' → FOUND");
+            }
+        }
+
+        // Close dropdown
+        subtypeInput.sendKeys(Keys.ESCAPE);
+        pause(300);
     }
 
     /**
@@ -795,8 +801,7 @@ public class AssetPart4TestNG extends BaseTest {
     public void testMOT_AST_01_DefaultSubtype() {
         ExtentReportManager.createTest(MODULE, FEATURE, "MOT_AST_01_DefaultSubtype");
         if (!openEditForAssetClass("Motor", "MOTOR")) { skipIfNotFound("Motor"); return; }
-        verifyAssetSubtype("None",
-                "None",
+        verifyAssetSubtype(null,
                 "Low-Voltage Machine",
                 "Medium-Voltage Induction Machine",
                 "Medium-Voltage Synchronous Machine");
@@ -937,9 +942,9 @@ public class AssetPart4TestNG extends BaseTest {
     public void testOCP_AST_01_SubtypeNone() {
         ExtentReportManager.createTest(MODULE, FEATURE, "OCP_AST_01_SubtypeNone");
         if (!openEditForAssetClass("Other (OCP)", "OCP")) { skipIfNotFound("OCP"); return; }
-        verifyAssetSubtype("None");
+        verifyAssetSubtype(null);
         logStepWithScreenshot("OCP subtype");
-        ExtentReportManager.logPass("OCP subtype is None");
+        ExtentReportManager.logPass("OCP subtype field verified");
     }
 
     // ================================================================
@@ -1147,9 +1152,9 @@ public class AssetPart4TestNG extends BaseTest {
     public void testPB_AST_01_DefaultSubtype() {
         ExtentReportManager.createTest(MODULE, FEATURE, "PB_AST_01_DefaultSubtype");
         if (!openEditForAssetClass("Panelboard", "PB")) { skipIfNotFound("Panelboard"); return; }
-        verifyAssetSubtype("None", "None", "Panelboard");
+        verifyAssetSubtype(null, "Branch Panel", "Control Panel", "Panelboard", "Power Panel");
         logStepWithScreenshot("PB subtype");
-        ExtentReportManager.logPass("Panelboard default subtype is None");
+        ExtentReportManager.logPass("Panelboard subtype field verified with correct options");
     }
 
     @Test(priority = 56, description = "PB_AST_02: Verify Panelboard subtype dropdown options")
@@ -1161,25 +1166,28 @@ public class AssetPart4TestNG extends BaseTest {
         if (subtypeInput == null) subtypeInput = findInputByLabel("Subtype");
         if (subtypeInput == null) subtypeInput = findInputByLabel("Asset Subtype");
 
-        if (subtypeInput != null) {
-            subtypeInput.click();
-            pause(800);
-            List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
-            List<String> optTexts = new ArrayList<>();
-            for (WebElement opt : options) optTexts.add(opt.getText().trim());
-            logStep("PB subtype options: " + optTexts);
+        Assert.assertNotNull(subtypeInput, "Subtype field should be present for Panelboard");
+        subtypeInput.click();
+        pause(800);
+        List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
+        List<String> optTexts = new ArrayList<>();
+        for (WebElement opt : options) optTexts.add(opt.getText().trim());
+        logStep("PB subtype options: " + optTexts);
 
-            // Verify: None, Panelboard
-            Assert.assertTrue(optTexts.stream().anyMatch(t -> t.contains("None") || t.isEmpty()),
-                    "Should have None option");
-            Assert.assertTrue(optTexts.stream().anyMatch(t -> t.contains("Panelboard")),
-                    "Should have Panelboard option");
+        // Verify actual Panelboard subtype options
+        Assert.assertTrue(optTexts.stream().anyMatch(t -> t.contains("Panelboard")),
+                "Should have Panelboard option but found: " + optTexts);
+        Assert.assertTrue(optTexts.stream().anyMatch(t -> t.contains("Branch Panel")),
+                "Should have Branch Panel option but found: " + optTexts);
+        Assert.assertTrue(optTexts.stream().anyMatch(t -> t.contains("Control Panel")),
+                "Should have Control Panel option but found: " + optTexts);
+        Assert.assertTrue(optTexts.stream().anyMatch(t -> t.contains("Power Panel")),
+                "Should have Power Panel option but found: " + optTexts);
 
-            subtypeInput.sendKeys(Keys.ESCAPE);
-            pause(300);
-        }
+        subtypeInput.sendKeys(Keys.ESCAPE);
+        pause(300);
         logStepWithScreenshot("PB subtype options");
-        ExtentReportManager.logPass("PB subtype options verified");
+        ExtentReportManager.logPass("PB subtype options verified: " + optTexts);
     }
 
     @Test(priority = 57, description = "PB_AST_03: Select Panelboard subtype")
@@ -1232,9 +1240,9 @@ public class AssetPart4TestNG extends BaseTest {
     public void testPDU_AST_01_SubtypeNone() {
         ExtentReportManager.createTest(MODULE, FEATURE, "PDU_AST_01_SubtypeNone");
         if (!openEditForAssetClass("Power Distribution Unit", "PDU")) { skipIfNotFound("PDU"); return; }
-        verifyAssetSubtype("None");
+        verifyAssetSubtype(null);
         logStepWithScreenshot("PDU subtype");
-        ExtentReportManager.logPass("PDU subtype is None");
+        ExtentReportManager.logPass("PDU subtype field verified");
     }
 
     // ================================================================
@@ -1335,8 +1343,7 @@ public class AssetPart4TestNG extends BaseTest {
     public void testREL_AST_01_DefaultSubtype() {
         ExtentReportManager.createTest(MODULE, FEATURE, "REL_AST_01_DefaultSubtype");
         if (!openEditForAssetClass("Relay", "REL")) { skipIfNotFound("Relay"); return; }
-        verifyAssetSubtype("None",
-                "None",
+        verifyAssetSubtype(null,
                 "Electromechanical Relay",
                 "Microprocessor Relay",
                 "Solid-State Relay");
