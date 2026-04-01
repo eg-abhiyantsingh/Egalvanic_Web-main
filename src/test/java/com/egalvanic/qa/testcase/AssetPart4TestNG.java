@@ -323,7 +323,14 @@ public class AssetPart4TestNG extends BaseTest {
         }
         List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
         if (options.isEmpty()) {
-            input.sendKeys(Keys.ESCAPE);
+            // Click the drawer heading to dismiss focus — do NOT send Escape
+            // as it would close the entire MUI Drawer when no dropdown is open
+            try {
+                WebElement heading = driver.findElement(By.xpath(
+                        "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+                heading.click();
+            } catch (Exception ignored) {}
+            pause(300);
             return null;
         }
         String selected = null;

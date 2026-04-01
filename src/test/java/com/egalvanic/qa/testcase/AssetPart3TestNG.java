@@ -333,7 +333,14 @@ public class AssetPart3TestNG extends BaseTest {
         }
         List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
         if (options.isEmpty()) {
-            input.sendKeys(Keys.ESCAPE);
+            // Click the drawer heading to dismiss focus — do NOT send Escape
+            // as it would close the entire MUI Drawer when no dropdown is open
+            try {
+                WebElement heading = driver.findElement(By.xpath(
+                        "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+                heading.click();
+            } catch (Exception ignored) {}
+            pause(300);
             return null;
         }
         String selected = null;
@@ -876,9 +883,8 @@ public class AssetPart3TestNG extends BaseTest {
         if (!openEditForAssetClass("Generator", "GEN")) { skipIfNotFound("Generator"); return; }
         expandCoreAttributes();
 
-        // UI label is lowercase "manufacturer"
-        String val = selectFirstDropdownOption("manufacturer");
-        if (val == null) val = editTextField("manufacturer", "Caterpillar");
+        // UI label is lowercase "manufacturer" — plain text field, not a dropdown
+        String val = editTextField("manufacturer", "Caterpillar");
         Assert.assertNotNull(val, "Should be able to edit 'manufacturer' field");
 
         boolean saved = saveAndVerify();
