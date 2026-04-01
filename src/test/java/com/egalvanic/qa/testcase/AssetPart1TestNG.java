@@ -1198,23 +1198,47 @@ public class AssetPart1TestNG extends BaseTest {
 
         // Ensure clean state: close any leftover drawer/dialog from prior tests
         closeCreatePanelIfOpen();
-        pause(500);
+        pause(1000);
+
+        // Wait for grid to stabilise after prior test's clearSearch
+        JavascriptExecutor jsExec = (JavascriptExecutor) driver;
+        new WebDriverWait(driver, Duration.ofSeconds(10))
+                .until(d -> {
+                    try {
+                        return d.findElements(By.xpath(
+                                "//div[contains(@class,'MuiDataGrid-row')]")).size() > 0
+                                || d.findElements(By.xpath(
+                                "//p[contains(text(),'No rows')]")).size() > 0;
+                    } catch (Exception e) { return true; }
+                });
 
         int rowsBefore = assetPage.getGridRowCount();
         logStep("Rows before create attempt: " + rowsBefore);
 
+        // Open the Create Asset drawer using JS click on the TOOLBAR button
+        // (avoid matching the in-drawer "Create Asset" submit button)
+        Boolean drawerOpened = false;
         try {
-            assetPage.openCreateAssetForm();
+            jsExec.executeScript(
+                    "var btns = document.querySelectorAll('button');"
+                    + "for(var b of btns) {"
+                    + "  if(b.textContent.trim() === 'Create Asset'"
+                    + "     && !b.closest('.MuiDrawer-root')"
+                    + "     && !b.closest('[role=\"presentation\"]')) {"
+                    + "    b.click(); break;"
+                    + "  }"
+                    + "}");
+            pause(2000);
+
+            drawerOpened = !driver.findElements(ADD_ASSET_PANEL).isEmpty();
+            logStep("Drawer opened after JS click: " + drawerOpened);
         } catch (Exception e) {
-            // Recover: dismiss backdrop, refresh, try again
-            logStep("openCreateAssetForm failed — recovering: " + e.getMessage());
-            try {
-                JavascriptExecutor js = (JavascriptExecutor) driver;
-                js.executeScript(
-                        "document.querySelectorAll('.MuiBackdrop-root').forEach(b => b.click());"
-                        + "document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));");
-                pause(1000);
-            } catch (Exception ignored) {}
+            logStep("JS click on Create Asset: " + e.getMessage());
+        }
+
+        if (!drawerOpened) {
+            // Fallback: try openCreateAssetForm with longer wait
+            logStep("Drawer not opened — trying assetPage.openCreateAssetForm()");
             assetPage.openCreateAssetForm();
         }
         pause(500);
