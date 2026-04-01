@@ -748,6 +748,42 @@ public class AssetPage {
         }
         ensureOnDetailPage(detailUrl);
 
+        // Strategy 0b: Direct MoreVert SVG path match — the kebab icon always uses
+        // this SVG path, even when it has no aria-label or data-testid.
+        try {
+            @SuppressWarnings("unchecked")
+            java.util.List<WebElement> moreVertBtns = (java.util.List<WebElement>) js.executeScript(
+                    "var result = [];" +
+                    "var paths = document.querySelectorAll('svg path');" +
+                    "for (var p of paths) {" +
+                    "  var d = p.getAttribute('d') || '';" +
+                    "  if (d.indexOf('M12 8c1.1') > -1) {" +
+                    "    var btn = p.closest('button');" +
+                    "    if (btn) result.push(btn);" +
+                    "  }" +
+                    "}" +
+                    "return result;");
+            System.out.println("[AssetPage] Strategy 0b — MoreVert SVG buttons: " + moreVertBtns.size());
+            for (int i = 0; i < moreVertBtns.size(); i++) {
+                try {
+                    moreVertBtns.get(i).click();
+                    pause(800);
+                    if (!driver.getCurrentUrl().equals(detailUrl)) {
+                        System.out.println("[AssetPage]   MoreVert btn navigated away — recovering");
+                        driver.get(detailUrl); waitForDetailPageLoad(); continue;
+                    }
+                    if (tryClickMenuItem(itemText)) {
+                        System.out.println("[AssetPage] Success via MoreVert SVG button " + i);
+                        return;
+                    }
+                    dismissPopup();
+                } catch (Exception ignored) {}
+            }
+        } catch (Exception e) {
+            System.out.println("[AssetPage] Strategy 0b error: " + e.getMessage());
+        }
+        ensureOnDetailPage(detailUrl);
+
         // Strategy 1: Find small <button> elements in top 200px using Selenium click.
         // Previous attempts used JS click which may not trigger React event handlers.
         // Also look for MoreVert icon (three vertical dots SVG path).
