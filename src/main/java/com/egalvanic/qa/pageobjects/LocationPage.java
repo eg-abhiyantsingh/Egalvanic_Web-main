@@ -554,48 +554,46 @@ public class LocationPage {
         js.executeScript("arguments[0].scrollIntoView({block:'center'});", item);
         pause(400);
 
-        boolean expanded = false;
+        // Web UI uses MuiList with flat sibling LIs. Each expandable node has an
+        // MuiIconButton (no aria-label) with an SVG chevron arrow.
+        // Collapsed = right-pointing chevron (path starts with "M10")
+        // Expanded  = down-pointing chevron (path starts with "M16")
+        // If already expanded, skip clicking to avoid toggling it closed.
 
-        // Strategy 1: Find expand arrow button (any SVG button in the row)
-        try {
-            WebElement parent = item.findElement(
-                    By.xpath("./ancestor::div[contains(@class,'MuiListItem') or contains(@class,'MuiTreeItem')][1]"));
-            // Try specific expand arrow paths
-            List<WebElement> svgButtons = parent.findElements(By.xpath(".//button[.//svg]"));
-            System.out.println("[LocationPage] expandNode: Found " + svgButtons.size() + " SVG buttons in row for: " + name);
-            for (WebElement btn : svgButtons) {
-                String ariaLabel = "";
-                String ariaExpanded = "";
-                try { ariaLabel = btn.getAttribute("aria-label"); } catch (Exception ignored) {}
-                try { ariaExpanded = btn.getAttribute("aria-expanded"); } catch (Exception ignored) {}
-                System.out.println("[LocationPage] expandNode: SVG button aria-label='" + ariaLabel + "' aria-expanded='" + ariaExpanded + "'");
+        Boolean alreadyExpanded = (Boolean) js.executeScript(
+            "var el = arguments[0];" +
+            "var li = el.closest('li');" +
+            "if (!li) return false;" +
+            "var btn = li.querySelector('button.MuiIconButton-root:not([aria-label])');" +
+            "if (!btn) return false;" +
+            "var path = btn.querySelector('svg path');" +
+            "if (!path) return false;" +
+            "var d = path.getAttribute('d') || '';" +
+            // Down-arrow SVG path starts with M16 (expanded state)
+            "return d.startsWith('M16');", item);
 
-                // Click expand buttons (not Add buttons)
-                if (ariaLabel == null || (!ariaLabel.contains("Add") && !ariaLabel.contains("Delete") && !ariaLabel.contains("Edit"))) {
-                    js.executeScript("arguments[0].click();", btn);
-                    expanded = true;
-                    System.out.println("[LocationPage] expandNode: Clicked expand button");
-                    pause(800);
-                    break;
-                }
-            }
-        } catch (Exception e) {
-            System.out.println("[LocationPage] expandNode: No SVG buttons in row: " + e.getMessage());
+        if (alreadyExpanded != null && alreadyExpanded) {
+            System.out.println("[LocationPage] expandNode: '" + name + "' already expanded (chevron down)");
+            return;
         }
 
-        // Strategy 2: Click the item text directly (toggle expansion)
-        if (!expanded) {
-            System.out.println("[LocationPage] expandNode: Clicking item text directly");
+        // Click the expand arrow button directly (not the text, to avoid selecting the node)
+        Boolean clickedArrow = (Boolean) js.executeScript(
+            "var el = arguments[0];" +
+            "var li = el.closest('li');" +
+            "if (!li) return false;" +
+            "var btn = li.querySelector('button.MuiIconButton-root:not([aria-label])');" +
+            "if (btn) { btn.click(); return true; }" +
+            "return false;", item);
+
+        if (clickedArrow != null && clickedArrow) {
+            System.out.println("[LocationPage] expandNode: Clicked expand arrow for: " + name);
+            pause(800);
+        } else {
+            // Fallback: click the item text (for nodes without an expand arrow)
+            System.out.println("[LocationPage] expandNode: No arrow found, clicking text for: " + name);
             js.executeScript("arguments[0].click();", item);
             pause(800);
-        }
-
-        // Strategy 3: Double-click to expand
-        if (!expanded) {
-            try {
-                new org.openqa.selenium.interactions.Actions(driver).doubleClick(item).perform();
-                pause(800);
-            } catch (Exception ignored) {}
         }
     }
 
