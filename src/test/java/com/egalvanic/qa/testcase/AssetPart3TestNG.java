@@ -223,7 +223,9 @@ public class AssetPart3TestNG extends BaseTest {
     private String editTextField(String fieldLabel, String newValue) {
         logStep("Editing '" + fieldLabel + "' → '" + newValue + "'");
         JavascriptExecutor js = (JavascriptExecutor) driver;
-        WebElement input = findInputByPlaceholder(fieldLabel);
+        // Prefer drawer-scoped lookup (avoids matching the read-only detail table)
+        WebElement input = findInputInDrawerByLabel(fieldLabel);
+        if (input == null) input = findInputByPlaceholder(fieldLabel);
         if (input == null) input = findInputByLabel(fieldLabel);
         if (input == null) input = findInputByAriaLabel(fieldLabel);
         if (input == null) {
@@ -233,7 +235,8 @@ public class AssetPart3TestNG extends BaseTest {
         js.executeScript("arguments[0].scrollIntoView({behavior:'smooth',block:'center'});", input);
         pause(300);
         // Re-find the element after scroll — React may have re-rendered the DOM
-        WebElement freshInput = findInputByPlaceholder(fieldLabel);
+        WebElement freshInput = findInputInDrawerByLabel(fieldLabel);
+        if (freshInput == null) freshInput = findInputByPlaceholder(fieldLabel);
         if (freshInput == null) freshInput = findInputByLabel(fieldLabel);
         if (freshInput == null) freshInput = findInputByAriaLabel(fieldLabel);
         if (freshInput != null) input = freshInput;
@@ -250,7 +253,8 @@ public class AssetPart3TestNG extends BaseTest {
         js.executeScript(setterScript, input, newValue);
         pause(300);
         // Re-find again to read the value (avoid stale reference)
-        freshInput = findInputByPlaceholder(fieldLabel);
+        freshInput = findInputInDrawerByLabel(fieldLabel);
+        if (freshInput == null) freshInput = findInputByPlaceholder(fieldLabel);
         if (freshInput == null) freshInput = findInputByLabel(fieldLabel);
         if (freshInput == null) freshInput = findInputByAriaLabel(fieldLabel);
         if (freshInput != null) input = freshInput;
@@ -262,7 +266,8 @@ public class AssetPart3TestNG extends BaseTest {
     private String selectDropdownValue(String fieldLabel, String valueToSelect) {
         logStep("Selecting dropdown '" + fieldLabel + "'");
         JavascriptExecutor js = (JavascriptExecutor) driver;
-        WebElement input = findInputByPlaceholder(fieldLabel);
+        WebElement input = findInputInDrawerByLabel(fieldLabel);
+        if (input == null) input = findInputByPlaceholder(fieldLabel);
         if (input == null) input = findInputByLabel(fieldLabel);
         if (input == null) input = findInputByAriaLabel(fieldLabel);
         if (input == null) {
@@ -272,7 +277,8 @@ public class AssetPart3TestNG extends BaseTest {
         js.executeScript("arguments[0].scrollIntoView({behavior:'smooth',block:'center'});", input);
         pause(300);
         // Re-find after scroll to avoid stale element
-        WebElement freshInput = findInputByPlaceholder(fieldLabel);
+        WebElement freshInput = findInputInDrawerByLabel(fieldLabel);
+        if (freshInput == null) freshInput = findInputByPlaceholder(fieldLabel);
         if (freshInput == null) freshInput = findInputByLabel(fieldLabel);
         if (freshInput == null) freshInput = findInputByAriaLabel(fieldLabel);
         if (freshInput != null) input = freshInput;
@@ -361,6 +367,36 @@ public class AssetPart3TestNG extends BaseTest {
         return null;
     }
 
+    /**
+     * Find an input inside the edit drawer by matching the label paragraph text.
+     * DOM structure: div.MuiBox-root > p (label) + div.MuiTextField-root > ... > input
+     * Scoping to the drawer avoids matching the read-only Core Attributes table.
+     */
+    private WebElement findInputInDrawerByLabel(String label) {
+        try {
+            // Exact match inside drawer context
+            List<WebElement> inputs = driver.findElements(By.xpath(
+                    "//div[contains(@class,'MuiDrawer')]"
+                    + "//p[normalize-space()='" + label + "']"
+                    + "/following-sibling::div//input"));
+            if (!inputs.isEmpty()) return inputs.get(0);
+            // Case-insensitive fallback
+            String lower = label.toLowerCase();
+            inputs = driver.findElements(By.xpath(
+                    "//div[contains(@class,'MuiDrawer')]"
+                    + "//p[translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')='" + lower + "']"
+                    + "/following-sibling::div//input"));
+            if (!inputs.isEmpty()) return inputs.get(0);
+            // Textarea fallback
+            inputs = driver.findElements(By.xpath(
+                    "//div[contains(@class,'MuiDrawer')]"
+                    + "//p[normalize-space()='" + label + "']"
+                    + "/following-sibling::div//textarea"));
+            if (!inputs.isEmpty()) return inputs.get(0);
+        } catch (Exception ignored) {}
+        return null;
+    }
+
     private boolean saveAndVerify() {
         logStep("Saving changes");
         assetPage.saveChanges();
@@ -369,6 +405,39 @@ public class AssetPart3TestNG extends BaseTest {
         logStep("Save success: " + success);
         if (success) editFormOpen = false;
         return success;
+    }
+
+    /**
+     * Read an attribute value from the read-only Core Attributes table on the
+     * asset detail page.  The table structure is:
+     *   | (icon) | Attribute | Required | Value |
+     * We match the row whose "Attribute" cell equals {@code fieldLabel} and
+     * return the text in the "Value" cell.
+     */
+    private String readDetailAttributeValue(String fieldLabel) {
+        try {
+            pause(1000);  // let detail page finish rendering
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            String script =
+                    "var rows = document.querySelectorAll('table.MuiTable-root tr');"
+                    + "for (var r of rows) {"
+                    + "  var cells = r.querySelectorAll('td');"
+                    + "  for (var c of cells) {"
+                    + "    if (c.textContent.trim() === arguments[0]) {"
+                    + "      var all = r.querySelectorAll('td');"
+                    + "      return all[all.length - 1].textContent.trim();"
+                    + "    }"
+                    + "  }"
+                    + "}"
+                    + "return null;";
+            Object result = js.executeScript(script, fieldLabel);
+            String val = result != null ? result.toString() : null;
+            logStep("Detail page value for '" + fieldLabel + "': " + val);
+            return val;
+        } catch (Exception e) {
+            logStep("Could not read detail attribute '" + fieldLabel + "': " + e.getMessage());
+            return null;
+        }
     }
 
     private void closeEditFormIfOpen() {
@@ -680,9 +749,20 @@ public class AssetPart3TestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE, "GEN_EAD_05_AmpereRating");
         if (!openEditForAssetClass("Generator", "GEN")) { skipIfNotFound("Generator"); return; }
         expandCoreAttributes();
-        String val = editTextField("Ampere Rating", "800");
+
+        String newValue = "800";
+        String val = editTextField("Ampere Rating", newValue);
+        Assert.assertNotNull(val, "editTextField should find and set 'Ampere Rating' field");
+        Assert.assertEquals(val, newValue, "Ampere Rating input value should match");
+
         boolean saved = saveAndVerify();
-        ExtentReportManager.logPass("Ampere Rating: '" + val + "', saved=" + saved);
+        Assert.assertTrue(saved, "Save Changes should succeed after editing Ampere Rating");
+
+        String persisted = readDetailAttributeValue("Ampere Rating");
+        Assert.assertNotNull(persisted, "Ampere Rating should be visible on detail page after save");
+        Assert.assertEquals(persisted, newValue, "Ampere Rating should persist after save");
+
+        ExtentReportManager.logPass("Ampere Rating edited to '" + val + "', saved, and verified");
     }
 
     @Test(priority = 23, description = "GEN_EAD_06: Edit Configuration")
@@ -690,10 +770,20 @@ public class AssetPart3TestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE, "GEN_EAD_06_Configuration");
         if (!openEditForAssetClass("Generator", "GEN")) { skipIfNotFound("Generator"); return; }
         expandCoreAttributes();
-        String val = selectFirstDropdownOption("Configuration");
-        if (val == null) val = editTextField("Configuration", "3-Phase");
+
+        // Field label on UI is lowercase "configuration"
+        String val = selectFirstDropdownOption("configuration");
+        if (val == null) val = editTextField("configuration", "3-Phase");
+        Assert.assertNotNull(val, "Should be able to edit 'configuration' field");
+
         boolean saved = saveAndVerify();
-        ExtentReportManager.logPass("Configuration: '" + val + "', saved=" + saved);
+        Assert.assertTrue(saved, "Save Changes should succeed after editing configuration");
+
+        String persisted = readDetailAttributeValue("configuration");
+        Assert.assertNotNull(persisted, "configuration should be visible on detail page after save");
+        Assert.assertFalse("Not specified".equals(persisted), "configuration should have a value after save");
+
+        ExtentReportManager.logPass("Configuration edited to '" + val + "', saved, and verified");
     }
 
     @Test(priority = 24, description = "GEN_EAD_07: Edit KVA Rating")
@@ -701,9 +791,21 @@ public class AssetPart3TestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE, "GEN_EAD_07_KVARating");
         if (!openEditForAssetClass("Generator", "GEN")) { skipIfNotFound("Generator"); return; }
         expandCoreAttributes();
-        String val = editTextField("KVA Rating", "500");
+
+        // UI label is "K V A Rating" (with spaces)
+        String newValue = "500";
+        String val = editTextField("K V A Rating", newValue);
+        Assert.assertNotNull(val, "editTextField should find and set 'K V A Rating' field");
+        Assert.assertEquals(val, newValue, "K V A Rating input value should match");
+
         boolean saved = saveAndVerify();
-        ExtentReportManager.logPass("KVA Rating: '" + val + "', saved=" + saved);
+        Assert.assertTrue(saved, "Save Changes should succeed after editing K V A Rating");
+
+        String persisted = readDetailAttributeValue("K V A Rating");
+        Assert.assertNotNull(persisted, "K V A Rating should be visible on detail page after save");
+        Assert.assertEquals(persisted, newValue, "K V A Rating should persist after save");
+
+        ExtentReportManager.logPass("K V A Rating edited to '" + val + "', saved, and verified");
     }
 
     @Test(priority = 25, description = "GEN_EAD_08: Edit KW Rating")
@@ -711,9 +813,21 @@ public class AssetPart3TestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE, "GEN_EAD_08_KWRating");
         if (!openEditForAssetClass("Generator", "GEN")) { skipIfNotFound("Generator"); return; }
         expandCoreAttributes();
-        String val = editTextField("KW Rating", "400");
+
+        // UI label is "K W Rating" (with space)
+        String newValue = "400";
+        String val = editTextField("K W Rating", newValue);
+        Assert.assertNotNull(val, "editTextField should find and set 'K W Rating' field");
+        Assert.assertEquals(val, newValue, "K W Rating input value should match");
+
         boolean saved = saveAndVerify();
-        ExtentReportManager.logPass("KW Rating: '" + val + "', saved=" + saved);
+        Assert.assertTrue(saved, "Save Changes should succeed after editing K W Rating");
+
+        String persisted = readDetailAttributeValue("K W Rating");
+        Assert.assertNotNull(persisted, "K W Rating should be visible on detail page after save");
+        Assert.assertEquals(persisted, newValue, "K W Rating should persist after save");
+
+        ExtentReportManager.logPass("K W Rating edited to '" + val + "', saved, and verified");
     }
 
     @Test(priority = 26, description = "GEN_EAD_09: Edit Manufacturer")
@@ -721,10 +835,20 @@ public class AssetPart3TestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE, "GEN_EAD_09_Manufacturer");
         if (!openEditForAssetClass("Generator", "GEN")) { skipIfNotFound("Generator"); return; }
         expandCoreAttributes();
-        String val = selectFirstDropdownOption("Manufacturer");
-        if (val == null) val = editTextField("Manufacturer", "Caterpillar");
+
+        // UI label is lowercase "manufacturer"
+        String val = selectFirstDropdownOption("manufacturer");
+        if (val == null) val = editTextField("manufacturer", "Caterpillar");
+        Assert.assertNotNull(val, "Should be able to edit 'manufacturer' field");
+
         boolean saved = saveAndVerify();
-        ExtentReportManager.logPass("Manufacturer: '" + val + "', saved=" + saved);
+        Assert.assertTrue(saved, "Save Changes should succeed after editing manufacturer");
+
+        String persisted = readDetailAttributeValue("manufacturer");
+        Assert.assertNotNull(persisted, "manufacturer should be visible on detail page after save");
+        Assert.assertFalse("Not specified".equals(persisted), "manufacturer should have a value after save");
+
+        ExtentReportManager.logPass("Manufacturer edited to '" + val + "', saved, and verified");
     }
 
     @Test(priority = 27, description = "GEN_EAD_10: Edit Power Factor")
@@ -732,9 +856,22 @@ public class AssetPart3TestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE, "GEN_EAD_10_PowerFactor");
         if (!openEditForAssetClass("Generator", "GEN")) { skipIfNotFound("Generator"); return; }
         expandCoreAttributes();
-        String val = editTextField("Power Factor", "0.85");
+
+        String newValue = "0.85";
+        String val = editTextField("Power Factor", newValue);
+        Assert.assertNotNull(val, "editTextField should find and set 'Power Factor' field");
+        Assert.assertEquals(val, newValue, "Power Factor input value should match");
+
         boolean saved = saveAndVerify();
-        ExtentReportManager.logPass("Power Factor: '" + val + "', saved=" + saved);
+        Assert.assertTrue(saved, "Save Changes should succeed after editing Power Factor");
+
+        // Post-save: verify value persisted on detail page
+        String persisted = readDetailAttributeValue("Power Factor");
+        Assert.assertNotNull(persisted, "Power Factor should be visible on detail page after save");
+        Assert.assertEquals(persisted, newValue, "Power Factor should persist as '" + newValue + "' after save");
+
+        logStepWithScreenshot("GEN_EAD_10 Power Factor verified");
+        ExtentReportManager.logPass("Power Factor edited to '" + val + "', saved, and verified on detail page");
     }
 
     @Test(priority = 28, description = "GEN_EAD_11: Edit Serial Number")
@@ -742,9 +879,22 @@ public class AssetPart3TestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE, "GEN_EAD_11_SerialNumber");
         if (!openEditForAssetClass("Generator", "GEN")) { skipIfNotFound("Generator"); return; }
         expandCoreAttributes();
-        String val = editTextField("Serial Number", "GEN_SN_" + System.currentTimeMillis());
+
+        String newValue = "GEN_SN_" + System.currentTimeMillis();
+        String val = editTextField("Serial Number", newValue);
+        Assert.assertNotNull(val, "editTextField should find and set 'Serial Number' field");
+        Assert.assertEquals(val, newValue, "Serial Number input value should match");
+
         boolean saved = saveAndVerify();
-        ExtentReportManager.logPass("Serial Number: '" + val + "', saved=" + saved);
+        Assert.assertTrue(saved, "Save Changes should succeed after editing Serial Number");
+
+        // Post-save: verify value persisted on detail page
+        String persisted = readDetailAttributeValue("Serial Number");
+        Assert.assertNotNull(persisted, "Serial Number should be visible on detail page after save");
+        Assert.assertEquals(persisted, newValue, "Serial Number should persist as '" + newValue + "' after save");
+
+        logStepWithScreenshot("GEN_EAD_11 Serial Number verified");
+        ExtentReportManager.logPass("Serial Number edited to '" + val + "', saved, and verified on detail page");
     }
 
     @Test(priority = 29, description = "GEN_EAD_12: Edit Voltage")
@@ -752,10 +902,21 @@ public class AssetPart3TestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE, "GEN_EAD_12_Voltage");
         if (!openEditForAssetClass("Generator", "GEN")) { skipIfNotFound("Generator"); return; }
         expandCoreAttributes();
+
+        // "Voltage" (capital V) is a dropdown in the edit form
         String val = selectFirstDropdownOption("Voltage");
         if (val == null) val = editTextField("Voltage", "480");
+        Assert.assertNotNull(val, "Should be able to edit 'Voltage' field");
+
         boolean saved = saveAndVerify();
-        ExtentReportManager.logPass("Voltage: '" + val + "', saved=" + saved);
+        Assert.assertTrue(saved, "Save Changes should succeed after editing Voltage");
+
+        // Detail page label is lowercase "voltage"
+        String persisted = readDetailAttributeValue("voltage");
+        Assert.assertNotNull(persisted, "voltage should be visible on detail page after save");
+        Assert.assertFalse("Not specified".equals(persisted), "voltage should have a value after save");
+
+        ExtentReportManager.logPass("Voltage edited to '" + val + "', saved, and verified");
     }
 
     @Test(priority = 30, description = "GEN_EAD_18: Verify Save with no changes")
@@ -763,7 +924,8 @@ public class AssetPart3TestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE, "GEN_EAD_18_SaveNoChanges");
         if (!openEditForAssetClass("Generator", "GEN")) { skipIfNotFound("Generator"); return; }
         boolean saved = saveAndVerify();
-        ExtentReportManager.logPass("Generator save without changes: success=" + saved);
+        Assert.assertTrue(saved, "Save Changes should succeed even with no edits");
+        ExtentReportManager.logPass("Generator save without changes succeeded");
     }
 
     @Test(priority = 31, description = "GEN-03: Save Generator with optional fields empty")
@@ -774,8 +936,9 @@ public class AssetPart3TestNG extends BaseTest {
         expandCoreAttributes();
         selectFirstDropdownOption("Voltage");
         boolean saved = saveAndVerify();
+        Assert.assertTrue(saved, "Save should succeed with optional fields empty");
         logStepWithScreenshot("Generator save with optional empty");
-        ExtentReportManager.logPass("Generator saved with optional fields empty: " + saved);
+        ExtentReportManager.logPass("Generator saved with optional fields empty");
     }
 
     @Test(priority = 32, description = "GEN-04: Verify no subtype impacts core attributes")
