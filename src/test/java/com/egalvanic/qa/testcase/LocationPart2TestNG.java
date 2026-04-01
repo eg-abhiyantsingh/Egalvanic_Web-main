@@ -100,6 +100,36 @@ public class LocationPart2TestNG extends BaseTest {
         }
     }
 
+    private void ensureBuildingExists() {
+        if (!locationPage.isLocationVisible(testBuildingName)) {
+            logStep("Building not found — creating: " + testBuildingName);
+            locationPage.createBuilding(testBuildingName, "Auto-created");
+            pause(2000);
+        }
+    }
+
+    private void ensureFloorExists() {
+        ensureBuildingExists();
+        locationPage.expandNode(testBuildingName);
+        pause(500);
+        if (!locationPage.isLocationVisible(testFloorName)) {
+            logStep("Floor not found — creating: " + testFloorName);
+            locationPage.createFloor(testBuildingName, testFloorName, "");
+            pause(2000);
+        }
+    }
+
+    private void ensureRoomExists() {
+        ensureFloorExists();
+        locationPage.expandNode(testFloorName);
+        pause(500);
+        if (!locationPage.isLocationVisible(testRoomName)) {
+            logStep("Room not found — creating: " + testRoomName);
+            locationPage.createRoom(testFloorName, testRoomName, "Auto-created");
+            pause(2000);
+        }
+    }
+
     private JavascriptExecutor js() {
         return (JavascriptExecutor) driver;
     }
@@ -410,11 +440,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testNF_001_NewFloorUI() {
         ExtentReportManager.createTest(MODULE, FEATURE_FLOOR, "TC_NF_001_NewFloorUI");
 
-        // Ensure building exists
-        if (!locationPage.isLocationVisible(testBuildingName)) {
-            locationPage.createBuilding(testBuildingName, "");
-            pause(2000);
-        }
+        ensureBuildingExists();
 
         // Select building and look for Add Floor
         locationPage.selectNode(testBuildingName);
@@ -448,10 +474,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testNF_002_BuildingPreFilled() {
         ExtentReportManager.createTest(MODULE, FEATURE_FLOOR, "TC_NF_002_BuildingPreFilled");
 
-        if (!locationPage.isLocationVisible(testBuildingName)) {
-            locationPage.createBuilding(testBuildingName, "");
-            pause(2000);
-        }
+        ensureBuildingExists();
 
         locationPage.selectNode(testBuildingName);
         pause(1000);
@@ -479,10 +502,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testNF_008_CreateFloor() {
         ExtentReportManager.createTest(MODULE, FEATURE_FLOOR, "TC_NF_008_CreateFloor");
 
-        if (!locationPage.isLocationVisible(testBuildingName)) {
-            locationPage.createBuilding(testBuildingName, "");
-            pause(2000);
-        }
+        ensureBuildingExists();
 
         locationPage.createFloor(testBuildingName, testFloorName, "Floor notes");
         pause(2000);
@@ -502,7 +522,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testNF_010_FloorCount() {
         ExtentReportManager.createTest(MODULE, FEATURE_FLOOR, "TC_NF_010_FloorCount");
 
-        locationPage.expandNode(testBuildingName);
+        ensureFloorExists();
         pause(1000);
 
         // Count floor items under building
@@ -521,7 +541,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testFL_001_FloorsUnderBuilding() {
         ExtentReportManager.createTest(MODULE, FEATURE_FLOOR, "TC_FL_001_FloorsUnder");
 
-        locationPage.expandNode(testBuildingName);
+        ensureFloorExists();
         pause(1000);
 
         boolean floorVisible = locationPage.isLocationVisible(testFloorName);
@@ -539,7 +559,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testEF_001_EditFloorPreFilled() {
         ExtentReportManager.createTest(MODULE, FEATURE_FLOOR, "TC_EF_001_EditFloorPre");
 
-        locationPage.expandNode(testBuildingName);
+        ensureFloorExists();
         pause(1000);
 
         try {
@@ -561,7 +581,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testEF_002_UpdateFloorName() {
         ExtentReportManager.createTest(MODULE, FEATURE_FLOOR, "TC_EF_002_UpdateFloor");
 
-        locationPage.expandNode(testBuildingName);
+        ensureFloorExists();
         pause(1000);
 
         String updatedName = testFloorName + "_Updated";
@@ -590,7 +610,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testEF_003_BuildingReadOnly() {
         ExtentReportManager.createTest(MODULE, FEATURE_FLOOR, "TC_EF_003_BldgReadOnly");
 
-        locationPage.expandNode(testBuildingName);
+        ensureFloorExists();
         pause(1000);
         locationPage.selectNode(testFloorName);
         pause(1000);
@@ -619,7 +639,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testEF_004_CancelFloorEdit() {
         ExtentReportManager.createTest(MODULE, FEATURE_FLOOR, "TC_EF_004_CancelEdit");
 
-        locationPage.expandNode(testBuildingName);
+        ensureFloorExists();
         pause(1000);
         locationPage.selectNode(testFloorName);
         pause(1000);
@@ -649,11 +669,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testDF_001_DeleteFloor() {
         ExtentReportManager.createTest(MODULE, FEATURE_FLOOR, "TC_DF_001_DeleteFloor");
 
-        // Create disposable floor
-        if (!locationPage.isLocationVisible(testBuildingName)) {
-            locationPage.createBuilding(testBuildingName, "");
-            pause(2000);
-        }
+        ensureBuildingExists();
         String dispFloor = "DelFloor_" + TS;
         locationPage.createFloor(testBuildingName, dispFloor, "");
         pause(2000);
@@ -680,6 +696,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testDF_002_FloorCountAfterDelete() {
         ExtentReportManager.createTest(MODULE, FEATURE_FLOOR, "TC_DF_002_CountAfterDel");
 
+        ensureBuildingExists();
         locationPage.expandNode(testBuildingName);
         pause(1000);
 
@@ -701,15 +718,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testNR_001_NewRoomUI() {
         ExtentReportManager.createTest(MODULE, FEATURE_ROOM, "TC_NR_001_NewRoomUI");
 
-        locationPage.expandNode(testBuildingName);
-        pause(1000);
-
-        // Ensure floor exists
-        if (!locationPage.isLocationVisible(testFloorName)) {
-            locationPage.createFloor(testBuildingName, testFloorName, "");
-            pause(2000);
-        }
-
+        ensureFloorExists();
         locationPage.selectNode(testFloorName);
         pause(1000);
 
@@ -725,13 +734,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testNR_008_CreateRoom() {
         ExtentReportManager.createTest(MODULE, FEATURE_ROOM, "TC_NR_008_CreateRoom");
 
-        locationPage.expandNode(testBuildingName);
-        pause(1000);
-
-        if (!locationPage.isLocationVisible(testFloorName)) {
-            locationPage.createFloor(testBuildingName, testFloorName, "");
-            pause(2000);
-        }
+        ensureFloorExists();
 
         locationPage.createRoom(testFloorName, testRoomName, "Room notes");
         pause(2000);
@@ -750,9 +753,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testRL_001_RoomsUnderFloor() {
         ExtentReportManager.createTest(MODULE, FEATURE_ROOM, "TC_RL_001_RoomsUnder");
 
-        locationPage.expandNode(testBuildingName);
-        pause(500);
-        locationPage.expandNode(testFloorName);
+        ensureRoomExists();
         pause(1000);
 
         boolean roomVisible = locationPage.isLocationVisible(testRoomName);
@@ -766,9 +767,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testRL_002_RoomAssetCount() {
         ExtentReportManager.createTest(MODULE, FEATURE_ROOM, "TC_RL_002_AssetCount");
 
-        locationPage.expandNode(testBuildingName);
-        pause(500);
-        locationPage.expandNode(testFloorName);
+        ensureRoomExists();
         pause(1000);
 
         // Check if room entry shows count
@@ -789,8 +788,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testNR_009_CancelRoom() {
         ExtentReportManager.createTest(MODULE, FEATURE_ROOM, "TC_NR_009_CancelRoom");
 
-        locationPage.expandNode(testBuildingName);
-        pause(500);
+        ensureFloorExists();
         locationPage.selectNode(testFloorName);
         pause(1000);
 
@@ -820,10 +818,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testER_001_EditRoomPreFilled() {
         ExtentReportManager.createTest(MODULE, FEATURE_ROOM, "TC_ER_001_EditRoomPre");
 
-        locationPage.expandNode(testBuildingName);
-        pause(500);
-        locationPage.expandNode(testFloorName);
-        pause(1000);
+        ensureRoomExists();
 
         locationPage.selectNode(testRoomName);
         pause(1000);
@@ -840,10 +835,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testER_002_UpdateRoomName() {
         ExtentReportManager.createTest(MODULE, FEATURE_ROOM, "TC_ER_002_UpdateRoom");
 
-        locationPage.expandNode(testBuildingName);
-        pause(500);
-        locationPage.expandNode(testFloorName);
-        pause(1000);
+        ensureRoomExists();
 
         String updatedRoom = testRoomName + "_Upd";
         try {
@@ -870,10 +862,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testER_003_ParentReadOnly() {
         ExtentReportManager.createTest(MODULE, FEATURE_ROOM, "TC_ER_003_ParentReadOnly");
 
-        locationPage.expandNode(testBuildingName);
-        pause(500);
-        locationPage.expandNode(testFloorName);
-        pause(1000);
+        ensureRoomExists();
         locationPage.selectNode(testRoomName);
         pause(1000);
 
@@ -895,10 +884,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testER_004_UpdateRoomNotes() {
         ExtentReportManager.createTest(MODULE, FEATURE_ROOM, "TC_ER_004_UpdateNotes");
 
-        locationPage.expandNode(testBuildingName);
-        pause(500);
-        locationPage.expandNode(testFloorName);
-        pause(1000);
+        ensureRoomExists();
         locationPage.selectNode(testRoomName);
         pause(1000);
 
@@ -922,10 +908,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testER_005_CancelRoomEdit() {
         ExtentReportManager.createTest(MODULE, FEATURE_ROOM, "TC_ER_005_CancelRoomEdit");
 
-        locationPage.expandNode(testBuildingName);
-        pause(500);
-        locationPage.expandNode(testFloorName);
-        pause(1000);
+        ensureRoomExists();
         locationPage.selectNode(testRoomName);
         pause(1000);
 
@@ -952,8 +935,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testDR_001_DeleteRoom() {
         ExtentReportManager.createTest(MODULE, FEATURE_ROOM, "TC_DR_001_DeleteRoom");
 
-        locationPage.expandNode(testBuildingName);
-        pause(500);
+        ensureFloorExists();
         locationPage.expandNode(testFloorName);
         pause(1000);
 
@@ -981,8 +963,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testDR_002_RoomCountAfterDelete() {
         ExtentReportManager.createTest(MODULE, FEATURE_ROOM, "TC_DR_002_CountAfterDel");
 
-        locationPage.expandNode(testBuildingName);
-        pause(500);
+        ensureFloorExists();
         locationPage.expandNode(testFloorName);
         pause(1000);
 
@@ -1005,10 +986,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testRD_001_RoomDetailUI() {
         ExtentReportManager.createTest(MODULE, FEATURE_DETAIL, "TC_RD_001_RoomDetailUI");
 
-        locationPage.expandNode(testBuildingName);
-        pause(500);
-        locationPage.expandNode(testFloorName);
-        pause(1000);
+        ensureRoomExists();
         locationPage.selectNode(testRoomName);
         pause(2000);
 
@@ -1026,10 +1004,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testRD_002_Breadcrumb() {
         ExtentReportManager.createTest(MODULE, FEATURE_DETAIL, "TC_RD_002_Breadcrumb");
 
-        locationPage.expandNode(testBuildingName);
-        pause(500);
-        locationPage.expandNode(testFloorName);
-        pause(1000);
+        ensureRoomExists();
         locationPage.selectNode(testRoomName);
         pause(2000);
 
@@ -1049,10 +1024,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testRD_003_EmptyRoom() {
         ExtentReportManager.createTest(MODULE, FEATURE_DETAIL, "TC_RD_003_EmptyRoom");
 
-        locationPage.expandNode(testBuildingName);
-        pause(500);
-        locationPage.expandNode(testFloorName);
-        pause(1000);
+        ensureRoomExists();
         locationPage.selectNode(testRoomName);
         pause(2000);
 
@@ -1071,10 +1043,7 @@ public class LocationPart2TestNG extends BaseTest {
     public void testRD_004_AssetsInRoom() {
         ExtentReportManager.createTest(MODULE, FEATURE_DETAIL, "TC_RD_004_Assets");
 
-        locationPage.expandNode(testBuildingName);
-        pause(500);
-        locationPage.expandNode(testFloorName);
-        pause(1000);
+        ensureRoomExists();
         locationPage.selectNode(testRoomName);
         pause(2000);
 
