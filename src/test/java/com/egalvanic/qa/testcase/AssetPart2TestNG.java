@@ -509,8 +509,12 @@ public class AssetPart2TestNG extends BaseTest {
                 cancelBtns.get(0).click();
                 pause(500);
             }
-            // If still on edit, press Escape
-            driver.findElement(By.tagName("body")).sendKeys(org.openqa.selenium.Keys.ESCAPE);
+            // Click heading to dismiss focus safely (Escape would close entire MUI Drawer)
+            try {
+                WebElement heading = driver.findElement(By.xpath(
+                        "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+                heading.click();
+            } catch (Exception e2) { /* drawer already closed */ }
             pause(500);
         } catch (Exception ignored) {}
         editFormOpen = false;
