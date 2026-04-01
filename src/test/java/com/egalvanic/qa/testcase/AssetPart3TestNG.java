@@ -421,23 +421,35 @@ public class AssetPart3TestNG extends BaseTest {
      */
     private WebElement findInputInDrawerByLabel(String label) {
         try {
-            // Exact match inside drawer context
+            String drawerPrefix = "//div[contains(@class,'MuiDrawer')]";
+            // Strategy 1: Exact match — p label is direct sibling of input's container
+            // Works for: Ampere Rating, configuration, K V A Rating, manufacturer, etc.
             List<WebElement> inputs = driver.findElements(By.xpath(
-                    "//div[contains(@class,'MuiDrawer')]"
-                    + "//p[normalize-space()='" + label + "']"
+                    drawerPrefix + "//p[normalize-space()='" + label + "']"
                     + "/following-sibling::div//input"));
             if (!inputs.isEmpty()) return inputs.get(0);
-            // Case-insensitive fallback
+            // Strategy 2: Combobox layout — p is inside a wrapper div, input is in sibling div
+            // Works for: Voltage (capital V), Asset Class — MUI Autocomplete wraps label differently
+            inputs = driver.findElements(By.xpath(
+                    drawerPrefix + "//p[normalize-space()='" + label + "']"
+                    + "/parent::div/following-sibling::div//input"));
+            if (!inputs.isEmpty()) return inputs.get(0);
+            // Strategy 3: Case-insensitive — only if no exact match found above
+            // IMPORTANT: Skip CI fallback if a case-sensitive match exists for a different casing
+            // (e.g., "Voltage" combobox vs "voltage" text field are distinct fields)
             String lower = label.toLowerCase();
             inputs = driver.findElements(By.xpath(
-                    "//div[contains(@class,'MuiDrawer')]"
-                    + "//p[translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')='" + lower + "']"
+                    drawerPrefix + "//p[translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')='" + lower + "']"
                     + "/following-sibling::div//input"));
             if (!inputs.isEmpty()) return inputs.get(0);
-            // Textarea fallback
+            // Strategy 4: CI + combobox layout
             inputs = driver.findElements(By.xpath(
-                    "//div[contains(@class,'MuiDrawer')]"
-                    + "//p[normalize-space()='" + label + "']"
+                    drawerPrefix + "//p[translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')='" + lower + "']"
+                    + "/parent::div/following-sibling::div//input"));
+            if (!inputs.isEmpty()) return inputs.get(0);
+            // Strategy 5: Textarea fallback (for NOTES)
+            inputs = driver.findElements(By.xpath(
+                    drawerPrefix + "//p[normalize-space()='" + label + "']"
                     + "/following-sibling::div//textarea"));
             if (!inputs.isEmpty()) return inputs.get(0);
         } catch (Exception ignored) {}
