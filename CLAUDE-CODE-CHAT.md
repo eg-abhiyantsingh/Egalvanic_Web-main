@@ -1,7 +1,73 @@
 # Claude Code Chat Log (Compressed)
 
 > Auto-updated summary of AI-assisted debugging sessions. Read this for full context when starting a new chat.
-> Last updated: 2026-04-01
+> Last updated: 2026-04-01 (Session 2)
+
+---
+
+## Session: 2026-04-01 (Session 2) — GEN_EAD_09 Post-Save Verification Fix
+
+### Context
+GEN_EAD_09 (Edit Manufacturer) still FAIL after Escape key fix (a5be530). CI log showed save succeeding but test marked FAIL. User reported "this test is failing why it is working correctly i think".
+
+---
+
+### Root Cause (Playwright-verified with live API inspection)
+
+**The save works perfectly.** Network inspection confirmed:
+- PUT `/api/node/update/{id}` sends `"name": "manufacturer", "value": "Caterpillar"` in `core_attributes` array
+- API returns 200 with the saved value
+- Edit drawer shows the value correctly
+
+**The failure is a race condition in post-save verification:**
+
+1. `waitForEditSuccess()` has condition `ExpectedConditions.urlContains("/assets")` — this ALWAYS matches immediately because we're already on `/assets/{id}` detail page
+2. So it returns `true` instantly without waiting for save to complete
+3. `readDetailAttributeValue("manufacturer")` runs with only ~1s delay
+4. React hasn't re-fetched from API yet → detail table still shows stale "Not specified"
+5. `Assert.assertFalse("Not specified".equals(persisted))` → FAIL
+
+**Key insight:** The detail table initially renders with pre-edit data. After save, React re-fetches from the enriched API endpoint (`/api/graph/nodes/{id}/enriched`). Until that completes, the table shows stale values.
+
+### Fix (d075d8e)
+
+**saveAndVerify():**
+- Polls for edit drawer to actually close (`.MuiDrawer-anchorRight .MuiDrawer-paper` disappears)
+- After success, forces `driver.navigate().to(detailUrl)` — full page reload guarantees fresh React state
+- Added 3s pause after reload for page render
+
+**readDetailAttributeValue():**
+- Increased initial wait to 2s
+- Added polling: up to 8 attempts × 1s for the Core Attributes table to render
+- Better error logging per attempt
+
+### Verification
+Live Playwright test confirmed full flow:
+1. Edit manufacturer via React setter → value set ✓
+2. Save Changes → PUT returns 200 with value ✓
+3. Page reload → detail table shows saved value ✓
+4. `readDetailAttributeValue("manufacturer")` returns correct value ✓
+
+**Files changed:** AssetPart3TestNG.java (saveAndVerify + readDetailAttributeValue)
+**Commit:** d075d8e
+
+---
+
+### Additional Discovery: MUI Drawer DOM Structure
+
+The left sidebar nav and right edit drawer are BOTH `MuiDrawer` elements:
+- Left sidebar: `MuiDrawer-anchorLeft MuiDrawer-docked` (0 inputs, always present)
+- Right edit form: `MuiDrawer-anchorRight MuiDrawer-modal` (16 inputs, opened on Edit Asset)
+
+The XPath `//div[contains(@class,'MuiDrawer')]` matches BOTH. The `findInputInDrawerByLabel` works correctly because the left sidebar has no `<p>manufacturer</p>` label, so it only matches in the right drawer.
+
+---
+
+## Commits This Session
+
+| Commit | Description |
+|--------|-------------|
+| d075d8e | Fix GEN_EAD post-save verification: reload page + wait for drawer close |
 
 ---
 
