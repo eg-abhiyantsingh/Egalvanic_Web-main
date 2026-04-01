@@ -446,11 +446,33 @@ public class AssetPart3TestNG extends BaseTest {
 
     private boolean saveAndVerify() {
         logStep("Saving changes");
+        String detailUrl = driver.getCurrentUrl();
         assetPage.saveChanges();
-        pause(2000);
+        // Wait for the edit drawer to actually close (right-side drawer disappears)
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        for (int i = 0; i < 20; i++) {
+            pause(500);
+            Boolean drawerGone = (Boolean) js.executeScript(
+                    "var d = document.querySelector('.MuiDrawer-anchorRight .MuiDrawer-paper');"
+                    + "return !d || d.getBoundingClientRect().width === 0;");
+            if (Boolean.TRUE.equals(drawerGone)) {
+                logStep("Edit drawer closed after " + ((i + 1) * 500) + "ms");
+                break;
+            }
+        }
+        pause(1000);
         boolean success = assetPage.waitForEditSuccess();
         logStep("Save success: " + success);
-        if (success) editFormOpen = false;
+        if (success) {
+            editFormOpen = false;
+            // Force a fresh page load to ensure React state reflects saved data.
+            // Without this, the detail table may still show stale pre-save values.
+            if (detailUrl.contains("/assets/")) {
+                logStep("Refreshing detail page to load saved data");
+                driver.navigate().to(detailUrl);
+                pause(3000);
+            }
+        }
         return success;
     }
 
@@ -462,29 +484,39 @@ public class AssetPart3TestNG extends BaseTest {
      * return the text in the "Value" cell.
      */
     private String readDetailAttributeValue(String fieldLabel) {
-        try {
-            pause(1000);  // let detail page finish rendering
-            JavascriptExecutor js = (JavascriptExecutor) driver;
-            String script =
-                    "var rows = document.querySelectorAll('table.MuiTable-root tr');"
-                    + "for (var r of rows) {"
-                    + "  var cells = r.querySelectorAll('td');"
-                    + "  for (var c of cells) {"
-                    + "    if (c.textContent.trim() === arguments[0]) {"
-                    + "      var all = r.querySelectorAll('td');"
-                    + "      return all[all.length - 1].textContent.trim();"
-                    + "    }"
-                    + "  }"
-                    + "}"
-                    + "return null;";
-            Object result = js.executeScript(script, fieldLabel);
-            String val = result != null ? result.toString() : null;
-            logStep("Detail page value for '" + fieldLabel + "': " + val);
-            return val;
-        } catch (Exception e) {
-            logStep("Could not read detail attribute '" + fieldLabel + "': " + e.getMessage());
-            return null;
+        // Wait for the detail page to finish re-fetching data after save.
+        // The React component re-renders asynchronously after the drawer closes,
+        // so we poll up to 10s for the Core Attributes table to appear.
+        pause(2000);  // initial wait for React re-fetch
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        String script =
+                "var rows = document.querySelectorAll('table.MuiTable-root tr');"
+                + "for (var r of rows) {"
+                + "  var cells = r.querySelectorAll('td');"
+                + "  for (var c of cells) {"
+                + "    if (c.textContent.trim() === arguments[0]) {"
+                + "      var all = r.querySelectorAll('td');"
+                + "      return all[all.length - 1].textContent.trim();"
+                + "    }"
+                + "  }"
+                + "}"
+                + "return null;";
+        String val = null;
+        for (int attempt = 0; attempt < 8; attempt++) {
+            try {
+                Object result = js.executeScript(script, fieldLabel);
+                val = result != null ? result.toString() : null;
+            } catch (Exception e) {
+                logStep("readDetailAttributeValue attempt " + (attempt + 1) + " error: " + e.getMessage());
+            }
+            if (val != null) {
+                logStep("Detail page value for '" + fieldLabel + "': " + val + " (attempt " + (attempt + 1) + ")");
+                return val;
+            }
+            pause(1000);
         }
+        logStep("Detail page value for '" + fieldLabel + "': null (after 8 attempts)");
+        return null;
     }
 
     private void closeEditFormIfOpen() {
