@@ -124,8 +124,12 @@ public class AssetPart2TestNG extends BaseTest {
         }
         logStep("Found " + rowCount + " assets for search '" + assetClassName + "'");
 
-        // Navigate to the first asset detail
-        assetPage.navigateToFirstAssetDetail();
+        // Click a row whose "Asset Class" column matches, not just the first row.
+        boolean clicked = clickRowWithAssetClass(assetClassName);
+        if (!clicked) {
+            logStep("No row matched class '" + assetClassName + "' — falling back to first row");
+            assetPage.navigateToFirstAssetDetail();
+        }
         pause(2000);
 
         // Verify we're on a detail page
@@ -134,6 +138,40 @@ public class AssetPart2TestNG extends BaseTest {
         logStep("On detail page: " + onDetail + " URL: " + url);
 
         return onDetail;
+    }
+
+    /**
+     * Finds and clicks a grid row whose "Asset Class" column matches the given class name.
+     */
+    private boolean clickRowWithAssetClass(String assetClassName) {
+        try {
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            @SuppressWarnings("unchecked")
+            java.util.List<WebElement> rows = (java.util.List<WebElement>) js.executeScript(
+                    "var rows = document.querySelectorAll('.MuiDataGrid-row[data-rowindex]');" +
+                    "var result = [];" +
+                    "for (var row of rows) {" +
+                    "  var cells = row.querySelectorAll('.MuiDataGrid-cell');" +
+                    "  for (var cell of cells) {" +
+                    "    if (cell.textContent.trim().toLowerCase() === arguments[0].toLowerCase()) {" +
+                    "      result.push(row); break;" +
+                    "    }" +
+                    "  }" +
+                    "}" +
+                    "return result;", assetClassName);
+            if (rows != null && !rows.isEmpty()) {
+                logStep("Found " + rows.size() + " rows with class '" + assetClassName + "' — clicking first");
+                WebElement cell = rows.get(0).findElement(
+                        By.xpath(".//div[contains(@class,'MuiDataGrid-cell')][1]"));
+                String currentUrl = driver.getCurrentUrl();
+                try { cell.click(); } catch (Exception e) { js.executeScript("arguments[0].click();", cell); }
+                pause(3000);
+                return !driver.getCurrentUrl().equals(currentUrl);
+            }
+        } catch (Exception e) {
+            logStep("clickRowWithAssetClass error: " + e.getMessage());
+        }
+        return false;
     }
 
     /**
