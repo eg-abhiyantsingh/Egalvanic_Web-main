@@ -5,7 +5,7 @@ import com.egalvanic.qa.utils.ExtentReportManager;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Keys;
+
 import org.openqa.selenium.WebElement;
 
 import org.testng.Assert;
@@ -409,7 +409,12 @@ public class AssetPart5TestNG extends BaseTest {
         try {
             List<WebElement> cancelBtns = driver.findElements(By.xpath("//button[normalize-space()='Cancel']"));
             if (!cancelBtns.isEmpty()) { cancelBtns.get(0).click(); pause(500); }
-            driver.findElement(By.tagName("body")).sendKeys(Keys.ESCAPE);
+            // Click heading to dismiss focus safely (Escape would close entire MUI Drawer)
+            try {
+                WebElement heading = driver.findElement(By.xpath(
+                        "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+                heading.click();
+            } catch (Exception e2) { /* drawer already closed */ }
             pause(500);
         } catch (Exception ignored) {}
         editFormOpen = false;
@@ -435,41 +440,54 @@ public class AssetPart5TestNG extends BaseTest {
         if (subtypeInput == null) subtypeInput = findInputByLabel("Subtype");
         if (subtypeInput == null) subtypeInput = findInputByLabel("Asset Subtype");
 
-        if (subtypeInput != null) {
-            String currentValue = subtypeInput.getAttribute("value");
-            logStep("Current subtype value: '" + currentValue + "'");
-            if (expectedDefault != null) {
-                Assert.assertTrue(
-                        currentValue == null || currentValue.isEmpty()
-                        || currentValue.equalsIgnoreCase(expectedDefault)
-                        || currentValue.equalsIgnoreCase("None"),
-                        "Default subtype should be '" + expectedDefault + "' but was '" + currentValue + "'");
-            }
+        Assert.assertNotNull(subtypeInput, "Subtype field should be present in edit form");
 
-            subtypeInput.click();
-            pause(800);
-            List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
-            List<String> actualOptions = new ArrayList<>();
-            for (WebElement opt : options) {
-                String text = opt.getText().trim();
-                actualOptions.add(text);
-                logStep("  Subtype option: " + text);
-            }
-            logStep("Total subtype options: " + actualOptions.size());
+        String currentValue = subtypeInput.getAttribute("value");
+        logStep("Current subtype value: '" + currentValue + "'");
 
-            if (expectedOptions != null && expectedOptions.length > 0) {
-                for (String expected : expectedOptions) {
-                    boolean found = actualOptions.stream()
-                            .anyMatch(a -> a.equalsIgnoreCase(expected) || a.contains(expected));
-                    logStep("  Expected '" + expected + "' → " + (found ? "FOUND" : "MISSING"));
-                }
-            }
-
-            subtypeInput.sendKeys(Keys.ESCAPE);
-            pause(300);
-        } else {
-            logStep("Subtype field not found in edit form");
+        // Open dropdown and collect options
+        subtypeInput.click();
+        pause(800);
+        List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
+        List<String> actualOptions = new ArrayList<>();
+        for (WebElement opt : options) {
+            String text = opt.getText().trim();
+            actualOptions.add(text);
+            logStep("  Subtype option: " + text);
         }
+        logStep("Total subtype options: " + actualOptions.size());
+
+        // Verify current value is either empty or one of the valid dropdown options.
+        // Assets are reused across CI runs, so the subtype may have been set by a prior run.
+        if (currentValue != null && !currentValue.isEmpty()) {
+            boolean isValidOption = actualOptions.stream()
+                    .anyMatch(a -> a.equalsIgnoreCase(currentValue));
+            Assert.assertTrue(isValidOption,
+                    "Subtype value '" + currentValue + "' should be a valid option. Available: " + actualOptions);
+            logStep("Current value '" + currentValue + "' is a valid subtype option");
+        } else {
+            logStep("Subtype is empty (not yet set)");
+        }
+
+        // Verify expected options are present in the dropdown
+        if (expectedOptions != null && expectedOptions.length > 0) {
+            for (String expected : expectedOptions) {
+                if ("None".equalsIgnoreCase(expected)) continue; // "None" is not a real option; empty = unset
+                boolean found = actualOptions.stream()
+                        .anyMatch(a -> a.equalsIgnoreCase(expected) || a.contains(expected));
+                Assert.assertTrue(found,
+                        "Expected subtype option '" + expected + "' not found. Available: " + actualOptions);
+                logStep("  Expected '" + expected + "' → FOUND");
+            }
+        }
+
+        // Close dropdown — click heading instead of Escape for safety
+        try {
+            WebElement heading = driver.findElement(By.xpath(
+                    "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+            heading.click();
+        } catch (Exception ignored) {}
+        pause(300);
     }
 
     private String selectSubtype(String subtypeName) {
@@ -689,13 +707,13 @@ public class AssetPart5TestNG extends BaseTest {
     public void testSWB_AST_01_DefaultSubtype() {
         ExtentReportManager.createTest(MODULE, FEATURE, "SWB_AST_01_DefaultSubtype");
         if (!openEditForAssetClass("Switchboard", "SWB")) { skipIfNotFound("Switchboard"); return; }
-        verifyAssetSubtype("None",
-                "None",
+        verifyAssetSubtype(null,
                 "Distribution Panelboard",
                 "Switchboard",
-                "Switchgear");
+                "Switchgear",
+                "Unitized Substation");
         logStepWithScreenshot("SWB subtype default");
-        ExtentReportManager.logPass("Switchboard default subtype is None");
+        ExtentReportManager.logPass("Switchboard default subtype verified");
     }
 
     @Test(priority = 18, description = "SWB_AST_02: Verify SWB subtype dropdown options")
@@ -725,7 +743,12 @@ public class AssetPart5TestNG extends BaseTest {
                 logStep("  '" + exp + "': " + (found ? "FOUND" : "MISSING"));
             }
 
-            subtypeInput.sendKeys(Keys.ESCAPE);
+            // Close dropdown — click heading instead of Escape for safety
+            try {
+                WebElement heading = driver.findElement(By.xpath(
+                        "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+                heading.click();
+            } catch (Exception ignored) {}
             pause(300);
         }
         logStepWithScreenshot("SWB subtype options");
@@ -1007,12 +1030,12 @@ public class AssetPart5TestNG extends BaseTest {
     public void testTRF_AST_01_DefaultSubtype() {
         ExtentReportManager.createTest(MODULE, FEATURE, "TRF_AST_01_DefaultSubtype");
         if (!openEditForAssetClass("Transformer", "TRF")) { skipIfNotFound("Transformer"); return; }
-        verifyAssetSubtype("None",
-                "None",
+        verifyAssetSubtype(null,
                 "Dry Transformer",
+                "Dry-Type Transformer",
                 "Oil-Filled Transformer");
         logStepWithScreenshot("TRF subtype default");
-        ExtentReportManager.logPass("Transformer default subtype is None");
+        ExtentReportManager.logPass("Transformer default subtype verified");
     }
 
     @Test(priority = 52, description = "TRF_AST_02: Verify TRF subtype dropdown options")
@@ -1041,7 +1064,12 @@ public class AssetPart5TestNG extends BaseTest {
                 logStep("  '" + exp + "': " + (found ? "FOUND" : "MISSING"));
             }
 
-            subtypeInput.sendKeys(Keys.ESCAPE);
+            // Close dropdown — click heading instead of Escape for safety
+            try {
+                WebElement heading = driver.findElement(By.xpath(
+                        "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+                heading.click();
+            } catch (Exception ignored) {}
             pause(300);
         }
         logStepWithScreenshot("TRF subtype options");
@@ -1216,13 +1244,12 @@ public class AssetPart5TestNG extends BaseTest {
     public void testUPS_AST_01_DefaultSubtype() {
         ExtentReportManager.createTest(MODULE, FEATURE, "UPS_AST_01_DefaultSubtype");
         if (!openEditForAssetClass("UPS")) { skipIfNotFound("UPS"); return; }
-        verifyAssetSubtype("None",
-                "None",
+        verifyAssetSubtype(null,
                 "Hybrid UPS System",
                 "Rotary UPS System",
                 "Static UPS System");
         logStepWithScreenshot("UPS subtype default");
-        ExtentReportManager.logPass("UPS default subtype is None");
+        ExtentReportManager.logPass("UPS default subtype verified");
     }
 
     @Test(priority = 72, description = "UPS_AST_02: Verify UPS subtype dropdown options")
@@ -1251,7 +1278,12 @@ public class AssetPart5TestNG extends BaseTest {
                 logStep("  '" + exp + "': " + (found ? "FOUND" : "MISSING"));
             }
 
-            subtypeInput.sendKeys(Keys.ESCAPE);
+            // Close dropdown — click heading instead of Escape for safety
+            try {
+                WebElement heading = driver.findElement(By.xpath(
+                        "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+                heading.click();
+            } catch (Exception ignored) {}
             pause(300);
         }
         logStepWithScreenshot("UPS subtype options");
@@ -1395,9 +1427,9 @@ public class AssetPart5TestNG extends BaseTest {
     public void testUTL_AST_01_SubtypeNone() {
         ExtentReportManager.createTest(MODULE, FEATURE, "UTL_AST_01_SubtypeNone");
         if (!openEditForAssetClass("Utility", "UTL")) { skipIfNotFound("Utility"); return; }
-        verifyAssetSubtype("None");
+        verifyAssetSubtype(null);
         logStepWithScreenshot("UTL subtype");
-        ExtentReportManager.logPass("Utility subtype is None");
+        ExtentReportManager.logPass("Utility subtype verified");
     }
 
     // ================================================================
@@ -1536,8 +1568,8 @@ public class AssetPart5TestNG extends BaseTest {
     public void testVFD_AST_01_SubtypeNone() {
         ExtentReportManager.createTest(MODULE, FEATURE, "VFD_AST_01_SubtypeNone");
         if (!openEditForAssetClass("Variable Frequency Drive", "VFD")) { skipIfNotFound("VFD"); return; }
-        verifyAssetSubtype("None");
+        verifyAssetSubtype(null);
         logStepWithScreenshot("VFD subtype");
-        ExtentReportManager.logPass("VFD subtype is None");
+        ExtentReportManager.logPass("VFD subtype verified");
     }
 }

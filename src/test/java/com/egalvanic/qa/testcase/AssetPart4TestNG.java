@@ -5,7 +5,7 @@ import com.egalvanic.qa.utils.ExtentReportManager;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Keys;
+
 import org.openqa.selenium.WebElement;
 
 import org.testng.Assert;
@@ -414,7 +414,12 @@ public class AssetPart4TestNG extends BaseTest {
         try {
             List<WebElement> cancelBtns = driver.findElements(By.xpath("//button[normalize-space()='Cancel']"));
             if (!cancelBtns.isEmpty()) { cancelBtns.get(0).click(); pause(500); }
-            driver.findElement(By.tagName("body")).sendKeys(Keys.ESCAPE);
+            // Click heading to dismiss focus safely (Escape would close entire MUI Drawer)
+            try {
+                WebElement heading = driver.findElement(By.xpath(
+                        "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+                heading.click();
+            } catch (Exception e2) { /* drawer already closed */ }
             pause(500);
         } catch (Exception ignored) {}
         editFormOpen = false;
@@ -489,8 +494,12 @@ public class AssetPart4TestNG extends BaseTest {
             }
         }
 
-        // Close dropdown
-        subtypeInput.sendKeys(Keys.ESCAPE);
+        // Close dropdown — click heading instead of Escape for safety
+        try {
+            WebElement heading = driver.findElement(By.xpath(
+                    "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+            heading.click();
+        } catch (Exception ignored) {}
         pause(300);
     }
 
@@ -850,7 +859,12 @@ public class AssetPart4TestNG extends BaseTest {
                 logStep("  '" + exp + "': " + (found ? "FOUND" : "MISSING"));
             }
 
-            subtypeInput.sendKeys(Keys.ESCAPE);
+            // Close dropdown — click heading instead of Escape for safety
+            try {
+                WebElement heading = driver.findElement(By.xpath(
+                        "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+                heading.click();
+            } catch (Exception ignored) {}
             pause(300);
         } else {
             logStep("Subtype dropdown not found for Motor");
@@ -1191,7 +1205,12 @@ public class AssetPart4TestNG extends BaseTest {
         Assert.assertTrue(optTexts.stream().anyMatch(t -> t.contains("Power Panel")),
                 "Should have Power Panel option but found: " + optTexts);
 
-        subtypeInput.sendKeys(Keys.ESCAPE);
+        // Close dropdown — click heading instead of Escape for safety
+        try {
+            WebElement heading = driver.findElement(By.xpath(
+                    "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+            heading.click();
+        } catch (Exception ignored) {}
         pause(300);
         logStepWithScreenshot("PB subtype options");
         ExtentReportManager.logPass("PB subtype options verified: " + optTexts);
@@ -1384,7 +1403,12 @@ public class AssetPart4TestNG extends BaseTest {
                 logStep("  '" + exp + "': " + (found ? "FOUND" : "MISSING"));
             }
 
-            subtypeInput.sendKeys(Keys.ESCAPE);
+            // Close dropdown — click heading instead of Escape for safety
+            try {
+                WebElement heading = driver.findElement(By.xpath(
+                        "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+                heading.click();
+            } catch (Exception ignored) {}
             pause(300);
         }
         logStepWithScreenshot("Relay subtype options");
