@@ -332,6 +332,15 @@ public class AssetPart3TestNG extends BaseTest {
             pause(800);
         }
         List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
+        // For server-populated autocompletes, dispatch empty-string input to trigger full list
+        if (options.isEmpty()) {
+            js.executeScript(
+                    "var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
+                    + "s.call(arguments[0],'');"
+                    + "arguments[0].dispatchEvent(new Event('input',{bubbles:true}));", input);
+            pause(1500);
+            options = driver.findElements(By.xpath("//li[@role='option']"));
+        }
         if (options.isEmpty()) {
             // Click the drawer heading to dismiss focus — do NOT send Escape
             // as it would close the entire MUI Drawer when no dropdown is open
@@ -422,34 +431,32 @@ public class AssetPart3TestNG extends BaseTest {
     private WebElement findInputInDrawerByLabel(String label) {
         try {
             String drawerPrefix = "//div[contains(@class,'MuiDrawer')]";
-            // Strategy 1: Exact match — p label is direct sibling of input's container
-            // Works for: Ampere Rating, configuration, K V A Rating, manufacturer, etc.
+            // Strategy 1: starts-with match — standard text field layout (p/following-sibling::div//input)
+            // Uses starts-with to handle asterisk suffixes (e.g., "Ampere Rating*")
             List<WebElement> inputs = driver.findElements(By.xpath(
-                    drawerPrefix + "//p[normalize-space()='" + label + "']"
+                    drawerPrefix + "//p[starts-with(normalize-space(),'" + label + "')]"
                     + "/following-sibling::div//input"));
             if (!inputs.isEmpty()) return inputs.get(0);
-            // Strategy 2: Combobox layout — p is inside a wrapper div, input is in sibling div
+            // Strategy 2: starts-with + combobox layout (p inside wrapper, input in sibling div)
             // Works for: Voltage (capital V), Asset Class — MUI Autocomplete wraps label differently
             inputs = driver.findElements(By.xpath(
-                    drawerPrefix + "//p[normalize-space()='" + label + "']"
+                    drawerPrefix + "//p[starts-with(normalize-space(),'" + label + "')]"
                     + "/parent::div/following-sibling::div//input"));
             if (!inputs.isEmpty()) return inputs.get(0);
             // Strategy 3: Case-insensitive — only if no exact match found above
-            // IMPORTANT: Skip CI fallback if a case-sensitive match exists for a different casing
-            // (e.g., "Voltage" combobox vs "voltage" text field are distinct fields)
             String lower = label.toLowerCase();
             inputs = driver.findElements(By.xpath(
-                    drawerPrefix + "//p[translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')='" + lower + "']"
+                    drawerPrefix + "//p[starts-with(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'" + lower + "')]"
                     + "/following-sibling::div//input"));
             if (!inputs.isEmpty()) return inputs.get(0);
             // Strategy 4: CI + combobox layout
             inputs = driver.findElements(By.xpath(
-                    drawerPrefix + "//p[translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')='" + lower + "']"
+                    drawerPrefix + "//p[starts-with(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'" + lower + "')]"
                     + "/parent::div/following-sibling::div//input"));
             if (!inputs.isEmpty()) return inputs.get(0);
             // Strategy 5: Textarea fallback (for NOTES)
             inputs = driver.findElements(By.xpath(
-                    drawerPrefix + "//p[normalize-space()='" + label + "']"
+                    drawerPrefix + "//p[starts-with(normalize-space(),'" + label + "')]"
                     + "/following-sibling::div//textarea"));
             if (!inputs.isEmpty()) return inputs.get(0);
         } catch (Exception ignored) {}

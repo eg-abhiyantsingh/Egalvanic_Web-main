@@ -257,10 +257,43 @@ public class AssetPart4TestNG extends BaseTest {
         }
     }
 
+    /**
+     * Finds an input inside the MUI edit drawer by its &lt;p&gt; label.
+     * Handles asterisk suffixes, combobox layout, case-insensitive matching, and textarea fallback.
+     */
+    private WebElement findInputInDrawerByLabel(String label) {
+        try {
+            String drawerPrefix = "//div[contains(@class,'MuiDrawer')]";
+            List<WebElement> inputs = driver.findElements(By.xpath(
+                    drawerPrefix + "//p[starts-with(normalize-space(),'" + label + "')]"
+                    + "/following-sibling::div//input"));
+            if (!inputs.isEmpty()) return inputs.get(0);
+            inputs = driver.findElements(By.xpath(
+                    drawerPrefix + "//p[starts-with(normalize-space(),'" + label + "')]"
+                    + "/parent::div/following-sibling::div//input"));
+            if (!inputs.isEmpty()) return inputs.get(0);
+            String lower = label.toLowerCase();
+            inputs = driver.findElements(By.xpath(
+                    drawerPrefix + "//p[starts-with(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'" + lower + "')]"
+                    + "/following-sibling::div//input"));
+            if (!inputs.isEmpty()) return inputs.get(0);
+            inputs = driver.findElements(By.xpath(
+                    drawerPrefix + "//p[starts-with(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'" + lower + "')]"
+                    + "/parent::div/following-sibling::div//input"));
+            if (!inputs.isEmpty()) return inputs.get(0);
+            inputs = driver.findElements(By.xpath(
+                    drawerPrefix + "//p[starts-with(normalize-space(),'" + label + "')]"
+                    + "/following-sibling::div//textarea"));
+            if (!inputs.isEmpty()) return inputs.get(0);
+        } catch (Exception ignored) {}
+        return null;
+    }
+
     private String editTextField(String fieldLabel, String newValue) {
         logStep("Editing '" + fieldLabel + "' → '" + newValue + "'");
         JavascriptExecutor js = (JavascriptExecutor) driver;
-        WebElement input = findInputByPlaceholder(fieldLabel);
+        WebElement input = findInputInDrawerByLabel(fieldLabel);
+        if (input == null) input = findInputByPlaceholder(fieldLabel);
         if (input == null) input = findInputByLabel(fieldLabel);
         if (input == null) input = findInputByAriaLabel(fieldLabel);
         if (input == null) {
@@ -270,7 +303,8 @@ public class AssetPart4TestNG extends BaseTest {
         js.executeScript("arguments[0].scrollIntoView({behavior:'smooth',block:'center'});", input);
         pause(300);
         // Re-find the element after scroll — React may have re-rendered the DOM
-        WebElement freshInput = findInputByPlaceholder(fieldLabel);
+        WebElement freshInput = findInputInDrawerByLabel(fieldLabel);
+        if (freshInput == null) freshInput = findInputByPlaceholder(fieldLabel);
         if (freshInput == null) freshInput = findInputByLabel(fieldLabel);
         if (freshInput == null) freshInput = findInputByAriaLabel(fieldLabel);
         if (freshInput != null) input = freshInput;
@@ -298,7 +332,8 @@ public class AssetPart4TestNG extends BaseTest {
     private String selectDropdownValue(String fieldLabel, String valueToSelect) {
         logStep("Selecting dropdown '" + fieldLabel + "'");
         JavascriptExecutor js = (JavascriptExecutor) driver;
-        WebElement input = findInputByPlaceholder(fieldLabel);
+        WebElement input = findInputInDrawerByLabel(fieldLabel);
+        if (input == null) input = findInputByPlaceholder(fieldLabel);
         if (input == null) input = findInputByLabel(fieldLabel);
         if (input == null) input = findInputByAriaLabel(fieldLabel);
         if (input == null) {
@@ -308,7 +343,8 @@ public class AssetPart4TestNG extends BaseTest {
         js.executeScript("arguments[0].scrollIntoView({behavior:'smooth',block:'center'});", input);
         pause(300);
         // Re-find after scroll to avoid stale element
-        WebElement freshDD = findInputByPlaceholder(fieldLabel);
+        WebElement freshDD = findInputInDrawerByLabel(fieldLabel);
+        if (freshDD == null) freshDD = findInputByPlaceholder(fieldLabel);
         if (freshDD == null) freshDD = findInputByLabel(fieldLabel);
         if (freshDD == null) freshDD = findInputByAriaLabel(fieldLabel);
         if (freshDD != null) input = freshDD;
@@ -322,6 +358,15 @@ public class AssetPart4TestNG extends BaseTest {
             pause(800);
         }
         List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
+        // For server-populated autocompletes, dispatch empty-string input to trigger full list
+        if (options.isEmpty()) {
+            js.executeScript(
+                    "var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
+                    + "s.call(arguments[0],'');"
+                    + "arguments[0].dispatchEvent(new Event('input',{bubbles:true}));", input);
+            pause(1500);
+            options = driver.findElements(By.xpath("//li[@role='option']"));
+        }
         if (options.isEmpty()) {
             // Click the drawer heading to dismiss focus — do NOT send Escape
             // as it would close the entire MUI Drawer when no dropdown is open

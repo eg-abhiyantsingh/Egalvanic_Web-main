@@ -289,6 +289,38 @@ public class AssetPart2TestNG extends BaseTest {
     }
 
     /**
+     * Finds an input inside the MUI edit drawer by its &lt;p&gt; label.
+     * Handles asterisk suffixes, combobox layout, case-insensitive matching, and textarea fallback.
+     */
+    private WebElement findInputInDrawerByLabel(String label) {
+        try {
+            String drawerPrefix = "//div[contains(@class,'MuiDrawer')]";
+            List<WebElement> inputs = driver.findElements(By.xpath(
+                    drawerPrefix + "//p[starts-with(normalize-space(),'" + label + "')]"
+                    + "/following-sibling::div//input"));
+            if (!inputs.isEmpty()) return inputs.get(0);
+            inputs = driver.findElements(By.xpath(
+                    drawerPrefix + "//p[starts-with(normalize-space(),'" + label + "')]"
+                    + "/parent::div/following-sibling::div//input"));
+            if (!inputs.isEmpty()) return inputs.get(0);
+            String lower = label.toLowerCase();
+            inputs = driver.findElements(By.xpath(
+                    drawerPrefix + "//p[starts-with(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'" + lower + "')]"
+                    + "/following-sibling::div//input"));
+            if (!inputs.isEmpty()) return inputs.get(0);
+            inputs = driver.findElements(By.xpath(
+                    drawerPrefix + "//p[starts-with(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'" + lower + "')]"
+                    + "/parent::div/following-sibling::div//input"));
+            if (!inputs.isEmpty()) return inputs.get(0);
+            inputs = driver.findElements(By.xpath(
+                    drawerPrefix + "//p[starts-with(normalize-space(),'" + label + "')]"
+                    + "/following-sibling::div//textarea"));
+            if (!inputs.isEmpty()) return inputs.get(0);
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    /**
      * Edits a text input field by label/placeholder within the edit form.
      * Returns the value that was set, or null if field not found.
      */
@@ -296,16 +328,11 @@ public class AssetPart2TestNG extends BaseTest {
         logStep("Editing text field '" + fieldLabel + "' → '" + newValue + "'");
         JavascriptExecutor js = (JavascriptExecutor) driver;
 
-        // Strategy 1: Find input by placeholder
-        WebElement input = findInputByPlaceholder(fieldLabel);
-        if (input == null) {
-            // Strategy 2: Find input by label text
-            input = findInputByLabel(fieldLabel);
-        }
-        if (input == null) {
-            // Strategy 3: Find input by aria-label
-            input = findInputByAriaLabel(fieldLabel);
-        }
+        // Prefer drawer-scoped lookup (handles asterisk labels + combobox layout)
+        WebElement input = findInputInDrawerByLabel(fieldLabel);
+        if (input == null) input = findInputByPlaceholder(fieldLabel);
+        if (input == null) input = findInputByLabel(fieldLabel);
+        if (input == null) input = findInputByAriaLabel(fieldLabel);
 
         if (input == null) {
             logStep("Field '" + fieldLabel + "' not found in edit form");
@@ -317,7 +344,8 @@ public class AssetPart2TestNG extends BaseTest {
         pause(300);
 
         // Re-find the element after scroll — React may have re-rendered the DOM
-        WebElement freshInput = findInputByPlaceholder(fieldLabel);
+        WebElement freshInput = findInputInDrawerByLabel(fieldLabel);
+        if (freshInput == null) freshInput = findInputByPlaceholder(fieldLabel);
         if (freshInput == null) freshInput = findInputByLabel(fieldLabel);
         if (freshInput == null) freshInput = findInputByAriaLabel(fieldLabel);
         if (freshInput != null) input = freshInput;
@@ -353,13 +381,11 @@ public class AssetPart2TestNG extends BaseTest {
         logStep("Selecting dropdown '" + fieldLabel + "' → '" + valueToSelect + "'");
         JavascriptExecutor js = (JavascriptExecutor) driver;
 
-        WebElement input = findInputByPlaceholder(fieldLabel);
-        if (input == null) {
-            input = findInputByLabel(fieldLabel);
-        }
-        if (input == null) {
-            input = findInputByAriaLabel(fieldLabel);
-        }
+        // Prefer drawer-scoped lookup (handles asterisk labels + combobox layout)
+        WebElement input = findInputInDrawerByLabel(fieldLabel);
+        if (input == null) input = findInputByPlaceholder(fieldLabel);
+        if (input == null) input = findInputByLabel(fieldLabel);
+        if (input == null) input = findInputByAriaLabel(fieldLabel);
 
         if (input == null) {
             logStep("Dropdown '" + fieldLabel + "' not found");
@@ -370,7 +396,8 @@ public class AssetPart2TestNG extends BaseTest {
         js.executeScript("arguments[0].scrollIntoView({behavior:'smooth', block:'center'});", input);
         pause(300);
         // Re-find after scroll to avoid stale element
-        WebElement freshInput2 = findInputByPlaceholder(fieldLabel);
+        WebElement freshInput2 = findInputInDrawerByLabel(fieldLabel);
+        if (freshInput2 == null) freshInput2 = findInputByPlaceholder(fieldLabel);
         if (freshInput2 == null) freshInput2 = findInputByLabel(fieldLabel);
         if (freshInput2 == null) freshInput2 = findInputByAriaLabel(fieldLabel);
         if (freshInput2 != null) input = freshInput2;
@@ -389,6 +416,15 @@ public class AssetPart2TestNG extends BaseTest {
 
         // Select from dropdown options
         List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
+        // For server-populated autocompletes, dispatch empty-string input to trigger full list
+        if (options.isEmpty()) {
+            js.executeScript(
+                    "var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
+                    + "s.call(arguments[0],'');"
+                    + "arguments[0].dispatchEvent(new Event('input',{bubbles:true}));", input);
+            pause(1500);
+            options = driver.findElements(By.xpath("//li[@role='option']"));
+        }
         if (options.isEmpty()) {
             logStep("No dropdown options found for '" + fieldLabel + "'");
             // Click the drawer heading to dismiss focus — do NOT send Escape
