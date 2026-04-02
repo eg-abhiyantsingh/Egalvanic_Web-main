@@ -460,6 +460,11 @@ public class AssetPart3TestNG extends BaseTest {
                     drawerPrefix + "//p[starts-with(normalize-space(),'" + label + "')]"
                     + "/following-sibling::div//textarea"));
             if (!inputs.isEmpty()) return inputs.get(0);
+            // Strategy 6: CI textarea fallback
+            inputs = driver.findElements(By.xpath(
+                    drawerPrefix + "//p[starts-with(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'" + lower + "')]"
+                    + "/following-sibling::div//textarea"));
+            if (!inputs.isEmpty()) return inputs.get(0);
         } catch (Exception ignored) {}
         return null;
     }

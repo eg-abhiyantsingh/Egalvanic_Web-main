@@ -316,6 +316,11 @@ public class AssetPart2TestNG extends BaseTest {
                     drawerPrefix + "//p[starts-with(normalize-space(),'" + label + "')]"
                     + "/following-sibling::div//textarea"));
             if (!inputs.isEmpty()) return inputs.get(0);
+            // Strategy 6: CI textarea fallback
+            inputs = driver.findElements(By.xpath(
+                    drawerPrefix + "//p[starts-with(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'" + lower + "')]"
+                    + "/following-sibling::div//textarea"));
+            if (!inputs.isEmpty()) return inputs.get(0);
         } catch (Exception ignored) {}
         return null;
     }
@@ -521,14 +526,31 @@ public class AssetPart2TestNG extends BaseTest {
      */
     private boolean saveAndVerify() {
         logStep("Saving changes");
+        String detailUrl = driver.getCurrentUrl();
         assetPage.saveChanges();
-        pause(2000);
-
+        // Wait for the edit drawer to actually close (right-side drawer disappears)
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        for (int i = 0; i < 20; i++) {
+            pause(500);
+            Boolean drawerGone = (Boolean) js.executeScript(
+                    "var d = document.querySelector('.MuiDrawer-anchorRight .MuiDrawer-paper');"
+                    + "return !d || d.getBoundingClientRect().width === 0;");
+            if (Boolean.TRUE.equals(drawerGone)) {
+                logStep("Edit drawer closed after " + ((i + 1) * 500) + "ms");
+                break;
+            }
+        }
+        pause(1000);
         boolean success = assetPage.waitForEditSuccess();
         logStep("Save success: " + success);
-
         if (success) {
             editFormOpen = false;
+            // Refresh detail page so React state reflects saved data
+            if (detailUrl.contains("/assets/")) {
+                logStep("Refreshing detail page to load saved data");
+                driver.navigate().to(detailUrl);
+                pause(3000);
+            }
         }
         return success;
     }
