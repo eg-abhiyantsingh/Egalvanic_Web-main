@@ -1,7 +1,62 @@
 # Claude Code Chat Log (Compressed)
 
 > Auto-updated summary of AI-assisted debugging sessions. Read this for full context when starting a new chat.
-> Last updated: 2026-04-02 (Session 4)
+> Last updated: 2026-04-02 (Session 5)
+
+---
+
+## Session: 2026-04-02 (Session 5) — Deep Audit + saveAndVerify Hardening + CI Textarea Consistency
+
+### Context
+Continuation of Session 4. Comprehensive deep audit of ALL 208 asset tests across AssetPart2/3/4/5 to verify field lookups, subtype handling, and save reliability.
+
+### Findings from 4-Part Parallel Audit
+
+**CLEAN across all files:**
+- Zero `Keys.ESCAPE` in Part2/3/4/5
+- All `verifyAssetSubtype` callers use `null`, not `"None"`
+- All dropdown closures use heading-click pattern
+- All edit/select methods have drawer-scoped lookup + stale-element re-find
+- Autocomplete empty-string retry present in all parts
+
+**Medium (non-blocking) findings:**
+- `expectedDefault` parameter in `verifyAssetSubtype` is dead code — never asserted against (all parts)
+- Part4 Relay `Manufacturer` uses `editTextField` while Motor uses `selectFirstDropdownOption` — potential freetext-vs-dropdown mismatch
+- Part4 Motor inline subtype check has `"None"` in expected list (soft-logged only, no assertion)
+
+### Fixes Applied
+
+**1. Part3 `verifyAssetSubtype` rewrite** — replaced soft-logging with proper Assert:
+- `Assert.assertNotNull` for subtype field
+- `Assert.assertTrue` validating current value against actual dropdown options
+- Fixed all 6 callers from `"None"` to `null` (GEN, JB, LC, MCC×2, MCCB)
+- Added missing `ArrayList` import
+
+**2. `saveAndVerify` hardened in Part2/4/5** — replaced fixed `pause(2000)` with Part3's proven approach:
+```java
+// Poll for drawer close up to 10 seconds
+for (int i = 0; i < 20; i++) {
+    pause(500);
+    Boolean drawerGone = (Boolean) js.executeScript(
+        "var d = document.querySelector('.MuiDrawer-anchorRight .MuiDrawer-paper');"
+        + "return !d || d.getBoundingClientRect().width === 0;");
+    if (Boolean.TRUE.equals(drawerGone)) break;
+}
+// + page refresh after successful save
+```
+
+**3. Strategy 6 (CI textarea fallback) added to Part2/3/4** — matching Part5's complete 6-strategy set in `findInputInDrawerByLabel`
+
+### Commits
+
+| Commit | Description |
+|--------|-------------|
+| c1195e1 | Rewrite Part3 verifyAssetSubtype to match Part4/5 robust approach |
+| 89540cc | Harden saveAndVerify + add CI textarea fallback across all asset parts |
+
+### CI Runs
+- 23899076240: Full suite on pre-Session-5 code (in progress)
+- 23899706230: Full suite on Session 5 code (triggered)
 
 ---
 
