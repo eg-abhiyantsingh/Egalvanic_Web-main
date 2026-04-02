@@ -17,6 +17,7 @@ import org.testng.annotations.Test;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -578,54 +579,66 @@ public class AssetPart3TestNG extends BaseTest {
      * Verifies the Asset Subtype dropdown shows expected default and options.
      */
     private void verifyAssetSubtype(String expectedDefault, String... expectedOptions) {
-        JavascriptExecutor js = (JavascriptExecutor) driver;
         WebElement subtypeInput = findInputByPlaceholder("Select Subtype");
         if (subtypeInput == null) subtypeInput = findInputByLabel("Subtype");
         if (subtypeInput == null) subtypeInput = findInputByLabel("Asset Subtype");
 
-        if (subtypeInput != null) {
-            String currentValue = subtypeInput.getAttribute("value");
-            logStep("Current subtype value: '" + currentValue + "'");
-            // Log expected vs actual — don't hard-fail since test data may vary
-            if (expectedDefault != null) {
-                boolean matchesExpected = currentValue == null || currentValue.isEmpty()
-                        || currentValue.equalsIgnoreCase(expectedDefault)
-                        || currentValue.equalsIgnoreCase("None");
-                if (!matchesExpected) {
-                    logStep("NOTE: Subtype is '" + currentValue + "' (expected '" + expectedDefault
-                            + "') — asset may already have a subtype assigned");
-                }
-            }
+        Assert.assertNotNull(subtypeInput, "Subtype field should be present in edit form");
 
-            // Open dropdown and check options
-            // Re-find after scroll to avoid stale element
-            WebElement freshSubtype = findInputByPlaceholder("Select Subtype");
-            if (freshSubtype == null) freshSubtype = findInputByLabel("Subtype");
-            if (freshSubtype == null) freshSubtype = findInputByLabel("Asset Subtype");
-            if (freshSubtype != null) subtypeInput = freshSubtype;
-            js.executeScript("arguments[0].scrollIntoView({behavior:'smooth',block:'center'});", subtypeInput);
-            pause(300);
-            freshSubtype = findInputByPlaceholder("Select Subtype");
-            if (freshSubtype == null) freshSubtype = findInputByLabel("Subtype");
-            if (freshSubtype == null) freshSubtype = findInputByLabel("Asset Subtype");
-            if (freshSubtype != null) subtypeInput = freshSubtype;
-            subtypeInput.click();
-            pause(800);
-            List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
-            logStep("Subtype dropdown options: " + options.size());
-            for (WebElement opt : options) {
-                logStep("  Option: " + opt.getText().trim());
-            }
-            // Close dropdown — click heading instead of Escape for safety
-            try {
-                WebElement heading = driver.findElement(By.xpath(
-                        "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
-                heading.click();
-            } catch (Exception ignored2) {}
-            pause(300);
-        } else {
-            logStep("Subtype field not found in edit form");
+        String currentValue = subtypeInput.getAttribute("value");
+        logStep("Current subtype value: '" + currentValue + "'");
+
+        // Open dropdown and collect options
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        js.executeScript("arguments[0].scrollIntoView({behavior:'smooth',block:'center'});", subtypeInput);
+        pause(300);
+        // Re-find after scroll
+        WebElement freshSubtype = findInputByPlaceholder("Select Subtype");
+        if (freshSubtype == null) freshSubtype = findInputByLabel("Subtype");
+        if (freshSubtype == null) freshSubtype = findInputByLabel("Asset Subtype");
+        if (freshSubtype != null) subtypeInput = freshSubtype;
+        subtypeInput.click();
+        pause(800);
+        List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
+        List<String> actualOptions = new ArrayList<>();
+        for (WebElement opt : options) {
+            String text = opt.getText().trim();
+            actualOptions.add(text);
+            logStep("  Subtype option: " + text);
         }
+        logStep("Total subtype options: " + actualOptions.size());
+
+        // Verify current value is either empty or one of the valid dropdown options.
+        // Assets are reused across CI runs, so the subtype may have been set by a prior run.
+        if (currentValue != null && !currentValue.isEmpty()) {
+            boolean isValidOption = actualOptions.stream()
+                    .anyMatch(a -> a.equalsIgnoreCase(currentValue));
+            Assert.assertTrue(isValidOption,
+                    "Subtype value '" + currentValue + "' should be a valid option. Available: " + actualOptions);
+            logStep("Current value '" + currentValue + "' is a valid subtype option");
+        } else {
+            logStep("Subtype is empty (not yet set)");
+        }
+
+        // Verify expected options are present in the dropdown
+        if (expectedOptions != null && expectedOptions.length > 0) {
+            for (String expected : expectedOptions) {
+                if ("None".equalsIgnoreCase(expected)) continue; // "None" is not a real option; empty = unset
+                boolean found = actualOptions.stream()
+                        .anyMatch(a -> a.equalsIgnoreCase(expected) || a.contains(expected));
+                Assert.assertTrue(found,
+                        "Expected subtype option '" + expected + "' not found. Available: " + actualOptions);
+                logStep("  Expected '" + expected + "' → FOUND");
+            }
+        }
+
+        // Close dropdown — click heading instead of Escape for safety
+        try {
+            WebElement heading = driver.findElement(By.xpath(
+                    "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+            heading.click();
+        } catch (Exception ignored2) {}
+        pause(300);
     }
 
     // ================================================================
@@ -1052,9 +1065,9 @@ public class AssetPart3TestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE, "GEN_04_NoSubtypeImpact");
         if (!openEditForAssetClass("Generator", "GEN")) { skipIfNotFound("Generator"); return; }
         expandCoreAttributes();
-        verifyAssetSubtype("None");
+        verifyAssetSubtype(null);
         logStepWithScreenshot("Generator subtype verification");
-        ExtentReportManager.logPass("Generator subtype=None, core attributes display correctly");
+        ExtentReportManager.logPass("Generator subtype verified, core attributes display correctly");
     }
 
     // ================================================================
@@ -1140,9 +1153,9 @@ public class AssetPart3TestNG extends BaseTest {
     public void testJB_AST_01_SubtypeNone() {
         ExtentReportManager.createTest(MODULE, FEATURE, "JB_AST_01_SubtypeNone");
         if (!openEditForAssetClass("Junction Box", "JB")) { skipIfNotFound("Junction Box"); return; }
-        verifyAssetSubtype("None");
+        verifyAssetSubtype(null);
         logStepWithScreenshot("JB subtype verification");
-        ExtentReportManager.logPass("Junction Box subtype shows 'None'");
+        ExtentReportManager.logPass("Junction Box subtype verified");
     }
 
     // ================================================================
@@ -1291,9 +1304,9 @@ public class AssetPart3TestNG extends BaseTest {
     public void testLC_AST_01_SubtypeNone() {
         ExtentReportManager.createTest(MODULE, FEATURE, "LC_AST_01_SubtypeNone");
         if (!openEditForAssetClass("Load Center", "LC")) { skipIfNotFound("Load Center"); return; }
-        verifyAssetSubtype("None");
+        verifyAssetSubtype(null);
         logStepWithScreenshot("LC subtype verification");
-        ExtentReportManager.logPass("Load Center subtype shows 'None'");
+        ExtentReportManager.logPass("Load Center subtype verified");
     }
 
     // ================================================================
@@ -1420,8 +1433,8 @@ public class AssetPart3TestNG extends BaseTest {
     public void testMCC_AST_01_DefaultSubtypeNone() {
         ExtentReportManager.createTest(MODULE, FEATURE, "MCC_AST_01_DefaultSubtype");
         if (!openEditForAssetClass("Motor Control Center", "MCC")) { skipIfNotFound("MCC"); return; }
-        verifyAssetSubtype("None");
-        ExtentReportManager.logPass("MCC default subtype is None");
+        verifyAssetSubtype(null);
+        ExtentReportManager.logPass("MCC default subtype verified");
     }
 
     @Test(priority = 83, description = "MCC_AST_02: Verify subtype dropdown options for MCC")
@@ -1429,7 +1442,7 @@ public class AssetPart3TestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE, "MCC_AST_02_SubtypeOptions");
         if (!openEditForAssetClass("Motor Control Center", "MCC")) { skipIfNotFound("MCC"); return; }
         // Verify dropdown has expected options
-        verifyAssetSubtype("None", "None", "Motor Control Equipment (<=1000V)", "Motor Control Equipment (>1000V)");
+        verifyAssetSubtype(null, "Motor Control Equipment (<=1000V)", "Motor Control Equipment (>1000V)");
         logStepWithScreenshot("MCC subtype options");
         ExtentReportManager.logPass("MCC subtype dropdown has expected options");
     }
@@ -1487,8 +1500,8 @@ public class AssetPart3TestNG extends BaseTest {
     public void testMCCB_AST_01_SubtypeNone() {
         ExtentReportManager.createTest(MODULE, FEATURE, "MCCB_AST_01_SubtypeNone");
         if (!openEditForAssetClass("MCC Bucket", "MCCB")) { skipIfNotFound("MCC Bucket"); return; }
-        verifyAssetSubtype("None");
+        verifyAssetSubtype(null);
         logStepWithScreenshot("MCCB subtype verification");
-        ExtentReportManager.logPass("MCC Bucket subtype shows 'None'");
+        ExtentReportManager.logPass("MCC Bucket subtype verified");
     }
 }
