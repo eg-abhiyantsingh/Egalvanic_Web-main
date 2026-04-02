@@ -1,7 +1,77 @@
 # Claude Code Chat Log (Compressed)
 
 > Auto-updated summary of AI-assisted debugging sessions. Read this for full context when starting a new chat.
-> Last updated: 2026-04-01 (Session 2)
+> Last updated: 2026-04-02 (Session 4)
+
+---
+
+## Session: 2026-04-02 (Session 4) — Drawer-Scoped Field Lookup + Autocomplete Trigger
+
+### Context
+User reported `testSWB_05_EditAmpereRating` not working — test opened edit drawer but immediately went to save without editing anything. Log showed `saveChanges` called directly, meaning `selectFirstDropdownOption` and `editTextField` both returned null.
+
+---
+
+### Root Causes (Playwright-verified on live Switchboard edit drawer)
+
+**1. Missing `findInputInDrawerByLabel()` in Part2/4/5**
+Only Part3 had the drawer-scoped 5-strategy XPath lookup. Part2/4/5 used generic `findInputByPlaceholder` + `findInputByLabel` + `findInputByAriaLabel` which all fail for MUI Drawer Core Attribute fields because:
+- Labels are `<p>` elements with asterisk suffixes (e.g., `"Ampere Rating*"`)
+- Placeholder is `"Select..."` (not the field name)
+- No `aria-label` attribute
+- Fields use `<p>` + sibling `<div>` layout, not `MuiFormControl`/`MuiTextField`
+
+**2. Asterisk in label text (`*` suffix)**
+Required fields render as `"Ampere Rating*"` in the DOM but tests search for `"Ampere Rating"`. Exact match `normalize-space()='Ampere Rating'` fails. Fixed by using `starts-with()` instead.
+
+**3. Server-populated autocomplete needs text input to trigger**
+`selectFirstDropdownOption` clicks the combobox and immediately checks for `li[role='option']`. MUI Autocomplete fields that fetch from the server don't show options on click alone — they require an input event. Dispatching `value=''` + input event triggers the full option list (32 options for Ampere Rating).
+
+### Switchboard Core Attribute DOM Discovery
+
+| Label | Type | Strategy | Placeholder |
+|-------|------|----------|-------------|
+| Voltage | combobox | 2 (parent/sibling) | Select voltage |
+| Ampere Rating* | combobox | 2 (parent/sibling) | Select... |
+| Catalog Number* | text | 1 (following-sibling) | (empty) |
+| Configuration | combobox | 2 (parent/sibling) | Select... |
+| Fault Withstand Rating* | combobox | 2 (parent/sibling) | Select... |
+| Mains Type* | combobox | 2 (parent/sibling) | Select... |
+| Manufacturer* | combobox | 2 (parent/sibling) | Select... |
+| Notes | text | 1 (following-sibling) | (empty) |
+| Serial Number | text | 1 (following-sibling) | (empty) |
+| Size | text | 1 (following-sibling) | (empty) |
+| Voltage* | combobox | 2 (parent/sibling) | Select... |
+
+### Fixes Applied
+
+**`findInputInDrawerByLabel()` added to Part2/4/5** (Part3 updated to `starts-with`):
+```java
+// Strategy 1: starts-with + following-sibling (standard text fields)
+drawerPrefix + "//p[starts-with(normalize-space(),'" + label + "')]/following-sibling::div//input"
+// Strategy 2: starts-with + parent/following-sibling (combobox layout)
+drawerPrefix + "//p[starts-with(normalize-space(),'" + label + "')]/parent::div/following-sibling::div//input"
+// + CI variants and textarea fallback
+```
+
+**`editTextField` + `selectDropdownValue` updated in all parts:**
+- Use `findInputInDrawerByLabel` as primary lookup
+- All re-find-after-scroll chains also use drawer lookup first
+
+**Autocomplete trigger retry in all parts:**
+```java
+if (options.isEmpty()) {
+    js.executeScript("...s.call(arguments[0],''); ...dispatchEvent(new Event('input',...));", input);
+    pause(1500);
+    options = driver.findElements(By.xpath("//li[@role='option']"));
+}
+```
+
+### Commits
+
+| Commit | Description |
+|--------|-------------|
+| 8f01d13 | Add findInputInDrawerByLabel to Part2/4/5 + fix autocomplete trigger |
 
 ---
 
