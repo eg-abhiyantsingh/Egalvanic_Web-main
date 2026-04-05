@@ -1,7 +1,47 @@
 # Claude Code Chat Log (Compressed)
 
 > Auto-updated summary of AI-assisted debugging sessions. Read this for full context when starting a new chat.
-> Last updated: 2026-04-02 (Session 5)
+> Last updated: 2026-04-05 (Session 6)
+
+---
+
+## Session: 2026-04-05 (Session 6) — Full Suite Keys.ESCAPE Purge Across All Modules
+
+### Context
+Continuation of Session 5. CI run 24004733217 triggered on Session 5 code (180min timeout). While waiting, performed comprehensive audit of ALL test modules for `Keys.ESCAPE` — a known MUI hazard where Escape key propagates through DOM and closes drawers/dialogs unexpectedly.
+
+### Codebase-Wide Keys.ESCAPE Audit
+
+**Before: 24 total occurrences across 9 files**
+- AssetPart1TestNG: 5 (3 HIGH — body.sendKeys, 2 MEDIUM — input.sendKeys)
+- ConnectionTestNG: 2 (both HIGH — body.sendKeys in delete dialogs)
+- LocationTestNG: 1 (HIGH — body.sendKeys after cancel)
+- TaskTestNG: 2 (MEDIUM — search/dropdown input.sendKeys)
+- WorkOrderTestNG: 3 (1 HIGH — body.sendKeys on filter, 2 MEDIUM — input.sendKeys on dropdowns)
+- WorkOrderPart2TestNG: 7 (4 HIGH — body.sendKeys on filters/forms, 3 MEDIUM — input.sendKeys)
+- SiteSelectionTestNG: 2 (LOW — facility combobox, no drawer)
+- SiteSelectionSmokeTestNG: 1 (LOW — facility combobox)
+- DashboardBugTestNG: 1 (LOW — search field, no drawer)
+
+**After: 4 safe occurrences kept (SiteSelection + DashboardBug — no drawer context)**
+
+### Replacement Patterns Used
+| Old Pattern | New Pattern | When Used |
+|------------|-------------|-----------|
+| `body.sendKeys(Keys.ESCAPE)` | Click Cancel/No button, then MuiBackdrop-root | Dialog dismiss |
+| `body.sendKeys(Keys.ESCAPE)` | Click header/h5/h6 element | Filter/popover close |
+| `input.sendKeys(Keys.ESCAPE)` | Click drawer heading (e.g., "Add Asset", "Add Task") | Dropdown close in drawer |
+| `input.sendKeys(Keys.ESCAPE)` | `search.clear()` + click heading | Search field |
+
+### Commits
+
+| Commit | Description |
+|--------|-------------|
+| 6dbdcf3 | Remove dangerous Keys.ESCAPE from 6 test files (20 occurrences) |
+
+### CI Runs
+- 24004733217: Full suite on Session 5 code (still running)
+- 24006585710: Full suite on Session 6 code (triggered with Keys.ESCAPE fixes)
 
 ---
 
