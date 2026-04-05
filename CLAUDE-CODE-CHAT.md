@@ -12,7 +12,9 @@ Continuation of Session 5. CI run 24004733217 triggered on Session 5 code (180mi
 
 ### Codebase-Wide Keys.ESCAPE Audit
 
-**Before: 24 total occurrences across 9 files**
+**Before: 35 total occurrences (24 in test files + 11 in page objects)**
+
+**Test files (24 occurrences across 9 files):**
 - AssetPart1TestNG: 5 (3 HIGH — body.sendKeys, 2 MEDIUM — input.sendKeys)
 - ConnectionTestNG: 2 (both HIGH — body.sendKeys in delete dialogs)
 - LocationTestNG: 1 (HIGH — body.sendKeys after cancel)
@@ -22,6 +24,12 @@ Continuation of Session 5. CI run 24004733217 triggered on Session 5 code (180mi
 - SiteSelectionTestNG: 2 (LOW — facility combobox, no drawer)
 - SiteSelectionSmokeTestNG: 1 (LOW — facility combobox)
 - DashboardBugTestNG: 1 (LOW — search field, no drawer)
+
+**Page objects (11 occurrences across 4 files):**
+- AssetPage: 5 (dismissPopup, dismissAnyDrawerOrBackdrop, dismissAnyDialog, closeAddAssetPanel)
+- LocationPage: 2 (dismissAnyDrawerOrBackdrop)
+- IssuePage: 2 (dismissAnyDrawerOrBackdrop)
+- WorkOrderPage: 2 (dismissAnyDrawerOrBackdrop)
 
 **After: 4 safe occurrences kept (SiteSelection + DashboardBug — no drawer context)**
 
@@ -38,10 +46,12 @@ Continuation of Session 5. CI run 24004733217 triggered on Session 5 code (180mi
 | Commit | Description |
 |--------|-------------|
 | 6dbdcf3 | Remove dangerous Keys.ESCAPE from 6 test files (20 occurrences) |
+| e7c2cb2 | Remove Keys.ESCAPE from page object dismissAnyDrawerOrBackdrop methods (11 occurrences) |
 
 ### CI Runs
-- 24004733217: Full suite on Session 5 code (still running)
-- 24006585710: Full suite on Session 6 code (triggered with Keys.ESCAPE fixes)
+- 24004733217: Full suite on Session 5 code (baseline)
+- 24006585710: Full suite with test-file Keys.ESCAPE fixes
+- 24006670306: Full suite with complete fix (test + page objects)
 
 ---
 
