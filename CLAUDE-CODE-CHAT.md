@@ -1,7 +1,66 @@
 # Claude Code Chat Log (Compressed)
 
 > Auto-updated summary of AI-assisted debugging sessions. Read this for full context when starting a new chat.
-> Last updated: 2026-04-05 (Session 6)
+> Last updated: 2026-04-05 (Session 7)
+
+---
+
+## Session: 2026-04-05 (Session 7) — @BeforeMethod Cascade Prevention + Headless Timing Fixes
+
+### Context
+CI run 24008066386 (Session 6 Keys.ESCAPE fixes) still in progress. While waiting, investigated the 3 biggest failure categories from baseline run 24004733217: Task cascade (27), WorkOrder+Issue (10), SLD (2). Root cause analysis revealed a systemic issue across ALL test modules.
+
+### Root Cause: TestNG @BeforeMethod Cascade
+
+**The Problem:** Every test class calls `ensureOnXxxPage()` from `@BeforeMethod` without try-catch. If `driver.get()` throws a `TimeoutException` or the grid/page doesn't load, the exception propagates up → TestNG marks `@BeforeMethod` as FAILED → **all remaining tests in the class get SKIP status (0ms duration)**. One transient failure kills 27+ tests.
+
+**The Fix:** Wrap `ensureOnXxxPage()` in try-catch with dashboard round-trip recovery:
+```java
+try {
+    ensureOnXxxPage();
+} catch (Exception e) {
+    driver.get(BASE_URL + "/dashboard");  // clear stuck state
+    pause(3000);
+    driver.get(MODULE_URL);               // retry
+    pause(6000);
+    waitForGrid();
+}
+```
+
+### Files Modified (8 test classes)
+
+| File | Changes |
+|------|---------|
+| TaskTestNG | Cascade prevention + pause 4s→6s + grid waits 15s→20s/10s→15s |
+| SLDTestNG | Cascade prevention + page load 3s→5s |
+| WorkOrderTestNG | Cascade prevention with grid retry |
+| WorkOrderPart2TestNG | Cascade prevention with grid retry |
+| IssueTestNG | Cascade prevention via issuePage.navigateToIssues() |
+| ConnectionTestNG | Cascade prevention via connectionPage.navigateToConnections() |
+| LocationTestNG | Cascade prevention via locationPage.navigateToLocations() |
+| AssetPart3TestNG | Dropdown timing: accordion 800→1500ms, scroll 300→600ms, click 500→800ms, retry 1500→2500ms, detail read 2→3s, drawer close detection improved |
+
+### Commits
+
+| Commit | Description |
+|--------|-------------|
+| ec32cbf | Add @BeforeMethod cascade prevention + headless Chrome timing fixes |
+
+### CI Runs
+- 24008066386: Session 6 fixes only (Keys.ESCAPE purge + 360min timeout) — in progress
+- 24008217849: Session 6 + 7 fixes (cascade prevention + timing) — triggered
+
+### Baseline Comparison (from run 24004733217)
+| Group | Module | Baseline Failures | Expected After Session 6+7 |
+|-------|--------|-------------------|---------------------------|
+| 1 | Auth+Site+Connection | 3 | 0 (Keys.ESCAPE + cascade prevention) |
+| 2 | Location+Task | 27 | 0-2 (cascade prevention eliminates skip chain) |
+| 3 | WorkOrder+Issue | 10 | 0-3 (Keys.ESCAPE + cascade prevention) |
+| 4 | Asset Parts 1-2 | 0 | 0 (already clean) |
+| 5 | Asset Part 3 | 2 | 0 (timing fixes) |
+| 6 | Asset Parts 4-5 | never ran | should run now (360min timeout) |
+| 7 | SLD | 2 | 0-2 (cascade prevention, but simulated events still fragile) |
+| 8-10 | Dashboard+BugHunt+Load+Smoke | never ran | should run now |
 
 ---
 
