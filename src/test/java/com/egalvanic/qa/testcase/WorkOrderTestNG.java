@@ -4,6 +4,7 @@ import com.egalvanic.qa.constants.AppConstants;
 import com.egalvanic.qa.utils.ExtentReportManager;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -215,8 +216,13 @@ public class WorkOrderTestNG extends BaseTest {
     }
 
     private void clearSearchInput(WebElement search) {
-        search.sendKeys(Keys.chord(Keys.COMMAND, "a"));
-        search.sendKeys(Keys.DELETE);
+        // Use JS to clear — Keys.COMMAND is macOS-only, fails on Linux CI
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        js.executeScript(
+                "var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
+                + "s.call(arguments[0],'');"
+                + "arguments[0].dispatchEvent(new Event('input',{bubbles:true}));"
+                + "arguments[0].dispatchEvent(new Event('change',{bubbles:true}));", search);
     }
 
     // ================================================================

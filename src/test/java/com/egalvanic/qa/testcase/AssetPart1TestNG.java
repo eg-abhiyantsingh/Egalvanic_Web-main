@@ -4,7 +4,6 @@ import com.egalvanic.qa.constants.AppConstants;
 import com.egalvanic.qa.utils.ExtentReportManager;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -316,7 +315,11 @@ public class AssetPart1TestNG extends BaseTest {
 
         // Search for nonsense using direct Selenium input (React-compatible)
         WebElement search = driver.findElement(SEARCH_INPUT);
-        search.sendKeys(Keys.chord(Keys.COMMAND, "a"));
+        // Use JS to clear — Keys.COMMAND is macOS-only, fails on Linux CI
+        ((JavascriptExecutor) driver).executeScript(
+                "var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
+                + "s.call(arguments[0],'');"
+                + "arguments[0].dispatchEvent(new Event('input',{bubbles:true}));", search);
         search.sendKeys("ZZZZNONEXISTENT999QQQQ");
         pause(3000);
 

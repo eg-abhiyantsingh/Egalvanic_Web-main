@@ -838,7 +838,7 @@ public class TaskTestNG extends BaseTest {
 
         WebElement search = driver.findElement(SEARCH_INPUT);
         safeClick(search);
-        search.sendKeys(Keys.chord(Keys.COMMAND, "a"));
+        search.sendKeys(Keys.chord(Keys.CONTROL, "a"));
         search.sendKeys("T1");
         pause(3000);
 
@@ -856,7 +856,7 @@ public class TaskTestNG extends BaseTest {
         Assert.assertTrue(hasResult, "Search for 'T1' should return results");
 
         // Clear search
-        search.sendKeys(Keys.chord(Keys.COMMAND, "a"));
+        search.sendKeys(Keys.chord(Keys.CONTROL, "a"));
         search.sendKeys(Keys.DELETE);
         pause(1500);
 
@@ -870,7 +870,7 @@ public class TaskTestNG extends BaseTest {
 
         WebElement search = driver.findElement(SEARCH_INPUT);
         safeClick(search);
-        search.sendKeys(Keys.chord(Keys.COMMAND, "a"));
+        search.sendKeys(Keys.chord(Keys.CONTROL, "a"));
         search.sendKeys("ZZZZNONEXISTENT99999");
         pause(3000);
 
@@ -880,7 +880,7 @@ public class TaskTestNG extends BaseTest {
         Assert.assertTrue(rows == 0, "Non-existent search should return 0 results. Got: " + rows);
 
         // Clear
-        search.sendKeys(Keys.chord(Keys.COMMAND, "a"));
+        search.sendKeys(Keys.chord(Keys.CONTROL, "a"));
         search.sendKeys(Keys.DELETE);
         pause(1500);
 
@@ -898,7 +898,7 @@ public class TaskTestNG extends BaseTest {
         // Search to filter
         WebElement search = driver.findElement(SEARCH_INPUT);
         safeClick(search);
-        search.sendKeys(Keys.chord(Keys.COMMAND, "a"));
+        search.sendKeys(Keys.chord(Keys.CONTROL, "a"));
         search.sendKeys("offline");
         pause(3000);
 
@@ -906,7 +906,7 @@ public class TaskTestNG extends BaseTest {
         logStep("Filtered row count: " + filteredRows);
 
         // Clear search by selecting all and deleting
-        search.sendKeys(Keys.chord(Keys.COMMAND, "a"));
+        search.sendKeys(Keys.chord(Keys.CONTROL, "a"));
         search.sendKeys(Keys.DELETE);
         pause(3000);
 
