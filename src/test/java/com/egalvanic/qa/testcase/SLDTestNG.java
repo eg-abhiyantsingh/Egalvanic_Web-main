@@ -76,7 +76,21 @@ public class SLDTestNG extends BaseTest {
     @Override
     public void testSetup() {
         super.testSetup();
-        ensureOnSLDPage();
+        try {
+            ensureOnSLDPage();
+        } catch (Exception e) {
+            // Prevent cascade-skip of entire class if page load fails once.
+            logStep("ensureOnSLDPage failed (" + e.getClass().getSimpleName()
+                    + ") — recovering via dashboard round-trip");
+            try {
+                driver.get(AppConstants.BASE_URL + "/dashboard");
+                pause(3000);
+                driver.get(SLD_URL);
+                pause(5000);
+            } catch (Exception e2) {
+                logStep("Recovery also failed: " + e2.getMessage());
+            }
+        }
     }
 
     @AfterMethod
@@ -103,7 +117,7 @@ public class SLDTestNG extends BaseTest {
         String currentUrl = driver.getCurrentUrl();
         if (currentUrl == null || !currentUrl.contains("/slds")) {
             driver.get(SLD_URL);
-            pause(3000);
+            pause(5000); // React Flow canvas needs extra time in headless Chrome
         }
     }
 

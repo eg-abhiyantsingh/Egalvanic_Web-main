@@ -153,7 +153,24 @@ public class TaskTestNG extends BaseTest {
     @Override
     public void testSetup() {
         super.testSetup();
-        ensureOnTasksPage();
+        try {
+            ensureOnTasksPage();
+        } catch (Exception e) {
+            // First failure — recover via dashboard round-trip, then retry ONCE.
+            // Without this catch, a single TimeoutException cascade-skips the
+            // entire test class (TestNG marks @BeforeMethod FAILED → all SKIP).
+            logStep("ensureOnTasksPage failed (" + e.getClass().getSimpleName()
+                    + ") — recovering via dashboard round-trip");
+            try {
+                driver.get(AppConstants.BASE_URL + "/dashboard");
+                pause(3000);
+                driver.get(TASKS_URL);
+                pause(6000);
+                waitForGrid();
+            } catch (Exception e2) {
+                logStep("Recovery also failed — test will likely fail: " + e2.getMessage());
+            }
+        }
     }
 
     @AfterMethod
@@ -173,31 +190,31 @@ public class TaskTestNG extends BaseTest {
         if (!url.contains("/tasks") || url.matches(".*/tasks/[a-f0-9-]+.*")) {
             // Navigate to task list (not a detail page)
             driver.get(TASKS_URL);
-            pause(4000); // Allow SLD to resolve and tasks to load
+            pause(6000); // Headless Chrome SPA hydration needs more than 4s
         } else {
             // Already on tasks list — quick check for grid
-            pause(1000);
+            pause(1500);
         }
         waitForGrid();
         // Ensure grid rows are actually present
         if (driver.findElements(GRID_ROWS).isEmpty()) {
             logStep("Grid rows empty after wait — reloading page");
             driver.get(TASKS_URL);
-            pause(4000);
+            pause(6000);
             waitForGrid();
         }
     }
 
     private void waitForGrid() {
         try {
-            new WebDriverWait(driver, Duration.ofSeconds(15))
+            new WebDriverWait(driver, Duration.ofSeconds(20))
                     .until(d -> !d.findElements(GRID).isEmpty());
         } catch (Exception e) {
             logStep("Grid not found — refreshing page");
             driver.navigate().refresh();
-            pause(3000);
+            pause(4000);
             try {
-                new WebDriverWait(driver, Duration.ofSeconds(10))
+                new WebDriverWait(driver, Duration.ofSeconds(15))
                         .until(d -> !d.findElements(GRID).isEmpty());
             } catch (Exception e2) {
                 logStep("Grid still not present after refresh");
@@ -205,7 +222,7 @@ public class TaskTestNG extends BaseTest {
         }
         // Extra wait for grid rows to populate
         try {
-            new WebDriverWait(driver, Duration.ofSeconds(10))
+            new WebDriverWait(driver, Duration.ofSeconds(15))
                     .until(d -> !d.findElements(GRID_ROWS).isEmpty());
         } catch (Exception ignored) {
             logStep("Grid rows did not populate within timeout");

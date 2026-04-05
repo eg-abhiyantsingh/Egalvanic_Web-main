@@ -108,7 +108,21 @@ public class WorkOrderPart2TestNG extends BaseTest {
     @Override
     public void testSetup() {
         super.testSetup();
-        ensureOnWorkOrdersPage();
+        try {
+            ensureOnWorkOrdersPage();
+        } catch (Exception e) {
+            logStep("ensureOnWorkOrdersPage failed (" + e.getClass().getSimpleName()
+                    + ") — recovering via dashboard round-trip");
+            try {
+                driver.get(AppConstants.BASE_URL + "/dashboard");
+                pause(3000);
+                driver.get(WO_URL);
+                pause(6000);
+                waitForGrid();
+            } catch (Exception e2) {
+                logStep("Recovery also failed: " + e2.getMessage());
+            }
+        }
     }
 
     @AfterMethod

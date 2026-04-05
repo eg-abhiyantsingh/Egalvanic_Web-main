@@ -76,7 +76,19 @@ public class LocationTestNG extends BaseTest {
     @Override
     public void testSetup() {
         super.testSetup();
-        ensureOnLocationsPage();
+        try {
+            ensureOnLocationsPage();
+        } catch (Exception e) {
+            logStep("ensureOnLocationsPage failed (" + e.getClass().getSimpleName()
+                    + ") — recovering via dashboard round-trip");
+            try {
+                driver.get(AppConstants.BASE_URL + "/dashboard");
+                pause(3000);
+                locationPage.navigateToLocations();
+            } catch (Exception e2) {
+                logStep("Recovery also failed: " + e2.getMessage());
+            }
+        }
     }
 
     @AfterMethod

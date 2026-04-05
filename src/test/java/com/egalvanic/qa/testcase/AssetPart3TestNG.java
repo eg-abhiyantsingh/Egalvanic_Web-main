@@ -249,7 +249,7 @@ public class AssetPart3TestNG extends BaseTest {
                 "var summaries = document.querySelectorAll('[class*=\"MuiAccordionSummary\"][aria-expanded=\"false\"]');" +
                 "summaries.forEach(function(s) { s.click(); });"
             );
-            pause(800);
+            pause(1500); // Multiple accordion state updates need time in headless Chrome
         } catch (Exception ignored) {}
     }
 
@@ -274,7 +274,7 @@ public class AssetPart3TestNG extends BaseTest {
             return null;
         }
         js.executeScript("arguments[0].scrollIntoView({behavior:'smooth',block:'center'});", input);
-        pause(300);
+        pause(600); // Smooth scroll needs time to complete in headless Chrome
         // Re-find the element after scroll — React may have re-rendered the DOM
         WebElement freshInput = findInputInDrawerByLabel(fieldLabel);
         if (freshInput == null) freshInput = findInputByPlaceholder(fieldLabel);
@@ -324,13 +324,13 @@ public class AssetPart3TestNG extends BaseTest {
         if (freshInput == null) freshInput = findInputByAriaLabel(fieldLabel);
         if (freshInput != null) input = freshInput;
         input.click();
-        pause(500);
+        pause(800); // MUI autocomplete popover render needs time in headless
         if (valueToSelect != null && !valueToSelect.isEmpty()) {
             js.executeScript(
                     "var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
                     + "s.call(arguments[0],arguments[1]);"
                     + "arguments[0].dispatchEvent(new Event('input',{bubbles:true}));", input, valueToSelect);
-            pause(800);
+            pause(1200);
         }
         List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
         // For server-populated autocompletes, dispatch empty-string input to trigger full list
@@ -339,7 +339,7 @@ public class AssetPart3TestNG extends BaseTest {
                     "var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
                     + "s.call(arguments[0],'');"
                     + "arguments[0].dispatchEvent(new Event('input',{bubbles:true}));", input);
-            pause(1500);
+            pause(2500); // Server-populated dropdowns need longer in CI
             options = driver.findElements(By.xpath("//li[@role='option']"));
         }
         if (options.isEmpty()) {
@@ -475,11 +475,16 @@ public class AssetPart3TestNG extends BaseTest {
         assetPage.saveChanges();
         // Wait for the edit drawer to actually close (right-side drawer disappears)
         JavascriptExecutor js = (JavascriptExecutor) driver;
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 25; i++) {
             pause(500);
             Boolean drawerGone = (Boolean) js.executeScript(
                     "var d = document.querySelector('.MuiDrawer-anchorRight .MuiDrawer-paper');"
-                    + "return !d || d.getBoundingClientRect().width === 0;");
+                    + "if (!d) return true;"
+                    + "var s = window.getComputedStyle(d);"
+                    + "return d.getBoundingClientRect().width === 0"
+                    + " || s.display === 'none'"
+                    + " || s.visibility === 'hidden'"
+                    + " || s.opacity === '0';");
             if (Boolean.TRUE.equals(drawerGone)) {
                 logStep("Edit drawer closed after " + ((i + 1) * 500) + "ms");
                 break;
@@ -512,7 +517,7 @@ public class AssetPart3TestNG extends BaseTest {
         // Wait for the detail page to finish re-fetching data after save.
         // The React component re-renders asynchronously after the drawer closes,
         // so we poll up to 10s for the Core Attributes table to appear.
-        pause(2000);  // initial wait for React re-fetch
+        pause(3000);  // initial wait for React re-fetch (needs extra time in headless CI)
         JavascriptExecutor js = (JavascriptExecutor) driver;
         String script =
                 "var rows = document.querySelectorAll('table.MuiTable-root tr');"
@@ -596,7 +601,7 @@ public class AssetPart3TestNG extends BaseTest {
         // Open dropdown and collect options
         JavascriptExecutor js = (JavascriptExecutor) driver;
         js.executeScript("arguments[0].scrollIntoView({behavior:'smooth',block:'center'});", subtypeInput);
-        pause(300);
+        pause(600); // Smooth scroll completion in headless
         // Re-find after scroll
         WebElement freshSubtype = findInputByPlaceholder("Select Subtype");
         if (freshSubtype == null) freshSubtype = findInputByLabel("Subtype");
