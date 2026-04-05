@@ -307,9 +307,9 @@ public class AssetPage {
                 }
             } catch (Exception ignored) {}
 
-            // Strategy 3: Press Escape
+            // Strategy 3: Click backdrop overlay (avoid Keys.ESCAPE which can close drawers)
             try {
-                driver.findElement(By.tagName("body")).sendKeys(org.openqa.selenium.Keys.ESCAPE);
+                js.executeScript("var b=document.querySelector('.MuiBackdrop-root'); if(b) b.click();");
                 pause(500);
             } catch (Exception ignored) {}
 
@@ -990,10 +990,13 @@ public class AssetPage {
     }
 
 
-    /** Dismiss any open popup/menu by pressing Escape */
+    /** Dismiss any open popup/menu by clicking outside (avoids Keys.ESCAPE closing drawers) */
     private void dismissPopup() {
         try {
-            driver.findElement(By.tagName("body")).sendKeys(org.openqa.selenium.Keys.ESCAPE);
+            js.executeScript(
+                "var popper = document.querySelector('[role=\"listbox\"], [role=\"tooltip\"], .MuiPopover-root');" +
+                "if (popper) { document.querySelector('h5, h6, header, main').click(); }" +
+                "else { var b = document.querySelector('.MuiBackdrop-root'); if (b) b.click(); }");
             pause(200);
         } catch (Exception ignored) {}
     }
@@ -2081,14 +2084,24 @@ public class AssetPage {
             Boolean hasBackdrop = (Boolean) js.executeScript(
                 "return document.querySelectorAll('.MuiBackdrop-root, .MuiDrawer-root, [role=\"presentation\"]').length > 0;");
             if (Boolean.TRUE.equals(hasBackdrop)) {
-                System.out.println("[AssetPage] Backdrop/drawer detected — pressing Escape to dismiss");
-                new Actions(driver).sendKeys(Keys.ESCAPE).perform();
+                System.out.println("[AssetPage] Backdrop/drawer detected — clicking Cancel/Close/Backdrop to dismiss");
+                // Try Cancel/Close buttons first, then backdrop click (avoid Keys.ESCAPE)
+                js.executeScript(
+                    "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"], [role=\"dialog\"]');" +
+                    "for (var d of drawers) {" +
+                    "  var btn = d.querySelector('[aria-label=\"Close\"], [aria-label=\"close\"]');" +
+                    "  if (btn) { btn.click(); return; }" +
+                    "  var btns = d.querySelectorAll('button');" +
+                    "  for (var b of btns) { if (b.textContent.trim()==='Cancel') { b.click(); return; } }" +
+                    "}" +
+                    "var backdrop = document.querySelector('.MuiBackdrop-root');" +
+                    "if (backdrop) backdrop.click();");
                 pause(800);
-                // Press Escape again in case there are nested overlays
+                // Check if still present and try again
                 Boolean stillPresent = (Boolean) js.executeScript(
                     "return document.querySelectorAll('.MuiBackdrop-root').length > 0;");
                 if (Boolean.TRUE.equals(stillPresent)) {
-                    new Actions(driver).sendKeys(Keys.ESCAPE).perform();
+                    js.executeScript("var b=document.querySelector('.MuiBackdrop-root'); if(b) b.click();");
                     pause(800);
                 }
             }
@@ -2112,9 +2125,9 @@ public class AssetPage {
             );
             pause(500);
         } catch (Exception ignored) {}
-        // Fallback: press Escape
+        // Fallback: click backdrop (avoid Keys.ESCAPE which can close drawers)
         try {
-            driver.findElement(By.tagName("body")).sendKeys(org.openqa.selenium.Keys.ESCAPE);
+            js.executeScript("var b=document.querySelector('.MuiBackdrop-root'); if(b) b.click();");
             pause(500);
         } catch (Exception ignored) {}
         System.out.println("[AssetPage] dismissAnyDialog completed");

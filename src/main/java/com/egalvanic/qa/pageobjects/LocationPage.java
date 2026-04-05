@@ -2,10 +2,8 @@ package com.egalvanic.qa.pageobjects;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -702,13 +700,22 @@ public class LocationPage {
             Boolean hasBackdrop = (Boolean) js.executeScript(
                 "return document.querySelectorAll('.MuiBackdrop-root, .MuiDrawer-root, [role=\"presentation\"]').length > 0;");
             if (Boolean.TRUE.equals(hasBackdrop)) {
-                System.out.println("[LocationPage] Backdrop/drawer detected — pressing Escape");
-                new Actions(driver).sendKeys(Keys.ESCAPE).perform();
+                System.out.println("[LocationPage] Backdrop/drawer detected — clicking Cancel/Close/Backdrop to dismiss");
+                js.executeScript(
+                    "var drawers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"], [role=\"dialog\"]');" +
+                    "for (var d of drawers) {" +
+                    "  var btn = d.querySelector('[aria-label=\"Close\"], [aria-label=\"close\"]');" +
+                    "  if (btn) { btn.click(); return; }" +
+                    "  var btns = d.querySelectorAll('button');" +
+                    "  for (var b of btns) { if (b.textContent.trim()==='Cancel') { b.click(); return; } }" +
+                    "}" +
+                    "var backdrop = document.querySelector('.MuiBackdrop-root');" +
+                    "if (backdrop) backdrop.click();");
                 pause(800);
                 Boolean stillPresent = (Boolean) js.executeScript(
                     "return document.querySelectorAll('.MuiBackdrop-root').length > 0;");
                 if (Boolean.TRUE.equals(stillPresent)) {
-                    new Actions(driver).sendKeys(Keys.ESCAPE).perform();
+                    js.executeScript("var b=document.querySelector('.MuiBackdrop-root'); if(b) b.click();");
                     pause(800);
                 }
             }
