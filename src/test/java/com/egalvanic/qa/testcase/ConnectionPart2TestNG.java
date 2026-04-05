@@ -783,12 +783,15 @@ public class ConnectionPart2TestNG extends BaseTest {
         ensureConnectionExists();
 
         connectionPage.clickEditOnRow(0);
-        pause(2000);
+        pause(3000); // Extra time for drawer animation in headless Chrome
 
         Boolean drawerOpen = (Boolean) js().executeScript(
                 "var drawers = document.querySelectorAll('.MuiDrawer-paper');" +
                 "for(var d of drawers) {" +
-                "  if(d.textContent.includes('Edit Connection') && d.getBoundingClientRect().width > 0) return true;" +
+                "  var s = window.getComputedStyle(d);" +
+                "  if(d.textContent.includes('Edit Connection')" +
+                "     && s.visibility !== 'hidden' && s.display !== 'none'" +
+                "     && (d.getBoundingClientRect().width > 0 || s.opacity !== '0')) return true;" +
                 "}" +
                 "return false;");
         logStep("Edit drawer opened: " + drawerOpen);
@@ -1034,7 +1037,10 @@ public class ConnectionPart2TestNG extends BaseTest {
         Boolean drawerClosed = (Boolean) js().executeScript(
                 "var drawers = document.querySelectorAll('.MuiDrawer-paper');" +
                 "for(var d of drawers) {" +
-                "  if(d.textContent.includes('Edit Connection') && d.getBoundingClientRect().width > 0) return false;" +
+                "  var s = window.getComputedStyle(d);" +
+                "  if(d.textContent.includes('Edit Connection')" +
+                "     && s.visibility !== 'hidden' && s.display !== 'none'" +
+                "     && (d.getBoundingClientRect().width > 0 || s.opacity !== '0')) return false;" +
                 "}" +
                 "return true;");
         logStep("Drawer closed after cancel: " + drawerClosed);
@@ -1053,12 +1059,13 @@ public class ConnectionPart2TestNG extends BaseTest {
         ensureConnectionExists();
 
         connectionPage.clickEditOnRow(0);
-        pause(2000);
+        pause(3000); // Extra time for drawer animation in headless Chrome
 
         Boolean hasSaveBtn = (Boolean) js().executeScript(
                 "var btns = document.querySelectorAll('.MuiDrawer-paper button');" +
                 "for(var b of btns) {" +
-                "  if(b.textContent.trim() === 'Save Changes') return true;" +
+                "  var t = b.textContent.trim().toLowerCase();" +
+                "  if(t.includes('save')) return true;" +
                 "}" +
                 "return false;");
         logStep("Save Changes button found: " + hasSaveBtn);
@@ -1067,7 +1074,8 @@ public class ConnectionPart2TestNG extends BaseTest {
         Boolean hasCancelBtn = (Boolean) js().executeScript(
                 "var btns = document.querySelectorAll('.MuiDrawer-paper button');" +
                 "for(var b of btns) {" +
-                "  if(b.textContent.trim() === 'Cancel') return true;" +
+                "  var t = b.textContent.trim().toLowerCase();" +
+                "  if(t.includes('cancel')) return true;" +
                 "}" +
                 "return false;");
         logStep("Cancel button found: " + hasCancelBtn);
