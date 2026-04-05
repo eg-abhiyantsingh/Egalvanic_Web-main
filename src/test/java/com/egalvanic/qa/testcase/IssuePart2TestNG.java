@@ -79,7 +79,19 @@ public class IssuePart2TestNG extends BaseTest {
     @Override
     public void testSetup() {
         super.testSetup();
-        ensureOnIssuesPage();
+        try {
+            ensureOnIssuesPage();
+        } catch (Exception e) {
+            logStep("ensureOnIssuesPage failed (" + e.getClass().getSimpleName()
+                    + ") — recovering via dashboard round-trip");
+            try {
+                driver.get(AppConstants.BASE_URL + "/dashboard");
+                pause(3000);
+                issuePage.navigateToIssues();
+            } catch (Exception e2) {
+                logStep("Recovery also failed: " + e2.getMessage());
+            }
+        }
     }
 
     @AfterMethod

@@ -67,7 +67,19 @@ public class ConnectionPart2TestNG extends BaseTest {
     @Override
     public void testSetup() {
         super.testSetup();
-        ensureOnConnectionsPage();
+        try {
+            ensureOnConnectionsPage();
+        } catch (Exception e) {
+            logStep("ensureOnConnectionsPage failed (" + e.getClass().getSimpleName()
+                    + ") — recovering via dashboard round-trip");
+            try {
+                driver.get(AppConstants.BASE_URL + "/dashboard");
+                pause(3000);
+                connectionPage.navigateToConnections();
+            } catch (Exception e2) {
+                logStep("Recovery also failed: " + e2.getMessage());
+            }
+        }
     }
 
     @AfterMethod

@@ -71,7 +71,20 @@ public class AssetPart2TestNG extends BaseTest {
     @Override
     public void testSetup() {
         super.testSetup();
-        ensureOnAssetsPage();
+        try {
+            ensureOnAssetsPage();
+        } catch (Exception e) {
+            logStep("ensureOnAssetsPage failed (" + e.getClass().getSimpleName()
+                    + ") — recovering via dashboard round-trip");
+            try {
+                driver.get(AppConstants.BASE_URL + "/dashboard");
+                pause(3000);
+                driver.get(AppConstants.BASE_URL + "/assets");
+                pause(5000);
+            } catch (Exception e2) {
+                logStep("Recovery also failed: " + e2.getMessage());
+            }
+        }
     }
 
     @AfterMethod
