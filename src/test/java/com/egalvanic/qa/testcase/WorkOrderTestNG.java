@@ -465,8 +465,10 @@ public class WorkOrderTestNG extends BaseTest {
             }
             logStep("Priority options: " + optionTexts);
 
-            // Close dropdown
-            input.sendKeys(Keys.ESCAPE);
+            // Close dropdown by clicking drawer heading (avoid Keys.ESCAPE which can close drawer)
+            try {
+                driver.findElement(By.xpath("//*[normalize-space()='Add Work Order' or normalize-space()='Create Work Order' or normalize-space()='New Work Order']")).click();
+            } catch (Exception ignored) {}
             pause(300);
 
             Assert.assertTrue(options.size() >= 2, "Should have at least 2 priority options");
@@ -498,7 +500,10 @@ public class WorkOrderTestNG extends BaseTest {
             logStep("Facility options count: " + options.size());
             Assert.assertTrue(options.size() >= 1, "Should have at least 1 facility option");
 
-            input.sendKeys(Keys.ESCAPE);
+            // Close dropdown (avoid Keys.ESCAPE)
+            try {
+                driver.findElement(By.xpath("//*[normalize-space()='Add Work Order' or normalize-space()='Create Work Order' or normalize-space()='New Work Order']")).click();
+            } catch (Exception ignored) {}
         } catch (Exception e) {
             logStep("Facility check: " + e.getMessage());
         }
@@ -712,8 +717,12 @@ public class WorkOrderTestNG extends BaseTest {
                 pause(1000);
                 logStepWithScreenshot("Status filter menu");
 
-                // Close filter
-                driver.findElement(By.tagName("body")).sendKeys(Keys.ESCAPE);
+                // Close filter by clicking outside (avoid Keys.ESCAPE)
+                try {
+                    driver.findElement(By.xpath("//header | //h5 | //h6")).click();
+                } catch (Exception ignored) {
+                    new org.openqa.selenium.interactions.Actions(driver).moveByOffset(0, 0).click().perform();
+                }
                 pause(500);
                 logStep("Status filter menu opened and closed");
             } else {

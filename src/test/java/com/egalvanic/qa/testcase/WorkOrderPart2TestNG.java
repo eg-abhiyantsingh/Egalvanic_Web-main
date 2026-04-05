@@ -402,7 +402,10 @@ public class WorkOrderPart2TestNG extends BaseTest {
                 logStep("First assignee option: " + options.get(0).getText());
             }
 
-            input.sendKeys(Keys.ESCAPE);
+            // Close dropdown (avoid Keys.ESCAPE which can close drawer)
+            try {
+                driver.findElement(By.xpath("//*[normalize-space()='Add Work Order' or normalize-space()='Create Work Order' or normalize-space()='New Work Order']")).click();
+            } catch (Exception ignored) {}
             pause(300);
 
             Assert.assertTrue(options.size() >= 1, "Should have at least 1 assignee option");
@@ -431,7 +434,10 @@ public class WorkOrderPart2TestNG extends BaseTest {
 
             List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
             logStep("Location options count: " + options.size());
-            input.sendKeys(Keys.ESCAPE);
+            // Close dropdown (avoid Keys.ESCAPE)
+            try {
+                driver.findElement(By.xpath("//*[normalize-space()='Add Work Order' or normalize-space()='Create Work Order' or normalize-space()='New Work Order']")).click();
+            } catch (Exception ignored) {}
         } catch (Exception e) {
             logStep("Location dropdown check: " + e.getMessage());
         }
@@ -457,7 +463,10 @@ public class WorkOrderPart2TestNG extends BaseTest {
 
             List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
             logStep("Asset options count: " + options.size());
-            input.sendKeys(Keys.ESCAPE);
+            // Close dropdown (avoid Keys.ESCAPE)
+            try {
+                driver.findElement(By.xpath("//*[normalize-space()='Add Work Order' or normalize-space()='Create Work Order' or normalize-space()='New Work Order']")).click();
+            } catch (Exception ignored) {}
         } catch (Exception e) {
             logStep("Asset dropdown check: " + e.getMessage());
         }
@@ -925,9 +934,14 @@ public class WorkOrderPart2TestNG extends BaseTest {
                 logStep("Task form opened: " + hasForm);
                 logStepWithScreenshot("After Add Task click");
 
-                // Dismiss form
+                // Dismiss form (avoid Keys.ESCAPE which can close underlying drawer)
                 try {
-                    driver.findElement(By.tagName("body")).sendKeys(Keys.ESCAPE);
+                    List<WebElement> cancelBtns = driver.findElements(By.xpath("//button[normalize-space()='Cancel']"));
+                    if (!cancelBtns.isEmpty()) cancelBtns.get(0).click();
+                    else {
+                        List<WebElement> backdrops = driver.findElements(By.cssSelector(".MuiBackdrop-root"));
+                        if (!backdrops.isEmpty()) backdrops.get(0).click();
+                    }
                     pause(500);
                 } catch (Exception ignored) {}
             } else {
@@ -1271,7 +1285,10 @@ public class WorkOrderPart2TestNG extends BaseTest {
                 logStep("Initial rows: " + initialRows + ", After Open filter: " + filteredRows);
 
                 // Close filter menu
-                driver.findElement(By.tagName("body")).sendKeys(Keys.ESCAPE);
+                // Click outside to close filter (avoid Keys.ESCAPE)
+                try { driver.findElement(By.xpath("//header | //h5 | //h6")).click(); } catch (Exception ignored2) {
+                    new org.openqa.selenium.interactions.Actions(driver).moveByOffset(0, 0).click().perform();
+                }
                 pause(500);
             } else {
                 logStep("Filter button not found");
@@ -1301,7 +1318,10 @@ public class WorkOrderPart2TestNG extends BaseTest {
                 int filteredRows = countGridRows();
                 logStep("In Progress filter rows: " + filteredRows);
 
-                driver.findElement(By.tagName("body")).sendKeys(Keys.ESCAPE);
+                // Click outside to close filter (avoid Keys.ESCAPE)
+                try { driver.findElement(By.xpath("//header | //h5 | //h6")).click(); } catch (Exception ignored2) {
+                    new org.openqa.selenium.interactions.Actions(driver).moveByOffset(0, 0).click().perform();
+                }
                 pause(500);
             }
         } catch (Exception e) {
@@ -1329,7 +1349,10 @@ public class WorkOrderPart2TestNG extends BaseTest {
                 int filteredRows = countGridRows();
                 logStep("Complete filter rows: " + filteredRows);
 
-                driver.findElement(By.tagName("body")).sendKeys(Keys.ESCAPE);
+                // Click outside to close filter (avoid Keys.ESCAPE)
+                try { driver.findElement(By.xpath("//header | //h5 | //h6")).click(); } catch (Exception ignored2) {
+                    new org.openqa.selenium.interactions.Actions(driver).moveByOffset(0, 0).click().perform();
+                }
                 pause(500);
             }
         } catch (Exception e) {

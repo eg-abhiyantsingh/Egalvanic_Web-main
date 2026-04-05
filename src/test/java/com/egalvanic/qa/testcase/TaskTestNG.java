@@ -613,7 +613,8 @@ public class TaskTestNG extends BaseTest {
                 pause(2000);
                 found = findTaskInGrid(createdTaskTitle);
                 search.clear();
-                search.sendKeys(Keys.ESCAPE);
+                // Click outside to dismiss any search suggestions (avoid Keys.ESCAPE)
+                try { driver.findElement(By.xpath("//h5 | //h6 | //header")).click(); } catch (Exception ignored) {}
                 pause(1000);
             } catch (Exception e) {
                 logStep("Search fallback failed: " + e.getMessage());
@@ -786,8 +787,8 @@ public class TaskTestNG extends BaseTest {
             List<WebElement> options = driver.findElements(LISTBOX_OPTION);
             logStep("Procedure options count: " + options.size());
 
-            // Close dropdown
-            procInput.sendKeys(Keys.ESCAPE);
+            // Close dropdown by clicking drawer heading (avoid Keys.ESCAPE which can close drawer)
+            try { driver.findElement(By.xpath("//h6[normalize-space()='Add Task']")).click(); } catch (Exception ignored) {}
             pause(300);
 
             Assert.assertTrue(options.size() >= 0, "Procedure dropdown should load (may be empty)");

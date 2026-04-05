@@ -5,7 +5,6 @@ import com.egalvanic.qa.utils.ExtentReportManager;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
 
 import org.testng.Assert;
@@ -561,11 +560,19 @@ public class ConnectionTestNG extends BaseTest {
         boolean confirmVisible = !confirmBtns.isEmpty();
         logStep("Delete confirmation visible: " + confirmVisible);
 
-        // Cancel the delete
+        // Cancel the delete (avoid Keys.ESCAPE which can close underlying drawer)
         try {
             List<WebElement> cancelBtns = driver.findElements(By.xpath("//button[normalize-space()='Cancel']"));
-            if (!cancelBtns.isEmpty()) cancelBtns.get(0).click();
-            else driver.findElement(By.tagName("body")).sendKeys(Keys.ESCAPE);
+            if (!cancelBtns.isEmpty()) {
+                cancelBtns.get(0).click();
+            } else {
+                // Try dialog close or backdrop click instead of Escape
+                List<WebElement> noBtns = driver.findElements(By.xpath("//div[@role='dialog']//button[normalize-space()='No']"));
+                if (!noBtns.isEmpty()) noBtns.get(0).click();
+                else {
+                    try { driver.findElement(By.cssSelector(".MuiBackdrop-root")).click(); } catch (Exception ignored2) {}
+                }
+            }
         } catch (Exception ignored) {}
         pause(500);
 
@@ -613,13 +620,17 @@ public class ConnectionTestNG extends BaseTest {
         connectionPage.clickDeleteOnRow(0);
         pause(500);
 
-        // Press Cancel / Escape instead of confirming
+        // Press Cancel instead of confirming (avoid Keys.ESCAPE which can close drawer)
         try {
             List<WebElement> cancelBtns = driver.findElements(By.xpath("//button[normalize-space()='Cancel']"));
             if (!cancelBtns.isEmpty()) {
                 cancelBtns.get(0).click();
             } else {
-                driver.findElement(By.tagName("body")).sendKeys(Keys.ESCAPE);
+                List<WebElement> noBtns = driver.findElements(By.xpath("//div[@role='dialog']//button[normalize-space()='No']"));
+                if (!noBtns.isEmpty()) noBtns.get(0).click();
+                else {
+                    try { driver.findElement(By.cssSelector(".MuiBackdrop-root")).click(); } catch (Exception ignored2) {}
+                }
             }
         } catch (Exception ignored) {}
         pause(1000);

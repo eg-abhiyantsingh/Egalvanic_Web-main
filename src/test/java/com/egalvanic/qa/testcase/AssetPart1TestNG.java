@@ -746,8 +746,13 @@ public class AssetPart1TestNG extends BaseTest {
             logStep("  Expected class '" + expected + "': " + (found ? "FOUND" : "NOT FOUND"));
         }
 
-        // Close dropdown
-        classInput.sendKeys(Keys.ESCAPE);
+        // Close dropdown by clicking panel heading (Keys.ESCAPE can close the drawer)
+        try {
+            driver.findElement(By.xpath("//*[normalize-space()='Add Asset']")).click();
+        } catch (Exception ignored) {
+            // Fallback: click body at offset to dismiss dropdown
+            new org.openqa.selenium.interactions.Actions(driver).moveByOffset(0, 0).click().perform();
+        }
         pause(300);
 
         ExtentReportManager.logPass("Asset class list verified: " + classList.size() + " classes available");
@@ -1059,9 +1064,15 @@ public class AssetPart1TestNG extends BaseTest {
             logStep("Changed location button text: '" + newText + "'");
         } else {
             logStep("Not enough location options to test change (" + options.size() + " options)");
-            // Close picker if open
+            // Close picker if open (avoid Keys.ESCAPE which can close the drawer)
             try {
-                driver.findElement(By.tagName("body")).sendKeys(Keys.ESCAPE);
+                List<WebElement> dialogClose = driver.findElements(By.xpath(
+                        "//div[@role='dialog']//button[normalize-space()='Done' or normalize-space()='OK' or normalize-space()='Close' or @aria-label='Close']"));
+                if (!dialogClose.isEmpty()) {
+                    dialogClose.get(0).click();
+                } else {
+                    driver.findElement(By.xpath("//*[normalize-space()='Add Asset']")).click();
+                }
                 pause(500);
             } catch (Exception ignored) {}
         }
@@ -1261,9 +1272,18 @@ public class AssetPart1TestNG extends BaseTest {
         boolean panelClosed = driver.findElements(ADD_ASSET_PANEL).isEmpty();
         logStep("Create panel closed after cancel: " + panelClosed);
 
-        // If panel didn't close, try Escape
+        // If panel didn't close, try clicking Cancel via JS (avoid Keys.ESCAPE which can close drawer)
         if (!panelClosed) {
-            driver.findElement(By.tagName("body")).sendKeys(Keys.ESCAPE);
+            try {
+                JavascriptExecutor js = (JavascriptExecutor) driver;
+                WebElement cancelBtn = driver.findElement(CANCEL_BTN);
+                js.executeScript("arguments[0].click();", cancelBtn);
+            } catch (Exception ignored) {
+                // Last resort: click the backdrop overlay
+                try {
+                    driver.findElement(By.cssSelector(".MuiBackdrop-root")).click();
+                } catch (Exception ignored2) {}
+            }
             pause(500);
             panelClosed = driver.findElements(ADD_ASSET_PANEL).isEmpty();
         }
@@ -1329,9 +1349,12 @@ public class AssetPart1TestNG extends BaseTest {
                     cancelBtns.get(0).click();
                     pause(500);
                 }
-                // If still open, try Escape
+                // If still open, try JS click on Cancel or backdrop (avoid Keys.ESCAPE)
                 if (!driver.findElements(ADD_ASSET_PANEL).isEmpty()) {
-                    driver.findElement(By.tagName("body")).sendKeys(Keys.ESCAPE);
+                    try {
+                        JavascriptExecutor js = (JavascriptExecutor) driver;
+                        js.executeScript("var b=document.querySelector('.MuiBackdrop-root'); if(b) b.click();");
+                    } catch (Exception ignored2) {}
                     pause(500);
                 }
             }
@@ -1418,8 +1441,12 @@ public class AssetPart1TestNG extends BaseTest {
                 result.add(opt.getText().trim());
             }
 
-            // Close dropdown
-            subtypeInputs.get(0).sendKeys(Keys.ESCAPE);
+            // Close dropdown by clicking panel heading (avoid Keys.ESCAPE)
+            try {
+                driver.findElement(By.xpath("//*[normalize-space()='Add Asset']")).click();
+            } catch (Exception ignored2) {
+                new org.openqa.selenium.interactions.Actions(driver).moveByOffset(0, 0).click().perform();
+            }
             pause(300);
         } catch (Exception e) {
             System.out.println("[AssetPart1] getSubtypeOptions: " + e.getMessage());

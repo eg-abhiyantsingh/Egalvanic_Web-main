@@ -5,7 +5,6 @@ import com.egalvanic.qa.utils.ExtentReportManager;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
 
 import org.testng.Assert;
@@ -925,8 +924,11 @@ public class LocationTestNG extends BaseTest {
             // Don't confirm — cancel instead
             pause(500);
             clickCancelButton();
-            // Also try pressing Escape
-            driver.findElement(By.tagName("body")).sendKeys(Keys.ESCAPE);
+            // Also try clicking backdrop to dismiss any remaining dialog (avoid Keys.ESCAPE)
+            try {
+                List<WebElement> backdrops = driver.findElements(By.cssSelector(".MuiBackdrop-root"));
+                if (!backdrops.isEmpty()) backdrops.get(0).click();
+            } catch (Exception ignored) {}
             pause(1000);
 
             boolean stillVisible = locationPage.isLocationVisible(testBuildingName);
