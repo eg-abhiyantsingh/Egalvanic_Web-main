@@ -326,16 +326,29 @@ public class DashboardBugTestNG extends BaseTest {
         logStep("Checking issue type categories on dashboard");
 
         navigateTo(DASHBOARD_URL);
-        pause(2000);
+        pause(4000); // Charts render asynchronously — need extra wait
 
-        String pageText = getPageText();
         String[] expectedTypes = {"NEC Violation", "NFPA 70B Violation", "OSHA Violation",
                 "Repair Needed", "Thermal Anomaly", "Ultrasonic Anomaly"};
 
+        // Retry up to 3 times — chart data may load asynchronously after initial page render
         int found = 0;
+        String pageText = "";
+        for (int attempt = 0; attempt < 3; attempt++) {
+            pageText = getPageText();
+            found = 0;
+            for (String type : expectedTypes) {
+                if (pageText.contains(type)) {
+                    found++;
+                }
+            }
+            if (found >= 1) break;
+            logStep("Attempt " + (attempt + 1) + ": Found " + found + " categories, retrying...");
+            pause(3000);
+        }
+
         for (String type : expectedTypes) {
             if (pageText.contains(type)) {
-                found++;
                 logStep("Found issue type: " + type);
             }
         }

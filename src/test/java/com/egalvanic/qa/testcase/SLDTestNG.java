@@ -122,16 +122,50 @@ public class SLDTestNG extends BaseTest {
     }
 
     private void navigateToSLDViaSidebar() {
-        js().executeScript(
-            "var links = document.querySelectorAll('a, [role=\"menuitem\"], span, p, li');" +
-            "for(var el of links){" +
+        // First try: click nav link directly
+        Boolean clicked = (Boolean) js().executeScript(
+            "var links = document.querySelectorAll('nav a, [role=\"menuitem\"], a[href*=\"sld\"]');" +
+            "for(var i = 0; i < links.length; i++){" +
+            "  var el = links[i];" +
             "  var text = (el.textContent||'').trim().toLowerCase();" +
-            "  if(text === 'slds' || text === 'sld' || text === 'single line diagram' || text === 'single line diagrams'){" +
-            "    el.click(); return true;" +
+            "  var href = (el.getAttribute('href')||'').toLowerCase();" +
+            "  if(text === 'slds' || text === 'sld' || text === 'single line diagrams' || href.indexOf('/slds') !== -1){" +
+            "    el.scrollIntoView({block:'center'}); el.click(); return true;" +
+            "  }" +
+            "}" +
+            "/* Try expanding sidebar sections that might contain SLDs link */" +
+            "var expanders = document.querySelectorAll('nav button, nav [role=\"button\"], nav li');" +
+            "for(var j = 0; j < expanders.length; j++){" +
+            "  var text = (expanders[j].textContent||'').trim().toLowerCase();" +
+            "  if(text.indexOf('more') !== -1 || text.indexOf('expand') !== -1 || text.indexOf('other') !== -1){" +
+            "    expanders[j].click(); break;" +
             "  }" +
             "}" +
             "return false;");
-        pause(3000);
+        pause(2000);
+
+        // If first attempt didn't click, try again after potential expansion
+        if (clicked == null || !clicked) {
+            js().executeScript(
+                "var links = document.querySelectorAll('a, [role=\"menuitem\"]');" +
+                "for(var i = 0; i < links.length; i++){" +
+                "  var el = links[i];" +
+                "  var text = (el.textContent||'').trim().toLowerCase();" +
+                "  var href = (el.getAttribute('href')||'').toLowerCase();" +
+                "  if(text === 'slds' || text === 'sld' || href.indexOf('/slds') !== -1){" +
+                "    el.scrollIntoView({block:'center'}); el.click(); return true;" +
+                "  }" +
+                "}" +
+                "return false;");
+            pause(2000);
+        }
+
+        // Final fallback: direct navigation if sidebar click failed
+        if (!driver.getCurrentUrl().contains("/slds")) {
+            logStep("Sidebar click did not navigate to SLDs — using direct URL as fallback");
+            driver.get(AppConstants.BASE_URL + "/slds");
+            pause(3000);
+        }
     }
 
     private boolean isCanvasPresent() {

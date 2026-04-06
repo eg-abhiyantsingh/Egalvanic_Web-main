@@ -538,9 +538,10 @@ public class AssetPart5TestNG extends BaseTest {
         String currentValue = subtypeInput.getAttribute("value");
         logStep("Current subtype value: '" + currentValue + "'");
 
-        // Open dropdown and collect options
-        subtypeInput.click();
-        pause(800);
+        // Open dropdown — use JS click to avoid MUI backdrop intercept
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", subtypeInput);
+        pause(1000);
         List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
         List<String> actualOptions = new ArrayList<>();
         for (WebElement opt : options) {

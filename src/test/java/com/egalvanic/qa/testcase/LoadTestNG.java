@@ -88,9 +88,10 @@ public class LoadTestNG extends BaseTest {
         pause(1000);
 
         // Wait for content to appear
+        // Use arguments[0] to avoid JS syntax errors when selector contains quotes
         for (int i = 0; i < 30; i++) {
             Boolean ready = (Boolean) js().executeScript(
-                    "return document.querySelectorAll('" + waitForSelector + "').length > 0;");
+                    "return document.querySelectorAll(arguments[0]).length > 0;", waitForSelector);
             if (ready != null && ready) break;
             pause(500);
         }
@@ -104,7 +105,7 @@ public class LoadTestNG extends BaseTest {
         long start = System.currentTimeMillis();
         js().executeScript(
                 "var links = document.querySelectorAll('a');" +
-                "for(var el of links) { if(el.textContent.trim() === '" + linkText + "') { el.click(); return; } }");
+                "for(var el of links) { if(el.textContent.trim() === arguments[0]) { el.click(); return; } }", linkText);
 
         // Wait for URL to change
         for (int i = 0; i < 30; i++) {
@@ -421,7 +422,7 @@ public class LoadTestNG extends BaseTest {
             long start = System.currentTimeMillis();
             js().executeScript(
                     "var links = document.querySelectorAll('a');" +
-                    "for(var el of links) { if(el.textContent.trim() === '" + page + "') { el.click(); return; } }");
+                    "for(var el of links) { if(el.textContent.trim() === arguments[0]) { el.click(); return; } }", page);
             pause(2000);
             totalTime += System.currentTimeMillis() - start;
         }

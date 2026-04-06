@@ -4,6 +4,7 @@ import com.egalvanic.qa.constants.AppConstants;
 import com.egalvanic.qa.utils.ExtentReportManager;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -203,6 +204,13 @@ public class TaskTestNG extends BaseTest {
             pause(6000);
             waitForGrid();
         }
+        // Wait for Create Task button (renders after grid in SPA)
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(10))
+                    .until(d -> !d.findElements(CREATE_TASK_BTN).isEmpty());
+        } catch (Exception ignored) {
+            logStep("Create Task button not found after grid load — page may be partially rendered");
+        }
     }
 
     private void waitForGrid() {
@@ -260,6 +268,9 @@ public class TaskTestNG extends BaseTest {
 
     private void openCreateTaskDrawer() {
         if (isDrawerOpen()) return;
+        // Wait for Create Task button to appear (renders after grid in SPA)
+        new WebDriverWait(driver, Duration.ofSeconds(15))
+                .until(d -> !d.findElements(CREATE_TASK_BTN).isEmpty());
         safeClick(CREATE_TASK_BTN);
         pause(2000);
         // Wait for form to load
@@ -1394,7 +1405,9 @@ public class TaskTestNG extends BaseTest {
 
         List<WebElement> calBtns = driver.findElements(CALENDAR_VIEW_BTN);
         if (!calBtns.isEmpty()) {
-            safeClick(calBtns.get(0));
+            // Use JS click — button may be intercepted by KPI card overlay
+            ((JavascriptExecutor) driver).executeScript(
+                    "arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", calBtns.get(0));
             pause(2000);
             logStepWithScreenshot("Calendar view");
 
@@ -1415,17 +1428,17 @@ public class TaskTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_CALENDAR, "TC_CV_003_ToggleBackToList");
         logStep("Toggling back to list view");
 
-        // Ensure on calendar first
+        // Ensure on calendar first — use JS click to avoid intercept
         List<WebElement> calBtns = driver.findElements(CALENDAR_VIEW_BTN);
         if (!calBtns.isEmpty()) {
-            safeClick(calBtns.get(0));
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", calBtns.get(0));
             pause(1000);
         }
 
-        // Toggle to list
+        // Toggle to list — use JS click to avoid intercept
         List<WebElement> listBtns = driver.findElements(LIST_VIEW_BTN);
         if (!listBtns.isEmpty()) {
-            safeClick(listBtns.get(0));
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", listBtns.get(0));
             pause(2000);
 
             boolean gridPresent = !driver.findElements(GRID).isEmpty();
@@ -1441,7 +1454,7 @@ public class TaskTestNG extends BaseTest {
 
         List<WebElement> calBtns = driver.findElements(CALENDAR_VIEW_BTN);
         if (!calBtns.isEmpty()) {
-            safeClick(calBtns.get(0));
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", calBtns.get(0));
             pause(3000);
 
             String pageText = getPageText();
@@ -1455,7 +1468,7 @@ public class TaskTestNG extends BaseTest {
         // Switch back to list for subsequent tests
         List<WebElement> listBtns = driver.findElements(LIST_VIEW_BTN);
         if (!listBtns.isEmpty()) {
-            safeClick(listBtns.get(0));
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", listBtns.get(0));
             pause(1500);
         }
 
