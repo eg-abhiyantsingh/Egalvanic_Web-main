@@ -823,4 +823,20 @@ public class AuthSmokeTestNG {
     private void pause(long ms) {
         try { Thread.sleep(ms); } catch (InterruptedException ignored) {}
     }
+
+    private void dismissBackdrops() {
+        try {
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            js.executeScript(
+                "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"], .MuiModal-backdrop').forEach(" +
+                "  function(b) { b.style.display = 'none'; b.style.pointerEvents = 'none'; }" +
+                ");" +
+                "var beamer = document.getElementById('beamerOverlay');" +
+                "if (beamer) { beamer.style.display = 'none'; beamer.style.pointerEvents = 'none'; }" +
+                "document.querySelectorAll('[id^=\"beamer\"], .beamer_show').forEach(" +
+                "  function(b) { b.style.display = 'none'; b.style.pointerEvents = 'none'; }" +
+                ");"
+            );
+        } catch (Exception ignored) {}
+    }
 }
