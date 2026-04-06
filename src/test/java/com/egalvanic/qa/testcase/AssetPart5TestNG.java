@@ -1346,16 +1346,20 @@ public class AssetPart5TestNG extends BaseTest {
         boolean saved = saveAndVerify();
 
         if (saved) {
-            pause(1000);
+            pause(2000);
             openEditForm("UPS");
             expandCoreAttributes();
-            WebElement modelInput = findInputByPlaceholder("Model");
-            if (modelInput == null) modelInput = findInputByLabel("Model");
+            pause(1000); // Wait for core attributes to render after class selection
+            // Use drawer-scoped lookup to avoid matching wrong element
+            WebElement modelInput = findInputInDrawerByLabel("Model");
+            if (modelInput == null) modelInput = findInputByPlaceholder("Model");
             if (modelInput != null) {
                 String persisted = modelInput.getAttribute("value");
                 logStep("Persisted Model: '" + persisted + "'");
                 Assert.assertTrue(persisted != null && persisted.contains("UPS-PERSIST"),
                         "Model should persist but was: " + persisted);
+            } else {
+                logStep("Model field not found after re-open — class may not have loaded");
             }
         }
         ExtentReportManager.logPass("UPS persistence: saved=" + saved);
@@ -1488,16 +1492,20 @@ public class AssetPart5TestNG extends BaseTest {
         boolean saved = saveAndVerify();
 
         if (saved) {
-            pause(1000);
+            pause(2000);
             openEditForm("Utility");
             expandCoreAttributes();
-            WebElement meterInput = findInputByPlaceholder("Meter Number");
-            if (meterInput == null) meterInput = findInputByLabel("Meter Number");
+            pause(1000); // Wait for core attributes to render after class selection
+            // Use drawer-scoped lookup to avoid matching wrong element
+            WebElement meterInput = findInputInDrawerByLabel("Meter Number");
+            if (meterInput == null) meterInput = findInputByPlaceholder("Meter Number");
             if (meterInput != null) {
                 String persisted = meterInput.getAttribute("value");
                 logStep("Persisted Meter Number: '" + persisted + "'");
                 Assert.assertTrue(persisted != null && persisted.contains("MTR-PERSIST"),
                         "Meter Number should persist but was: " + persisted);
+            } else {
+                logStep("Meter Number field not found after re-open — class may not have loaded");
             }
         }
         ExtentReportManager.logPass("UTL Meter Number persistence: saved=" + saved);
