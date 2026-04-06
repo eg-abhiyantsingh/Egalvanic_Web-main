@@ -554,7 +554,12 @@ public class AssetPart5TestNG extends BaseTest {
         List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
         // Retry if options didn't load yet (server-populated dropdowns need time)
         if (options.isEmpty()) {
-            js.executeScript("arguments[0].click();", subtypeInput);
+            // Check if dropdown is open (aria-expanded=true) — if so, just wait longer
+            // If closed, click again to re-open
+            String expanded = subtypeInput.getAttribute("aria-expanded");
+            if (!"true".equals(expanded)) {
+                js.executeScript("arguments[0].click();", subtypeInput);
+            }
             pause(2000);
             options = driver.findElements(By.xpath("//li[@role='option']"));
         }

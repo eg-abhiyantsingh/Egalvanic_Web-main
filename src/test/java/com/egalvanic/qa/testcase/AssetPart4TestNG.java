@@ -551,10 +551,20 @@ public class AssetPart4TestNG extends BaseTest {
 
         // Open dropdown and collect options — use JS click to bypass Beamer overlay
         dismissBackdrops();
-        ((JavascriptExecutor) driver).executeScript(
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        js.executeScript(
                 "arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", subtypeInput);
-        pause(800);
+        pause(1500);
         List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
+        // Retry if options didn't load yet (server-populated dropdowns need time)
+        if (options.isEmpty()) {
+            String expanded = subtypeInput.getAttribute("aria-expanded");
+            if (!"true".equals(expanded)) {
+                js.executeScript("arguments[0].click();", subtypeInput);
+            }
+            pause(2000);
+            options = driver.findElements(By.xpath("//li[@role='option']"));
+        }
         List<String> actualOptions = new ArrayList<>();
         for (WebElement opt : options) {
             String text = opt.getText().trim();
