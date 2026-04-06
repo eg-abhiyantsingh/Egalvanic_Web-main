@@ -362,6 +362,13 @@ public class AssetPart5TestNG extends BaseTest {
             logStep("Dropdown '" + fieldLabel + "' not found");
             return null;
         }
+        // Skip dropdown logic for plain text fields — avoids clearing the value
+        String role = input.getAttribute("role");
+        String ariaAuto = input.getAttribute("aria-autocomplete");
+        if (!"combobox".equals(role) && ariaAuto == null) {
+            logStep("'" + fieldLabel + "' is a text field, not a dropdown — skipping");
+            return null;
+        }
         js.executeScript("arguments[0].scrollIntoView({behavior:'smooth',block:'center'});", input);
         pause(300);
         // Re-find after scroll to avoid stale element
@@ -539,11 +546,18 @@ public class AssetPart5TestNG extends BaseTest {
         String currentValue = subtypeInput.getAttribute("value");
         logStep("Current subtype value: '" + currentValue + "'");
 
-        // Open dropdown — use JS click to avoid MUI backdrop intercept
+        // Open dropdown — use JS click to avoid Beamer overlay + MUI backdrop intercept
+        dismissBackdrops();
         JavascriptExecutor js = (JavascriptExecutor) driver;
         js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", subtypeInput);
-        pause(1000);
+        pause(1500);
         List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
+        // Retry if options didn't load yet (server-populated dropdowns need time)
+        if (options.isEmpty()) {
+            js.executeScript("arguments[0].click();", subtypeInput);
+            pause(2000);
+            options = driver.findElements(By.xpath("//li[@role='option']"));
+        }
         List<String> actualOptions = new ArrayList<>();
         for (WebElement opt : options) {
             String text = opt.getText().trim();
@@ -782,16 +796,20 @@ public class AssetPart5TestNG extends BaseTest {
         boolean saved = saveAndVerify();
 
         if (saved) {
-            pause(1000);
+            pause(2000);
             openEditForm("Switchboard");
             expandCoreAttributes();
-            WebElement snInput = findInputByPlaceholder("Serial Number");
-            if (snInput == null) snInput = findInputByLabel("Serial Number");
+            pause(1000); // Wait for core attributes to render after class selection
+            // Use drawer-scoped lookup to avoid matching wrong element
+            WebElement snInput = findInputInDrawerByLabel("Serial Number");
+            if (snInput == null) snInput = findInputByPlaceholder("Serial Number");
             if (snInput != null) {
                 String persisted = snInput.getAttribute("value");
                 logStep("Persisted Serial Number: '" + persisted + "'");
                 Assert.assertTrue(persisted != null && persisted.contains("SWB-PERSIST"),
                         "Serial Number should persist but was: " + persisted);
+            } else {
+                logStep("Serial Number field not found after re-open — class may not have loaded");
             }
         }
         ExtentReportManager.logPass("SWB persistence: saved=" + saved);

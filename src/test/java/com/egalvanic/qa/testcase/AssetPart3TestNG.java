@@ -328,6 +328,13 @@ public class AssetPart3TestNG extends BaseTest {
             logStep("Dropdown '" + fieldLabel + "' not found");
             return null;
         }
+        // Skip dropdown logic for plain text fields — avoids clearing the value
+        String role = input.getAttribute("role");
+        String ariaAuto = input.getAttribute("aria-autocomplete");
+        if (!"combobox".equals(role) && ariaAuto == null) {
+            logStep("'" + fieldLabel + "' is a text field, not a dropdown — skipping");
+            return null;
+        }
         js.executeScript("arguments[0].scrollIntoView({behavior:'smooth',block:'center'});", input);
         pause(300);
         // Re-find after scroll to avoid stale element

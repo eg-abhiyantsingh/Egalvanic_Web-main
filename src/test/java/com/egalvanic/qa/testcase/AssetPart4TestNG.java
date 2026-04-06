@@ -358,6 +358,13 @@ public class AssetPart4TestNG extends BaseTest {
             logStep("Dropdown '" + fieldLabel + "' not found");
             return null;
         }
+        // Skip dropdown logic for plain text fields — avoids clearing the value
+        String role = input.getAttribute("role");
+        String ariaAuto = input.getAttribute("aria-autocomplete");
+        if (!"combobox".equals(role) && ariaAuto == null) {
+            logStep("'" + fieldLabel + "' is a text field, not a dropdown — skipping");
+            return null;
+        }
         js.executeScript("arguments[0].scrollIntoView({behavior:'smooth',block:'center'});", input);
         pause(300);
         // Re-find after scroll to avoid stale element
@@ -1241,16 +1248,20 @@ public class AssetPart4TestNG extends BaseTest {
 
         // Re-open edit to verify persistence
         if (saved) {
-            pause(1000);
+            pause(2000);
             openEditForm("Panelboard");
             expandCoreAttributes();
-            WebElement sizeInput = findInputByPlaceholder("Size");
-            if (sizeInput == null) sizeInput = findInputByLabel("Size");
+            pause(1000); // Wait for core attributes to render after class selection
+            // Use drawer-scoped lookup to avoid matching wrong element
+            WebElement sizeInput = findInputInDrawerByLabel("Size");
+            if (sizeInput == null) sizeInput = findInputByPlaceholder("Size");
             if (sizeInput != null) {
                 String persisted = sizeInput.getAttribute("value");
                 logStep("Persisted value: '" + persisted + "'");
                 Assert.assertTrue(persisted != null && persisted.contains("PB-PERSIST"),
                         "Size should persist after save but was: " + persisted);
+            } else {
+                logStep("Size field not found after re-open — class may not have loaded");
             }
         }
         ExtentReportManager.logPass("PB persistence verified: saved=" + saved);
