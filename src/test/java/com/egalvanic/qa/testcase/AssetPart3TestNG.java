@@ -336,7 +336,8 @@ public class AssetPart3TestNG extends BaseTest {
         if (freshInput == null) freshInput = findInputByLabel(fieldLabel);
         if (freshInput == null) freshInput = findInputByAriaLabel(fieldLabel);
         if (freshInput != null) input = freshInput;
-        input.click();
+        dismissBackdrops();
+        js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", input);
         pause(800); // MUI autocomplete popover render needs time in headless
         if (valueToSelect != null && !valueToSelect.isEmpty()) {
             js.executeScript(
@@ -620,7 +621,8 @@ public class AssetPart3TestNG extends BaseTest {
         if (freshSubtype == null) freshSubtype = findInputByLabel("Subtype");
         if (freshSubtype == null) freshSubtype = findInputByLabel("Asset Subtype");
         if (freshSubtype != null) subtypeInput = freshSubtype;
-        subtypeInput.click();
+        dismissBackdrops();
+        js.executeScript("arguments[0].click();", subtypeInput);
         pause(800);
         List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
         List<String> actualOptions = new ArrayList<>();

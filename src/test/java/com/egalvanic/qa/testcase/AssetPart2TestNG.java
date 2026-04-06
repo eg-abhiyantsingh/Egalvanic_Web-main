@@ -419,7 +419,9 @@ public class AssetPart2TestNG extends BaseTest {
         if (freshInput2 == null) freshInput2 = findInputByLabel(fieldLabel);
         if (freshInput2 == null) freshInput2 = findInputByAriaLabel(fieldLabel);
         if (freshInput2 != null) input = freshInput2;
-        input.click();
+        dismissBackdrops();
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", input);
         pause(500);
 
         // Type to filter if valueToSelect is provided

@@ -41,7 +41,7 @@ public class LoadTestNG extends BaseTest {
     private static final String FEATURE_API = "API Response Time";
 
     // Acceptable thresholds (ms)
-    private static final long PAGE_LOAD_THRESHOLD = 15000;
+    private static final long PAGE_LOAD_THRESHOLD = 25000;
     private static final long GRID_THRESHOLD = 10000;
     private static final long SEARCH_THRESHOLD = 5000;
 

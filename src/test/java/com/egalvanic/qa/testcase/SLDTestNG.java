@@ -271,8 +271,14 @@ public class SLDTestNG extends BaseTest {
     @Test(priority = 6, description = "TC_SLD_006: Verify canvas/diagram container is rendered")
     public void testSLD_006_CanvasRendered() {
         ExtentReportManager.createTest(MODULE, FEATURE_UI, "TC_SLD_006_Canvas");
-        pause(2000);
-        boolean canvasPresent = isCanvasPresent();
+        // react-flow / canvas can take extra time to render on CI
+        boolean canvasPresent = false;
+        for (int i = 0; i < 10; i++) {
+            pause(2000);
+            canvasPresent = isCanvasPresent();
+            if (canvasPresent) break;
+            logStep("Wait " + (i + 1) + ": canvas not yet rendered");
+        }
         logStep("Canvas/diagram container present: " + canvasPresent);
         logStepWithScreenshot("Canvas/diagram area");
         Assert.assertTrue(canvasPresent, "SLD canvas or diagram container should be rendered");

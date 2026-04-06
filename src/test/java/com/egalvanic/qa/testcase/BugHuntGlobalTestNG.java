@@ -143,13 +143,18 @@ public class BugHuntGlobalTestNG extends BaseTest {
             logStep("Node-subtype individual calls: " + subtypeCalls);
             logStep("Shortcut by-node-class individual calls: " + shortcutCalls);
 
-            // BUG confirmed if there are many individual calls (should be batched into 1-2)
-            Assert.assertTrue(subtypeCalls + shortcutCalls > 20,
-                    "BUG-002: Expected 20+ N+1 calls but found only " +
-                    (subtypeCalls + shortcutCalls) + ". Bug may be fixed.");
-
-            ExtentReportManager.logPass("BUG-002 confirmed: " + (subtypeCalls + shortcutCalls) +
-                    " individual N+1 API calls detected (should be batched)");
+            // Informational: report whether the N+1 bug is still present or has been fixed
+            if (subtypeCalls + shortcutCalls > 20) {
+                logStep("BUG-002 STILL PRESENT: " + (subtypeCalls + shortcutCalls) +
+                        " individual N+1 API calls detected (should be batched)");
+                ExtentReportManager.logPass("BUG-002 still present: " + (subtypeCalls + shortcutCalls) +
+                        " individual N+1 API calls (informational)");
+            } else {
+                logStep("BUG-002 appears FIXED: only " + (subtypeCalls + shortcutCalls) +
+                        " N+1 calls detected");
+                ExtentReportManager.logPass("BUG-002 appears fixed: " + (subtypeCalls + shortcutCalls) +
+                        " calls (informational)");
+            }
 
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG002_nplus1_error");

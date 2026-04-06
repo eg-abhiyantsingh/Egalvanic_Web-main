@@ -428,7 +428,14 @@ public class BaseTest {
         try {
             JavascriptExecutor js = (JavascriptExecutor) driver;
             js.executeScript(
+                "/* Remove MUI backdrops */" +
                 "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"], .MuiModal-backdrop').forEach(" +
+                "  function(b) { b.style.display = 'none'; b.style.pointerEvents = 'none'; }" +
+                ");" +
+                "/* Remove Beamer notification overlay — blocks clicks on CI */" +
+                "var beamer = document.getElementById('beamerOverlay');" +
+                "if (beamer) { beamer.style.display = 'none'; beamer.style.pointerEvents = 'none'; }" +
+                "document.querySelectorAll('[id^=\"beamer\"], .beamer_show').forEach(" +
                 "  function(b) { b.style.display = 'none'; b.style.pointerEvents = 'none'; }" +
                 ");"
             );

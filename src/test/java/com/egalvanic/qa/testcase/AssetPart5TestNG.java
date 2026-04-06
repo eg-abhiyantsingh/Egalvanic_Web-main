@@ -370,7 +370,8 @@ public class AssetPart5TestNG extends BaseTest {
         if (freshDD == null) freshDD = findInputByLabel(fieldLabel);
         if (freshDD == null) freshDD = findInputByAriaLabel(fieldLabel);
         if (freshDD != null) input = freshDD;
-        input.click();
+        dismissBackdrops();
+        js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", input);
         pause(500);
         if (valueToSelect != null && !valueToSelect.isEmpty()) {
             js.executeScript(
@@ -820,8 +821,10 @@ public class AssetPart5TestNG extends BaseTest {
         if (subtypeInput == null) subtypeInput = findInputByLabel("Asset Subtype");
 
         if (subtypeInput != null) {
-            subtypeInput.click();
-            pause(800);
+            dismissBackdrops();
+            ((JavascriptExecutor) driver).executeScript(
+                    "arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", subtypeInput);
+            pause(1000);
             List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
             List<String> optTexts = new ArrayList<>();
             for (WebElement opt : options) optTexts.add(opt.getText().trim());
@@ -1142,7 +1145,9 @@ public class AssetPart5TestNG extends BaseTest {
         if (subtypeInput == null) subtypeInput = findInputByLabel("Asset Subtype");
 
         if (subtypeInput != null) {
-            subtypeInput.click();
+            dismissBackdrops();
+            ((JavascriptExecutor) driver).executeScript(
+                    "arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", subtypeInput);
             pause(800);
             List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
             List<String> optTexts = new ArrayList<>();
@@ -1356,7 +1361,9 @@ public class AssetPart5TestNG extends BaseTest {
         if (subtypeInput == null) subtypeInput = findInputByLabel("Asset Subtype");
 
         if (subtypeInput != null) {
-            subtypeInput.click();
+            dismissBackdrops();
+            ((JavascriptExecutor) driver).executeScript(
+                    "arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", subtypeInput);
             pause(800);
             List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
             List<String> optTexts = new ArrayList<>();

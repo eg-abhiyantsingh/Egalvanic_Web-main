@@ -164,6 +164,7 @@ public class AuthSmokeTestNG {
             logStep("Credentials submitted");
 
             waitForPostLoginPage();
+            dismissBackdrops();
             logStepWithScreenshot("Admin login successful — post-login page loaded");
 
             // Verify we're past the login page
@@ -172,8 +173,15 @@ public class AuthSmokeTestNG {
                     "Still on login page after admin login. URL: " + currentUrl);
             logStep("Verified: not on login page. URL: " + currentUrl);
 
-            // Verify navigation menu is present
+            // Verify navigation menu is present — wait for SPA to render
+            pause(2000);
+            dismissBackdrops();
             boolean hasNav = driver.findElements(By.cssSelector("nav")).size() > 0;
+            if (!hasNav) {
+                // Retry — SPA may still be rendering after login redirect
+                pause(3000);
+                hasNav = driver.findElements(By.cssSelector("nav")).size() > 0;
+            }
             Assert.assertTrue(hasNav, "Navigation menu not found after admin login");
             logStep("Navigation menu is present");
 

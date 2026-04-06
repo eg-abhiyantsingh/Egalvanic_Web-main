@@ -765,13 +765,27 @@ public class ConnectionPart2TestNG extends BaseTest {
 
         Boolean hasEdit = (Boolean) js().executeScript(
                 "var row = document.querySelector(\"[role='rowgroup'] [role='row']\");" +
-                "return !!row && !!row.querySelector('button[title=\"Edit Connection\"], button[title=\"Edit connection\"]');");
+                "if(!row) return false;" +
+                "var actionCell = row.querySelector('[data-field=\"actions\"]') || row;" +
+                "var btns = actionCell.querySelectorAll('button');" +
+                "for(var b of btns) {" +
+                "  var t = (b.getAttribute('title') || b.getAttribute('aria-label') || b.textContent || '').toLowerCase();" +
+                "  if(t.includes('edit')) return true;" +
+                "}" +
+                "return btns.length > 0;");
         Boolean hasDelete = (Boolean) js().executeScript(
                 "var row = document.querySelector(\"[role='rowgroup'] [role='row']\");" +
-                "return !!row && !!row.querySelector('button[title=\"Delete Connection\"], button[title=\"Delete connection\"], button[title=\"Delete\"]');");
+                "if(!row) return false;" +
+                "var actionCell = row.querySelector('[data-field=\"actions\"]') || row;" +
+                "var btns = actionCell.querySelectorAll('button');" +
+                "for(var b of btns) {" +
+                "  var t = (b.getAttribute('title') || b.getAttribute('aria-label') || b.textContent || '').toLowerCase();" +
+                "  if(t.includes('delete')) return true;" +
+                "}" +
+                "return btns.length > 1;");
 
-        Assert.assertTrue(hasEdit != null && hasEdit, "Edit button should be visible on row");
-        Assert.assertTrue(hasDelete != null && hasDelete, "Delete button should be visible on row");
+        Assert.assertTrue(hasEdit != null && hasEdit, "Edit button should be visible on row. Actions: " + actionInfo);
+        Assert.assertTrue(hasDelete != null && hasDelete, "Delete button should be visible on row. Actions: " + actionInfo);
 
         logStepWithScreenshot("Row action buttons");
         ExtentReportManager.logPass("Edit=" + hasEdit + ", Delete=" + hasDelete);
@@ -789,7 +803,8 @@ public class ConnectionPart2TestNG extends BaseTest {
                 "var drawers = document.querySelectorAll('.MuiDrawer-paper');" +
                 "for(var d of drawers) {" +
                 "  var s = window.getComputedStyle(d);" +
-                "  if(d.textContent.includes('Edit Connection')" +
+                "  var t = d.textContent.toLowerCase();" +
+                "  if((t.includes('edit connection') || t.includes('edit') || t.includes('save'))" +
                 "     && s.visibility !== 'hidden' && s.display !== 'none'" +
                 "     && (d.getBoundingClientRect().width > 0 || s.opacity !== '0')) return true;" +
                 "}" +

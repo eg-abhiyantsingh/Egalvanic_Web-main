@@ -366,7 +366,8 @@ public class AssetPart4TestNG extends BaseTest {
         if (freshDD == null) freshDD = findInputByLabel(fieldLabel);
         if (freshDD == null) freshDD = findInputByAriaLabel(fieldLabel);
         if (freshDD != null) input = freshDD;
-        input.click();
+        dismissBackdrops();
+        js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", input);
         pause(500);
         if (valueToSelect != null && !valueToSelect.isEmpty()) {
             js.executeScript(
@@ -541,8 +542,10 @@ public class AssetPart4TestNG extends BaseTest {
         String currentValue = subtypeInput.getAttribute("value");
         logStep("Current subtype value: '" + currentValue + "'");
 
-        // Open dropdown and collect options
-        subtypeInput.click();
+        // Open dropdown and collect options — use JS click to bypass Beamer overlay
+        dismissBackdrops();
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", subtypeInput);
         pause(800);
         List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
         List<String> actualOptions = new ArrayList<>();
@@ -918,7 +921,9 @@ public class AssetPart4TestNG extends BaseTest {
         if (subtypeInput == null) subtypeInput = findInputByLabel("Asset Subtype");
 
         if (subtypeInput != null) {
-            subtypeInput.click();
+            dismissBackdrops();
+            ((JavascriptExecutor) driver).executeScript(
+                    "arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", subtypeInput);
             pause(800);
             List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
             List<String> optionTexts = new ArrayList<>();
@@ -1271,7 +1276,9 @@ public class AssetPart4TestNG extends BaseTest {
         if (subtypeInput == null) subtypeInput = findInputByLabel("Asset Subtype");
 
         Assert.assertNotNull(subtypeInput, "Subtype field should be present for Panelboard");
-        subtypeInput.click();
+        dismissBackdrops();
+        ((JavascriptExecutor) driver).executeScript(
+                "arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", subtypeInput);
         pause(800);
         List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
         List<String> optTexts = new ArrayList<>();
@@ -1470,7 +1477,9 @@ public class AssetPart4TestNG extends BaseTest {
         if (subtypeInput == null) subtypeInput = findInputByLabel("Asset Subtype");
 
         if (subtypeInput != null) {
-            subtypeInput.click();
+            dismissBackdrops();
+            ((JavascriptExecutor) driver).executeScript(
+                    "arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", subtypeInput);
             pause(800);
             List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
             List<String> optTexts = new ArrayList<>();
