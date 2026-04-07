@@ -241,17 +241,15 @@ public class AssetPart5TestNG extends BaseTest {
             pause(2000);
             createFormOpen = true;
 
-            // Select the Asset Class
+            // Select the Asset Class — use sendKeys so MUI Autocomplete filters properly
             WebElement classInput = driver.findElement(
                     By.xpath("//input[@placeholder='Select Class']"));
             JavascriptExecutor js = (JavascriptExecutor) driver;
             dismissBackdrops();
-            js.executeScript(
-                    "var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
-                    + "s.call(arguments[0],arguments[1]);"
-                    + "arguments[0].dispatchEvent(new Event('input',{bubbles:true}));",
-                    classInput, assetClassName);
-            pause(1000);
+            js.executeScript("arguments[0].focus(); arguments[0].click();", classInput);
+            pause(300);
+            classInput.sendKeys(assetClassName);
+            pause(1500);
 
             List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
             boolean selected = false;
@@ -259,16 +257,30 @@ public class AssetPart5TestNG extends BaseTest {
                 String text = opt.getText().trim();
                 if (text.equalsIgnoreCase(assetClassName)
                         || text.toLowerCase().contains(assetClassName.toLowerCase())) {
-                    opt.click();
+                    js.executeScript("arguments[0].click();", opt);
                     selected = true;
                     break;
                 }
             }
             if (!selected && !options.isEmpty()) {
-                options.get(0).click();
+                js.executeScript("arguments[0].click();", options.get(0));
                 selected = true;
             }
-            pause(1500); // Wait for subtype to populate after class selection
+
+            // Wait for subtype dropdown to become enabled (up to 5s)
+            if (selected) {
+                for (int i = 0; i < 10; i++) {
+                    try {
+                        WebElement subtype = driver.findElement(
+                                By.xpath("//input[@placeholder='Select Subtype']"));
+                        if (subtype.isEnabled()) {
+                            logStep("Subtype enabled after ~" + (i * 500 + 1500) + "ms");
+                            break;
+                        }
+                    } catch (Exception ignored) {}
+                    pause(500);
+                }
+            }
 
             logStep("Create form opened with class: " + assetClassName + ", selected: " + selected);
             return selected;
