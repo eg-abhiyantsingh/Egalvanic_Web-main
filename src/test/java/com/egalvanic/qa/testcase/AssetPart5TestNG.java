@@ -939,11 +939,36 @@ public class AssetPart5TestNG extends BaseTest {
         if (subtypeInput == null) subtypeInput = findInputByLabel("Asset Subtype");
 
         if (subtypeInput != null) {
+            // Open dropdown — use native click (MUI ignores JS synthetic click)
             dismissBackdrops();
-            ((JavascriptExecutor) driver).executeScript(
-                    "arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", subtypeInput);
-            pause(1000);
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            js.executeScript("arguments[0].scrollIntoView({block:'center'});", subtypeInput);
+            pause(300);
+            try {
+                subtypeInput.click();
+            } catch (Exception clickEx) {
+                dismissBackdrops();
+                js.executeScript("arguments[0].focus();", subtypeInput);
+                subtypeInput.sendKeys("");
+            }
+            pause(1500);
             List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
+            if (options.isEmpty()) {
+                String expanded = subtypeInput.getAttribute("aria-expanded");
+                if (!"true".equals(expanded)) {
+                    try {
+                        WebElement openBtn = subtypeInput.findElement(By.xpath(
+                                "./ancestor::div[contains(@class,'MuiAutocomplete')]"
+                                + "//button[contains(@class,'popupIndicator') or @title='Open']"));
+                        dismissBackdrops();
+                        openBtn.click();
+                    } catch (Exception btnEx) {
+                        subtypeInput.sendKeys(org.openqa.selenium.Keys.ARROW_DOWN);
+                    }
+                }
+                pause(2000);
+                options = driver.findElements(By.xpath("//li[@role='option']"));
+            }
             List<String> optTexts = new ArrayList<>();
             for (WebElement opt : options) optTexts.add(opt.getText().trim());
             logStep("SWB subtype options: " + optTexts);
@@ -1265,11 +1290,36 @@ public class AssetPart5TestNG extends BaseTest {
         if (subtypeInput == null) subtypeInput = findInputByLabel("Asset Subtype");
 
         if (subtypeInput != null) {
+            // Open dropdown — use native click (MUI ignores JS synthetic click)
             dismissBackdrops();
-            ((JavascriptExecutor) driver).executeScript(
-                    "arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", subtypeInput);
-            pause(800);
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            js.executeScript("arguments[0].scrollIntoView({block:'center'});", subtypeInput);
+            pause(300);
+            try {
+                subtypeInput.click();
+            } catch (Exception clickEx) {
+                dismissBackdrops();
+                js.executeScript("arguments[0].focus();", subtypeInput);
+                subtypeInput.sendKeys("");
+            }
+            pause(1500);
             List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
+            if (options.isEmpty()) {
+                String expanded = subtypeInput.getAttribute("aria-expanded");
+                if (!"true".equals(expanded)) {
+                    try {
+                        WebElement openBtn = subtypeInput.findElement(By.xpath(
+                                "./ancestor::div[contains(@class,'MuiAutocomplete')]"
+                                + "//button[contains(@class,'popupIndicator') or @title='Open']"));
+                        dismissBackdrops();
+                        openBtn.click();
+                    } catch (Exception btnEx) {
+                        subtypeInput.sendKeys(org.openqa.selenium.Keys.ARROW_DOWN);
+                    }
+                }
+                pause(2000);
+                options = driver.findElements(By.xpath("//li[@role='option']"));
+            }
             List<String> optTexts = new ArrayList<>();
             for (WebElement opt : options) optTexts.add(opt.getText().trim());
             logStep("TRF subtype options: " + optTexts);
@@ -1485,11 +1535,36 @@ public class AssetPart5TestNG extends BaseTest {
         if (subtypeInput == null) subtypeInput = findInputByLabel("Asset Subtype");
 
         if (subtypeInput != null) {
+            // Open dropdown — use native click (MUI ignores JS synthetic click)
             dismissBackdrops();
-            ((JavascriptExecutor) driver).executeScript(
-                    "arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", subtypeInput);
-            pause(800);
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            js.executeScript("arguments[0].scrollIntoView({block:'center'});", subtypeInput);
+            pause(300);
+            try {
+                subtypeInput.click();
+            } catch (Exception clickEx) {
+                dismissBackdrops();
+                js.executeScript("arguments[0].focus();", subtypeInput);
+                subtypeInput.sendKeys("");
+            }
+            pause(1500);
             List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
+            if (options.isEmpty()) {
+                String expanded = subtypeInput.getAttribute("aria-expanded");
+                if (!"true".equals(expanded)) {
+                    try {
+                        WebElement openBtn = subtypeInput.findElement(By.xpath(
+                                "./ancestor::div[contains(@class,'MuiAutocomplete')]"
+                                + "//button[contains(@class,'popupIndicator') or @title='Open']"));
+                        dismissBackdrops();
+                        openBtn.click();
+                    } catch (Exception btnEx) {
+                        subtypeInput.sendKeys(org.openqa.selenium.Keys.ARROW_DOWN);
+                    }
+                }
+                pause(2000);
+                options = driver.findElements(By.xpath("//li[@role='option']"));
+            }
             List<String> optTexts = new ArrayList<>();
             for (WebElement opt : options) optTexts.add(opt.getText().trim());
             logStep("UPS subtype options: " + optTexts);
