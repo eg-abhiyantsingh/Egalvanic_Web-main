@@ -628,18 +628,35 @@ public class AssetPart4TestNG extends BaseTest {
         String currentValue = subtypeInput.getAttribute("value");
         logStep("Current subtype value: '" + currentValue + "'");
 
-        // Open dropdown and collect options — use JS click to bypass Beamer overlay
+        // Open dropdown — try native click first (MUI needs real events), then fallback
         dismissBackdrops();
         JavascriptExecutor js = (JavascriptExecutor) driver;
-        js.executeScript(
-                "arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", subtypeInput);
+        js.executeScript("arguments[0].scrollIntoView({block:'center'});", subtypeInput);
+        pause(300);
+        try {
+            subtypeInput.click();
+        } catch (Exception clickEx) {
+            // Beamer overlay may intercept — dismiss and use sendKeys as fallback
+            dismissBackdrops();
+            js.executeScript("arguments[0].focus();", subtypeInput);
+            subtypeInput.sendKeys("");
+        }
         pause(1500);
         List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
-        // Retry if options didn't load yet (server-populated dropdowns need time)
+        // Retry: if dropdown didn't open, try the MUI popup indicator button
         if (options.isEmpty()) {
             String expanded = subtypeInput.getAttribute("aria-expanded");
             if (!"true".equals(expanded)) {
-                js.executeScript("arguments[0].click();", subtypeInput);
+                try {
+                    WebElement openBtn = subtypeInput.findElement(By.xpath(
+                            "./ancestor::div[contains(@class,'MuiAutocomplete')]"
+                            + "//button[contains(@class,'popupIndicator') or @title='Open']"));
+                    dismissBackdrops();
+                    openBtn.click();
+                } catch (Exception btnEx) {
+                    // Last resort: sendKeys arrow-down to trigger dropdown
+                    subtypeInput.sendKeys(org.openqa.selenium.Keys.ARROW_DOWN);
+                }
             }
             pause(2000);
             options = driver.findElements(By.xpath("//li[@role='option']"));
