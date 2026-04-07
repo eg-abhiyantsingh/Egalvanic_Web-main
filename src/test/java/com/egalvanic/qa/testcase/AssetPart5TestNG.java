@@ -43,6 +43,7 @@ public class AssetPart5TestNG extends BaseTest {
 
     // navigatedToAssets removed — ensureOnAssetsPage() now checks URL directly
     private boolean editFormOpen = false;
+    private boolean createFormOpen = false;
 
     private static final String CORE_ATTRIBUTES_HEADER = "CORE ATTRIBUTES";
     private static final By SAVE_CHANGES_BTN = By.xpath(
@@ -88,6 +89,10 @@ public class AssetPart5TestNG extends BaseTest {
             if (editFormOpen) {
                 closeEditFormIfOpen();
                 editFormOpen = false;
+            }
+            if (createFormOpen) {
+                closeCreateFormIfOpen();
+                createFormOpen = false;
             }
         } catch (Exception ignored) {}
         super.testTeardown(result);
@@ -221,6 +226,68 @@ public class AssetPart5TestNG extends BaseTest {
         ensureOnAssetsPage();
         if (!navigateToAssetByClass(fallback)) return false;
         return openEditForm(primary);
+    }
+
+    /**
+     * Opens the Create Asset form and selects the given asset class.
+     * Subtype options only populate when a class is selected during creation,
+     * not in Edit mode — so subtype verification tests must use this flow.
+     */
+    private boolean openCreateFormForClass(String assetClassName) {
+        logStep("Opening Create Asset form for class: " + assetClassName);
+        try {
+            ensureOnAssetsPage();
+            assetPage.openCreateAssetForm();
+            pause(2000);
+            createFormOpen = true;
+
+            // Select the Asset Class
+            WebElement classInput = driver.findElement(
+                    By.xpath("//input[@placeholder='Select Class']"));
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            dismissBackdrops();
+            js.executeScript(
+                    "var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
+                    + "s.call(arguments[0],arguments[1]);"
+                    + "arguments[0].dispatchEvent(new Event('input',{bubbles:true}));",
+                    classInput, assetClassName);
+            pause(1000);
+
+            List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
+            boolean selected = false;
+            for (WebElement opt : options) {
+                String text = opt.getText().trim();
+                if (text.equalsIgnoreCase(assetClassName)
+                        || text.toLowerCase().contains(assetClassName.toLowerCase())) {
+                    opt.click();
+                    selected = true;
+                    break;
+                }
+            }
+            if (!selected && !options.isEmpty()) {
+                options.get(0).click();
+                selected = true;
+            }
+            pause(1500); // Wait for subtype to populate after class selection
+
+            logStep("Create form opened with class: " + assetClassName + ", selected: " + selected);
+            return selected;
+        } catch (Exception e) {
+            logStep("Failed to open create form for class: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private void closeCreateFormIfOpen() {
+        try {
+            List<WebElement> cancelBtns = driver.findElements(
+                    By.xpath("//button[normalize-space()='Cancel']"));
+            if (!cancelBtns.isEmpty()) {
+                cancelBtns.get(0).click();
+                pause(500);
+            }
+        } catch (Exception ignored) {}
+        createFormOpen = false;
     }
 
     private void expandCoreAttributes() {
@@ -403,7 +470,7 @@ public class AssetPart5TestNG extends BaseTest {
             // as it would close the entire MUI Drawer when no dropdown is open
             try {
                 WebElement heading = driver.findElement(By.xpath(
-                        "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+                        "//h6[normalize-space()='Edit Asset' or normalize-space()='Add Asset']"));
                 heading.click();
             } catch (Exception ignored) {}
             pause(300);
@@ -513,7 +580,7 @@ public class AssetPart5TestNG extends BaseTest {
             // Click heading to dismiss focus safely (Escape would close entire MUI Drawer)
             try {
                 WebElement heading = driver.findElement(By.xpath(
-                        "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+                        "//h6[normalize-space()='Edit Asset' or normalize-space()='Add Asset']"));
                 heading.click();
             } catch (Exception e2) { /* drawer already closed */ }
             pause(500);
@@ -541,7 +608,7 @@ public class AssetPart5TestNG extends BaseTest {
         if (subtypeInput == null) subtypeInput = findInputByLabel("Subtype");
         if (subtypeInput == null) subtypeInput = findInputByLabel("Asset Subtype");
 
-        Assert.assertNotNull(subtypeInput, "Subtype field should be present in edit form");
+        Assert.assertNotNull(subtypeInput, "Subtype field should be present");
 
         String currentValue = subtypeInput.getAttribute("value");
         logStep("Current subtype value: '" + currentValue + "'");
@@ -598,7 +665,7 @@ public class AssetPart5TestNG extends BaseTest {
         // Close dropdown — click heading instead of Escape for safety
         try {
             WebElement heading = driver.findElement(By.xpath(
-                    "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+                    "//h6[normalize-space()='Edit Asset' or normalize-space()='Add Asset']"));
             heading.click();
         } catch (Exception ignored) {}
         pause(300);
@@ -824,7 +891,7 @@ public class AssetPart5TestNG extends BaseTest {
     @Test(priority = 17, description = "SWB_AST_01: Verify default Asset Subtype is None for Switchboard")
     public void testSWB_AST_01_DefaultSubtype() {
         ExtentReportManager.createTest(MODULE, FEATURE, "SWB_AST_01_DefaultSubtype");
-        if (!openEditForAssetClass("Switchboard", "SWB")) { skipIfNotFound("Switchboard"); return; }
+        if (!openCreateFormForClass("Switchboard")) { skipIfNotFound("Switchboard"); return; }
         verifyAssetSubtype(null,
                 "Distribution Panelboard",
                 "Switchboard",
@@ -837,7 +904,7 @@ public class AssetPart5TestNG extends BaseTest {
     @Test(priority = 18, description = "SWB_AST_02: Verify SWB subtype dropdown options")
     public void testSWB_AST_02_SubtypeOptions() {
         ExtentReportManager.createTest(MODULE, FEATURE, "SWB_AST_02_SubtypeOptions");
-        if (!openEditForAssetClass("Switchboard", "SWB")) { skipIfNotFound("Switchboard"); return; }
+        if (!openCreateFormForClass("Switchboard")) { skipIfNotFound("Switchboard"); return; }
 
         WebElement subtypeInput = findInputByPlaceholder("Select Subtype");
         if (subtypeInput == null) subtypeInput = findInputByLabel("Subtype");
@@ -866,7 +933,7 @@ public class AssetPart5TestNG extends BaseTest {
             // Close dropdown — click heading instead of Escape for safety
             try {
                 WebElement heading = driver.findElement(By.xpath(
-                        "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+                        "//h6[normalize-space()='Edit Asset' or normalize-space()='Add Asset']"));
                 heading.click();
             } catch (Exception ignored) {}
             pause(300);
@@ -1149,7 +1216,7 @@ public class AssetPart5TestNG extends BaseTest {
     @Test(priority = 51, description = "TRF_AST_01: Verify default subtype is None for Transformer")
     public void testTRF_AST_01_DefaultSubtype() {
         ExtentReportManager.createTest(MODULE, FEATURE, "TRF_AST_01_DefaultSubtype");
-        if (!openEditForAssetClass("Transformer", "TRF")) { skipIfNotFound("Transformer"); return; }
+        if (!openCreateFormForClass("Transformer")) { skipIfNotFound("Transformer"); return; }
         verifyAssetSubtype(null,
                 "Dry Transformer",
                 "Dry-Type Transformer",
@@ -1161,7 +1228,7 @@ public class AssetPart5TestNG extends BaseTest {
     @Test(priority = 52, description = "TRF_AST_02: Verify TRF subtype dropdown options")
     public void testTRF_AST_02_SubtypeOptions() {
         ExtentReportManager.createTest(MODULE, FEATURE, "TRF_AST_02_SubtypeOptions");
-        if (!openEditForAssetClass("Transformer", "TRF")) { skipIfNotFound("Transformer"); return; }
+        if (!openCreateFormForClass("Transformer")) { skipIfNotFound("Transformer"); return; }
 
         WebElement subtypeInput = findInputByPlaceholder("Select Subtype");
         if (subtypeInput == null) subtypeInput = findInputByLabel("Subtype");
@@ -1189,7 +1256,7 @@ public class AssetPart5TestNG extends BaseTest {
             // Close dropdown — click heading instead of Escape for safety
             try {
                 WebElement heading = driver.findElement(By.xpath(
-                        "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+                        "//h6[normalize-space()='Edit Asset' or normalize-space()='Add Asset']"));
                 heading.click();
             } catch (Exception ignored) {}
             pause(300);
@@ -1369,7 +1436,7 @@ public class AssetPart5TestNG extends BaseTest {
     @Test(priority = 71, description = "UPS_AST_01: Verify default subtype is None for UPS")
     public void testUPS_AST_01_DefaultSubtype() {
         ExtentReportManager.createTest(MODULE, FEATURE, "UPS_AST_01_DefaultSubtype");
-        if (!openEditForAssetClass("UPS")) { skipIfNotFound("UPS"); return; }
+        if (!openCreateFormForClass("UPS")) { skipIfNotFound("UPS"); return; }
         verifyAssetSubtype(null,
                 "Hybrid UPS System",
                 "Rotary UPS System",
@@ -1381,7 +1448,7 @@ public class AssetPart5TestNG extends BaseTest {
     @Test(priority = 72, description = "UPS_AST_02: Verify UPS subtype dropdown options")
     public void testUPS_AST_02_SubtypeOptions() {
         ExtentReportManager.createTest(MODULE, FEATURE, "UPS_AST_02_SubtypeOptions");
-        if (!openEditForAssetClass("UPS")) { skipIfNotFound("UPS"); return; }
+        if (!openCreateFormForClass("UPS")) { skipIfNotFound("UPS"); return; }
 
         WebElement subtypeInput = findInputByPlaceholder("Select Subtype");
         if (subtypeInput == null) subtypeInput = findInputByLabel("Subtype");
@@ -1409,7 +1476,7 @@ public class AssetPart5TestNG extends BaseTest {
             // Close dropdown — click heading instead of Escape for safety
             try {
                 WebElement heading = driver.findElement(By.xpath(
-                        "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+                        "//h6[normalize-space()='Edit Asset' or normalize-space()='Add Asset']"));
                 heading.click();
             } catch (Exception ignored) {}
             pause(300);
