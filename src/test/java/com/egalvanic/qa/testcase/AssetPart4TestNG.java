@@ -1556,11 +1556,13 @@ public class AssetPart4TestNG extends BaseTest {
         boolean saved = saveAndVerify();
 
         if (saved) {
-            pause(1000);
+            pause(2000);
             openEditForm("Relay");
             expandCoreAttributes();
-            WebElement modelInput = findInputByPlaceholder("Model");
-            if (modelInput == null) modelInput = findInputByLabel("Model");
+            pause(1000); // Wait for core attributes to render after class selection
+            // Use drawer-scoped lookup to avoid matching wrong element (e.g. checkbox)
+            WebElement modelInput = findInputInDrawerByLabel("Model");
+            if (modelInput == null) modelInput = findInputByPlaceholder("Model");
             if (modelInput != null) {
                 String persisted = modelInput.getAttribute("value");
                 logStep("Persisted Model: '" + persisted + "'");

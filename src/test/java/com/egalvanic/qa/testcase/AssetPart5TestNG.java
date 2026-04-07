@@ -1225,11 +1225,13 @@ public class AssetPart5TestNG extends BaseTest {
         boolean saved = saveAndVerify();
 
         if (saved) {
-            pause(1000);
+            pause(2000);
             openEditForm("Transformer");
             expandCoreAttributes();
-            WebElement snInput = findInputByPlaceholder("Serial Number");
-            if (snInput == null) snInput = findInputByLabel("Serial Number");
+            pause(1000); // Wait for core attributes to render after class selection
+            // Use drawer-scoped lookup to avoid matching wrong element
+            WebElement snInput = findInputInDrawerByLabel("Serial Number");
+            if (snInput == null) snInput = findInputByPlaceholder("Serial Number");
             if (snInput != null) {
                 String persisted = snInput.getAttribute("value");
                 logStep("Persisted Serial Number: '" + persisted + "'");
@@ -1628,11 +1630,13 @@ public class AssetPart5TestNG extends BaseTest {
         boolean saved = saveAndVerify();
 
         if (saved) {
-            pause(1000);
+            pause(2000);
             openEditForm("Utility");
             expandCoreAttributes();
-            WebElement voltageInput = findInputByPlaceholder("Starting Voltage");
-            if (voltageInput == null) voltageInput = findInputByLabel("Starting Voltage");
+            pause(1000); // Wait for core attributes to render after class selection
+            // Use drawer-scoped lookup to avoid matching wrong element
+            WebElement voltageInput = findInputInDrawerByLabel("Starting Voltage");
+            if (voltageInput == null) voltageInput = findInputByPlaceholder("Starting Voltage");
             if (voltageInput != null) {
                 String persisted = voltageInput.getAttribute("value");
                 logStep("Persisted Starting Voltage: '" + persisted + "'");
@@ -1776,14 +1780,15 @@ public class AssetPart5TestNG extends BaseTest {
         boolean saved = saveAndVerify();
 
         if (saved) {
-            pause(1000);
+            pause(2000);
             openEditForm("Variable Frequency Drive");
             // Verify still no core attribute fields after save
             String[] commonFields = {"Manufacturer", "Model", "Voltage"};
             int found = 0;
             for (String field : commonFields) {
-                WebElement input = findInputByPlaceholder(field);
-                if (input == null) input = findInputByLabel(field);
+                // Use drawer-scoped lookup to avoid matching wrong elements
+                WebElement input = findInputInDrawerByLabel(field);
+                if (input == null) input = findInputByPlaceholder(field);
                 if (input != null) found++;
             }
             logStep("Core attribute fields after re-open: " + found + " (expected: 0)");
