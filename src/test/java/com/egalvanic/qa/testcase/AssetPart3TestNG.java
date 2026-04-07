@@ -43,6 +43,7 @@ public class AssetPart3TestNG extends BaseTest {
 
     // navigatedToAssets removed — ensureOnAssetsPage now checks URL directly
     private boolean editFormOpen = false;
+    private boolean createFormOpen = false;
 
     private static final String CORE_ATTRIBUTES_HEADER = "CORE ATTRIBUTES";
     private static final By SAVE_CHANGES_BTN = By.xpath(
@@ -88,6 +89,10 @@ public class AssetPart3TestNG extends BaseTest {
             if (editFormOpen) {
                 closeEditFormIfOpen();
                 editFormOpen = false;
+            }
+            if (createFormOpen) {
+                closeCreateFormIfOpen();
+                createFormOpen = false;
             }
         } catch (Exception ignored) {}
         super.testTeardown(result);
@@ -224,6 +229,80 @@ public class AssetPart3TestNG extends BaseTest {
         // Search grid with fallback term, but use primary name for class selection
         if (!navigateToAssetByClass(fallback)) return false;
         return openEditForm(primary);
+    }
+
+    /**
+     * Opens the Create Asset form and selects the given asset class.
+     * Subtype options only populate when a class is selected during creation,
+     * not in Edit mode — so subtype verification tests must use this flow.
+     */
+    private boolean openCreateFormForClass(String assetClassName) {
+        logStep("Opening Create Asset form for class: " + assetClassName);
+        try {
+            ensureOnAssetsPage();
+            assetPage.openCreateAssetForm();
+            pause(2000);
+            createFormOpen = true;
+
+            // Select the Asset Class — use sendKeys so MUI Autocomplete filters properly
+            WebElement classInput = driver.findElement(
+                    By.xpath("//input[@placeholder='Select Class']"));
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            dismissBackdrops();
+            js.executeScript("arguments[0].focus(); arguments[0].click();", classInput);
+            pause(300);
+            classInput.sendKeys(assetClassName);
+            pause(1500);
+
+            List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
+            boolean selected = false;
+            for (WebElement opt : options) {
+                String text = opt.getText().trim();
+                if (text.equalsIgnoreCase(assetClassName)
+                        || text.toLowerCase().contains(assetClassName.toLowerCase())) {
+                    js.executeScript("arguments[0].click();", opt);
+                    selected = true;
+                    break;
+                }
+            }
+            if (!selected && !options.isEmpty()) {
+                js.executeScript("arguments[0].click();", options.get(0));
+                selected = true;
+            }
+
+            // Wait for subtype dropdown to become enabled (up to 5s)
+            if (selected) {
+                for (int i = 0; i < 10; i++) {
+                    try {
+                        WebElement subtype = driver.findElement(
+                                By.xpath("//input[@placeholder='Select Subtype']"));
+                        if (subtype.isEnabled()) {
+                            logStep("Subtype enabled after ~" + (i * 500 + 1500) + "ms");
+                            break;
+                        }
+                    } catch (Exception ignored) {}
+                    pause(500);
+                }
+            }
+
+            logStep("Create form opened with class: " + assetClassName + ", selected: " + selected);
+            return selected;
+        } catch (Exception e) {
+            logStep("Failed to open create form for class: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private void closeCreateFormIfOpen() {
+        try {
+            List<WebElement> cancelBtns = driver.findElements(
+                    By.xpath("//button[normalize-space()='Cancel']"));
+            if (!cancelBtns.isEmpty()) {
+                cancelBtns.get(0).click();
+                pause(500);
+            }
+        } catch (Exception ignored) {}
+        createFormOpen = false;
     }
 
     private void expandCoreAttributes() {
@@ -368,7 +447,7 @@ public class AssetPart3TestNG extends BaseTest {
             // as it would close the entire MUI Drawer when no dropdown is open
             try {
                 WebElement heading = driver.findElement(By.xpath(
-                        "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+                        "//h6[normalize-space()='Edit Asset' or normalize-space()='Add Asset']"));
                 heading.click();
             } catch (Exception ignored) {}
             pause(300);
@@ -577,7 +656,7 @@ public class AssetPart3TestNG extends BaseTest {
             // Click heading to dismiss focus safely (Escape would close entire MUI Drawer)
             try {
                 WebElement heading = driver.findElement(By.xpath(
-                        "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+                        "//h6[normalize-space()='Edit Asset' or normalize-space()='Add Asset']"));
                 heading.click();
             } catch (Exception e2) { /* drawer already closed */ }
             pause(500);
@@ -614,29 +693,43 @@ public class AssetPart3TestNG extends BaseTest {
         if (subtypeInput == null) subtypeInput = findInputByLabel("Subtype");
         if (subtypeInput == null) subtypeInput = findInputByLabel("Asset Subtype");
 
-        Assert.assertNotNull(subtypeInput, "Subtype field should be present in edit form");
+        Assert.assertNotNull(subtypeInput, "Subtype field should be present");
 
         String currentValue = subtypeInput.getAttribute("value");
         logStep("Current subtype value: '" + currentValue + "'");
 
-        // Open dropdown and collect options
+        // Open dropdown — try native click first (MUI needs real events), then fallback
         JavascriptExecutor js = (JavascriptExecutor) driver;
-        js.executeScript("arguments[0].scrollIntoView({behavior:'smooth',block:'center'});", subtypeInput);
-        pause(600); // Smooth scroll completion in headless
+        js.executeScript("arguments[0].scrollIntoView({block:'center'});", subtypeInput);
+        pause(400);
         // Re-find after scroll
         WebElement freshSubtype = findInputByPlaceholder("Select Subtype");
         if (freshSubtype == null) freshSubtype = findInputByLabel("Subtype");
         if (freshSubtype == null) freshSubtype = findInputByLabel("Asset Subtype");
         if (freshSubtype != null) subtypeInput = freshSubtype;
         dismissBackdrops();
-        js.executeScript("arguments[0].click();", subtypeInput);
+        try {
+            subtypeInput.click();
+        } catch (Exception clickEx) {
+            dismissBackdrops();
+            js.executeScript("arguments[0].focus();", subtypeInput);
+            subtypeInput.sendKeys("");
+        }
         pause(1500);
         List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
-        // Retry if options didn't load yet (server-populated dropdowns need time)
+        // Retry: if dropdown didn't open, try the MUI popup indicator button
         if (options.isEmpty()) {
             String expanded = subtypeInput.getAttribute("aria-expanded");
             if (!"true".equals(expanded)) {
-                js.executeScript("arguments[0].click();", subtypeInput);
+                try {
+                    WebElement openBtn = subtypeInput.findElement(By.xpath(
+                            "./ancestor::div[contains(@class,'MuiAutocomplete')]"
+                            + "//button[contains(@class,'popupIndicator') or @title='Open']"));
+                    dismissBackdrops();
+                    openBtn.click();
+                } catch (Exception btnEx) {
+                    subtypeInput.sendKeys(org.openqa.selenium.Keys.ARROW_DOWN);
+                }
             }
             pause(2000);
             options = driver.findElements(By.xpath("//li[@role='option']"));
@@ -676,7 +769,7 @@ public class AssetPart3TestNG extends BaseTest {
         // Close dropdown — click heading instead of Escape for safety
         try {
             WebElement heading = driver.findElement(By.xpath(
-                    "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+                    "//h6[normalize-space()='Edit Asset' or normalize-space()='Add Asset']"));
             heading.click();
         } catch (Exception ignored2) {}
         pause(300);
@@ -1481,7 +1574,7 @@ public class AssetPart3TestNG extends BaseTest {
     @Test(priority = 83, description = "MCC_AST_02: Verify subtype dropdown options for MCC")
     public void testMCC_AST_02_SubtypeDropdownOptions() {
         ExtentReportManager.createTest(MODULE, FEATURE, "MCC_AST_02_SubtypeOptions");
-        if (!openEditForAssetClass("Motor Control Center", "MCC")) { skipIfNotFound("MCC"); return; }
+        if (!openCreateFormForClass("Motor Control Center")) { skipIfNotFound("MCC"); return; }
         // Verify dropdown has expected options
         verifyAssetSubtype(null, "Motor Control Equipment (<=1000V)", "Motor Control Equipment (>1000V)");
         logStepWithScreenshot("MCC subtype options");

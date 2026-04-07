@@ -458,7 +458,7 @@ public class AssetPart2TestNG extends BaseTest {
             // as it would close the entire MUI Drawer when no dropdown is open
             try {
                 WebElement heading = driver.findElement(By.xpath(
-                        "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+                        "//h6[normalize-space()='Edit Asset' or normalize-space()='Add Asset']"));
                 heading.click();
             } catch (Exception ignored) {}
             pause(300);
@@ -592,7 +592,7 @@ public class AssetPart2TestNG extends BaseTest {
             // Click heading to dismiss focus safely (Escape would close entire MUI Drawer)
             try {
                 WebElement heading = driver.findElement(By.xpath(
-                        "//div[contains(@class,'MuiDrawer')]//h6[normalize-space()='Edit Asset']"));
+                        "//h6[normalize-space()='Edit Asset' or normalize-space()='Add Asset']"));
                 heading.click();
             } catch (Exception e2) { /* drawer already closed */ }
             pause(500);
