@@ -549,7 +549,7 @@ public class TaskTestNG extends BaseTest {
         }
         logStep("Column headers: " + headerText);
 
-        String[] expectedColumns = {"Title", "Asset", "Location", "Type", "Created", "Due Date"};
+        String[] expectedColumns = {"Name", "Asset", "Location", "Type", "Created", "Due Date"};
         String pageText = getPageText();
         int found = 0;
         for (String col : expectedColumns) {
@@ -1741,8 +1741,9 @@ public class TaskTestNG extends BaseTest {
         }
         logStep("Grid columns: " + headerText);
 
-        // Verify the actual columns: Title, Asset, Location, Type, Created, Due Date
-        Assert.assertTrue(headerText.contains("Title"), "Grid should have Title column");
+        // Verify the actual columns: Name, Asset, Location, Type, Created, Due Date
+        // Note: Grid column header is "Name", while the edit form field is "Title"
+        Assert.assertTrue(headerText.contains("Name"), "Grid should have Name column");
         Assert.assertTrue(headerText.contains("Asset"), "Grid should have Asset column");
         Assert.assertTrue(headerText.contains("Location"), "Grid should have Location column");
         logStep("PASS: Grid column headers verified");
