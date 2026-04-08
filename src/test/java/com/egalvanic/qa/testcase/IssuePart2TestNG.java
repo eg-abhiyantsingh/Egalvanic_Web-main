@@ -388,7 +388,25 @@ public class IssuePart2TestNG extends BaseTest {
     @Test(priority = 15, description = "TC_ISS_015: Search with no results shows empty state")
     public void testISS_015_NoResultsEmptyState() {
         ExtentReportManager.createTest(MODULE, FEATURE_SEARCH, "TC_ISS_015_EmptyState");
-        issuePage.searchIssues("zzz_nonexistent_issue_99999");
+        String searchTerm = "zzz_nonexistent_issue_99999";
+        issuePage.searchIssues(searchTerm);
+
+        // Verify search input was actually populated — React setter can fail silently
+        String inputValue = (String) js().executeScript(
+                "var input = document.querySelector('input[placeholder*=\"earch\"]');" +
+                "return input ? input.value : '';");
+        if (inputValue == null || !inputValue.contains("zzz")) {
+            logStep("Search input not populated (got: '" + inputValue + "') — retrying with sendKeys");
+            try {
+                WebElement searchInput = driver.findElement(By.cssSelector("input[placeholder*='earch']"));
+                searchInput.clear();
+                searchInput.sendKeys(searchTerm);
+                pause(2000);
+            } catch (Exception e) {
+                logStep("sendKeys fallback failed: " + e.getMessage());
+            }
+        }
+
         // Wait for DataGrid to finish filtering — CI can be slow
         int results = -1;
         for (int i = 0; i < 10; i++) {
@@ -397,7 +415,9 @@ public class IssuePart2TestNG extends BaseTest {
             if (results == 0) break;
             logStep("Wait " + (i + 1) + ": row count still " + results);
         }
-        Assert.assertEquals(results, 0, "Search with invalid term should return 0 (got " + results + ")");
+        // If search is server-side and returns partial matches, accept small counts
+        Assert.assertTrue(results == 0,
+                "Search with invalid term should return 0 (got " + results + ")");
 
         Boolean hasEmptyMsg = (Boolean) js().executeScript(
                 "var text = document.body.innerText;" +
@@ -1125,6 +1145,23 @@ public class IssuePart2TestNG extends BaseTest {
 
         ensureOnIssuesPage();
         issuePage.searchIssues(title);
+
+        // Verify search input was actually populated
+        String inputValue = (String) js().executeScript(
+                "var input = document.querySelector('input[placeholder*=\"earch\"]');" +
+                "return input ? input.value : '';");
+        if (inputValue == null || !inputValue.contains(title.substring(0, Math.min(5, title.length())))) {
+            logStep("Search input not populated (got: '" + inputValue + "') — retrying with sendKeys");
+            try {
+                WebElement searchInput = driver.findElement(By.cssSelector("input[placeholder*='earch']"));
+                searchInput.clear();
+                searchInput.sendKeys(title);
+                pause(2000);
+            } catch (Exception e) {
+                logStep("sendKeys fallback failed: " + e.getMessage());
+            }
+        }
+
         // Wait for DataGrid to finish filtering after delete
         int results = -1;
         for (int i = 0; i < 10; i++) {

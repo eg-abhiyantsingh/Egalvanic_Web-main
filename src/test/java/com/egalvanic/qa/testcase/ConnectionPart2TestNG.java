@@ -133,6 +133,14 @@ public class ConnectionPart2TestNG extends BaseTest {
                 pause(3000);
             }
         }
+
+        // Final check: wait for at least one grid row to be visible in DOM
+        for (int i = 0; i < 8; i++) {
+            Long rowCount = (Long) js().executeScript(
+                    "return document.querySelectorAll(\"[role='rowgroup'] [role='row']\").length;");
+            if (rowCount != null && rowCount > 0) break;
+            pause(1000);
+        }
     }
 
     private JavascriptExecutor js() {
@@ -750,6 +758,19 @@ public class ConnectionPart2TestNG extends BaseTest {
     public void testCONN_043_RowActionButtons() {
         ExtentReportManager.createTest(MODULE, FEATURE_OPTIONS, "TC_CONN_043_RowActions");
         ensureConnectionExists();
+
+        // Wait for grid rows to be present in DOM — CI may have timing gap after ensureConnectionExists
+        for (int i = 0; i < 10; i++) {
+            Long rowCount = (Long) js().executeScript(
+                    "return document.querySelectorAll(\"[role='rowgroup'] [role='row']\").length;");
+            if (rowCount != null && rowCount > 0) break;
+            pause(1000);
+            if (i == 4) {
+                logStep("Grid rows still empty at 5s — reloading");
+                driver.navigate().refresh();
+                pause(3000);
+            }
+        }
 
         String actionInfo = (String) js().executeScript(
                 "var rows = document.querySelectorAll(\"[role='rowgroup'] [role='row']\");" +

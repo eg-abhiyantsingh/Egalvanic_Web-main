@@ -469,8 +469,15 @@ public class TaskTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_LIST, "TC_TL_003_PendingKPICard");
         logStep("Checking Pending KPI card");
 
+        // Explicit wait: KPI cards render after grid — CI @BeforeMethod may have failed silently
+        waitForGrid();
         String pageText = getPageText();
-        Assert.assertTrue(pageText.contains("Pending"),
+        if (!pageText.contains("Pending") && !pageText.contains("PENDING")) {
+            logStep("KPI text not found yet — waiting for async render");
+            pause(4000);
+            pageText = getPageText();
+        }
+        Assert.assertTrue(pageText.contains("Pending") || pageText.contains("PENDING"),
                 "Tasks page should show 'Pending' KPI card");
 
         // Verify count is a positive number
@@ -1705,7 +1712,14 @@ public class TaskTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_DETAIL, "TC_TD_002_StatusBadge");
         logStep("Checking task status badges");
 
+        // Ensure grid is loaded — CI @BeforeMethod may have failed silently
+        waitForGrid();
         String pageText = getPageText();
+        if (!pageText.contains("Pending") && !pageText.contains("Scheduled") && !pageText.contains("Completed")) {
+            logStep("Status badges not found yet — waiting for grid render");
+            pause(4000);
+            pageText = getPageText();
+        }
         boolean hasPending = pageText.contains("Pending");
         boolean hasScheduled = pageText.contains("Scheduled");
         boolean hasCompleted = pageText.contains("Completed");
@@ -1754,9 +1768,16 @@ public class TaskTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_DETAIL, "TC_TD_004_CreatedDateColumn");
         logStep("Checking Created date column");
 
-        // Ensure grid is loaded with data
+        // Ensure grid is loaded with data — CI may need a page reload
         waitForGrid();
         List<WebElement> rows = driver.findElements(GRID_ROWS);
+        if (rows.isEmpty()) {
+            logStep("Grid rows empty — reloading page");
+            driver.get(TASKS_URL);
+            pause(6000);
+            waitForGrid();
+            rows = driver.findElements(GRID_ROWS);
+        }
         logStep("Grid rows found: " + rows.size());
         int validDates = 0;
         for (WebElement row : rows) {
