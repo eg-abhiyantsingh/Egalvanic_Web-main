@@ -25,6 +25,7 @@
 6. [Commit History](#6-commit-history)
 7. [Key Concepts Explained](#7-key-concepts-explained)
 8. [Interview-Ready Talking Points](#8-interview-ready-talking-points)
+9. [CriticalPathTestNG.java — Customer-Priority Failure Tests](#9-criticalpathtestng-java--customer-priority-failure-tests)
 
 ---
 
@@ -856,6 +857,96 @@ A JSON file that remembers past locator heals. Key-value: broken locator → wor
 
 ---
 
+---
+
+## 9. CriticalPathTestNG.java — Customer-Priority Failure Tests
+
+**Date Added:** April 8, 2026  
+**File:** `src/test/java/com/egalvanic/qa/testcase/CriticalPathTestNG.java` (~900 lines, 25 tests)  
+**Suite XML:** `smoke-critical-testng.xml` (standalone) + added to `fullsuite-testng.xml`
+
+### Why This Exists
+
+Most of the 1,000+ existing tests verify individual UI features work correctly — and they pass. But customers don't care if a button clicks; they care if their **data is accurate**, **financial numbers are right**, **search actually finds things**, and **the app doesn't silently break**.
+
+CriticalPathTestNG targets the gap between "tests pass" and "app works for real users."
+
+### 5 Test Categories
+
+#### Category 1: Data Integrity (CP_DI_001–005)
+Tests that **Dashboard KPI numbers actually match** the real data in each module.
+
+- **CP_DI_001**: Dashboard "TOTAL ASSETS" count must match Assets grid pagination total
+- **CP_DI_002**: Dashboard "OPEN ISSUES" count must match Issues grid pagination total
+- **CP_DI_003**: Dashboard "PENDING TASKS" count must match Tasks grid pending count
+- **CP_DI_004**: Dashboard "WORK ORDERS" count must match Work Orders grid count
+- **CP_DI_005**: Asset data must survive a browser refresh (no phantom writes)
+
+**Why customers care:** If the dashboard says 42 assets but the grid shows 38, someone is making decisions on wrong numbers. This is the #1 source of customer complaints in data-heavy apps.
+
+#### Category 2: Financial Accuracy (CP_FA_001–005)
+Tests that **dollar amounts display correctly** and KPIs make mathematical sense.
+
+- **CP_FA_001**: Dollar values must have proper $ formatting with commas
+- **CP_FA_002**: Asset values must not show NaN, undefined, or "null"
+- **CP_FA_003**: All KPI card numbers must be ≥ 0 (no negative counts)
+- **CP_FA_004**: Percentages must be in 0-100 range
+- **CP_FA_005**: KPI cards must show actual numbers, not loading spinners forever
+
+**Why customers care:** A "$NaN" asset value or negative work order count destroys trust instantly. Financial data must be bulletproof.
+
+#### Category 3: Search Reliability (CP_SR_001–005)
+Tests that **search finds what it should** and doesn't corrupt the view.
+
+- **CP_SR_001**: Searching a known asset name must return relevant results
+- **CP_SR_002**: Clearing search must restore the full original grid
+- **CP_SR_003**: Empty search results must show a clear message, not blank grid
+- **CP_SR_004**: Grid must never show duplicate assets (same ID twice)
+- **CP_SR_005**: Pagination must work after search (results properly paginated)
+
+**Why customers care:** If search doesn't find a known asset, the user thinks it was deleted. If clearing search doesn't restore results, they think data was lost.
+
+#### Category 4: Cross-Module Consistency (CP_CM_001–005)
+Tests that **modules work together** and navigation doesn't break.
+
+- **CP_CM_001**: Clicking sidebar modules must load the correct pages
+- **CP_CM_002**: All critical modules must be accessible without crashing
+- **CP_CM_003**: Detail drawer tabs must load without errors
+- **CP_CM_004**: Overdue task count must not exceed total pending tasks
+- **CP_CM_005**: Creating data in one module must reflect in related modules
+
+**Why customers care:** An unreachable module means an entire workflow is blocked. Overdue > Total means the counting logic is broken.
+
+#### Category 5: Silent Failures (CP_SF_001–005)
+Tests that detect **problems the user can't see** but will suffer from.
+
+- **CP_SF_001**: Dashboard must load without JS console errors
+- **CP_SF_002**: Data must not come from stale cache after navigation
+- **CP_SF_003**: Navigating to invalid URL must not show crash/stack trace
+- **CP_SF_004**: Page load must complete under 15 seconds
+- **CP_SF_005**: Session must survive navigating through 5+ pages
+
+**Why customers care:** Silent JS errors cause phantom bugs — buttons that look clickable but do nothing. Stale cache means a user saves data but sees old values. Slow pages drive users to competitors.
+
+### How to Run
+
+```bash
+# Run just the 25 critical path tests
+mvn clean test -DsuiteXmlFile=smoke-critical-testng.xml
+
+# Run as part of the full suite
+mvn clean test -DsuiteXmlFile=fullsuite-testng.xml
+```
+
+### Interview Talking Points
+
+- "I created a separate test tier focused on customer-observable failures, not just feature verification"
+- "Data integrity tests cross-validate Dashboard KPIs against actual module data — catching the #1 class of production complaints"
+- "Silent failure tests catch JS console errors and stale cache issues that users can't see but definitely suffer from"
+- "Tests are designed to FAIL when real problems exist, unlike feature tests that pass even when the app has data inconsistencies"
+
+---
+
 ## File Summary
 
 | File | Location | Lines | Purpose |
@@ -868,4 +959,5 @@ A JSON file that remembers past locator heals. Key-value: broken locator → wor
 | SmartBugDetector.java | `src/main/java/.../utils/ai/` | 382 | Auto-classify failures (4 categories) |
 | AITestGenerator.java | `src/main/java/.../utils/ai/` | 626 | DOM analysis → TestNG code generation |
 | BaseTest.java (modified) | `src/test/java/.../testcase/` | +21 lines | Integration point for all AI features |
-| **Total** | | **2,990 new + 21 modified** | |
+| CriticalPathTestNG.java | `src/test/java/.../testcase/` | ~900 | 25 customer-priority failure tests |
+| **Total** | | **~3,890 new + 21 modified** | |

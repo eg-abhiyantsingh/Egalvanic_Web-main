@@ -19,9 +19,10 @@
     Work Orders:           ~120 TCs (50 + ~70 Part2)
     Bug Hunt:               60 TCs (7 files)
     Load & Performance:     20 TCs
+    Critical Path:          25 TCs (new)
     API Tests:              17 TCs
     ────────────────────────────
-    TOTAL:              ~1,000+ TCs
+    TOTAL:              ~1,025+ TCs
 -->
 <suite name="eGalvanic Full Automation Suite" verbose="1" parallel="false">
 
@@ -250,22 +251,31 @@
     <!-- ═══════════════════════════════════════════════════════ -->
     <!-- MODULE 13: API TESTS (17 TCs)                          -->
     <!-- ═══════════════════════════════════════════════════════ -->
-    <test name="35. API — Authentication (4 TCs)">
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- MODULE 14: CRITICAL PATH (25 TCs)                      -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <test name="35. Critical Path — Customer Priority (25 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.CriticalPathTestNG"/>
+        </classes>
+    </test>
+
+    <test name="36. API — Authentication (4 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.api.AuthenticationAPITest"/>
         </classes>
     </test>
-    <test name="36. API — Users (4 TCs)">
+    <test name="37. API — Users (4 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.api.UserAPITest"/>
         </classes>
     </test>
-    <test name="37. API — Security (5 TCs)">
+    <test name="38. API — Security (5 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.api.APISecurityTest"/>
         </classes>
     </test>
-    <test name="38. API — Performance (4 TCs)">
+    <test name="39. API — Performance (4 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.api.APIPerformanceTest"/>
         </classes>

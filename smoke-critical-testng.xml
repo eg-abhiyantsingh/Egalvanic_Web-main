@@ -1,0 +1,22 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  eGalvanic Critical Path Tests — Customer Priority Validation
+  25 tests across 5 categories: Data Integrity, Financial Accuracy,
+  Search Reliability, Cross-Module Consistency, Silent Failures
+
+  Run: mvn clean test -DsuiteXmlFile=smoke-critical-testng.xml
+-->
+<suite name="eGalvanic Critical Path Suite" verbose="1" parallel="false">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <test name="Critical Path — Customer Priority (25 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.CriticalPathTestNG"/>
+        </classes>
+    </test>
+
+</suite>
