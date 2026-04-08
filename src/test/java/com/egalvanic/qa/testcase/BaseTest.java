@@ -10,6 +10,7 @@ import com.egalvanic.qa.pageobjects.LoginPage;
 import com.egalvanic.qa.pageobjects.WorkOrderPage;
 import com.egalvanic.qa.utils.ExtentReportManager;
 import com.egalvanic.qa.utils.ScreenshotUtil;
+import com.egalvanic.qa.utils.ai.SmartBugDetector;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -102,6 +103,14 @@ public class BaseTest {
     public void suiteTeardown() {
         ExtentReportManager.flushReports();
 
+        // Write AI bug detection report and print summary
+        SmartBugDetector.writeReport();
+        String bugSummary = SmartBugDetector.getSummary();
+        if (!bugSummary.startsWith("No failures")) {
+            System.out.println();
+            System.out.println(bugSummary);
+        }
+
         System.out.println();
         System.out.println("==============================================================");
         System.out.println("     eGalvanic Web Automation - Test Suite Complete");
@@ -110,6 +119,7 @@ public class BaseTest {
         System.out.println("Reports generated:");
         System.out.println("   - Detailed: " + ExtentReportManager.getDetailedReportPath());
         System.out.println("   - Client:   " + ExtentReportManager.getClientReportPath());
+        System.out.println("   - Bug Detection: test-output/bug-detection-report.json");
     }
 
     // ================================================================
@@ -239,6 +249,16 @@ public class BaseTest {
             ExtentReportManager.logFailWithScreenshot(
                     "Test failed: " + result.getMethod().getMethodName(),
                     result.getThrowable());
+
+            // AI-powered failure analysis — classifies the failure automatically
+            if (driver != null && result.getThrowable() != null) {
+                try {
+                    String testName = result.getTestClass().getName() + "." + result.getMethod().getMethodName();
+                    SmartBugDetector.analyze(driver, testName, result.getThrowable(), duration);
+                } catch (Exception e) {
+                    System.out.println("[BaseTest] SmartBugDetector analysis failed: " + e.getMessage());
+                }
+            }
         } else if (result.getStatus() == ITestResult.SKIP) {
             ExtentReportManager.logSkip("Test skipped: " + result.getMethod().getMethodName());
         }
