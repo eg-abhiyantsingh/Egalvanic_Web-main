@@ -10,6 +10,9 @@ import com.egalvanic.qa.pageobjects.LoginPage;
 import com.egalvanic.qa.pageobjects.WorkOrderPage;
 import com.egalvanic.qa.utils.ExtentReportManager;
 import com.egalvanic.qa.utils.ScreenshotUtil;
+import com.egalvanic.qa.utils.ai.FlakinessPrevention;
+import com.egalvanic.qa.utils.ai.SelfHealingDriver;
+import com.egalvanic.qa.utils.ai.SelfHealingElement;
 import com.egalvanic.qa.utils.ai.SmartBugDetector;
 
 import org.openqa.selenium.By;
@@ -116,10 +119,15 @@ public class BaseTest {
         System.out.println("     eGalvanic Web Automation - Test Suite Complete");
         System.out.println("     " + timestamp());
         System.out.println("==============================================================");
+        // Print self-healing and flakiness prevention statistics
+        System.out.println(SelfHealingElement.getStatsSummary());
+        System.out.println(FlakinessPrevention.getStatsSummary());
+
         System.out.println("Reports generated:");
         System.out.println("   - Detailed: " + ExtentReportManager.getDetailedReportPath());
         System.out.println("   - Client:   " + ExtentReportManager.getClientReportPath());
         System.out.println("   - Bug Detection: test-output/bug-detection-report.json");
+        System.out.println("   - Healed Locators: test-output/healed-locators.json");
     }
 
     // ================================================================
@@ -148,13 +156,20 @@ public class BaseTest {
             opts.addArguments("--headless=new");
         }
 
-        driver = new ChromeDriver(opts);
+        // Wrap ChromeDriver with self-healing capabilities — ALL findElement/findElements
+        // calls now auto-retry, recover from stale elements, and try alternative locators.
+        // Existing test code requires ZERO changes.
+        driver = SelfHealingDriver.wrap(new ChromeDriver(opts));
         driver.manage().window().maximize();
         // Reduce pageLoad timeout from default 300s to 60s to prevent browser death
         driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
 
         JavascriptExecutor js = (JavascriptExecutor) driver;
         js.executeScript("document.body.style.zoom='80%';");
+
+        // Install flakiness prevention interceptors (network tracking + console error capture)
+        FlakinessPrevention.installNetworkInterceptor(driver);
+        FlakinessPrevention.installConsoleErrorCapture(driver);
 
         // Set driver for screenshot utility
         ScreenshotUtil.setDriver(driver);
@@ -170,6 +185,10 @@ public class BaseTest {
 
         // Login and select site
         loginAndSelectSite();
+
+        // Re-install interceptors after login (page navigations reset JS state)
+        FlakinessPrevention.installNetworkInterceptor(driver);
+        FlakinessPrevention.installConsoleErrorCapture(driver);
     }
 
     @AfterClass

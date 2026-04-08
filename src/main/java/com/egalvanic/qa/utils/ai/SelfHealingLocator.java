@@ -317,6 +317,33 @@ public class SelfHealingLocator {
     }
 
     /**
+     * Bridge method for SelfHealingDriver — register a healed locator discovered
+     * by the driver's own alternative locator generation.
+     */
+    public static void registerHealFromDriver(By original, By healed) {
+        loadRegistry();
+        registerHeal(original, healed, "driver-auto", original.toString());
+        saveRegistry();
+    }
+
+    /**
+     * Bridge method for SelfHealingDriver — check if we have a cached heal
+     * for the given locator from a previous run.
+     *
+     * @return the healed By locator, or null if none cached
+     */
+    public static By getCachedHeal(By original) {
+        loadRegistry();
+        String key = original.toString();
+        HealRecord cached = healRegistry.get(key);
+        if (cached != null && cached.healedLocator != null) {
+            cached.hitCount++;
+            return cached.healedLocator;
+        }
+        return null;
+    }
+
+    /**
      * Generate a summary report of all healed locators.
      */
     public static String getHealingSummary() {
