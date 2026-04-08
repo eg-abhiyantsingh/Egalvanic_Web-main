@@ -355,18 +355,16 @@ public class DashboardBugTestNG extends BaseTest {
                     "var h6s = document.querySelectorAll('h6');" +
                     "for (var h of h6s) { if (h.textContent.includes('Issues by Type')) { heading = h; break; } }" +
                     "if (!heading) return false;" +
-                    "// Check siblings and parent for canvas/SVG chart\n" +
-                    "var parent = heading.closest('div');" +
-                    "if (!parent) parent = heading.parentElement;" +
-                    "var canvas = parent ? parent.querySelector('canvas') : null;" +
-                    "var svg = parent ? parent.querySelector('svg') : null;" +
-                    "// Also check grandparent\n" +
-                    "if (!canvas && !svg && parent) {" +
-                    "  var gp = parent.parentElement;" +
-                    "  canvas = gp ? gp.querySelector('canvas') : null;" +
-                    "  svg = gp ? gp.querySelector('svg') : null;" +
+                    "// Walk up to 4 ancestor levels looking for any chart element\n" +
+                    "var el = heading;" +
+                    "for (var i = 0; i < 4; i++) {" +
+                    "  el = el.parentElement;" +
+                    "  if (!el) break;" +
+                    "  if (el.querySelector('canvas, svg.recharts-surface, [class*=\"recharts\"], [class*=\"chart-container\"]')) {" +
+                    "    return true;" +
+                    "  }" +
                     "}" +
-                    "return !!(canvas || svg);");
+                    "return false;");
             if (hasChart != null && hasChart) {
                 found = 1; // Chart exists — issue types are rendered graphically
                 logStep("Issues by Type chart found as canvas/SVG — categories rendered graphically");
