@@ -507,28 +507,51 @@ public class WorkOrderTestNG extends BaseTest {
         workOrderPage.openCreateWorkOrderForm();
         pause(2000);
 
-        try {
-            By facilityInput = By.xpath(
-                    "//label[contains(text(),'Facility')]/following::input[1]"
-                    + " | //input[@placeholder='Facility' or @placeholder='Select facility'"
-                    + " or @placeholder='Select a facility']");
-            WebElement input = driver.findElement(facilityInput);
-            input.click();
-            pause(500);
+        // Facility is a MUI Autocomplete inside a Dialog (not Drawer).
+        // Clicking the input only focuses it — must click the popup indicator button to open dropdown.
+        ((JavascriptExecutor) driver).executeScript(
+                "var label = null;" +
+                "var labels = document.querySelectorAll('label');" +
+                "for (var l of labels) { if (l.innerText.includes('Facility')) { label = l; break; } }" +
+                "if (!label) return;" +
+                "var ac = label.closest('[class*=\"MuiAutocomplete\"]');" +
+                "if (!ac) return;" +
+                "var btn = ac.querySelector('[class*=\"MuiAutocomplete-popupIndicator\"]');" +
+                "if (btn) btn.click();");
+        pause(1500);
 
-            List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
-            logStep("Facility options count: " + options.size());
-            Assert.assertTrue(options.size() >= 1, "Should have at least 1 facility option");
+        List<WebElement> options = driver.findElements(By.xpath("//li[@role='option']"));
+        logStep("Facility options count: " + options.size());
 
-            // Close dropdown (avoid Keys.ESCAPE)
+        if (options.isEmpty()) {
+            // Fallback: try sendKeys(ARROW_DOWN) on the input to open dropdown
+            logStep("Popup indicator click didn't open dropdown — trying sendKeys fallback");
             try {
-                driver.findElement(By.xpath("//*[normalize-space()='Add Work Order' or normalize-space()='Create Work Order' or normalize-space()='New Work Order']")).click();
-            } catch (Exception ignored) {}
-        } catch (Exception e) {
-            logStep("Facility check: " + e.getMessage());
+                WebElement input = driver.findElement(By.xpath(
+                        "//label[contains(text(),'Facility')]/following::input[1]"));
+                input.click();
+                input.sendKeys(Keys.ARROW_DOWN);
+                pause(1500);
+                options = driver.findElements(By.xpath("//li[@role='option']"));
+                logStep("After sendKeys fallback: " + options.size() + " options");
+            } catch (Exception e) {
+                logStep("sendKeys fallback failed: " + e.getMessage());
+            }
         }
 
-        logStep("PASS: Facility options check completed");
+        Assert.assertTrue(options.size() >= 1,
+                "Should have at least 1 facility option (got " + options.size() + ")");
+        logStep("Facility options verified: " + options.size());
+
+        // Close dropdown by clicking dialog title (avoid Keys.ESCAPE which closes dialog)
+        try {
+            driver.findElement(By.xpath(
+                    "//*[normalize-space()='Add Work Order' or normalize-space()='Create Work Order'"
+                    + " or normalize-space()='New Work Order']")).click();
+        } catch (Exception ignored) {}
+
+        logStepWithScreenshot("Facility options");
+        ExtentReportManager.logPass("Facility options check completed: " + options.size() + " options");
     }
 
     @Test(priority = 16, description = "TC_CWO_007: Verify Name field is required")

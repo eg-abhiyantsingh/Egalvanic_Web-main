@@ -389,33 +389,47 @@ public class IssuePart2TestNG extends BaseTest {
     public void testISS_015_NoResultsEmptyState() {
         ExtentReportManager.createTest(MODULE, FEATURE_SEARCH, "TC_ISS_015_EmptyState");
         String searchTerm = "zzz_nonexistent_issue_99999";
-        issuePage.searchIssues(searchTerm);
 
-        // Verify search input was actually populated — React setter can fail silently
-        String inputValue = (String) js().executeScript(
-                "var input = document.querySelector('input[placeholder*=\"earch\"]');" +
-                "return input ? input.value : '';");
-        if (inputValue == null || !inputValue.contains("zzz")) {
-            logStep("Search input not populated (got: '" + inputValue + "') — retrying with sendKeys");
-            try {
-                WebElement searchInput = driver.findElement(By.cssSelector("input[placeholder*='earch']"));
-                searchInput.clear();
-                searchInput.sendKeys(searchTerm);
-                pause(2000);
-            } catch (Exception e) {
-                logStep("sendKeys fallback failed: " + e.getMessage());
-            }
+        // Capture row count BEFORE search to detect if filter actually triggered
+        int beforeCount = issuePage.getRowCount();
+        logStep("Rows before search: " + beforeCount);
+
+        // Use sendKeys directly — most reliable for triggering MUI DataGrid Quick Filter.
+        // The React setter (issuePage.searchIssues) can set the DOM value without
+        // triggering React's internal state update, leaving the grid unfiltered.
+        try {
+            WebElement searchInput = driver.findElement(By.cssSelector("input[placeholder*='earch']"));
+            searchInput.click();
+            searchInput.clear();
+            pause(300);
+            searchInput.sendKeys(searchTerm);
+            pause(2000);
+        } catch (Exception e) {
+            logStep("sendKeys failed, falling back to React setter: " + e.getMessage());
+            issuePage.searchIssues(searchTerm);
+            pause(2000);
         }
 
-        // Wait for DataGrid to finish filtering — CI can be slow
+        // Wait for DataGrid to finish filtering
         int results = -1;
         for (int i = 0; i < 10; i++) {
             pause(1000);
             results = issuePage.getRowCount();
             if (results == 0) break;
             logStep("Wait " + (i + 1) + ": row count still " + results);
+            // If rows haven't changed after 3s, the filter didn't trigger — retry sendKeys
+            if (i == 2 && results == beforeCount) {
+                logStep("Grid didn't filter after 3s — retrying search via sendKeys");
+                try {
+                    WebElement searchInput = driver.findElement(By.cssSelector("input[placeholder*='earch']"));
+                    searchInput.click();
+                    searchInput.clear();
+                    pause(300);
+                    searchInput.sendKeys(searchTerm);
+                    pause(2000);
+                } catch (Exception ignored) {}
+            }
         }
-        // If search is server-side and returns partial matches, accept small counts
         Assert.assertTrue(results == 0,
                 "Search with invalid term should return 0 (got " + results + ")");
 
@@ -1144,22 +1158,21 @@ public class IssuePart2TestNG extends BaseTest {
         }
 
         ensureOnIssuesPage();
-        issuePage.searchIssues(title);
+        int beforeCount = issuePage.getRowCount();
 
-        // Verify search input was actually populated
-        String inputValue = (String) js().executeScript(
-                "var input = document.querySelector('input[placeholder*=\"earch\"]');" +
-                "return input ? input.value : '';");
-        if (inputValue == null || !inputValue.contains(title.substring(0, Math.min(5, title.length())))) {
-            logStep("Search input not populated (got: '" + inputValue + "') — retrying with sendKeys");
-            try {
-                WebElement searchInput = driver.findElement(By.cssSelector("input[placeholder*='earch']"));
-                searchInput.clear();
-                searchInput.sendKeys(title);
-                pause(2000);
-            } catch (Exception e) {
-                logStep("sendKeys fallback failed: " + e.getMessage());
-            }
+        // Use sendKeys directly — React setter can set DOM value without triggering
+        // MUI DataGrid's Quick Filter (React state update not propagated)
+        try {
+            WebElement searchInput = driver.findElement(By.cssSelector("input[placeholder*='earch']"));
+            searchInput.click();
+            searchInput.clear();
+            pause(300);
+            searchInput.sendKeys(title);
+            pause(2000);
+        } catch (Exception e) {
+            logStep("sendKeys failed, falling back to React setter: " + e.getMessage());
+            issuePage.searchIssues(title);
+            pause(2000);
         }
 
         // Wait for DataGrid to finish filtering after delete
@@ -1169,6 +1182,17 @@ public class IssuePart2TestNG extends BaseTest {
             results = issuePage.getRowCount();
             if (results == 0) break;
             logStep("Wait " + (i + 1) + ": row count still " + results);
+            if (i == 2 && results == beforeCount) {
+                logStep("Grid didn't filter after 3s — retrying search via sendKeys");
+                try {
+                    WebElement searchInput = driver.findElement(By.cssSelector("input[placeholder*='earch']"));
+                    searchInput.click();
+                    searchInput.clear();
+                    pause(300);
+                    searchInput.sendKeys(title);
+                    pause(2000);
+                } catch (Exception ignored) {}
+            }
         }
         logStep("Search for deleted '" + title + "': " + results);
         Assert.assertEquals(results, 0, "Deleted issue should not appear in search (got " + results + ")");
