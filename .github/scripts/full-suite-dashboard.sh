@@ -1,6 +1,6 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════════
-# FULL TEST SUITE DASHBOARD — 1,035 TCs across 10 Groups
+# FULL TEST SUITE DASHBOARD — 1,060 TCs across 10 Groups
 # ═══════════════════════════════════════════════════════════════════════
 # Runs 10 module groups individually with LIVE per-test progress updates.
 #   Group 1:  Auth + Site + Connection    (130 TCs)
@@ -11,7 +11,7 @@
 #   Group 6:  Asset Parts 4-5            (141 TCs)
 #   Group 7:  SLD                        ( 71 TCs)
 #   Group 8:  Dashboard + BugHunt        (105 TCs)
-#   Group 9:  Load + API                 ( 37 TCs)
+#   Group 9:  Load + API + Critical Path  ( 62 TCs)
 #   Group 10: Smoke Suites               ( 37 TCs)
 #
 # Architecture (same as smoke-dashboard.sh):
@@ -51,10 +51,10 @@ ALL_GROUP_NAMES=(
   "Asset Parts 4-5"
   "SLD Module"
   "Dashboard + BugHunt"
-  "Load + API"
+  "Load + API + Critical Path"
   "Smoke Suites"
 )
-ALL_GROUP_TESTS=(130 135 234 69 76 141 71 105 37 37)
+ALL_GROUP_TESTS=(130 135 234 69 76 141 71 105 62 37)
 ALL_GROUP_XMLS=(
   "suite-auth-site-connection.xml"
   "suite-location-task.xml"

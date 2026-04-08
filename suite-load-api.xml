@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="Full Suite — Load + API (37 TCs)" verbose="1">
+<suite name="Full Suite — Load + API + Critical Path (62 TCs)" verbose="1">
 
     <listeners>
         <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
     </listeners>
+
+    <test name="Critical Path — Customer Priority (25 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.CriticalPathTestNG"/>
+        </classes>
+    </test>
 
     <test name="Load &amp; Performance Tests (20 TCs)">
         <classes>

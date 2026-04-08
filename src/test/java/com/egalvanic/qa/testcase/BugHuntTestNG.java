@@ -91,6 +91,14 @@ public class BugHuntTestNG {
         options.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
         options.setExperimentalOption("useAutomationExtension", false);
 
+        // Headless mode for CI — matches BaseTest behavior
+        if ("true".equals(System.getProperty("headless"))) {
+            options.addArguments("--headless=new");
+        }
+
+        // Use EAGER page load strategy to avoid SPA navigation hangs (matches BaseTest)
+        options.setPageLoadStrategy(org.openqa.selenium.PageLoadStrategy.EAGER);
+
         // Enable browser console log capture
         LoggingPreferences logPrefs = new LoggingPreferences();
         logPrefs.enable(LogType.BROWSER, Level.ALL);
@@ -98,7 +106,7 @@ public class BugHuntTestNG {
 
         driver = new ChromeDriver(options);
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(AppConstants.IMPLICIT_WAIT));
-        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(AppConstants.PAGE_LOAD_TIMEOUT));
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
 
         js = (JavascriptExecutor) driver;
         ScreenshotUtil.setDriver(driver);

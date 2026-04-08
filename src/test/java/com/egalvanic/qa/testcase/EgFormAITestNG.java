@@ -156,13 +156,21 @@ public class EgFormAITestNG {
         options.addArguments("--disable-dev-shm-usage");
         options.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
 
+        // Headless mode for CI — matches BaseTest behavior
+        if ("true".equals(System.getProperty("headless"))) {
+            options.addArguments("--headless=new");
+        }
+
+        // Use EAGER page load strategy to avoid SPA navigation hangs
+        options.setPageLoadStrategy(org.openqa.selenium.PageLoadStrategy.EAGER);
+
         LoggingPreferences logPrefs = new LoggingPreferences();
         logPrefs.enable(LogType.BROWSER, Level.ALL);
         options.setCapability("goog:loggingPrefs", logPrefs);
 
         driver = new ChromeDriver(options);
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
-        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(30));
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
 
         wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         js = (JavascriptExecutor) driver;
