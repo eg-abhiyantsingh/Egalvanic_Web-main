@@ -1,7 +1,62 @@
 # Claude Code Chat Log (Compressed)
 
 > Auto-updated summary of AI-assisted debugging sessions. Read this for full context when starting a new chat.
-> Last updated: 2026-04-05 (Session 7)
+> Last updated: 2026-04-07 (Session 8)
+
+---
+
+## Session: 2026-04-07 (Session 8) — Subtype Create Flow + Native Click + Persistence Drawer-Scoping
+
+### Context
+CI run 24069299097 showed 9 failures across AssetPart4/5 (7 subtype `Available: []` + 2 persistence wrong-element). All other modules clean. User directive: "Quality > quantity, think from every angle, go deeper."
+
+### Root Causes (3 distinct issues)
+
+**1. Subtype dropdown empty in Edit form (`Available: []`)**
+Subtype dropdown options only populate when Asset Class is selected during **creation**. In Edit mode, the class is already set and the subtype API call isn't triggered. Fix: Switch `_AST_01`/`_AST_02` tests to Create form flow.
+
+**2. MUI Autocomplete ignores JS synthetic events**
+- `Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set` + `dispatchEvent('input')` does NOT trigger MUI Autocomplete filtering → must use `sendKeys()` for real keyboard events
+- `arguments[0].click()` dispatches synthetic click that MUI ignores for dropdown toggling → must use native Selenium `.click()` or MUI popup indicator button
+
+**3. Page-wide `findInputByLabel` matches wrong elements**
+- RELAY_11: `findInputByLabel("Model")` matched a checkbox → value "on"
+- TRF_22: `findInputByLabel("Serial Number")` matched a textarea from another section
+- Fix: `findInputInDrawerByLabel()` scopes to `//div[contains(@class,'MuiDrawer')]`
+
+### Key Code Additions
+
+**`openCreateFormForClass(assetClassName)`** — Opens Create Asset form, selects class via sendKeys (real keyboard events), polls for subtype combobox to become enabled (API returns in ~3s).
+
+**`verifyAssetSubtype` 3-tier dropdown open** — (1) native `subtypeInput.click()`, (2) MUI popup indicator button fallback, (3) `sendKeys(Keys.ARROW_DOWN)` last resort.
+
+**Persistence tests** — `pause(2000)` before re-open + `pause(1000)` after `expandCoreAttributes()` for render time.
+
+### Files Modified
+
+| File | Changes |
+|------|---------|
+| AssetPart4TestNG | createFormOpen field, openCreateFormForClass(), closeCreateFormIfOpen(), verifyAssetSubtype native click, 6 heading XPaths, MOT/PB/REL_AST_01/02 → Create flow, RELAY_11 drawer-scoped |
+| AssetPart5TestNG | Same structural changes, SWB/TRF/UPS_AST_01/02 → Create flow, TRF_22/UTL_06/VFD_08 drawer-scoped |
+| AssetPart3TestNG | Same helpers, MCC_AST_02 → Create flow, heading XPaths |
+| AssetPart2TestNG | 2 heading XPaths updated |
+
+### Commits
+
+| Commit | Description |
+|--------|-------------|
+| 3174fb2 | Fix _AST_01/_02 subtype tests: use Create form instead of Edit |
+| d8e423c | Fix openCreateFormForClass: sendKeys + wait for subtype enabled |
+| 309aca8 | Fix verifyAssetSubtype: native click + MUI popup indicator fallback |
+| 74c1a64 | Apply subtype fixes to Part2/Part3: native click, Create flow, heading XPaths |
+| 1dbb11b | Fix 4 persistence tests: drawer-scoped lookups + extra render waits |
+| d39c82e | Fix _AST_02 subtype tests: native click instead of JS synthetic click |
+
+### CI Runs
+- 24069299097: Baseline — 9 failures (pre-fix)
+- 24070796149: On d8e423c — 3 failures (Part5 SWB/TRF/UPS_AST_01 still using JS click)
+- 24073439332: On 1dbb11b — persistence + native click, missing _AST_02 fix
+- 24075673004: On d39c82e — all fixes complete
 
 ---
 
