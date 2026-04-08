@@ -28,6 +28,7 @@
 9. [CriticalPathTestNG.java — Customer-Priority Failure Tests](#9-criticalpathtestng-java--customer-priority-failure-tests)
 10. [CI Failure Investigation & Fixes (Run #24122357413)](#10-ci-failure-investigation--fixes-run-24122357413)
 11. [Proactive CI Hardening (BugHuntTestNG + CriticalPath Group)](#11-proactive-ci-hardening-bughunttestng--criticalpath-group)
+12. [Live Failures: ISS_015 Search + CWO_006 Facility Dropdown](#12-live-failures-iss_015-search--cwo_006-facility-dropdown)
 
 ---
 
@@ -825,6 +826,8 @@ System.out.println(FlakinessPrevention.getStatsSummary());
 | `a19cd0b` | Apr 8, 2026, 6:15 PM | Add CI failure analysis documentation (Section 10) |
 | `4e9dd4a` | Apr 8, 2026, 6:45 PM | Fix BUGD04 chart detection: walk 4 ancestors + check Recharts classes |
 | `661b89b` | Apr 8, 2026, 8:05 PM | Fix BugHuntTestNG CI crash (headless) + add CriticalPath to CI Group 9 |
+| `ee176c7` | Apr 8, 2026, 8:10 PM | Update docs: Section 11 — BugHuntTestNG headless + CriticalPath group |
+| `c4151bb` | Apr 8, 2026, 8:30 PM | Fix ISS_015 search (sendKeys > React setter) + CWO_006 Facility popup indicator |
 
 ---
 
@@ -1099,6 +1102,54 @@ Adding a test to (1) without also adding it to (2) means CI never executes it.
 
 ### Why Group 9?
 Group 9 was the lightest group (37 TCs). Adding 25 CriticalPath tests brings it to 62 — still lighter than most groups. CriticalPath tests are cross-module (touch Assets, Issues, Tasks, Connections) so they don't belong to any single module group.
+
+---
+
+## 12. Live Failures: ISS_015 Search + CWO_006 Facility Dropdown
+
+**Date:** April 8, 2026 | **Commit:** `c4151bb`
+
+User reported two test failures on local Chrome:
+
+### ISS_015_NoResultsEmptyState — "Search with invalid term should return 0 (got 5)"
+
+**Root Cause:** The React setter approach (`Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set`) can set the DOM input value without updating React's internal state. When this happens:
+- The input DOM element shows "zzz_nonexistent_issue_99999" ✓
+- React's state doesn't receive the change ✗
+- MUI DataGrid's Quick Filter is never triggered ✗
+- The grid stays at whatever row count it had
+
+The existing fallback checked the **input value** (which IS set in the DOM), so it never triggered. The grid showed leftover rows from the previous test (ISS_014's partial search).
+
+**Fix:** Replaced React setter with `sendKeys` as the primary search method. Added a smarter retry that checks **row count change** (not just input value) — if rows haven't decreased after 3 seconds, retry with sendKeys. Same fix applied to ISS_046 (deleted issue search).
+
+**Key Lesson:** For MUI DataGrid Quick Filter, `sendKeys` (real keyboard events) is more reliable than the React setter trick. The setter is useful for React form inputs but can fail with complex MUI components that use internal state management beyond simple `onChange`.
+
+### CWO_006_FacilityOptions — Facility dropdown never opens
+
+**Root Cause:** The Create Work Order form is a **MUI Dialog** (not a Drawer). The Facility field is a **MUI Autocomplete** with `role="combobox"`. The test clicked the input element directly, which only **focuses** the input — it does NOT open the dropdown popup. MUI Autocomplete requires clicking the **popup indicator button** (`[class*="MuiAutocomplete-popupIndicator"]`, `aria-label="Open"`) to expand options.
+
+**Debugging:** Used Chrome DevTools MCP to:
+1. Navigate to `/sessions` and click "Create Work Order"
+2. Discover the form opens as `MuiDialog` (not `MuiDrawer-paper`)
+3. Find that `input.click()` produces 0 `li[role='option']` elements
+4. Discover the popup indicator button with `aria-label="Open"`
+5. Verify clicking it produces 44 facility options
+
+**Fix:** Use JavaScript to find the Facility label → traverse to `MuiAutocomplete` container → click the popup indicator button. Added `sendKeys(Keys.ARROW_DOWN)` as fallback. Moved the assertion out of the try-catch block to ensure failures propagate correctly.
+
+### Files Modified
+
+| File | Changes |
+|------|---------|
+| IssuePart2TestNG.java | ISS_015 + ISS_046: sendKeys primary, row-count-based retry fallback |
+| WorkOrderTestNG.java | CWO_006: popup indicator click via JS, sendKeys(ARROW_DOWN) fallback |
+
+### Verification
+
+Both fixes verified on live site (`acme.qa.egalvanic.ai`) using Chrome DevTools MCP:
+- ISS_015: Search "zzz..." → 0 rows, "No rows" message ✓
+- CWO_006: Popup indicator click → 44 facility options loaded ✓
 
 ---
 
