@@ -616,15 +616,43 @@ public class AssetPart3TestNG extends BaseTest {
     private String readDetailAttributeValue(String fieldLabel) {
         // Wait for the detail page to finish re-fetching data after save.
         // The React component re-renders asynchronously after the drawer closes,
-        // so we poll up to 10s for the Core Attributes table to appear.
-        pause(3000);  // initial wait for React re-fetch (needs extra time in headless CI)
+        // so we poll for the Core Attributes table to appear + contain the field.
         JavascriptExecutor js = (JavascriptExecutor) driver;
+
+        // Step 1: Ensure the Core Attributes tab is clicked (it may not be default after reload)
+        try {
+            List<WebElement> tabs = driver.findElements(By.xpath(
+                    "//button[@role='tab' and contains(text(),'Core Attributes')]"));
+            for (WebElement tab : tabs) {
+                String selected = tab.getAttribute("aria-selected");
+                if (!"true".equals(selected)) {
+                    tab.click();
+                    logStep("Clicked 'Core Attributes' tab");
+                    pause(1000);
+                }
+            }
+        } catch (Exception ignored) {}
+
+        // Step 2: Wait for table.MuiTable-root to appear in DOM (up to 15s)
+        pause(2000);
+        for (int i = 0; i < 10; i++) {
+            Boolean tableExists = (Boolean) js.executeScript(
+                    "var t = document.querySelector('table.MuiTable-root');"
+                    + "return t !== null && t.querySelectorAll('tr').length > 1;");
+            if (Boolean.TRUE.equals(tableExists)) {
+                logStep("Core Attributes table found after ~" + (2000 + i * 1000) + "ms");
+                break;
+            }
+            pause(1000);
+        }
+
+        // Step 3: Poll for the specific field value (case-insensitive match)
         String script =
                 "var rows = document.querySelectorAll('table.MuiTable-root tr');"
                 + "for (var r of rows) {"
                 + "  var cells = r.querySelectorAll('td');"
                 + "  for (var c of cells) {"
-                + "    if (c.textContent.trim() === arguments[0]) {"
+                + "    if (c.textContent.trim().toLowerCase() === arguments[0].toLowerCase()) {"
                 + "      var all = r.querySelectorAll('td');"
                 + "      return all[all.length - 1].textContent.trim();"
                 + "    }"
@@ -632,7 +660,7 @@ public class AssetPart3TestNG extends BaseTest {
                 + "}"
                 + "return null;";
         String val = null;
-        for (int attempt = 0; attempt < 8; attempt++) {
+        for (int attempt = 0; attempt < 10; attempt++) {
             try {
                 Object result = js.executeScript(script, fieldLabel);
                 val = result != null ? result.toString() : null;
@@ -643,9 +671,9 @@ public class AssetPart3TestNG extends BaseTest {
                 logStep("Detail page value for '" + fieldLabel + "': " + val + " (attempt " + (attempt + 1) + ")");
                 return val;
             }
-            pause(1000);
+            pause(1500);
         }
-        logStep("Detail page value for '" + fieldLabel + "': null (after 8 attempts)");
+        logStep("Detail page value for '" + fieldLabel + "': null (after 10 attempts)");
         return null;
     }
 
@@ -1156,15 +1184,22 @@ public class AssetPart3TestNG extends BaseTest {
         if (!openEditForAssetClass("Generator", "GEN")) { skipIfNotFound("Generator"); return; }
         expandCoreAttributes();
 
-        // "Voltage" (capital V) is a dropdown in the edit form
-        String val = selectFirstDropdownOption("Voltage");
-        if (val == null) val = editTextField("Voltage", "480");
-        Assert.assertNotNull(val, "Should be able to edit 'Voltage' field");
+        // The edit form has two voltage fields under Core Attributes:
+        //   "Voltage" (capital V) — a combobox (e.g. "120V"), shown in BASIC INFO on detail
+        //   "voltage" (lowercase) — a text field, shown in Core Attributes table on detail
+        // We edit the lowercase "voltage" text field since that's what readDetailAttributeValue reads.
+        String newValue = "480";
+        String val = editTextField("voltage", newValue);
+        if (val == null) {
+            // Fallback: try the combobox and skip detail verification
+            val = selectFirstDropdownOption("Voltage");
+        }
+        Assert.assertNotNull(val, "Should be able to edit a voltage field");
 
         boolean saved = saveAndVerify();
-        Assert.assertTrue(saved, "Save Changes should succeed after editing Voltage");
+        Assert.assertTrue(saved, "Save Changes should succeed after editing voltage");
 
-        // Detail page label is lowercase "voltage"
+        // Detail page Core Attributes table uses lowercase "voltage"
         String persisted = readDetailAttributeValue("voltage");
         Assert.assertNotNull(persisted, "voltage should be visible on detail page after save");
         Assert.assertFalse("Not specified".equals(persisted), "voltage should have a value after save");
