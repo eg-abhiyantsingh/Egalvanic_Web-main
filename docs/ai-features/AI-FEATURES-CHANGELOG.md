@@ -27,6 +27,7 @@
 8. [Interview-Ready Talking Points](#8-interview-ready-talking-points)
 9. [CriticalPathTestNG.java — Customer-Priority Failure Tests](#9-criticalpathtestng-java--customer-priority-failure-tests)
 10. [CI Failure Investigation & Fixes (Run #24122357413)](#10-ci-failure-investigation--fixes-run-24122357413)
+11. [Proactive CI Hardening (BugHuntTestNG + CriticalPath Group)](#11-proactive-ci-hardening-bughunttestng--criticalpath-group)
 
 ---
 
@@ -821,6 +822,9 @@ System.out.println(FlakinessPrevention.getStatsSummary());
 | `c4d2e4b` | Apr 8, 2026, 5:15 PM | Add 25 critical-path customer-priority tests (CriticalPathTestNG) |
 | `a344854` | Apr 8, 2026, 5:30 PM | Fix testLoginWithMissingFields: accept 200 for missing subdomain |
 | `bba1fe1` | Apr 8, 2026, 6:00 PM | Fix 12 CI test failures: timing, locators, assertions, thresholds across 6 files |
+| `a19cd0b` | Apr 8, 2026, 6:15 PM | Add CI failure analysis documentation (Section 10) |
+| `4e9dd4a` | Apr 8, 2026, 6:45 PM | Fix BUGD04 chart detection: walk 4 ancestors + check Recharts classes |
+| `661b89b` | Apr 8, 2026, 8:05 PM | Fix BugHuntTestNG CI crash (headless) + add CriticalPath to CI Group 9 |
 
 ---
 
@@ -1019,11 +1023,17 @@ mvn clean test -DsuiteXmlFile=fullsuite-testng.xml
 |------|-------|-----|
 | GR01_AssetsGridRender | 10s grid render timeout on CI VM | Increased to 15s |
 
-#### Category 6: Environment Issue (1 test — no code fix)
+#### Category 6: Environment Issue (1 test — FIXED in follow-up commit `661b89b`)
 
-| Test | Issue | Why No Fix |
-|------|-------|------------|
-| BugHuntTestNG.classSetup | `SessionNotCreatedException: Chrome instance exited` | Chrome crashed after 4h+ of testing. Resource exhaustion on CI VM. BugHuntTestNG creates its own ChromeDriver (doesn't use BaseTest). Not a code bug. |
+| Test | Issue | Root Cause | Fix |
+|------|-------|------------|-----|
+| BugHuntTestNG.classSetup | `SessionNotCreatedException: Chrome instance exited` | BugHuntTestNG creates its own ChromeDriver but was **missing `--headless=new`** for CI. After 4h+ on CI VM, launching a visible Chrome (no display server on Ubuntu) would crash. | Added `if ("true".equals(System.getProperty("headless"))) { options.addArguments("--headless=new"); }` + EAGER page load strategy + 60s pageLoad timeout. Same fix applied proactively to EgFormAITestNG. |
+
+#### Additional CI Fix: CriticalPathTestNG Not Running in CI
+
+CriticalPathTestNG (25 TCs) was added to `fullsuite-testng.xml` but **not** to any `suite-*.xml` group file. Since CI runs group XMLs via the dashboard script, CriticalPathTestNG was silently skipped in all CI runs.
+
+**Fix:** Added to `suite-load-api.xml` as Group 9 (62 TCs total, up from 37). Updated dashboard script and workflow header counts (1,035 → 1,060).
 
 ### Files Modified
 
@@ -1035,6 +1045,60 @@ mvn clean test -DsuiteXmlFile=fullsuite-testng.xml
 | DashboardBugTestNG.java | +38/-6 lines — canvas/SVG chart detection for BUGD04 |
 | LoadTestNG.java | +1/-1 line — GRID_THRESHOLD 10s → 15s |
 | APISecurityTest.java | +6/-5 lines — accept 200 for lenient auth |
+| BugHuntTestNG.java | +10 lines — headless mode, EAGER strategy, 60s timeout |
+| EgFormAITestNG.java | +10 lines — same headless + EAGER fixes (proactive) |
+| suite-load-api.xml | +8 lines — CriticalPathTestNG added to Group 9 |
+| full-suite-dashboard.sh | +3/-3 lines — updated group 9 name + count |
+| full-suite.yml | +3/-3 lines — updated total TC count + group 9 comment |
+
+---
+
+## 11. Proactive CI Hardening (BugHuntTestNG + CriticalPath Group)
+
+**Date:** April 8, 2026 | **Commit:** `661b89b`
+
+While waiting for CI run #24135466210 to complete, we performed proactive analysis of the test suite and discovered two issues:
+
+### Issue 1: BugHuntTestNG Missing Headless Mode
+
+**Root Cause:** BugHuntTestNG is a standalone test class (does NOT extend BaseTest). It creates its own `ChromeDriver` at line 99 with hardcoded `ChromeOptions`. Unlike BaseTest which reads `-Dheadless=true` at line 155, BugHuntTestNG had **no headless mode support**.
+
+**Impact:** On CI (Ubuntu runner, no X display server), BugHuntTestNG attempted to launch a visible Chrome browser. After 4+ hours of prior test execution exhausting system resources, this consistently crashed with `SessionNotCreatedException: Chrome instance exited`.
+
+**Fix (BugHuntTestNG.java):**
+```java
+// Headless mode for CI — matches BaseTest behavior
+if ("true".equals(System.getProperty("headless"))) {
+    options.addArguments("--headless=new");
+}
+
+// Use EAGER page load strategy to avoid SPA navigation hangs
+options.setPageLoadStrategy(org.openqa.selenium.PageLoadStrategy.EAGER);
+```
+
+Also changed `pageLoadTimeout` from `AppConstants.PAGE_LOAD_TIMEOUT` (45s) to 60s to match BaseTest's override.
+
+**Proactive fix (EgFormAITestNG.java):** Same standalone ChromeDriver pattern found — applied identical headless + EAGER + timeout fixes even though it's not yet in the CI suite.
+
+### Issue 2: CriticalPathTestNG Not Running in CI
+
+**Root Cause:** CriticalPathTestNG (25 TCs) was added to `fullsuite-testng.xml` (the monolithic XML), but the CI dashboard script (`full-suite-dashboard.sh`) runs group-by-group using `suite-*.xml` files. CriticalPathTestNG was **not in any group XML**, so it was silently skipped in every CI run.
+
+**How this happens:** The framework has two ways to define the suite:
+1. `fullsuite-testng.xml` — used for local `mvn test` runs
+2. `suite-*.xml` group files — used by CI dashboard script for group-by-group execution
+
+Adding a test to (1) without also adding it to (2) means CI never executes it.
+
+**Fix:**
+- Added CriticalPathTestNG as the first test in `suite-load-api.xml` (Group 9)
+- Updated group name: "Load + API" → "Load + API + Critical Path"
+- Updated test count: 37 → 62 TCs
+- Updated dashboard script header comment and `ALL_GROUP_TESTS` array
+- Updated workflow YAML header (1,035 → 1,060 TCs)
+
+### Why Group 9?
+Group 9 was the lightest group (37 TCs). Adding 25 CriticalPath tests brings it to 62 — still lighter than most groups. CriticalPath tests are cross-module (touch Assets, Issues, Tasks, Connections) so they don't belong to any single module group.
 
 ---
 
