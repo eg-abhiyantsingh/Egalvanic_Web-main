@@ -1190,7 +1190,7 @@ public class IssuePart2TestNG extends BaseTest {
                 "Deleted issue should not appear in search (pagination=" + paginationTotal + ", domRows=" + domRows + ")");
         issuePage.clearSearch();
         logStepWithScreenshot("Deleted search");
-        ExtentReportManager.logPass("Deleted issue not in search: " + results);
+        ExtentReportManager.logPass("Deleted issue not in search: pagination=" + paginationTotal + ", domRows=" + domRows);
     }
 
     // ================================================================
