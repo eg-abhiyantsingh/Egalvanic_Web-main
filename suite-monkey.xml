@@ -1,0 +1,11 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<suite name="Monkey Exploratory Suite" verbose="1" parallel="false">
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+    <test name="Monkey Exploration">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.MonkeyTestNG"/>
+        </classes>
+    </test>
+</suite>
