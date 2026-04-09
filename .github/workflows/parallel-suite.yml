@@ -36,10 +36,12 @@ name: Parallel Full Suite — All Modules (1,060 TCs)
 on:
   workflow_dispatch:
 
-# Concurrency: only one parallel suite at a time
+# Concurrency: allow only one parallel suite at a time.
+# cancel-in-progress: false — a new run queues instead of killing the active one.
+# (Previous setting was 'true', which cancelled 9/10 groups mid-run.)
 concurrency:
   group: parallel-suite
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   # ============================================================
@@ -55,55 +57,68 @@ jobs:
 
       matrix:
         include:
+          # stagger: seconds to wait before starting tests.
+          # Prevents 10 simultaneous login requests from overwhelming
+          # the server and triggering session conflicts.
           - group: auth-site-connection
             name: "Auth + Site + Connection"
             xml: suite-auth-site-connection.xml
             tests: 130
+            stagger: 0
 
           - group: location-task
             name: "Location + Task"
             xml: suite-location-task.xml
             tests: 135
+            stagger: 10
 
           - group: workorder-issue
             name: "Work Order + Issue"
             xml: suite-workorder-issue.xml
             tests: 234
+            stagger: 20
 
           - group: asset-1-2
             name: "Asset Parts 1-2"
             xml: suite-asset-1-2.xml
             tests: 69
+            stagger: 30
 
           - group: asset-3
             name: "Asset Part 3"
             xml: suite-asset-3.xml
             tests: 76
+            stagger: 40
 
           - group: asset-4-5
             name: "Asset Parts 4-5"
             xml: suite-asset-4-5.xml
             tests: 141
+            stagger: 50
 
           - group: sld
             name: "SLD Module"
             xml: suite-sld.xml
             tests: 71
+            stagger: 60
 
           - group: dashboard-bughunt
             name: "Dashboard + BugHunt"
             xml: suite-dashboard-bughunt.xml
             tests: 105
+            stagger: 70
 
           - group: load-api
             name: "Load + API + Critical Path"
             xml: suite-load-api.xml
             tests: 62
+            stagger: 80
 
           - group: smoke
             name: "Smoke Suites"
             xml: smoke-testng.xml
             tests: 37
+            stagger: 90
 
     name: "${{ matrix.name }} (${{ matrix.tests }} TCs)"
 
@@ -151,6 +166,18 @@ jobs:
           echo "Compiling project..."
           mvn compile test-compile -B -q
           echo "Compilation successful"
+
+      # ──────────────────────────────────────────────
+      # Stagger Login — Avoid 10 Simultaneous Logins
+      # ──────────────────────────────────────────────
+      - name: Stagger login delay
+        env:
+          STAGGER_SECONDS: ${{ matrix.stagger }}
+        run: |
+          if [ "${STAGGER_SECONDS}" -gt 0 ]; then
+            echo "Waiting ${STAGGER_SECONDS}s before starting tests (stagger login)..."
+            sleep "${STAGGER_SECONDS}"
+          fi
 
       # ──────────────────────────────────────────────
       # Run Tests via Dashboard Script (clean UI)
@@ -250,6 +277,7 @@ jobs:
           name: reports-${{ matrix.group }}
           path: |
             reports/detail-report/
+            reports/groups/
             test-output/screenshots/
             target/surefire-reports/
           retention-days: 30

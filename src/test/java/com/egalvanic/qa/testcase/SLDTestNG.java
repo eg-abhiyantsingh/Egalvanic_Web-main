@@ -175,6 +175,39 @@ public class SLDTestNG extends BaseTest {
         return hasCanvas != null && hasCanvas;
     }
 
+    /**
+     * Select "All Nodes" view if no view is loaded yet.
+     * In CI (fresh Chrome profile), the SLD page shows "Select a View to Load Assets"
+     * because no view is pre-selected in localStorage. The react-flow canvas only
+     * renders after a view is loaded. Playwright debugging confirmed this.
+     */
+    private void ensureViewSelected() {
+        Boolean needsView = (Boolean) js().executeScript(
+            "return document.body.innerText.includes('Select a View to Load Assets');");
+        if (needsView != null && needsView) {
+            logStep("No view loaded — selecting 'All Nodes' to render the SLD canvas");
+            // Open the "Select View" dropdown, then click "All Nodes"
+            js().executeScript(
+                "var btns = document.querySelectorAll('button');" +
+                "for (var b of btns) {" +
+                "  if (b.textContent.trim() === 'Select View' && b.offsetWidth > 0) {" +
+                "    b.click(); break;" +
+                "  }" +
+                "}");
+            pause(2000);
+            js().executeScript(
+                "var allEls = document.querySelectorAll('*');" +
+                "for (var el of allEls) {" +
+                "  if (el.textContent.trim() === 'All Nodes' && el.offsetWidth > 0 && el.childElementCount === 0) {" +
+                "    el.click(); return true;" +
+                "  }" +
+                "}" +
+                "return false;");
+            pause(5000); // Give react-flow time to load all nodes
+            logStep("Selected 'All Nodes' view");
+        }
+    }
+
     // ================================================================
     // SECTION 1: SLD NAVIGATION & PAGE LOAD (5 TCs)
     // ================================================================
@@ -271,6 +304,9 @@ public class SLDTestNG extends BaseTest {
     @Test(priority = 6, description = "TC_SLD_006: Verify canvas/diagram container is rendered")
     public void testSLD_006_CanvasRendered() {
         ExtentReportManager.createTest(MODULE, FEATURE_UI, "TC_SLD_006_Canvas");
+        // In CI (fresh Chrome profile), no view is pre-selected — the react-flow canvas
+        // only renders after a view is loaded. Select "All Nodes" if needed.
+        ensureViewSelected();
         // react-flow / canvas can take extra time to render on CI
         boolean canvasPresent = false;
         for (int i = 0; i < 10; i++) {
