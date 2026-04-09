@@ -1166,6 +1166,15 @@ Both fixes verified on live site (`acme.qa.egalvanic.ai`) using Chrome DevTools 
 
 ---
 
+## 14. AI Intelligence Features — Reducing Manual vs Automation Gap
+
+> **Moved to standalone file:** [`docs/ai-features/017-ai-intelligence-features.md`](017-ai-intelligence-features.md)
+>
+> **Date:** April 9, 2026 | **10 files, 2,555 lines**  
+> **Summary:** Four features to close the gap between what manual testers catch and what automation misses: SmartTestDataGenerator (realistic/edge-case data via JavaFaker), MonkeyTestNG (exploratory random testing with safety blocklist), VisualRegressionUtil (pixel-level screenshot comparison with Claude vision fallback), AIPageAnalyzer (DOM discovery + page classification + test scenario suggestion).
+
+---
+
 ## File Summary
 
 | File | Location | Lines | Purpose |
@@ -1177,6 +1186,12 @@ Both fixes verified on live site (`acme.qa.egalvanic.ai`) using Chrome DevTools 
 | FlakinessPrevention.java | `src/main/java/.../utils/ai/` | 526 | React waits, network idle, MUI animation detection |
 | SmartBugDetector.java | `src/main/java/.../utils/ai/` | 382 | Auto-classify failures (4 categories) |
 | AITestGenerator.java | `src/main/java/.../utils/ai/` | 626 | DOM analysis → TestNG code generation |
+| SmartTestDataGenerator.java | `src/main/java/.../utils/ai/` | 433 | Realistic + edge-case test data via JavaFaker |
+| VisualRegressionUtil.java | `src/main/java/.../utils/ai/` | 453 | Pixel-level visual regression detection |
+| AIPageAnalyzer.java | `src/main/java/.../utils/ai/` | 566 | Page discovery, classification, scenario suggestion |
 | BaseTest.java (modified) | `src/test/java/.../testcase/` | +21 lines | Integration point for all AI features |
 | CriticalPathTestNG.java | `src/test/java/.../testcase/` | ~900 | 25 customer-priority failure tests |
-| **Total** | | **~3,890 new + 21 modified** | |
+| MonkeyTestNG.java | `src/test/java/.../testcase/` | 742 | Exploratory random testing |
+| VisualRegressionTestNG.java | `src/test/java/.../testcase/` | 156 | Visual baseline comparison tests |
+| AIPageAnalyzerTestNG.java | `src/test/java/.../testcase/` | 165 | Page analysis + test stub generation |
+| **Total** | | **~6,425 new + 21 modified** | |
