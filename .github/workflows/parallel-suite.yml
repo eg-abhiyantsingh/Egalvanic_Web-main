@@ -300,12 +300,21 @@ jobs:
     timeout-minutes: 10
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Download all result JSONs
         uses: actions/download-artifact@v4
         with:
           pattern: result-*
           path: results
           merge-multiple: true
+
+      - name: Download all test reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: reports-*
+          path: all-reports
 
       - name: Aggregate results
         id: aggregate
@@ -370,6 +379,30 @@ jobs:
           fi
 
       # ──────────────────────────────────────────────
+      # Consolidated Client Report (Single HTML)
+      # ──────────────────────────────────────────────
+      - name: Generate consolidated client report
+        if: always()
+        id: report
+        env:
+          SEND_EMAIL_ENABLED: ${{ secrets.EMAIL_PASSWORD != '' && 'true' || 'false' }}
+          EMAIL_FROM: "abhiyant.singh@egalvanic.com"
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_TO: "dharmesh.avaiya@egalvanic.com, abhiyant.singh@egalvanic.com"
+        run: |
+          python3 .github/scripts/consolidated-report.py \
+            all-reports \
+            reports/client-report/Consolidated_Client_Report.html
+
+      - name: Upload consolidated report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: consolidated-client-report
+          path: reports/client-report/Consolidated_Client_Report.html
+          retention-days: 30
+
+      # ──────────────────────────────────────────────
       # Combined Step Summary
       # ──────────────────────────────────────────────
       - name: Generate combined summary
@@ -420,7 +453,8 @@ jobs:
           {
             echo ""
             echo "### Reports"
-            echo "Each group's reports are in separate artifacts: \`reports-{group-name}\`"
+            echo "- **Consolidated Client Report**: Single HTML covering all modules — artifact \`consolidated-client-report\`"
+            echo "- **Per-group details**: Individual reports in \`reports-{group-name}\` artifacts"
           } >> "$GITHUB_STEP_SUMMARY"
 
       # ──────────────────────────────────────────────
