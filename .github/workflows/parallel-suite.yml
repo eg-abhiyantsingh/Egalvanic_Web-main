@@ -28,8 +28,9 @@ name: Parallel Full Suite — All Modules (1,060 TCs)
 # Cost: Uses ~5-8 runner-hours total (vs 4h sequential).
 #       Wall-clock time drops from ~4h to ~1h.
 #
-# Note: The original sequential workflow (full-suite.yml) is preserved
-# for cases where you want the live dashboard or lower runner usage.
+# Dashboard: Reuses .github/scripts/full-suite-dashboard.sh (same as full-suite.yml)
+#            Each parallel job runs with FULL_SUITE_GROUP=<group-key>.
+#            Per-test progress, collapsed raw output — identical clean UI.
 # ============================================================
 
 on:
@@ -143,116 +144,56 @@ jobs:
           mkdir -p test-output/screenshots
           mkdir -p reports/detail-report
           mkdir -p reports/client-report
+          mkdir -p reports/groups
 
       - name: Compile project
-        run: mvn compile test-compile -B -q
+        run: |
+          echo "Compiling project..."
+          mvn compile test-compile -B -q
+          echo "Compilation successful"
 
       # ──────────────────────────────────────────────
-      # Run Tests for This Group
+      # Run Tests via Dashboard Script (clean UI)
       # ──────────────────────────────────────────────
-      - name: Run tests
+      - name: Run tests with dashboard
         id: run_tests
         continue-on-error: true
         env:
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           SEND_EMAIL_ENABLED: "false"
-          GROUP_NAME: ${{ matrix.name }}
-          SUITE_XML: ${{ matrix.xml }}
-          EXPECTED_TESTS: ${{ matrix.tests }}
+          FULL_SUITE_GROUP: ${{ matrix.group }}
         run: |
-          echo "================================================================"
-          echo "  Group: ${GROUP_NAME}"
-          echo "  XML:   ${SUITE_XML}"
-          echo "  Tests: ${EXPECTED_TESTS}"
-          echo "  Time:  $(date '+%Y-%m-%d %H:%M:%S')"
-          echo "================================================================"
-          echo ""
-
-          START_TIME=$(date +%s)
-
-          mvn test -B \
-            -DsuiteXmlFile="${SUITE_XML}" \
-            -Dheadless=true \
-            2>&1 | tee /tmp/maven-output.log
-
-          MVN_EXIT=$?
-          END_TIME=$(date +%s)
-          DURATION=$((END_TIME - START_TIME))
-
-          echo ""
-          echo "================================================================"
-          echo "  Maven exit code: ${MVN_EXIT}"
-          echo "  Duration: ${DURATION}s"
-          echo "================================================================"
-
-          echo "duration=${DURATION}" >> "$GITHUB_OUTPUT"
-          echo "mvn_exit=${MVN_EXIT}" >> "$GITHUB_OUTPUT"
-
-      # ──────────────────────────────────────────────
-      # Parse TestNG Results
-      # ──────────────────────────────────────────────
-      - name: Parse test results
-        if: always()
-        id: results
-        env:
-          TEST_DURATION: ${{ steps.run_tests.outputs.duration }}
-        run: |
-          XML="target/surefire-reports/testng-results.xml"
-          if [ -f "$XML" ]; then
-            PASSED=$(sed -n 's/.*passed="\([^"]*\)".*/\1/p' "$XML" | head -1)
-            FAILED=$(sed -n 's/.*failed="\([^"]*\)".*/\1/p' "$XML" | head -1)
-            SKIPPED=$(sed -n 's/.*skipped="\([^"]*\)".*/\1/p' "$XML" | head -1)
-          else
-            echo "WARNING: No testng-results.xml — using Maven output fallback"
-            PASSED=$(grep -c "PASSED:" /tmp/maven-output.log 2>/dev/null || echo "0")
-            FAILED=$(grep -c "FAILED:" /tmp/maven-output.log 2>/dev/null || echo "0")
-            SKIPPED=$(grep -c "SKIPPED:" /tmp/maven-output.log 2>/dev/null || echo "0")
-          fi
-
-          PASSED=${PASSED:-0}
-          FAILED=${FAILED:-0}
-          SKIPPED=${SKIPPED:-0}
-          TOTAL=$((PASSED + FAILED + SKIPPED))
-
-          DURATION=${TEST_DURATION:-0}
-
-          echo "passed=${PASSED}" >> "$GITHUB_OUTPUT"
-          echo "failed=${FAILED}" >> "$GITHUB_OUTPUT"
-          echo "skipped=${SKIPPED}" >> "$GITHUB_OUTPUT"
-          echo "total=${TOTAL}" >> "$GITHUB_OUTPUT"
-          echo "duration=${DURATION}" >> "$GITHUB_OUTPUT"
-
-          if [ "$TOTAL" -eq 0 ]; then
-            echo "status=error" >> "$GITHUB_OUTPUT"
-          elif [ "$FAILED" -gt 0 ]; then
-            echo "status=failed" >> "$GITHUB_OUTPUT"
-          else
-            echo "status=passed" >> "$GITHUB_OUTPUT"
-          fi
-
-          echo ""
-          echo "  Passed:  ${PASSED}"
-          echo "  Failed:  ${FAILED}"
-          echo "  Skipped: ${SKIPPED}"
-          echo "  Total:   ${TOTAL}"
+          bash .github/scripts/full-suite-dashboard.sh
 
       # ──────────────────────────────────────────────
       # Write Result JSON (for summary job)
       # ──────────────────────────────────────────────
+      # The dashboard script writes SUITE_PASSED, SUITE_FAILED,
+      # SUITE_SKIPPED, SUITE_DURATION, SUITE_RESULT to GITHUB_ENV.
       - name: Write result JSON
         if: always()
         env:
           GROUP_KEY: ${{ matrix.group }}
           GROUP_NAME: ${{ matrix.name }}
           EXPECTED: ${{ matrix.tests }}
-          R_PASSED: ${{ steps.results.outputs.passed }}
-          R_FAILED: ${{ steps.results.outputs.failed }}
-          R_SKIPPED: ${{ steps.results.outputs.skipped }}
-          R_TOTAL: ${{ steps.results.outputs.total }}
-          R_STATUS: ${{ steps.results.outputs.status }}
-          R_DURATION: ${{ steps.results.outputs.duration }}
         run: |
           mkdir -p results
+
+          # Read from GITHUB_ENV vars set by the dashboard script
+          export R_PASSED=${SUITE_PASSED:-0}
+          export R_FAILED=${SUITE_FAILED:-0}
+          export R_SKIPPED=${SUITE_SKIPPED:-0}
+          export R_TOTAL=$((R_PASSED + R_FAILED + R_SKIPPED))
+          export R_DURATION=${SUITE_DURATION:-0}
+
+          if [ "$R_TOTAL" -eq 0 ]; then
+            export R_STATUS="error"
+          elif [ "$R_FAILED" -gt 0 ]; then
+            export R_STATUS="failed"
+          else
+            export R_STATUS="passed"
+          fi
+
           python3 -c "
           import json, os
           data = {
@@ -278,15 +219,15 @@ jobs:
         if: always()
         env:
           GROUP_NAME: ${{ matrix.name }}
-          R_STATUS: ${{ steps.results.outputs.status }}
-          R_PASSED: ${{ steps.results.outputs.passed }}
-          R_FAILED: ${{ steps.results.outputs.failed }}
-          R_SKIPPED: ${{ steps.results.outputs.skipped }}
-          R_DURATION: ${{ steps.results.outputs.duration }}
         run: |
+          R_PASSED=${SUITE_PASSED:-0}
+          R_FAILED=${SUITE_FAILED:-0}
+          R_SKIPPED=${SUITE_SKIPPED:-0}
+          R_DURATION=${SUITE_DURATION:-0}
+
           ICON="✅"
-          [ "${R_STATUS}" = "failed" ] && ICON="❌"
-          [ "${R_STATUS}" = "error" ] && ICON="⚠️"
+          [ "$R_FAILED" -gt 0 ] && ICON="❌"
+          [ "$((R_PASSED + R_FAILED + R_SKIPPED))" -eq 0 ] && ICON="⚠️"
 
           {
             echo "## ${ICON} ${GROUP_NAME}"
