@@ -1,18 +1,22 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════════
-# FULL TEST SUITE DASHBOARD — 1,060 TCs across 10 Groups
+# FULL TEST SUITE DASHBOARD — 1,130 TCs across 14 Groups
 # ═══════════════════════════════════════════════════════════════════════
-# Runs 10 module groups individually with LIVE per-test progress updates.
-#   Group 1:  Auth + Site + Connection    (130 TCs)
-#   Group 2:  Location + Task             (135 TCs)
-#   Group 3:  Work Order + Issue          (234 TCs)
-#   Group 4:  Asset Parts 1-2             ( 69 TCs)
-#   Group 5:  Asset Part 3               ( 76 TCs)
-#   Group 6:  Asset Parts 4-5            (141 TCs)
-#   Group 7:  SLD                        ( 71 TCs)
-#   Group 8:  Dashboard + BugHunt        (105 TCs)
-#   Group 9:  Load + API + Critical Path  ( 62 TCs)
-#   Group 10: Smoke Suites               ( 37 TCs)
+# Runs module groups individually with LIVE per-test progress updates.
+#   Group  1:  Auth + Site + Connection    (130 TCs)
+#   Group  2:  Location + Task             (135 TCs)
+#   Group  3:  Work Order + Issue          (234 TCs)
+#   Group  4:  Asset Parts 1-2             ( 69 TCs)
+#   Group  5:  Asset Part 3               ( 76 TCs)
+#   Group  6:  Asset Parts 4-5            (141 TCs)
+#   Group  7:  SLD                        ( 71 TCs)
+#   Group  8:  Dashboard + BugHunt        (105 TCs)
+#   Group  9:  Load + API + Critical Path  ( 62 TCs)
+#   Group 10:  Smoke Suites               ( 37 TCs)
+#   Group 11:  AI Form Creation           ( 56 TCs)
+#   Group 12:  Monkey Exploratory          (  4 TCs)
+#   Group 13:  Visual Regression           (  7 TCs)
+#   Group 14:  AI Page Analyzer            (  3 TCs)
 #
 # Architecture (same as smoke-dashboard.sh):
 #   1. Maven runs in background → output to temp log file
@@ -41,6 +45,10 @@ ALL_GROUPS=(
   "dashboard-bughunt"
   "load-api"
   "smoke"
+  "ai-form"
+  "monkey"
+  "visual-regression"
+  "ai-analyzer"
 )
 ALL_GROUP_NAMES=(
   "Auth + Site + Connection"
@@ -53,8 +61,12 @@ ALL_GROUP_NAMES=(
   "Dashboard + BugHunt"
   "Load + API + Critical Path"
   "Smoke Suites"
+  "AI Form Creation"
+  "Monkey Exploratory"
+  "Visual Regression"
+  "AI Page Analyzer"
 )
-ALL_GROUP_TESTS=(130 135 234 69 76 141 71 105 62 37)
+ALL_GROUP_TESTS=(130 135 234 69 76 141 71 105 62 37 56 4 7 3)
 ALL_GROUP_XMLS=(
   "suite-auth-site-connection.xml"
   "suite-location-task.xml"
@@ -66,6 +78,10 @@ ALL_GROUP_XMLS=(
   "suite-dashboard-bughunt.xml"
   "suite-load-api.xml"
   "smoke-testng.xml"
+  "suite-ai-form.xml"
+  "suite-monkey.xml"
+  "suite-visual.xml"
+  "suite-ai-analyzer.xml"
 )
 
 # ─────────────────────────────────────────────────────
@@ -83,6 +99,10 @@ get_group_index() {
     dashboard-bughunt)    echo 7 ;;
     load-api)             echo 8 ;;
     smoke)                echo 9 ;;
+    ai-form)              echo 10 ;;
+    monkey)               echo 11 ;;
+    visual-regression)    echo 12 ;;
+    ai-analyzer)          echo 13 ;;
     *)                    echo -1 ;;
   esac
 }
@@ -99,7 +119,7 @@ else
   IDX=$(get_group_index "$SELECTED")
   if [ "$IDX" -eq -1 ]; then
     echo "Unknown group: $SELECTED"
-    echo "   Valid: all, auth-site-connection, location-task, workorder-issue, asset-1-2, asset-3, asset-4-5, sld, dashboard-bughunt, load-api, smoke"
+    echo "   Valid: all, auth-site-connection, location-task, workorder-issue, asset-1-2, asset-3, asset-4-5, sld, dashboard-bughunt, load-api, smoke, ai-form, monkey, visual-regression, ai-analyzer"
     exit 1
   fi
   RUN_GROUPS=("${ALL_GROUPS[$IDX]}")

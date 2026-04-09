@@ -103,6 +103,10 @@ CLASS_TO_MODULE = {
     'APISecurityTest': 'API Tests',
     'APIUsersTest': 'API Tests',
     'APIPerformanceTest': 'API Tests',
+    # AI Intelligence
+    'MonkeyTestNG': 'AI Exploratory',
+    'VisualRegressionTestNG': 'AI Visual Regression',
+    'AIPageAnalyzerTestNG': 'AI Page Analysis',
 }
 
 # Display order for modules in the report
@@ -111,6 +115,7 @@ MODULE_ORDER = [
     'Issues', 'Work Orders', 'Asset Management', 'SLD Module',
     'Dashboard & Bug Verification', 'Bug Hunt & Security',
     'Load & Performance', 'Critical Path', 'Admin Forms', 'API Tests',
+    'AI Exploratory', 'AI Visual Regression', 'AI Page Analysis',
 ]
 
 
