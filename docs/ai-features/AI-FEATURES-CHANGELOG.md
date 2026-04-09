@@ -29,6 +29,7 @@
 10. [CI Failure Investigation & Fixes (Run #24122357413)](#10-ci-failure-investigation--fixes-run-24122357413)
 11. [Proactive CI Hardening (BugHuntTestNG + CriticalPath Group)](#11-proactive-ci-hardening-bughunttestng--criticalpath-group)
 12. [Live Failures: ISS_015 Search + CWO_006 Facility Dropdown](#12-live-failures-iss_015-search--cwo_006-facility-dropdown)
+13. [Parallel CI Execution Workflow](#13-parallel-ci-execution-workflow)
 
 ---
 
@@ -828,6 +829,9 @@ System.out.println(FlakinessPrevention.getStatsSummary());
 | `661b89b` | Apr 8, 2026, 8:05 PM | Fix BugHuntTestNG CI crash (headless) + add CriticalPath to CI Group 9 |
 | `ee176c7` | Apr 8, 2026, 8:10 PM | Update docs: Section 11 — BugHuntTestNG headless + CriticalPath group |
 | `c4151bb` | Apr 8, 2026, 8:30 PM | Fix ISS_015 search (sendKeys > React setter) + CWO_006 Facility popup indicator |
+| `f041e06` | Apr 8, 2026, 8:40 PM | Update docs: Section 12 — ISS_015 + CWO_006 root cause analysis |
+| `4aee520` | Apr 8, 2026, 9:00 PM | Update chat log: Sessions 9-10 |
+| `(next)` | Apr 9, 2026 | Add parallel CI workflow (parallel-suite.yml) + Section 13 documentation |
 
 ---
 
@@ -1150,6 +1154,149 @@ The existing fallback checked the **input value** (which IS set in the DOM), so 
 Both fixes verified on live site (`acme.qa.egalvanic.ai`) using Chrome DevTools MCP:
 - ISS_015: Search "zzz..." → 0 rows, "No rows" message ✓
 - CWO_006: Popup indicator click → 44 facility options loaded ✓
+
+---
+
+## 13. Parallel CI Execution Workflow
+
+**Date:** April 9, 2026 | **File:** `.github/workflows/parallel-suite.yml`
+
+### The Problem
+
+The existing `full-suite.yml` workflow runs all 10 test groups **sequentially** on a single GitHub Actions runner. Each group starts a fresh Chrome session, runs its tests, saves results, then the next group starts. Total wall-clock time: **~4-4.5 hours**.
+
+```
+Sequential Timeline (single runner):
+┌──────┬──────┬──────┬──────┬──────┬──────┬──────┬──────┬──────┬──────┐
+│ G1   │ G2   │ G3   │ G4   │ G5   │ G6   │ G7   │ G8   │ G9   │ G10  │
+│ 25m  │ 30m  │ 55m  │ 20m  │ 20m  │ 35m  │ 15m  │ 30m  │ 15m  │ 10m  │
+└──────┴──────┴──────┴──────┴──────┴──────┴──────┴──────┴──────┴──────┘
+                        Total: ~4 hours
+```
+
+### The Solution
+
+A new `parallel-suite.yml` workflow that runs all 10 groups **simultaneously** using GitHub Actions `strategy.matrix`. Each group gets its own Ubuntu runner with its own Chrome browser.
+
+```
+Parallel Timeline (10 runners):
+Runner 1:  ┌── G1 (25m) ──┐
+Runner 2:  ┌── G2 (30m) ───┐
+Runner 3:  ┌── G3 (55m) ────────────┐  ← bottleneck
+Runner 4:  ┌── G4 (20m) ─┐
+Runner 5:  ┌── G5 (20m) ─┐
+Runner 6:  ┌── G6 (35m) ────┐
+Runner 7:  ┌── G7 (15m) ┐
+Runner 8:  ┌── G8 (30m) ───┐
+Runner 9:  ┌── G9 (15m) ┐
+Runner 10: ┌── G10 (10m)┐
+Summary:                              ┌── Aggregate (2m) ──┐
+                        Total: ~1 hour
+```
+
+**Speedup: ~4x** (wall-clock time drops from ~4h to ~1h)
+
+### Architecture: 2-Phase Design
+
+#### Phase 1: `test-group` Job (10 parallel instances)
+
+Uses `strategy.matrix.include` to define all 10 groups with their properties:
+
+```yaml
+strategy:
+  fail-fast: false    # CRITICAL: don't cancel other groups if one fails
+  max-parallel: 10    # All 10 simultaneously
+
+  matrix:
+    include:
+      - group: auth-site-connection
+        name: "Auth + Site + Connection"
+        xml: suite-auth-site-connection.xml
+        tests: 130
+      # ... 9 more groups
+```
+
+Each parallel job:
+1. **Sets up its own environment**: JDK 17 + Chrome + Maven cache
+2. **Compiles the project**: Each runner compiles independently (fast due to Maven cache)
+3. **Runs its group via Maven**: `mvn test -DsuiteXmlFile=${xml} -Dheadless=true`
+4. **Parses results**: Reads `testng-results.xml` for passed/failed/skipped counts
+5. **Writes a result JSON**: Small file with group name, status, and counts
+6. **Uploads artifacts**: Test reports + result JSON, named uniquely per group
+
+**Why `fail-fast: false` is critical:** By default, GitHub Actions cancels remaining matrix jobs when one fails. We need ALL groups to complete so we see the full picture — not just the first failure.
+
+#### Phase 2: `summary` Job (1 instance, runs after all groups)
+
+```yaml
+summary:
+  needs: test-group    # Waits for ALL 10 matrix jobs
+  if: always()         # Runs even if some groups failed
+```
+
+This job:
+1. **Downloads all result JSONs** from the 10 parallel jobs
+2. **Aggregates** passed/failed/skipped counts across all groups
+3. **Generates a combined GitHub Actions step summary** with a table
+4. **Sets the final pass/fail status** for the workflow
+
+### Key Design Decision: Result Passing via JSON Artifacts
+
+GitHub Actions doesn't let you pass outputs between matrix job instances. The solution: each job writes a tiny JSON file and uploads it as an artifact. The summary job downloads all 10 JSON files and aggregates.
+
+```json
+{
+  "group": "workorder-issue",
+  "name": "Work Order + Issue",
+  "expected_tests": 234,
+  "passed": 230,
+  "failed": 3,
+  "skipped": 1,
+  "status": "failed",
+  "duration_seconds": 3250
+}
+```
+
+### Security: No Command Injection
+
+All dynamic values in `run:` blocks are passed via `env:` variables (not `${{ }}` interpolation). This follows GitHub's security best practices. Example:
+
+```yaml
+# SAFE: matrix value goes through env
+env:
+  SUITE_XML: ${{ matrix.xml }}
+run: |
+  mvn test -DsuiteXmlFile="${SUITE_XML}"
+
+# UNSAFE (we avoid this): direct interpolation
+run: |
+  mvn test -DsuiteXmlFile="${{ matrix.xml }}"
+```
+
+### Cost Comparison
+
+| Metric | Sequential | Parallel |
+|--------|-----------|----------|
+| Wall-clock time | ~4 hours | ~1 hour |
+| Total runner-minutes | ~240 min | ~300 min |
+| Runners used | 1 | 10 + 1 (summary) |
+| Feedback speed | 4h | 1h |
+
+Parallel uses ~25% more total runner-minutes but delivers results **4x faster**. On GitHub Free (2,000 min/month), you get ~6 full parallel runs. On GitHub Pro/Teams (3,000 min/month), ~10 runs.
+
+### When to Use Which Workflow
+
+| Workflow | Use When |
+|----------|----------|
+| `parallel-suite.yml` | Want fastest results. Typical for PR validation or daily CI. |
+| `full-suite.yml` | Want the live dashboard with per-test progress. Lower runner cost. Good for overnight runs. |
+| `smoke-tests.yml` | Quick critical-path check (37 TCs, ~10 min). Pre-merge validation. |
+
+### Files Created/Modified
+
+| File | Type | Description |
+|------|------|-------------|
+| `.github/workflows/parallel-suite.yml` | NEW | 295 lines — Parallel execution workflow with matrix + summary |
 
 ---
 

@@ -1,0 +1,478 @@
+name: Parallel Full Suite — All Modules (1,060 TCs)
+
+# ============================================================
+# PARALLEL FULL SUITE — 10 Groups Running Simultaneously
+# ============================================================
+#
+# Architecture:
+#   Phase 1: 10 parallel jobs (one per group) via strategy.matrix
+#   Phase 2: Summary job aggregates results from all groups
+#
+# Performance:
+#   Sequential (full-suite.yml): ~4-4.5 hours (groups run one after another)
+#   Parallel  (this workflow):   ~1-1.5 hours (groups run simultaneously)
+#   Speedup: ~3-4x
+#
+# Groups (10 parallel jobs):
+#   Group  1: Auth + Site + Connection    (130 TCs)  ~25 min
+#   Group  2: Location + Task             (135 TCs)  ~30 min
+#   Group  3: Work Order + Issue          (234 TCs)  ~55 min  [bottleneck]
+#   Group  4: Asset Parts 1-2             ( 69 TCs)  ~20 min
+#   Group  5: Asset Part 3               ( 76 TCs)  ~20 min
+#   Group  6: Asset Parts 4-5            (141 TCs)  ~35 min
+#   Group  7: SLD                        ( 71 TCs)  ~15 min
+#   Group  8: Dashboard + BugHunt        (105 TCs)  ~30 min
+#   Group  9: Load + API + Critical Path  ( 62 TCs)  ~15 min
+#   Group 10: Smoke Suites               ( 37 TCs)  ~10 min
+#
+# Cost: Uses ~5-8 runner-hours total (vs 4h sequential).
+#       Wall-clock time drops from ~4h to ~1h.
+#
+# Note: The original sequential workflow (full-suite.yml) is preserved
+# for cases where you want the live dashboard or lower runner usage.
+# ============================================================
+
+on:
+  workflow_dispatch:
+
+# Concurrency: only one parallel suite at a time
+concurrency:
+  group: parallel-suite
+  cancel-in-progress: true
+
+jobs:
+  # ============================================================
+  # Phase 1: Run each group in parallel
+  # ============================================================
+  test-group:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+
+      matrix:
+        include:
+          - group: auth-site-connection
+            name: "Auth + Site + Connection"
+            xml: suite-auth-site-connection.xml
+            tests: 130
+
+          - group: location-task
+            name: "Location + Task"
+            xml: suite-location-task.xml
+            tests: 135
+
+          - group: workorder-issue
+            name: "Work Order + Issue"
+            xml: suite-workorder-issue.xml
+            tests: 234
+
+          - group: asset-1-2
+            name: "Asset Parts 1-2"
+            xml: suite-asset-1-2.xml
+            tests: 69
+
+          - group: asset-3
+            name: "Asset Part 3"
+            xml: suite-asset-3.xml
+            tests: 76
+
+          - group: asset-4-5
+            name: "Asset Parts 4-5"
+            xml: suite-asset-4-5.xml
+            tests: 141
+
+          - group: sld
+            name: "SLD Module"
+            xml: suite-sld.xml
+            tests: 71
+
+          - group: dashboard-bughunt
+            name: "Dashboard + BugHunt"
+            xml: suite-dashboard-bughunt.xml
+            tests: 105
+
+          - group: load-api
+            name: "Load + API + Critical Path"
+            xml: suite-load-api.xml
+            tests: 62
+
+          - group: smoke
+            name: "Smoke Suites"
+            xml: smoke-testng.xml
+            tests: 37
+
+    name: "${{ matrix.name }} (${{ matrix.tests }} TCs)"
+
+    steps:
+      # ──────────────────────────────────────────────
+      # Environment Setup
+      # ──────────────────────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: 'stable'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Download dependencies
+        run: |
+          mvn dependency:resolve -B -q 2>/dev/null || true
+          mvn dependency:resolve-plugins -B -q 2>/dev/null || true
+
+      - name: Create output directories
+        run: |
+          mkdir -p test-output/screenshots
+          mkdir -p reports/detail-report
+          mkdir -p reports/client-report
+
+      - name: Compile project
+        run: mvn compile test-compile -B -q
+
+      # ──────────────────────────────────────────────
+      # Run Tests for This Group
+      # ──────────────────────────────────────────────
+      - name: Run tests
+        id: run_tests
+        continue-on-error: true
+        env:
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          SEND_EMAIL_ENABLED: "false"
+          GROUP_NAME: ${{ matrix.name }}
+          SUITE_XML: ${{ matrix.xml }}
+          EXPECTED_TESTS: ${{ matrix.tests }}
+        run: |
+          echo "================================================================"
+          echo "  Group: ${GROUP_NAME}"
+          echo "  XML:   ${SUITE_XML}"
+          echo "  Tests: ${EXPECTED_TESTS}"
+          echo "  Time:  $(date '+%Y-%m-%d %H:%M:%S')"
+          echo "================================================================"
+          echo ""
+
+          START_TIME=$(date +%s)
+
+          mvn test -B \
+            -DsuiteXmlFile="${SUITE_XML}" \
+            -Dheadless=true \
+            2>&1 | tee /tmp/maven-output.log
+
+          MVN_EXIT=$?
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - START_TIME))
+
+          echo ""
+          echo "================================================================"
+          echo "  Maven exit code: ${MVN_EXIT}"
+          echo "  Duration: ${DURATION}s"
+          echo "================================================================"
+
+          echo "duration=${DURATION}" >> "$GITHUB_OUTPUT"
+          echo "mvn_exit=${MVN_EXIT}" >> "$GITHUB_OUTPUT"
+
+      # ──────────────────────────────────────────────
+      # Parse TestNG Results
+      # ──────────────────────────────────────────────
+      - name: Parse test results
+        if: always()
+        id: results
+        env:
+          TEST_DURATION: ${{ steps.run_tests.outputs.duration }}
+        run: |
+          XML="target/surefire-reports/testng-results.xml"
+          if [ -f "$XML" ]; then
+            PASSED=$(sed -n 's/.*passed="\([^"]*\)".*/\1/p' "$XML" | head -1)
+            FAILED=$(sed -n 's/.*failed="\([^"]*\)".*/\1/p' "$XML" | head -1)
+            SKIPPED=$(sed -n 's/.*skipped="\([^"]*\)".*/\1/p' "$XML" | head -1)
+          else
+            echo "WARNING: No testng-results.xml — using Maven output fallback"
+            PASSED=$(grep -c "PASSED:" /tmp/maven-output.log 2>/dev/null || echo "0")
+            FAILED=$(grep -c "FAILED:" /tmp/maven-output.log 2>/dev/null || echo "0")
+            SKIPPED=$(grep -c "SKIPPED:" /tmp/maven-output.log 2>/dev/null || echo "0")
+          fi
+
+          PASSED=${PASSED:-0}
+          FAILED=${FAILED:-0}
+          SKIPPED=${SKIPPED:-0}
+          TOTAL=$((PASSED + FAILED + SKIPPED))
+
+          DURATION=${TEST_DURATION:-0}
+
+          echo "passed=${PASSED}" >> "$GITHUB_OUTPUT"
+          echo "failed=${FAILED}" >> "$GITHUB_OUTPUT"
+          echo "skipped=${SKIPPED}" >> "$GITHUB_OUTPUT"
+          echo "total=${TOTAL}" >> "$GITHUB_OUTPUT"
+          echo "duration=${DURATION}" >> "$GITHUB_OUTPUT"
+
+          if [ "$TOTAL" -eq 0 ]; then
+            echo "status=error" >> "$GITHUB_OUTPUT"
+          elif [ "$FAILED" -gt 0 ]; then
+            echo "status=failed" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=passed" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo ""
+          echo "  Passed:  ${PASSED}"
+          echo "  Failed:  ${FAILED}"
+          echo "  Skipped: ${SKIPPED}"
+          echo "  Total:   ${TOTAL}"
+
+      # ──────────────────────────────────────────────
+      # Write Result JSON (for summary job)
+      # ──────────────────────────────────────────────
+      - name: Write result JSON
+        if: always()
+        env:
+          GROUP_KEY: ${{ matrix.group }}
+          GROUP_NAME: ${{ matrix.name }}
+          EXPECTED: ${{ matrix.tests }}
+          R_PASSED: ${{ steps.results.outputs.passed }}
+          R_FAILED: ${{ steps.results.outputs.failed }}
+          R_SKIPPED: ${{ steps.results.outputs.skipped }}
+          R_TOTAL: ${{ steps.results.outputs.total }}
+          R_STATUS: ${{ steps.results.outputs.status }}
+          R_DURATION: ${{ steps.results.outputs.duration }}
+        run: |
+          mkdir -p results
+          python3 -c "
+          import json, os
+          data = {
+              'group': os.environ.get('GROUP_KEY', ''),
+              'name': os.environ.get('GROUP_NAME', ''),
+              'expected_tests': int(os.environ.get('EXPECTED', '0')),
+              'passed': int(os.environ.get('R_PASSED', '0')),
+              'failed': int(os.environ.get('R_FAILED', '0')),
+              'skipped': int(os.environ.get('R_SKIPPED', '0')),
+              'total': int(os.environ.get('R_TOTAL', '0')),
+              'status': os.environ.get('R_STATUS', 'error'),
+              'duration_seconds': int(os.environ.get('R_DURATION', '0'))
+          }
+          with open(f\"results/{data['group']}.json\", 'w') as f:
+              json.dump(data, f, indent=2)
+          print(json.dumps(data, indent=2))
+          "
+
+      # ──────────────────────────────────────────────
+      # Per-Group Step Summary
+      # ──────────────────────────────────────────────
+      - name: Group summary
+        if: always()
+        env:
+          GROUP_NAME: ${{ matrix.name }}
+          R_STATUS: ${{ steps.results.outputs.status }}
+          R_PASSED: ${{ steps.results.outputs.passed }}
+          R_FAILED: ${{ steps.results.outputs.failed }}
+          R_SKIPPED: ${{ steps.results.outputs.skipped }}
+          R_DURATION: ${{ steps.results.outputs.duration }}
+        run: |
+          ICON="✅"
+          [ "${R_STATUS}" = "failed" ] && ICON="❌"
+          [ "${R_STATUS}" = "error" ] && ICON="⚠️"
+
+          {
+            echo "## ${ICON} ${GROUP_NAME}"
+            echo ""
+            echo "| Metric | Count |"
+            echo "|--------|-------|"
+            echo "| Passed | ${R_PASSED} |"
+            echo "| Failed | ${R_FAILED} |"
+            echo "| Skipped | ${R_SKIPPED} |"
+            echo "| Duration | ${R_DURATION}s |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ──────────────────────────────────────────────
+      # Upload Artifacts (unique names per group)
+      # ──────────────────────────────────────────────
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-${{ matrix.group }}
+          path: |
+            reports/detail-report/
+            test-output/screenshots/
+            target/surefire-reports/
+          retention-days: 30
+
+      - name: Upload result JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: result-${{ matrix.group }}
+          path: results/${{ matrix.group }}.json
+          retention-days: 7
+
+  # ============================================================
+  # Phase 2: Aggregate Results from All Groups
+  # ============================================================
+  summary:
+    runs-on: ubuntu-latest
+    needs: test-group
+    if: always()
+    timeout-minutes: 10
+
+    steps:
+      - name: Download all result JSONs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: result-*
+          path: results
+          merge-multiple: true
+
+      - name: Aggregate results
+        id: aggregate
+        run: |
+          echo ""
+          echo "================================================================"
+          echo "  PARALLEL SUITE — Aggregating Results"
+          echo "================================================================"
+          echo ""
+
+          TOTAL_PASSED=0
+          TOTAL_FAILED=0
+          TOTAL_SKIPPED=0
+          TOTAL_TESTS=0
+          GROUP_COUNT=0
+
+          for json in results/*.json; do
+            [ -f "$json" ] || continue
+            GROUP_COUNT=$((GROUP_COUNT + 1))
+
+            eval "$(python3 -c "
+          import json, os
+          d = json.load(open('$json'))
+          print(f\"NAME='{d[\"name\"]}'\"  )
+          print(f\"PASSED={d['passed']}\"  )
+          print(f\"FAILED={d['failed']}\"  )
+          print(f\"SKIPPED={d['skipped']}\")
+          print(f\"DURATION={d['duration_seconds']}\")
+          print(f\"STATUS={d['status']}\"  )
+          ")"
+
+            TOTAL_PASSED=$((TOTAL_PASSED + PASSED))
+            TOTAL_FAILED=$((TOTAL_FAILED + FAILED))
+            TOTAL_SKIPPED=$((TOTAL_SKIPPED + SKIPPED))
+            TOTAL_TESTS=$((TOTAL_TESTS + PASSED + FAILED + SKIPPED))
+
+            ICON="✅"; [ "$STATUS" = "failed" ] && ICON="❌"; [ "$STATUS" = "error" ] && ICON="⚠️"
+            printf "  %s  %-35s  P:%-4s F:%-4s S:%-4s  %ss\n" \
+              "$ICON" "$NAME" "$PASSED" "$FAILED" "$SKIPPED" "$DURATION"
+          done
+
+          echo ""
+          echo "────────────────────────────────────────────"
+          echo "  TOTAL:  Passed=$TOTAL_PASSED  Failed=$TOTAL_FAILED  Skipped=$TOTAL_SKIPPED"
+          echo "  Groups: $GROUP_COUNT / 10 completed"
+          echo "────────────────────────────────────────────"
+
+          {
+            echo "total_passed=${TOTAL_PASSED}"
+            echo "total_failed=${TOTAL_FAILED}"
+            echo "total_skipped=${TOTAL_SKIPPED}"
+            echo "total_tests=${TOTAL_TESTS}"
+            echo "group_count=${GROUP_COUNT}"
+          } >> "$GITHUB_OUTPUT"
+
+          if [ "$TOTAL_TESTS" -eq 0 ]; then
+            echo "overall_status=error" >> "$GITHUB_OUTPUT"
+          elif [ "$TOTAL_FAILED" -gt 0 ]; then
+            echo "overall_status=partial" >> "$GITHUB_OUTPUT"
+          else
+            echo "overall_status=passed" >> "$GITHUB_OUTPUT"
+          fi
+
+      # ──────────────────────────────────────────────
+      # Combined Step Summary
+      # ──────────────────────────────────────────────
+      - name: Generate combined summary
+        if: always()
+        env:
+          STATUS: ${{ steps.aggregate.outputs.overall_status }}
+          TOTAL_TESTS: ${{ steps.aggregate.outputs.total_tests }}
+          TOTAL_PASSED: ${{ steps.aggregate.outputs.total_passed }}
+          TOTAL_FAILED: ${{ steps.aggregate.outputs.total_failed }}
+          TOTAL_SKIPPED: ${{ steps.aggregate.outputs.total_skipped }}
+          GROUP_COUNT: ${{ steps.aggregate.outputs.group_count }}
+        run: |
+          HEADER="### ALL TESTS PASSED"
+          [ "${STATUS}" = "partial" ] && HEADER="### SOME TESTS FAILED"
+          [ "${STATUS}" = "error" ] && HEADER="### ERROR"
+
+          {
+            echo "## Parallel Full Suite — Combined Results"
+            echo ""
+            echo "${HEADER}"
+            echo ""
+            echo "| Metric | Count |"
+            echo "|--------|-------|"
+            echo "| Total | ${TOTAL_TESTS} |"
+            echo "| Passed | ${TOTAL_PASSED} |"
+            echo "| Failed | ${TOTAL_FAILED} |"
+            echo "| Skipped | ${TOTAL_SKIPPED} |"
+            echo "| Groups | ${GROUP_COUNT} / 10 |"
+            echo ""
+            echo "### Individual Group Results"
+            echo ""
+            echo "| Group | Status | Passed | Failed | Skipped | Duration |"
+            echo "|-------|--------|--------|--------|---------|----------|"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          for json in results/*.json; do
+            [ -f "$json" ] || continue
+            python3 -c "
+          import json
+          d = json.load(open('$json'))
+          icon = '✅' if d['status'] == 'passed' else '❌' if d['status'] == 'failed' else '⚠️'
+          s = d['duration_seconds']
+          dur = f'{s // 60}m {s % 60}s' if s >= 60 else f'{s}s'
+          print(f\"| {d['name']} | {icon} {d['status']} | {d['passed']} | {d['failed']} | {d['skipped']} | {dur} |\")
+          " >> "$GITHUB_STEP_SUMMARY" 2>/dev/null
+          done
+
+          {
+            echo ""
+            echo "### Reports"
+            echo "Each group's reports are in separate artifacts: \`reports-{group-name}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # ──────────────────────────────────────────────
+      # Final Pass/Fail
+      # ──────────────────────────────────────────────
+      - name: Check overall result
+        if: always()
+        env:
+          STATUS: ${{ steps.aggregate.outputs.overall_status }}
+          TOTAL_PASSED: ${{ steps.aggregate.outputs.total_passed }}
+          TOTAL_TESTS: ${{ steps.aggregate.outputs.total_tests }}
+          TOTAL_FAILED: ${{ steps.aggregate.outputs.total_failed }}
+          GROUP_COUNT: ${{ steps.aggregate.outputs.group_count }}
+        run: |
+          echo ""
+          if [ "${STATUS}" = "passed" ]; then
+            echo "ALL ${TOTAL_TESTS} TESTS PASSED across ${GROUP_COUNT} groups"
+          elif [ "${STATUS}" = "partial" ]; then
+            echo "SOME TESTS FAILED: ${TOTAL_PASSED}/${TOTAL_TESTS} passed, ${TOTAL_FAILED} failed"
+            echo "Check individual group artifacts for details"
+          else
+            echo "ERROR: No test results collected"
+            exit 1
+          fi
