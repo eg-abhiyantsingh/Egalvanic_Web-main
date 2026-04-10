@@ -255,6 +255,14 @@ public class TaskTestNG extends BaseTest {
 
     private void dismissOpenDrawer() {
         try {
+            // If we navigated to a detail page (/tasks/{uuid}), go back to list
+            String url = driver.getCurrentUrl();
+            if (url.matches(".*/tasks/[a-f0-9-]+.*")) {
+                driver.get(TASKS_URL);
+                pause(3000);
+                return;
+            }
+            // Try clicking Cancel if a drawer is open
             List<WebElement> cancelBtns = driver.findElements(CANCEL_BTN);
             for (WebElement btn : cancelBtns) {
                 if (btn.isDisplayed()) {
@@ -1712,17 +1720,42 @@ public class TaskTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_DETAIL, "TC_TD_002_StatusBadge");
         logStep("Checking task status badges");
 
-        // Ensure grid is loaded — CI @BeforeMethod may have failed silently
+        // Ensure grid is loaded with rows — navigate fresh if needed
         waitForGrid();
+        List<WebElement> rows = driver.findElements(GRID_ROWS);
+        if (rows.isEmpty()) {
+            logStep("Grid rows empty — reloading tasks page");
+            driver.get(TASKS_URL);
+            pause(6000);
+            waitForGrid();
+        }
+
+        // Check for status text inside grid cells (Pending/Scheduled/Completed)
+        // These are inside gridcell elements, not standalone page text
         String pageText = getPageText();
         if (!pageText.contains("Pending") && !pageText.contains("Scheduled") && !pageText.contains("Completed")) {
-            logStep("Status badges not found yet — waiting for grid render");
+            logStep("Status badges not found yet — waiting for grid data render");
             pause(4000);
             pageText = getPageText();
         }
+
+        // Also check grid cells directly — more reliable than page text
         boolean hasPending = pageText.contains("Pending");
         boolean hasScheduled = pageText.contains("Scheduled");
         boolean hasCompleted = pageText.contains("Completed");
+
+        if (!hasPending && !hasScheduled && !hasCompleted) {
+            // Fallback: check gridcell elements directly
+            try {
+                List<WebElement> statusCells = driver.findElements(By.xpath(
+                        "//div[contains(@class,'MuiDataGrid') or @role='grid']"
+                        + "//*[normalize-space()='Pending' or normalize-space()='Scheduled' or normalize-space()='Completed']"));
+                logStep("Status cells found via xpath: " + statusCells.size());
+                hasPending = statusCells.size() > 0;
+            } catch (Exception e) {
+                logStep("Status cell fallback failed: " + e.getMessage());
+            }
+        }
 
         logStep("Status Pending: " + hasPending + ", Scheduled: " + hasScheduled + ", Completed: " + hasCompleted);
         Assert.assertTrue(hasPending || hasScheduled || hasCompleted,
@@ -1749,15 +1782,26 @@ public class TaskTestNG extends BaseTest {
         }
 
         List<WebElement> headers = driver.findElements(COLUMN_HEADERS);
+        if (headers.isEmpty()) {
+            logStep("Column headers still empty — attempting one more reload");
+            driver.get(TASKS_URL);
+            pause(6000);
+            waitForGrid();
+            try {
+                new WebDriverWait(driver, Duration.ofSeconds(10))
+                        .until(d -> !d.findElements(COLUMN_HEADERS).isEmpty());
+            } catch (Exception ignored) {}
+            headers = driver.findElements(COLUMN_HEADERS);
+        }
+
         String headerText = "";
         for (WebElement h : headers) {
             headerText += h.getText() + " | ";
         }
         logStep("Grid columns: " + headerText);
 
-        // Verify the actual columns: Name, Asset, Location, Type, Created, Due Date
-        // Note: Grid column header is "Name", while the edit form field is "Title"
-        Assert.assertTrue(headerText.contains("Name"), "Grid should have Name column");
+        // Actual grid columns: Title, Asset, Location, Type, Created, Due Date, Work Order, Status, Actions
+        Assert.assertTrue(headerText.contains("Title"), "Grid should have Title column");
         Assert.assertTrue(headerText.contains("Asset"), "Grid should have Asset column");
         Assert.assertTrue(headerText.contains("Location"), "Grid should have Location column");
         logStep("PASS: Grid column headers verified");
@@ -1768,7 +1812,7 @@ public class TaskTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_DETAIL, "TC_TD_004_CreatedDateColumn");
         logStep("Checking Created date column");
 
-        // Ensure grid is loaded with data — CI may need a page reload
+        // Ensure grid is loaded with data — navigate fresh if needed
         waitForGrid();
         List<WebElement> rows = driver.findElements(GRID_ROWS);
         if (rows.isEmpty()) {
@@ -1779,6 +1823,8 @@ public class TaskTestNG extends BaseTest {
             rows = driver.findElements(GRID_ROWS);
         }
         logStep("Grid rows found: " + rows.size());
+
+        // Check gridcell elements for date patterns (DD/MM/YYYY)
         int validDates = 0;
         for (WebElement row : rows) {
             String text = row.getText();
@@ -1787,13 +1833,31 @@ public class TaskTestNG extends BaseTest {
             }
         }
 
-        logStep("Rows with valid dates: " + validDates);
+        logStep("Rows with valid dates (row text): " + validDates);
 
-        // Fallback: check page text for date patterns
+        // Fallback 1: check "Created" gridcells directly
+        if (validDates == 0) {
+            try {
+                List<WebElement> dateCells = driver.findElements(By.xpath(
+                        "//div[@role='grid']//div[@role='gridcell'][position()=5]"
+                        + " | //div[@role='grid']//div[@role='row']/div[5]"));
+                for (WebElement cell : dateCells) {
+                    String cellText = cell.getText().trim();
+                    if (cellText.matches("\\d{2}/\\d{2}/\\d{4}")) {
+                        validDates++;
+                    }
+                }
+                logStep("Fallback (gridcell) dates found: " + validDates);
+            } catch (Exception e) {
+                logStep("Gridcell fallback failed: " + e.getMessage());
+            }
+        }
+
+        // Fallback 2: check page text for date patterns
         if (validDates == 0) {
             String pageText = getPageText();
             boolean hasDateInPage = pageText.matches("(?s).*\\d{2}/\\d{2}/\\d{4}.*");
-            logStep("Fallback — date pattern in page text: " + hasDateInPage);
+            logStep("Fallback (page text) — date pattern found: " + hasDateInPage);
             if (hasDateInPage) validDates = 1;
         }
 

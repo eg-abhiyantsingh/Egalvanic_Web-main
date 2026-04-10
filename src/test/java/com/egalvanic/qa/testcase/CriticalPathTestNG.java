@@ -156,14 +156,14 @@ public class CriticalPathTestNG extends BaseTest {
         navigateTo(DASHBOARD_URL);
         int dashboardTotal = 0;
         try {
-            // Look for "TOTAL ASSETS" followed by a number
+            // Look for "Total Assets" (DOM uses Title Case; CSS text-transform makes it visually uppercase)
             WebElement totalHeading = driver.findElement(By.xpath(
-                    "//*[contains(text(),'TOTAL ASSETS')]/following-sibling::*[1]"
-                    + " | //*[contains(text(),'TOTAL ASSETS')]/..//h3"));
+                    "//*[contains(text(),'Total Assets')]/following-sibling::*[1]"
+                    + " | //*[contains(text(),'Total Assets')]/..//h3"));
             dashboardTotal = extractNumber(totalHeading.getText());
             logStep("Dashboard shows: " + dashboardTotal + " total assets");
         } catch (Exception e) {
-            logStep("Could not read TOTAL ASSETS from dashboard: " + e.getMessage());
+            logStep("Could not read Total Assets from dashboard: " + e.getMessage());
         }
 
         // Step 2: Get total from Assets grid pagination
@@ -206,12 +206,12 @@ public class CriticalPathTestNG extends BaseTest {
         int dashboardTasks = 0;
         try {
             WebElement taskHeading = driver.findElement(By.xpath(
-                    "//*[contains(text(),'PENDING TASKS')]/following-sibling::*[1]"
-                    + " | //*[contains(text(),'PENDING TASKS')]/..//h3"));
+                    "//*[contains(text(),'Pending Tasks')]/following-sibling::*[1]"
+                    + " | //*[contains(text(),'Pending Tasks')]/..//h3"));
             dashboardTasks = extractNumber(taskHeading.getText());
             logStep("Dashboard pending tasks: " + dashboardTasks);
         } catch (Exception e) {
-            logStep("Could not read PENDING TASKS: " + e.getMessage());
+            logStep("Could not read Pending Tasks: " + e.getMessage());
         }
 
         // Step 2: Tasks module KPI
@@ -220,8 +220,8 @@ public class CriticalPathTestNG extends BaseTest {
         int taskModuleCount = 0;
         try {
             WebElement pendingBadge = driver.findElement(By.xpath(
-                    "//*[contains(text(),'PENDING')]/following-sibling::*[1]"
-                    + " | //*[contains(text(),'PENDING')]/..//h5"));
+                    "//*[contains(text(),'Pending')]/following-sibling::*[1]"
+                    + " | //*[contains(text(),'Pending')]/..//h5"));
             taskModuleCount = extractNumber(pendingBadge.getText());
             logStep("Tasks module pending: " + taskModuleCount);
         } catch (Exception e) {
@@ -247,12 +247,12 @@ public class CriticalPathTestNG extends BaseTest {
         int dashboardIssues = 0;
         try {
             WebElement issueHeading = driver.findElement(By.xpath(
-                    "//*[contains(text(),'UNRESOLVED ISSUES')]/following-sibling::*[1]"
-                    + " | //*[contains(text(),'UNRESOLVED ISSUES')]/..//h3"));
+                    "//*[contains(text(),'Unresolved Issues')]/following-sibling::*[1]"
+                    + " | //*[contains(text(),'Unresolved Issues')]/..//h3"));
             dashboardIssues = extractNumber(issueHeading.getText());
             logStep("Dashboard unresolved issues: " + dashboardIssues);
         } catch (Exception e) {
-            logStep("Could not read UNRESOLVED ISSUES: " + e.getMessage());
+            logStep("Could not read Unresolved Issues: " + e.getMessage());
         }
 
         navigateTo(ISSUES_URL);
@@ -290,12 +290,12 @@ public class CriticalPathTestNG extends BaseTest {
         int dashboardWO = 0;
         try {
             WebElement woHeading = driver.findElement(By.xpath(
-                    "//*[contains(text(),'ACTIVE WORK ORDERS')]/following-sibling::*[1]"
-                    + " | //*[contains(text(),'ACTIVE WORK ORDERS')]/..//h3"));
+                    "//*[contains(text(),'Active Work Orders')]/following-sibling::*[1]"
+                    + " | //*[contains(text(),'Active Work Orders')]/..//h3"));
             dashboardWO = extractNumber(woHeading.getText());
             logStep("Dashboard active work orders: " + dashboardWO);
         } catch (Exception e) {
-            logStep("Could not read ACTIVE WORK ORDERS: " + e.getMessage());
+            logStep("Could not read Active Work Orders: " + e.getMessage());
         }
 
         navigateTo(WORK_ORDERS_URL);
@@ -388,8 +388,8 @@ public class CriticalPathTestNG extends BaseTest {
 
         try {
             WebElement riskHeading = driver.findElement(By.xpath(
-                    "//*[contains(text(),'EQUIPMENT AT RISK')]/following-sibling::*[1]"
-                    + " | //*[contains(text(),'EQUIPMENT AT RISK')]/..//h3"));
+                    "//*[contains(text(),'Equipment At Risk') or contains(text(),'Equipment at Risk')]/following-sibling::*[1]"
+                    + " | //*[contains(text(),'Equipment At Risk') or contains(text(),'Equipment at Risk')]/..//h3"));
             String riskValue = riskHeading.getText().trim();
             logStep("Equipment at Risk value: " + riskValue);
 
@@ -424,8 +424,8 @@ public class CriticalPathTestNG extends BaseTest {
 
         try {
             WebElement oppHeading = driver.findElement(By.xpath(
-                    "//*[contains(text(),'OPPORTUNITIES VALUE')]/following-sibling::*[1]"
-                    + " | //*[contains(text(),'OPPORTUNITIES VALUE')]/..//h3"));
+                    "//*[contains(text(),'Opportunities Value')]/following-sibling::*[1]"
+                    + " | //*[contains(text(),'Opportunities Value')]/..//h3"));
             String oppValue = oppHeading.getText().trim();
             logStep("Opportunities Value: " + oppValue);
 
@@ -875,11 +875,11 @@ public class CriticalPathTestNG extends BaseTest {
         int pending = 0, overdue = 0;
         try {
             WebElement pendingEl = driver.findElement(By.xpath(
-                    "//*[contains(text(),'PENDING')]/..//h5"));
+                    "//*[contains(text(),'Pending')]/..//h5"));
             pending = extractNumber(pendingEl.getText());
 
             WebElement overdueEl = driver.findElement(By.xpath(
-                    "//*[contains(text(),'OVERDUE')]/..//h5"));
+                    "//*[contains(text(),'Overdue')]/..//h5"));
             overdue = extractNumber(overdueEl.getText());
 
             logStep("Pending: " + pending + ", Overdue: " + overdue);

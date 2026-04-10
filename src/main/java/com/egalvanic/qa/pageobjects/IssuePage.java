@@ -1655,18 +1655,32 @@ public class IssuePage {
     public void searchIssues(String query) {
         try {
             WebElement searchInput = wait.until(ExpectedConditions.visibilityOfElementLocated(SEARCH_INPUT));
-            js.executeScript(
-                    "var el = arguments[0];" +
-                            "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;"
-                            +
-                            "setter.call(el, '');" +
-                            "el.dispatchEvent(new Event('input', {bubbles: true}));" +
-                            "setter.call(el, arguments[1]);" +
-                            "el.dispatchEvent(new Event('input', {bubbles: true}));" +
-                            "el.dispatchEvent(new Event('change', {bubbles: true}));",
-                    searchInput, query);
+
+            // Primary: sendKeys (real keyboard events — always triggers MUI Quick Filter)
+            searchInput.click();
+            pause(300);
+            searchInput.sendKeys(Keys.chord(Keys.CONTROL, "a"));
+            searchInput.sendKeys(Keys.DELETE);
+            pause(200);
+            searchInput.sendKeys(query);
             pause(1500);
-            System.out.println("[IssuePage] Searched for: " + query);
+            System.out.println("[IssuePage] Searched via sendKeys for: " + query);
+
+            // Verify the value actually stuck — fallback to nativeSetter if not
+            String actual = searchInput.getAttribute("value");
+            if (actual == null || !actual.equals(query)) {
+                System.out.println("[IssuePage] sendKeys value mismatch ('" + actual + "') — retrying via nativeSetter");
+                js.executeScript(
+                        "var el = arguments[0];" +
+                                "var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;" +
+                                "setter.call(el, '');" +
+                                "el.dispatchEvent(new Event('input', {bubbles: true}));" +
+                                "setter.call(el, arguments[1]);" +
+                                "el.dispatchEvent(new Event('input', {bubbles: true}));" +
+                                "el.dispatchEvent(new Event('change', {bubbles: true}));",
+                        searchInput, query);
+                pause(1500);
+            }
         } catch (Exception e) {
             System.out.println("[IssuePage] Search failed: " + e.getMessage());
         }

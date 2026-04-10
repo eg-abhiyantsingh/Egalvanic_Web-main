@@ -390,10 +390,7 @@ public class IssuePart2TestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_SEARCH, "TC_ISS_015_EmptyState");
         String searchTerm = "zzz_nonexistent_issue_99999";
 
-        // Use the React nativeSetter to trigger MUI DataGrid Quick Filter reliably.
-        // Playwright debugging confirmed: sendKeys in headless CI doesn't always trigger
-        // the Quick Filter debounce, but nativeSetter (HTMLInputElement.prototype.value.set)
-        // consistently fires React's synthetic event handlers.
+        // Search uses sendKeys (real keyboard events) as primary, with nativeSetter fallback.
         issuePage.searchIssues(searchTerm);
         pause(2000);
 
@@ -416,9 +413,18 @@ public class IssuePart2TestNG extends BaseTest {
             }
             if (paginationTotal == 0) break;
 
-            // Retry nativeSetter if filter hasn't kicked in after 3s
+            // Retry search if filter hasn't kicked in after 3s
             if (i == 2 && paginationTotal > 0) {
-                logStep("Filter didn't trigger after 3s — retrying via nativeSetter");
+                logStep("Filter didn't trigger after 3s — retrying search");
+                issuePage.searchIssues(searchTerm);
+                pause(2000);
+            }
+
+            // Last resort at 6s: reload page and search fresh
+            if (i == 5 && paginationTotal > 0) {
+                logStep("Filter still not working after 6s — reloading page and re-searching");
+                driver.get(AppConstants.BASE_URL + "/issues");
+                pause(4000);
                 issuePage.searchIssues(searchTerm);
                 pause(2000);
             }
@@ -1157,8 +1163,7 @@ public class IssuePart2TestNG extends BaseTest {
 
         ensureOnIssuesPage();
 
-        // Use nativeSetter to trigger MUI DataGrid Quick Filter reliably.
-        // sendKeys in headless CI doesn't always trigger the Quick Filter debounce.
+        // Search uses sendKeys (real keyboard events) as primary, with nativeSetter fallback.
         issuePage.searchIssues(title);
         pause(2000);
 
@@ -1179,7 +1184,16 @@ public class IssuePart2TestNG extends BaseTest {
             if (paginationTotal == 0) break;
 
             if (i == 2 && paginationTotal > 0) {
-                logStep("Filter didn't trigger after 3s — retrying via nativeSetter");
+                logStep("Filter didn't trigger after 3s — retrying search");
+                issuePage.searchIssues(title);
+                pause(2000);
+            }
+
+            // Last resort at 6s: reload page and search fresh
+            if (i == 5 && paginationTotal > 0) {
+                logStep("Filter still not working after 6s — reloading page and re-searching");
+                driver.get(AppConstants.BASE_URL + "/issues");
+                pause(4000);
                 issuePage.searchIssues(title);
                 pause(2000);
             }
