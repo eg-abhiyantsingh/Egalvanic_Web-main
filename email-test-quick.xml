@@ -1,0 +1,142 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  Quick Email Test Suite — 1 TC per module
+  Purpose: Verify email delivery with minimal execution time.
+
+  Run: mvn clean test -DsuiteXmlFile=email-test-quick.xml
+  Expected: ~14 TCs across 14 modules, ~5-8 min total
+-->
+<suite name="Email Test — 1 TC per Module (14 TCs)" verbose="1" parallel="false">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <!-- Authentication -->
+    <test name="Auth (1 TC)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AuthenticationTestNG">
+                <methods><include name="testTC01_WelcomeScreenUILoads"/></methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- Site Selection -->
+    <test name="Site Selection (1 TC)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.SiteSelectionTestNG">
+                <methods><include name="testTC_SS_001_SelectSiteScreenUI"/></methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- Dashboard -->
+    <test name="Dashboard (1 TC)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.DashboardBugTestNG">
+                <methods><include name="testBUGD01_DashboardKPICardsLoad"/></methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- Assets -->
+    <test name="Assets (1 TC)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetPart1TestNG">
+                <methods><include name="testAS01_AssetsScreenLoads"/></methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- Locations -->
+    <test name="Locations (1 TC)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.LocationTestNG">
+                <methods><include name="testNB_002_CancelButton"/></methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- SLD -->
+    <test name="SLD (1 TC)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.SLDTestNG">
+                <methods><include name="testSLD_001_DirectURLAccess"/></methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- Connections -->
+    <test name="Connections (1 TC)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ConnectionTestNG">
+                <methods><include name="testCC_001_NavigateToConnections"/></methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- Issues -->
+    <test name="Issues (1 TC)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.IssueTestNG">
+                <methods><include name="testCI_001_NavigateToIssues"/></methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- Tasks -->
+    <test name="Tasks (1 TC)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.TaskTestNG">
+                <methods><include name="testTC_TL_001_TasksPageLoads"/></methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- Work Orders -->
+    <test name="Work Orders (1 TC)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkOrderTestNG">
+                <methods><include name="testTC_WOL_001_PageLoads"/></methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- Bug Hunt -->
+    <test name="Bug Hunt (1 TC)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntTestNG">
+                <methods><include name="testBUG01_ConsoleErrorsOnPageLoad"/></methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- Load & Performance -->
+    <test name="Load (1 TC)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.LoadTestNG">
+                <methods><include name="testPL01_DashboardLoad"/></methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- Critical Path -->
+    <test name="Critical Path (1 TC)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.CriticalPathTestNG">
+                <methods><include name="testCP_DI_001_AssetCountMatchesDashboard"/></methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- API -->
+    <test name="API (1 TC)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.AuthenticationAPITest">
+                <methods><include name="testValidLogin"/></methods>
+            </class>
+        </classes>
+    </test>
+
+</suite>

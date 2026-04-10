@@ -1,0 +1,65 @@
+name: Email Test — Quick (1 TC per module)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  email-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: 'stable'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Download dependencies
+        run: |
+          mvn dependency:resolve -B -q 2>/dev/null || true
+
+      - name: Create output directories
+        run: |
+          mkdir -p test-output/screenshots
+          mkdir -p reports/detail-report
+          mkdir -p reports/client-report
+
+      - name: Compile
+        run: mvn compile test-compile -B -q
+
+      - name: Run 1-TC-per-module suite
+        continue-on-error: true
+        env:
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          SEND_EMAIL_ENABLED: "true"
+        run: |
+          mvn test -DsuiteXmlFile=email-test-quick.xml -Dheadless=true -B 2>&1 | tail -30
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: email-test-reports
+          path: |
+            reports/
+            test-output/screenshots/
+            target/surefire-reports/
+          retention-days: 7
