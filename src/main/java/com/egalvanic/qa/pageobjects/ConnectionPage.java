@@ -100,24 +100,56 @@ public class ConnectionPage {
 
     /**
      * Open the Create Connection drawer.
+     *
+     * Includes retry logic with alert dismissal because the "App Update Available"
+     * alert can appear asynchronously in the QA environment (periodic check fires
+     * ~60s after page load). If present, the alert overlay intercepts the button
+     * click — the JS fires but hits the alert instead of the "Create Connection"
+     * button, so the drawer never opens and the wait for SOURCE_NODE_INPUT times out.
      */
     public void openCreateConnectionDrawer() {
-        // Click the "Create Connection" button in page header (top area)
-        js.executeScript(
-            "var btns = document.querySelectorAll('button');" +
-            "for (var b of btns) {" +
-            "  var text = b.textContent.trim();" +
-            "  if (text === 'Create Connection' || text.includes('Create Connection')) {" +
-            "    var r = b.getBoundingClientRect();" +
-            "    if (r.width > 0 && r.top < 300) { b.click(); return; }" +
-            "  }" +
-            "}"
-        );
-        pause(2000);
+        int maxAttempts = 2;
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                // Dismiss any "App Update Available" alert BEFORE clicking
+                // — this is the #1 reason the button click silently fails in CI
+                dismissAppAlert();
 
-        // Wait for drawer to open
-        wait.until(ExpectedConditions.visibilityOfElementLocated(SOURCE_NODE_INPUT));
-        System.out.println("[ConnectionPage] Create Connection drawer opened");
+                // Click the "Create Connection" button in page header (top area)
+                // r.top < 300 distinguishes the page-level header button from the
+                // submit button inside an already-open drawer (which is lower)
+                js.executeScript(
+                    "var btns = document.querySelectorAll('button');" +
+                    "for (var b of btns) {" +
+                    "  var text = b.textContent.trim();" +
+                    "  if (text === 'Create Connection' || text.includes('Create Connection')) {" +
+                    "    var r = b.getBoundingClientRect();" +
+                    "    if (r.width > 0 && r.top < 300) { b.click(); return; }" +
+                    "  }" +
+                    "}"
+                );
+                pause(2000);
+
+                // Wait for drawer to open — SOURCE_NODE_INPUT appears inside the drawer
+                wait.until(ExpectedConditions.visibilityOfElementLocated(SOURCE_NODE_INPUT));
+                System.out.println("[ConnectionPage] Create Connection drawer opened");
+                return; // success
+            } catch (Exception e) {
+                if (attempt < maxAttempts) {
+                    System.out.println("[ConnectionPage] openCreateConnectionDrawer attempt "
+                            + attempt + " failed (" + e.getClass().getSimpleName()
+                            + ") — dismissing overlays and retrying...");
+                    dismissOverlays();
+                    dismissAppAlert();
+                    pause(1000);
+                } else {
+                    // Re-throw on final attempt so caller sees the real error
+                    throw new RuntimeException(
+                            "Create Connection drawer did not open after " + maxAttempts
+                            + " attempts. Last error: " + e.getMessage(), e);
+                }
+            }
+        }
     }
 
     /**
@@ -992,6 +1024,25 @@ public class ConnectionPage {
             );
             if (hasSpinner == null || !hasSpinner) return;
             pause(1000);
+        }
+    }
+
+    /**
+     * Dismiss the "App Update Available" alert that appears asynchronously in QA.
+     * Uses WebDriverWait (5s) to catch the DISMISS button even if React hasn't
+     * rendered it yet. Shorter timeout than BaseTest's version (10s) because this
+     * is called inline during test actions, not just at login.
+     */
+    private void dismissAppAlert() {
+        try {
+            WebElement dismissBtn = new WebDriverWait(driver, Duration.ofSeconds(5))
+                    .until(ExpectedConditions.elementToBeClickable(
+                            By.xpath("//button[text()='DISMISS']")));
+            dismissBtn.click();
+            System.out.println("[ConnectionPage] Dismissed app update alert");
+            pause(1000);
+        } catch (Exception ignored) {
+            // No alert present — that's fine
         }
     }
 

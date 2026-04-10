@@ -336,8 +336,12 @@ public class BaseTest {
                 }
 
                 dashboardPage.waitForDashboard();
-                dismissBackdrops(); // dismiss app update alert before site selection
-                pause(1000);
+                // Robustly dismiss the "app update available" alert.
+                // In CI headless Chrome, the alert renders AFTER the dashboard shell
+                // — the fire-and-forget JS in dismissBackdrops() misses it because
+                // the DISMISS button doesn't exist in the DOM yet.
+                // WebDriverWait polls repeatedly until the button appears (up to 10s).
+                waitAndDismissAppAlert();
                 selectTestSite();
                 return; // success
             } catch (Exception e) {
@@ -458,12 +462,58 @@ public class BaseTest {
     protected void longWait() { pause(800); }
 
     // ================================================================
+    // APP UPDATE ALERT — robust WebDriverWait-based dismissal
+    // ================================================================
+
+    /**
+     * Robustly dismiss the "App Update Available" alert that appears asynchronously
+     * in the QA environment. This alert blocks the site selector and page interactions.
+     *
+     * Unlike the fire-and-forget JS in dismissBackdrops() (which runs once and returns
+     * immediately), this method uses WebDriverWait to POLL for the DISMISS button
+     * over 10 seconds. This catches the alert even when React renders it AFTER the
+     * dashboard shell — the #1 cause of CI failures in headless Chrome.
+     *
+     * Flow:
+     *   1. Wait up to 10s for DISMISS button (catches late-rendering alerts)
+     *   2. Click it via Selenium (reliable cross-browser)
+     *   3. Pause 1s for React to re-render after alert dismissal
+     *   4. Run fire-and-forget dismissBackdrops() as safety net
+     *
+     * Call this after login and after any driver.get() / driver.navigate().refresh()
+     * that triggers a full page reload — those re-initialize the React app state
+     * including the update alert.
+     */
+    protected void waitAndDismissAppAlert() {
+        // Step 1: Try Selenium wait for DISMISS button (catches late-rendering alerts)
+        try {
+            WebElement dismissBtn = new WebDriverWait(driver, Duration.ofSeconds(10))
+                    .until(ExpectedConditions.elementToBeClickable(
+                            By.xpath("//button[text()='DISMISS']")));
+            dismissBtn.click();
+            System.out.println("[BaseTest] Dismissed app update alert via Selenium click");
+            pause(1000); // let React re-render after alert dismissal
+        } catch (Exception e) {
+            // No alert appeared within 10s — that's normal on subsequent calls.
+            // Fall through to backdrop cleanup.
+        }
+        // Step 2: Always run fire-and-forget cleanup as safety net
+        // (removes any residual MUI backdrops, Beamer overlays, etc.)
+        dismissBackdrops();
+    }
+
+    // ================================================================
     // MUI BACKDROP HANDLING — prevents ElementClickInterceptedException
     // ================================================================
 
     /**
      * Remove all MUI backdrop overlays that intercept clicks in headless Chrome.
      * Called automatically before every test via @BeforeMethod.
+     *
+     * NOTE: This is fire-and-forget — it runs the JS once and returns immediately.
+     * If the DISMISS button hasn't rendered yet (common in CI), it will miss it.
+     * For reliable alert dismissal after login or page reload, use
+     * waitAndDismissAppAlert() instead.
      */
     protected void dismissBackdrops() {
         try {

@@ -152,7 +152,9 @@ public class SiteSelectionTestNG {
     @BeforeMethod
     public void testSetup() {
         testStartTime = System.currentTimeMillis();
-        dismissBackdrops();
+        // Use robust alert dismissal — the fire-and-forget JS can miss the alert
+        // if React hasn't rendered it yet (common in CI headless mode)
+        waitAndDismissAppAlert();
     }
 
     @AfterMethod
@@ -1270,8 +1272,11 @@ public class SiteSelectionTestNG {
                 });
 
                 pause(1000);
-                dismissBackdrops(); // dismiss app update alert if present
-                pause(500);
+                // Robustly dismiss the "app update available" alert.
+                // In CI, the alert renders AFTER the dashboard — the old fire-and-forget
+                // JS missed it because it ran before the button existed in the DOM.
+                // Now: wait up to 10s for the DISMISS button, click it, then verify.
+                waitAndDismissAppAlert();
                 System.out.println("[SiteSelection] Post-login page loaded. URL: " + driver.getCurrentUrl());
 
                 // Check if login actually succeeded
@@ -1566,13 +1571,48 @@ public class SiteSelectionTestNG {
     // MUI BACKDROP HANDLING — prevents ElementClickInterceptedException
     // ================================================================
 
+    /**
+     * Robustly dismiss the "App Update Available" alert banner.
+     *
+     * The old fire-and-forget JS approach missed the alert in CI because React
+     * hadn't rendered the DISMISS button yet when the script ran. This method
+     * uses WebDriverWait to poll for the button (up to 10s), clicks it via
+     * Selenium, then waits for the facility selector to become available.
+     */
+    private void waitAndDismissAppAlert() {
+        // Step 1: try Selenium wait for DISMISS button (catches late-rendering alerts)
+        try {
+            WebElement dismissBtn = new WebDriverWait(driver, Duration.ofSeconds(10))
+                    .until(ExpectedConditions.elementToBeClickable(
+                            By.xpath("//button[text()='DISMISS']")));
+            dismissBtn.click();
+            System.out.println("[SiteSelection] Dismissed app update alert via Selenium click");
+            pause(1000); // let React re-render after alert dismissal
+        } catch (Exception e) {
+            // No alert appeared within 10s — fall back to JS sweep
+            dismissBackdrops();
+        }
+
+        // Step 2: remove any MUI backdrops that might still block clicks
+        dismissBackdrops();
+
+        // Step 3: wait for facility selector to become available
+        // After fresh login in CI, it may take a moment for sites to load
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(15))
+                    .until(d -> !d.findElements(FACILITY_INPUT).isEmpty());
+            System.out.println("[SiteSelection] Facility selector is available");
+        } catch (Exception e) {
+            System.out.println("[SiteSelection] WARNING: Facility selector not found after 15s");
+        }
+    }
+
     private void dismissBackdrops() {
         try {
             js.executeScript(
                 "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"], .MuiModal-backdrop').forEach(" +
                 "  function(b) { b.style.display = 'none'; b.style.pointerEvents = 'none'; }" +
                 ");" +
-                "/* Dismiss 'app update available' alert banner — blocks site selector in CI */" +
                 "var btns = document.querySelectorAll('button');" +
                 "for (var i = 0; i < btns.length; i++) {" +
                 "  if (btns[i].textContent === 'DISMISS') { btns[i].click(); break; }" +

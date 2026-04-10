@@ -67,6 +67,10 @@ public class ConnectionTestNG extends BaseTest {
             try {
                 driver.get(AppConstants.BASE_URL + "/dashboard");
                 pause(3000);
+                // driver.get() triggers full page reload → re-initializes React app
+                // → "App Update Available" alert re-appears. Must dismiss before
+                // navigating to connections, otherwise the sidebar click is blocked.
+                waitAndDismissAppAlert();
                 connectionPage.navigateToConnections();
             } catch (Exception e2) {
                 logStep("Recovery also failed: " + e2.getMessage());
@@ -432,6 +436,7 @@ public class ConnectionTestNG extends BaseTest {
         // Refresh and check spinner
         driver.navigate().refresh();
         pause(5000);
+        dismissBackdrops(); // refresh re-triggers alert
 
         List<WebElement> spinners = driver.findElements(By.cssSelector(
                 ".MuiCircularProgress-root, [role='progressbar']"));
@@ -611,6 +616,7 @@ public class ConnectionTestNG extends BaseTest {
             // Refresh and check
             driver.navigate().refresh();
             pause(3000);
+            dismissBackdrops(); // refresh re-triggers alert
             int after = connectionPage.getGridRowCount();
             logStep("Rows after delete: " + after);
 
@@ -675,6 +681,8 @@ public class ConnectionTestNG extends BaseTest {
 
             driver.navigate().refresh();
             pause(3000);
+            dismissBackdrops(); // refresh re-triggers alert
+            pause(500);
 
             int mid = connectionPage.getGridRowCount();
             logStep("Rows after first delete: " + mid);
@@ -688,6 +696,8 @@ public class ConnectionTestNG extends BaseTest {
 
                 driver.navigate().refresh();
                 pause(3000);
+                dismissBackdrops(); // refresh re-triggers alert
+                pause(500);
                 int after = connectionPage.getGridRowCount();
                 logStep("Rows after second delete: " + after);
             }
