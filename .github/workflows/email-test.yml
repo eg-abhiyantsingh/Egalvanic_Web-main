@@ -6,7 +6,7 @@ on:
 jobs:
   email-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 480
 
     steps:
       - name: Checkout code

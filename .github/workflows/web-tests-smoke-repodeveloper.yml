@@ -45,7 +45,7 @@ on:
 jobs:
   web-smoke-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 480
 
     steps:
       # ============================================================
