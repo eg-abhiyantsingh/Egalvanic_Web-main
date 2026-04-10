@@ -18,7 +18,7 @@
     Issues:                109 TCs (44 + 65 Part2)
     Work Orders:           ~120 TCs (50 + ~70 Part2)
     Bug Hunt:               60 TCs (7 files)
-    Load & Performance:     20 TCs
+    Load and Performance:   20 TCs
     Critical Path:          25 TCs (new)
     API Tests:              17 TCs
     ────────────────────────────
@@ -196,7 +196,7 @@
     </test>
 
     <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- MODULE 11: BUG HUNT & SECURITY (60 TCs)                -->
+    <!-- MODULE 11: BUG HUNT and SECURITY (60 TCs)               -->
     <!-- ═══════════════════════════════════════════════════════ -->
     <test name="26. Bug Hunt — Global (9 TCs)">
         <classes>
@@ -240,9 +240,9 @@
     </test>
 
     <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- MODULE 12: LOAD & PERFORMANCE (20 TCs)                 -->
+    <!-- MODULE 12: LOAD and PERFORMANCE (20 TCs)                -->
     <!-- ═══════════════════════════════════════════════════════ -->
-    <test name="34. Load & Performance (20 TCs)">
+    <test name="34. Load and Performance (20 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.LoadTestNG"/>
         </classes>

@@ -1,11 +1,11 @@
 name: Parallel Full Suite — Core Regression (961 TCs)
 
 # ============================================================
-# PARALLEL FULL SUITE — 8 Groups Running Simultaneously
+# PARALLEL FULL SUITE — 9 Groups Running Simultaneously
 # ============================================================
 #
 # Architecture:
-#   Phase 1: 8 parallel jobs (one per group) via strategy.matrix
+#   Phase 1: 9 parallel jobs (one per group) via strategy.matrix
 #   Phase 2: Summary job aggregates results from all groups
 #
 # Performance:
@@ -13,15 +13,16 @@ name: Parallel Full Suite — Core Regression (961 TCs)
 #   Parallel  (this workflow):   ~1-1.5 hours (groups run simultaneously)
 #   Speedup: ~3-4x
 #
-# Groups (8 parallel jobs):
+# Groups (9 parallel jobs):
 #   Group  1: Auth + Site + Connection    (130 TCs)  ~25 min
 #   Group  2: Location + Task             (135 TCs)  ~30 min
 #   Group  3: Work Order + Issue          (234 TCs)  ~55 min  [bottleneck]
 #   Group  4: Asset Parts 1-2             ( 69 TCs)  ~20 min
 #   Group  5: Asset Part 3               ( 76 TCs)  ~20 min
-#   Group  6: Asset Parts 4-5            (141 TCs)  ~35 min
-#   Group  7: SLD                        ( 71 TCs)  ~15 min
-#   Group  8: Dashboard + BugHunt        (105 TCs)  ~30 min
+#   Group  6: Asset Part 4               ( 65 TCs)  ~20 min
+#   Group  7: Asset Part 5               ( 76 TCs)  ~20 min
+#   Group  8: SLD                        ( 71 TCs)  ~15 min
+#   Group  9: Dashboard + BugHunt        (105 TCs)  ~30 min
 #
 # Moved to parallel-suite-2.yml:
 #   Smoke Suites, Load + API + Critical Path, AI Form, Monkey, Visual, AI Analyzer
@@ -54,7 +55,7 @@ jobs:
 
     strategy:
       fail-fast: false
-      max-parallel: 8
+      max-parallel: 9
 
       matrix:
         include:
@@ -91,11 +92,17 @@ jobs:
             tests: 76
             stagger: 40
 
-          - group: asset-4-5
-            name: "Asset Parts 4-5"
-            xml: suite-asset-4-5.xml
-            tests: 141
+          - group: asset-4
+            name: "Asset Part 4"
+            xml: suite-asset-4.xml
+            tests: 65
             stagger: 50
+
+          - group: asset-5
+            name: "Asset Part 5"
+            xml: suite-asset-5.xml
+            tests: 76
+            stagger: 55
 
           - group: sld
             name: "SLD Module"
@@ -348,7 +355,7 @@ jobs:
           echo ""
           echo "────────────────────────────────────────────"
           echo "  TOTAL:  Passed=$TOTAL_PASSED  Failed=$TOTAL_FAILED  Skipped=$TOTAL_SKIPPED"
-          echo "  Groups: $GROUP_COUNT / 8 completed"
+          echo "  Groups: $GROUP_COUNT / 9 completed"
           echo "────────────────────────────────────────────"
 
           {

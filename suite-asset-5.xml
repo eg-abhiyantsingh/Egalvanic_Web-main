@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Full Suite — Asset Part 5 (76 TCs)" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <test name="Full Asset Tests Part 5 (76 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetPart5TestNG"/>
+        </classes>
+    </test>
+
+</suite>

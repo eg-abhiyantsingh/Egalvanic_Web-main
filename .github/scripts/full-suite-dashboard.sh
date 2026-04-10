@@ -40,7 +40,8 @@ ALL_GROUPS=(
   "workorder-issue"
   "asset-1-2"
   "asset-3"
-  "asset-4-5"
+  "asset-4"
+  "asset-5"
   "sld"
   "dashboard-bughunt"
   "load-api"
@@ -56,7 +57,8 @@ ALL_GROUP_NAMES=(
   "Work Order + Issue"
   "Asset Parts 1-2"
   "Asset Part 3"
-  "Asset Parts 4-5"
+  "Asset Part 4"
+  "Asset Part 5"
   "SLD Module"
   "Dashboard + BugHunt"
   "Load + API + Critical Path"
@@ -66,14 +68,15 @@ ALL_GROUP_NAMES=(
   "Visual Regression"
   "AI Page Analyzer"
 )
-ALL_GROUP_TESTS=(130 135 234 69 76 141 71 105 62 37 56 4 7 3)
+ALL_GROUP_TESTS=(130 135 234 69 76 65 76 71 105 62 37 56 4 7 3)
 ALL_GROUP_XMLS=(
   "suite-auth-site-connection.xml"
   "suite-location-task.xml"
   "suite-workorder-issue.xml"
   "suite-asset-1-2.xml"
   "suite-asset-3.xml"
-  "suite-asset-4-5.xml"
+  "suite-asset-4.xml"
+  "suite-asset-5.xml"
   "suite-sld.xml"
   "suite-dashboard-bughunt.xml"
   "suite-load-api.xml"
@@ -94,15 +97,16 @@ get_group_index() {
     workorder-issue)      echo 2 ;;
     asset-1-2)            echo 3 ;;
     asset-3)              echo 4 ;;
-    asset-4-5)            echo 5 ;;
-    sld)                  echo 6 ;;
-    dashboard-bughunt)    echo 7 ;;
-    load-api)             echo 8 ;;
-    smoke)                echo 9 ;;
-    ai-form)              echo 10 ;;
-    monkey)               echo 11 ;;
-    visual-regression)    echo 12 ;;
-    ai-analyzer)          echo 13 ;;
+    asset-4)              echo 5 ;;
+    asset-5)              echo 6 ;;
+    sld)                  echo 7 ;;
+    dashboard-bughunt)    echo 8 ;;
+    load-api)             echo 9 ;;
+    smoke)                echo 10 ;;
+    ai-form)              echo 11 ;;
+    monkey)               echo 12 ;;
+    visual-regression)    echo 13 ;;
+    ai-analyzer)          echo 14 ;;
     *)                    echo -1 ;;
   esac
 }
@@ -119,7 +123,7 @@ else
   IDX=$(get_group_index "$SELECTED")
   if [ "$IDX" -eq -1 ]; then
     echo "Unknown group: $SELECTED"
-    echo "   Valid: all, auth-site-connection, location-task, workorder-issue, asset-1-2, asset-3, asset-4-5, sld, dashboard-bughunt, load-api, smoke, ai-form, monkey, visual-regression, ai-analyzer"
+    echo "   Valid: all, auth-site-connection, location-task, workorder-issue, asset-1-2, asset-3, asset-4, asset-5, sld, dashboard-bughunt, load-api, smoke, ai-form, monkey, visual-regression, ai-analyzer"
     exit 1
   fi
   RUN_GROUPS=("${ALL_GROUPS[$IDX]}")
