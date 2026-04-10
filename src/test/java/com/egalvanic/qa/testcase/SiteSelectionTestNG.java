@@ -1270,6 +1270,8 @@ public class SiteSelectionTestNG {
                 });
 
                 pause(1000);
+                dismissBackdrops(); // dismiss app update alert if present
+                pause(500);
                 System.out.println("[SiteSelection] Post-login page loaded. URL: " + driver.getCurrentUrl());
 
                 // Check if login actually succeeded
@@ -1569,7 +1571,12 @@ public class SiteSelectionTestNG {
             js.executeScript(
                 "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"], .MuiModal-backdrop').forEach(" +
                 "  function(b) { b.style.display = 'none'; b.style.pointerEvents = 'none'; }" +
-                ");"
+                ");" +
+                "/* Dismiss 'app update available' alert banner — blocks site selector in CI */" +
+                "var btns = document.querySelectorAll('button');" +
+                "for (var i = 0; i < btns.length; i++) {" +
+                "  if (btns[i].textContent === 'DISMISS') { btns[i].click(); break; }" +
+                "}"
             );
         } catch (Exception ignored) {}
     }

@@ -424,7 +424,9 @@ public class IssuePart2TestNG extends BaseTest {
             if (i == 5 && paginationTotal > 0) {
                 logStep("Filter still not working after 6s — reloading page and re-searching");
                 driver.get(AppConstants.BASE_URL + "/issues");
-                pause(4000);
+                pause(2000);
+                dismissBackdrops(); // dismiss app update alert after navigation
+                pause(3000);
                 issuePage.searchIssues(searchTerm);
                 pause(2000);
             }
@@ -1193,7 +1195,9 @@ public class IssuePart2TestNG extends BaseTest {
             if (i == 5 && paginationTotal > 0) {
                 logStep("Filter still not working after 6s — reloading page and re-searching");
                 driver.get(AppConstants.BASE_URL + "/issues");
-                pause(4000);
+                pause(2000);
+                dismissBackdrops(); // dismiss app update alert after navigation
+                pause(3000);
                 issuePage.searchIssues(title);
                 pause(2000);
             }

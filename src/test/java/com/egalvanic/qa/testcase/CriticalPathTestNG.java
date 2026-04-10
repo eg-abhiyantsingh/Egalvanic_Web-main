@@ -104,7 +104,9 @@ public class CriticalPathTestNG extends BaseTest {
 
     private void navigateTo(String url) {
         driver.get(url);
-        pause(3000);
+        pause(2000);
+        dismissBackdrops(); // dismiss app update alert after navigation
+        pause(1000);
         new WebDriverWait(driver, Duration.ofSeconds(AppConstants.DEFAULT_TIMEOUT))
                 .until(d -> "complete".equals(
                         ((JavascriptExecutor) d).executeScript("return document.readyState")));

@@ -126,6 +126,15 @@ public class BugHuntTestNG {
     @BeforeMethod
     public void testSetup() {
         testStartTime = System.currentTimeMillis();
+        // Dismiss app update alert if present — blocks page interaction in CI
+        try {
+            js.executeScript(
+                "var btns = document.querySelectorAll('button');" +
+                "for (var i = 0; i < btns.length; i++) {" +
+                "  if (btns[i].textContent === 'DISMISS') { btns[i].click(); break; }" +
+                "}"
+            );
+        } catch (Exception ignored) {}
     }
 
     @AfterMethod

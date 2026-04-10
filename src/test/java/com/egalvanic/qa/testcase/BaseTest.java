@@ -336,6 +336,8 @@ public class BaseTest {
                 }
 
                 dashboardPage.waitForDashboard();
+                dismissBackdrops(); // dismiss app update alert before site selection
+                pause(1000);
                 selectTestSite();
                 return; // success
             } catch (Exception e) {
@@ -476,7 +478,12 @@ public class BaseTest {
                 "if (beamer) { beamer.style.display = 'none'; beamer.style.pointerEvents = 'none'; }" +
                 "document.querySelectorAll('[id^=\"beamer\"], .beamer_show').forEach(" +
                 "  function(b) { b.style.display = 'none'; b.style.pointerEvents = 'none'; }" +
-                ");"
+                ");" +
+                "/* Dismiss 'app update available' alert banner — blocks site selector in CI */" +
+                "var btns = document.querySelectorAll('button');" +
+                "for (var i = 0; i < btns.length; i++) {" +
+                "  if (btns[i].textContent === 'DISMISS') { btns[i].click(); break; }" +
+                "}"
             );
         } catch (Exception ignored) {}
     }
