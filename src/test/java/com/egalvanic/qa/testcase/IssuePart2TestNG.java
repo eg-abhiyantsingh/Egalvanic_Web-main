@@ -394,39 +394,52 @@ public class IssuePart2TestNG extends BaseTest {
         issuePage.searchIssues(searchTerm);
         pause(2000);
 
-        // Check the pagination text for the definitive filtered count.
-        // getRowCount() counts rendered DOM rows which depends on viewport/virtualisation
-        // (headless CI renders ~5 rows vs ~11 locally). Pagination text ("0–0 of 0")
-        // reflects the actual filtered total regardless of viewport.
+        // Poll for search results: check pagination text, DataGrid overlay, and DOM rows.
+        // MUI DataGrid may not render MuiTablePagination when all rows fit on one page,
+        // so we also check the "No rows" overlay and DOM row count as fallback signals.
         int paginationTotal = -1;
+        boolean noRowsOverlay = false;
         for (int i = 0; i < 10; i++) {
             pause(1000);
+
+            // Strategy 1: MUI Table Pagination text ("X–Y of Z")
             String pagText = (String) js().executeScript(
                     "var el = document.querySelector('[class*=\"MuiTablePagination-displayedRows\"]');" +
-                    "return el ? el.textContent : '';");
+                    "if (el) return el.textContent;" +
+                    "var footer = document.querySelector('[class*=\"MuiDataGrid-footerContainer\"]');" +
+                    "return footer ? footer.textContent : '';");
             logStep("Wait " + (i + 1) + ": pagination = '" + pagText + "'");
 
-            // Parse total from "X–Y of Z" or "0–0 of 0"
             if (pagText != null && pagText.contains("of")) {
                 String totalStr = pagText.substring(pagText.lastIndexOf("of") + 2).trim();
                 try { paginationTotal = Integer.parseInt(totalStr); } catch (Exception ignored) {}
             }
-            if (paginationTotal == 0) break;
+
+            // Strategy 2: DataGrid "No rows" overlay (shown when filter yields 0 results)
+            noRowsOverlay = Boolean.TRUE.equals(js().executeScript(
+                    "var overlay = document.querySelector('[class*=\"MuiDataGrid-overlay\"]');" +
+                    "if (overlay && overlay.textContent.trim().length > 0) return true;" +
+                    "var text = document.body.innerText;" +
+                    "return text.includes('No rows') || text.includes('No issues')" +
+                    "  || text.includes('No data') || text.includes('No results');"));
+
+            if (paginationTotal == 0 || noRowsOverlay) break;
 
             // Retry search if filter hasn't kicked in after 3s
-            if (i == 2 && paginationTotal > 0) {
+            // (paginationTotal != 0 covers both "not found" (-1) and "still showing rows" (>0))
+            if (i == 2 && paginationTotal != 0 && !noRowsOverlay) {
                 logStep("Filter didn't trigger after 3s — retrying search");
                 issuePage.searchIssues(searchTerm);
                 pause(2000);
             }
 
             // Last resort at 6s: reload page and search fresh
-            if (i == 5 && paginationTotal > 0) {
+            if (i == 5 && paginationTotal != 0 && !noRowsOverlay) {
                 logStep("Filter still not working after 6s — reloading page and re-searching");
                 driver.get(AppConstants.BASE_URL + "/issues");
                 pause(2000);
-                dismissBackdrops(); // dismiss app update alert after navigation
-                pause(3000);
+                waitAndDismissAppAlert();
+                pause(2000);
                 issuePage.searchIssues(searchTerm);
                 pause(2000);
             }
@@ -434,15 +447,17 @@ public class IssuePart2TestNG extends BaseTest {
 
         // Fallback: also check DOM row count
         int domRows = issuePage.getRowCount();
-        logStep("Pagination total: " + paginationTotal + ", DOM rows: " + domRows);
+        logStep("Pagination total: " + paginationTotal + ", DOM rows: " + domRows
+                + ", noRowsOverlay: " + noRowsOverlay);
 
-        Assert.assertTrue(paginationTotal == 0 || domRows == 0,
-                "Search with invalid term should return 0 results (pagination=" + paginationTotal + ", domRows=" + domRows + ")");
+        Assert.assertTrue(paginationTotal == 0 || domRows == 0 || noRowsOverlay,
+                "Search with invalid term should return 0 results (pagination=" + paginationTotal
+                + ", domRows=" + domRows + ", noRowsOverlay=" + noRowsOverlay + ")");
 
-        Boolean hasEmptyMsg = (Boolean) js().executeScript(
+        Boolean hasEmptyMsg = noRowsOverlay || Boolean.TRUE.equals(js().executeScript(
                 "var text = document.body.innerText;" +
                 "return text.includes('No rows') || text.includes('No issues') " +
-                "  || text.includes('No data') || text.includes('No results');");
+                "  || text.includes('No data') || text.includes('No results');"));
         logStep("Empty state message: " + hasEmptyMsg);
 
         issuePage.clearSearch();
@@ -1169,43 +1184,58 @@ public class IssuePart2TestNG extends BaseTest {
         issuePage.searchIssues(title);
         pause(2000);
 
-        // Check pagination text for the definitive filtered count.
-        // getRowCount() counts rendered DOM rows (viewport-dependent via virtualisation).
+        // Poll for search results: check pagination text, DataGrid overlay, and DOM rows.
         int paginationTotal = -1;
+        boolean noRowsOverlay = false;
         for (int i = 0; i < 10; i++) {
             pause(1000);
+
+            // Strategy 1: MUI Table Pagination text ("X–Y of Z") or DataGrid footer
             String pagText = (String) js().executeScript(
                     "var el = document.querySelector('[class*=\"MuiTablePagination-displayedRows\"]');" +
-                    "return el ? el.textContent : '';");
+                    "if (el) return el.textContent;" +
+                    "var footer = document.querySelector('[class*=\"MuiDataGrid-footerContainer\"]');" +
+                    "return footer ? footer.textContent : '';");
             logStep("Wait " + (i + 1) + ": pagination = '" + pagText + "'");
 
             if (pagText != null && pagText.contains("of")) {
                 String totalStr = pagText.substring(pagText.lastIndexOf("of") + 2).trim();
                 try { paginationTotal = Integer.parseInt(totalStr); } catch (Exception ignored) {}
             }
-            if (paginationTotal == 0) break;
 
-            if (i == 2 && paginationTotal > 0) {
+            // Strategy 2: DataGrid "No rows" overlay
+            noRowsOverlay = Boolean.TRUE.equals(js().executeScript(
+                    "var overlay = document.querySelector('[class*=\"MuiDataGrid-overlay\"]');" +
+                    "if (overlay && overlay.textContent.trim().length > 0) return true;" +
+                    "var text = document.body.innerText;" +
+                    "return text.includes('No rows') || text.includes('No issues')" +
+                    "  || text.includes('No data') || text.includes('No results');"));
+
+            if (paginationTotal == 0 || noRowsOverlay) break;
+
+            if (i == 2 && paginationTotal != 0 && !noRowsOverlay) {
                 logStep("Filter didn't trigger after 3s — retrying search");
                 issuePage.searchIssues(title);
                 pause(2000);
             }
 
             // Last resort at 6s: reload page and search fresh
-            if (i == 5 && paginationTotal > 0) {
+            if (i == 5 && paginationTotal != 0 && !noRowsOverlay) {
                 logStep("Filter still not working after 6s — reloading page and re-searching");
                 driver.get(AppConstants.BASE_URL + "/issues");
                 pause(2000);
-                dismissBackdrops(); // dismiss app update alert after navigation
-                pause(3000);
+                waitAndDismissAppAlert();
+                pause(2000);
                 issuePage.searchIssues(title);
                 pause(2000);
             }
         }
         int domRows = issuePage.getRowCount();
-        logStep("Search for deleted '" + title + "': pagination=" + paginationTotal + ", domRows=" + domRows);
-        Assert.assertTrue(paginationTotal == 0 || domRows == 0,
-                "Deleted issue should not appear in search (pagination=" + paginationTotal + ", domRows=" + domRows + ")");
+        logStep("Search for deleted '" + title + "': pagination=" + paginationTotal
+                + ", domRows=" + domRows + ", noRowsOverlay=" + noRowsOverlay);
+        Assert.assertTrue(paginationTotal == 0 || domRows == 0 || noRowsOverlay,
+                "Deleted issue should not appear in search (pagination=" + paginationTotal
+                + ", domRows=" + domRows + ", noRowsOverlay=" + noRowsOverlay + ")");
         issuePage.clearSearch();
         logStepWithScreenshot("Deleted search");
         ExtentReportManager.logPass("Deleted issue not in search: pagination=" + paginationTotal + ", domRows=" + domRows);

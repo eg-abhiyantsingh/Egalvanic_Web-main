@@ -49,6 +49,7 @@ import java.util.List;
  *   - TC_SS_055-056: Offline Sync continued (mobile-only)
  *
  * Architecture: Single browser session. Login once in @BeforeClass.
+ * Each test gets a fresh React state via about:blank navigation in @BeforeMethod.
  * Does NOT extend BaseTest because BaseTest auto-selects site in @BeforeClass —
  * here we need to control the site selection flow explicitly.
  *
@@ -152,9 +153,38 @@ public class SiteSelectionTestNG {
     @BeforeMethod
     public void testSetup() {
         testStartTime = System.currentTimeMillis();
-        // Use robust alert dismissal — the fire-and-forget JS can miss the alert
-        // if React hasn't rendered it yet (common in CI headless mode)
-        waitAndDismissAppAlert();
+
+        // ── Full React state reset between tests ──
+        // Navigate to about:blank to completely tear down the React app,
+        // then navigate back to the dashboard. This ensures each test starts
+        // with a fresh component tree — no lingering selected sites, open
+        // dropdowns, or stale state from the previous test.
+        try {
+            driver.get("about:blank");
+            pause(500);
+            driver.get(AppConstants.BASE_URL + "/dashboard");
+            pause(2000);
+
+            // Check if we're still logged in or need to re-login
+            boolean hasLoginForm = !driver.findElements(By.id("email")).isEmpty();
+            if (hasLoginForm) {
+                System.out.println("[SiteSelection] Session expired after reset — re-logging in");
+                loginAsAdmin();
+            }
+
+            waitAndDismissAppAlert();
+
+            // Wait for facility selector to be ready (up to 15s)
+            new FluentWait<>(driver)
+                    .withTimeout(Duration.ofSeconds(15))
+                    .pollingEvery(Duration.ofSeconds(1))
+                    .ignoring(NoSuchElementException.class)
+                    .until(d -> !d.findElements(FACILITY_INPUT).isEmpty());
+        } catch (Exception e) {
+            System.out.println("[SiteSelection] BeforeMethod reset failed: " + e.getMessage()
+                    + " — proceeding with current state");
+            waitAndDismissAppAlert();
+        }
     }
 
     @AfterMethod

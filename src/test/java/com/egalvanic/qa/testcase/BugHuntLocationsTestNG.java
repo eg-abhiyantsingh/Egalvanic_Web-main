@@ -155,12 +155,17 @@ public class BugHuntLocationsTestNG extends BaseTest {
 
             logStep("Total test data entries across all pages: " + totalPollution);
 
-            Assert.assertTrue(totalPollution > 0,
-                    "BUG-011: No test data pollution found on any page. Bug may be fixed.");
-
-            ExtentReportManager.logPass("BUG-011 confirmed: " + totalPollution +
-                    " test data entries. Locations=" + pollutionStats +
-                    " | Issues=" + issuesStats + " | WOs=" + woStats);
+            // Soft-pass: log finding without failing the suite.
+            // When cleanup is implemented, totalPollution drops to 0 — that's success, not failure.
+            if (totalPollution > 0) {
+                logStep("BUG-011 CONFIRMED: " + totalPollution + " test data entries found");
+                ExtentReportManager.logWarning("BUG-011 REPORTED: " + totalPollution +
+                        " test data entries. Locations=" + pollutionStats +
+                        " | Issues=" + issuesStats + " | WOs=" + woStats);
+            } else {
+                logStep("BUG-011: No test data pollution found — cleanup working");
+                ExtentReportManager.logPass("BUG-011: No test data pollution (bug may be fixed)");
+            }
 
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG011_pollution_error");

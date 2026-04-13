@@ -303,13 +303,29 @@ public class ConnectionPage {
 
     /**
      * Search for connections using the search bar.
+     *
+     * Uses JavaScript nativeInputValueSetter + dispatchEvent('input') instead of
+     * Selenium's .clear() + .sendKeys() because React MUI Quick Filter only
+     * responds to native DOM 'input' events — Selenium's approach changes the
+     * DOM value but doesn't trigger React's onChange handler.
      */
     public void searchConnections(String query) {
         try {
-            WebElement searchInput = driver.findElement(SEARCH_INPUT);
-            searchInput.clear();
-            searchInput.sendKeys(query);
-            pause(1500); // Wait for filter to apply
+            WebElement searchInput = wait.until(
+                    ExpectedConditions.visibilityOfElementLocated(SEARCH_INPUT));
+
+            // Use JS nativeSetter to set value AND fire React-compatible event
+            js.executeScript(
+                "var input = arguments[0];" +
+                "var nativeSetter = Object.getOwnPropertyDescriptor(" +
+                "  window.HTMLInputElement.prototype, 'value').set;" +
+                "nativeSetter.call(input, arguments[1]);" +
+                "input.dispatchEvent(new Event('input', { bubbles: true }));" +
+                "input.dispatchEvent(new Event('change', { bubbles: true }));",
+                searchInput, query);
+
+            pause(2000); // Wait for MUI Quick Filter to re-render grid
+            System.out.println("[ConnectionPage] Search applied: '" + query + "'");
         } catch (Exception e) {
             System.out.println("[ConnectionPage] Search input not found: " + e.getMessage());
         }

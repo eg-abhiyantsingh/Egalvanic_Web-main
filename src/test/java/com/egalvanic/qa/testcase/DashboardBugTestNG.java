@@ -183,15 +183,25 @@ public class DashboardBugTestNG extends BaseTest {
         logStep("Navigating to Site Overview dashboard");
 
         navigateTo(DASHBOARD_URL);
+
+        // Wait for React to finish rendering dashboard content (readyState fires before React hydration)
+        String pageText = "";
+        boolean hasAssets = false;
+        boolean hasIssues = false;
+        for (int attempt = 0; attempt < 10; attempt++) {
+            pageText = getPageText();
+            hasAssets = pageText.contains("Assets") || pageText.contains("assets");
+            hasIssues = pageText.contains("Issues") || pageText.contains("issues");
+            if (pageText.length() > 100 && (hasAssets || hasIssues)) break;
+            logStep("Waiting for dashboard content (attempt " + (attempt + 1) + ", length=" + pageText.length() + ")");
+            pause(2000);
+        }
+
         logStepWithScreenshot("Dashboard page loaded");
 
-        String pageText = getPageText();
         Assert.assertTrue(pageText.length() > 100,
-                "Dashboard should contain meaningful content, got empty or minimal page");
+                "Dashboard should contain meaningful content, got empty or minimal page (length=" + pageText.length() + ")");
 
-        // Verify key dashboard sections are present
-        boolean hasAssets = pageText.contains("Assets") || pageText.contains("assets");
-        boolean hasIssues = pageText.contains("Issues") || pageText.contains("issues");
         logStep("Dashboard contains Assets section: " + hasAssets);
         logStep("Dashboard contains Issues section: " + hasIssues);
 
@@ -1295,16 +1305,24 @@ public class DashboardBugTestNG extends BaseTest {
         logStep("Navigating to Condition Assessment (PM Readiness) page");
 
         navigateTo(CONDITION_URL);
-        pause(2000);
 
-        String pageText = getPageText();
+        // Poll for React-rendered content (readyState fires before React hydration)
+        String pageText = "";
+        boolean hasContent = false;
+        for (int attempt = 0; attempt < 10; attempt++) {
+            pageText = getPageText();
+            hasContent = pageText.contains("Condition") || pageText.contains("Assessment")
+                    || pageText.contains("PM") || pageText.contains("Readiness")
+                    || pageText.contains("condition") || pageText.contains("assessment");
+            if (hasContent) break;
+            logStep("Waiting for Condition Assessment content (attempt " + (attempt + 1) + ")");
+            pause(2000);
+        }
+
         logStepWithScreenshot("Condition Assessment page");
 
-        boolean hasContent = pageText.contains("Condition") || pageText.contains("Assessment")
-                || pageText.contains("PM") || pageText.contains("Readiness")
-                || pageText.contains("condition") || pageText.contains("assessment");
         Assert.assertTrue(hasContent,
-                "Condition Assessment page should contain relevant content");
+                "Condition Assessment page should contain relevant content (text length=" + pageText.length() + ")");
         logStep("PASS: Condition Assessment page loaded");
     }
 

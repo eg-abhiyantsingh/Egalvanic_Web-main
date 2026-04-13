@@ -4,6 +4,7 @@ import com.egalvanic.qa.constants.AppConstants;
 import com.egalvanic.qa.utils.ExtentReportManager;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -791,15 +792,44 @@ public class AssetPart1TestNG extends BaseTest {
             logStep("Subtype disabled before class selection: " + disabledBefore);
         }
 
-        // Select a class
+        // Select a class — use sendKeys to trigger MUI Autocomplete dropdown population
         WebElement classInput = driver.findElement(ASSET_CLASS_INPUT);
-        setReactValue(classInput, "Circuit Breaker");
+        classInput.click();
         pause(300);
-        selectFirstDropdownOption();
+        classInput.sendKeys(Keys.chord(Keys.CONTROL, "a"));
+        classInput.sendKeys(Keys.DELETE);
+        pause(200);
+        classInput.sendKeys("Circuit Breaker");
+        pause(1000);
+
+        // Wait for dropdown options to appear (up to 5s)
+        boolean optionFound = false;
+        for (int i = 0; i < 10; i++) {
+            List<WebElement> opts = driver.findElements(By.xpath("//li[@role='option']"));
+            if (!opts.isEmpty()) {
+                JavascriptExecutor jsExec = (JavascriptExecutor) driver;
+                jsExec.executeScript("arguments[0].click();", opts.get(0));
+                optionFound = true;
+                logStep("Selected class option: " + opts.get(0).getText());
+                break;
+            }
+            pause(500);
+        }
+        if (!optionFound) {
+            // Fallback: try nativeSetter + selectFirstDropdownOption
+            setReactValue(classInput, "Circuit Breaker");
+            pause(500);
+            selectFirstDropdownOption();
+        }
         pause(1000);
 
         // Check subtype state after class selection
         subtypeInputs = driver.findElements(ASSET_SUBTYPE_INPUT);
+        if (subtypeInputs.isEmpty()) {
+            // Wait a bit more for subtype to appear after class selection
+            pause(2000);
+            subtypeInputs = driver.findElements(ASSET_SUBTYPE_INPUT);
+        }
         Assert.assertFalse(subtypeInputs.isEmpty(),
                 "Subtype field not found after class selection");
         boolean enabledAfter = subtypeInputs.get(0).isEnabled();

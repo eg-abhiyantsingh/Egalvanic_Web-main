@@ -1651,10 +1651,25 @@ public class IssuePage {
 
     /**
      * Search for issues by typing in the search input.
+     * Cascading strategy: tries DataGrid-scoped input first, then general SEARCH_INPUT.
      */
     public void searchIssues(String query) {
         try {
-            WebElement searchInput = wait.until(ExpectedConditions.visibilityOfElementLocated(SEARCH_INPUT));
+            // Find the correct search input — prefer DataGrid Quick Filter over global search
+            WebElement searchInput = null;
+            try {
+                searchInput = driver.findElement(By.cssSelector(
+                        "[class*='MuiDataGrid'] input[type='text'],"
+                        + " [class*='MuiDataGrid'] input[type='search'],"
+                        + " [class*='QuickFilter'] input,"
+                        + " [class*='MuiDataGrid-toolbarQuickFilter'] input"));
+                System.out.println("[IssuePage] Found DataGrid-scoped search input");
+            } catch (Exception ignored) {}
+
+            if (searchInput == null) {
+                searchInput = wait.until(ExpectedConditions.visibilityOfElementLocated(SEARCH_INPUT));
+                System.out.println("[IssuePage] Using general SEARCH_INPUT locator");
+            }
 
             // Primary: sendKeys (real keyboard events — always triggers MUI Quick Filter)
             searchInput.click();

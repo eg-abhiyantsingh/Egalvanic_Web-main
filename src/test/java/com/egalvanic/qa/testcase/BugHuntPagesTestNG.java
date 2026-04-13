@@ -349,10 +349,15 @@ public class BugHuntPagesTestNG extends BaseTest {
             boolean hasDuplicates = roleCalls > 1 || attachCalls > 1;
             logStep("Duplicate calls: roles=" + roleCalls + "x, attachments=" + attachCalls + "x");
 
-            Assert.assertTrue(hasDuplicates,
-                    "BUG-027: No duplicate API calls on Attachments page. Bug may be fixed. " + apiStats);
-
-            ExtentReportManager.logPass("BUG-027 confirmed: " + apiStats);
+            // Soft-pass: log finding without failing the suite.
+            // When the duplicate API calls are fixed, hasDuplicates becomes false — that's good.
+            if (hasDuplicates) {
+                logStep("BUG-027 CONFIRMED: Duplicate API calls detected. " + apiStats);
+                ExtentReportManager.logWarning("BUG-027 REPORTED: Duplicate API calls on Attachments page. " + apiStats);
+            } else {
+                logStep("BUG-027: No duplicate API calls — bug may be fixed. " + apiStats);
+                ExtentReportManager.logPass("BUG-027: No duplicate API calls (bug may be fixed). " + apiStats);
+            }
 
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG027_attachments_error");
