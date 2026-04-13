@@ -195,7 +195,9 @@ public class TaskTestNG extends BaseTest {
         if (!url.contains("/tasks") || url.matches(".*/tasks/[a-f0-9-]+.*")) {
             // Navigate to task list (not a detail page)
             driver.get(TASKS_URL);
-            pause(6000); // Headless Chrome SPA hydration needs more than 4s
+            pause(3000);
+            waitAndDismissAppAlert(); // driver.get() triggers "app update" alert in CI
+            pause(3000);
         } else {
             // Already on tasks list — quick check for grid
             pause(1500);
@@ -205,7 +207,9 @@ public class TaskTestNG extends BaseTest {
         if (driver.findElements(GRID_ROWS).isEmpty()) {
             logStep("Grid rows empty after wait — reloading page");
             driver.get(TASKS_URL);
-            pause(6000);
+            pause(3000);
+            waitAndDismissAppAlert(); // second navigation also triggers alert
+            pause(3000);
             waitForGrid();
         }
         // Wait for Create Task button (renders after grid in SPA)
@@ -1788,7 +1792,7 @@ public class TaskTestNG extends BaseTest {
         logStep("Verifying all expected grid column headers");
 
         // Ensure we're on list view with grid loaded
-        dismissBackdrops();
+        waitAndDismissAppAlert();
         waitForGrid();
         // Wait for column headers to render
         try {
@@ -1798,7 +1802,7 @@ public class TaskTestNG extends BaseTest {
             logStep("Column headers not found — grid may need reload");
             driver.get(TASKS_URL);
             pause(2000);
-            dismissBackdrops();
+            waitAndDismissAppAlert(); // driver.get() re-triggers alert
             pause(3000);
             waitForGrid();
         }
@@ -1808,7 +1812,7 @@ public class TaskTestNG extends BaseTest {
             logStep("Column headers still empty — attempting one more reload");
             driver.get(TASKS_URL);
             pause(2000);
-            dismissBackdrops();
+            waitAndDismissAppAlert(); // driver.get() re-triggers alert
             pause(3000);
             waitForGrid();
             try {
@@ -1837,14 +1841,14 @@ public class TaskTestNG extends BaseTest {
         logStep("Checking Created date column");
 
         // Ensure grid is loaded with data — navigate fresh if needed
-        dismissBackdrops();
+        waitAndDismissAppAlert();
         waitForGrid();
         List<WebElement> rows = driver.findElements(GRID_ROWS);
         if (rows.isEmpty()) {
             logStep("Grid rows empty — reloading page");
             driver.get(TASKS_URL);
             pause(2000);
-            dismissBackdrops();
+            waitAndDismissAppAlert(); // driver.get() re-triggers alert
             pause(3000);
             waitForGrid();
             rows = driver.findElements(GRID_ROWS);

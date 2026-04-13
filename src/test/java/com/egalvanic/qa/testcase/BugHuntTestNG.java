@@ -159,15 +159,38 @@ public class BugHuntTestNG {
 
     private void navigateToLogin() {
         driver.get(AppConstants.BASE_URL);
+        // Dismiss "app update" alert that appears on every driver.get() in CI
+        dismissAppAlert();
         new WebDriverWait(driver, Duration.ofSeconds(15))
                 .until(d -> {
                     try {
+                        // Keep dismissing alert each poll — it may render after page load
+                        dismissAppAlert();
                         return d.findElement(EMAIL_INPUT).isDisplayed()
                                 || d.findElement(By.tagName("body")).getText().contains("Error");
                     } catch (Exception e) {
                         return false;
                     }
                 });
+    }
+
+    /**
+     * Dismiss the "A new app update is available" alert overlay.
+     * This alert appears on every driver.get() navigation and blocks element interaction.
+     */
+    private void dismissAppAlert() {
+        try {
+            js.executeScript(
+                "var btns = document.querySelectorAll('button');" +
+                "for (var i = 0; i < btns.length; i++) {" +
+                "  var txt = btns[i].textContent.trim();" +
+                "  if (txt === 'DISMISS' || txt === 'Dismiss') { btns[i].click(); break; }" +
+                "};" +
+                "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"]').forEach(" +
+                "  function(b) { b.style.display = 'none'; b.style.pointerEvents = 'none'; }" +
+                ");"
+            );
+        } catch (Exception ignored) {}
     }
 
     private void logStep(String msg) {
