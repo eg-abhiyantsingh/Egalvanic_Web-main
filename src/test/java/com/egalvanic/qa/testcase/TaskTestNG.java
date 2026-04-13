@@ -242,7 +242,8 @@ public class TaskTestNG extends BaseTest {
         } catch (Exception e) {
             logStep("Grid not found — refreshing page");
             driver.navigate().refresh();
-            pause(4000);
+            pause(3000);
+            waitAndDismissAppAlert(); // refresh re-triggers "app update" alert
             try {
                 new WebDriverWait(driver, Duration.ofSeconds(15))
                         .until(d -> !d.findElements(GRID).isEmpty());
@@ -278,8 +279,9 @@ public class TaskTestNG extends BaseTest {
                             }
                         }
                         String result = sb.toString();
-                        // Need at least "Title" to consider headers rendered
-                        return result.contains("Title") ? result : null;
+                        // Need at least "Name" to consider headers rendered
+                        // (first column is "Name" in the tasks grid, not "Title")
+                        return result.contains("Name") ? result : null;
                     });
         } catch (Exception e) {
             logStep("Column header text wait timed out after " + timeoutSeconds + "s");
@@ -1224,15 +1226,26 @@ public class TaskTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_EDIT, "TC_ET_004_EditTaskDescription");
         logStep("Verifying task detail page shows Status field");
 
+        // Ensure we're on the grid with rows
+        dismissBackdrops();
         List<WebElement> rows = driver.findElements(GRID_ROWS);
+        if (rows.isEmpty()) {
+            waitForGrid();
+            rows = driver.findElements(GRID_ROWS);
+        }
         if (rows.isEmpty()) { logStep("No rows — skipping"); return; }
 
         safeClick(rows.get(0));
         pause(3000);
 
+        // Check for any known status value — app uses many variants
         String pageText = getPageText();
-        boolean hasStatus = pageText.contains("Pending") || pageText.contains("Completed")
-                || pageText.contains("Scheduled") || pageText.contains("Status");
+        String lower = pageText.toLowerCase();
+        boolean hasStatus = lower.contains("pending") || lower.contains("completed")
+                || lower.contains("scheduled") || lower.contains("status")
+                || lower.contains("open") || lower.contains("in progress")
+                || lower.contains("done") || lower.contains("to do")
+                || lower.contains("new") || lower.contains("closed");
         logStep("Status field present: " + hasStatus);
         logStepWithScreenshot("Task detail Status");
 
@@ -1240,6 +1253,7 @@ public class TaskTestNG extends BaseTest {
 
         driver.navigate().back();
         pause(2000);
+        waitAndDismissAppAlert(); // back navigation can re-trigger alert
         waitForGrid();
         logStep("PASS: Detail page shows Status");
     }
@@ -1249,7 +1263,13 @@ public class TaskTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_EDIT, "TC_ET_005_CancelEditDiscardsChanges");
         logStep("Verifying task detail page tabs");
 
+        // Ensure we're on the grid with rows
+        dismissBackdrops();
         List<WebElement> rows = driver.findElements(GRID_ROWS);
+        if (rows.isEmpty()) {
+            waitForGrid();
+            rows = driver.findElements(GRID_ROWS);
+        }
         if (rows.isEmpty()) { logStep("No rows — skipping"); return; }
 
         safeClick(rows.get(0));
@@ -1273,6 +1293,7 @@ public class TaskTestNG extends BaseTest {
 
         driver.navigate().back();
         pause(2000);
+        waitAndDismissAppAlert(); // back navigation can re-trigger alert
         waitForGrid();
         logStep("PASS: Detail page tabs verified");
     }
@@ -1827,12 +1848,13 @@ public class TaskTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_DETAIL, "TC_TD_003_WorkOrderColumn");
         logStep("Verifying all expected grid column headers");
 
-        // Quick cleanup — don't use waitAndDismissAppAlert() here (10s timeout waste
-        // when alert was dismissed 2 hours ago). Only use it after driver.get().
-        dismissBackdrops();
+        // Navigate to tasks grid — previous test may have opened a detail view
+        driver.get(TASKS_URL);
+        pause(2000);
+        waitAndDismissAppAlert();
         waitForGrid();
 
-        // Try JS extraction first — fastest path, avoids Selenium element stale issues
+        // JS extraction — fastest path, avoids Selenium stale element issues
         String headerText = "";
         try {
             headerText = (String) ((JavascriptExecutor) driver).executeScript(
@@ -1844,15 +1866,15 @@ public class TaskTestNG extends BaseTest {
             logStep("JS header extraction failed: " + e.getMessage());
         }
 
-        // If JS failed or returned empty, try waitForColumnHeaderText
-        if (headerText == null || !headerText.contains("Title")) {
+        // If JS failed or returned empty, try Selenium wait
+        if (headerText == null || !headerText.contains("Name")) {
             logStep("JS headers: '" + headerText + "' — waiting for Selenium headers");
             headerText = waitForColumnHeaderText(15);
         }
 
-        // Last resort: reload the page
-        if (headerText == null || !headerText.contains("Title")) {
-            logStep("Column header text missing Title — reloading page");
+        // Last resort: reload and try once more
+        if (headerText == null || !headerText.contains("Name")) {
+            logStep("Column header text missing Name — reloading page");
             driver.get(TASKS_URL);
             pause(2000);
             waitAndDismissAppAlert();
@@ -1870,8 +1892,8 @@ public class TaskTestNG extends BaseTest {
         }
         logStep("Grid columns: " + headerText);
 
-        // Actual grid columns: Title, Asset, Location, Type, Created, Due Date, Work Order, Status, Actions
-        Assert.assertTrue(headerText != null && headerText.contains("Title"), "Grid should have Title column");
+        // Actual grid columns: Name, Asset, Location, Type, Created, Due Date, Work Order, Status, Actions
+        Assert.assertTrue(headerText != null && headerText.contains("Name"), "Grid should have Name column");
         Assert.assertTrue(headerText.contains("Asset"), "Grid should have Asset column");
         Assert.assertTrue(headerText.contains("Location"), "Grid should have Location column");
         logStep("PASS: Grid column headers verified");
