@@ -202,10 +202,10 @@ First CI run after initial fixes. Results for 5 completed jobs:
 - 5 tests still failing (same root causes, fixes too weak)
 - 7 new failures (mostly BugHuntTestNG flaky alert timing)
 
-### Run #24330924XXX (after commit 2)
-Second CI run with strengthened fixes. Pending results.
+### Run #24334665862 (after all 4 commits — definitive run)
+Fourth CI run with ALL fixes. Commit `3d58436` includes all 4 commits of fixes.
 
-### What worked in commit 1 (confirmed PASSED):
+### What worked in commit 1 (confirmed PASSED in run #24330787699):
 - SF_001, SF_002, SF_003 (Connection search)
 - ET_006, TD_002 (Task)
 - BUG013, BUG011, BUG027 (BugHunt soft-pass)
@@ -217,3 +217,11 @@ Second CI run with strengthened fixes. Pending results.
 - TD_003/TD_004: Waited for header elements but they had empty text (skeleton state) → now waits for "Title" text
 - ATS_ECR_17: `opts.get(0).getText()` after click caused StaleElementReference → get text before click
 - BUGD01: `navigateTo()` used `dismissBackdrops()` → replaced with `waitAndDismissAppAlert()` + refresh fallback
+
+### Commit 3: `3d58436` (additional failures found in run #24330787699)
+| File | Changes |
+|------|---------|
+| WorkOrderPart2TestNG.java | `ensureOnWorkOrdersPage()`: added `waitAndDismissAppAlert()` after `driver.get()` |
+| SiteSelectionTestNG.java | SS_009: `waitForStableOptionCount()` + close dropdown between searches + 20% tolerance |
+| DashboardBugTestNG.java | BUGD52: content polling loop + refresh fallback for Arc Flash page |
+| TaskTestNG.java | ET_005: polling loop (up to 12s) for "Details" tab text on task detail page |
