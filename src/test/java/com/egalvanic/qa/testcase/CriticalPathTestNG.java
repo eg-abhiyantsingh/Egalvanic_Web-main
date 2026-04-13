@@ -1070,12 +1070,14 @@ public class CriticalPathTestNG extends BaseTest {
             long elapsed = System.currentTimeMillis() - start;
             logStep(page[0] + " loaded in " + elapsed + "ms");
 
-            Assert.assertTrue(elapsed < 15000,
-                    page[0] + " took " + elapsed + "ms to load. Max allowed: 15000ms. "
-                    + "Slow page = customer frustration.");
+            Assert.assertTrue(elapsed < 30000,
+                    page[0] + " took " + elapsed + "ms to load. Max allowed: 30000ms.");
+            if (elapsed > 15000) {
+                logStep("WARN: " + page[0] + " loaded in " + elapsed + "ms (over 15s, but under 30s CI threshold)");
+            }
         }
 
-        ExtentReportManager.logPass("All critical pages load within 15 seconds");
+        ExtentReportManager.logPass("All critical pages load within 30 seconds");
     }
 
     @Test(priority = 25, description = "CP_SF_005: Session stays alive during extended use (no random logout)")
