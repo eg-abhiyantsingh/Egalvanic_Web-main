@@ -1255,9 +1255,17 @@ public class TaskTestNG extends BaseTest {
         safeClick(rows.get(0));
         pause(3000);
 
-        String pageText = getPageText();
-        boolean hasDetails = pageText.contains("Details");
-        boolean hasPhotos = pageText.contains("Photos");
+        // Poll for detail page content — React SPA renders tabs asynchronously
+        String pageText = "";
+        boolean hasDetails = false;
+        boolean hasPhotos = false;
+        for (int i = 0; i < 8; i++) {
+            pageText = getPageText();
+            hasDetails = pageText.contains("Details");
+            hasPhotos = pageText.contains("Photos");
+            if (hasDetails) break;
+            pause(1500);
+        }
         logStep("Tabs — Details: " + hasDetails + ", Photos: " + hasPhotos);
         logStepWithScreenshot("Task detail tabs");
 

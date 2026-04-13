@@ -140,7 +140,9 @@ public class WorkOrderPart2TestNG extends BaseTest {
         String url = driver.getCurrentUrl();
         if (!url.contains("/sessions") || url.matches(".*/sessions/[a-f0-9-]+.*")) {
             driver.get(WO_URL);
-            pause(4000);
+            pause(2000);
+            waitAndDismissAppAlert(); // driver.get() triggers alert in CI
+            pause(2000);
         } else {
             pause(1000);
         }
@@ -148,7 +150,9 @@ public class WorkOrderPart2TestNG extends BaseTest {
         if (driver.findElements(GRID_ROWS).isEmpty()) {
             logStep("Grid rows empty after wait — reloading page");
             driver.get(WO_URL);
-            pause(4000);
+            pause(2000);
+            waitAndDismissAppAlert();
+            pause(2000);
             waitForGrid();
         }
     }

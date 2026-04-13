@@ -1212,9 +1212,21 @@ public class DashboardBugTestNG extends BaseTest {
         logStep("Checking asset class breakdown on Arc Flash page");
 
         navigateTo(ARC_FLASH_URL);
-        pause(2000);
 
-        String pageText = getPageText();
+        // Poll for content — React hydration can take time in CI
+        String pageText = "";
+        for (int attempt = 0; attempt < 10; attempt++) {
+            pageText = getPageText();
+            if (pageText.length() > 100) break;
+            logStep("Waiting for Arc Flash content (attempt " + (attempt + 1) + ", length=" + pageText.length() + ")");
+            if (attempt == 4 && pageText.length() < 50) {
+                logStep("Content minimal — refreshing page");
+                driver.navigate().refresh();
+                pause(2000);
+                waitAndDismissAppAlert();
+            }
+            pause(2000);
+        }
 
         // Known asset classes that should appear
         String[] assetClasses = {"Switchboard", "Panelboard", "PDU", "MCC", "ATS", "Transformer", "TRF"};
@@ -1226,7 +1238,7 @@ public class DashboardBugTestNG extends BaseTest {
             }
         }
 
-        logStep("Found " + found + " asset classes on Arc Flash page");
+        logStep("Found " + found + " asset classes on Arc Flash page (page length: " + pageText.length() + ")");
         logStepWithScreenshot("Arc Flash asset class breakdown");
 
         if (found == 0) {
