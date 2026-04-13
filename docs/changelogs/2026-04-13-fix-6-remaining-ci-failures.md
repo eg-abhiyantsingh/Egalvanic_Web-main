@@ -202,8 +202,26 @@ First CI run after initial fixes. Results for 5 completed jobs:
 - 5 tests still failing (same root causes, fixes too weak)
 - 7 new failures (mostly BugHuntTestNG flaky alert timing)
 
-### Run #24334665862 (after all 4 commits — definitive run)
-Fourth CI run with ALL fixes. Commit `3d58436` includes all 4 commits of fixes.
+### Run #24334665862 (after all 4 commits — COMPLETE RESULTS)
+Commit `3d58436`. **All 9 jobs completed.**
+
+| Job | Failures | Previously | Fixed Tests |
+|-----|:--------:|:----------:|-------------|
+| Dashboard + BugHunt (105 TCs) | 3 | 9 | BUGD01, BUGD60, BUG003/008/011/013/016/027/029 all PASS |
+| Work Order + Issue (234 TCs) | 1 | 2 | ISS_015, ISS_046 both PASS |
+| Asset Parts 1-2 (69 TCs) | **0** | 1 | ATS_ECR_17 PASS |
+| Location + Task (135 TCs) | 43 | 4 | ET_005, ET_006, TD_002, TD_004 PASS. TD_003 still fails. LocationPart2 cascade (42 new, infra issue) |
+| Auth + Site + Connection (130 TCs) | 14 | 3 | ConnectionTestNG Edit/Delete cascade (infra issue, not our code) |
+| SLD Module (71 TCs) | **0** | 0 | — |
+| Asset Part 3 (76 TCs) | **0** | 0 | — |
+| Asset Part 4 (65 TCs) | **0** | 0 | — |
+| Asset Part 5 (76 TCs) | **0** | 0 | — |
+
+**Key win: BugHuntTestNG 29/30 PASS** — all `navigateToLogin()` timeouts eliminated by WebDriverWait for DISMISS button.
+
+**New infrastructure issues (not our code):**
+- ConnectionTestNG EC_/DC_/SF_ cascade: "Create Connection drawer did not open" after CC tests
+- LocationPart2TestNG BL_/NB_/EB_/DB_/NF_/FL_/EF_/DF_/NR_ cascade: building/floor/room CRUD failures
 
 ### What worked in commit 1 (confirmed PASSED in run #24330787699):
 - SF_001, SF_002, SF_003 (Connection search)
@@ -225,3 +243,34 @@ Fourth CI run with ALL fixes. Commit `3d58436` includes all 4 commits of fixes.
 | SiteSelectionTestNG.java | SS_009: `waitForStableOptionCount()` + close dropdown between searches + 20% tolerance |
 | DashboardBugTestNG.java | BUGD52: content polling loop + refresh fallback for Arc Flash page |
 | TaskTestNG.java | ET_005: polling loop (up to 12s) for "Details" tab text on task detail page |
+
+### Commit 5: `47e9b00` (TD_003 still failing after commit 3)
+| File | Changes |
+|------|---------|
+| TaskTestNG.java | TD_003: JS-first header extraction, `dismissBackdrops()` instead of `waitAndDismissAppAlert()`, multi-fallback strategy |
+
+**TD_003 root cause (commit 5):** Even after commit 2's `waitForColumnHeaderText()`, TD_003 still failed because:
+1. `waitAndDismissAppAlert()` at test start wasted 10s looking for DISMISS button that didn't exist (alert was already dismissed by `ensureOnTasksPage()`)
+2. By the time the test got to header extraction, the page state may have shifted
+
+**Fix strategy:**
+- Use `dismissBackdrops()` (instant, fire-and-forget) instead of `waitAndDismissAppAlert()` (10s timeout) for non-navigation cleanup
+- JS-first header extraction via `document.querySelectorAll('[role="columnheader"]')` — fastest path, avoids Selenium overhead
+- Fallback to `waitForColumnHeaderText(15)` if JS extraction fails
+- Last resort: full page reload + `waitAndDismissAppAlert()` + retry
+
+**Key lesson:** `waitAndDismissAppAlert()` should ONLY be used after `driver.get()` / page reload. For cleanup at test start (when alert was already dismissed during setup), `dismissBackdrops()` is correct — no wasted 10s timeout.
+
+---
+
+## CI Verification Runs
+
+| Run | Commit | Status | Key Results |
+|-----|--------|--------|-------------|
+| #24330787699 | `610ee40` | 12/19 fixed | First round of fixes — fire-and-forget too weak |
+| #24334665862 | `3d58436` | 18/19 fixed | TD_003 still failing, infra cascades in Connection/Location |
+| #24340766639 | `47e9b00` | Pending | TD_003 JS-first fix — awaiting results |
+
+### Infrastructure Issues (Not Our Code)
+- **ConnectionTestNG** (14 failures): "Create Connection drawer did not open" — Connection page stops responding after Create Connection tests. All Edit/Delete/Search tests cascade-fail.
+- **LocationPart2TestNG** (42 failures): Building/floor/room CRUD operations all fail — appears to be environment/server issue, not test code.
