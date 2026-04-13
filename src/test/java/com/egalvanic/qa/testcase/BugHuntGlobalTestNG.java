@@ -475,11 +475,11 @@ public class BugHuntGlobalTestNG extends BaseTest {
             logStep("Leaks firstname: " + hasName);
             logStepWithScreenshot("Beamer data leak check");
 
-            Assert.assertTrue(hasUserRole || hasCompany,
-                    "BUG-018: Beamer URL no longer contains user data. Bug may be fixed.");
+            Assert.assertFalse(hasUserRole || hasCompany || hasName,
+                    "BUG-018 REGRESSION: Beamer URL is again leaking user data in URL params" +
+                    " (role=" + hasUserRole + ", company=" + hasCompany + ", name=" + hasName + ")");
 
-            ExtentReportManager.logPass("BUG-018 confirmed: Beamer URL exposes " +
-                    "role=" + hasUserRole + ", company=" + hasCompany + ", name=" + hasName);
+            ExtentReportManager.logPass("BUG-018 verified FIXED: Beamer URL no longer exposes user data");
 
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG018_beamer_error");
