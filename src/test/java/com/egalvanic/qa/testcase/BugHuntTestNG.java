@@ -159,13 +159,12 @@ public class BugHuntTestNG {
 
     private void navigateToLogin() {
         driver.get(AppConstants.BASE_URL);
-        // Dismiss "app update" alert that appears on every driver.get() in CI
-        dismissAppAlert();
+        // Wait for and dismiss "app update" alert that appears on every driver.get() in CI.
+        // Must use WebDriverWait (not fire-and-forget JS) because alert renders asynchronously.
+        waitAndDismissAppAlert();
         new WebDriverWait(driver, Duration.ofSeconds(15))
                 .until(d -> {
                     try {
-                        // Keep dismissing alert each poll — it may render after page load
-                        dismissAppAlert();
                         return d.findElement(EMAIL_INPUT).isDisplayed()
                                 || d.findElement(By.tagName("body")).getText().contains("Error");
                     } catch (Exception e) {
@@ -175,18 +174,41 @@ public class BugHuntTestNG {
     }
 
     /**
-     * Dismiss the "A new app update is available" alert overlay.
-     * This alert appears on every driver.get() navigation and blocks element interaction.
+     * Wait up to 10s for the "app update" DISMISS button to appear, click it,
+     * then remove any residual MUI backdrops. Mirrors BaseTest.waitAndDismissAppAlert().
+     * BugHuntTestNG has its own driver (doesn't extend BaseTest), so needs its own copy.
      */
-    private void dismissAppAlert() {
+    private void waitAndDismissAppAlert() {
+        // Step 1: WebDriverWait for DISMISS button — catches late-rendering alerts
+        try {
+            WebElement dismissBtn = new WebDriverWait(driver, Duration.ofSeconds(10))
+                    .until(d -> {
+                        try {
+                            for (WebElement btn : d.findElements(By.tagName("button"))) {
+                                String txt = btn.getText().trim();
+                                if ("DISMISS".equals(txt) || "Dismiss".equals(txt)) {
+                                    return btn;
+                                }
+                            }
+                        } catch (Exception ignored) {}
+                        return null;
+                    });
+            if (dismissBtn != null) {
+                dismissBtn.click();
+                pause(1000); // let React re-render after alert dismissal
+            }
+        } catch (Exception e) {
+            // No alert appeared within 10s — normal on some navigations
+        }
+        // Step 2: Fire-and-forget cleanup for residual backdrops
         try {
             js.executeScript(
-                "var btns = document.querySelectorAll('button');" +
-                "for (var i = 0; i < btns.length; i++) {" +
-                "  var txt = btns[i].textContent.trim();" +
-                "  if (txt === 'DISMISS' || txt === 'Dismiss') { btns[i].click(); break; }" +
-                "};" +
-                "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"]').forEach(" +
+                "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"], .MuiModal-backdrop').forEach(" +
+                "  function(b) { b.style.display = 'none'; b.style.pointerEvents = 'none'; }" +
+                ");" +
+                "var beamer = document.getElementById('beamerOverlay');" +
+                "if (beamer) { beamer.style.display = 'none'; }" +
+                "document.querySelectorAll('[id^=\"beamer\"]').forEach(" +
                 "  function(b) { b.style.display = 'none'; b.style.pointerEvents = 'none'; }" +
                 ");"
             );

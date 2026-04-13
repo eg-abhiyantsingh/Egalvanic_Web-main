@@ -110,8 +110,7 @@ public class DashboardBugTestNG extends BaseTest {
     private void navigateTo(String url) {
         driver.get(url);
         pause(2000);
-        dismissBackdrops(); // dismiss app update alert after navigation
-        pause(1000);
+        waitAndDismissAppAlert(); // must use full wait — alert renders asynchronously in CI
         // Wait for page content to stabilize
         new WebDriverWait(driver, Duration.ofSeconds(AppConstants.DEFAULT_TIMEOUT))
                 .until(d -> {
@@ -188,12 +187,19 @@ public class DashboardBugTestNG extends BaseTest {
         String pageText = "";
         boolean hasAssets = false;
         boolean hasIssues = false;
-        for (int attempt = 0; attempt < 10; attempt++) {
+        for (int attempt = 0; attempt < 15; attempt++) {
             pageText = getPageText();
             hasAssets = pageText.contains("Assets") || pageText.contains("assets");
             hasIssues = pageText.contains("Issues") || pageText.contains("issues");
             if (pageText.length() > 100 && (hasAssets || hasIssues)) break;
             logStep("Waiting for dashboard content (attempt " + (attempt + 1) + ", length=" + pageText.length() + ")");
+            // At attempt 5, try refreshing the page — CI sometimes gets a stale response
+            if (attempt == 5 && pageText.length() < 50) {
+                logStep("Content still minimal — refreshing page");
+                driver.navigate().refresh();
+                pause(2000);
+                waitAndDismissAppAlert();
+            }
             pause(2000);
         }
 

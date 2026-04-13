@@ -259,6 +259,34 @@ public class TaskTestNG extends BaseTest {
         }
     }
 
+    /**
+     * Wait for column headers to render with non-empty text.
+     * MUI DataGrid renders skeleton headers first (empty text), then populates.
+     * Returns concatenated header text, or empty string on timeout.
+     */
+    private String waitForColumnHeaderText(int timeoutSeconds) {
+        try {
+            return new WebDriverWait(driver, Duration.ofSeconds(timeoutSeconds))
+                    .until(d -> {
+                        List<WebElement> headers = d.findElements(COLUMN_HEADERS);
+                        if (headers.isEmpty()) return null;
+                        StringBuilder sb = new StringBuilder();
+                        for (WebElement h : headers) {
+                            String txt = h.getText();
+                            if (txt != null && !txt.isEmpty()) {
+                                sb.append(txt).append(" | ");
+                            }
+                        }
+                        String result = sb.toString();
+                        // Need at least "Title" to consider headers rendered
+                        return result.contains("Title") ? result : null;
+                    });
+        } catch (Exception e) {
+            logStep("Column header text wait timed out after " + timeoutSeconds + "s");
+            return "";
+        }
+    }
+
     private void dismissOpenDrawer() {
         try {
             // If we navigated to a detail page (/tasks/{uuid}), go back to list
@@ -1794,37 +1822,33 @@ public class TaskTestNG extends BaseTest {
         // Ensure we're on list view with grid loaded
         waitAndDismissAppAlert();
         waitForGrid();
-        // Wait for column headers to render
-        try {
-            new WebDriverWait(driver, Duration.ofSeconds(10))
-                    .until(d -> !d.findElements(COLUMN_HEADERS).isEmpty());
-        } catch (Exception e) {
-            logStep("Column headers not found — grid may need reload");
+        // Wait for column headers to render WITH TEXT (not just element presence).
+        // MUI DataGrid renders skeleton headers first with empty text, then populates.
+        String headerText = waitForColumnHeaderText(20);
+        if (headerText.isEmpty()) {
+            logStep("Column header text empty — reloading page");
             driver.get(TASKS_URL);
             pause(2000);
-            waitAndDismissAppAlert(); // driver.get() re-triggers alert
+            waitAndDismissAppAlert();
             pause(3000);
             waitForGrid();
+            headerText = waitForColumnHeaderText(15);
         }
-
-        List<WebElement> headers = driver.findElements(COLUMN_HEADERS);
-        if (headers.isEmpty()) {
-            logStep("Column headers still empty — attempting one more reload");
-            driver.get(TASKS_URL);
-            pause(2000);
-            waitAndDismissAppAlert(); // driver.get() re-triggers alert
-            pause(3000);
-            waitForGrid();
+        if (headerText.isEmpty()) {
+            logStep("Still empty after reload — trying JS extraction");
             try {
-                new WebDriverWait(driver, Duration.ofSeconds(10))
-                        .until(d -> !d.findElements(COLUMN_HEADERS).isEmpty());
-            } catch (Exception ignored) {}
-            headers = driver.findElements(COLUMN_HEADERS);
-        }
-
-        String headerText = "";
-        for (WebElement h : headers) {
-            headerText += h.getText() + " | ";
+                String jsHeaders = (String) ((JavascriptExecutor) driver).executeScript(
+                    "var headers = document.querySelectorAll('[role=\"columnheader\"]');" +
+                    "var text = '';" +
+                    "headers.forEach(function(h) { text += h.textContent.trim() + ' | '; });" +
+                    "return text;");
+                if (jsHeaders != null && !jsHeaders.isEmpty()) {
+                    headerText = jsHeaders;
+                    logStep("JS extracted columns: " + headerText);
+                }
+            } catch (Exception e) {
+                logStep("JS header extraction failed: " + e.getMessage());
+            }
         }
         logStep("Grid columns: " + headerText);
 

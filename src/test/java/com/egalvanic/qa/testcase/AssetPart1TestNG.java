@@ -807,10 +807,14 @@ public class AssetPart1TestNG extends BaseTest {
         for (int i = 0; i < 10; i++) {
             List<WebElement> opts = driver.findElements(By.xpath("//li[@role='option']"));
             if (!opts.isEmpty()) {
+                // Get text BEFORE clicking — MUI Autocomplete re-renders on selection,
+                // making the element reference stale after click
+                String optionText = "";
+                try { optionText = opts.get(0).getText(); } catch (Exception ignored) {}
                 JavascriptExecutor jsExec = (JavascriptExecutor) driver;
                 jsExec.executeScript("arguments[0].click();", opts.get(0));
                 optionFound = true;
-                logStep("Selected class option: " + opts.get(0).getText());
+                logStep("Selected class option: " + optionText);
                 break;
             }
             pause(500);
