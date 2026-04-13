@@ -1827,41 +1827,51 @@ public class TaskTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_DETAIL, "TC_TD_003_WorkOrderColumn");
         logStep("Verifying all expected grid column headers");
 
-        // Ensure we're on list view with grid loaded
-        waitAndDismissAppAlert();
+        // Quick cleanup — don't use waitAndDismissAppAlert() here (10s timeout waste
+        // when alert was dismissed 2 hours ago). Only use it after driver.get().
+        dismissBackdrops();
         waitForGrid();
-        // Wait for column headers to render WITH TEXT (not just element presence).
-        // MUI DataGrid renders skeleton headers first with empty text, then populates.
-        String headerText = waitForColumnHeaderText(20);
-        if (headerText.isEmpty()) {
-            logStep("Column header text empty — reloading page");
+
+        // Try JS extraction first — fastest path, avoids Selenium element stale issues
+        String headerText = "";
+        try {
+            headerText = (String) ((JavascriptExecutor) driver).executeScript(
+                "var headers = document.querySelectorAll('[role=\"columnheader\"]');" +
+                "var text = '';" +
+                "headers.forEach(function(h) { text += h.textContent.trim() + ' | '; });" +
+                "return text;");
+        } catch (Exception e) {
+            logStep("JS header extraction failed: " + e.getMessage());
+        }
+
+        // If JS failed or returned empty, try waitForColumnHeaderText
+        if (headerText == null || !headerText.contains("Title")) {
+            logStep("JS headers: '" + headerText + "' — waiting for Selenium headers");
+            headerText = waitForColumnHeaderText(15);
+        }
+
+        // Last resort: reload the page
+        if (headerText == null || !headerText.contains("Title")) {
+            logStep("Column header text missing Title — reloading page");
             driver.get(TASKS_URL);
             pause(2000);
             waitAndDismissAppAlert();
             pause(3000);
             waitForGrid();
-            headerText = waitForColumnHeaderText(15);
-        }
-        if (headerText.isEmpty()) {
-            logStep("Still empty after reload — trying JS extraction");
             try {
-                String jsHeaders = (String) ((JavascriptExecutor) driver).executeScript(
+                headerText = (String) ((JavascriptExecutor) driver).executeScript(
                     "var headers = document.querySelectorAll('[role=\"columnheader\"]');" +
                     "var text = '';" +
                     "headers.forEach(function(h) { text += h.textContent.trim() + ' | '; });" +
                     "return text;");
-                if (jsHeaders != null && !jsHeaders.isEmpty()) {
-                    headerText = jsHeaders;
-                    logStep("JS extracted columns: " + headerText);
-                }
             } catch (Exception e) {
-                logStep("JS header extraction failed: " + e.getMessage());
+                headerText = waitForColumnHeaderText(15);
             }
         }
         logStep("Grid columns: " + headerText);
 
         // Actual grid columns: Title, Asset, Location, Type, Created, Due Date, Work Order, Status, Actions
-        Assert.assertTrue(headerText.contains("Title"), "Grid should have Title column");
+        Assert.assertTrue(headerText != null && headerText.contains("Title"), "Grid should have Title column");
         Assert.assertTrue(headerText.contains("Asset"), "Grid should have Asset column");
         Assert.assertTrue(headerText.contains("Location"), "Grid should have Location column");
         logStep("PASS: Grid column headers verified");
