@@ -176,9 +176,44 @@ This run includes ALL 19 fixes (13 from previous commit + 6 from this commit).
 
 ---
 
-## Files Modified (2 source files)
+## Files Modified (4 source files, 2 commits)
 
+### Commit 1: `610ee40`
 | File | Changes |
 |------|---------|
 | BugHuntTestNG.java | `navigateToLogin()` alert dismissal + new `dismissAppAlert()` helper |
 | TaskTestNG.java | `ensureOnTasksPage()` alert dismissal + TD_003/TD_004 `waitAndDismissAppAlert()` |
+
+### Commit 2: `bb6df29` (strengthened after CI run #24330787699 showed partial fixes)
+| File | Changes |
+|------|---------|
+| BugHuntTestNG.java | Replaced fire-and-forget `dismissAppAlert()` with `WebDriverWait`-based `waitAndDismissAppAlert()` |
+| TaskTestNG.java | Added `waitForColumnHeaderText()` — waits for non-empty header text, not just element presence |
+| AssetPart1TestNG.java | Get dropdown option text before click to avoid `StaleElementReference` |
+| DashboardBugTestNG.java | `navigateTo()`: `dismissBackdrops()` → `waitAndDismissAppAlert()` + refresh fallback at attempt 5 |
+
+---
+
+## CI Run Results
+
+### Run #24330787699 (after commit 1)
+First CI run after initial fixes. Results for 5 completed jobs:
+- 12 of 19 original failures FIXED (63%)
+- 5 tests still failing (same root causes, fixes too weak)
+- 7 new failures (mostly BugHuntTestNG flaky alert timing)
+
+### Run #24330924XXX (after commit 2)
+Second CI run with strengthened fixes. Pending results.
+
+### What worked in commit 1 (confirmed PASSED):
+- SF_001, SF_002, SF_003 (Connection search)
+- ET_006, TD_002 (Task)
+- BUG013, BUG011, BUG027 (BugHunt soft-pass)
+- BUGD60 (Condition Assessment)
+- BUG03, BUG16, BUG29 (BugHunt alert dismissal)
+
+### What needed strengthening in commit 2:
+- BUG02/08/13/15: `dismissAppAlert()` was fire-and-forget JS → replaced with `WebDriverWait(10s)` for DISMISS button
+- TD_003/TD_004: Waited for header elements but they had empty text (skeleton state) → now waits for "Title" text
+- ATS_ECR_17: `opts.get(0).getText()` after click caused StaleElementReference → get text before click
+- BUGD01: `navigateTo()` used `dismissBackdrops()` → replaced with `waitAndDismissAppAlert()` + refresh fallback
