@@ -435,8 +435,8 @@ public class ConnectionTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_ADD, "TC_CL_005_Spinner");
         // Refresh and check spinner
         driver.navigate().refresh();
-        pause(5000);
-        dismissBackdrops(); // refresh re-triggers alert
+        pause(3000);
+        waitAndDismissAppAlert(); // refresh re-triggers "app update" alert
 
         List<WebElement> spinners = driver.findElements(By.cssSelector(
                 ".MuiCircularProgress-root, [role='progressbar']"));
@@ -616,7 +616,7 @@ public class ConnectionTestNG extends BaseTest {
             // Refresh and check
             driver.navigate().refresh();
             pause(3000);
-            dismissBackdrops(); // refresh re-triggers alert
+            waitAndDismissAppAlert(); // refresh re-triggers "app update" alert
             int after = connectionPage.getGridRowCount();
             logStep("Rows after delete: " + after);
 
@@ -681,8 +681,7 @@ public class ConnectionTestNG extends BaseTest {
 
             driver.navigate().refresh();
             pause(3000);
-            dismissBackdrops(); // refresh re-triggers alert
-            pause(500);
+            waitAndDismissAppAlert(); // refresh re-triggers "app update" alert
 
             int mid = connectionPage.getGridRowCount();
             logStep("Rows after first delete: " + mid);
@@ -696,8 +695,7 @@ public class ConnectionTestNG extends BaseTest {
 
                 driver.navigate().refresh();
                 pause(3000);
-                dismissBackdrops(); // refresh re-triggers alert
-                pause(500);
+                waitAndDismissAppAlert(); // refresh re-triggers "app update" alert
                 int after = connectionPage.getGridRowCount();
                 logStep("Rows after second delete: " + after);
             }

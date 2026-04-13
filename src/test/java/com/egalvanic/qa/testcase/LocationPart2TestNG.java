@@ -80,8 +80,10 @@ public class LocationPart2TestNG extends BaseTest {
                     + ") — recovering via dashboard round-trip");
             try {
                 driver.get(AppConstants.BASE_URL + "/dashboard");
-                pause(3000);
+                pause(2000);
+                waitAndDismissAppAlert(); // driver.get() re-triggers "app update" alert
                 locationPage.navigateToLocations();
+                pause(2000);
             } catch (Exception e2) {
                 logStep("Recovery also failed: " + e2.getMessage());
             }
@@ -109,6 +111,9 @@ public class LocationPart2TestNG extends BaseTest {
         if (!locationPage.isOnLocationsPage()) {
             locationPage.navigateToLocations();
             pause(2000);
+            // navigateToLocations() may have called driver.get() which re-triggers
+            // the "app update" alert. Dismiss it before tests interact with the page.
+            waitAndDismissAppAlert();
         }
     }
 

@@ -155,7 +155,8 @@ public class WorkOrderTestNG extends BaseTest {
         } catch (Exception e) {
             logStep("Grid not found — refreshing page");
             driver.navigate().refresh();
-            pause(3000);
+            pause(2000);
+            waitAndDismissAppAlert(); // refresh re-triggers "app update" alert
             try {
                 new WebDriverWait(driver, Duration.ofSeconds(10))
                         .until(d -> !d.findElements(GRID).isEmpty());

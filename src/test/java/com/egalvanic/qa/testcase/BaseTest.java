@@ -216,7 +216,21 @@ public class BaseTest {
      */
     private void recoverFromErrorPage() {
         try {
-            if (!isApplicationErrorPage()) return;
+            // Check for unexpected login-page redirect FIRST.
+            // This catches the scenario where the "app update" alert blocks sidebar
+            // navigation and driver.get() redirects to login — which is NOT an
+            // Application Error page, so isApplicationErrorPage() returns false.
+            if (!isApplicationErrorPage()) {
+                if (driver.findElements(By.id("email")).size() > 0) {
+                    System.out.println("[BaseTest] Unexpected login page detected — session may have expired. Re-logging in...");
+                    loginPage.login(AppConstants.VALID_EMAIL, AppConstants.VALID_PASSWORD);
+                    pause(2000);
+                    dashboardPage.waitForDashboard();
+                    waitAndDismissAppAlert();
+                    selectTestSite();
+                }
+                return;
+            }
 
             System.out.println("[BaseTest] Error page detected — recovering before next test...");
 

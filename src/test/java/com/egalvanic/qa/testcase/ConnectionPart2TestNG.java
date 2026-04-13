@@ -132,7 +132,7 @@ public class ConnectionPart2TestNG extends BaseTest {
                 // Refresh and try once more — page may have been in a bad state
                 driver.navigate().refresh();
                 pause(3000);
-                dismissBackdrops(); // refresh re-triggers alert
+                waitAndDismissAppAlert(); // refresh re-triggers "app update" alert
             }
         }
 
@@ -771,7 +771,7 @@ public class ConnectionPart2TestNG extends BaseTest {
                 logStep("Grid rows still empty at 5s — reloading");
                 driver.navigate().refresh();
                 pause(3000);
-                dismissBackdrops(); // refresh re-triggers alert
+                waitAndDismissAppAlert(); // refresh re-triggers "app update" alert
             }
         }
 
@@ -1209,7 +1209,7 @@ public class ConnectionPart2TestNG extends BaseTest {
         long start = System.currentTimeMillis();
         driver.navigate().refresh();
         pause(1000);
-        dismissBackdrops(); // refresh re-triggers alert
+        waitAndDismissAppAlert(); // refresh re-triggers "app update" alert
 
         // Wait for grid to load
         for (int i = 0; i < 20; i++) {
