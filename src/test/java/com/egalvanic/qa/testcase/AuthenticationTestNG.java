@@ -51,7 +51,7 @@ public class AuthenticationTestNG {
     private LoginPage loginPage;
     private long testStartTime;
 
-    private static final int LOGIN_TIMEOUT = 25;
+    private static final int LOGIN_TIMEOUT = 60;
     private static final int POST_LOGIN_TIMEOUT = 30;
 
     private static final DateTimeFormatter TIMESTAMP_FMT =

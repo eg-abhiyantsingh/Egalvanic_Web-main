@@ -55,7 +55,7 @@ public class SiteSelectionSmokeTestNG {
     private WebDriverWait wait;
     private long testStartTime;
 
-    private static final int LOGIN_TIMEOUT = 25;
+    private static final int LOGIN_TIMEOUT = 60;
     private static final int POST_LOGIN_TIMEOUT = 30;
 
     private static final By FACILITY_INPUT = By.xpath("//input[@placeholder='Select facility']");

@@ -67,7 +67,7 @@ public class SiteSelectionTestNG {
     private WebDriverWait wait;
     private long testStartTime;
 
-    private static final int LOGIN_TIMEOUT = 25;
+    private static final int LOGIN_TIMEOUT = 60;
     private static final int POST_LOGIN_TIMEOUT = 30;
 
     // Element locators — facility dropdown
@@ -163,7 +163,14 @@ public class SiteSelectionTestNG {
             driver.get("about:blank");
             pause(500);
             driver.get(AppConstants.BASE_URL + "/dashboard");
-            pause(2000);
+
+            // Wait for page to reach at least interactive state before checking elements
+            new WebDriverWait(driver, Duration.ofSeconds(30))
+                    .until(d -> {
+                        Object ready = ((JavascriptExecutor) d).executeScript("return document.readyState");
+                        return "complete".equals(ready) || "interactive".equals(ready);
+                    });
+            pause(1000);
 
             // Check if we're still logged in or need to re-login
             boolean hasLoginForm = !driver.findElements(By.id("email")).isEmpty();
@@ -174,9 +181,11 @@ public class SiteSelectionTestNG {
 
             waitAndDismissAppAlert();
 
-            // Wait for facility selector to be ready (up to 15s)
+            // Wait for facility selector to be ready (up to 30s).
+            // In CI, the first few tests after login may need longer while the SPA
+            // fully initializes and fetches site data from the API.
             new FluentWait<>(driver)
-                    .withTimeout(Duration.ofSeconds(15))
+                    .withTimeout(Duration.ofSeconds(30))
                     .pollingEvery(Duration.ofSeconds(1))
                     .ignoring(NoSuchElementException.class)
                     .until(d -> !d.findElements(FACILITY_INPUT).isEmpty());
@@ -1277,7 +1286,30 @@ public class SiteSelectionTestNG {
                 }
 
                 driver.get(AppConstants.BASE_URL);
+
+                // Wait for page to fully load before looking for any elements.
+                // In CI, a fresh Chrome instance can take 30-60s to render the SPA.
+                new WebDriverWait(driver, Duration.ofSeconds(LOGIN_TIMEOUT))
+                        .until(d -> {
+                            Object ready = ((JavascriptExecutor) d).executeScript("return document.readyState");
+                            return "complete".equals(ready) || "interactive".equals(ready);
+                        });
                 pause(2000);
+
+                // Check if already logged in (facility selector present = on dashboard)
+                if (!driver.findElements(FACILITY_INPUT).isEmpty()) {
+                    System.out.println("[SiteSelection] Already logged in — facility selector found. URL: " + driver.getCurrentUrl());
+                    waitAndDismissAppAlert();
+                    return;
+                }
+
+                // Check if we're on the dashboard without the facility selector yet
+                boolean hasNav = !driver.findElements(By.cssSelector("nav")).isEmpty();
+                if (hasNav && driver.findElements(By.id("email")).isEmpty()) {
+                    System.out.println("[SiteSelection] Already logged in (nav present, no login form). Waiting for facility selector...");
+                    waitAndDismissAppAlert();
+                    return;
+                }
 
                 if (isApplicationErrorPage()) {
                     System.out.println("[SiteSelection] Error page on attempt " + attempt);
@@ -1295,24 +1327,18 @@ public class SiteSelectionTestNG {
                 pause(2000);
 
                 // Wait for post-login page OR login error
-                wait.until(d -> {
-                    // Success conditions
+                new WebDriverWait(driver, Duration.ofSeconds(LOGIN_TIMEOUT)).until(d -> {
                     boolean leftLogin = d.findElements(By.id("email")).isEmpty()
                             || d.findElements(By.id("password")).isEmpty();
-                    boolean hasNav = !d.findElements(By.cssSelector("nav")).isEmpty();
+                    boolean foundNav = !d.findElements(By.cssSelector("nav")).isEmpty();
                     boolean hasFacility = !d.findElements(FACILITY_INPUT).isEmpty();
-                    // Error condition (still on login page with error message)
                     boolean hasLoginError = !d.findElements(By.xpath(
                             "//*[contains(text(),'Invalid') or contains(text(),'invalid') "
                             + "or contains(text(),'incorrect') or contains(text(),'locked')]")).isEmpty();
-                    return leftLogin || hasNav || hasFacility || hasLoginError;
+                    return leftLogin || foundNav || hasFacility || hasLoginError;
                 });
 
                 pause(1000);
-                // Robustly dismiss the "app update available" alert.
-                // In CI, the alert renders AFTER the dashboard — the old fire-and-forget
-                // JS missed it because it ran before the button existed in the DOM.
-                // Now: wait up to 10s for the DISMISS button, click it, then verify.
                 waitAndDismissAppAlert();
                 System.out.println("[SiteSelection] Post-login page loaded. URL: " + driver.getCurrentUrl());
 
@@ -1333,7 +1359,6 @@ public class SiteSelectionTestNG {
             } catch (Exception e) {
                 System.out.println("[SiteSelection] Login attempt " + attempt + " failed: " + e.getMessage());
                 if (attempt == maxRetries) {
-                    // Don't crash — proceed and let tests fail individually
                     System.out.println("[SiteSelection] WARNING: Login failed after " + maxRetries + " attempts. Proceeding.");
                     return;
                 }
@@ -1655,13 +1680,14 @@ public class SiteSelectionTestNG {
         dismissBackdrops();
 
         // Step 3: wait for facility selector to become available
-        // After fresh login in CI, it may take a moment for sites to load
+        // After fresh login in CI, the SPA may take 30-60s to fully render the
+        // dashboard with the facility selector (API calls, site data loading).
         try {
-            new WebDriverWait(driver, Duration.ofSeconds(15))
+            new WebDriverWait(driver, Duration.ofSeconds(30))
                     .until(d -> !d.findElements(FACILITY_INPUT).isEmpty());
             System.out.println("[SiteSelection] Facility selector is available");
         } catch (Exception e) {
-            System.out.println("[SiteSelection] WARNING: Facility selector not found after 15s");
+            System.out.println("[SiteSelection] WARNING: Facility selector not found after 30s");
         }
     }
 

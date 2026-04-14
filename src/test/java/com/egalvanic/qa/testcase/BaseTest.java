@@ -314,7 +314,26 @@ public class BaseTest {
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 driver.get(AppConstants.BASE_URL);
+
+                // Wait for page to fully load before checking for elements.
+                // In CI, a fresh Chrome instance can take 30-60s to render the SPA.
+                new WebDriverWait(driver, Duration.ofSeconds(60))
+                        .until(d -> {
+                            Object ready = ((JavascriptExecutor) d).executeScript("return document.readyState");
+                            return "complete".equals(ready) || "interactive".equals(ready);
+                        });
                 pause(2000);
+
+                // Check if already logged in (nav present, no login form) — can happen
+                // when multiple test classes run sequentially sharing a browser session
+                boolean hasNav = !driver.findElements(By.cssSelector("nav")).isEmpty();
+                boolean hasLoginForm = !driver.findElements(By.id("email")).isEmpty();
+                if (hasNav && !hasLoginForm) {
+                    System.out.println("[BaseTest] Already logged in (nav present, no login form). URL: " + driver.getCurrentUrl());
+                    waitAndDismissAppAlert();
+                    selectTestSite();
+                    return;
+                }
 
                 // Check for Application Error / "We encountered an error" page
                 if (isApplicationErrorPage()) {
@@ -336,8 +355,9 @@ public class BaseTest {
                     }
                 }
 
-                // Wait for login page to load
-                new WebDriverWait(driver, Duration.ofSeconds(AppConstants.DEFAULT_TIMEOUT))
+                // Wait for login page to load (use 60s on first attempt for cold CI starts)
+                int loginTimeout = (attempt == 1) ? 60 : AppConstants.DEFAULT_TIMEOUT;
+                new WebDriverWait(driver, Duration.ofSeconds(loginTimeout))
                         .until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
 
                 loginPage.login(AppConstants.VALID_EMAIL, AppConstants.VALID_PASSWORD);
