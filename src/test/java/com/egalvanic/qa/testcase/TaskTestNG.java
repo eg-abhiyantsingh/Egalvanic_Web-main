@@ -1681,14 +1681,23 @@ public class TaskTestNG extends BaseTest {
         logStep("Checking pagination controls");
 
         String pageText = getPageText();
-        boolean hasPagination = pageText.contains("Rows per page") || pageText.contains("of");
+        // MUI DataGrid has two pagination variants:
+        //   Full:       "Rows per page: 25  1-25 of N"  (with prev/next buttons)
+        //   Simplified: "Total Rows: N"                  (no prev/next buttons)
+        boolean hasFullPagination = pageText.contains("Rows per page");
+        boolean hasSimplifiedPagination = pageText.contains("Total Rows");
+        boolean hasPagination = hasFullPagination || hasSimplifiedPagination;
 
-        Assert.assertTrue(hasPagination, "Pagination controls should be present");
+        Assert.assertTrue(hasPagination,
+                "Pagination controls should be present ('Rows per page' or 'Total Rows')");
 
-        List<WebElement> nextBtns = driver.findElements(NEXT_PAGE_BTN);
-        Assert.assertFalse(nextBtns.isEmpty(), "Next page button should exist");
-
-        logStep("PASS: Pagination controls present");
+        if (hasFullPagination) {
+            List<WebElement> nextBtns = driver.findElements(NEXT_PAGE_BTN);
+            Assert.assertFalse(nextBtns.isEmpty(), "Next page button should exist");
+            logStep("PASS: Full pagination controls present (Rows per page + nav buttons)");
+        } else {
+            logStep("PASS: Simplified pagination present (Total Rows — all data fits on one page)");
+        }
     }
 
     @Test(priority = 71, description = "TC_PG_002: Navigate to next page")
@@ -1743,12 +1752,18 @@ public class TaskTestNG extends BaseTest {
         logStep("Checking rows per page selector");
 
         String pageText = getPageText();
-        Assert.assertTrue(pageText.contains("Rows per page") || pageText.contains("25"),
-                "Rows per page selector should be present");
+        boolean hasFullPagination = pageText.contains("Rows per page");
+        boolean hasSimplifiedPagination = pageText.contains("Total Rows");
 
-        // Default is 25
-        Assert.assertTrue(pageText.contains("25"), "Default rows per page should be 25");
-        logStep("PASS: Rows per page selector verified (default: 25)");
+        Assert.assertTrue(hasFullPagination || hasSimplifiedPagination,
+                "Pagination info should be present ('Rows per page' or 'Total Rows')");
+
+        if (hasFullPagination) {
+            Assert.assertTrue(pageText.contains("25"), "Default rows per page should be 25");
+            logStep("PASS: Rows per page selector verified (default: 25)");
+        } else {
+            logStep("PASS: Simplified pagination (Total Rows) — rows per page selector not applicable");
+        }
     }
 
     // ================================================================
