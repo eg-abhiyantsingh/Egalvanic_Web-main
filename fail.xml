@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Failed Tests Re-run (67 TCs from run #24008387048)" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <!-- ============================================================ -->
+    <!-- Task Tests (25 failures)                                     -->
+    <!-- ============================================================ -->
+    <test name="Task Failures (25 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.TaskTestNG">
+                <methods>
+                    <include name="testTC_CT_001_CreateTaskButtonVisible"/>
+                    <include name="testTC_CT_002_CreateTaskDrawerOpens"/>
+                    <include name="testTC_CT_003_DrawerTabs"/>
+                    <include name="testTC_CT_004_FormFieldsPresent"/>
+                    <include name="testTC_CT_005_TaskTypeDefaultPM"/>
+                    <include name="testTC_CT_006_CreateTaskRequiredFieldsOnly"/>
+                    <include name="testTC_CT_007_CreateTaskAllFields"/>
+                    <include name="testTC_CT_008_CancelCloseDrawer"/>
+                    <include name="testTC_CT_009_EmptyTitleValidation"/>
+                    <include name="testTC_CT_010_PhotoTabs"/>
+                    <include name="testTC_CT_011_BasicInfoAccordion"/>
+                    <include name="testTC_CT_012_ProcedureDropdown"/>
+                    <include name="testTC_CV_002_ToggleToCalendar"/>
+                    <include name="testTC_CV_003_ToggleBackToList"/>
+                    <include name="testTC_CV_004_CalendarShowsData"/>
+                    <include name="testTC_DT_002_DeleteShowsConfirmation"/>
+                    <include name="testTC_EC_001_XSSInTitle"/>
+                    <include name="testTC_EC_002_LongTitle"/>
+                    <include name="testTC_EC_003_SpecialCharsInTitle"/>
+                    <include name="testTC_ET_003_EditTaskTitle"/>
+                    <include name="testTC_ET_006_EditDueDate"/>
+                    <include name="testTC_TD_002_StatusBadge"/>
+                    <include name="testTC_TD_003_WorkOrderColumn"/>
+                    <include name="testTC_TD_004_CreatedDateColumn"/>
+                    <include name="testTC_TL_003_PendingKPICard"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- ============================================================ -->
+    <!-- AssetPart5 Tests (10 failures)                               -->
+    <!-- ============================================================ -->
+    <test name="AssetPart5 Failures (10 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetPart5TestNG">
+                <methods>
+                    <include name="testSWB_18_Persistence"/>
+                    <include name="testSWB_AST_01_DefaultSubtype"/>
+                    <include name="testSWB_AST_02_SubtypeOptions"/>
+                    <include name="testSWB_AST_03_SelectSwitchgear"/>
+                    <include name="testSWB_AST_04_SelectUSS"/>
+                    <include name="testTRF_AST_01_DefaultSubtype"/>
+                    <include name="testTRF_AST_02_SubtypeOptions"/>
+                    <include name="testTRF_AST_03_SelectDryType"/>
+                    <include name="testTRF_AST_04_SelectOilFilled"/>
+                    <include name="testUTL_04_MeterNumberPersistence"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- ============================================================ -->
+    <!-- Load Tests (6 failures)                                      -->
+    <!-- ============================================================ -->
+    <test name="Load Failures (6 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.LoadTestNG">
+                <methods>
+                    <include name="testPL01_DashboardLoad"/>
+                    <include name="testPL02_AssetsLoad"/>
+                    <include name="testPL03_ConnectionsLoad"/>
+                    <include name="testPL04_IssuesLoad"/>
+                    <include name="testPL05_WorkOrdersLoad"/>
+                    <include name="testSLD01_SLDLoad"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- ============================================================ -->
+    <!-- WorkOrder Tests (6 failures)                                 -->
+    <!-- ============================================================ -->
+    <test name="WorkOrder Failures (6 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkOrderTestNG">
+                <methods>
+                    <include name="testTC_SL_001_OpenStatusPresent"/>
+                    <include name="testTC_SL_002_StatusBadgeStyling"/>
+                </methods>
+            </class>
+            <class name="com.egalvanic.qa.testcase.WorkOrderPart2TestNG">
+                <methods>
+                    <include name="testTC_NOT2_002_AddNoteInputField"/>
+                    <include name="testTC_SLC2_001_OpenStatusDisplayed"/>
+                    <include name="testTC_WOL2_005_RowsDisplayStatus"/>
+                    <include name="testTC_WOL2_007_CellsHaveDataField"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- ============================================================ -->
+    <!-- BugHunt Tests (8 failures)                                   -->
+    <!-- ============================================================ -->
+    <test name="BugHunt Failures (8 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntDashboardTestNG">
+                <methods>
+                    <include name="testBUG019_DashboardStatCardsOverlap"/>
+                </methods>
+            </class>
+            <class name="com.egalvanic.qa.testcase.BugHuntGlobalTestNG">
+                <methods>
+                    <include name="testBUG025_DifferentBundleHashes"/>
+                </methods>
+            </class>
+            <class name="com.egalvanic.qa.testcase.BugHuntLocationsTestNG">
+                <methods>
+                    <include name="testBUG010_BuildingNameConcatenation"/>
+                </methods>
+            </class>
+            <class name="com.egalvanic.qa.testcase.BugHuntPagesTestNG">
+                <methods>
+                    <include name="testBUG020_AdminSettingsZeroSites"/>
+                    <include name="testBUG023_ConditionAssessmentBlank"/>
+                    <include name="testBUG024_EquipmentTypeTruncated"/>
+                    <include name="testBUG030_ZUniversityDevLoadingText"/>
+                </methods>
+            </class>
+            <class name="com.egalvanic.qa.testcase.BugHuntWorkOrdersTestNG">
+                <methods>
+                    <include name="testBUG022_SchedulingTestDataOnly"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- ============================================================ -->
+    <!-- Connection Tests (3 failures)                                -->
+    <!-- ============================================================ -->
+    <test name="Connection Failures (3 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ConnectionPart2TestNG">
+                <methods>
+                    <include name="testCONN_043_RowActionButtons"/>
+                    <include name="testCONN_044_EditButtonOpensDrawer"/>
+                    <include name="testCONN_078_SaveChangesButton"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- ============================================================ -->
+    <!-- Issue Tests (3 failures)                                     -->
+    <!-- ============================================================ -->
+    <test name="Issue Failures (3 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.IssuePart2TestNG">
+                <methods>
+                    <include name="testISS_015_NoResultsEmptyState"/>
+                    <include name="testISS_046_DeletedNotInSearch"/>
+                    <include name="testISS_063_PageLoadPerformance"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <!-- ============================================================ -->
+    <!-- Dashboard, SLD, Asset, API Tests (6 failures)                -->
+    <!-- ============================================================ -->
+    <test name="Dashboard &amp; SLD Failures (2 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.DashboardBugTestNG">
+                <methods>
+                    <include name="testBUGD04_IssueTypeCategoriesPresent"/>
+                </methods>
+            </class>
+            <class name="com.egalvanic.qa.testcase.SLDTestNG">
+                <methods>
+                    <include name="testSLD_002_SidebarNavigation"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="Asset Misc Failures (2 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetPart2TestNG">
+                <methods>
+                    <include name="testCAP_EAD_01_OpenEditScreen"/>
+                </methods>
+            </class>
+            <class name="com.egalvanic.qa.testcase.AssetPart3TestNG">
+                <methods>
+                    <include name="testDS_EAD_10_EditAmpereRating"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="API Security Failures (2 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.APISecurityTest">
+                <methods>
+                    <include name="testParameterManipulation"/>
+                </methods>
+            </class>
+            <class name="com.egalvanic.qa.testcase.api.AuthenticationAPITest">
+                <methods>
+                    <include name="testLoginWithMissingFields"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+</suite>

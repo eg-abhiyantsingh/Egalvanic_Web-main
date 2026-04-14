@@ -219,7 +219,7 @@ public class AppConstants {
     public static final String EMAIL_TO = "abhiyant.singh@egalvanic.com ";
     public static final String EMAIL_SUBJECT = "eGalvanic Web Automation - Test Report";
     public static final boolean SEND_EMAIL_ENABLED =
-            Boolean.parseBoolean(getEnv("SEND_EMAIL_ENABLED", "true"));
+            Boolean.parseBoolean(getEnv("SEND_EMAIL_ENABLED", "false"));
 
     // ============================================
     // HELPER METHODS

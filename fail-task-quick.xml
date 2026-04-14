@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Task Create Quick Test (5 TCs)" verbose="1">
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+    <test name="Task Create Button + Drawer">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.TaskTestNG">
+                <methods>
+                    <include name="testTC_CT_001_CreateTaskButtonVisible"/>
+                    <include name="testTC_CT_002_CreateTaskDrawerOpens"/>
+                    <include name="testTC_CT_003_DrawerTabs"/>
+                    <include name="testTC_CT_004_FormFieldsPresent"/>
+                    <include name="testTC_CT_005_TaskTypeDefaultPM"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>

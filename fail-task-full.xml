@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Task Full Failures Re-run (25 TCs)" verbose="1">
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+    <test name="Task Failures (25 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.TaskTestNG">
+                <methods>
+                    <include name="testTC_CT_001_CreateTaskButtonVisible"/>
+                    <include name="testTC_CT_002_CreateTaskDrawerOpens"/>
+                    <include name="testTC_CT_003_DrawerTabs"/>
+                    <include name="testTC_CT_004_FormFieldsPresent"/>
+                    <include name="testTC_CT_005_TaskTypeDefaultPM"/>
+                    <include name="testTC_CT_006_CreateTaskRequiredFieldsOnly"/>
+                    <include name="testTC_CT_007_CreateTaskAllFields"/>
+                    <include name="testTC_CT_008_CancelCloseDrawer"/>
+                    <include name="testTC_CT_009_EmptyTitleValidation"/>
+                    <include name="testTC_CT_010_PhotoTabs"/>
+                    <include name="testTC_CT_011_BasicInfoAccordion"/>
+                    <include name="testTC_CT_012_ProcedureDropdown"/>
+                    <include name="testTC_CV_002_ToggleToCalendar"/>
+                    <include name="testTC_CV_003_ToggleBackToList"/>
+                    <include name="testTC_CV_004_CalendarShowsData"/>
+                    <include name="testTC_DT_002_DeleteShowsConfirmation"/>
+                    <include name="testTC_EC_001_XSSInTitle"/>
+                    <include name="testTC_EC_002_LongTitle"/>
+                    <include name="testTC_EC_003_SpecialCharsInTitle"/>
+                    <include name="testTC_ET_003_EditTaskTitle"/>
+                    <include name="testTC_ET_006_EditDueDate"/>
+                    <include name="testTC_TD_002_StatusBadge"/>
+                    <include name="testTC_TD_003_WorkOrderColumn"/>
+                    <include name="testTC_TD_004_CreatedDateColumn"/>
+                    <include name="testTC_TL_003_PendingKPICard"/>
+                </methods>
+            </class>
+        </classes>
+    </test>
+</suite>
