@@ -168,7 +168,7 @@ def parse_testng_xml(filepath):
 
 
 def find_and_parse_all(results_dir):
-    """Find all testng-results.xml recursively and parse them."""
+    """Find all testng-results.xml recursively, parse them, and deduplicate."""
     all_tests = []
     xml_files = glob.glob(os.path.join(results_dir, '**', 'testng-results.xml'), recursive=True)
 
@@ -181,6 +181,28 @@ def find_and_parse_all(results_dir):
         tests = parse_testng_xml(f)
         print(f"  {f}: {len(tests)} test methods")
         all_tests.extend(tests)
+
+    # Deduplicate: if the same test (class+method) appears multiple times
+    # (e.g. from duplicate XML files in artifacts), keep only one copy.
+    # Prefer FAIL > SKIP > PASS so we never hide a failure.
+    before = len(all_tests)
+    seen = {}
+    status_priority = {'FAIL': 0, 'SKIP': 1, 'PASS': 2}
+    for t in all_tests:
+        key = (t['class_name'], t['name'])
+        if key not in seen:
+            seen[key] = t
+        else:
+            # Keep the one with higher priority (lower number = keep)
+            existing_pri = status_priority.get(seen[key]['status'], 3)
+            new_pri = status_priority.get(t['status'], 3)
+            if new_pri < existing_pri:
+                seen[key] = t
+
+    all_tests = list(seen.values())
+    after = len(all_tests)
+    if before != after:
+        print(f"  Deduplicated: {before} → {after} tests ({before - after} duplicates removed)")
 
     return all_tests
 

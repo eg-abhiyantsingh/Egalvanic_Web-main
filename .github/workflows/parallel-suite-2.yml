@@ -20,6 +20,12 @@ name: Parallel Suite 2 — AI, Smoke, Load & Exploratory
 
 on:
   workflow_dispatch:
+    inputs:
+      send_email:
+        description: 'Send email report after completion'
+        required: false
+        type: boolean
+        default: true
 
 concurrency:
   group: parallel-suite-2
@@ -234,8 +240,11 @@ jobs:
             reports/groups/
             test-output/screenshots/
             test-output/visual-diffs/
-            target/surefire-reports/
           retention-days: 30
+          # NOTE: target/surefire-reports/ intentionally excluded —
+          # reports/groups/ already contains the copy (via dashboard script).
+          # Including both caused every test to appear twice in the
+          # consolidated report (duplicate testng-results.xml files).
 
       - name: Upload result JSON
         if: always()
@@ -340,7 +349,7 @@ jobs:
         if: always()
         id: report
         env:
-          SEND_EMAIL_ENABLED: ${{ secrets.EMAIL_PASSWORD != '' && 'true' || 'false' }}
+          SEND_EMAIL_ENABLED: ${{ inputs.send_email && secrets.EMAIL_PASSWORD != '' && 'true' || 'false' }}
           EMAIL_FROM: "abhiyant.singh@egalvanic.com"
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           EMAIL_TO: "abhiyant.singh@egalvanic.com"
