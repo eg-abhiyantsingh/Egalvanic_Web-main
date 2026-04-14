@@ -14,6 +14,10 @@ reports/
 *.iml
 .idea/
 
+# Playwright MCP cache (local debugging artifacts)
+.playwright-mcp/
+playwright-*.png
+
 # OS files
 .DS_Store
 Thumbs.db
