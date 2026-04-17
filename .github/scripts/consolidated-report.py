@@ -582,7 +582,7 @@ def send_email(report_path, stats):
 
     email_from = os.environ.get('EMAIL_FROM', 'abhiyant.singh@egalvanic.com')
     email_password = os.environ.get('EMAIL_PASSWORD', '')
-    email_to = os.environ.get('EMAIL_TO', 'dharmesh.avaiya@egalvanic.com, abhiyant.singh@egalvanic.com')
+    email_to = os.environ.get('EMAIL_TO', 'dharmesh.avaiya@egalvanic.com, mukul@egalvanic.com, abhiyant.singh@egalvanic.com')
     smtp_host = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
     smtp_port = int(os.environ.get('SMTP_PORT', '587'))
 
