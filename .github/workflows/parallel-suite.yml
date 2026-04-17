@@ -393,7 +393,7 @@ jobs:
           SEND_EMAIL_ENABLED: ${{ inputs.send_email && secrets.EMAIL_PASSWORD != '' && 'true' || 'false' }}
           EMAIL_FROM: "abhiyant.singh@egalvanic.com"
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-          EMAIL_TO: "dharmesh.avaiya@egalvanic.com, abhiyant.singh@egalvanic.com"
+          EMAIL_TO: "dharmesh.avaiya@egalvanic.com, mukul@egalvanic.com, abhiyant.singh@egalvanic.com"
         run: |
           python3 .github/scripts/consolidated-report.py \
             all-reports \
