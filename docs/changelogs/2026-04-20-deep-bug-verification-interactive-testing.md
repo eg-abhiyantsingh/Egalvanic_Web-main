@@ -45,17 +45,19 @@ Verify all previously reported bugs against the LIVE eGalvanic platform (acme.qa
 
 ---
 
-## 7 Verified Bugs Found
+## 5 Verified Bugs Found
 
 | # | ID | Severity | Bug | Page |
 |---|-----|----------|-----|------|
-| 1 | BUG-001 | **HIGH** | Equipment Insights page renders completely blank | /equipment-insights |
-| 2 | BUG-002 | MEDIUM | No 404 error page — invalid URLs show blank content | Any invalid URL |
-| 3 | BUG-003 | MEDIUM | Audit Log has duplicate search fields ("Search..." + "Search items...") | /admin/audit-log |
-| 4 | BUG-004 | MEDIUM | DevRev PLuG SDK fails to initialize on every page (17x across 12 pages) | All pages |
-| 5 | BUG-005 | MEDIUM | CSP blocks Beamer fonts — 102 violations per session | All pages |
-| 6 | BUG-006 | MEDIUM | Task creation triggers API 400 on task-session mapping (silent failure) | /tasks |
-| 7 | BUG-007 | LOW | SLDs page renders duplicate "Select View" dropdown controls | /slds |
+| 1 | BUG-001 | MEDIUM | No 404 error page — invalid URLs show blank content | Any invalid URL |
+| 2 | BUG-002 | MEDIUM | Audit Log has duplicate search fields ("Search..." + "Search items...") | /admin/audit-log |
+| 3 | BUG-003 | MEDIUM | DevRev PLuG SDK fails to initialize on every page (17x across 12 pages) | All pages |
+| 4 | BUG-004 | MEDIUM | CSP blocks Beamer fonts — 102 violations per session | All pages |
+| 5 | BUG-005 | MEDIUM | Task creation triggers API 400 on task-session mapping (silent failure) | /tasks |
+
+### Removed After Review (not bugs)
+- ~~Equipment Insights blank page~~ — Was testing `/equipment-insights` (invalid URL). The real page is `/equipment-library` which works correctly. This was just the 404 bug manifesting.
+- ~~SLDs duplicate "Select View"~~ — The two buttons are intentional UX: center prompt for initial state + persistent toolbar control. Clicking either opens the SLD view selector correctly.
 
 ---
 
@@ -71,7 +73,7 @@ Verify all previously reported bugs against the LIVE eGalvanic platform (acme.qa
 | `deep-part2-results.json` | /tmp/bug-verification/ | Part 2 test results |
 | `deep-part3-results.json` | /tmp/bug-verification/ | Part 3 test results |
 | `screenshots-deep/*.png` | /tmp/bug-verification/ | 25+ screenshots from interactive testing |
-| `eGalvanic_Deep_Bug_Report_20_April_2026.html` | bug pdf/ | **Final consolidated report (0.98 MB)** — self-contained HTML with embedded screenshots |
+| `eGalvanic_Deep_Bug_Report_20_April_2026.html` | bug pdf/ | **Final consolidated report (0.78 MB)** — self-contained HTML with embedded screenshots |
 
 ---
 
