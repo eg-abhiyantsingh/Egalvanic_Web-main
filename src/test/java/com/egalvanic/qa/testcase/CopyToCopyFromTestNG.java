@@ -166,4 +166,196 @@ public class CopyToCopyFromTestNG extends BaseTest {
             Assert.fail("TC_Copy_04 crashed: " + e.getMessage());
         }
     }
+
+    // =================================================================
+    // TC_Copy_05 — Search filter narrows the asset picker
+    // =================================================================
+    @Test(priority = 5, description = "Typing in Copy From picker filters the asset list")
+    public void testTC_Copy_05_PickerSearchFilters() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_COPY_TO_FROM,
+            "TC_Copy_05: Picker search");
+        try {
+            openFirstAssetDetail();
+            WebElement entry = findByText("Copy From", "Copy from");
+            if (entry == null && openKebab()) entry = findByText("Copy From", "Copy from");
+            if (entry == null) { logWarning("Copy From missing — skip"); return; }
+            safeClick(entry);
+            pause(3000);
+
+            List<WebElement> pickers = driver.findElements(By.cssSelector(
+                "[role='dialog'] input[type='search'], " +
+                "[role='dialog'] input[placeholder*='Search' i], " +
+                "[role='dialog'] input[role='combobox']"));
+            if (pickers.isEmpty()) { logWarning("No picker input"); return; }
+            WebElement picker = pickers.get(0);
+            // Count options before filter
+            safeClick(picker); pause(1200);
+            int beforeCount = driver.findElements(By.cssSelector("li[role='option']")).size();
+            picker.sendKeys("ZZZZ_UNLIKELY_" + System.currentTimeMillis());
+            pause(1800);
+            int afterCount = driver.findElements(By.cssSelector("li[role='option']")).size();
+            logStep("Options before filter: " + beforeCount + ", after typing unlikely string: " + afterCount);
+            ScreenshotUtil.captureScreenshot("TC_Copy_05");
+            // Cancel the dialog
+            WebElement cancel = findByText("Cancel", "Close");
+            if (cancel != null) safeClick(cancel);
+            pause(1000);
+            Assert.assertTrue(afterCount < beforeCount || afterCount == 0,
+                "Picker search did not filter the list (before=" + beforeCount + " after=" + afterCount + ")");
+            ExtentReportManager.logPass("Copy From picker search filters correctly");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_Copy_05_error");
+            Assert.fail("TC_Copy_05 crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_Copy_06 — Copy From excludes the current (self) asset
+    // =================================================================
+    @Test(priority = 6, description = "Current asset is excluded from Copy From picker (can't copy from self)")
+    public void testTC_Copy_06_ExcludesSelf() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_COPY_TO_FROM,
+            "TC_Copy_06: Exclude self");
+        try {
+            openFirstAssetDetail();
+            String currentName = assetPage.getDetailPageAssetName();
+            logStep("Current asset: " + currentName);
+            WebElement entry = findByText("Copy From", "Copy from");
+            if (entry == null && openKebab()) entry = findByText("Copy From", "Copy from");
+            if (entry == null) { logWarning("Copy From missing — skip"); return; }
+            safeClick(entry);
+            pause(3000);
+
+            List<WebElement> pickers = driver.findElements(By.cssSelector(
+                "[role='dialog'] input[type='search'], " +
+                "[role='dialog'] input[placeholder*='Search' i], " +
+                "[role='dialog'] input[role='combobox']"));
+            if (pickers.isEmpty() || currentName == null || currentName.isEmpty()) {
+                logWarning("Cannot probe — picker or name missing");
+                WebElement cancel = findByText("Cancel", "Close");
+                if (cancel != null) safeClick(cancel);
+                return;
+            }
+            WebElement picker = pickers.get(0);
+            safeClick(picker); pause(1200);
+            // Type partial of current asset name
+            String frag = currentName.length() > 4 ? currentName.substring(0, 4) : currentName;
+            picker.sendKeys(frag);
+            pause(2000);
+
+            List<WebElement> options = driver.findElements(By.cssSelector("li[role='option']"));
+            boolean selfListed = false;
+            for (WebElement o : options) {
+                if (o.getText() != null && o.getText().equals(currentName)) { selfListed = true; break; }
+            }
+            ScreenshotUtil.captureScreenshot("TC_Copy_06");
+            WebElement cancel = findByText("Cancel", "Close");
+            if (cancel != null) safeClick(cancel);
+            pause(1000);
+
+            Assert.assertFalse(selfListed,
+                "Current asset '" + currentName + "' appears in its own Copy From picker");
+            ExtentReportManager.logPass("Copy From picker excludes current (self) asset");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_Copy_06_error");
+            Assert.fail("TC_Copy_06 crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_Copy_07 — Copy offers per-field selection (don't force full-clone)
+    // =================================================================
+    @Test(priority = 7, description = "Copy dialog exposes per-field checkboxes to choose what to copy")
+    public void testTC_Copy_07_FieldSelectorInDialog() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_COPY_TO_FROM,
+            "TC_Copy_07: Field selector");
+        try {
+            openFirstAssetDetail();
+            WebElement entry = findByText("Copy From", "Copy To");
+            if (entry == null && openKebab()) entry = findByText("Copy From", "Copy To");
+            if (entry == null) { logWarning("No Copy entry — skip"); return; }
+            safeClick(entry);
+            pause(3000);
+
+            List<WebElement> checkboxes = driver.findElements(By.cssSelector(
+                "[role='dialog'] input[type='checkbox'], [class*='MuiDialog'] input[type='checkbox']"));
+            logStep("Checkboxes in copy dialog: " + checkboxes.size());
+            ScreenshotUtil.captureScreenshot("TC_Copy_07");
+            WebElement cancel = findByText("Cancel", "Close");
+            if (cancel != null) safeClick(cancel);
+            pause(1000);
+
+            // Soft expectation — some flows do whole-record copy by design
+            if (checkboxes.size() < 2) {
+                logWarning("Copy dialog has < 2 checkboxes — may be whole-record copy by design. " +
+                    "Flag for product spec: should users be able to cherry-pick fields?");
+            }
+            ExtentReportManager.logPass("Copy dialog field selectors: " + checkboxes.size());
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_Copy_07_error");
+            Assert.fail("TC_Copy_07 crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_Copy_08 — Copy preserves the target's identity (ID, QR, creation timestamp)
+    // =================================================================
+    @Test(priority = 8, description = "Target asset's identity fields (QR code, creation date) unchanged after Copy From cancel")
+    public void testTC_Copy_08_TargetIdentityPreservedOnCancel() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_COPY_TO_FROM,
+            "TC_Copy_08: Target identity preserved");
+        try {
+            openFirstAssetDetail();
+            // Read QR and creation if visible
+            Object identityBefore = ((org.openqa.selenium.JavascriptExecutor) driver).executeScript(
+                "var result = {};" +
+                "var all = document.querySelectorAll('label, [class*=\"FormControl\"]');" +
+                "for (var l of all) {" +
+                "  var t = (l.textContent || '').toLowerCase();" +
+                "  var input = l.querySelector('input');" +
+                "  if (!input) continue;" +
+                "  if (t.includes('qr') || t.includes('id') || t.includes('created')) {" +
+                "    result[t.trim().substring(0,30)] = input.value;" +
+                "  }" +
+                "}" +
+                "return result;");
+            logStep("Identity before Copy: " + identityBefore);
+
+            WebElement entry = findByText("Copy From", "Copy from");
+            if (entry == null && openKebab()) entry = findByText("Copy From", "Copy from");
+            if (entry == null) { logWarning("No Copy From — skip"); return; }
+            safeClick(entry);
+            pause(2500);
+            WebElement cancel = findByText("Cancel", "Close");
+            if (cancel != null) safeClick(cancel);
+            pause(2000);
+
+            Object identityAfter = ((org.openqa.selenium.JavascriptExecutor) driver).executeScript(
+                "var result = {};" +
+                "var all = document.querySelectorAll('label, [class*=\"FormControl\"]');" +
+                "for (var l of all) {" +
+                "  var t = (l.textContent || '').toLowerCase();" +
+                "  var input = l.querySelector('input');" +
+                "  if (!input) continue;" +
+                "  if (t.includes('qr') || t.includes('id') || t.includes('created')) {" +
+                "    result[t.trim().substring(0,30)] = input.value;" +
+                "  }" +
+                "}" +
+                "return result;");
+            logStep("Identity after Copy cancel: " + identityAfter);
+            ScreenshotUtil.captureScreenshot("TC_Copy_08");
+            String before = identityBefore == null ? "" : identityBefore.toString();
+            String after = identityAfter == null ? "" : identityAfter.toString();
+            Assert.assertEquals(after, before,
+                "Identity fields changed after Copy From cancel: before=" + before + " after=" + after);
+            ExtentReportManager.logPass("Identity fields preserved after Copy From cancel");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_Copy_08_error");
+            Assert.fail("TC_Copy_08 crashed: " + e.getMessage());
+        }
+    }
 }

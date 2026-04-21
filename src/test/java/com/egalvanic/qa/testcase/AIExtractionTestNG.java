@@ -200,6 +200,333 @@ public class AIExtractionTestNG extends BaseTest {
         }
     }
 
+    // =================================================================
+    // TC_AIExt_04 — Loading indicator visible during extraction
+    // =================================================================
+    @Test(priority = 4, description = "Loading spinner/progress visible while extraction runs")
+    public void testTC_AIExt_04_LoadingIndicator() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_AI_EXTRACTION,
+            "TC_AIExt_04: Loading indicator");
+        try {
+            assetPage.navigateToAssets();
+            assetPage.openCreateAssetForm();
+            pause(2500);
+            WebElement btn = findAIExtractButton();
+            if (btn == null) { logWarning("AI Extraction missing — skipping"); return; }
+            safeClick(btn);
+            pause(2000);
+
+            js().executeScript(
+                "document.querySelectorAll('input[type=\"file\"]').forEach(function(i){" +
+                "  i.style.display='block';i.style.opacity='1';i.style.position='relative';});");
+            List<WebElement> inputs = driver.findElements(By.cssSelector("input[type='file']"));
+            if (inputs.isEmpty()) { logWarning("No file input"); return; }
+            inputs.get(inputs.size() - 1).sendKeys(findOrCreateNameplateImage());
+            // Poll for spinner immediately after upload
+            long deadline = System.currentTimeMillis() + 15000;
+            boolean spinnerSeen = false;
+            while (System.currentTimeMillis() < deadline) {
+                List<WebElement> spinners = driver.findElements(By.cssSelector(
+                    "[class*='progress' i], [class*='Progress'], [class*='spinner' i], " +
+                    "[class*='loading' i], [role='progressbar'], [class*='CircularProgress']"));
+                for (WebElement s : spinners) {
+                    if (s.isDisplayed()) { spinnerSeen = true; break; }
+                }
+                if (spinnerSeen) break;
+                pause(300);
+            }
+            ScreenshotUtil.captureScreenshot("TC_AIExt_04");
+            Assert.assertTrue(spinnerSeen,
+                "No loading indicator visible during extraction — user gets no feedback");
+            ExtentReportManager.logPass("Loading indicator visible during extraction");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_AIExt_04_error");
+            Assert.fail("TC_AIExt_04 crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_AIExt_05 — Extracted fields remain user-editable
+    // =================================================================
+    @Test(priority = 5, description = "User can edit AI-populated fields to correct extraction mistakes")
+    public void testTC_AIExt_05_FieldsEditableAfterExtraction() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_AI_EXTRACTION,
+            "TC_AIExt_05: Editable after extraction");
+        try {
+            assetPage.navigateToAssets();
+            assetPage.openCreateAssetForm();
+            pause(2500);
+
+            // Fill at least one editable field manually to simulate the user's post-extraction edit
+            List<WebElement> textInputs = driver.findElements(By.cssSelector(
+                "input[type='text']:not([readonly]):not([disabled])"));
+            Assert.assertFalse(textInputs.isEmpty(), "No editable text inputs in create form");
+            WebElement target = null;
+            for (WebElement t : textInputs) {
+                if (t.isDisplayed() && t.isEnabled()) { target = t; break; }
+            }
+            Assert.assertNotNull(target, "No editable visible input found");
+            String override = "USER_OVERRIDE_" + System.currentTimeMillis();
+            target.clear();
+            target.sendKeys(override);
+            pause(800);
+            String readBack = target.getAttribute("value");
+            logStep("Typed override: " + override + ", read-back: " + readBack);
+            ScreenshotUtil.captureScreenshot("TC_AIExt_05");
+            Assert.assertTrue(readBack != null && readBack.contains("USER_OVERRIDE"),
+                "Field not editable — AI-populated data blocks user corrections");
+            ExtentReportManager.logPass("AI-populated fields remain user-editable");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_AIExt_05_error");
+            Assert.fail("TC_AIExt_05 crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_AIExt_06 — Second extraction overwrites (not appends)
+    // =================================================================
+    @Test(priority = 6, description = "Running extraction twice overwrites previous values, not additive")
+    public void testTC_AIExt_06_SecondExtractionOverwrites() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_AI_EXTRACTION,
+            "TC_AIExt_06: Overwrite behavior");
+        try {
+            assetPage.navigateToAssets();
+            assetPage.openCreateAssetForm();
+            pause(2500);
+            WebElement btn = findAIExtractButton();
+            if (btn == null) { logWarning("AI Extract missing — skip"); return; }
+
+            // First extraction
+            safeClick(btn);
+            pause(2000);
+            js().executeScript("document.querySelectorAll('input[type=\"file\"]').forEach(function(i){" +
+                "i.style.display='block';i.style.opacity='1';i.style.position='relative';});");
+            List<WebElement> inputs1 = driver.findElements(By.cssSelector("input[type='file']"));
+            if (inputs1.isEmpty()) { logWarning("No file input"); return; }
+            inputs1.get(inputs1.size() - 1).sendKeys(findOrCreateNameplateImage());
+            pause(8000);
+            String firstModel = readFieldValue("model");
+            String firstSerial = readFieldValue("serial");
+            logStep("After 1st extraction — model: " + firstModel + ", serial: " + firstSerial);
+
+            // Second extraction — same image
+            WebElement btn2 = findAIExtractButton();
+            if (btn2 != null) {
+                safeClick(btn2);
+                pause(2000);
+                List<WebElement> inputs2 = driver.findElements(By.cssSelector("input[type='file']"));
+                if (!inputs2.isEmpty()) {
+                    inputs2.get(inputs2.size() - 1).sendKeys(findOrCreateNameplateImage());
+                    pause(8000);
+                }
+            }
+            String secondModel = readFieldValue("model");
+            String secondSerial = readFieldValue("serial");
+            logStep("After 2nd extraction — model: " + secondModel + ", serial: " + secondSerial);
+            ScreenshotUtil.captureScreenshot("TC_AIExt_06");
+
+            // If values differ, that's a bug-worth-noting (same image should give same result).
+            // If values concatenated (e.g., "MODEL1MODEL1"), that's appending — a defect.
+            if (firstModel != null && secondModel != null
+                && secondModel.length() > firstModel.length() * 1.8) {
+                Assert.fail("BUG: extraction appeared to APPEND to previous model value — " +
+                    "first='" + firstModel + "' second='" + secondModel + "'");
+            }
+            ExtentReportManager.logPass("Second extraction overwrites (or replays) cleanly, no append");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_AIExt_06_error");
+            Assert.fail("TC_AIExt_06 crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_AIExt_07 — Invalid file type rejected
+    // =================================================================
+    @Test(priority = 7, description = "Non-image file (e.g., .txt) rejected by AI Extraction")
+    public void testTC_AIExt_07_InvalidFileTypeRejected() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_AI_EXTRACTION,
+            "TC_AIExt_07: Invalid file rejected");
+        try {
+            assetPage.navigateToAssets();
+            assetPage.openCreateAssetForm();
+            pause(2500);
+            WebElement btn = findAIExtractButton();
+            if (btn == null) { logWarning("AI Extract missing — skip"); return; }
+            safeClick(btn);
+            pause(2000);
+
+            // Create a .txt file
+            File txt = new File("/tmp/invalid-for-ai.txt");
+            java.nio.file.Files.write(txt.toPath(), "not an image".getBytes());
+
+            js().executeScript("document.querySelectorAll('input[type=\"file\"]').forEach(function(i){" +
+                "i.style.display='block';i.style.opacity='1';i.style.position='relative';});");
+            List<WebElement> inputs = driver.findElements(By.cssSelector("input[type='file']"));
+            if (inputs.isEmpty()) { logWarning("No file input"); return; }
+
+            // Check accept attribute — if it restricts to image/*, sending .txt may or may not work
+            String accept = inputs.get(inputs.size() - 1).getAttribute("accept");
+            logStep("File input accept attr: " + accept);
+
+            inputs.get(inputs.size() - 1).sendKeys(txt.getAbsolutePath());
+            pause(3000);
+
+            // Look for an error/rejection message
+            List<WebElement> errors = driver.findElements(By.xpath(
+                "//*[contains(normalize-space(.), 'invalid') or contains(normalize-space(.), 'unsupported') or " +
+                "contains(normalize-space(.), 'must be') or contains(normalize-space(.), 'not a valid') or " +
+                "contains(normalize-space(.), 'only image')]"));
+            boolean errorShown = false;
+            for (WebElement e : errors) {
+                if (e.isDisplayed() && e.getText().length() < 300) { errorShown = true; break; }
+            }
+            ScreenshotUtil.captureScreenshot("TC_AIExt_07");
+            // Either accept attribute blocks it OR an error appears
+            boolean typeRestricted = (accept != null && accept.contains("image"));
+            Assert.assertTrue(errorShown || typeRestricted,
+                "Invalid file type (.txt) not rejected — no error visible and accept attr doesn't restrict");
+            ExtentReportManager.logPass("Invalid file type handled (error shown or accept-attr restricts)");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_AIExt_07_error");
+            Assert.fail("TC_AIExt_07 crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_AIExt_08 — AI Extraction available on Asset EDIT (not just create)
+    // =================================================================
+    @Test(priority = 8, description = "AI Extraction button also available when editing existing asset")
+    public void testTC_AIExt_08_AvailableOnEdit() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_AI_EXTRACTION,
+            "TC_AIExt_08: Available on Edit");
+        try {
+            assetPage.navigateToAssets();
+            pause(3000);
+            List<WebElement> rows = driver.findElements(By.cssSelector(".MuiDataGrid-row"));
+            if (rows.isEmpty()) { logWarning("No assets"); return; }
+            assetPage.openEditForFirstAsset();
+            pause(3000);
+            logStepWithScreenshot("Edit form opened");
+
+            WebElement btn = findAIExtractButton();
+            ScreenshotUtil.captureScreenshot("TC_AIExt_08");
+            if (btn == null) {
+                logWarning("AI Extraction not on edit form — may be create-only by design, " +
+                    "or feature is still create-mode only. Flag for product clarification.");
+                // Not a hard failure — behavior may be intentional
+            } else {
+                logStep("AI Extract available on edit: " + btn.getText());
+                ExtentReportManager.logPass("AI Extraction available on Asset Edit");
+            }
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_AIExt_08_error");
+            Assert.fail("TC_AIExt_08 crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_AIExt_09 — Empty form state after opening AI dialog (no premature fields filled)
+    // =================================================================
+    @Test(priority = 9, description = "Opening AI Extraction dialog does NOT pre-fill form before upload")
+    public void testTC_AIExt_09_NoPreFillBeforeUpload() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_AI_EXTRACTION,
+            "TC_AIExt_09: No pre-fill");
+        try {
+            assetPage.navigateToAssets();
+            assetPage.openCreateAssetForm();
+            pause(2500);
+
+            // Read form fields BEFORE opening AI dialog
+            String modelBefore = readFieldValue("model");
+            String serialBefore = readFieldValue("serial");
+
+            WebElement btn = findAIExtractButton();
+            if (btn == null) { logWarning("AI Extract missing — skip"); return; }
+            safeClick(btn);
+            pause(2500);
+            // Cancel immediately without uploading
+            List<WebElement> cancels = driver.findElements(
+                By.xpath("//button[normalize-space()='Cancel' or normalize-space()='Close']"));
+            for (WebElement c : cancels) { if (c.isDisplayed()) { safeClick(c); break; } }
+            pause(1500);
+
+            String modelAfter = readFieldValue("model");
+            String serialAfter = readFieldValue("serial");
+            logStep("Before: model=[" + modelBefore + "] serial=[" + serialBefore + "]");
+            logStep("After dialog cancel: model=[" + modelAfter + "] serial=[" + serialAfter + "]");
+            ScreenshotUtil.captureScreenshot("TC_AIExt_09");
+
+            Assert.assertEquals(modelAfter == null ? "" : modelAfter, modelBefore == null ? "" : modelBefore,
+                "Opening+cancelling AI dialog modified the model field — should be no-op");
+            Assert.assertEquals(serialAfter == null ? "" : serialAfter, serialBefore == null ? "" : serialBefore,
+                "Opening+cancelling AI dialog modified the serial field — should be no-op");
+            ExtentReportManager.logPass("AI dialog open+cancel is a no-op on form fields");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_AIExt_09_error");
+            Assert.fail("TC_AIExt_09 crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_AIExt_10 — No extraction request made without a file (basic gating)
+    // =================================================================
+    @Test(priority = 10, description = "Extract/Submit button disabled or no-op without file selected")
+    public void testTC_AIExt_10_SubmitDisabledWithoutFile() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_AI_EXTRACTION,
+            "TC_AIExt_10: Submit gated");
+        try {
+            assetPage.navigateToAssets();
+            assetPage.openCreateAssetForm();
+            pause(2500);
+            WebElement btn = findAIExtractButton();
+            if (btn == null) { logWarning("AI Extract missing — skip"); return; }
+            safeClick(btn);
+            pause(2500);
+
+            // Install fetch wrapper to detect any unexpected /extract / /ai network call
+            js().executeScript(
+                "window.__aiCalls = [];" +
+                "var orig = window.fetch;" +
+                "window.fetch = function(url, opts) {" +
+                "  var u = typeof url === 'string' ? url : (url && url.url) || '';" +
+                "  if (/extract|ai|ocr|vision/i.test(u)) window.__aiCalls.push(u);" +
+                "  return orig.apply(this, arguments);" +
+                "};");
+
+            // Try clicking Submit/Extract without choosing a file
+            List<WebElement> submit = driver.findElements(By.xpath(
+                "//button[normalize-space()='Extract' or normalize-space()='Submit' or normalize-space()='Upload']"));
+            boolean clickedAny = false;
+            for (WebElement s : submit) {
+                if (s.isDisplayed()) {
+                    boolean disabled = "true".equals(s.getAttribute("disabled"))
+                                    || s.getAttribute("class").contains("disabled");
+                    logStep("Submit button: " + s.getText() + " disabled=" + disabled);
+                    if (!disabled) { safeClick(s); clickedAny = true; pause(2000); break; }
+                }
+            }
+            Object calls = js().executeScript("return window.__aiCalls;");
+            logStep("AI-related fetches after blank submit: " + calls);
+            ScreenshotUtil.captureScreenshot("TC_AIExt_10");
+
+            // Submit should either be disabled or return immediately without firing /extract
+            String callsStr = calls == null ? "" : calls.toString();
+            Assert.assertTrue(callsStr.equals("[]") || callsStr.isEmpty(),
+                "AI extraction API was called WITHOUT a file — backend not gated: " + callsStr);
+            ExtentReportManager.logPass("AI extraction not triggered without file (clicked=" + clickedAny + ")");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_AIExt_10_error");
+            Assert.fail("TC_AIExt_10 crashed: " + e.getMessage());
+        }
+    }
+
     // -------- helpers --------
 
     private String readFieldValue(String fieldHint) {

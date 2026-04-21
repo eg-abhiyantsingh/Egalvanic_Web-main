@@ -185,4 +185,169 @@ public class MiscFeaturesTestNG extends BaseTest {
             Assert.fail("TC_Misc_04 crashed: " + e.getMessage());
         }
     }
+
+    // =================================================================
+    // TC_Misc_05 — T&C link target is correct (href to policy page)
+    // =================================================================
+    @Test(priority = 5, description = "Terms & Conditions link has a valid href (not javascript:void or #)")
+    public void testTC_Misc_05_TermsLinkHref() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_TERMS_CHECKBOX,
+            "TC_Misc_05: T&C link href");
+        try {
+            driver.get(AppConstants.BASE_URL + "/login");
+            pause(4000);
+            List<WebElement> links = driver.findElements(By.tagName("a"));
+            String href = null;
+            String text = null;
+            for (WebElement a : links) {
+                String t = a.getText() == null ? "" : a.getText().trim();
+                if (t.matches("(?i).*(terms|privacy|conditions).*") && a.isDisplayed()) {
+                    href = a.getAttribute("href");
+                    text = t;
+                    break;
+                }
+            }
+            ScreenshotUtil.captureScreenshot("TC_Misc_05");
+            Assert.assertNotNull(href, "T&C link has no href at all");
+            logStep("T&C link: '" + text + "' → " + href);
+            Assert.assertFalse(href.startsWith("javascript:"), "T&C href is javascript:void — broken link");
+            Assert.assertFalse("#".equals(href) || href.endsWith("/#"),
+                "T&C href is # — placeholder, not a real policy URL");
+            ExtentReportManager.logPass("T&C link points to real URL: " + href);
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_Misc_05_error");
+            Assert.fail("TC_Misc_05 crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_Misc_06 — Maintenance State value is one of the allowed states (not empty/free text)
+    // =================================================================
+    @Test(priority = 6, description = "Maintenance State value is a known enum (not free text)")
+    public void testTC_Misc_06_MaintenanceStateEnum() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_MAINTENANCE_STATE,
+            "TC_Misc_06: Maintenance State enum");
+        try {
+            assetPage.navigateToAssets();
+            pause(3000);
+            List<WebElement> rows = driver.findElements(By.cssSelector(".MuiDataGrid-row"));
+            Assert.assertFalse(rows.isEmpty(), "No assets");
+            safeClick(rows.get(0));
+            pause(3500);
+            WebElement calcTab = findText("Calculations", "Calculation");
+            if (calcTab != null) { safeClick(calcTab); pause(2000); }
+
+            Object val = js().executeScript(
+                "var all = document.querySelectorAll('label, [class*=\"FormControl\"], *');" +
+                "for (var el of all) {" +
+                "  if (el.children.length > 0 && !el.tagName.match(/label|span|div/i)) continue;" +
+                "  var t = (el.textContent || '').toLowerCase();" +
+                "  if (t.includes('maintenance state') || t.includes('maintenance status')) {" +
+                "    var parent = el.parentElement;" +
+                "    var val = parent ? parent.querySelector('input, span, div') : null;" +
+                "    if (val) return (val.value || val.textContent || '').trim().substring(0,80);" +
+                "  }" +
+                "}" +
+                "return null;");
+            ScreenshotUtil.captureScreenshot("TC_Misc_06");
+            logStep("Maintenance State value: " + val);
+            if (val == null) { logWarning("No Maintenance State value readable"); return; }
+            String s = val.toString().toLowerCase();
+            // Expected enum set (guessed common labels for electrical asset state)
+            boolean known = s.matches(".*(in service|out of service|retired|maintenance|active|inactive|" +
+                "operational|decommissioned|pending|unknown|scheduled|overdue|compliant|non-compliant|good|fair|poor).*");
+            Assert.assertTrue(known || s.isEmpty(),
+                "Maintenance State value '" + val + "' does not match a known state enum — free text?");
+            ExtentReportManager.logPass("Maintenance State: " + val);
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_Misc_06_error");
+            Assert.fail("TC_Misc_06 crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_Misc_07 — Suggested Shortcut navigates when clicked
+    // =================================================================
+    @Test(priority = 7, description = "Clicking a Suggested Shortcut triggers navigation or action")
+    public void testTC_Misc_07_ShortcutNavigates() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_SUGGESTED_SHORTCUTS,
+            "TC_Misc_07: Shortcut navigates");
+        try {
+            driver.get(AppConstants.BASE_URL + "/slds");
+            pause(5000);
+            WebElement shortcut = findText("Suggested Shortcuts", "Shortcuts", "Quick Actions");
+            if (shortcut == null) {
+                assetPage.navigateToAssets();
+                pause(3000);
+                List<WebElement> rows = driver.findElements(By.cssSelector(".MuiDataGrid-row"));
+                if (!rows.isEmpty()) {
+                    safeClick(rows.get(0));
+                    pause(3500);
+                    shortcut = findText("Suggested Shortcuts", "Shortcuts", "Quick Actions");
+                }
+            }
+            if (shortcut == null) { logWarning("No shortcuts panel"); return; }
+
+            // Find a clickable shortcut item near the label
+            String urlBefore = driver.getCurrentUrl();
+            List<WebElement> btns = driver.findElements(By.cssSelector(
+                "[class*='Shortcut'] button, [class*='shortcut'] button, " +
+                "[class*='QuickAction'] button, [class*='quick'] button, [role='button']"));
+            WebElement clickable = null;
+            for (WebElement b : btns) {
+                if (b.isDisplayed() && b.getText() != null && b.getText().length() > 0 && b.getText().length() < 40) {
+                    clickable = b; break;
+                }
+            }
+            if (clickable == null) { logWarning("No clickable shortcut item"); return; }
+            String label = clickable.getText();
+            safeClick(clickable);
+            pause(3000);
+            String urlAfter = driver.getCurrentUrl();
+            boolean dialogOpened = !driver.findElements(
+                By.cssSelector("[role='dialog']:not([aria-hidden='true'])")).isEmpty();
+            ScreenshotUtil.captureScreenshot("TC_Misc_07");
+            logStep("Shortcut '" + label + "' clicked. URL before: " + urlBefore + " after: " + urlAfter
+                + ", dialog opened: " + dialogOpened);
+            boolean actedOn = !urlBefore.equals(urlAfter) || dialogOpened;
+            Assert.assertTrue(actedOn,
+                "Shortcut '" + label + "' click did nothing (no nav, no dialog)");
+            ExtentReportManager.logPass("Suggested Shortcut triggers action on click");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_Misc_07_error");
+            Assert.fail("TC_Misc_07 crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_Misc_08 — Schedule page exposes create/add entry point
+    // =================================================================
+    @Test(priority = 8, description = "Schedule page exposes an Add/Create event control")
+    public void testTC_Misc_08_ScheduleHasCreateEntry() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_SCHEDULE,
+            "TC_Misc_08: Schedule create entry");
+        try {
+            String[] paths = { "/scheduling", "/schedule", "/calendar" };
+            for (String p : paths) {
+                driver.get(AppConstants.BASE_URL + p);
+                pause(4000);
+                String body = driver.findElement(By.tagName("body")).getText();
+                if (body.length() > 100 && !body.contains("Page Not Found")) break;
+            }
+            pause(2000);
+            WebElement add = findText("Add", "Create", "Schedule Work", "New Event", "+");
+            ScreenshotUtil.captureScreenshot("TC_Misc_08");
+            Assert.assertNotNull(add,
+                "Schedule page has no Add/Create control — users can't schedule new events");
+            logStep("Schedule add/create control: " + add.getText());
+            ExtentReportManager.logPass("Schedule page exposes create entry point");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_Misc_08_error");
+            Assert.fail("TC_Misc_08 crashed: " + e.getMessage());
+        }
+    }
 }

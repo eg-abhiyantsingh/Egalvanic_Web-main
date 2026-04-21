@@ -204,4 +204,223 @@ public class ConnectionCoreAttrsTestNG extends BaseTest {
             Assert.fail("TC_Conn_04 crashed: " + e.getMessage());
         }
     }
+
+    // =================================================================
+    // TC_Conn_05 — Numeric Core Attributes reject alpha input
+    // =================================================================
+    @Test(priority = 5, description = "Voltage/amperage fields accept digits only (basic numeric validation)")
+    public void testTC_Conn_05_NumericFieldsRejectAlpha() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_CONN_CORE_ATTRS,
+            "TC_Conn_05: Numeric validation");
+        try {
+            openFirstConnectionDetail();
+            WebElement editBtn = findText("Edit");
+            if (editBtn != null) { safeClick(editBtn); pause(2000); }
+
+            Object result = js().executeScript(
+                "var labels = document.querySelectorAll('label, [class*=\"FormControl\"]');" +
+                "for (var l of labels) {" +
+                "  var t = l.textContent.toLowerCase();" +
+                "  if (t.includes('voltage') || t.includes('amperage') || t.includes('current')) {" +
+                "    var input = l.querySelector('input') || (l.parentElement ? l.parentElement.querySelector('input') : null);" +
+                "    if (input && !input.disabled && !input.readOnly) {" +
+                "      var original = input.value;" +
+                "      var type = input.getAttribute('type');" +
+                "      var inputMode = input.getAttribute('inputmode');" +
+                "      var pattern = input.getAttribute('pattern');" +
+                "      return { label: l.textContent.substring(0,40), type: type, inputMode: inputMode, pattern: pattern };" +
+                "    }" +
+                "  }" +
+                "}" +
+                "return null;");
+            logStep("Numeric field attrs: " + result);
+            ScreenshotUtil.captureScreenshot("TC_Conn_05");
+            if (result == null) {
+                logWarning("No editable numeric Core Attr found — skipping validation test");
+                return;
+            }
+            String s = result.toString();
+            boolean gated = s.contains("number") || s.contains("numeric") || s.contains("decimal") ||
+                            s.contains("[0-9") || s.contains("\\d");
+            Assert.assertTrue(gated,
+                "Numeric Core Attribute field has no type/inputmode/pattern restriction to digits: " + s);
+            ExtentReportManager.logPass("Numeric fields have input restrictions: " + s);
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_Conn_05_error");
+            Assert.fail("TC_Conn_05 crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_Conn_06 — Unit labels render next to numeric fields
+    // =================================================================
+    @Test(priority = 6, description = "Core Attribute numeric fields display units (kV, A, Hz)")
+    public void testTC_Conn_06_UnitLabelsVisible() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_CONN_CORE_ATTRS,
+            "TC_Conn_06: Unit labels");
+        try {
+            openFirstConnectionDetail();
+
+            Object units = js().executeScript(
+                "var found = [];" +
+                "var all = document.querySelectorAll('*');" +
+                "for (var el of all) {" +
+                "  if (el.children.length > 0) continue;" +
+                "  var t = el.textContent.trim();" +
+                "  if (/^(k?V|A|Hz|kVA|kW|Ohms?|Ω|phase)$/i.test(t)) {" +
+                "    found.push(t);" +
+                "  }" +
+                "}" +
+                "return Array.from(new Set(found));");
+            logStep("Unit labels discovered: " + units);
+            ScreenshotUtil.captureScreenshot("TC_Conn_06");
+            String s = units == null ? "" : units.toString();
+            Assert.assertTrue(s.contains("V") || s.contains("A") || s.contains("Hz"),
+                "No common electrical unit labels (V/A/Hz) visible on Core Attributes");
+            ExtentReportManager.logPass("Unit labels present: " + s);
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_Conn_06_error");
+            Assert.fail("TC_Conn_06 crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_Conn_07 — Cancel edit does not persist changes
+    // =================================================================
+    @Test(priority = 7, description = "Cancel on Connection edit reverts unsaved changes")
+    public void testTC_Conn_07_CancelEditReverts() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_CONN_CORE_ATTRS,
+            "TC_Conn_07: Cancel reverts");
+        try {
+            openFirstConnectionDetail();
+            WebElement editBtn = findText("Edit");
+            if (editBtn != null) { safeClick(editBtn); pause(2000); }
+
+            // Type into first editable text input
+            List<WebElement> inputs = driver.findElements(By.cssSelector(
+                "input[type='text']:not([readonly]):not([disabled])"));
+            if (inputs.isEmpty()) { logWarning("No editable input"); return; }
+            WebElement target = null;
+            for (WebElement t : inputs) { if (t.isDisplayed()) { target = t; break; } }
+            if (target == null) { logWarning("No visible input"); return; }
+            String original = target.getAttribute("value");
+            String typed = "TEMP_" + System.currentTimeMillis();
+            target.clear(); target.sendKeys(typed);
+            pause(500);
+
+            // Cancel
+            WebElement cancel = findText("Cancel", "Discard");
+            if (cancel != null) { safeClick(cancel); pause(2000); }
+
+            // Verify field reverted
+            String afterCancel = "";
+            try {
+                List<WebElement> reread = driver.findElements(By.cssSelector(
+                    "input[type='text']:not([readonly]):not([disabled])"));
+                for (WebElement t : reread) {
+                    if (t.isDisplayed()) { afterCancel = t.getAttribute("value"); break; }
+                }
+            } catch (Exception ignored) {}
+            logStep("Original: [" + original + "] typed: [" + typed + "] after cancel: [" + afterCancel + "]");
+            ScreenshotUtil.captureScreenshot("TC_Conn_07");
+            Assert.assertFalse(afterCancel != null && afterCancel.contains("TEMP_"),
+                "Cancel did not revert unsaved edit — field still shows [" + afterCancel + "]");
+            ExtentReportManager.logPass("Cancel reverts unsaved Core Attribute changes");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_Conn_07_error");
+            Assert.fail("TC_Conn_07 crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_Conn_08 — Required Core Attribute fields show error when blanked
+    // =================================================================
+    @Test(priority = 8, description = "Blanking a required Core Attribute and saving shows validation")
+    public void testTC_Conn_08_RequiredFieldValidation() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_CONN_CORE_ATTRS,
+            "TC_Conn_08: Required validation");
+        try {
+            openFirstConnectionDetail();
+            WebElement editBtn = findText("Edit");
+            if (editBtn != null) { safeClick(editBtn); pause(2000); }
+
+            // Find a required input (has 'required' attr, or label has '*')
+            WebElement required = null;
+            List<WebElement> inputs = driver.findElements(By.cssSelector(
+                "input[required], input[aria-required='true']"));
+            for (WebElement i : inputs) {
+                if (i.isDisplayed() && !"false".equals(i.getAttribute("aria-readonly"))) { required = i; break; }
+            }
+            if (required == null) { logWarning("No required input found"); return; }
+            String orig = required.getAttribute("value");
+            required.clear();
+            pause(500);
+
+            // Try save
+            WebElement save = findText("Save", "Save Changes", "Update");
+            if (save != null) { safeClick(save); pause(2500); }
+
+            // Look for validation error
+            List<WebElement> errors = driver.findElements(By.xpath(
+                "//*[contains(normalize-space(.), 'required') or contains(normalize-space(.), 'cannot be empty') or " +
+                "contains(normalize-space(.), 'is required')]"));
+            boolean errorShown = errors.stream().anyMatch(e -> e.isDisplayed() && e.getText().length() < 200);
+            ScreenshotUtil.captureScreenshot("TC_Conn_08");
+
+            // Restore the value
+            if (orig != null) { required.clear(); required.sendKeys(orig); pause(500); }
+            WebElement cancel = findText("Cancel", "Discard");
+            if (cancel != null) safeClick(cancel);
+            pause(1500);
+
+            Assert.assertTrue(errorShown,
+                "No validation error after blanking required Core Attribute and saving");
+            ExtentReportManager.logPass("Required Core Attribute validation triggers error");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_Conn_08_error");
+            Assert.fail("TC_Conn_08 crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_Conn_09 — Connection Type selector offers multiple types
+    // =================================================================
+    @Test(priority = 9, description = "Connection Type selector exposes multiple type options (edge properties differ)")
+    public void testTC_Conn_09_TypeOptionsAvailable() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_CONN_EDGE_PROPS,
+            "TC_Conn_09: Type options");
+        try {
+            connectionPage.navigateToConnections();
+            pause(3000);
+            connectionPage.openCreateConnectionDrawer();
+            pause(3000);
+            logStepWithScreenshot("Create connection drawer opened");
+
+            // Click the Connection Type combobox if present
+            List<WebElement> combos = driver.findElements(By.cssSelector(
+                "[role='combobox'], [role='dialog'] input[role='combobox'], " +
+                "input[placeholder*='Type' i], input[placeholder*='Connection' i]"));
+            int optionCount = 0;
+            for (WebElement c : combos) {
+                if (!c.isDisplayed()) continue;
+                try { safeClick(c); pause(1500); } catch (Exception ignored) {}
+                List<WebElement> opts = driver.findElements(By.cssSelector("li[role='option']"));
+                if (opts.size() > 0) { optionCount = opts.size(); break; }
+            }
+            logStep("Connection Type options available: " + optionCount);
+            ScreenshotUtil.captureScreenshot("TC_Conn_09");
+            connectionPage.closeDrawer();
+            Assert.assertTrue(optionCount >= 2,
+                "Fewer than 2 Connection Type options — cannot test edge-property differentiation");
+            ExtentReportManager.logPass("Connection Type selector exposes " + optionCount + " types");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_Conn_09_error");
+            Assert.fail("TC_Conn_09 crashed: " + e.getMessage());
+        }
+    }
 }
