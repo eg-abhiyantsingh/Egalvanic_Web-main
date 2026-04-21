@@ -209,6 +209,24 @@ public class AppConstants {
     public static final String FEATURE_Z_UNIVERSITY = "Z University";
 
     // ============================================
+    // FEATURE NAMES - DEEP BUG VERIFICATION (2026-04-20/21)
+    // ============================================
+    public static final String FEATURE_NO_404_PAGE = "404 Page Missing";
+    public static final String FEATURE_CSP_BEAMER_FONTS = "CSP Beamer Fonts Blocked";
+    public static final String FEATURE_TASK_SESSION_MAPPING = "Task Session Mapping";
+    public static final String FEATURE_ISSUE_CLASS_VALIDATION = "Issue Class Validation Gap";
+    public static final String FEATURE_KEYBOARD_FOCUS = "Keyboard Focus Indicator";
+    public static final String FEATURE_RAW_API_ERROR_LEAK = "Raw API Error Leak";
+    public static final String FEATURE_JSON_PARSE_ERROR = "JSON Parse Error";
+    public static final String FEATURE_BLANK_INVALID_ROUTE = "Blank Page on Invalid Route";
+    public static final String FEATURE_INTERNAL_FIELD_NAMES = "Internal Field Names in Validation";
+    public static final String FEATURE_DOUBLE_API_PREFIX = "Doubled /api/api/ URL";
+    public static final String FEATURE_NO_MAX_LENGTH = "No MaxLength on Inputs";
+    public static final String FEATURE_SALES_OVERVIEW_BROKEN = "Sales Overview Broken";
+    public static final String FEATURE_PAGE_LOAD_PERFORMANCE = "Page Load Performance";
+    public static final String FEATURE_DATA_PERSISTENCE = "Data Persistence";
+
+    // ============================================
     // EMAIL CONFIGURATION
     // ============================================
     public static final String SMTP_HOST = "smtp.gmail.com";
