@@ -1,0 +1,74 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  ZP-323 New Feature Coverage Suite.
+
+  Parent Epic: ZP-323 (Automation).
+  Adds Web automation for the 13 flows called out in the Scope:
+    - AI Extraction
+    - Bulk Upload
+    - Bulk Edit
+    - Generate Report / EG Form
+    - Copy to / Copy from
+    - Connection - Core Attributes
+    - Connection Type - Edge Properties
+    - Terms & Conditions checkbox
+    - Calculation - Maintenance State
+    - Suggested Shortcuts
+    - Issue Details - IR photos visibility
+    - IR Photo upload in Work Order
+    - Schedule
+
+  Each @Test is independent; test classes share one browser session per class.
+
+  Run: mvn clean test -DsuiteXmlFile=zp323-new-coverage-testng.xml
+-->
+<suite name="ZP-323 New Feature Coverage Suite" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <test name="AI-Extraction">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AIExtractionTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Bulk-Upload-and-Bulk-Edit">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BulkUploadBulkEditTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Connection-Core-Attrs-and-Edge-Props">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ConnectionCoreAttrsTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Copy-To-and-Copy-From">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.CopyToCopyFromTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Generate-Report-EG-Form">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.GenerateReportEgFormTestNG"/>
+        </classes>
+    </test>
+
+    <test name="IR-Photos-Issue-and-WorkOrder">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.IRPhotoTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Misc-TC-Maintenance-Shortcuts-Schedule">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.MiscFeaturesTestNG"/>
+        </classes>
+    </test>
+
+</suite>

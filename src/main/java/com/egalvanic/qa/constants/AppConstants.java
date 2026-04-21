@@ -238,6 +238,24 @@ public class AppConstants {
     // FEATURE_SEC_SIGNUP_POLICY removed on 2026-04-21 — /signup is not a real signup form
 
     // ============================================
+    // FEATURE NAMES - NEW AUTOMATION COVERAGE (2026-04-21, ZP-323 Epic)
+    // ============================================
+    public static final String MODULE_NEW_COVERAGE = "New Feature Coverage (ZP-323)";
+    public static final String FEATURE_AI_EXTRACTION = "AI Extraction";
+    public static final String FEATURE_BULK_UPLOAD = "Bulk Upload";
+    public static final String FEATURE_BULK_EDIT = "Bulk Edit";
+    public static final String FEATURE_GENERATE_REPORT = "Generate Report / EG Form";
+    public static final String FEATURE_COPY_TO_FROM = "Copy To / Copy From";
+    public static final String FEATURE_CONN_CORE_ATTRS = "Connection Core Attributes";
+    public static final String FEATURE_CONN_EDGE_PROPS = "Connection Type Edge Properties";
+    public static final String FEATURE_TERMS_CHECKBOX = "Terms and Conditions Checkbox";
+    public static final String FEATURE_MAINTENANCE_STATE = "Calculation - Maintenance State";
+    public static final String FEATURE_SUGGESTED_SHORTCUTS = "Suggested Shortcuts";
+    public static final String FEATURE_ISSUE_IR_PHOTOS_VISIBILITY = "Issue IR Photos Visibility";
+    public static final String FEATURE_WO_IR_PHOTO_UPLOAD = "Work Order IR Photo Upload";
+    public static final String FEATURE_SCHEDULE = "Schedule";
+
+    // ============================================
     // EMAIL CONFIGURATION
     // ============================================
     public static final String SMTP_HOST = "smtp.gmail.com";
