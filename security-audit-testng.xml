@@ -1,0 +1,24 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  Security Audit Regression Suite - 7 security findings (BUG-015..BUG-021)
+
+  Each test expects the security issue to STILL BE PRESENT and fails when
+  the finding is fixed. Flip the assertion or remove the @Test when a bug
+  is fixed in production so this file becomes the regression gate.
+
+  Run: mvn clean test -DsuiteXmlFile=security-audit-testng.xml
+-->
+<suite name="eGalvanic Security Audit Suite (7 Security Findings)" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <test name="Security Audit - BUG-015..BUG-021 (7 security TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.SecurityAuditTestNG"/>
+        </classes>
+    </test>
+
+</suite>

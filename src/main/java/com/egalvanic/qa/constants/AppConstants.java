@@ -227,6 +227,17 @@ public class AppConstants {
     public static final String FEATURE_DATA_PERSISTENCE = "Data Persistence";
 
     // ============================================
+    // FEATURE NAMES - SECURITY AUDIT (2026-04-21)
+    // ============================================
+    public static final String FEATURE_SEC_HEADERS_MISSING = "Missing HTTP Security Headers";
+    public static final String FEATURE_SEC_COOKIE_SAMESITE = "Auth Cookie SameSite=None";
+    public static final String FEATURE_SEC_NO_RATE_LIMIT = "No Login Rate Limiting";
+    public static final String FEATURE_SEC_CLICKJACKING = "Clickjacking Login Page";
+    public static final String FEATURE_SEC_AUTOCOMPLETE = "Login autocomplete new-password";
+    public static final String FEATURE_SEC_THIRD_PARTY_COOKIES = "Third-party Cookies Weak Flags";
+    public static final String FEATURE_SEC_SIGNUP_POLICY = "Signup No Client Password Policy";
+
+    // ============================================
     // EMAIL CONFIGURATION
     // ============================================
     public static final String SMTP_HOST = "smtp.gmail.com";
