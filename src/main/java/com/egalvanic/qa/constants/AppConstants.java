@@ -235,7 +235,7 @@ public class AppConstants {
     public static final String FEATURE_SEC_CLICKJACKING = "Clickjacking Login Page";
     public static final String FEATURE_SEC_AUTOCOMPLETE = "Login autocomplete new-password";
     public static final String FEATURE_SEC_THIRD_PARTY_COOKIES = "Third-party Cookies Weak Flags";
-    public static final String FEATURE_SEC_SIGNUP_POLICY = "Signup No Client Password Policy";
+    // FEATURE_SEC_SIGNUP_POLICY removed on 2026-04-21 — /signup is not a real signup form
 
     // ============================================
     // EMAIL CONFIGURATION

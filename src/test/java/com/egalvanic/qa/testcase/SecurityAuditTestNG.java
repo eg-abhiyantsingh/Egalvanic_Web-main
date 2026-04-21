@@ -18,27 +18,29 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Security Audit Regression Suite — 7 security bugs (BUG-015..BUG-021).
+ * Security Audit Regression Suite — 6 security bugs (BUG-015..BUG-020).
  *
  * Each test asserts the security issue is STILL PRESENT. When a finding is
  * fixed in production, flip the assertion or remove the @Test — this file
  * becomes the regression gate preventing the issue from reappearing.
  *
  * Scope: authorized QA / passive probes only.
- *   - Header inspection via Selenium-driver + HttpURLConnection HEAD
+ *   - Header inspection via HttpURLConnection
  *   - Cookie flag inspection via driver.manage().getCookies()
- *   - Rate-limit probe: 6 failed logins, no credential stuffing against real accounts
- *   - Clickjacking PoC: loads an attacker-html file that iframes /login
+ *   - Rate-limit probe: 6 failed logins (deeper 28-attempt probe in /tmp probe script)
+ *   - Clickjacking PoC: header check confirms missing XFO/CSP-FA
  *   - DOM autocomplete audit on login form
  *
  * Coverage:
- *   BUG-015  Missing HTTP security headers on login HTML
- *   BUG-016  Auth cookies SameSite=None (CSRF surface)
- *   BUG-017  No rate-limiting on /api/auth/login (6 attempts, no 429)
- *   BUG-018  Clickjacking — /login framable (no X-Frame-Options)
- *   BUG-019  Login password input autocomplete="new-password"
- *   BUG-020  Third-party widget cookies lack Secure/HttpOnly
- *   BUG-021  Signup password field has no minlength / pattern
+ *   BUG-015  Missing HTTP security headers on login HTML              [HIGH]
+ *   BUG-016  Auth cookies SameSite=None (form-POST CSRF)               [MEDIUM]
+ *   BUG-017  No rate-limiting on /api/auth/login (elevated to HIGH)    [HIGH]
+ *   BUG-018  Clickjacking — /login framable (JS frame-busting partial) [MEDIUM]
+ *   BUG-019  Login password input autocomplete="new-password"          [LOW]
+ *   BUG-020  Third-party widget cookies lack Secure/HttpOnly            [LOW]
+ *
+ * BUG-021 was removed on 2026-04-21 after verification showed /signup
+ * is actually the login page — no signup form exists to audit.
  */
 public class SecurityAuditTestNG extends BaseTest {
 
@@ -274,35 +276,10 @@ public class SecurityAuditTestNG extends BaseTest {
         }
     }
 
-    // =================================================================
-    // BUG-021: Signup password field has no minlength / pattern
-    // =================================================================
-    @Test(priority = 7, description = "BUG-021: /signup password input has no minlength / pattern")
-    public void testBUG021_SignupNoClientPasswordPolicy() {
-        ExtentReportManager.createTest(
-                AppConstants.MODULE_BUG_HUNT, AppConstants.FEATURE_SEC_SIGNUP_POLICY,
-                "BUG-021: Signup policy gap");
-        try {
-            driver.get(AppConstants.BASE_URL + "/signup");
-            pause(3000);
-            List<WebElement> pwInputs = driver.findElements(By.cssSelector("input[type='password']"));
-            if (pwInputs.isEmpty()) {
-                ExtentReportManager.logPass("BUG-021: /signup has no password input (page may be removed)");
-                return;
-            }
-            String minlength = pwInputs.get(0).getAttribute("minlength");
-            String pattern = pwInputs.get(0).getAttribute("pattern");
-            logStep("Signup password minlength=" + minlength + ", pattern=" + pattern);
-            ScreenshotUtil.captureScreenshot("BUG021_signup");
-
-            boolean bugPresent = (minlength == null || minlength.isEmpty())
-                    && (pattern == null || pattern.isEmpty());
-            Assert.assertTrue(bugPresent,
-                    "BUG-021 FIXED: signup password now has client-side minlength=" + minlength + " / pattern=" + pattern);
-            ExtentReportManager.logPass("BUG-021 confirmed: signup password input lacks minlength and pattern");
-        } catch (Exception e) {
-            ScreenshotUtil.captureScreenshot("BUG021_error");
-            Assert.fail("BUG-021 test crashed: " + e.getMessage());
-        }
-    }
+    // BUG-021 REMOVED on 2026-04-21 after deep re-verification:
+    // /signup URL does NOT have a dedicated signup form — the SPA router falls
+    // through to the login page. Since there is no public signup flow to audit,
+    // the previous @Test method was removed as a false positive. If a real
+    // signup flow appears in the future (e.g., invitation-based at /invite/:token),
+    // add a new @Test keyed to that route rather than resurrecting this one.
 }
