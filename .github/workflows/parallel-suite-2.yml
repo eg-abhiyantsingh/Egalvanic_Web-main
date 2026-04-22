@@ -372,12 +372,25 @@ jobs:
             all-reports \
             reports/client-report/Consolidated_Client_Report_Suite2.html
 
+      # ──────────────────────────────────────────────
+      # Generate CLIENT-READY report from the consolidated one
+      # (executive summary + feature-area coverage + known-issues split)
+      # ──────────────────────────────────────────────
+      - name: Generate client-ready report
+        if: always()
+        run: |
+          python3 .github/scripts/client-report.py \
+            reports/client-report/Consolidated_Client_Report_Suite2.html \
+            reports/client-report/Client_Report_Polished_Suite2.html
+
       - name: Upload consolidated report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: consolidated-client-report-suite2
-          path: reports/client-report/Consolidated_Client_Report_Suite2.html
+          path: |
+            reports/client-report/Consolidated_Client_Report_Suite2.html
+            reports/client-report/Client_Report_Polished_Suite2.html
           retention-days: 30
 
       # ──────────────────────────────────────────────
@@ -447,8 +460,9 @@ jobs:
           {
             echo ""
             echo "### Reports"
-            echo "- **Curated Bug Report (CLIENT)**: PDF + HTML of the 8 validated bugs — artifact \`curated-bug-report-client\` (90-day retention)"
-            echo "- **Consolidated Client Report**: Single HTML covering all modules — artifact \`consolidated-client-report-suite2\`"
+            echo "- **Client-Polished Report (SEND TO CLIENT)**: \`Client_Report_Polished_Suite2.html\` inside artifact \`consolidated-client-report-suite2\` — executive summary, feature-area coverage, separates known-issues from functional failures"
+            echo "- **Curated Bug Report**: PDF + HTML of the 8 validated bugs — artifact \`curated-bug-report-client\` (90-day retention)"
+            echo "- **Consolidated Technical Report**: \`Consolidated_Client_Report_Suite2.html\` (same artifact as above) — full test-level detail for engineering"
             echo "- **Per-group details**: Individual reports in \`reports-s2-{group-name}\` artifacts"
           } >> "$GITHUB_STEP_SUMMARY"
 
