@@ -1,10 +1,23 @@
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 
 <!--
-  Deep Bug Verification Suite — 14 Bug Regression Tests
+  Deep Bug Verification Suite — 8 Curated Bug Regression Tests
 
-  Runs one test per bug in docs/changelogs/2026-04-21-full-deep-research-bug-hunt.md
-  and eGalvanic_Deep_Bug_Report_20_April_2026.html.
+  On 2026-04-21, QA lead finalized the bug list to 8 reproducible, valid bugs.
+  This suite runs the regression tests for those 8 bugs (6 from deep-research +
+  2 security).
+
+  Mapping to curated PDF (bug pdf/eGalvanic_Deep_Bug_Report_20_April_2026.pdf):
+    DeepBugVerificationTestNG — BUG-001..BUG-006 (6 TCs):
+      BUG-001 No 404 page
+      BUG-002 CSP blocks Beamer fonts
+      BUG-003 Issue Class validation gap
+      BUG-004 Raw HTTP 400 + internal API leak
+      BUG-005 Issue Title no maxLength
+      BUG-006 Page load > 10s
+    SecurityAuditTestNG — BUG-007..BUG-008 (2 TCs):
+      BUG-007 Auth cookies SameSite=None (CSRF)
+      BUG-008 No rate limiting on /api/auth/login
 
   Each test expects the bug to STILL BE PRESENT. When a bug is fixed in
   production, flip the assertion or remove the @Test — this file then
@@ -12,15 +25,21 @@
 
   Run: mvn clean test -DsuiteXmlFile=deep-bug-verification-testng.xml
 -->
-<suite name="eGalvanic Deep Bug Verification Suite (14 Bugs)" verbose="1">
+<suite name="eGalvanic Curated Bug Verification Suite (8 Bugs)" verbose="1">
 
     <listeners>
         <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
     </listeners>
 
-    <test name="Deep Bug Verification — BUG-001..BUG-014 (14 TCs)">
+    <test name="Deep Bug Verification — BUG-001..BUG-006 (6 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.DeepBugVerificationTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Security Audit — BUG-007..BUG-008 (2 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.SecurityAuditTestNG"/>
         </classes>
     </test>
 
