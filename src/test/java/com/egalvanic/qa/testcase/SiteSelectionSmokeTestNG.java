@@ -30,6 +30,7 @@ import org.testng.annotations.Test;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -190,10 +191,32 @@ public class SiteSelectionSmokeTestNG {
                     "Not on dashboard after login. URL: " + currentUrl);
             logStep("On dashboard. URL: " + currentUrl);
 
-            // Verify "Select facility" input exists
-            List<WebElement> inputs = driver.findElements(FACILITY_INPUT);
+            // Wait up to 20s for the facility input to appear — SPA may still be
+            // hydrating after login redirect, or the page may show a backdrop that
+            // has to be dismissed before the selector is reachable. Also DISMISS
+            // button on the app-update alert blocks the selector on first load.
+            List<WebElement> inputs = new ArrayList<>();
+            long deadline = System.currentTimeMillis() + 20_000L;
+            while (System.currentTimeMillis() < deadline) {
+                try {
+                    // Inline backdrop cleanup — this class doesn't extend BaseTest,
+                    // so we cannot reuse BaseTest#dismissBackdrops(). Same logic.
+                    js.executeScript(
+                            "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"], .MuiModal-backdrop')"
+                            + ".forEach(function(b){b.style.display='none';b.style.pointerEvents='none';});"
+                            + "var btns = document.querySelectorAll('button');"
+                            + "for (var i = 0; i < btns.length; i++) {"
+                            + "  if (btns[i].textContent === 'DISMISS') { btns[i].click(); break; }"
+                            + "}"
+                    );
+                    inputs = driver.findElements(FACILITY_INPUT);
+                    if (!inputs.isEmpty()) break;
+                } catch (Exception ignored) {}
+                try { Thread.sleep(500); } catch (InterruptedException ignored) {}
+            }
             Assert.assertFalse(inputs.isEmpty(),
-                    "Facility selector input (placeholder='Select facility') not found on dashboard");
+                    "Facility selector input (placeholder='Select facility') not found on dashboard "
+                    + "within 20s. URL: " + driver.getCurrentUrl());
             logStep("Facility selector input found");
 
             // Verify input is visible and enabled

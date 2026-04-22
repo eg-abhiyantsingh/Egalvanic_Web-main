@@ -173,15 +173,10 @@ public class AuthSmokeTestNG {
                     "Still on login page after admin login. URL: " + currentUrl);
             logStep("Verified: not on login page. URL: " + currentUrl);
 
-            // Verify navigation menu is present — wait for SPA to render
-            pause(2000);
-            dismissBackdrops();
-            boolean hasNav = driver.findElements(By.cssSelector("nav")).size() > 0;
-            if (!hasNav) {
-                // Retry — SPA may still be rendering after login redirect
-                pause(3000);
-                hasNav = driver.findElements(By.cssSelector("nav")).size() > 0;
-            }
+            // Verify navigation menu is present — wait up to 15s for SPA hydration,
+            // accepting any of nav / aside / sidebar / drawer / role=navigation
+            // containers (not all layouts use <nav>).
+            boolean hasNav = waitForNavMenu(15);
             Assert.assertTrue(hasNav, "Navigation menu not found after admin login");
             logStep("Navigation menu is present");
 
@@ -227,6 +222,7 @@ public class AuthSmokeTestNG {
             logStep("Credentials submitted");
 
             waitForPostLoginPage();
+            dismissBackdrops();
             logStepWithScreenshot("PM login successful — post-login page loaded");
 
             String currentUrl = driver.getCurrentUrl();
@@ -234,8 +230,13 @@ public class AuthSmokeTestNG {
                     "Still on login page after PM login. URL: " + currentUrl);
             logStep("Verified: not on login page. URL: " + currentUrl);
 
-            boolean hasNav = driver.findElements(By.cssSelector("nav")).size() > 0;
-            Assert.assertTrue(hasNav, "Navigation menu not found after PM login");
+            // Wait up to 15s for nav container to render (nav, aside, sidebar, drawer, role=navigation).
+            // SPA may still be hydrating after login redirect.
+            boolean hasNav = waitForNavMenu(15);
+            Assert.assertTrue(hasNav,
+                    "Navigation menu not found after PM login within 15s. " +
+                    "Checked: nav, aside, [class*='Sidebar'], [class*='MuiDrawer'], [role='navigation']. " +
+                    "URL: " + currentUrl);
             logStep("Navigation menu is present");
 
             String navItems = dumpNavItems();
@@ -297,8 +298,9 @@ public class AuthSmokeTestNG {
                 ExtentReportManager.logPass(
                         "Technician login: authentication succeeded, web access correctly restricted. " + restrictionDetails);
             } else {
-                // If Technician CAN access the web app, still verify nav items
-                boolean hasNav = driver.findElements(By.cssSelector("nav")).size() > 0;
+                // If Technician CAN access the web app, still verify nav items.
+                // Wait up to 15s for SPA hydration (accepts nav/aside/sidebar/drawer).
+                boolean hasNav = waitForNavMenu(15);
                 Assert.assertTrue(hasNav, "No nav menu and not on restricted page after Technician login");
 
                 String navItems = dumpNavItems();
@@ -357,8 +359,11 @@ public class AuthSmokeTestNG {
                         "Facility Manager login: authentication succeeded, web access restricted. " + restrictionDetails);
             } else {
                 // Facility Manager has web access — verify nav items
-                boolean hasNav = driver.findElements(By.cssSelector("nav")).size() > 0;
-                Assert.assertTrue(hasNav, "No nav menu and not on restricted page after FM login");
+                // Wait up to 15s for nav container to render (SPA may still be hydrating).
+                boolean hasNav = waitForNavMenu(15);
+                Assert.assertTrue(hasNav,
+                        "No nav menu (nav/aside/sidebar/drawer/role=navigation) after 15s and " +
+                        "not on restricted page after FM login. URL: " + currentUrl);
 
                 String navItems = dumpNavItems();
                 logStep("Facility Manager nav items: " + navItems);
@@ -423,8 +428,9 @@ public class AuthSmokeTestNG {
                 ExtentReportManager.logPass(
                         "Client Portal login: authentication succeeded, web access restricted. " + restrictionDetails);
             } else {
-                // Client Portal has web access — verify nav items
-                boolean hasNav = driver.findElements(By.cssSelector("nav")).size() > 0;
+                // Client Portal has web access — verify nav items.
+                // Wait up to 15s for SPA hydration (accepts nav/aside/sidebar/drawer).
+                boolean hasNav = waitForNavMenu(15);
                 Assert.assertTrue(hasNav, "No nav menu and not on restricted page after Client Portal login");
 
                 String navItems = dumpNavItems();
@@ -498,6 +504,40 @@ public class AuthSmokeTestNG {
     // ================================================================
     // HELPER METHODS
     // ================================================================
+
+    /**
+     * Wait up to {@code timeoutSeconds} for a navigation container to render
+     * after login. Modern SPAs may render the nav in <nav>, <aside>, or
+     * inside a sidebar/drawer div — we accept any of them. Also dismisses
+     * MUI backdrops between polls because an open backdrop can make the
+     * nav unreachable / not-visible.
+     *
+     * Returns {@code true} if any navigation container renders within the
+     * timeout, {@code false} otherwise.
+     */
+    private boolean waitForNavMenu(int timeoutSeconds) {
+        long deadline = System.currentTimeMillis() + (timeoutSeconds * 1000L);
+        String selector = "nav, aside, [class*='Sidebar'], [class*='sidebar'], "
+                + "[class*='MuiDrawer'], [role='navigation']";
+        while (System.currentTimeMillis() < deadline) {
+            try {
+                dismissBackdrops();
+                List<WebElement> candidates = driver.findElements(By.cssSelector(selector));
+                for (WebElement el : candidates) {
+                    try {
+                        if (el.isDisplayed() && el.getSize().getWidth() > 50
+                                && el.getSize().getHeight() > 100) {
+                            return true;
+                        }
+                    } catch (Exception ignored) {
+                        // Stale — keep polling
+                    }
+                }
+            } catch (Exception ignored) {}
+            pause(500);
+        }
+        return false;
+    }
 
     /**
      * Check if the current page is the "Web Access Restricted" page.
