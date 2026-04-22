@@ -25,16 +25,20 @@ import java.util.List;
  * Current coverage (renumbered to match the curated PDF at
  * bug pdf/eGalvanic_Deep_Bug_Report_20_April_2026.pdf):
  *   BUG-001  No 404 page for invalid routes                       [MEDIUM]
- *   BUG-002  CSP blocks Beamer fonts (102 violations)             [MEDIUM]
+ *   BUG-002  CSP blocks Beamer fonts                              [MEDIUM]
  *   BUG-003  Issue Class validation gap                           [MEDIUM]
  *   BUG-004  Raw HTTP 400 + internal API name leaked in UI        [HIGH]
  *   BUG-005  Issue Title accepts 2000+ chars (no maxLength)       [LOW]
  *   BUG-006  Average page load > 10 seconds                       [MEDIUM]
  *
- * Every test EXPECTS THE BUG TO BE PRESENT and fails when the bug is fixed.
- * When a bug is fixed in production, flip the Assert.assertTrue/False to
- * the opposite polarity (or delete the @Test) so this file becomes a
- * regression gate that prevents the bug from coming back.
+ * Assertion contract (updated 2026-04-22):
+ *   PASS  = feature works correctly (bug NOT detected in this run)
+ *   FAIL  = bug detected — the assertion message describes the defect and fix
+ *
+ * This is the conventional polarity: a green CI dashboard means the product
+ * is healthy; a red CI dashboard means a regression is active. The earlier
+ * inverted pattern (pass = bug present) was replaced because it made green
+ * runs misleading for clients.
  */
 public class DeepBugVerificationTestNG extends BaseTest {
 
@@ -62,9 +66,11 @@ public class DeepBugVerificationTestNG extends BaseTest {
             )).trim();
 
             boolean bugPresent = !has404Text && mainText.length() < 40;
-            Assert.assertTrue(bugPresent,
-                    "BUG-001 FIXED: invalid URL now shows 404 text or non-empty main. Remove this test.");
-            ExtentReportManager.logPass("BUG-001 confirmed: blank content on invalid route");
+            Assert.assertFalse(bugPresent,
+                    "BUG-001: Invalid URL /nonexistentpage123xyz renders blank content instead of a 404 page. " +
+                    "Expected: 404 or 'Page Not Found' message with nav back to dashboard. " +
+                    "Actual: has404Text=" + has404Text + ", mainTextLen=" + mainText.length());
+            ExtentReportManager.logPass("Invalid URL shows a 404 / Page Not Found page correctly");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG001_error");
             Assert.fail("BUG-001 test crashed: " + e.getMessage());
@@ -83,17 +89,28 @@ public class DeepBugVerificationTestNG extends BaseTest {
             driver.get(AppConstants.BASE_URL + "/dashboard");
             pause(8000);
 
-            Long beamerFontCount = (Long) js().executeScript(
-                    "return performance.getEntriesByType('resource').filter(" +
-                    "  e => e.name.indexOf('getbeamer.com') !== -1 && e.name.endsWith('.woff2')" +
-                    ").length;"
+            // Count ONLY Beamer font entries that failed (transferSize===0 with very short duration
+            // indicates CSP block or network failure). Loaded fonts have non-zero transferSize.
+            Long blockedCount = (Long) js().executeScript(
+                    "return performance.getEntriesByType('resource').filter(function(e){" +
+                    "  return /getbeamer\\.com/.test(e.name) && " +
+                    "         /\\.woff2?$/.test(e.name) && " +
+                    "         e.transferSize === 0 && e.duration < 10;" +
+                    "}).length;"
             );
-            logStep("Beamer font resource entries: " + beamerFontCount);
-            logStepWithScreenshot("Dashboard loaded — check CSP violations in console");
+            Long totalBeamerFonts = (Long) js().executeScript(
+                    "return performance.getEntriesByType('resource').filter(function(e){" +
+                    "  return /getbeamer\\.com/.test(e.name) && /\\.woff2?$/.test(e.name);" +
+                    "}).length;"
+            );
+            logStep("Beamer font entries — total: " + totalBeamerFonts + ", CSP-blocked: " + blockedCount);
+            logStepWithScreenshot("Dashboard loaded — Beamer font load status");
 
-            Assert.assertTrue(beamerFontCount != null && beamerFontCount >= 1,
-                    "BUG-002 may be fixed: no Beamer font requests detected (expected CSP-blocked requests)");
-            ExtentReportManager.logPass("BUG-002 confirmed: " + beamerFontCount + " Beamer font requests (each CSP-blocked)");
+            long blocked = blockedCount == null ? 0L : blockedCount.longValue();
+            Assert.assertEquals(blocked, 0L,
+                    "BUG-002: " + blocked + " Beamer font(s) blocked by CSP (out of " + totalBeamerFonts + " total). " +
+                    "Fix: add fonts.getbeamer.com or *.getbeamer.com to the CSP font-src directive.");
+            ExtentReportManager.logPass("No CSP-blocked Beamer fonts detected");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG002_error");
             Assert.fail("BUG-002 test crashed: " + e.getMessage());
@@ -140,9 +157,11 @@ public class DeepBugVerificationTestNG extends BaseTest {
                     By.cssSelector(".MuiDialog-root:not([style*='display: none']), .MuiDrawer-root:not([style*='display: none'])"));
             boolean dialogClosed = stillOpen.isEmpty();
             logStepWithScreenshot("After Create Issue submit without Issue Class");
-            Assert.assertTrue(dialogClosed,
-                    "BUG-003 FIXED: dialog stayed open — validation catching missing Issue Class");
-            ExtentReportManager.logPass("BUG-003 confirmed: form submitted without required Issue Class");
+            Assert.assertFalse(dialogClosed,
+                    "BUG-003: Create Issue form accepted submit with blank Issue Class " +
+                    "(dialog closed = validation did NOT catch the missing required field). " +
+                    "Fix: add required-field validation on Issue Class in both frontend and backend.");
+            ExtentReportManager.logPass("Issue form correctly blocks submit when Issue Class is blank");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG004_error");
             Assert.fail("BUG-003 test crashed: " + e.getMessage());
@@ -164,9 +183,11 @@ public class DeepBugVerificationTestNG extends BaseTest {
             logStepWithScreenshot("Loaded invalid asset URL");
             boolean leakPresent = body.contains("Failed to fetch enriched node details") ||
                     body.contains("enriched node details: 400");
-            Assert.assertTrue(leakPresent,
-                    "BUG-004 FIXED: raw error text no longer visible — great, remove this test");
-            ExtentReportManager.logPass("BUG-004 confirmed: raw backend error leaked to UI");
+            Assert.assertFalse(leakPresent,
+                    "BUG-004: Invalid asset URL exposes raw backend error 'Failed to fetch enriched " +
+                    "node details: 400' (internal API method name) in the UI. " +
+                    "Fix: catch the 400 in the frontend, show a generic 'Asset not found' message instead.");
+            ExtentReportManager.logPass("Invalid asset URL handled cleanly (no raw API error leaked)");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG006_error");
             Assert.fail("BUG-004 test crashed: " + e.getMessage());
@@ -206,9 +227,11 @@ public class DeepBugVerificationTestNG extends BaseTest {
             String maxLen = titleInput.getAttribute("maxlength");
             logStepWithScreenshot("Input value length=" + (value == null ? 0 : value.length()) + " maxlength=" + maxLen);
             boolean bugPresent = (maxLen == null || maxLen.isEmpty()) && value != null && value.length() >= 1500;
-            Assert.assertTrue(bugPresent,
-                    "BUG-005 FIXED: maxLength=" + maxLen + " valueLen=" + (value == null ? 0 : value.length()));
-            ExtentReportManager.logPass("BUG-005 confirmed: no maxLength, accepted " + value.length() + " chars");
+            Assert.assertFalse(bugPresent,
+                    "BUG-005: Issue Title input has no maxlength attribute and accepted " +
+                    (value == null ? 0 : value.length()) + " chars. " +
+                    "Fix: add maxlength=255 (or whatever the server allows) to the Title input.");
+            ExtentReportManager.logPass("Issue Title input has a character limit (maxLength=" + maxLen + ")");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG011_error");
             Assert.fail("BUG-005 test crashed: " + e.getMessage());
@@ -241,9 +264,10 @@ public class DeepBugVerificationTestNG extends BaseTest {
             }
             long avg = totalMs / Math.max(samples, 1);
             logStepWithScreenshot("Average load: " + avg + "ms across " + samples + " pages");
-            Assert.assertTrue(avg >= 6000,
-                    "BUG-006 FIXED: avg load is " + avg + "ms (under 6s threshold). Performance improved — flip assertion.");
-            ExtentReportManager.logPass("BUG-006 confirmed: avg " + avg + "ms across " + samples + " pages");
+            Assert.assertTrue(avg < 6000,
+                    "BUG-006: Average page load " + avg + "ms across " + samples + " pages (threshold: 6000ms). " +
+                    "Top-level pages are too slow. Fix: investigate N+1 API calls, bundle size, initial render blockers.");
+            ExtentReportManager.logPass("Average page load " + avg + "ms across " + samples + " pages (under 6s threshold)");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG013_error");
             Assert.fail("BUG-006 test crashed: " + e.getMessage());

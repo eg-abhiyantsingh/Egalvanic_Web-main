@@ -25,13 +25,13 @@ import java.util.Set;
  *   BUG-007  Auth cookies SameSite=None (form-POST CSRF surface)   [MEDIUM]
  *   BUG-008  No rate-limiting on /api/auth/login                   [HIGH]
  *
+ * Assertion contract (updated 2026-04-22):
+ *   PASS  = security control is active / vulnerability NOT detected
+ *   FAIL  = vulnerability detected — message describes the finding + fix
+ *
  * Scope: authorized QA / passive probes only.
  *   - Cookie flag inspection via driver.manage().getCookies()
  *   - Rate-limit probe: 6 failed logins (deeper 28-attempt probe in /tmp probe script)
- *
- * Each test asserts the security issue is STILL PRESENT. When a finding is
- * fixed in production, flip the assertion or remove the @Test — this file
- * becomes the regression gate preventing the issue from reappearing.
  */
 public class SecurityAuditTestNG extends BaseTest {
 
@@ -62,10 +62,11 @@ public class SecurityAuditTestNG extends BaseTest {
             logStep("access_token SameSite=" + accessSs + ", refresh_token SameSite=" + refreshSs);
 
             boolean bugPresent = "None".equalsIgnoreCase(accessSs) || "None".equalsIgnoreCase(refreshSs);
-            Assert.assertTrue(bugPresent,
-                    "BUG-007 FIXED: auth cookies now use SameSite=Lax/Strict (" +
-                            "access=" + accessSs + ", refresh=" + refreshSs + ")");
-            ExtentReportManager.logPass("BUG-007 confirmed: at least one auth cookie uses SameSite=None");
+            Assert.assertFalse(bugPresent,
+                    "BUG-007: At least one auth cookie uses SameSite=None (access=" + accessSs +
+                    ", refresh=" + refreshSs + "). This widens the form-POST CSRF surface. " +
+                    "Fix: set SameSite=Lax on access_token and refresh_token (SPA+API are same-origin, so Lax covers all legit flows).");
+            ExtentReportManager.logPass("Auth cookies use SameSite=Lax/Strict (access=" + accessSs + ", refresh=" + refreshSs + ")");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG016_error");
             Assert.fail("BUG-007 test crashed: " + e.getMessage());
@@ -106,9 +107,12 @@ public class SecurityAuditTestNG extends BaseTest {
             logStep("Rate-limit signals in UI: " + rateLimited + "/6 attempts");
 
             boolean bugPresent = rateLimited == 0;
-            Assert.assertTrue(bugPresent,
-                    "BUG-008 FIXED: rate limiting now active — " + rateLimited + "/6 attempts triggered limit");
-            ExtentReportManager.logPass("BUG-008 confirmed: 6 failed logins, no rate-limit/lockout/captcha UI signal");
+            Assert.assertFalse(bugPresent,
+                    "BUG-008: 6 consecutive failed logins produced 0 rate-limit / lockout / CAPTCHA signals. " +
+                    "Endpoint /api/auth/login accepts brute-force attempts unimpeded. " +
+                    "Fix: add rate limiting at WAF (5/min per IP → 429) or in the /api/auth/login handler " +
+                    "(express-rate-limit or equivalent), keyed on IP + email. Pair with CAPTCHA after 3 failures.");
+            ExtentReportManager.logPass("Rate limiting active: " + rateLimited + "/6 attempts triggered limit/lockout/CAPTCHA");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG017_error");
             Assert.fail("BUG-008 test crashed: " + e.getMessage());
