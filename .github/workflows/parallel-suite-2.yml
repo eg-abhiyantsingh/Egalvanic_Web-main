@@ -1,21 +1,25 @@
-name: Parallel Suite 2 — AI, Smoke, Load & Exploratory
+name: Parallel Suite 2 — Curated Bug Verification + AI + Smoke + Load
 
 # ============================================================
-# PARALLEL SUITE 2 — 6 Groups Running Simultaneously
+# PARALLEL SUITE 2 — 7 Groups Running Simultaneously
 # ============================================================
 #
-# Complementary suite to parallel-suite.yml. Runs lighter, AI-powered,
-# and exploratory test modules that don't belong in the core regression.
+# Complementary suite to parallel-suite.yml. Runs the curated 8-bug
+# regression gate (client-facing), plus lighter AI-powered and
+# exploratory test modules.
 #
-# Groups (6 parallel jobs):
-#   Group  1: Smoke Suites               ( 37 TCs)  ~10 min
-#   Group  2: Load + API + Critical Path  ( 62 TCs)  ~15 min
-#   Group  3: AI Form Creation           ( 56 TCs)  ~20 min
-#   Group  4: Monkey Exploratory          (  4 TCs)  ~10 min
-#   Group  5: Visual Regression           (  7 TCs)  ~10 min
-#   Group  6: AI Page Analyzer            (  3 TCs)  ~10 min
+# Groups (7 parallel jobs):
+#   Group  1: Curated Bug Verification    (  8 TCs)  ~15 min  [CLIENT]
+#   Group  2: Smoke Suites                ( 37 TCs)  ~10 min
+#   Group  3: Load + API + Critical Path  ( 62 TCs)  ~15 min
+#   Group  4: AI Form Creation            ( 56 TCs)  ~20 min
+#   Group  5: Monkey Exploratory          (  4 TCs)  ~10 min
+#   Group  6: Visual Regression           (  7 TCs)  ~10 min
+#   Group  7: AI Page Analyzer            (  3 TCs)  ~10 min
 #
-# Total: ~169 TCs across 6 groups
+# Total: ~177 TCs across 7 groups.
+# The client-facing bug report PDF is uploaded as an artifact of the
+# summary job so it can be attached to client communications.
 # ============================================================
 
 on:
@@ -41,45 +45,55 @@ jobs:
 
     strategy:
       fail-fast: false
-      max-parallel: 6
+      max-parallel: 7
 
       matrix:
         include:
+          # ──────────────────────────────────────────────
+          # CLIENT-FACING: Curated 8-bug regression gate
+          # (DeepBugVerificationTestNG + SecurityAuditTestNG)
+          # ──────────────────────────────────────────────
+          - group: curated-bug-verification
+            name: "Curated Bug Verification"
+            xml: deep-bug-verification-testng.xml
+            tests: 8
+            stagger: 0
+
           - group: smoke
             name: "Smoke Suites"
             xml: smoke-testng.xml
             tests: 37
-            stagger: 0
+            stagger: 10
 
           - group: load-api-critical
             name: "Load + API + Critical Path"
             xml: suite-load-api.xml
             tests: 62
-            stagger: 10
+            stagger: 20
 
           - group: ai-form
             name: "AI Form Creation"
             xml: suite-ai-form.xml
             tests: 56
-            stagger: 20
+            stagger: 30
 
           - group: monkey
             name: "Monkey Exploratory"
             xml: suite-monkey.xml
             tests: 4
-            stagger: 30
+            stagger: 40
 
           - group: visual-regression
             name: "Visual Regression"
             xml: suite-visual.xml
             tests: 7
-            stagger: 40
+            stagger: 50
 
           - group: ai-analyzer
             name: "AI Page Analyzer"
             xml: suite-ai-analyzer.xml
             tests: 3
-            stagger: 50
+            stagger: 60
 
     name: "${{ matrix.name }} (${{ matrix.tests }} TCs)"
 
@@ -323,7 +337,7 @@ jobs:
           echo ""
           echo "────────────────────────────────────────────"
           echo "  TOTAL:  Passed=$TOTAL_PASSED  Failed=$TOTAL_FAILED  Skipped=$TOTAL_SKIPPED"
-          echo "  Groups: $GROUP_COUNT / 6 completed"
+          echo "  Groups: $GROUP_COUNT / 7 completed"
           echo "────────────────────────────────────────────"
 
           {
@@ -367,6 +381,22 @@ jobs:
           retention-days: 30
 
       # ──────────────────────────────────────────────
+      # Client-facing Curated Bug Report (8 validated bugs)
+      # Uploaded as a SEPARATE artifact so the client package
+      # includes both the run results AND the consolidated PDF.
+      # ──────────────────────────────────────────────
+      - name: Upload curated bug report PDF
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: curated-bug-report-client
+          path: |
+            bug pdf/eGalvanic_Deep_Bug_Report_20_April_2026.pdf
+            bug pdf/eGalvanic_Deep_Bug_Report_20_April_2026.html
+          retention-days: 90
+          if-no-files-found: warn
+
+      # ──────────────────────────────────────────────
       # Combined Step Summary
       # ──────────────────────────────────────────────
       - name: Generate combined summary
@@ -394,7 +424,7 @@ jobs:
             echo "| Passed | ${TOTAL_PASSED} |"
             echo "| Failed | ${TOTAL_FAILED} |"
             echo "| Skipped | ${TOTAL_SKIPPED} |"
-            echo "| Groups | ${GROUP_COUNT} / 6 |"
+            echo "| Groups | ${GROUP_COUNT} / 7 |"
             echo ""
             echo "### Individual Group Results"
             echo ""
@@ -417,6 +447,7 @@ jobs:
           {
             echo ""
             echo "### Reports"
+            echo "- **Curated Bug Report (CLIENT)**: PDF + HTML of the 8 validated bugs — artifact \`curated-bug-report-client\` (90-day retention)"
             echo "- **Consolidated Client Report**: Single HTML covering all modules — artifact \`consolidated-client-report-suite2\`"
             echo "- **Per-group details**: Individual reports in \`reports-s2-{group-name}\` artifacts"
           } >> "$GITHUB_STEP_SUMMARY"

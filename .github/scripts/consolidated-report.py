@@ -107,10 +107,16 @@ CLASS_TO_MODULE = {
     'MonkeyTestNG': 'AI Exploratory',
     'VisualRegressionTestNG': 'AI Visual Regression',
     'AIPageAnalyzerTestNG': 'AI Page Analysis',
+    # Curated Bug Verification (client-facing)
+    'DeepBugVerificationTestNG': 'Curated Bug Verification',
+    'SecurityAuditTestNG': 'Curated Bug Verification',
 }
 
-# Display order for modules in the report
+# Display order for modules in the report.
+# 'Curated Bug Verification' is first — it's the client-facing summary of
+# validated bugs and the section clients read first.
 MODULE_ORDER = [
+    'Curated Bug Verification',
     'Authentication', 'Site Selection', 'Connections', 'Locations', 'Tasks',
     'Issues', 'Work Orders', 'Asset Management', 'SLD Module',
     'Dashboard & Bug Verification', 'Bug Hunt & Security',
