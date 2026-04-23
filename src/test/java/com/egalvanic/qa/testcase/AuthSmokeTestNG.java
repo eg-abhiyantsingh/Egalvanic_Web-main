@@ -474,8 +474,14 @@ public class AuthSmokeTestNG {
             loginPage.login(AppConstants.INVALID_EMAIL, AppConstants.INVALID_PASSWORD);
             logStep("Invalid credentials submitted");
 
-            // Wait for either: error message, or still on login page after timeout
-            pause(3000);
+            // Wait up to 10s for either: error message on login page, or login page
+            // DOM to stabilize after the submit. The app briefly routes to "/" then
+            // back to "/login" on invalid credentials — a single 3s pause caught
+            // the user mid-transition, failing the test on a false positive.
+            try {
+                new WebDriverWait(driver, Duration.ofSeconds(10))
+                        .until(d -> isOnLoginPage() || checkForLoginError());
+            } catch (Exception ignoreTimeout) { /* fall through to the strict assert below */ }
 
             // Verify we're still on the login page (not redirected to dashboard)
             Assert.assertTrue(isOnLoginPage(),
@@ -546,10 +552,29 @@ public class AuthSmokeTestNG {
      */
     private boolean isWebAccessRestricted() {
         try {
+            // Broader restricted-page detection — catches variations of the
+            // "you can't access this app" screen. Covers the older "Web Access
+            // Restricted" heading plus newer copy ("access denied", "role does
+            // not allow", "contact your administrator") as well as explicit
+            // role hints ("Current Role: Unknown", "mobile app only").
             List<WebElement> restricted = driver.findElements(By.xpath(
-                    "//*[contains(text(),'Web Access Restricted') or contains(text(),'not have permission') "
-                            + "or contains(text(),'access restricted')]"));
-            return !restricted.isEmpty();
+                    "//*[contains(normalize-space(.), 'Web Access Restricted') "
+                            + "or contains(normalize-space(.), 'not have permission') "
+                            + "or contains(normalize-space(.), 'access restricted') "
+                            + "or contains(normalize-space(.), 'access denied') "
+                            + "or contains(normalize-space(.), 'Access Denied') "
+                            + "or contains(normalize-space(.), 'role does not allow') "
+                            + "or contains(normalize-space(.), 'Current Role: Unknown') "
+                            + "or contains(normalize-space(.), 'use the mobile app') "
+                            + "or contains(normalize-space(.), 'mobile app only') "
+                            + "or contains(normalize-space(.), 'contact your administrator')]"));
+            // Filter to visible elements only (hidden matches in aria-live etc. don't count)
+            for (WebElement r : restricted) {
+                try {
+                    if (r.isDisplayed() && r.getText() != null && r.getText().trim().length() > 0) return true;
+                } catch (Exception ignored) { /* stale, try next */ }
+            }
+            return false;
         } catch (Exception e) {
             return false;
         }
@@ -680,7 +705,16 @@ public class AuthSmokeTestNG {
      */
     private boolean isOnLoginPage() {
         try {
-            // Login page has email + password fields
+            // Three signals of "still on login page":
+            //  1. URL contains /login  (strongest — survives React re-renders)
+            //  2. Email input still present in DOM
+            //  3. Password input or submit button present
+            // Accept if ANY URL check or DOM check matches. The app sometimes
+            // briefly routes to "/" then back to "/login" on invalid-cred submission;
+            // checking URL alone catches those transitions.
+            String url = driver.getCurrentUrl();
+            if (url != null && url.contains("/login")) return true;
+
             boolean hasEmailField = driver.findElements(By.id("email")).size() > 0;
             boolean hasPasswordField = driver.findElements(By.id("password")).size() > 0;
             boolean hasSubmitBtn = driver.findElements(

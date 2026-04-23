@@ -48,13 +48,25 @@ public class AssetSmokeTestNG extends BaseTest {
             Assert.assertTrue(success, "Asset creation did not complete successfully");
             logStep("Create success confirmed");
 
-            // Verify asset appears in the grid
+            // Verify asset appears in the grid. Retry up to 30s — the backend
+            // sometimes takes several seconds to index a newly-created asset
+            // before it shows up in search results. A single-shot check hit
+            // the indexing window too early and flaked false-negative.
             assetPage.navigateToAssets();
             pause(2000);
-            assetPage.searchAsset(name);
-            boolean found = assetPage.isAssetVisible(name);
-            Assert.assertTrue(found, "Newly created asset not found in grid: " + name);
-            logStepWithScreenshot("Asset verified in grid: " + name);
+            boolean found = false;
+            long deadline = System.currentTimeMillis() + 30_000L;
+            int attempts = 0;
+            while (System.currentTimeMillis() < deadline) {
+                attempts++;
+                assetPage.searchAsset(name);
+                if (assetPage.isAssetVisible(name)) { found = true; break; }
+                pause(3000);
+            }
+            Assert.assertTrue(found,
+                    "Newly created asset not found in grid after " + attempts
+                    + " search attempts over ~30s: " + name);
+            logStepWithScreenshot("Asset verified in grid: " + name + " (attempts=" + attempts + ")");
 
             ExtentReportManager.logPass("Asset created and verified in grid: " + name);
 

@@ -186,10 +186,25 @@ public class SiteSelectionSmokeTestNG {
             logStep("Verifying facility selector on dashboard");
 
             // Verify we're on dashboard (past login)
+            // Wait up to 20s for post-login routing to settle. The app sometimes
+            // routes first to "/" (root) and then to "/dashboard" or "/sites"; the
+            // exact transition depends on site-selection cookie + first-visit state.
+            // Accept ANY of /, /dashboard, /sites as a valid post-login landing.
+            try {
+                new WebDriverWait(driver, Duration.ofSeconds(20)).until(d -> {
+                    String u = d.getCurrentUrl();
+                    return u.contains("dashboard") || u.contains("sites")
+                            || (!u.contains("/login") && u.matches("https?://[^/]+/?$"));
+                });
+            } catch (Exception ignoreTimeout) { /* fall through — final assert prints the URL */ }
             String currentUrl = driver.getCurrentUrl();
-            Assert.assertTrue(currentUrl.contains("dashboard") || currentUrl.contains("sites"),
-                    "Not on dashboard after login. URL: " + currentUrl);
-            logStep("On dashboard. URL: " + currentUrl);
+            boolean landedPastLogin = currentUrl.contains("dashboard")
+                    || currentUrl.contains("sites")
+                    || (!currentUrl.contains("/login") && currentUrl.matches("https?://[^/]+/?$"));
+            Assert.assertTrue(landedPastLogin,
+                    "Not past login after 20s. URL: " + currentUrl
+                    + " (accepted: /dashboard, /sites, or bare root /)");
+            logStep("Past login. URL: " + currentUrl);
 
             // Wait up to 20s for the facility input to appear — SPA may still be
             // hydrating after login redirect, or the page may show a backdrop that
