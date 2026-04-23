@@ -190,15 +190,32 @@ public class DeepBugVerificationTestNG extends BaseTest {
         try {
             driver.get(AppConstants.BASE_URL + "/assets/invalid-uuid-test-12345");
             pause(6000);
+            // Broaden detection beyond body.getText() — the leak may surface in a
+            // toast/snackbar/alert that's rendered in a portal outside <body> flow,
+            // or in page source (text inside aria-live regions, title attributes,
+            // or initially hidden elements). Also scan pageSource for the specific
+            // API internals that shouldn't be client-visible.
             String body = driver.findElement(By.tagName("body")).getText();
+            String pageSource = driver.getPageSource();
             logStepWithScreenshot("Loaded invalid asset URL");
-            boolean leakPresent = body.contains("Failed to fetch enriched node details") ||
-                    body.contains("enriched node details: 400");
+
+            String[] leakMarkers = {
+                    "Failed to fetch enriched node details",
+                    "enriched node details: 400",
+                    "enriched_node_details",  // snake_case variant
+                    "/api/asset/enriched",    // raw endpoint path
+            };
+            String foundIn = null;
+            for (String marker : leakMarkers) {
+                if (body.contains(marker)) { foundIn = "body[" + marker + "]"; break; }
+                if (pageSource.contains(marker)) { foundIn = "pageSource[" + marker + "]"; break; }
+            }
+            boolean leakPresent = foundIn != null;
+            logStep("Leak marker found: " + foundIn);
             Assert.assertFalse(leakPresent,
-                    "BUG-004: Invalid asset URL exposes raw backend error 'Failed to fetch enriched " +
-                    "node details: 400' (internal API method name) in the UI. " +
-                    "Fix: catch the 400 in the frontend, show a generic 'Asset not found' message instead.");
-            ExtentReportManager.logPass("Invalid asset URL handled cleanly (no raw API error leaked)");
+                    "BUG-004: Invalid asset URL exposes raw backend internals (" + foundIn + "). "
+                    + "Fix: catch the 400 in the frontend, show a generic 'Asset not found' message instead.");
+            ExtentReportManager.logPass("Invalid asset URL handled cleanly (no raw API error leaked in body OR pageSource)");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG006_error");
             Assert.fail("BUG-004 test crashed: " + e.getMessage());
@@ -250,6 +267,11 @@ public class DeepBugVerificationTestNG extends BaseTest {
             // "no bug". Require that the setter actually took effect (valueLen >= 1500)
             // OR that maxlength IS present (meaning the limit is enforced at the DOM level).
             boolean maxLenSet = maxLen != null && !maxLen.isEmpty();
+            int maxLenInt = -1;
+            if (maxLenSet) {
+                try { maxLenInt = Integer.parseInt(maxLen); } catch (NumberFormatException ignored) {}
+            }
+
             if (!maxLenSet && valueLen < 1500) {
                 Assert.fail("BUG-005: Cannot verify — JS native-setter injected only " + valueLen
                         + " chars (expected >= 1500). Either the React component prevented the write "
@@ -257,11 +279,20 @@ public class DeepBugVerificationTestNG extends BaseTest {
                         + "Manually paste 2000+ chars into the Issue Title and re-run.");
             }
 
-            boolean bugPresent = !maxLenSet && valueLen >= 1500;
+            // Bug is present when either:
+            //  (a) No maxlength attribute AND input accepted 1500+ chars, OR
+            //  (b) maxlength IS set but unreasonably high (>1000) — effectively unlimited
+            //      so DB/UI damage is still possible (long titles break list views, CSV
+            //      exports, email notifications).
+            boolean bugPresent = (!maxLenSet && valueLen >= 1500)
+                              || (maxLenSet && maxLenInt > 1000);
             Assert.assertFalse(bugPresent,
-                    "BUG-005: Issue Title input has no maxlength attribute and accepted " + valueLen
-                    + " chars. Fix: add maxlength=255 (or whatever the server allows) to the Title input.");
-            ExtentReportManager.logPass("Issue Title has a character limit (maxLength=" + maxLen + ", value=" + valueLen + ")");
+                    "BUG-005: Issue Title input accepts excessive length. "
+                    + "maxlength=" + maxLen + ", value-length=" + valueLen + ". "
+                    + "Fix: set maxlength to a reasonable value (e.g., 255) to protect downstream "
+                    + "list views, CSV exports, and email notifications from oversized titles.");
+            ExtentReportManager.logPass("Issue Title has a reasonable character limit (maxLength="
+                    + maxLen + ", value=" + valueLen + ")");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG011_error");
             Assert.fail("BUG-005 test crashed: " + e.getMessage());
@@ -279,6 +310,8 @@ public class DeepBugVerificationTestNG extends BaseTest {
         try {
             String[] paths = { "/dashboard", "/tasks", "/sessions", "/assets", "/issues" };
             long totalMs = 0;
+            long maxMs = 0;
+            String slowestPath = "";
             int samples = 0;
             for (String p : paths) {
                 long start = System.currentTimeMillis();
@@ -290,14 +323,27 @@ public class DeepBugVerificationTestNG extends BaseTest {
                 long loadTime = System.currentTimeMillis() - start;
                 logStep(p + " loaded in " + loadTime + "ms");
                 totalMs += loadTime;
+                if (loadTime > maxMs) { maxMs = loadTime; slowestPath = p; }
                 samples++;
             }
             long avg = totalMs / Math.max(samples, 1);
-            logStepWithScreenshot("Average load: " + avg + "ms across " + samples + " pages");
-            Assert.assertTrue(avg < 6000,
-                    "BUG-006: Average page load " + avg + "ms across " + samples + " pages (threshold: 6000ms). " +
-                    "Top-level pages are too slow. Fix: investigate N+1 API calls, bundle size, initial render blockers.");
-            ExtentReportManager.logPass("Average page load " + avg + "ms across " + samples + " pages (under 6s threshold)");
+            logStepWithScreenshot("Avg load: " + avg + "ms, slowest: " + slowestPath + " at " + maxMs
+                    + "ms, across " + samples + " pages");
+
+            // Dual threshold:
+            //  (1) Average < 6s (existing check) — catches broad slowness
+            //  (2) Max page load < 8s — catches "one page is really slow" even when avg is fine
+            // CI network is faster than a typical user's corporate VPN, so the thresholds are lenient.
+            // If either breaks, the product has a genuine performance issue.
+            boolean avgFast = avg < 6000;
+            boolean maxFast = maxMs < 8000;
+            Assert.assertTrue(avgFast && maxFast,
+                    "BUG-006: Page-load performance regression. "
+                    + "Avg=" + avg + "ms (threshold 6000ms, pass=" + avgFast + "), "
+                    + "Slowest=" + slowestPath + " at " + maxMs + "ms (threshold 8000ms, pass=" + maxFast + "). "
+                    + "Fix: investigate N+1 API calls, bundle size, initial render blockers on the slowest page first.");
+            ExtentReportManager.logPass("Page-load performance OK — avg " + avg + "ms, slowest "
+                    + slowestPath + " at " + maxMs + "ms");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG013_error");
             Assert.fail("BUG-006 test crashed: " + e.getMessage());

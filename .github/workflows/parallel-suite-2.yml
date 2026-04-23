@@ -74,7 +74,9 @@ jobs:
             tests: 37
             stagger: 10
 
-          - group: load-api-critical
+          # NOTE: `group` key must match ALL_GROUPS[] in full-suite-dashboard.sh
+          # (the case label in get_group_index is `load-api`, not `load-api-critical`).
+          - group: load-api
             name: "Load + API + Critical Path"
             xml: suite-load-api.xml
             tests: 62

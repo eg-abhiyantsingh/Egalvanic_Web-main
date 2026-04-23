@@ -101,6 +101,13 @@ public class MonkeyTestNG {
         System.out.println("     " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("h:mm a - dd MMM")));
         System.out.println("==============================================================");
 
+        // Initialise ExtentReports BEFORE any createTest() call. MonkeyTestNG is a
+        // standalone class (doesn't extend BaseTest), so when the suite runs this
+        // class in isolation, no one else calls initReports() first — resulting in
+        // "ExtentReports.createTest: detailedReport is null" NPE on the first @Test.
+        // Idempotent: safe to call when already initialized.
+        ExtentReportManager.initReports();
+
         ChromeOptions opts = new ChromeOptions();
         opts.addArguments("--start-maximized", "--remote-allow-origins=*",
                 "--disable-blink-features=AutomationControlled", "--no-sandbox", "--disable-dev-shm-usage");
