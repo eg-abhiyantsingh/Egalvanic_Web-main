@@ -1,14 +1,14 @@
-name: Parallel Suite 2 — Curated Bug Verification + AI + Smoke + Load
+name: Parallel Suite 2 — Curated Bug Verification + AI + Smoke + Load + BCES-IQ
 
 # ============================================================
-# PARALLEL SUITE 2 — 7 Groups Running Simultaneously
+# PARALLEL SUITE 2 — 8 Groups Running Simultaneously
 # ============================================================
 #
 # Complementary suite to parallel-suite.yml. Runs the curated 8-bug
-# regression gate (client-facing), plus lighter AI-powered and
-# exploratory test modules.
+# regression gate (client-facing), lighter AI-powered and exploratory
+# test modules, plus a cross-tenant smoke for acme.bces-iq.com.
 #
-# Groups (7 parallel jobs):
+# Groups (8 parallel jobs):
 #   Group  1: Curated Bug Verification    (  8 TCs)  ~15 min  [CLIENT]
 #   Group  2: Smoke Suites                ( 37 TCs)  ~10 min
 #   Group  3: Load + API + Critical Path  ( 62 TCs)  ~15 min
@@ -16,8 +16,17 @@ name: Parallel Suite 2 — Curated Bug Verification + AI + Smoke + Load
 #   Group  5: Monkey Exploratory          (  4 TCs)  ~10 min
 #   Group  6: Visual Regression           (  7 TCs)  ~10 min
 #   Group  7: AI Page Analyzer            (  3 TCs)  ~10 min
+#   Group  8: BCES-IQ Tenant Smoke        (  3 TCs)  ~5 min   [NEW TENANT]
 #
-# Total: ~177 TCs across 7 groups.
+# Total: ~180 TCs across 8 groups.
+#
+# The BCES-IQ group runs the SAME test framework against
+# https://acme.bces-iq.com using a different user (shubham.goswami+acme@...)
+# via env-var overrides on BASE_URL / USER_EMAIL / USER_PASSWORD. The
+# password comes from the BCES_IQ_PASSWORD repo secret (set manually in
+# GitHub settings). If the secret is missing, the job falls back to a
+# safe no-op (won't accidentally pummel the tenant with bad logins).
+#
 # The client-facing bug report PDF is uploaded as an artifact of the
 # summary job so it can be attached to client communications.
 # ============================================================
@@ -45,7 +54,7 @@ jobs:
 
     strategy:
       fail-fast: false
-      max-parallel: 7
+      max-parallel: 8
 
       matrix:
         include:
@@ -94,6 +103,26 @@ jobs:
             xml: suite-ai-analyzer.xml
             tests: 3
             stagger: 60
+
+          # ──────────────────────────────────────────────
+          # Cross-tenant: BCES-IQ tenant smoke
+          # Runs the same test framework against a DIFFERENT tenant by
+          # overriding BASE_URL / USER_EMAIL / USER_PASSWORD via env vars
+          # in the "Run tests" step below. AppConstants#getEnv() picks
+          # these up so tests hit the BCES-IQ tenant instead of acme.qa.
+          # ──────────────────────────────────────────────
+          - group: bces-iq-smoke
+            name: "BCES-IQ Tenant Smoke"
+            xml: smoke-bces-iq-testng.xml
+            tests: 3
+            stagger: 70
+            base_url: "https://acme.bces-iq.com"
+            user_email: "shubham.goswami+acme@egalvanic.com"
+            # Tenant QA credential, matches the pattern of existing test
+            # passwords in AppConstants.java (plaintext defaults). To rotate:
+            # (a) update here, or (b) set BCES_IQ_PASSWORD as a repo secret and
+            #     change the USER_PASSWORD env line below to read it.
+            user_password: "Shubham@123"
 
     name: "${{ matrix.name }} (${{ matrix.tests }} TCs)"
 
@@ -166,6 +195,14 @@ jobs:
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           SEND_EMAIL_ENABLED: "false"
           FULL_SUITE_GROUP: ${{ matrix.group }}
+          # Per-matrix tenant overrides. When a matrix entry sets these
+          # fields, AppConstants#getEnv() substitutes them for the defaults
+          # (acme.qa.egalvanic.ai / abhiyant.singh+admin@... / RP@egalvanic123).
+          # Empty string is treated as "use default", so non-bces-iq jobs
+          # transparently fall through to the standard acme.qa credentials.
+          BASE_URL: ${{ matrix.base_url }}
+          USER_EMAIL: ${{ matrix.user_email }}
+          USER_PASSWORD: ${{ matrix.user_password }}
         run: |
           bash .github/scripts/full-suite-dashboard.sh
 
@@ -337,7 +374,7 @@ jobs:
           echo ""
           echo "────────────────────────────────────────────"
           echo "  TOTAL:  Passed=$TOTAL_PASSED  Failed=$TOTAL_FAILED  Skipped=$TOTAL_SKIPPED"
-          echo "  Groups: $GROUP_COUNT / 7 completed"
+          echo "  Groups: $GROUP_COUNT / 8 completed"
           echo "────────────────────────────────────────────"
 
           {
@@ -437,7 +474,7 @@ jobs:
             echo "| Passed | ${TOTAL_PASSED} |"
             echo "| Failed | ${TOTAL_FAILED} |"
             echo "| Skipped | ${TOTAL_SKIPPED} |"
-            echo "| Groups | ${GROUP_COUNT} / 7 |"
+            echo "| Groups | ${GROUP_COUNT} / 8 |"
             echo ""
             echo "### Individual Group Results"
             echo ""

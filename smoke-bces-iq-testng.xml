@@ -1,0 +1,34 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  BCES-IQ Tenant Smoke Suite
+
+  Runs BcesIqSmokeTestNG against the acme.bces-iq.com tenant. Expects the
+  following environment variables to be set BEFORE the test runner starts:
+
+    BASE_URL       = https://acme.bces-iq.com
+    USER_EMAIL     = shubham.goswami+acme@egalvanic.com
+    USER_PASSWORD  = <from BCES_IQ_PASSWORD secret>
+
+  In Parallel Suite 2 (GitHub Actions), these are set by the matrix entry
+  env: block so AppConstants.getEnv() picks them up.
+
+  Run locally:
+    BASE_URL=https://acme.bces-iq.com \
+    USER_EMAIL=shubham.goswami+acme@egalvanic.com \
+    USER_PASSWORD=Shubham@123 \
+    mvn clean test -DsuiteXmlFile=smoke-bces-iq-testng.xml
+-->
+<suite name="BCES-IQ Tenant Smoke Suite (3 TCs)" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <test name="BCES-IQ Smoke — Site loads, login, dashboard shell">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BcesIqSmokeTestNG"/>
+        </classes>
+    </test>
+
+</suite>

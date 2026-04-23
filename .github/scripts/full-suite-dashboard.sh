@@ -51,6 +51,7 @@ ALL_GROUPS=(
   "visual-regression"
   "ai-analyzer"
   "curated-bug-verification"
+  "bces-iq-smoke"
 )
 ALL_GROUP_NAMES=(
   "Auth + Site + Connection"
@@ -69,8 +70,9 @@ ALL_GROUP_NAMES=(
   "Visual Regression"
   "AI Page Analyzer"
   "Curated Bug Verification"
+  "BCES-IQ Tenant Smoke"
 )
-ALL_GROUP_TESTS=(130 135 234 69 76 65 76 71 105 62 37 56 4 7 3 8)
+ALL_GROUP_TESTS=(130 135 234 69 76 65 76 71 105 62 37 56 4 7 3 8 3)
 ALL_GROUP_XMLS=(
   "suite-auth-site-connection.xml"
   "suite-location-task.xml"
@@ -88,6 +90,7 @@ ALL_GROUP_XMLS=(
   "suite-visual.xml"
   "suite-ai-analyzer.xml"
   "deep-bug-verification-testng.xml"
+  "smoke-bces-iq-testng.xml"
 )
 
 # ─────────────────────────────────────────────────────
@@ -111,6 +114,7 @@ get_group_index() {
     visual-regression)    echo 13 ;;
     ai-analyzer)          echo 14 ;;
     curated-bug-verification) echo 15 ;;
+    bces-iq-smoke)        echo 16 ;;
     *)                    echo -1 ;;
   esac
 }
@@ -127,7 +131,7 @@ else
   IDX=$(get_group_index "$SELECTED")
   if [ "$IDX" -eq -1 ]; then
     echo "Unknown group: $SELECTED"
-    echo "   Valid: all, auth-site-connection, location-task, workorder-issue, asset-1-2, asset-3, asset-4, asset-5, sld, dashboard-bughunt, load-api, smoke, ai-form, monkey, visual-regression, ai-analyzer, curated-bug-verification"
+    echo "   Valid: all, auth-site-connection, location-task, workorder-issue, asset-1-2, asset-3, asset-4, asset-5, sld, dashboard-bughunt, load-api, smoke, ai-form, monkey, visual-regression, ai-analyzer, curated-bug-verification, bces-iq-smoke"
     exit 1
   fi
   RUN_GROUPS=("${ALL_GROUPS[$IDX]}")
