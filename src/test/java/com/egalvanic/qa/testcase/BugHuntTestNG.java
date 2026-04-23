@@ -112,7 +112,7 @@ public class BugHuntTestNG {
         ScreenshotUtil.setDriver(driver);
 
         // Set zoom to 80% to match BaseTest
-        js.executeScript("document.body.style.zoom='80%';");
+        js.executeScript("document.body.style.zoom='90%';");
     }
 
     @AfterClass

@@ -178,7 +178,7 @@ public class EgFormAITestNG {
 
         // Set zoom to 80% to match BaseTest
         loginToAdmin();
-        js.executeScript("document.body.style.zoom='80%';");
+        js.executeScript("document.body.style.zoom='90%';");
     }
 
     @AfterClass
@@ -238,11 +238,10 @@ public class EgFormAITestNG {
 
     private void clickFormsTab() {
         try {
-            WebElement tab = driver.findElement(FORMS_TAB);
-            tab.click();
+            safeClick(FORMS_TAB);
             sleep(3000);
         } catch (Exception e) {
-            System.out.println("  ⚠️ Forms tab not found");
+            System.out.println("  ⚠️ Forms tab not found: " + e.getMessage());
         }
     }
 
@@ -252,6 +251,46 @@ public class EgFormAITestNG {
             dismiss.click();
             sleep(500);
         } catch (Exception e) { /* no banner */ }
+    }
+
+    /**
+     * Dismiss all MUI backdrops + the "App Update Available" banner that cover
+     * AI Form clicks in CI (headless Chrome). Safe to call anytime.
+     * The backdrop re-appears on React re-render, so this must run IMMEDIATELY
+     * before every click &mdash; not just once at page-load.
+     */
+    private void dismissAllBlockers() {
+        try {
+            js.executeScript(
+                    "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"], .MuiModal-backdrop')"
+                            + ".forEach(function(b){b.style.display='none';b.style.pointerEvents='none';});"
+                            + "var btns = document.querySelectorAll('button');"
+                            + "for (var i = 0; i < btns.length; i++) {"
+                            + "  if (btns[i].textContent === 'DISMISS') { btns[i].click(); break; }"
+                            + "}");
+        } catch (Exception ignored) {}
+    }
+
+    /**
+     * Click with backdrop cleanup + scrollIntoView + JS-click fallback.
+     * Replaces raw {@code driver.findElement(x).click()} calls that were
+     * failing with "element not interactable" when a backdrop covered them.
+     */
+    private void safeClick(By locator) {
+        dismissAllBlockers();
+        try {
+            WebElement el = driver.findElement(locator);
+            js.executeScript("arguments[0].scrollIntoView({block:'center'});", el);
+            try {
+                el.click();
+            } catch (Exception e) {
+                // Backdrop re-appeared during the click — try once more after cleanup
+                dismissAllBlockers();
+                js.executeScript("arguments[0].click();", el);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("safeClick failed for " + locator + ": " + e.getMessage(), e);
+        }
     }
 
     private boolean elementExists(By locator) {
@@ -347,7 +386,7 @@ public class EgFormAITestNG {
                 boolean addEnabled = elementEnabled(ADD_FORM_BUTTON);
                 System.out.println("  📌 Add Form button found — enabled=" + addEnabled);
                 if (addEnabled) {
-                    driver.findElement(ADD_FORM_BUTTON).click();
+                    safeClick(ADD_FORM_BUTTON);
                     sleep(3000);
                     boolean aiInModal = elementExists(AI_BUTTON);
                     System.out.println("  " + (aiInModal ? "✅ Found AI button INSIDE Add Form modal" : "❌ Not found in modal either"));
@@ -463,7 +502,7 @@ public class EgFormAITestNG {
             return;
         }
 
-        driver.findElement(AI_BUTTON).click();
+        safeClick(AI_BUTTON);
         sleep(2000);
         ScreenshotUtil.captureScreenshot("TC04_ai_modal");
 
@@ -474,7 +513,7 @@ public class EgFormAITestNG {
             sleep(1000);
 
             if (elementExists(GENERATE_BUTTON)) {
-                driver.findElement(GENERATE_BUTTON).click();
+                safeClick(GENERATE_BUTTON);
                 sleep(10000); // AI may take time
 
                 String content = driver.getPageSource().toLowerCase();
@@ -505,7 +544,7 @@ public class EgFormAITestNG {
 
         if (!elementExists(AI_BUTTON)) { System.out.println("  ⚠️ SKIP"); return; }
 
-        driver.findElement(AI_BUTTON).click();
+        safeClick(AI_BUTTON);
         sleep(2000);
 
         if (elementExists(AI_DESCRIPTION_INPUT)) {
@@ -516,7 +555,7 @@ public class EgFormAITestNG {
             );
 
             if (elementExists(GENERATE_BUTTON)) {
-                driver.findElement(GENERATE_BUTTON).click();
+                safeClick(GENERATE_BUTTON);
                 sleep(10000);
 
                 String content = driver.getPageSource().toLowerCase();
@@ -541,7 +580,7 @@ public class EgFormAITestNG {
 
         if (!elementExists(AI_BUTTON)) { System.out.println("  ⚠️ SKIP"); return; }
 
-        driver.findElement(AI_BUTTON).click();
+        safeClick(AI_BUTTON);
         sleep(2000);
 
         if (elementExists(AI_DESCRIPTION_INPUT)) {
@@ -554,7 +593,7 @@ public class EgFormAITestNG {
             );
 
             if (elementExists(GENERATE_BUTTON)) {
-                driver.findElement(GENERATE_BUTTON).click();
+                safeClick(GENERATE_BUTTON);
                 sleep(15000); // Complex form may take longer
 
                 ScreenshotUtil.captureScreenshot("TC06_complex_form");
@@ -575,14 +614,14 @@ public class EgFormAITestNG {
 
         if (!elementExists(AI_BUTTON)) { System.out.println("  ⚠️ SKIP"); return; }
 
-        driver.findElement(AI_BUTTON).click();
+        safeClick(AI_BUTTON);
         sleep(2000);
 
         if (elementExists(AI_DESCRIPTION_INPUT)) {
             driver.findElement(AI_DESCRIPTION_INPUT).sendKeys("make a form");
 
             if (elementExists(GENERATE_BUTTON)) {
-                driver.findElement(GENERATE_BUTTON).click();
+                safeClick(GENERATE_BUTTON);
                 sleep(10000);
 
                 String content = driver.getPageSource().toLowerCase();
@@ -612,7 +651,7 @@ public class EgFormAITestNG {
 
         if (!elementExists(AI_BUTTON)) { System.out.println("  ⚠️ SKIP"); return; }
 
-        driver.findElement(AI_BUTTON).click();
+        safeClick(AI_BUTTON);
         sleep(2000);
 
         // Look for form type selector
@@ -648,14 +687,14 @@ public class EgFormAITestNG {
 
         if (!elementExists(AI_BUTTON)) { System.out.println("  ⚠️ SKIP"); return; }
 
-        driver.findElement(AI_BUTTON).click();
+        safeClick(AI_BUTTON);
         sleep(2000);
 
         if (elementExists(AI_DESCRIPTION_INPUT)) {
             driver.findElement(AI_DESCRIPTION_INPUT).sendKeys("Create a simple voltage test form");
 
             if (elementExists(GENERATE_BUTTON)) {
-                driver.findElement(GENERATE_BUTTON).click();
+                safeClick(GENERATE_BUTTON);
                 sleep(10000);
 
                 // Check console for schema validation errors
@@ -727,14 +766,14 @@ public class EgFormAITestNG {
         if (!elementExists(AI_BUTTON)) { System.out.println("  ⚠️ SKIP"); return; }
 
         // Step 1: Generate initial
-        driver.findElement(AI_BUTTON).click();
+        safeClick(AI_BUTTON);
         sleep(2000);
 
         if (elementExists(AI_DESCRIPTION_INPUT)) {
             driver.findElement(AI_DESCRIPTION_INPUT).sendKeys("Create a voltage test form with one voltage field");
 
             if (elementExists(GENERATE_BUTTON)) {
-                driver.findElement(GENERATE_BUTTON).click();
+                safeClick(GENERATE_BUTTON);
                 sleep(10000);
                 ScreenshotUtil.captureScreenshot("TC11_initial");
 
@@ -793,14 +832,14 @@ public class EgFormAITestNG {
 
         if (!elementExists(AI_BUTTON)) { System.out.println("  ⚠️ SKIP"); return; }
 
-        driver.findElement(AI_BUTTON).click();
+        safeClick(AI_BUTTON);
         sleep(2000);
 
         if (elementExists(AI_DESCRIPTION_INPUT)) {
             driver.findElement(AI_DESCRIPTION_INPUT).sendKeys("<script>alert('XSS')</script>");
 
             if (elementExists(GENERATE_BUTTON)) {
-                driver.findElement(GENERATE_BUTTON).click();
+                safeClick(GENERATE_BUTTON);
                 sleep(5000);
 
                 // No alert should appear
@@ -829,14 +868,14 @@ public class EgFormAITestNG {
 
         if (!elementExists(AI_BUTTON)) { System.out.println("  ⚠️ SKIP"); return; }
 
-        driver.findElement(AI_BUTTON).click();
+        safeClick(AI_BUTTON);
         sleep(2000);
 
         if (elementExists(AI_DESCRIPTION_INPUT)) {
             driver.findElement(AI_DESCRIPTION_INPUT).sendKeys("'; DROP TABLE forms; --");
 
             if (elementExists(GENERATE_BUTTON)) {
-                driver.findElement(GENERATE_BUTTON).click();
+                safeClick(GENERATE_BUTTON);
                 sleep(5000);
 
                 String content = driver.getPageSource().toLowerCase();
@@ -860,7 +899,7 @@ public class EgFormAITestNG {
 
         if (!elementExists(AI_BUTTON)) { System.out.println("  ⚠️ SKIP"); return; }
 
-        driver.findElement(AI_BUTTON).click();
+        safeClick(AI_BUTTON);
         sleep(2000);
 
         // Don't type anything — just click generate
@@ -869,7 +908,7 @@ public class EgFormAITestNG {
             System.out.println("  Generate button enabled (empty input): " + genEnabled);
 
             if (genEnabled) {
-                driver.findElement(GENERATE_BUTTON).click();
+                safeClick(GENERATE_BUTTON);
                 sleep(3000);
 
                 // Should show validation error
@@ -897,7 +936,7 @@ public class EgFormAITestNG {
 
         if (!elementExists(AI_BUTTON)) { System.out.println("  ⚠️ SKIP"); return; }
 
-        driver.findElement(AI_BUTTON).click();
+        safeClick(AI_BUTTON);
         sleep(2000);
 
         if (elementExists(AI_DESCRIPTION_INPUT)) {
@@ -911,7 +950,7 @@ public class EgFormAITestNG {
             System.out.println("  Input length: " + longText.length() + " chars");
 
             if (elementExists(GENERATE_BUTTON)) {
-                driver.findElement(GENERATE_BUTTON).click();
+                safeClick(GENERATE_BUTTON);
                 sleep(15000);
 
                 List<String> errors = getConsoleErrors();
@@ -937,7 +976,7 @@ public class EgFormAITestNG {
 
         if (!elementExists(AI_BUTTON)) { System.out.println("  ⚠️ SKIP"); return; }
 
-        driver.findElement(AI_BUTTON).click();
+        safeClick(AI_BUTTON);
         sleep(2000);
 
         String formName = "QA_AI_Test_" + System.currentTimeMillis();
@@ -948,7 +987,7 @@ public class EgFormAITestNG {
             );
 
             if (elementExists(GENERATE_BUTTON)) {
-                driver.findElement(GENERATE_BUTTON).click();
+                safeClick(GENERATE_BUTTON);
                 sleep(10000);
 
                 // Save
@@ -1051,7 +1090,7 @@ public class EgFormAITestNG {
 
         // Try opening Form Builder
         if (elementExists(ADD_FORM_BUTTON) && elementEnabled(ADD_FORM_BUTTON)) {
-            driver.findElement(ADD_FORM_BUTTON).click();
+            safeClick(ADD_FORM_BUTTON);
             sleep(3000);
 
             // Search ENTIRE DOM for AI-related attributes
@@ -1618,7 +1657,7 @@ public class EgFormAITestNG {
         navigateToAdmin();
         clickFormsTab();
         if (elementExists(ADD_FORM_BUTTON) && elementEnabled(ADD_FORM_BUTTON)) {
-            driver.findElement(ADD_FORM_BUTTON).click();
+            safeClick(ADD_FORM_BUTTON);
             sleep(3000);
             boolean inModal = elementExists(startFromTemplate);
             System.out.println("  In Add Form modal: " + (inModal ? "✅ Found" : "❌ Not found"));

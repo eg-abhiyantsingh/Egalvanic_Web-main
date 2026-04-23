@@ -121,7 +121,7 @@ public class MonkeyTestNG {
         driver.manage().window().maximize();
         driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
         js = (JavascriptExecutor) driver;
-        js.executeScript("document.body.style.zoom='80%';");
+        js.executeScript("document.body.style.zoom='90%';");
 
         ScreenshotUtil.setDriver(driver);
         FlakinessPrevention.installNetworkInterceptor(driver);

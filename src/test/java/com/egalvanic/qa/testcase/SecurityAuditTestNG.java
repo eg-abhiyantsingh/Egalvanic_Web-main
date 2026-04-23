@@ -56,10 +56,26 @@ public class SecurityAuditTestNG extends BaseTest {
             logStep("access_token found=" + (access != null) + ", refresh_token found=" + (refresh != null));
             ScreenshotUtil.captureScreenshot("BUG016_cookies");
 
+            // Guard against false-positive PASS: if we couldn't read either cookie,
+            // we never actually verified SameSite. Fail explicitly.
+            Assert.assertFalse(access == null && refresh == null,
+                    "BUG-007: Cannot verify — neither access_token nor refresh_token cookie found "
+                    + "after login. Check that loginAndSelectSite() actually completed, then re-run. "
+                    + "Current URL: " + driver.getCurrentUrl());
+
             // Selenium exposes getSameSite() from v4
             String accessSs = access != null ? access.getSameSite() : null;
             String refreshSs = refresh != null ? refresh.getSameSite() : null;
             logStep("access_token SameSite=" + accessSs + ", refresh_token SameSite=" + refreshSs);
+
+            // Guard: if BOTH SameSite values are null/unreadable, the driver didn't
+            // surface the attribute — we can't tell the flag's value, so don't claim
+            // the bug is fixed. Fail with a clear reason.
+            if (access != null && accessSs == null && refresh != null && refreshSs == null) {
+                Assert.fail("BUG-007: Cannot verify — Selenium.Cookie.getSameSite() returned null for "
+                        + "both access_token and refresh_token. The cookies exist but the SameSite attribute "
+                        + "was not parsed. Check Selenium version or read raw 'document.cookie' via JS.");
+            }
 
             boolean bugPresent = "None".equalsIgnoreCase(accessSs) || "None".equalsIgnoreCase(refreshSs);
             Assert.assertFalse(bugPresent,

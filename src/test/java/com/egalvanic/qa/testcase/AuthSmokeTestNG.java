@@ -113,7 +113,7 @@ public class AuthSmokeTestNG {
         driver.manage().window().maximize();
 
         js = (JavascriptExecutor) driver;
-        js.executeScript("document.body.style.zoom='80%';");
+        js.executeScript("document.body.style.zoom='90%';");
 
         ScreenshotUtil.setDriver(driver);
 

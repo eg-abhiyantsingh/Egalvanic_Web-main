@@ -107,10 +107,21 @@ public class DeepBugVerificationTestNG extends BaseTest {
             logStepWithScreenshot("Dashboard loaded — Beamer font load status");
 
             long blocked = blockedCount == null ? 0L : blockedCount.longValue();
+            long totalFonts = totalBeamerFonts == null ? 0L : totalBeamerFonts.longValue();
+
+            // Guard against false-positive PASS: if Beamer didn't load AT ALL,
+            // blocked==0 would silently pass even though we haven't verified anything.
+            // Treat "Beamer never loaded" as an inconclusive failure so the CI report
+            // doesn't claim the bug is fixed when we couldn't check.
+            Assert.assertTrue(totalFonts > 0L,
+                    "BUG-002: Cannot verify — Beamer didn't load any fonts in this run. "
+                    + "Either Beamer SDK failed to init (separate issue) or CSP already blocked it pre-font. "
+                    + "Manually verify on /dashboard, then re-run.");
+
             Assert.assertEquals(blocked, 0L,
-                    "BUG-002: " + blocked + " Beamer font(s) blocked by CSP (out of " + totalBeamerFonts + " total). " +
-                    "Fix: add fonts.getbeamer.com or *.getbeamer.com to the CSP font-src directive.");
-            ExtentReportManager.logPass("No CSP-blocked Beamer fonts detected");
+                    "BUG-002: " + blocked + " Beamer font(s) blocked by CSP (out of " + totalFonts + " total). "
+                    + "Fix: add fonts.getbeamer.com or *.getbeamer.com to the CSP font-src directive.");
+            ExtentReportManager.logPass("No CSP-blocked Beamer fonts detected (of " + totalFonts + " loaded)");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG002_error");
             Assert.fail("BUG-002 test crashed: " + e.getMessage());
@@ -223,15 +234,34 @@ public class DeepBugVerificationTestNG extends BaseTest {
                     "arguments[0].dispatchEvent(new Event('input', {bubbles:true}));",
                     titleInput, longStr.toString());
             pause(1500);
-            String value = titleInput.getAttribute("value");
+            // Read live DOM value (not React state) via JS to avoid React returning
+            // stale virtual-DOM value. getAttribute("value") returns the DOM property
+            // which is correct, but we double-read via JS to be safe.
+            Object liveValueObj = js().executeScript("return arguments[0].value;", titleInput);
+            String liveValue = liveValueObj == null ? "" : liveValueObj.toString();
+            String domValue = titleInput.getAttribute("value");
+            String value = (domValue != null && domValue.length() >= liveValue.length()) ? domValue : liveValue;
             String maxLen = titleInput.getAttribute("maxlength");
-            logStepWithScreenshot("Input value length=" + (value == null ? 0 : value.length()) + " maxlength=" + maxLen);
-            boolean bugPresent = (maxLen == null || maxLen.isEmpty()) && value != null && value.length() >= 1500;
+            int valueLen = value == null ? 0 : value.length();
+            logStepWithScreenshot("Input value length=" + valueLen + " maxlength=" + maxLen);
+
+            // Guard against false-positive PASS: if the JS native-setter injection
+            // silently failed, valueLen would be near-0 and the test would report
+            // "no bug". Require that the setter actually took effect (valueLen >= 1500)
+            // OR that maxlength IS present (meaning the limit is enforced at the DOM level).
+            boolean maxLenSet = maxLen != null && !maxLen.isEmpty();
+            if (!maxLenSet && valueLen < 1500) {
+                Assert.fail("BUG-005: Cannot verify — JS native-setter injected only " + valueLen
+                        + " chars (expected >= 1500). Either the React component prevented the write "
+                        + "(would be an implicit fix worth confirming manually) or the test helper failed. "
+                        + "Manually paste 2000+ chars into the Issue Title and re-run.");
+            }
+
+            boolean bugPresent = !maxLenSet && valueLen >= 1500;
             Assert.assertFalse(bugPresent,
-                    "BUG-005: Issue Title input has no maxlength attribute and accepted " +
-                    (value == null ? 0 : value.length()) + " chars. " +
-                    "Fix: add maxlength=255 (or whatever the server allows) to the Title input.");
-            ExtentReportManager.logPass("Issue Title input has a character limit (maxLength=" + maxLen + ")");
+                    "BUG-005: Issue Title input has no maxlength attribute and accepted " + valueLen
+                    + " chars. Fix: add maxlength=255 (or whatever the server allows) to the Title input.");
+            ExtentReportManager.logPass("Issue Title has a character limit (maxLength=" + maxLen + ", value=" + valueLen + ")");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG011_error");
             Assert.fail("BUG-005 test crashed: " + e.getMessage());

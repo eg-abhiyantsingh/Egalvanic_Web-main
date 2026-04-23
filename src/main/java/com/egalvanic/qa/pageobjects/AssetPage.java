@@ -23,9 +23,24 @@ public class AssetPage {
 
     private static final int TIMEOUT = 25;
 
-    // Navigation
-    private static final By ASSETS_NAV = By.xpath("//span[normalize-space()='Assets'] | //a[normalize-space()='Assets'] | //button[normalize-space()='Assets']");
-    private static final By LOCATIONS_NAV = By.xpath("//span[normalize-space()='Locations'] | //a[normalize-space()='Locations'] | //button[normalize-space()='Locations']");
+    // Navigation — match exact text "Assets" AND also sidebar patterns where the label is
+    // wrapped in a larger structure (e.g., <a href="/assets"><span>Assets</span><badge>42</badge></a>).
+    // Includes a href-based fallback so SPA router links match even when text rendering is late.
+    private static final By ASSETS_NAV = By.xpath(
+            "//nav//a[@href='/assets' or @href='/assets/']"
+            + " | //aside//a[@href='/assets' or @href='/assets/']"
+            + " | //a[@href='/assets' or @href='/assets/']"
+            + " | //span[normalize-space()='Assets']"
+            + " | //a[normalize-space()='Assets']"
+            + " | //button[normalize-space()='Assets']"
+            + " | //*[@role='button' and normalize-space()='Assets']");
+    private static final By LOCATIONS_NAV = By.xpath(
+            "//nav//a[@href='/locations' or @href='/locations/']"
+            + " | //aside//a[@href='/locations' or @href='/locations/']"
+            + " | //a[@href='/locations' or @href='/locations/']"
+            + " | //span[normalize-space()='Locations']"
+            + " | //a[normalize-space()='Locations']"
+            + " | //button[normalize-space()='Locations']");
     private static final By CREATE_ASSET_BTN = By.xpath("//button[normalize-space()='Create Asset']");
 
     // Asset form fields (using placeholder selectors — confirmed by diagnostic)
@@ -2814,16 +2829,45 @@ public class AssetPage {
     }
 
     private void click(By by) {
+        // Dismiss MUI backdrops and the "App Update Available" banner that
+        // can cover sidebar items in CI (headless Chrome). Repeat inside the
+        // wait loop because backdrops can re-appear on React re-render.
+        dismissBlockers();
         try {
             wait.until(ExpectedConditions.elementToBeClickable(by)).click();
         } catch (Exception e) {
+            // Retry after another backdrop cleanup + scroll-into-view
             try {
+                dismissBlockers();
                 WebElement el = driver.findElement(by);
+                js.executeScript(
+                        "arguments[0].scrollIntoView({block:'center', inline:'nearest'});",
+                        el);
+                pause(300);
                 js.executeScript("arguments[0].click();", el);
             } catch (Exception ex) {
                 throw new RuntimeException("Click failed for: " + by, ex);
             }
         }
+    }
+
+    /**
+     * Remove MUI backdrops + dismiss the "App Update Available" banner.
+     * Called before every {@link #click(By)} attempt. The sidebar nav items
+     * in CI (headless Chrome) are often covered by a late-arriving backdrop
+     * after login redirect, causing "element not interactable" even though
+     * the element is in the DOM.
+     */
+    private void dismissBlockers() {
+        try {
+            js.executeScript(
+                    "document.querySelectorAll('.MuiBackdrop-root, [class*=\"MuiBackdrop\"], .MuiModal-backdrop')"
+                            + ".forEach(function(b){b.style.display='none';b.style.pointerEvents='none';});"
+                            + "var btns = document.querySelectorAll('button');"
+                            + "for (var i = 0; i < btns.length; i++) {"
+                            + "  if (btns[i].textContent === 'DISMISS') { btns[i].click(); break; }"
+                            + "}");
+        } catch (Exception ignored) {}
     }
 
     private void typeField(By by, String text) {

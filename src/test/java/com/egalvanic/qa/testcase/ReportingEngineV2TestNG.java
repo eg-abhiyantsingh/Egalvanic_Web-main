@@ -266,7 +266,7 @@ public class ReportingEngineV2TestNG {
         ScreenshotUtil.setDriver(driver);
 
         loginToApp();
-        js.executeScript("document.body.style.zoom='80%';");
+        js.executeScript("document.body.style.zoom='90%';");
     }
 
     @AfterClass

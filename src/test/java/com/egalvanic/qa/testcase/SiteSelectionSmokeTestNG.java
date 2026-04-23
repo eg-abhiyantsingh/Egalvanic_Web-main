@@ -124,7 +124,7 @@ public class SiteSelectionSmokeTestNG {
         driver.manage().window().maximize();
 
         js = (JavascriptExecutor) driver;
-        js.executeScript("document.body.style.zoom='80%';");
+        js.executeScript("document.body.style.zoom='90%';");
 
         wait = new WebDriverWait(driver, Duration.ofSeconds(POST_LOGIN_TIMEOUT));
         ScreenshotUtil.setDriver(driver);

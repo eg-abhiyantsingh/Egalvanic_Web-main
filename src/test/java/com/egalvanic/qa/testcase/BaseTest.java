@@ -165,7 +165,7 @@ public class BaseTest {
         driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
 
         JavascriptExecutor js = (JavascriptExecutor) driver;
-        js.executeScript("document.body.style.zoom='80%';");
+        js.executeScript("document.body.style.zoom='90%';");
 
         // Install flakiness prevention interceptors (network tracking + console error capture)
         FlakinessPrevention.installNetworkInterceptor(driver);
