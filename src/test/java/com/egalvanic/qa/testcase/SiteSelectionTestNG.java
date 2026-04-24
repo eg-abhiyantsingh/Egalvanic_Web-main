@@ -73,7 +73,11 @@ public class SiteSelectionTestNG {
     // Element locators — facility dropdown
     private static final By FACILITY_INPUT = By.xpath("//input[@placeholder='Select facility']");
     private static final By LISTBOX = By.xpath("//ul[@role='listbox']");
-    private static final By OPTIONS = By.xpath("//li[@role='option']");
+    // OPTIONS: scope to the currently-open listbox so we count ONLY visible/filtered options.
+    // Old locator `//li[@role='option']` matched every option in any listbox anywhere in the
+    // DOM (MUI Autocomplete keeps all options mounted). That caused TC_SS_008's filteredCount
+    // to equal totalCount (both 67 — real evidence from run 24876014524).
+    private static final By OPTIONS = By.xpath("//ul[@role='listbox']//li[@role='option']");
 
     // Stored state for cross-test assertions
     private int initialSiteCount = 0;
@@ -453,20 +457,17 @@ public class SiteSelectionTestNG {
                 AppConstants.FEATURE_SEARCH_SITES, "TC_SS_008_SearchFiltersSiteList");
         logStep("Verifying typing in search filters displayed sites");
 
-        // Get total count first
+        // Get total count first — dropdown must be OPEN for OPTIONS (scoped to listbox) to match.
         openFacilityDropdown();
-        int totalCount = driver.findElements(OPTIONS).size();
-        closeFacilityDropdown();
+        int totalCount = waitForStableOptionCount();
         logStep("Total sites before search: " + totalCount);
 
-        // Type search query
+        // Type search query — keep dropdown open during typing (MUI filters in place).
+        // If we closed first, typing into the input would re-open it fresh with unfiltered list.
         WebElement input = driver.findElement(FACILITY_INPUT);
         clearAndType(input, "Test");
-        pause(1000);
-
-        // Get filtered count
-        List<WebElement> filtered = driver.findElements(OPTIONS);
-        int filteredCount = filtered.isEmpty() ? 0 : filtered.size();
+        // Filter is debounced ~300ms in MUI Autocomplete. Wait for option count to stabilize.
+        int filteredCount = waitForStableOptionCount();
         logStep("Filtered sites for 'Test': " + filteredCount);
 
         // Search for "Test" must return at least one result
@@ -480,13 +481,14 @@ public class SiteSelectionTestNG {
                     + ") should be < totalCount (" + totalCount + "). Search may not be working.");
         }
 
-        // Verify all filtered results contain "Test"
-        for (WebElement opt : filtered) {
+        // Verify all filtered results contain "Test" (re-read from DOM after the stable wait)
+        List<WebElement> filteredOptions = driver.findElements(OPTIONS);
+        for (WebElement opt : filteredOptions) {
             String text = getElementText(opt).toLowerCase();
             Assert.assertTrue(text.contains("test"),
                     "Filtered option does not contain 'Test': '" + text + "'");
         }
-        logStep("All filtered results contain 'Test'");
+        logStep("All " + filteredOptions.size() + " filtered results contain 'Test'");
 
         // Clear search
         clearFacilityInput();
@@ -1395,16 +1397,33 @@ public class SiteSelectionTestNG {
     }
 
     private void openFacilityDropdown() {
+        // MUI Autocomplete opens on MOUSEDOWN, not on plain .click(). Selenium's
+        // WebElement.click() synthesizes a click but doesn't reliably fire the mousedown
+        // that MUI's internal handler listens for — confirmed via live Playwright this week
+        // (dropdown stayed closed on plain click; opened only after dispatching mousedown+
+        // mouseup+click MouseEvents). This helper dispatches the full sequence via JS.
         try {
             dismissBackdrops();
             WebElement input = driver.findElement(FACILITY_INPUT);
+            // Sequence 1: try native WebElement click (works on non-MUI Autocompletes)
             safeClick(input);
-            pause(800);
-            if (!isDropdownOpen()) {
-                // Retry with JS click
-                js.executeScript("arguments[0].click();", input);
-                pause(800);
-            }
+            pause(500);
+            if (isDropdownOpen()) return;
+
+            // Sequence 2: dispatch proper MouseEvents (MUI-compatible)
+            js.executeScript(
+                    "var el = arguments[0];"
+                    + "el.focus();"
+                    + "var opts = {bubbles:true, cancelable:true, view:window, button:0};"
+                    + "el.dispatchEvent(new MouseEvent('mousedown', opts));"
+                    + "el.dispatchEvent(new MouseEvent('mouseup', opts));"
+                    + "el.dispatchEvent(new MouseEvent('click', opts));", input);
+            pause(600);
+            if (isDropdownOpen()) return;
+
+            // Sequence 3: keyboard fallback (Arrow Down opens MUI Autocomplete)
+            input.sendKeys(Keys.ARROW_DOWN);
+            pause(600);
         } catch (Exception e) {
             System.out.println("[SiteSelection] Could not open dropdown: " + e.getMessage());
         }

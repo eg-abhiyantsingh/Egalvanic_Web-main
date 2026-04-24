@@ -262,9 +262,20 @@ public class BugHuntTestNG {
     }
 
     private boolean isSignInEnabled() {
+        // MUI buttons signal disabled state via FOUR independent mechanisms — all must be "enabled"
+        // for the button to be genuinely clickable. Prior implementation only checked 2 (DOM disabled
+        // + Mui-disabled class), which false-positived when MUI rendered with aria-disabled="true"
+        // without the Mui-disabled class (common in newer @mui/material versions).
         try {
             WebElement btn = driver.findElement(SIGN_IN_BUTTON);
-            return btn.isEnabled() && !btn.getAttribute("class").contains("Mui-disabled");
+            boolean domEnabled = btn.isEnabled();
+            String cls = btn.getAttribute("class");
+            boolean classEnabled = cls == null || !cls.contains("Mui-disabled");
+            String ariaDisabled = btn.getAttribute("aria-disabled");
+            boolean ariaEnabled = ariaDisabled == null || !"true".equalsIgnoreCase(ariaDisabled);
+            String pointerEvents = btn.getCssValue("pointer-events");
+            boolean pointerEnabled = !"none".equalsIgnoreCase(pointerEvents);
+            return domEnabled && classEnabled && ariaEnabled && pointerEnabled;
         } catch (Exception e) {
             return false;
         }

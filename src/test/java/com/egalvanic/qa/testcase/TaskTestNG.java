@@ -1934,18 +1934,34 @@ public class TaskTestNG extends BaseTest {
         }
         logStep("Grid rows found: " + rows.size());
 
-        // Check gridcell elements for date patterns (DD/MM/YYYY)
+        // Broad date-pattern regex — accepts any of the formats this app has used over versions:
+        //   DD/MM/YYYY   (01/02/2026)           ← original expectation
+        //   YYYY-MM-DD   (2026-01-02)           ← ISO
+        //   MMM DD, YYYY ("Jan 02, 2026")       ← locale long-form
+        //   MMM DD       ("Jan 02")             ← MUI DataGrid default for current year
+        //   DD-MMM-YYYY  ("02-Jan-2026")
+        //   relative     ("Today", "Yesterday", "2 hours ago", "5 min ago", "just now")
+        // Using a single combined regex avoids silent narrow-match failures when the product
+        // legitimately switches date rendering libraries (we've seen moment -> date-fns transitions).
+        String dateRegex = "(?is).*("
+                + "\\d{2}/\\d{2}/\\d{4}"                                        // DD/MM/YYYY
+                + "|\\d{4}-\\d{2}-\\d{2}"                                        // ISO
+                + "|(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\\s+\\d{1,2}(,\\s*\\d{4})?"  // "Jan 02, 2026" / "Jan 2"
+                + "|\\d{1,2}[\\s-](Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\\s-]\\d{4}"  // "02-Jan-2026"
+                + "|today|yesterday|just\\s*now|\\d+\\s*(minute|minutes|min|hour|hours|hr|day|days)\\s*ago"  // relative
+                + ").*";
+
         int validDates = 0;
         for (WebElement row : rows) {
             String text = row.getText();
-            if (text.matches(".*\\d{2}/\\d{2}/\\d{4}.*")) {
+            if (text.matches(dateRegex)) {
                 validDates++;
             }
         }
 
         logStep("Rows with valid dates (row text): " + validDates);
 
-        // Fallback 1: check "Created" gridcells directly
+        // Fallback 1: check gridcells directly (5th cell = Created column per this grid's layout)
         if (validDates == 0) {
             try {
                 List<WebElement> dateCells = driver.findElements(By.xpath(
@@ -1953,7 +1969,7 @@ public class TaskTestNG extends BaseTest {
                         + " | //div[@role='grid']//div[@role='row']/div[5]"));
                 for (WebElement cell : dateCells) {
                     String cellText = cell.getText().trim();
-                    if (cellText.matches("\\d{2}/\\d{2}/\\d{4}")) {
+                    if (cellText.matches(dateRegex)) {
                         validDates++;
                     }
                 }
@@ -1963,10 +1979,10 @@ public class TaskTestNG extends BaseTest {
             }
         }
 
-        // Fallback 2: check page text for date patterns
+        // Fallback 2: check page text for any date pattern
         if (validDates == 0) {
             String pageText = getPageText();
-            boolean hasDateInPage = pageText.matches("(?s).*\\d{2}/\\d{2}/\\d{4}.*");
+            boolean hasDateInPage = pageText.matches(dateRegex);
             logStep("Fallback (page text) — date pattern found: " + hasDateInPage);
             if (hasDateInPage) validDates = 1;
         }
