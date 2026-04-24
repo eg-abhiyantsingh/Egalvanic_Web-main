@@ -1273,4 +1273,159 @@ public class AuthenticationTestNG {
     private void pause(long ms) {
         try { Thread.sleep(ms); } catch (InterruptedException ignored) {}
     }
+
+    // ================================================================
+    // SECURITY HARDENING TESTS (added 2026-04-24 after deep bug audit)
+    // ================================================================
+
+    /**
+     * TC_SEC_01: SameSite cookie attribute on auth cookies (ZP-2024).
+     * Product ships access_token + refresh_token with SameSite=None. That's a
+     * form-POST CSRF surface because CORS blocks JSON cross-origin fetches but
+     * not form-POSTs. Per defense-in-depth, these should be SameSite=Lax (or
+     * Strict for session tokens) unless there's an explicit cross-site use case.
+     */
+    @Test(priority = 40, description = "TC_SEC_01: Auth cookies should use SameSite=Lax or Strict (ZP-2024)")
+    public void testTC_SEC_01_AuthCookieSameSiteAttribute() {
+        ExtentReportManager.createTest(AppConstants.MODULE_AUTHENTICATION,
+                "Security Hardening",
+                "TC_SEC_01_AuthCookieSameSiteAttribute (ZP-2024)");
+        logStep("Verifying SameSite attribute on access_token + refresh_token cookies");
+
+        try {
+            // Class-level login already happened in BaseTest.classSetup; navigate to any in-app
+            // URL to ensure cookies are attached to the current domain context.
+            if (!driver.getCurrentUrl().contains("egalvanic")) {
+                driver.get(AppConstants.BASE_URL + "/dashboard");
+                pause(3000);
+            }
+
+            java.util.Set<org.openqa.selenium.Cookie> cookies = driver.manage().getCookies();
+            String[] authCookieNames = {"access_token", "refresh_token"};
+            int violationCount = 0;
+            StringBuilder evidence = new StringBuilder();
+            for (String name : authCookieNames) {
+                org.openqa.selenium.Cookie c = driver.manage().getCookieNamed(name);
+                if (c == null) {
+                    logStep("Auth cookie '" + name + "' not found (user may not be logged in yet)");
+                    continue;
+                }
+                // Selenium Cookie object exposes sameSite via getSameSite() in Selenium 4
+                String sameSite = null;
+                try {
+                    java.lang.reflect.Method m = c.getClass().getMethod("getSameSite");
+                    Object v = m.invoke(c);
+                    sameSite = v == null ? "null" : v.toString();
+                } catch (Exception reflectFail) {
+                    sameSite = "<unknown>";
+                }
+                evidence.append(name).append(": SameSite=").append(sameSite)
+                        .append(" Secure=").append(c.isSecure())
+                        .append(" HttpOnly=").append(c.isHttpOnly()).append(" | ");
+                if ("None".equalsIgnoreCase(sameSite)) {
+                    violationCount++;
+                }
+            }
+            logStepWithScreenshot("Cookie attributes: " + evidence);
+            Assert.assertEquals(violationCount, 0,
+                    "Auth cookies must NOT use SameSite=None (CSRF surface). Found: " + evidence);
+            ExtentReportManager.logPass("ZP-2024 coverage: auth cookies use SameSite=Lax/Strict");
+        } catch (Exception e) {
+            logStepWithScreenshot("TC_SEC_01 error");
+            Assert.fail("TC_SEC_01 failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * TC_SEC_02: Rate-limit / lockout on repeated failed logins (ZP-2025).
+     * Product currently returns 401 with no throttling / CAPTCHA / lockout after
+     * 28+ failed attempts. Verify at least one defense kicks in within 10 attempts.
+     * Runs against a known-bad-password pair against a throwaway email to avoid
+     * interfering with real accounts.
+     */
+    @Test(priority = 41, description = "TC_SEC_02: Login endpoint should rate-limit after repeated failures (ZP-2025)")
+    public void testTC_SEC_02_LoginRateLimitAfterFailures() {
+        ExtentReportManager.createTest(AppConstants.MODULE_AUTHENTICATION,
+                "Security Hardening",
+                "TC_SEC_02_LoginRateLimitAfterFailures (ZP-2025)");
+        logStep("Hammering /api/auth/login with 10 failed attempts — expect 429 or similar defense");
+
+        try {
+            org.openqa.selenium.JavascriptExecutor js = (org.openqa.selenium.JavascriptExecutor) driver;
+            // Use an address that doesn't exist so we don't affect real accounts
+            String email = "nonexistent+ratetest@egalvanic.test";
+            String wrongPw = "definitely-wrong-" + System.currentTimeMillis();
+            int attemptCount = 10;
+            int throttledCount = 0;
+            int lastStatus = -1;
+
+            StringBuilder statusCodes = new StringBuilder();
+            for (int i = 0; i < attemptCount; i++) {
+                Object rawStatus = js.executeScript(
+                        "var xhr = new XMLHttpRequest();"
+                        + "xhr.open('POST', '/api/auth/login', false);"
+                        + "xhr.setRequestHeader('Content-Type', 'application/json');"
+                        + "xhr.send(JSON.stringify({email: arguments[0], password: arguments[1], subdomain: 'acme'}));"
+                        + "return xhr.status;", email, wrongPw);
+                int status = rawStatus == null ? -1 : ((Number) rawStatus).intValue();
+                statusCodes.append(status).append(" ");
+                lastStatus = status;
+                if (status == 429 || status == 423 || status == 403) {
+                    throttledCount++;
+                }
+                pause(150);  // tiny delay between attempts
+            }
+            logStepWithScreenshot("Status codes across " + attemptCount + " attempts: " + statusCodes);
+
+            Assert.assertTrue(throttledCount > 0,
+                    "Expected at least one throttle response (429/423/403) within " + attemptCount
+                    + " failed logins. All responses: " + statusCodes
+                    + ". ZP-2025: no rate limit in place.");
+            ExtentReportManager.logPass("ZP-2025 coverage: login endpoint throttles after repeated failures");
+        } catch (Exception e) {
+            logStepWithScreenshot("TC_SEC_02 error");
+            Assert.fail("TC_SEC_02 failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * TC_SEC_03: Raw backend error string should NOT leak into DOM on invalid routes (ZP-2020).
+     * Navigating to an invalid asset UUID currently leaks
+     * 'Failed to fetch enriched node details: 400' into body.innerText.
+     */
+    @Test(priority = 42, description = "TC_SEC_03: Invalid-URL routes should not leak raw backend error strings (ZP-2020)")
+    public void testTC_SEC_03_InvalidUrlDoesNotLeakBackendError() {
+        ExtentReportManager.createTest(AppConstants.MODULE_AUTHENTICATION,
+                "Security Hardening",
+                "TC_SEC_03_InvalidUrlDoesNotLeakBackendError (ZP-2020)");
+        logStep("Navigating to /assets/<bad-uuid> and /issues/<bad-uuid> to check error-leak");
+
+        try {
+            String[] badPaths = {"/assets/00000000-0000-0000-0000-000000000000",
+                                 "/issues/00000000-0000-0000-0000-000000000000"};
+            String[] leakMarkers = {"Failed to fetch", "enriched node", "Internal Server Error",
+                                    "stack trace", "at com.egalvanic", "NullPointerException",
+                                    "HTTPClientError"};
+            java.util.List<String> leaks = new java.util.ArrayList<>();
+            for (String path : badPaths) {
+                driver.get(AppConstants.BASE_URL + path);
+                pause(6000);
+                String bodyText = ((org.openqa.selenium.JavascriptExecutor) driver)
+                        .executeScript("return document.body.innerText || '';").toString();
+                for (String marker : leakMarkers) {
+                    if (bodyText.contains(marker)) {
+                        leaks.add(path + " leaks: " + marker);
+                    }
+                }
+            }
+            logStepWithScreenshot("Leak scan complete. Found: " + leaks);
+            Assert.assertTrue(leaks.isEmpty(),
+                    "Invalid-URL pages leaked backend error strings: " + leaks
+                    + ". ZP-2020: raw API errors surface in UI for invalid asset URLs.");
+            ExtentReportManager.logPass("ZP-2020 coverage: no raw backend errors on invalid routes");
+        } catch (Exception e) {
+            logStepWithScreenshot("TC_SEC_03 error");
+            Assert.fail("TC_SEC_03 failed: " + e.getMessage());
+        }
+    }
 }
