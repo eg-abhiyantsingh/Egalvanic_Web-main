@@ -152,27 +152,54 @@ public class DeepBugVerificationTestNG extends BaseTest {
                     By.cssSelector("input[placeholder*='Title' i]"));
             titleInput.sendKeys("Regression BUG-003 Issue " + System.currentTimeMillis());
             pause(500);
-            List<WebElement> textAreas = driver.findElements(By.tagName("textarea"));
-            if (!textAreas.isEmpty()) {
-                textAreas.get(0).sendKeys("Regression proposed resolution");
-                pause(500);
-            }
+
+            // Fix (live-verified 2026-04-24): the original test filled
+            // textAreas.get(0) which is the "Describe the issue" textarea, NOT
+            // "Describe the proposed resolution". Proposed Resolution IS a
+            // required field, so the original test's submit was rejected on
+            // PropRes validation — the drawer stayed open, which the test then
+            // misread as "Issue Class validation caught it". We have to fill
+            // Proposed Resolution specifically and leave ONLY Issue Class blank.
+            List<WebElement> propResAreas = driver.findElements(
+                    By.cssSelector("textarea[placeholder*='proposed resolution' i]"));
+            List<WebElement> descAreas = driver.findElements(
+                    By.cssSelector("textarea[placeholder*='Describe the issue' i]"));
+            if (!descAreas.isEmpty()) { descAreas.get(0).sendKeys("Regression issue description"); pause(300); }
+            if (!propResAreas.isEmpty()) { propResAreas.get(0).sendKeys("Regression proposed resolution"); pause(300); }
+            logStep("Filled Title + Description + Proposed Resolution. Issue Class INTENTIONALLY blank.");
+
             List<WebElement> submit = driver.findElements(
                     By.xpath("//button[contains(., 'Create Issue') and not(@disabled)]"));
             if (!submit.isEmpty()) {
                 submit.get(submit.size() - 1).click();
                 pause(5000);
             }
-            // Check whether dialog closed (validation passed) or stayed open (validation caught it)
-            List<WebElement> stillOpen = driver.findElements(
-                    By.cssSelector(".MuiDialog-root:not([style*='display: none']), .MuiDrawer-root:not([style*='display: none'])"));
-            boolean dialogClosed = stillOpen.isEmpty();
-            logStepWithScreenshot("After Create Issue submit without Issue Class");
-            Assert.assertFalse(dialogClosed,
-                    "BUG-003: Create Issue form accepted submit with blank Issue Class " +
-                    "(dialog closed = validation did NOT catch the missing required field). " +
-                    "Fix: add required-field validation on Issue Class in both frontend and backend.");
-            ExtentReportManager.logPass("Issue form correctly blocks submit when Issue Class is blank");
+
+            // Fix (live-verified 2026-04-24): the original "still open" selector
+            // matched .MuiDrawer-root which ALWAYS matches the left-sidebar nav
+            // (a permanent MuiDrawer). The sidebar was making dialogClosed always
+            // false, falsely reporting "bug fixed". Correct check: is the Create
+            // Issue form (the drawer/dialog CONTAINING the Title input) still
+            // visible? If yes → validation caught it; if no → form accepted
+            // submit despite blank Issue Class (bug present).
+            boolean createFormStillOpen = (Boolean) js().executeScript(
+                    "var drawers = document.querySelectorAll('.MuiDrawer-paper, [role=\"dialog\"]');"
+                    + "for (var d of drawers) {"
+                    + "  var r = d.getBoundingClientRect();"
+                    + "  if (r.width > 400 && r.height > 300) {"
+                    + "    var titleInput = d.querySelector('input[placeholder*=\"Title\" i]');"
+                    + "    if (titleInput) return true;"
+                    + "  }"
+                    + "}"
+                    + "return false;");
+            logStepWithScreenshot("After submit — Create Issue form still open: " + createFormStillOpen);
+
+            // bug present when: form CLOSED (submit accepted). form still open means validation worked.
+            Assert.assertTrue(createFormStillOpen,
+                    "BUG-003: Create Issue form accepted submit with blank Issue Class "
+                    + "(form CLOSED without error = validation did NOT catch the missing required field). "
+                    + "Fix: add required-field validation on Issue Class in both frontend and backend.");
+            ExtentReportManager.logPass("Issue form correctly blocks submit when Issue Class is blank (form still open)");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG004_error");
             Assert.fail("BUG-003 test crashed: " + e.getMessage());
@@ -190,24 +217,30 @@ public class DeepBugVerificationTestNG extends BaseTest {
         try {
             driver.get(AppConstants.BASE_URL + "/assets/invalid-uuid-test-12345");
             pause(6000);
-            // Broaden detection beyond body.getText() — the leak may surface in a
-            // toast/snackbar/alert that's rendered in a portal outside <body> flow,
-            // or in page source (text inside aria-live regions, title attributes,
-            // or initially hidden elements). Also scan pageSource for the specific
-            // API internals that shouldn't be client-visible.
-            String body = driver.findElement(By.tagName("body")).getText();
-            String pageSource = driver.getPageSource();
+            // Fix (live-verified 2026-04-24): Selenium's WebElement.getText() filters
+            // based on CSS visibility and can miss text that document.body.innerText
+            // DOES include. We verified manually that "Failed to fetch enriched node
+            // details: 400" appears in body.innerText on this tenant — but the test
+            // was falsely passing in CI because getText() missed it. Switch to JS
+            // innerText + outerHTML to cover the same surface a user sees.
+            String body = (String) js().executeScript(
+                    "return document.body && document.body.innerText ? document.body.innerText : '';");
+            String pageSource = (String) js().executeScript(
+                    "return document.documentElement ? document.documentElement.outerHTML : '';");
+            if (body == null) body = "";
+            if (pageSource == null) pageSource = "";
             logStepWithScreenshot("Loaded invalid asset URL");
 
             String[] leakMarkers = {
                     "Failed to fetch enriched node details",
                     "enriched node details: 400",
-                    "enriched_node_details",  // snake_case variant
-                    "/api/asset/enriched",    // raw endpoint path
+                    "enriched_node_details",    // snake_case variant
+                    "/api/asset/enriched",      // raw endpoint path
+                    "enrichedNodeDetails",      // camelCase variant
             };
             String foundIn = null;
             for (String marker : leakMarkers) {
-                if (body.contains(marker)) { foundIn = "body[" + marker + "]"; break; }
+                if (body.contains(marker)) { foundIn = "body.innerText[" + marker + "]"; break; }
                 if (pageSource.contains(marker)) { foundIn = "pageSource[" + marker + "]"; break; }
             }
             boolean leakPresent = foundIn != null;
@@ -215,7 +248,7 @@ public class DeepBugVerificationTestNG extends BaseTest {
             Assert.assertFalse(leakPresent,
                     "BUG-004: Invalid asset URL exposes raw backend internals (" + foundIn + "). "
                     + "Fix: catch the 400 in the frontend, show a generic 'Asset not found' message instead.");
-            ExtentReportManager.logPass("Invalid asset URL handled cleanly (no raw API error leaked in body OR pageSource)");
+            ExtentReportManager.logPass("Invalid asset URL handled cleanly (no raw API error leaked in body.innerText OR pageSource)");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG006_error");
             Assert.fail("BUG-004 test crashed: " + e.getMessage());
@@ -251,22 +284,31 @@ public class DeepBugVerificationTestNG extends BaseTest {
                     "arguments[0].dispatchEvent(new Event('input', {bubbles:true}));",
                     titleInput, longStr.toString());
             pause(1500);
-            // Read live DOM value (not React state) via JS to avoid React returning
-            // stale virtual-DOM value. getAttribute("value") returns the DOM property
-            // which is correct, but we double-read via JS to be safe.
+            // Fix (live-verified 2026-04-24): Selenium's WebElement.getAttribute("maxlength")
+            // can return the DOM .maxLength PROPERTY (-1 when unset) rather than the HTML
+            // attribute (null when unset). That non-null "-1" string made maxLenSet=true
+            // and maxLenInt=-1, which failed the >1000 check, giving a false PASS.
+            // Fix: read raw HTML attribute via JS getAttribute('maxlength') — returns
+            // null if no maxlength="" in HTML, regardless of DOM-property default.
             Object liveValueObj = js().executeScript("return arguments[0].value;", titleInput);
             String liveValue = liveValueObj == null ? "" : liveValueObj.toString();
-            String domValue = titleInput.getAttribute("value");
-            String value = (domValue != null && domValue.length() >= liveValue.length()) ? domValue : liveValue;
-            String maxLen = titleInput.getAttribute("maxlength");
-            int valueLen = value == null ? 0 : value.length();
-            logStepWithScreenshot("Input value length=" + valueLen + " maxlength=" + maxLen);
+            // Raw HTML attribute, not DOM property — this is the authoritative "is there
+            // a maxlength on this input?" signal.
+            Object rawMaxLenObj = js().executeScript("return arguments[0].getAttribute('maxlength');", titleInput);
+            String maxLen = rawMaxLenObj == null ? null : rawMaxLenObj.toString();
+            // Also capture the DOM .maxLength property as diagnostic info (not used in
+            // the assertion — -1 means "no limit").
+            Long maxLenProp = (Long) js().executeScript(
+                    "var v = arguments[0].maxLength; return (typeof v === 'number') ? v : null;", titleInput);
+
+            int valueLen = liveValue.length();
+            logStepWithScreenshot("Input valueLen=" + valueLen + " htmlMaxlength=" + maxLen
+                    + " domMaxLengthProp=" + maxLenProp);
 
             // Guard against false-positive PASS: if the JS native-setter injection
             // silently failed, valueLen would be near-0 and the test would report
-            // "no bug". Require that the setter actually took effect (valueLen >= 1500)
-            // OR that maxlength IS present (meaning the limit is enforced at the DOM level).
-            boolean maxLenSet = maxLen != null && !maxLen.isEmpty();
+            // "no bug". Require that the setter actually took effect (valueLen >= 1500).
+            boolean maxLenSet = maxLen != null && !maxLen.isEmpty() && !maxLen.equals("-1");
             int maxLenInt = -1;
             if (maxLenSet) {
                 try { maxLenInt = Integer.parseInt(maxLen); } catch (NumberFormatException ignored) {}
