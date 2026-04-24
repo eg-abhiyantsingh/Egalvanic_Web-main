@@ -218,11 +218,11 @@
     <div class="label">Total Tests</div>
   </div>
   <div class="stat-card card-passed">
-    <div class="number">161</div>
+    <div class="number">160</div>
     <div class="label">Passed</div>
   </div>
   <div class="stat-card card-failed">
-    <div class="number">13</div>
+    <div class="number">14</div>
     <div class="label">Failed</div>
   </div>
   <div class="stat-card card-skipped">
@@ -234,11 +234,11 @@
 <!-- Progress Bar -->
 <div class="progress-wrap">
   <div class="progress-bar">
-    <div class="progress-pass" style="width:92.5%"></div>
-    <div class="progress-fail" style="width:7.5%"></div>
+    <div class="progress-pass" style="width:92.0%"></div>
+    <div class="progress-fail" style="width:8.0%"></div>
     <div class="progress-skip" style="width:0.0%"></div>
   </div>
-  <div class="progress-label">92.5% pass rate (after 2026-04-24 live-verification re-classification, 2 rounds)</div>
+  <div class="progress-label">92.0% pass rate (after 2026-04-24 live-verification re-classification, 3 rounds)</div>
 </div>
 
 <!-- Live-verification audit callout -->
@@ -246,7 +246,8 @@
   <strong>2026-04-24 live-verification audit (2 rounds):</strong>
   <br><strong>Round 1</strong>: 4 smoke-test failures confirmed as false positives (product works; CI tests asserted fragile URL/DOM conditions). 1 smoke failure (<em>Delete an issue via detail page &#x22EE; menu</em>) retained as FAIL &mdash; detail-page kebab only has &quot;Edit Issue&quot;.
   <br><strong>Round 2</strong>: 8 Critical Path failures live-verified on <code>acme.qa.egalvanic.ai</code> and confirmed as false positives. Dashboard counts MATCH the corresponding grid pagination totals: <code>Assets 47&#61;47</code>, <code>Tasks 9&#61;9</code>, <code>Issues 10&#61;10</code>, <code>Work Orders 20&#61;20</code>. Sidebar has all 20&#43; modules. <code>/work-order-planning</code> loads with charts &#43; data. <code>/locations</code> tree has 7&#43; buildings. All re-classified as PASS below with per-test evidence.
-  The remaining 13 failures (4 Curated Bug Verification, 7 other Critical Path, 1 Issues Delete, 1 other) stay as FAIL pending separate investigation.
+  <br><strong>Round 3</strong>: <code>BUG-005</code> (Issue Title accepts 2000&#43; chars, no maxLength) was falsely PASSING due to a Selenium <code>getAttribute()</code> quirk. Live-verified the bug is REAL (<code>maxlength=null</code>, title accepts 2000 chars without truncation); corrected to <strong>FAIL</strong> below with evidence note.
+  The remaining 14 failures include 5 Curated Bug Verification (including the newly-corrected BUG-005), 7 other Critical Path, 1 Issues Delete, 1 other. These are real findings for the product team to address.
 </div>
 
 <!-- Modules -->
@@ -257,8 +258,8 @@
         <span class="toggle">&#9660;</span>Curated Bug Verification
       </div>
       <div class="module-stats">
-        <span class="mini-badge mini-pass">4 passed</span>
-        <span class="mini-badge mini-fail">4 failed</span>
+        <span class="mini-badge mini-pass">3 passed</span>
+        <span class="mini-badge mini-fail">5 failed</span>
       </div>
     </div>
     <div class="test-list">
@@ -293,9 +294,12 @@
         <span class="badge badge-pass">PASS</span>
       </div>
       <div class="test-row">
-        <span class="test-name">BUG-005: Issue Title accepts 2000+ chars (no maxLength)</span>
+        <span class="test-name">
+          BUG-005: Issue Title accepts 2000+ chars (no maxLength)
+          <span class="reverify-note" style="color:#a15400">Re-verified 2026-04-24 via live Playwright on <code>acme.qa.egalvanic.ai</code>: bug is REAL. Create Issue drawer &rarr; Title input: <code>maxlength=null</code> (HTML attr not set), <code>.maxLength=&minus;1</code> (DOM property default), <code>valueLen=2000</code> accepted via native setter. Product rendered the 2000-char value without truncation or validation. Earlier PASS was a test false-positive caused by Selenium 4&#39;s <code>getAttribute(&quot;maxlength&quot;)</code> returning the DOM property (<code>&minus;1</code>) instead of the raw HTML attribute (<code>null</code>); the test treated <code>&minus;1</code> as &quot;maxlength set&quot;. Fixed in commit <code>8e0a750</code> &mdash; subsequent CI runs will correctly report FAIL.</span>
+        </span>
         <span class="test-duration">8s</span>
-        <span class="badge badge-pass">PASS</span>
+        <span class="badge badge-fail">FAIL</span>
       </div>
       <div class="test-row">
         <span class="test-name">BUG-006: Top-level pages take &gt; 10s to reach networkidle</span>
