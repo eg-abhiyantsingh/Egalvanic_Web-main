@@ -221,7 +221,35 @@ public class WorkOrderPart2TestNG extends BaseTest {
     }
 
     private boolean findWOInGrid(String name) {
-        return getPageText().contains(name);
+        // Uses search box + retry loop: grid is paginated, so newly-created WOs
+        // on page 2+ are invisible to a plain getPageText() scan. Search narrows
+        // the grid to the single match; retry covers 5-15s backend indexing latency.
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        for (int attempt = 1; attempt <= 10; attempt++) {
+            try {
+                List<WebElement> searches = driver.findElements(SEARCH_INPUT);
+                if (!searches.isEmpty()) {
+                    WebElement search = searches.get(0);
+                    js.executeScript(
+                            "var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
+                            + "s.call(arguments[0], '');"
+                            + "arguments[0].dispatchEvent(new Event('input',{bubbles:true}));"
+                            + "s.call(arguments[0], arguments[1]);"
+                            + "arguments[0].dispatchEvent(new Event('input',{bubbles:true}));",
+                            search, name);
+                    pause(2000); // debounced search + grid refilter
+                }
+                if (getPageText().contains(name)) {
+                    logStep("findWOInGrid: '" + name + "' found on attempt " + attempt);
+                    return true;
+                }
+            } catch (Exception e) {
+                logStep("findWOInGrid attempt " + attempt + " error: " + e.getMessage());
+            }
+            logStep("findWOInGrid: '" + name + "' not yet visible (attempt " + attempt + "/10)");
+            pause(3000);
+        }
+        return false;
     }
 
     private void clearSearchInput(WebElement search) {
