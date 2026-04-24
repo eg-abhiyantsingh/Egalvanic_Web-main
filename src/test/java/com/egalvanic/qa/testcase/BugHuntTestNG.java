@@ -82,6 +82,11 @@ public class BugHuntTestNG {
         System.out.println("==============================================================");
         System.out.println();
 
+        // Initialise ExtentReports before createTest() — this class is standalone
+        // (doesn't extend BaseTest). Running in isolation via `-Dtest=BugHuntTestNG#...`
+        // otherwise NPEs on the first createTest() call. Idempotent.
+        ExtentReportManager.initReports();
+
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--start-maximized");
         options.addArguments("--remote-allow-origins=*");

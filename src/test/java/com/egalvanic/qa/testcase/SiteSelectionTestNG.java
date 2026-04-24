@@ -503,21 +503,22 @@ public class SiteSelectionTestNG {
                 AppConstants.FEATURE_SEARCH_SITES, "TC_SS_009_SearchCaseInsensitive");
         logStep("Verifying search is case-insensitive");
 
-        // Search uppercase
+        // Search uppercase — must open dropdown first. Since OPTIONS is now scoped to the
+        // open listbox (post-selector-fix), typing into a closed Autocomplete reports 0 options.
+        openFacilityDropdown();
         WebElement input = driver.findElement(FACILITY_INPUT);
         clearAndType(input, "TEST");
-        pause(1500);
-        // Wait for dropdown options to stabilize (MUI Autocomplete filters async)
         int uppercaseCount = waitForStableOptionCount();
         logStep("Results for 'TEST': " + uppercaseCount);
 
-        // Close dropdown, clear, and search lowercase — ensures clean state
+        // Close dropdown, clear, and RE-OPEN before lowercase search — scoped OPTIONS
+        // require an open listbox. Without re-opening, lowercaseCount = 0 artefact.
         closeFacilityDropdown();
         clearFacilityInput();
         pause(500);
+        openFacilityDropdown();
         input = driver.findElement(FACILITY_INPUT);
         clearAndType(input, "test");
-        pause(1500);
         int lowercaseCount = waitForStableOptionCount();
         logStep("Results for 'test': " + lowercaseCount);
 
