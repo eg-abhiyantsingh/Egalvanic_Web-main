@@ -72,6 +72,8 @@ public class CopyToCopyFromTestNG extends BaseTest {
                 "Copy From entry point not found on asset detail (checked buttons + kebab menu)");
             logStep("Copy From entry: " + entry.getText());
             ExtentReportManager.logPass("Copy From entry point present");
+        } catch (org.testng.SkipException se) {
+            throw se;
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("TC_Copy_01_error");
             Assert.fail("TC_Copy_01 crashed: " + e.getMessage());
@@ -94,6 +96,8 @@ public class CopyToCopyFromTestNG extends BaseTest {
                 "Copy To entry point not found on asset detail (checked buttons + kebab menu)");
             logStep("Copy To entry: " + entry.getText());
             ExtentReportManager.logPass("Copy To entry point present");
+        } catch (org.testng.SkipException se) {
+            throw se;
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("TC_Copy_02_error");
             Assert.fail("TC_Copy_02 crashed: " + e.getMessage());
@@ -110,8 +114,10 @@ public class CopyToCopyFromTestNG extends BaseTest {
             WebElement entry = findByText("Copy From", "Copy from");
             if (entry == null && openKebab()) entry = findByText("Copy From", "Copy from");
             if (entry == null) {
-                logWarning("Copy From not available — skipping");
-                return;
+                throw new org.testng.SkipException(
+                    "Copy From entry point absent on asset detail — feature may be role-gated, "
+                    + "relabeled, or unshipped on Web (ZP-1498 'Copy Asset Details — Frontend' "
+                    + "still To Do per Jira). TC_Copy_01 is the canonical signal for this gap.");
             }
             safeClick(entry);
             pause(3000);
@@ -131,6 +137,8 @@ public class CopyToCopyFromTestNG extends BaseTest {
             if (cancel != null) safeClick(cancel);
             pause(1500);
             ExtentReportManager.logPass("Copy From opens asset picker dialog");
+        } catch (org.testng.SkipException se) {
+            throw se;
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("TC_Copy_03_error");
             Assert.fail("TC_Copy_03 crashed: " + e.getMessage());
@@ -148,7 +156,10 @@ public class CopyToCopyFromTestNG extends BaseTest {
 
             WebElement entry = findByText("Copy From", "Copy To");
             if (entry == null && openKebab()) entry = findByText("Copy From", "Copy To");
-            if (entry == null) { logWarning("No copy entry — skipping"); return; }
+            if (entry == null) {
+                throw new org.testng.SkipException(
+                    "No Copy entry point on asset detail — see TC_Copy_01/02 for canonical signal");
+            }
             safeClick(entry);
             pause(2500);
             WebElement cancel = findByText("Cancel", "Close");
@@ -161,6 +172,8 @@ public class CopyToCopyFromTestNG extends BaseTest {
             Assert.assertEquals(afterName, originalName,
                 "Cancel on Copy flow appears to have modified the record");
             ExtentReportManager.logPass("Cancel on Copy flow preserves record");
+        } catch (org.testng.SkipException se) {
+            throw se;
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("TC_Copy_04_error");
             Assert.fail("TC_Copy_04 crashed: " + e.getMessage());
@@ -179,7 +192,10 @@ public class CopyToCopyFromTestNG extends BaseTest {
             openFirstAssetDetail();
             WebElement entry = findByText("Copy From", "Copy from");
             if (entry == null && openKebab()) entry = findByText("Copy From", "Copy from");
-            if (entry == null) { logWarning("Copy From missing — skip"); return; }
+            if (entry == null) {
+                throw new org.testng.SkipException(
+                    "Copy From entry absent — see TC_Copy_01 for canonical signal");
+            }
             safeClick(entry);
             pause(3000);
 
@@ -187,7 +203,10 @@ public class CopyToCopyFromTestNG extends BaseTest {
                 "[role='dialog'] input[type='search'], " +
                 "[role='dialog'] input[placeholder*='Search' i], " +
                 "[role='dialog'] input[role='combobox']"));
-            if (pickers.isEmpty()) { logWarning("No picker input"); return; }
+            if (pickers.isEmpty()) {
+                throw new org.testng.SkipException(
+                    "Copy From dialog opened but has no picker input — picker UI not wired up");
+            }
             WebElement picker = pickers.get(0);
             // Count options before filter
             safeClick(picker); pause(1200);
@@ -204,6 +223,8 @@ public class CopyToCopyFromTestNG extends BaseTest {
             Assert.assertTrue(afterCount < beforeCount || afterCount == 0,
                 "Picker search did not filter the list (before=" + beforeCount + " after=" + afterCount + ")");
             ExtentReportManager.logPass("Copy From picker search filters correctly");
+        } catch (org.testng.SkipException se) {
+            throw se;
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("TC_Copy_05_error");
             Assert.fail("TC_Copy_05 crashed: " + e.getMessage());
@@ -224,7 +245,10 @@ public class CopyToCopyFromTestNG extends BaseTest {
             logStep("Current asset: " + currentName);
             WebElement entry = findByText("Copy From", "Copy from");
             if (entry == null && openKebab()) entry = findByText("Copy From", "Copy from");
-            if (entry == null) { logWarning("Copy From missing — skip"); return; }
+            if (entry == null) {
+                throw new org.testng.SkipException(
+                    "Copy From entry absent — see TC_Copy_01 for canonical signal");
+            }
             safeClick(entry);
             pause(3000);
 
@@ -233,10 +257,11 @@ public class CopyToCopyFromTestNG extends BaseTest {
                 "[role='dialog'] input[placeholder*='Search' i], " +
                 "[role='dialog'] input[role='combobox']"));
             if (pickers.isEmpty() || currentName == null || currentName.isEmpty()) {
-                logWarning("Cannot probe — picker or name missing");
                 WebElement cancel = findByText("Cancel", "Close");
                 if (cancel != null) safeClick(cancel);
-                return;
+                throw new org.testng.SkipException(
+                    "Cannot probe self-exclusion — picker (" + pickers.size()
+                    + ") or current asset name ('" + currentName + "') missing");
             }
             WebElement picker = pickers.get(0);
             safeClick(picker); pause(1200);
@@ -258,6 +283,8 @@ public class CopyToCopyFromTestNG extends BaseTest {
             Assert.assertFalse(selfListed,
                 "Current asset '" + currentName + "' appears in its own Copy From picker");
             ExtentReportManager.logPass("Copy From picker excludes current (self) asset");
+        } catch (org.testng.SkipException se) {
+            throw se;
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("TC_Copy_06_error");
             Assert.fail("TC_Copy_06 crashed: " + e.getMessage());
@@ -276,7 +303,10 @@ public class CopyToCopyFromTestNG extends BaseTest {
             openFirstAssetDetail();
             WebElement entry = findByText("Copy From", "Copy To");
             if (entry == null && openKebab()) entry = findByText("Copy From", "Copy To");
-            if (entry == null) { logWarning("No Copy entry — skip"); return; }
+            if (entry == null) {
+                throw new org.testng.SkipException(
+                    "No Copy entry on asset detail — see TC_Copy_01/02 for canonical signal");
+            }
             safeClick(entry);
             pause(3000);
 
@@ -294,6 +324,8 @@ public class CopyToCopyFromTestNG extends BaseTest {
                     "Flag for product spec: should users be able to cherry-pick fields?");
             }
             ExtentReportManager.logPass("Copy dialog field selectors: " + checkboxes.size());
+        } catch (org.testng.SkipException se) {
+            throw se;
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("TC_Copy_07_error");
             Assert.fail("TC_Copy_07 crashed: " + e.getMessage());
@@ -327,7 +359,10 @@ public class CopyToCopyFromTestNG extends BaseTest {
 
             WebElement entry = findByText("Copy From", "Copy from");
             if (entry == null && openKebab()) entry = findByText("Copy From", "Copy from");
-            if (entry == null) { logWarning("No Copy From — skip"); return; }
+            if (entry == null) {
+                throw new org.testng.SkipException(
+                    "Copy From entry absent — see TC_Copy_01 for canonical signal");
+            }
             safeClick(entry);
             pause(2500);
             WebElement cancel = findByText("Cancel", "Close");
@@ -353,6 +388,8 @@ public class CopyToCopyFromTestNG extends BaseTest {
             Assert.assertEquals(after, before,
                 "Identity fields changed after Copy From cancel: before=" + before + " after=" + after);
             ExtentReportManager.logPass("Identity fields preserved after Copy From cancel");
+        } catch (org.testng.SkipException se) {
+            throw se;
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("TC_Copy_08_error");
             Assert.fail("TC_Copy_08 crashed: " + e.getMessage());
