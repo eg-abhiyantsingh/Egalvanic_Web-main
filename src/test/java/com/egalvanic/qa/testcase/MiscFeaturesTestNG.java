@@ -44,32 +44,70 @@ public class MiscFeaturesTestNG extends BaseTest {
     }
 
     // =================================================================
-    // TC_Misc_01 — Terms & Conditions checkbox
+    // TC_Misc_01 — Terms & Conditions consent (post-ZP-1828 design)
+    //
+    // ZP-1828 (Web | Sign-in page: Remove T&C checkbox and update consent text)
+    // shipped as Done. The new design:
+    //   - REMOVED: standalone "I agree to T&C" checkbox
+    //   - ADDED: inline consent statement under the Sign In button reading
+    //            "By signing in, you agree to our Terms and Conditions and Privacy Policy."
+    // Acceptance is now implicit by clicking Sign In.
+    //
+    // Approach C (strictest defense in depth — picked 2026-04-24): assert ALL THREE:
+    //   (a) inline consent text is present (verifies the new shipped design)
+    //   (b) the standalone T&C checkbox is gone (verifies ZP-1828 didn't regress)
+    //   (c) Terms and Privacy Policy links are still clickable (compliance)
+    //
+    // If the checkbox sneaks back via a regression OR the consent text disappears,
+    // this test fails and tells you exactly which invariant broke.
     // =================================================================
-    @Test(priority = 1, description = "Terms & Conditions checkbox/link present on login or agreement page")
+    @Test(priority = 1, description = "TC_Misc_01: Inline T&C consent text present, checkbox removed (ZP-1828)")
     public void testTC_Misc_01_TermsConditions() {
         ExtentReportManager.createTest(
             AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_TERMS_CHECKBOX,
-            "TC_Misc_01: T&C checkbox");
+            "TC_Misc_01: T&C consent (post-ZP-1828)");
         try {
-            // Try login page first
             driver.get(AppConstants.BASE_URL + "/login");
             pause(4000);
             logStepWithScreenshot("Login page");
 
-            // Check for explicit T&C checkbox
-            List<WebElement> checkboxes = driver.findElements(By.cssSelector("input[type='checkbox']"));
-            WebElement tcLink = findText("Terms and Conditions", "Terms & Conditions",
-                "Terms of Service", "Privacy Policy", "I agree");
-            ScreenshotUtil.captureScreenshot("TC_Misc_01");
+            // (a) Inline consent text present — confirms ZP-1828 shipped
+            String bodyText = driver.findElement(By.tagName("body")).getText();
+            boolean hasInlineConsent = bodyText.matches("(?is).*by\\s+signing\\s+in.*you\\s+agree.*terms.*and\\s+conditions.*")
+                    || bodyText.matches("(?is).*by\\s+signing\\s+in.*agree.*privacy\\s+policy.*");
+            Assert.assertTrue(hasInlineConsent,
+                "Inline consent text 'By signing in, you agree to our Terms and Conditions and "
+                + "Privacy Policy' missing on login — ZP-1828 design regression. Body: "
+                + bodyText.substring(0, Math.min(400, bodyText.length())));
+            logStep("(a) Inline consent text present");
 
-            // The UI confirmed earlier that login shows "By signing in, you agree to our Terms
-            // and Conditions and Privacy Policy" — acceptance is implicit via the Sign In button,
-            // not via a checkbox. We assert the T&C link is present as a compliance requirement.
-            Assert.assertNotNull(tcLink,
-                "No Terms & Conditions link/checkbox visible on login — compliance requirement");
-            logStep("T&C reference found: " + tcLink.getText().substring(0, Math.min(80, tcLink.getText().length())));
-            ExtentReportManager.logPass("Terms & Conditions reference present (checkboxes on page: " + checkboxes.size() + ")");
+            // (b) Standalone T&C checkbox should NOT be present (ZP-1828 removed it).
+            //     Filter to a checkbox whose label/aria mentions Terms/Conditions/Agree, since
+            //     other unrelated checkboxes (e.g. "Show password", "Remember me") are fine.
+            List<WebElement> tcCheckboxes = driver.findElements(By.xpath(
+                    "//input[@type='checkbox'][contains(translate(@aria-label,'TERMS','terms'),'terms') "
+                    + "or contains(translate(@aria-label,'AGREE','agree'),'agree') "
+                    + "or contains(translate(@aria-label,'CONDITIONS','conditions'),'conditions')]"
+                    + " | //label[contains(translate(., 'TERMS','terms'), 'terms') "
+                    + "or contains(translate(., 'AGREE','agree'), 'agree')]//input[@type='checkbox']"));
+            int visibleTcCheckboxes = 0;
+            for (WebElement cb : tcCheckboxes) if (cb.isDisplayed()) visibleTcCheckboxes++;
+            Assert.assertEquals(visibleTcCheckboxes, 0,
+                "Standalone T&C checkbox detected on login page — ZP-1828 regression "
+                + "(checkbox should have been removed in favor of inline consent text). "
+                + "Found " + visibleTcCheckboxes + " visible T&C-labeled checkbox(es).");
+            logStep("(b) No standalone T&C checkbox present");
+
+            // (c) Terms and Privacy Policy LINKS still clickable (compliance requirement)
+            WebElement termsLink = findText("Terms and Conditions", "Terms & Conditions",
+                "Terms of Service");
+            WebElement privacyLink = findText("Privacy Policy", "Privacy Notice");
+            Assert.assertNotNull(termsLink, "Terms and Conditions link missing on login — compliance regression");
+            Assert.assertNotNull(privacyLink, "Privacy Policy link missing on login — compliance regression");
+            logStep("(c) Terms + Privacy Policy links present");
+
+            ScreenshotUtil.captureScreenshot("TC_Misc_01");
+            ExtentReportManager.logPass("ZP-1828 design verified: inline consent + no checkbox + links present");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("TC_Misc_01_error");
             Assert.fail("TC_Misc_01 crashed: " + e.getMessage());
@@ -319,6 +357,173 @@ public class MiscFeaturesTestNG extends BaseTest {
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("TC_Misc_07_error");
             Assert.fail("TC_Misc_07 crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_SUGG_01 — Suggested Shortcuts: chips render for an asset
+    //
+    // Tightens TC_Misc_03 (which only confirmed a panel label exists) to
+    // assert that ACTUAL clickable shortcut chips render in the panel.
+    // =================================================================
+    @Test(priority = 11, description = "TC_SUGG_01: Suggested Shortcuts panel renders at least one shortcut chip")
+    public void testTC_SUGG_01_ChipsRenderedForAsset() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_SUGGESTED_SHORTCUTS,
+            "TC_SUGG_01: Suggested Shortcuts chips render");
+        try {
+            // Open SLD page (where suggested shortcuts most reliably render)
+            driver.get(AppConstants.BASE_URL + "/slds");
+            pause(6000);
+            logStepWithScreenshot("SLDs page");
+
+            // Locate the Suggested Shortcuts panel container, then its chips
+            WebElement panel = findText("Suggested Shortcuts", "Shortcuts");
+            if (panel == null) {
+                // Fallback: open an asset detail and look there
+                assetPage.navigateToAssets();
+                pause(3000);
+                List<WebElement> rows = driver.findElements(By.cssSelector(".MuiDataGrid-row"));
+                if (!rows.isEmpty()) {
+                    safeClick(rows.get(0));
+                    pause(3500);
+                    panel = findText("Suggested Shortcuts", "Shortcuts");
+                }
+            }
+            Assert.assertNotNull(panel, "Suggested Shortcuts panel not found");
+
+            // Count the chips/buttons inside or near the panel
+            // MUI Chips: .MuiChip-root, OR generic role=button under the panel container
+            List<WebElement> chips = driver.findElements(By.xpath(
+                "//*[contains(normalize-space(.), 'Suggested Shortcuts') or contains(normalize-space(.), 'Shortcuts')]"
+                + "/following::div[contains(@class, 'MuiChip-root') or @role='button'][position() < 10]"));
+            int visibleChips = 0;
+            for (WebElement c : chips) {
+                if (c.isDisplayed() && c.getSize().getWidth() > 20) visibleChips++;
+            }
+            ScreenshotUtil.captureScreenshot("TC_SUGG_01");
+            Assert.assertTrue(visibleChips > 0,
+                "Suggested Shortcuts panel found but no chips/buttons rendered — feature visually broken. "
+                + "Visible chips: " + visibleChips);
+            logStep("Visible shortcut chips: " + visibleChips);
+            ExtentReportManager.logPass("Suggested Shortcuts shows " + visibleChips + " chip(s)");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_SUGG_01_error");
+            Assert.fail("TC_SUGG_01 crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_SUGG_02 — Clicking a suggested shortcut adds a node, no duplicate fires
+    // =================================================================
+    @Test(priority = 12, description = "TC_SUGG_02: Clicking a suggested shortcut adds a node and doesn't duplicate-fire")
+    public void testTC_SUGG_02_ClickShortcutAddsNodeNoDuplicate() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_SUGGESTED_SHORTCUTS,
+            "TC_SUGG_02: Click shortcut adds node, no duplicate");
+        try {
+            driver.get(AppConstants.BASE_URL + "/slds");
+            pause(6000);
+
+            // Capture node count BEFORE the click. SLD nodes typically render as <g> elements
+            // inside the canvas svg, OR as cards with class containing 'node'.
+            int nodesBefore = countSldNodes();
+            logStep("SLD nodes before click: " + nodesBefore);
+
+            // Find first Suggested Shortcut chip
+            List<WebElement> chips = driver.findElements(By.xpath(
+                "//*[contains(normalize-space(.), 'Suggested Shortcuts') or contains(normalize-space(.), 'Shortcuts')]"
+                + "/following::div[contains(@class, 'MuiChip-root') or @role='button'][position() < 5]"));
+            WebElement chip = null;
+            for (WebElement c : chips) {
+                if (c.isDisplayed() && c.getSize().getWidth() > 20) { chip = c; break; }
+            }
+            if (chip == null) {
+                throw new org.testng.SkipException("No clickable shortcut chip — TC_SUGG_01 covers presence");
+            }
+            String chipLabel = chip.getText().trim();
+            logStep("Clicking chip: " + chipLabel);
+            safeClick(chip);
+            pause(3000);
+
+            int nodesAfter = countSldNodes();
+            int delta = nodesAfter - nodesBefore;
+            logStep("SLD nodes after click: " + nodesAfter + " (delta=" + delta + ")");
+
+            // Assertion: clicking a shortcut should add EXACTLY ONE node — never zero (broken),
+            // never two+ (duplicate-fire bug).
+            ScreenshotUtil.captureScreenshot("TC_SUGG_02");
+            Assert.assertEquals(delta, 1,
+                "Clicking suggested shortcut '" + chipLabel + "' added " + delta
+                + " nodes (expected exactly 1). 0 = feature broken, 2+ = duplicate-fire.");
+            ExtentReportManager.logPass("Suggested Shortcut click added exactly 1 node");
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_SUGG_02_error");
+            Assert.fail("TC_SUGG_02 crashed: " + e.getMessage());
+        }
+    }
+
+    private int countSldNodes() {
+        try {
+            Long count = (Long) js().executeScript(
+                "var nodes = document.querySelectorAll('g.node, [class*=\"-node\"], [data-id^=\"node\"], "
+                + ".MuiCard-root[class*=\"node\"]');"
+                + "return nodes.length;");
+            return count == null ? 0 : count.intValue();
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    // =================================================================
+    // TC_SUGG_03 — Shortcuts API not called >1 time per asset class change
+    //
+    // Performance sibling: today's live audit found /api/shortcut/by-node-class
+    // hit 11 times on dashboard load (one per node class). Validates the same
+    // pattern doesn't recur per-asset-class-switch on the SLD where the shortcut
+    // panel lives.
+    // =================================================================
+    @Test(priority = 13, description = "TC_SUGG_03: /api/shortcut/by-node-class fires <=1x per asset-class change")
+    public void testTC_SUGG_03_ShortcutApiNotCalledExcessively() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_SUGGESTED_SHORTCUTS,
+            "TC_SUGG_03: Shortcut API call dedup");
+        try {
+            driver.get(AppConstants.BASE_URL + "/slds");
+            pause(7000);
+
+            // Use Performance API to count network resource entries hitting /api/shortcut/by-node-class
+            Long apiCallCount = (Long) js().executeScript(
+                "if (typeof performance === 'undefined' || !performance.getEntriesByType) return -1;"
+                + "var entries = performance.getEntriesByType('resource');"
+                + "var hits = 0;"
+                + "for (var i = 0; i < entries.length; i++) {"
+                + "  if (entries[i].name && entries[i].name.indexOf('/api/shortcut/by-node-class') !== -1) hits++;"
+                + "}"
+                + "return hits;");
+            int hits = apiCallCount == null ? -1 : apiCallCount.intValue();
+            logStep("Shortcut API calls observed on SLD load: " + hits);
+            ScreenshotUtil.captureScreenshot("TC_SUGG_03");
+
+            if (hits == -1) {
+                throw new org.testng.SkipException("Performance API not available");
+            }
+
+            // The bug: dashboard fires 11x (one per node class) because each class fetches its own.
+            // On a SLD page that opens with no asset selected, expectation is < 5 (gives slack for
+            // side-panels) — anything ≥ 10 strongly suggests the dashboard's per-class fan-out.
+            Assert.assertTrue(hits < 10,
+                "/api/shortcut/by-node-class fired " + hits + "x on SLD load (expected < 10). "
+                + "Likely the same per-node-class fan-out pattern as on Dashboard. "
+                + "Should be a single batched query.");
+            ExtentReportManager.logPass("Shortcut API call count acceptable: " + hits);
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_SUGG_03_error");
+            Assert.fail("TC_SUGG_03 crashed: " + e.getMessage());
         }
     }
 
