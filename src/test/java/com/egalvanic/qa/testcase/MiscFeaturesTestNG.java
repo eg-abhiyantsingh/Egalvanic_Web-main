@@ -417,9 +417,20 @@ public class MiscFeaturesTestNG extends BaseTest {
         try {
             // Live evidence: /api/shortcut/by-node-class fires 11x on dashboard load (one per node
             // class) and 0x on /slds. So the feature populates dashboard and/or asset-create form,
-            // not the SLDs page. Try multiple candidate locations.
-            // Labels tightened: dropped "Suggested" alone — too generic, matches sidebar items.
-            // Now require the FULL feature name to avoid false-positive panel matches.
+            // not the SLDs page.
+            //
+            // Recon 2026-04-27 (admin role on acme.qa): scanned /dashboard, /assets, /sites for
+            // text matching /shortcut|quick.action|suggested|quick.add/i — ZERO hits visible.
+            // The /api/shortcut/by-node-class endpoint IS being called (TC_SUGG_03 measures it),
+            // but no UI panel surfaces the data with admin login. Possibilities:
+            //   1. Feature is role-gated to a different role (technician/PM/etc.)
+            //   2. Feature is keyed off a specific entry point (asset-create form?)
+            //   3. Label has changed entirely from "Suggested Shortcuts"
+            //   4. Feature is shipped but mounted only on specific routes I haven't tested
+            //
+            // Labels intentionally narrow — only match the FULL feature names to avoid false
+            // positives. If feature is genuinely absent on these paths, test SkipExceptions
+            // cleanly rather than false-failing.
             String[] panelLabels = {"Suggested Shortcuts", "Quick Actions", "Suggested Assets",
                                     "Add Shortcut", "Quick Add"};
             String[] paths = {"/dashboard", "/sites", "/assets"};
