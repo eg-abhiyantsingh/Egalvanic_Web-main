@@ -1,24 +1,25 @@
 name: Parallel Suite 2 — Curated Bug Verification + AI + Smoke + Load + BCES-IQ
 
 # ============================================================
-# PARALLEL SUITE 2 — 8 Groups Running Simultaneously
+# PARALLEL SUITE 2 — 9 Groups Running Simultaneously
 # ============================================================
 #
 # Complementary suite to parallel-suite.yml. Runs the curated 8-bug
 # regression gate (client-facing), lighter AI-powered and exploratory
 # test modules, plus a cross-tenant smoke for acme.bces-iq.com.
 #
-# Groups (8 parallel jobs):
-#   Group  1: Curated Bug Verification    (  8 TCs)  ~15 min  [CLIENT]
-#   Group  2: Smoke Suites                ( 37 TCs)  ~10 min
-#   Group  3: Load + API + Critical Path  ( 62 TCs)  ~15 min
-#   Group  4: AI Form Creation            ( 56 TCs)  ~20 min
-#   Group  5: Monkey Exploratory          (  4 TCs)  ~10 min
-#   Group  6: Visual Regression           (  7 TCs)  ~10 min
-#   Group  7: AI Page Analyzer            (  3 TCs)  ~10 min
-#   Group  8: BCES-IQ Tenant Smoke        (  3 TCs)  ~5 min   [NEW TENANT]
+# Groups (9 parallel jobs):
+#   Group  1: Curated Bug Verification     (  8 TCs)  ~15 min  [CLIENT]
+#   Group  2: Smoke Suites                 ( 37 TCs)  ~10 min
+#   Group  3: Load + API + Critical Path   ( 62 TCs)  ~15 min
+#   Group  4: AI Form Creation             ( 56 TCs)  ~20 min
+#   Group  5: Monkey Exploratory           (  4 TCs)  ~10 min
+#   Group  6: Visual Regression            (  7 TCs)  ~10 min
+#   Group  7: AI Page Analyzer             (  3 TCs)  ~10 min
+#   Group  8: BCES-IQ Tenant Smoke         (  3 TCs)  ~5 min   [NEW TENANT]
+#   Group  9: Documentation-Inspired Tests ( 17 TCs)  ~10 min  [NEW 2026-04-27]
 #
-# Total: ~180 TCs across 8 groups.
+# Total: ~197 TCs across 9 groups.
 #
 # The BCES-IQ group runs the SAME test framework against
 # https://acme.bces-iq.com using a different user (shubham.goswami+acme@...)
@@ -54,7 +55,7 @@ jobs:
 
     strategy:
       fail-fast: false
-      max-parallel: 8
+      max-parallel: 9
 
       matrix:
         include:
@@ -105,6 +106,19 @@ jobs:
             xml: suite-ai-analyzer.xml
             tests: 3
             stagger: 60
+
+          # ──────────────────────────────────────────────
+          # NEW (2026-04-27): Documentation-Inspired Tests
+          # Derived from docs/ppt-document/ — 3 classes covering:
+          #   - HTTP status code contract (HTTP_StatusCode.png)
+          #   - POST/PUT/PATCH semantics (Difference...pptx)
+          #   - Console log quality (QA Must Review...pdf)
+          # ──────────────────────────────────────────────
+          - group: doc-inspired
+            name: "Documentation-Inspired Tests"
+            xml: suite-doc-inspired.xml
+            tests: 17
+            stagger: 65
 
           # ──────────────────────────────────────────────
           # Cross-tenant: BCES-IQ tenant smoke
@@ -376,7 +390,7 @@ jobs:
           echo ""
           echo "────────────────────────────────────────────"
           echo "  TOTAL:  Passed=$TOTAL_PASSED  Failed=$TOTAL_FAILED  Skipped=$TOTAL_SKIPPED"
-          echo "  Groups: $GROUP_COUNT / 8 completed"
+          echo "  Groups: $GROUP_COUNT / 9 completed"
           echo "────────────────────────────────────────────"
 
           {
@@ -476,7 +490,7 @@ jobs:
             echo "| Passed | ${TOTAL_PASSED} |"
             echo "| Failed | ${TOTAL_FAILED} |"
             echo "| Skipped | ${TOTAL_SKIPPED} |"
-            echo "| Groups | ${GROUP_COUNT} / 8 |"
+            echo "| Groups | ${GROUP_COUNT} / 9 |"
             echo ""
             echo "### Individual Group Results"
             echo ""

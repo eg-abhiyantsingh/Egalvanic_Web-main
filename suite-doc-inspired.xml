@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  Documentation-Inspired Test Suite — derived from docs/ppt-document/.
+
+  Three test classes, ~17 @Test methods total, anchored on:
+    - HTTP_StatusCode.png         → HttpStatusCodeContractTestNG (8 tests)
+    - Difference between Post,
+      Put and Patch.pptx          → HttpMethodSemanticsTestNG (4 tests)
+    - QA Must Review And
+      Analyze The Logs.pdf        → ConsoleLogQualityTestNG (5 tests)
+
+  The other 5 documents in docs/ppt-document/ inform existing classes
+  rather than spawning new test classes:
+    - SQL.pdf + Database Testing.pdf  → already covered by API integrity
+                                        in CriticalPathTestNG (CP_DI_*) — counts
+                                        match across endpoints.
+    - Mobile App Testing Concepts.jpg → web responsive tests (out of scope
+                                        for now; would need mobile/tablet
+                                        viewport coverage in a separate suite).
+    - API Testing Tools Comparison.pdf → informational — Selenium-XHR-based
+                                         probe is our chosen tool.
+    - Defects Category Definition.pptx → defect-classification taxonomy used
+                                         by SmartBugDetector when classifying
+                                         failures (Functional / Compat /
+                                         Usability / Performance / Regression).
+-->
+<suite name="Documentation-Inspired Test Suite" verbose="1">
+
+  <test name="HTTP-Status-Code-Contract">
+    <classes>
+      <class name="com.egalvanic.qa.testcase.HttpStatusCodeContractTestNG"/>
+    </classes>
+  </test>
+
+  <test name="HTTP-Method-Semantics">
+    <classes>
+      <class name="com.egalvanic.qa.testcase.HttpMethodSemanticsTestNG"/>
+    </classes>
+  </test>
+
+  <test name="Console-Log-Quality">
+    <classes>
+      <class name="com.egalvanic.qa.testcase.ConsoleLogQualityTestNG"/>
+    </classes>
+  </test>
+
+</suite>
