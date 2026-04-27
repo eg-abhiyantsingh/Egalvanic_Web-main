@@ -287,7 +287,17 @@ public class BaseTest {
             if (driver != null && result.getThrowable() != null) {
                 try {
                     String testName = result.getTestClass().getName() + "." + result.getMethod().getMethodName();
-                    SmartBugDetector.analyze(driver, testName, result.getThrowable(), duration);
+                    SmartBugDetector.BugReport report =
+                        SmartBugDetector.analyze(driver, testName, result.getThrowable(), duration);
+
+                    // Use Case 1 from user spec: enrich with Claude root-cause + fix
+                    // when ClaudeClient.isConfigured() and rule-based confidence is low.
+                    com.egalvanic.qa.utils.ai.AIBugAnalyzer.analyze(report);
+
+                    // Use Case 5 from user spec: write a copy-paste-ready bug file
+                    // under ready-bug/. NEVER uploaded to Jira automatically.
+                    String shotPath = "test-output/screenshots/" + screenshotName + ".png";
+                    com.egalvanic.qa.utils.ai.ReadyBugGenerator.generate(report, shotPath);
                 } catch (Exception e) {
                     System.out.println("[BaseTest] SmartBugDetector analysis failed: " + e.getMessage());
                 }
