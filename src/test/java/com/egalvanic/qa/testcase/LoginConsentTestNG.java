@@ -3,6 +3,9 @@ package com.egalvanic.qa.testcase;
 import com.egalvanic.qa.constants.AppConstants;
 import com.egalvanic.qa.utils.ExtentReportManager;
 import com.egalvanic.qa.utils.ScreenshotUtil;
+import com.egalvanic.qa.utils.ai.FlakinessPrevention;
+import com.egalvanic.qa.utils.ai.SelfHealingDriver;
+import com.egalvanic.qa.utils.ai.SmartBugDetector;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -13,8 +16,11 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 
 import org.testng.Assert;
+import org.testng.ITestResult;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.time.Duration;
@@ -58,6 +64,7 @@ public class LoginConsentTestNG {
 
     private WebDriver driver;
     private JavascriptExecutor js;
+    private long testStartTime;
 
     // Locators
     private static final By EMAIL_INPUT = By.id("email");
@@ -90,11 +97,20 @@ public class LoginConsentTestNG {
         }
         options.setPageLoadStrategy(PageLoadStrategy.EAGER);
 
-        driver = new ChromeDriver(options);
+        // Wrap with SelfHealingDriver — auto-retries findElement, falls back to alternative
+        // locators on failure, recovers from StaleElementReferenceException. Same wrap that
+        // BaseTest applies to its driver — keeps standalone classes equally AI-enabled.
+        driver = SelfHealingDriver.wrap(new ChromeDriver(options));
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(AppConstants.IMPLICIT_WAIT));
         driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
         js = (JavascriptExecutor) driver;
         ScreenshotUtil.setDriver(driver);
+
+        // Install FlakinessPrevention hooks — network-idle detection + console-error capture.
+        // Same hooks BaseTest installs. These capture browser console errors which feed
+        // SmartBugDetector on test failure for more diagnostic signal in @AfterMethod.
+        FlakinessPrevention.installNetworkInterceptor(driver);
+        FlakinessPrevention.installConsoleErrorCapture(driver);
 
         // Navigate to login page (we're never authenticated, so it actually renders)
         driver.get(AppConstants.BASE_URL + "/login");
@@ -102,8 +118,38 @@ public class LoginConsentTestNG {
         js.executeScript("document.body.style.zoom='80%';");
     }
 
+    @BeforeMethod
+    public void testSetup() {
+        testStartTime = System.currentTimeMillis();
+    }
+
+    @AfterMethod
+    public void testTeardown(ITestResult result) {
+        long duration = System.currentTimeMillis() - testStartTime;
+        // Run SmartBugDetector ONLY on failure — auto-classifies failure as
+        // {real bug | test-side flake | env issue} with confidence + evidence.
+        // Adds the bug to the rolling JSON report read by ExtentReports.
+        if (result.getStatus() == ITestResult.FAILURE && result.getThrowable() != null) {
+            try {
+                SmartBugDetector.analyze(driver, result.getName(), result.getThrowable(), duration);
+            } catch (Exception e) {
+                System.out.println("[LoginConsent] SmartBugDetector.analyze failed: " + e.getMessage());
+            }
+        }
+    }
+
     @AfterClass
     public void classTeardown() {
+        // Flush AI-driven bug-detection report + flakiness stats. Mirrors BaseTest's flow.
+        try {
+            SmartBugDetector.writeReport();
+            String summary = SmartBugDetector.getSummary();
+            if (summary != null && !summary.isBlank()) {
+                System.out.println("[SmartBugDetector] " + summary);
+            }
+            System.out.println(FlakinessPrevention.getStatsSummary());
+        } catch (Exception ignored) {}
+
         if (driver != null) {
             try { driver.quit(); } catch (Exception ignored) {}
         }
