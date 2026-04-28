@@ -47,31 +47,103 @@ public class CopyToCopyFromTestNG extends BaseTest {
         pause(3500);
     }
 
-    private boolean openKebab() {
-        List<WebElement> kebabs = driver.findElements(By.cssSelector(
-            "button[aria-label*='more' i], [data-testid='MoreVertIcon']"));
-        for (WebElement k : kebabs) {
-            if (k.isDisplayed()) { safeClick(k); pause(1200); return true; }
+    /**
+     * Open the Edit Asset drawer.
+     *
+     * Verified live 2026-04-28: the established pattern in this project is
+     * <code>AssetPage.clickKebabMenuItem("Edit Asset")</code>. The asset detail
+     * page has a PAGE-LEVEL kebab; that menu has "Edit Asset" — clicking it
+     * opens the Edit drawer. There's no top-level "Edit" button.
+     */
+    private boolean openEditDrawer() {
+        try {
+            assetPage.clickKebabMenuItem("Edit Asset");
+            pause(2500);
+            String body = driver.findElement(By.tagName("body")).getText();
+            return body.contains("Edit Asset") || body.contains("BASIC INFO");
+        } catch (Exception e) {
+            System.out.println("[CopyTest] openEditDrawer failed: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Open the "Copy Details" menu in the Edit Asset drawer header.
+     *
+     * Live-verified 2026-04-28: the trigger has aria-label="Copy Details"
+     * (semantic, not generic "more"). Its SVG path is MoreVert (three dots)
+     * but data-testid is empty, so aria-label is the reliable selector.
+     * Drawer header sits at y≈15; icons are Copy Details (x=1240),
+     * Refresh (x=1278), Close (x=1316).
+     */
+    private boolean openDrawerKebab() {
+        // Strategy 1 — exact aria-label (verified live)
+        List<WebElement> direct = driver.findElements(
+            By.cssSelector("button[aria-label='Copy Details']"));
+        for (WebElement b : direct) {
+            if (!b.isDisplayed()) continue;
+            try {
+                safeClick(b);
+                pause(1500);
+                long visible = driver.findElements(
+                    By.cssSelector("[role='menuitem'], .MuiMenuItem-root"))
+                    .stream().filter(WebElement::isDisplayed).count();
+                if (visible > 0) return true;
+            } catch (Exception ignore) {}
+        }
+
+        // Strategy 2 — fallback: any rightmost MoreVert-style button at top of viewport
+        List<WebElement> candidates = driver.findElements(By.xpath(
+            "//button[.//*[name()='svg'][contains(@data-testid, 'MoreVert') "
+            + "or contains(@data-testid, 'MoreHoriz') or contains(@data-testid, 'Menu')]] "
+            + "| //button[contains(@aria-label, 'Copy') "
+            + "or contains(@aria-label, 'More') or contains(@aria-label, 'menu')]"));
+        candidates.removeIf(b -> !b.isDisplayed());
+        candidates.sort((a, b) -> Integer.compare(
+            b.getRect().getX(), a.getRect().getX()));
+
+        for (WebElement k : candidates) {
+            org.openqa.selenium.Rectangle r = k.getRect();
+            if (r.getX() < 800 || r.getY() > 200) continue;
+            try {
+                safeClick(k);
+                pause(1500);
+                long visible = driver.findElements(
+                    By.cssSelector("[role='menuitem'], .MuiMenuItem-root"))
+                    .stream().filter(WebElement::isDisplayed).count();
+                if (visible > 0) return true;
+            } catch (Exception ignore) {}
         }
         return false;
     }
 
-    @Test(priority = 1, description = "Copy From entry point on asset detail")
+    /**
+     * Open Edit drawer + kebab + return the matching menu item (or null).
+     * Centralises the navigation so all 8 tests don't repeat it.
+     */
+    private WebElement findCopyMenuItem(String... labels) {
+        if (!openEditDrawer()) return null;
+        if (!openDrawerKebab()) return null;
+        return findByText(labels);
+    }
+
+    @Test(priority = 1, description = "Copy Details From entry in Edit Asset drawer kebab")
     public void testTC_Copy_01_CopyFromEntry() {
         ExtentReportManager.createTest(
             AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_COPY_TO_FROM,
-            "TC_Copy_01: Copy From entry");
+            "TC_Copy_01: Copy Details From entry");
         try {
             openFirstAssetDetail();
-            WebElement entry = findByText("Copy From", "Copy from");
-            if (entry == null && openKebab()) {
-                entry = findByText("Copy From", "Copy from");
-            }
+            // Verified live 2026-04-28: feature lives in Edit Asset drawer's
+            // 3-dot kebab menu, NOT on the asset detail page itself.
+            // Menu labels are "Copy Details From..." and "Copy Details To...".
+            WebElement entry = findCopyMenuItem("Copy Details From", "Copy details from");
             ScreenshotUtil.captureScreenshot("TC_Copy_01");
             Assert.assertNotNull(entry,
-                "Copy From entry point not found on asset detail (checked buttons + kebab menu)");
-            logStep("Copy From entry: " + entry.getText());
-            ExtentReportManager.logPass("Copy From entry point present");
+                "Copy Details From entry not found in Edit Asset drawer kebab. "
+                + "Expected location: Asset row → Edit → kebab → 'Copy Details From...'");
+            logStep("Copy Details From entry: " + entry.getText());
+            ExtentReportManager.logPass("Copy Details From entry point present");
         } catch (org.testng.SkipException se) {
             throw se;
         } catch (Exception e) {
@@ -80,22 +152,20 @@ public class CopyToCopyFromTestNG extends BaseTest {
         }
     }
 
-    @Test(priority = 2, description = "Copy To entry point on asset detail")
+    @Test(priority = 2, description = "Copy Details To entry in Edit Asset drawer kebab")
     public void testTC_Copy_02_CopyToEntry() {
         ExtentReportManager.createTest(
             AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_COPY_TO_FROM,
-            "TC_Copy_02: Copy To entry");
+            "TC_Copy_02: Copy Details To entry");
         try {
             openFirstAssetDetail();
-            WebElement entry = findByText("Copy To", "Copy to");
-            if (entry == null && openKebab()) {
-                entry = findByText("Copy To", "Copy to");
-            }
+            WebElement entry = findCopyMenuItem("Copy Details To", "Copy details to");
             ScreenshotUtil.captureScreenshot("TC_Copy_02");
             Assert.assertNotNull(entry,
-                "Copy To entry point not found on asset detail (checked buttons + kebab menu)");
-            logStep("Copy To entry: " + entry.getText());
-            ExtentReportManager.logPass("Copy To entry point present");
+                "Copy Details To entry not found in Edit Asset drawer kebab. "
+                + "Expected location: Asset row → Edit → kebab → 'Copy Details To...'");
+            logStep("Copy Details To entry: " + entry.getText());
+            ExtentReportManager.logPass("Copy Details To entry point present");
         } catch (org.testng.SkipException se) {
             throw se;
         } catch (Exception e) {
@@ -111,13 +181,10 @@ public class CopyToCopyFromTestNG extends BaseTest {
             "TC_Copy_03: Copy From picker");
         try {
             openFirstAssetDetail();
-            WebElement entry = findByText("Copy From", "Copy from");
-            if (entry == null && openKebab()) entry = findByText("Copy From", "Copy from");
+            WebElement entry = findCopyMenuItem("Copy Details From", "Copy details from");
             if (entry == null) {
                 throw new org.testng.SkipException(
-                    "Copy From entry point absent on asset detail — feature may be role-gated, "
-                    + "relabeled, or unshipped on Web (ZP-1498 'Copy Asset Details — Frontend' "
-                    + "still To Do per Jira). TC_Copy_01 is the canonical signal for this gap.");
+                    "Copy Details From not in Edit Asset drawer kebab on this run — check that the asset is editable for the test user role. TC_Copy_01 is the canonical signal.");
             }
             safeClick(entry);
             pause(3000);
@@ -154,11 +221,10 @@ public class CopyToCopyFromTestNG extends BaseTest {
             openFirstAssetDetail();
             String originalName = assetPage.getDetailPageAssetName();
 
-            WebElement entry = findByText("Copy From", "Copy To");
-            if (entry == null && openKebab()) entry = findByText("Copy From", "Copy To");
+            WebElement entry = findCopyMenuItem("Copy Details From", "Copy Details To", "Copy details from", "Copy details to");
             if (entry == null) {
                 throw new org.testng.SkipException(
-                    "No Copy entry point on asset detail — see TC_Copy_01/02 for canonical signal");
+                    "No Copy Details menu items in Edit drawer kebab — see TC_Copy_01/02");
             }
             safeClick(entry);
             pause(2500);
@@ -190,11 +256,10 @@ public class CopyToCopyFromTestNG extends BaseTest {
             "TC_Copy_05: Picker search");
         try {
             openFirstAssetDetail();
-            WebElement entry = findByText("Copy From", "Copy from");
-            if (entry == null && openKebab()) entry = findByText("Copy From", "Copy from");
+            WebElement entry = findCopyMenuItem("Copy Details From", "Copy details from");
             if (entry == null) {
                 throw new org.testng.SkipException(
-                    "Copy From entry absent — see TC_Copy_01 for canonical signal");
+                    "Copy Details From absent in Edit drawer kebab — see TC_Copy_01");
             }
             safeClick(entry);
             pause(3000);
@@ -243,11 +308,10 @@ public class CopyToCopyFromTestNG extends BaseTest {
             openFirstAssetDetail();
             String currentName = assetPage.getDetailPageAssetName();
             logStep("Current asset: " + currentName);
-            WebElement entry = findByText("Copy From", "Copy from");
-            if (entry == null && openKebab()) entry = findByText("Copy From", "Copy from");
+            WebElement entry = findCopyMenuItem("Copy Details From", "Copy details from");
             if (entry == null) {
                 throw new org.testng.SkipException(
-                    "Copy From entry absent — see TC_Copy_01 for canonical signal");
+                    "Copy Details From absent in Edit drawer kebab — see TC_Copy_01");
             }
             safeClick(entry);
             pause(3000);
@@ -301,11 +365,10 @@ public class CopyToCopyFromTestNG extends BaseTest {
             "TC_Copy_07: Field selector");
         try {
             openFirstAssetDetail();
-            WebElement entry = findByText("Copy From", "Copy To");
-            if (entry == null && openKebab()) entry = findByText("Copy From", "Copy To");
+            WebElement entry = findCopyMenuItem("Copy Details From", "Copy Details To", "Copy details from", "Copy details to");
             if (entry == null) {
                 throw new org.testng.SkipException(
-                    "No Copy entry on asset detail — see TC_Copy_01/02 for canonical signal");
+                    "No Copy Details menu items in Edit drawer kebab — see TC_Copy_01/02");
             }
             safeClick(entry);
             pause(3000);
@@ -357,11 +420,10 @@ public class CopyToCopyFromTestNG extends BaseTest {
                 "return result;");
             logStep("Identity before Copy: " + identityBefore);
 
-            WebElement entry = findByText("Copy From", "Copy from");
-            if (entry == null && openKebab()) entry = findByText("Copy From", "Copy from");
+            WebElement entry = findCopyMenuItem("Copy Details From", "Copy details from");
             if (entry == null) {
                 throw new org.testng.SkipException(
-                    "Copy From entry absent — see TC_Copy_01 for canonical signal");
+                    "Copy Details From absent in Edit drawer kebab — see TC_Copy_01");
             }
             safeClick(entry);
             pause(2500);
