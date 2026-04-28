@@ -227,6 +227,334 @@ public class MiscFeaturesTestNG extends BaseTest {
     }
 
     // =================================================================
+    // TC_Misc_02b — COM Calculator dialog structure (Maintenance State input)
+    // =================================================================
+    /**
+     * The static COM card that TC_Misc_02 verifies is just the OUTPUT of the
+     * COM Calculator dialog. The actual maintenance-state input lives behind
+     * the "Calculator" button on the asset detail. Live-verified 2026-04-28
+     * via user screenshot:
+     *
+     *   Dialog title: "COM Calculator"
+     *   Section heading: "Maintenance State"
+     *   Subtitle: "Check all statements that apply. If none apply, the
+     *              equipment is rated Level 1 (like-new condition...)"
+     *   "Derived maintenance level: Level X" — calculated dynamically
+     *   Categorical groups: NONSERVICEABLE / LEVEL 3 — POOR / (more below fold)
+     *   Buttons: Reset / Cancel / Apply Rating (N)
+     *
+     * This test asserts the dialog opens and exposes the structural elements.
+     * TC_Misc_02c verifies interactivity (checking a box updates the derived level).
+     */
+    @Test(priority = 21, description = "COM Calculator dialog has Maintenance State checkboxes + derived level")
+    public void testTC_Misc_02b_COMCalculatorStructure() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_MAINTENANCE_STATE,
+            "TC_Misc_02b: COM Calculator structure");
+        try {
+            assetPage.navigateToAssets();
+            pause(3000);
+            List<WebElement> rows = driver.findElements(By.cssSelector(".MuiDataGrid-row"));
+            Assert.assertFalse(rows.isEmpty(), "No assets in grid");
+            safeClick(rows.get(0));
+            pause(3500);
+
+            // Live-verified 2026-04-28: Calculator button is inside the Edit Asset
+            // drawer (next to the COM rating field), NOT on the bare asset detail page.
+            assetPage.clickKebabMenuItem("Edit Asset");
+            pause(2500);
+            logStepWithScreenshot("Edit Asset drawer opened");
+
+            // Find the Calculator button. May need to scroll the drawer to surface it.
+            WebElement calcBtn = findCalculatorButton();
+            Assert.assertNotNull(calcBtn,
+                "Calculator button not found in Edit Asset drawer (after scroll attempts)");
+            safeClick(calcBtn);
+            pause(2500);
+            logStepWithScreenshot("COM Calculator opened");
+
+            // Verify the dialog opened with the expected title
+            WebElement comCalcTitle = findText("COM Calculator");
+            Assert.assertNotNull(comCalcTitle, "COM Calculator dialog title not found after click");
+
+            // Live-verified: dialog opens at "Asset Criticality" section. Maintenance
+            // State is one of 3 factors and requires scrolling. The dialog header
+            // text says "highest value among the three factors" — Asset Criticality
+            // is one, Maintenance State is another.
+            scrollComCalculatorToMaintenanceState();
+            // findText filters elements with text > 200 chars (drops section containers).
+            // Use JS to find the heading whose text is EXACTLY "Maintenance State".
+            Boolean hasMaintHeading = (Boolean) js().executeScript(
+                "var dlgs = document.querySelectorAll('[role=\"dialog\"]');"
+                + "for (var d of dlgs) {"
+                + "  if (!d.offsetWidth) continue;"
+                + "  var headings = Array.from(d.querySelectorAll('*')).filter(function(el) {"
+                + "    return (el.textContent || '').trim() === 'Maintenance State'"
+                + "      && el.children.length === 0;"
+                + "  });"
+                + "  if (headings.length) return true;"
+                + "}"
+                + "return false;");
+            Assert.assertTrue(Boolean.TRUE.equals(hasMaintHeading),
+                "Maintenance State heading missing in COM Calculator (after scroll)");
+
+            // "Derived maintenance level: Level X"
+            String derivedLevel = (String) js().executeScript(
+                "var dlgs = document.querySelectorAll('[role=\"dialog\"]');"
+                + "for (var d of dlgs) {"
+                + "  if (!d.offsetWidth) continue;"
+                + "  var t = d.textContent || '';"
+                + "  var m = t.match(/Derived maintenance level\\s*:?\\s*(Level\\s*[0-9]+|Nonserviceable)/i);"
+                + "  if (m) return m[1];"
+                + "}"
+                + "return null;");
+            logStep("Derived maintenance level: " + derivedLevel);
+            Assert.assertNotNull(derivedLevel,
+                "'Derived maintenance level' text not found in COM Calculator dialog — calculation engine may not be wired");
+
+            // Verify checkbox count + section labels (NONSERVICEABLE + at least one LEVEL group)
+            Object structure = js().executeScript(
+                "var dlgs = document.querySelectorAll('[role=\"dialog\"]');"
+                + "for (var d of dlgs) {"
+                + "  if (!d.offsetWidth) continue;"
+                + "  var t = d.textContent || '';"
+                + "  if (!t.includes('Maintenance State')) continue;"
+                + "  return {"
+                + "    checkboxes: d.querySelectorAll('input[type=\"checkbox\"]').length,"
+                + "    nonserviceable: t.toUpperCase().includes('NONSERVICEABLE'),"
+                + "    hasLevel3: t.toUpperCase().includes('LEVEL 3'),"
+                + "    hasApplyRating: Array.from(d.querySelectorAll('button')).some(function(b) { return (b.textContent || '').includes('Apply Rating'); }),"
+                + "    hasReset: Array.from(d.querySelectorAll('button')).some(function(b) { return (b.textContent || '').trim() === 'Reset'; }),"
+                + "    hasCancel: Array.from(d.querySelectorAll('button')).some(function(b) { return (b.textContent || '').trim() === 'Cancel'; })"
+                + "  };"
+                + "}"
+                + "return null;");
+            logStep("COM Calculator structure: " + structure);
+            ScreenshotUtil.captureScreenshot("TC_Misc_02b");
+            Assert.assertNotNull(structure, "COM Calculator dialog structure could not be inspected");
+
+            @SuppressWarnings("unchecked")
+            java.util.Map<String, Object> s = (java.util.Map<String, Object>) structure;
+            int checkboxCount = ((Number) s.get("checkboxes")).intValue();
+            Assert.assertTrue(checkboxCount >= 5,
+                "Expected ≥5 maintenance-state checkboxes (multiple level groups). Found " + checkboxCount);
+            Assert.assertTrue(Boolean.TRUE.equals(s.get("nonserviceable")),
+                "NONSERVICEABLE category heading missing");
+            Assert.assertTrue(Boolean.TRUE.equals(s.get("hasLevel3")),
+                "LEVEL 3 category heading missing");
+            Assert.assertTrue(Boolean.TRUE.equals(s.get("hasApplyRating")),
+                "Apply Rating button missing — cannot commit calculator output");
+            Assert.assertTrue(Boolean.TRUE.equals(s.get("hasReset")),
+                "Reset button missing — cannot clear checkboxes");
+
+            // Cleanup: cancel without applying so we don't mutate the asset's COM rating
+            WebElement cancel = findText("Cancel");
+            if (cancel != null) safeClick(cancel);
+            pause(1500);
+
+            ExtentReportManager.logPass("COM Calculator dialog structure verified — "
+                + checkboxCount + " checkboxes, derived level: " + derivedLevel);
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_Misc_02b_error");
+            Assert.fail("TC_Misc_02b crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_Misc_02c — COM Calculator interactivity (checkbox changes derived level)
+    // =================================================================
+    /**
+     * Falsifiable proof that the COM Calculator's calculation engine actually
+     * runs: read the derived level BEFORE, check a NONSERVICEABLE box, read
+     * the derived level AFTER, assert it changed. Reset + Cancel to avoid
+     * mutating the asset's persisted rating.
+     *
+     * If the level doesn't change after checking NONSERVICEABLE, either the
+     * onChange handler is broken OR the calculation isn't wired to the inputs.
+     * Both are real product bugs — the test fires immediately.
+     */
+    @Test(priority = 22, description = "COM Calculator: checking a maintenance-state box updates the derived level")
+    public void testTC_Misc_02c_COMCalculatorInteractivity() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_MAINTENANCE_STATE,
+            "TC_Misc_02c: Calculator interactivity");
+        try {
+            assetPage.navigateToAssets();
+            pause(3000);
+            List<WebElement> rows = driver.findElements(By.cssSelector(".MuiDataGrid-row"));
+            Assert.assertFalse(rows.isEmpty(), "No assets in grid");
+            safeClick(rows.get(0));
+            pause(3500);
+
+            assetPage.clickKebabMenuItem("Edit Asset");
+            pause(2500);
+            WebElement calcBtn = findCalculatorButton();
+            Assert.assertNotNull(calcBtn, "Calculator button missing in Edit Asset drawer");
+            safeClick(calcBtn);
+            pause(2500);
+            scrollComCalculatorToMaintenanceState();
+
+            // BEFORE: capture derived level
+            String levelBefore = readDerivedLevel();
+            logStep("Derived level BEFORE: " + levelBefore);
+            Assert.assertNotNull(levelBefore, "Could not read initial derived level");
+
+            // Toggle the FIRST NONSERVICEABLE checkbox using React's native setter
+            // protocol. MUI's <Radio>/<Checkbox> hides the real <input> (opacity:0)
+            // and Selenium's click on the visible label often gets eaten by ripple
+            // wrappers. The reliable path: set checked=true via the prototype setter
+            // and dispatch a synthetic change event React's onChange listens to.
+            Boolean toggled = (Boolean) js().executeScript(
+                "var dlgs = document.querySelectorAll('[role=\"dialog\"]');"
+                + "for (var d of dlgs) {"
+                + "  if (!d.offsetWidth) continue;"
+                + "  var headings = Array.from(d.querySelectorAll('*')).filter(function(el) {"
+                + "    return (el.textContent || '').trim().toUpperCase() === 'NONSERVICEABLE'"
+                + "      && el.children.length === 0;"
+                + "  });"
+                + "  if (!headings.length) continue;"
+                + "  var heading = headings[0];"
+                + "  var allCbs = Array.from(d.querySelectorAll('input[type=\"checkbox\"]'));"
+                + "  for (var cb of allCbs) {"
+                + "    if (!(heading.compareDocumentPosition(cb) & Node.DOCUMENT_POSITION_FOLLOWING)) continue;"
+                // React-controlled-input pattern: bypass React's setState protection
+                + "    var setter = Object.getOwnPropertyDescriptor("
+                + "      window.HTMLInputElement.prototype, 'checked').set;"
+                + "    setter.call(cb, true);"
+                + "    cb.dispatchEvent(new Event('change', { bubbles: true }));"
+                + "    cb.dispatchEvent(new Event('input', { bubbles: true }));"
+                // Also click for ripple/blur effects
+                + "    cb.click();"
+                + "    return true;"
+                + "  }"
+                + "}"
+                + "return false;");
+            Assert.assertTrue(Boolean.TRUE.equals(toggled),
+                "Could not toggle a NONSERVICEABLE checkbox in COM Calculator");
+            pause(2000);
+            ScreenshotUtil.captureScreenshot("TC_Misc_02c_after_check");
+
+            // AFTER: capture new derived level
+            String levelAfter = readDerivedLevel();
+            logStep("Derived level AFTER checking NONSERVICEABLE: " + levelAfter);
+            Assert.assertNotNull(levelAfter, "Could not read post-click derived level");
+
+            // Falsifiable: level should have changed. Checking a NONSERVICEABLE box
+            // should escalate the equipment to Nonserviceable status (or at least
+            // away from whatever it was before).
+            Assert.assertNotEquals(levelAfter, levelBefore,
+                "Derived maintenance level did NOT change after checking a NONSERVICEABLE "
+                + "statement. Calculation engine may be disconnected from inputs. "
+                + "(before='" + levelBefore + "', after='" + levelAfter + "')");
+
+            // Reset to clear our changes, then Cancel to avoid persisting
+            WebElement reset = findText("Reset");
+            if (reset != null) { safeClick(reset); pause(1500); }
+            WebElement cancel = findText("Cancel");
+            if (cancel != null) { safeClick(cancel); pause(1500); }
+
+            ExtentReportManager.logPass("COM Calculator engine works: '" + levelBefore
+                + "' → '" + levelAfter + "' on NONSERVICEABLE check (rolled back via Reset+Cancel)");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_Misc_02c_error");
+            Assert.fail("TC_Misc_02c crashed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Find the Calculator button inside the Edit Asset drawer. Per user
+     * screenshot: a button labeled "Calculator" near the Condition of
+     * Maintenance section with the 1/2/3 manual rating buttons.
+     *
+     * Prioritises the actual &lt;button&gt; element over any sibling span/div
+     * that also contains the word "Calculator" — clicking the wrong target
+     * (a span) silently no-ops and the dialog never opens.
+     */
+    private WebElement findCalculatorButton() {
+        // Prefer real <button> elements on the right side of the viewport (drawer area)
+        Object btn = js().executeScript(
+            "var btns = Array.from(document.querySelectorAll('button'));"
+            + "for (var b of btns) {"
+            + "  var txt = (b.textContent || '').trim();"
+            + "  if (txt.toLowerCase() !== 'calculator') continue;" // exact text only
+            + "  var r = b.getBoundingClientRect();"
+            + "  if (r.width === 0 || r.x < 600) continue;"
+            + "  return b;"
+            + "}"
+            // Loose match if exact didn't hit
+            + "for (var b of btns) {"
+            + "  if (!(b.textContent || '').toLowerCase().includes('calculator')) continue;"
+            + "  var r = b.getBoundingClientRect();"
+            + "  if (r.width === 0 || r.x < 600) continue;"
+            + "  return b;"
+            + "}"
+            + "return null;");
+        if (btn instanceof WebElement) return (WebElement) btn;
+        // Scroll drawer + retry once
+        try {
+            js().executeScript(
+                "var dws = document.querySelectorAll('[class*=\"Drawer\"] [class*=\"Paper\"], "
+                + "[class*=\"drawer\"], [role=\"presentation\"] > div > div');"
+                + "for (var d of dws) {"
+                + "  if (d.scrollHeight > d.clientHeight) { d.scrollTop = d.scrollHeight; }"
+                + "}");
+        } catch (Exception ignore) {}
+        pause(800);
+        Object retry = js().executeScript(
+            "var btns = Array.from(document.querySelectorAll('button'));"
+            + "for (var b of btns) {"
+            + "  if (!(b.textContent || '').toLowerCase().includes('calculator')) continue;"
+            + "  var r = b.getBoundingClientRect();"
+            + "  if (r.width === 0 || r.x < 600) continue;"
+            + "  return b;"
+            + "}"
+            + "return null;");
+        return retry instanceof WebElement ? (WebElement) retry : null;
+    }
+
+    /**
+     * Scroll the open COM Calculator dialog to surface the "Maintenance State"
+     * section. The dialog opens at "Asset Criticality" by default — Maintenance
+     * State is the second of three factors and requires scrolling.
+     */
+    private void scrollComCalculatorToMaintenanceState() {
+        try {
+            js().executeScript(
+                "var dlgs = document.querySelectorAll('[role=\"dialog\"]');"
+                + "for (var d of dlgs) {"
+                + "  if (!d.offsetWidth) continue;"
+                // Find the Maintenance State heading inside this dialog
+                + "  var headings = Array.from(d.querySelectorAll('*')).filter(function(el) {"
+                + "    return (el.textContent || '').trim() === 'Maintenance State'"
+                + "      && el.children.length === 0;"
+                + "  });"
+                + "  if (headings.length) {"
+                + "    headings[0].scrollIntoView({block: 'center', behavior: 'instant'});"
+                + "    return true;"
+                + "  }"
+                // Otherwise just scroll the dialog body down
+                + "  var scrollable = d.querySelector('[class*=\"DialogContent\"], [class*=\"dialog-content\"]') || d;"
+                + "  scrollable.scrollTop = scrollable.scrollHeight / 2;"
+                + "}"
+                + "return false;");
+            pause(800);
+        } catch (Exception ignore) {}
+    }
+
+    /** Read the "Derived maintenance level: Level X" text from the open COM Calculator. */
+    private String readDerivedLevel() {
+        return (String) js().executeScript(
+            "var dlgs = document.querySelectorAll('[role=\"dialog\"]');"
+            + "for (var d of dlgs) {"
+            + "  if (!d.offsetWidth) continue;"
+            + "  var t = d.textContent || '';"
+            + "  var m = t.match(/Derived maintenance level\\s*:?\\s*(Level\\s*[0-9]+|Nonserviceable)/i);"
+            + "  if (m) return m[1].trim();"
+            + "}"
+            + "return null;");
+    }
+
+    // =================================================================
     // TC_Misc_03 — Suggested Shortcut combobox in Edit Asset drawer
     // =================================================================
     /**
