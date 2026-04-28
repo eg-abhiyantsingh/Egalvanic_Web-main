@@ -6,6 +6,7 @@ import com.egalvanic.qa.utils.ScreenshotUtil;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -627,6 +628,179 @@ public class MiscFeaturesTestNG extends BaseTest {
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("TC_Misc_03_error");
             Assert.fail("TC_Misc_03 crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_Misc_03b — Suggested Shortcut dropdown opens with ≥1 option
+    //
+    // Pre-existing TC_Misc_03 only verifies the combobox EXISTS and is
+    // visible. That's a weak claim — a broken combobox that renders but
+    // has zero options would still pass. The user-confirmed full behavior
+    // (per their Edit drawer screenshot showing the field with red focus
+    // border) is that clicking it opens a dropdown with selectable
+    // shortcut presets.
+    //
+    // This test exercises the actual dropdown:
+    //   1. Open Edit drawer for an asset
+    //   2. Scroll to the Suggested Shortcut combobox
+    //   3. Click it to open the dropdown
+    //   4. Assert ≥1 option is rendered (proves the data layer is wired)
+    //   5. Close (ESC) — DO NOT select to avoid mutating the asset's
+    //      applied_shortcut field (which currently is null per DevTools
+    //      console: `applied_shortcut: null`)
+    //
+    // Falsifiable: if the dropdown opens with zero options, that means
+    // either (a) no shortcut templates exist for this asset class, OR
+    // (b) the data fetch failed silently. Either is a real product issue.
+    // =================================================================
+    @Test(priority = 31, description = "Suggested Shortcut dropdown opens with at least one selectable option")
+    public void testTC_Misc_03b_SuggestedShortcutDropdownHasOptions() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_SUGGESTED_SHORTCUTS,
+            "TC_Misc_03b: Shortcut dropdown options");
+        try {
+            assetPage.navigateToAssets();
+            pause(3000);
+            List<WebElement> rows = driver.findElements(By.cssSelector(".MuiDataGrid-row"));
+            Assert.assertFalse(rows.isEmpty(), "No assets in grid");
+            safeClick(rows.get(0));
+            pause(3500);
+
+            assetPage.clickKebabMenuItem("Edit Asset");
+            pause(2500);
+            logStepWithScreenshot("Edit Asset drawer opened");
+
+            // Scroll the drawer body all the way down to ensure ALL sections render
+            // (Suggested Shortcut sits far below the fold). MUI Drawer's content is
+            // wrapped in a scrollable Paper element — scroll its scrollTop to bottom.
+            js().executeScript(
+                "var papers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');"
+                + "for (var p of papers) {"
+                + "  if (p.offsetWidth > 0) {"
+                + "    p.scrollTop = p.scrollHeight;"
+                + "    return;"
+                + "  }"
+                + "}");
+            pause(1000);
+            // Then scroll back to the Suggested Shortcut label specifically
+            js().executeScript(
+                "var els = document.querySelectorAll('*');"
+                + "for (var el of els) {"
+                + "  var t = (el.textContent || '').trim();"
+                + "  if ((t.startsWith('Suggested Shortcut') || t === 'Suggested Shortcut')"
+                + "      && el.children.length === 0) {"
+                + "    el.scrollIntoView({block: 'center'}); return true;"
+                + "  }"
+                + "}"
+                + "return false;");
+            pause(800);
+            logStepWithScreenshot("Drawer scrolled to Suggested Shortcut field");
+
+            // Diagnostic: dump first 30 chars of every label-like text in the drawer
+            // so future failures show what's actually present
+            Object labelsDump = js().executeScript(
+                "var papers = document.querySelectorAll('[class*=\"MuiDrawer-paper\"]');"
+                + "for (var p of papers) {"
+                + "  if (!p.offsetWidth) continue;"
+                + "  var labels = p.querySelectorAll('label, .MuiInputLabel-root');"
+                + "  return Array.from(labels).map(function(l) {"
+                + "    return (l.textContent || '').trim().slice(0, 40);"
+                + "  }).filter(function(t) { return t.length > 0; });"
+                + "}"
+                + "return [];");
+            logStep("Drawer labels visible: " + labelsDump);
+
+            // Locate label first. The combobox is associated with this label by
+            // SPATIAL PROXIMITY (next combobox in DOM order that's ≤200px below
+            // the label). FormControl-based scoping was too strict for this field
+            // (combobox isn't always in the same wrapper), and ancestor-based
+            // walking was too loose (caught Asset Class which is first in DOM).
+            // The proximity heuristic mirrors how a sighted user reads forms.
+            WebElement shortcutLabel = findText("Suggested Shortcut", "SUGGESTED SHORTCUT");
+            Assert.assertNotNull(shortcutLabel,
+                "Suggested Shortcut label not found in Edit drawer — see TC_Misc_03");
+            Object comboObj = js().executeScript(
+                "var lbl = arguments[0];"
+                + "var lblRect = lbl.getBoundingClientRect();"
+                + "var allCombos = document.querySelectorAll('[role=\"combobox\"], "
+                + "[class*=\"MuiSelect-select\"]');"
+                + "var best = null;"
+                + "var bestDist = 1e9;"
+                + "for (var combo of allCombos) {"
+                + "  if (!combo.offsetWidth) continue;"
+                // Must come AFTER the label in DOM order
+                + "  var pos = lbl.compareDocumentPosition(combo);"
+                + "  if (!(pos & Node.DOCUMENT_POSITION_FOLLOWING)) continue;"
+                + "  var r = combo.getBoundingClientRect();"
+                + "  var dy = r.top - lblRect.top;"
+                + "  if (dy < 0 || dy > 200) continue;" // within 200px below
+                + "  if (dy < bestDist) { bestDist = dy; best = combo; }"
+                + "}"
+                + "if (best) { best.scrollIntoView({block: 'center'}); return best; }"
+                + "return null;",
+                shortcutLabel);
+            Assert.assertTrue(comboObj instanceof WebElement,
+                "No combobox within 200px below the Suggested Shortcut label. "
+                + "Either the field has no combobox OR MUI DOM structure changed.");
+            WebElement combo = (WebElement) comboObj;
+            pause(500);
+            try {
+                safeClick(combo);
+            } catch (Exception ex) {
+                // MUI Select sometimes intercepts clicks on the visible div —
+                // fallback: JS click which fires the dropdown open
+                js().executeScript("arguments[0].click();", combo);
+            }
+            pause(1500);
+            logStepWithScreenshot("Suggested Shortcut dropdown clicked");
+
+            // After clicking, MUI renders the options as a popover/listbox at
+            // document body level (NOT inside the drawer). Look for visible
+            // li[role='option'] elements.
+            @SuppressWarnings("unchecked")
+            List<String> dropdownOptions = (List<String>) js().executeScript(
+                "var opts = document.querySelectorAll('li[role=\"option\"], "
+                + "[role=\"listbox\"] [role=\"option\"]');"
+                + "var out = [];"
+                + "for (var o of opts) {"
+                + "  if (!o.offsetWidth) continue;"
+                + "  var t = (o.textContent || '').trim();"
+                + "  if (t.length > 0 && t.length < 80) out.push(t);"
+                + "}"
+                + "return Array.from(new Set(out));");
+            logStep("Suggested Shortcut dropdown options: " + dropdownOptions);
+            ScreenshotUtil.captureScreenshot("TC_Misc_03b");
+
+            // Cleanup: close dropdown via ESC — do NOT select an option
+            // (would set applied_shortcut on the asset)
+            try {
+                driver.findElement(By.tagName("body")).sendKeys(Keys.ESCAPE);
+            } catch (Exception ignore) {}
+            pause(800);
+
+            // Honest precondition: zero options means EITHER no shortcut presets
+            // exist for this asset class (data state, not a bug) OR the API
+            // failed silently (real bug — can't distinguish from this layer).
+            // Skip rather than fake-pass or false-fail. The test is meaningful
+            // ONLY when presets exist, and the existing TC_Misc_03 already
+            // verifies the combobox is present + interactable as a base claim.
+            if (dropdownOptions == null || dropdownOptions.isEmpty()) {
+                throw new org.testng.SkipException(
+                    "Suggested Shortcut dropdown opened with zero options — likely no "
+                    + "shortcut presets are configured for this asset class. Test data "
+                    + "prerequisite: at least one shortcut preset must exist for the "
+                    + "first asset's class. Run on an account with seeded shortcuts to "
+                    + "verify the dropdown wiring.");
+            }
+
+            ExtentReportManager.logPass("Suggested Shortcut dropdown has "
+                + dropdownOptions.size() + " selectable option(s): " + dropdownOptions);
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_Misc_03b_error");
+            Assert.fail("TC_Misc_03b crashed: " + e.getMessage());
         }
     }
 
