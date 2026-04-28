@@ -634,6 +634,280 @@ public class BulkUploadBulkEditTestNG extends BaseTest {
         }
     }
 
+    // =================================================================
+    // TC_Bulk_13 — Bulk Ops + 1 row selected reveals all 5 action buttons
+    //
+    // User-confirmed 2026-04-28 via screenshot: clicking Bulk Ops + selecting
+    // a single row reveals 5 bulk action buttons in the toolbar:
+    //   1. Edit                  (single-row edit)
+    //   2. Edit Core Attributes  (bulk edit shared core attributes)
+    //   3. Edit PM Designations  (bulk edit PM type designations)
+    //   4. Apply PM Plans        (bulk apply preventive-maintenance plans)
+    //   5. Delete                (red, opens confirmation modal)
+    //
+    // Plus a "Cancel" button to exit selection mode AND a "1 selected" counter.
+    //
+    // The pre-existing TC_Bulk_03 enters selection mode but doesn't assert the
+    // specific buttons. This test pins down the exact bulk-action contract.
+    // =================================================================
+    @Test(priority = 13, description = "Bulk Ops + 1 row selected reveals all 5 bulk action buttons")
+    public void testTC_Bulk_13_BulkOpsActionButtons() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_BULK_EDIT,
+            "TC_Bulk_13: Bulk Ops 5 action buttons");
+        try {
+            assetPage.navigateToAssets();
+            pause(3000);
+            logStepWithScreenshot("Assets page loaded");
+
+            // Click Bulk Ops to enable selection mode
+            WebElement bulkOpsBtn = findByText("Bulk Ops");
+            Assert.assertNotNull(bulkOpsBtn, "Bulk Ops button missing on Assets toolbar");
+            safeClick(bulkOpsBtn);
+            pause(2000);
+            logStep("Bulk Ops clicked — selection mode active");
+
+            // Check the FIRST row's checkbox via Selenium-native click on the
+            // checkbox CELL (not the hidden input). MUI DataGrid expects the click
+            // on the cell wrapper — the React handler is bound there, not on the
+            // hidden <input>. Native-setter approach (used for non-DataGrid MUI
+            // checkboxes) doesn't trigger DataGrid's selection-state update.
+            List<WebElement> firstRowCheckboxes = driver.findElements(By.cssSelector(
+                    ".MuiDataGrid-row .MuiDataGrid-cellCheckbox, "
+                    + ".MuiDataGrid-row [role='checkbox']"));
+            Assert.assertFalse(firstRowCheckboxes.isEmpty(),
+                    "No row checkbox cells found in DataGrid after enabling Bulk Ops");
+            WebElement firstCheckbox = firstRowCheckboxes.get(0);
+            js().executeScript("arguments[0].scrollIntoView({block:'center'});", firstCheckbox);
+            pause(300);
+            try {
+                safeClick(firstCheckbox);
+            } catch (Exception ex) {
+                // Fallback: click the input itself via JS
+                js().executeScript(
+                        "var cb = arguments[0].querySelector('input[type=\"checkbox\"]') "
+                        + "|| arguments[0]; cb.click();", firstCheckbox);
+            }
+            pause(2500);
+            logStepWithScreenshot("First row selected — action buttons should appear");
+
+            // Capture all visible button labels in the toolbar area
+            @SuppressWarnings("unchecked")
+            List<String> visibleButtons = (List<String>) js().executeScript(
+                    "var btns = document.querySelectorAll('button');"
+                    + "var out = [];"
+                    + "for (var b of btns) {"
+                    + "  if (!b.offsetWidth) continue;"
+                    + "  var t = (b.textContent || '').trim();"
+                    + "  if (t.length > 0 && t.length < 60) out.push(t);"
+                    + "}"
+                    + "return Array.from(new Set(out));");
+            logStep("Visible buttons after selection: " + visibleButtons);
+
+            // The 5 expected bulk action buttons per the user screenshot.
+            // Substring match so "Edit Core Attributes" still matches even if
+            // FE adds suffix/icon text.
+            String[] expectedActions = {
+                    "Edit",                  // standalone Edit (must match before "Edit Core Attributes")
+                    "Edit Core Attributes",
+                    "Edit PM Designations",
+                    "Apply PM Plans",
+                    "Delete"
+            };
+            java.util.List<String> missing = new java.util.ArrayList<>();
+            for (String expected : expectedActions) {
+                boolean found = visibleButtons.stream().anyMatch(b -> b.contains(expected));
+                if (!found) missing.add(expected);
+            }
+
+            // Also verify a selection-feedback signal — accept any of:
+            //   - "1 selected" / "1\nselected" / "1selected" (textContent
+            //     compresses whitespace differently across renders)
+            //   - "1 item selected" / "1 of N selected"
+            //   - just the word "selected" in proximity to a digit
+            Boolean hasSelectedCounter = (Boolean) js().executeScript(
+                    "var t = document.body ? document.body.textContent : '';"
+                    + "return /1[\\s\\S]{0,5}selected/i.test(t) "
+                    + "|| /selected[\\s\\S]{0,5}1/i.test(t) "
+                    + "|| /1\\s+(item|asset|row).*selected/i.test(t);");
+            logStep("Selection counter visible: " + hasSelectedCounter);
+
+            // Cleanup: click Cancel to exit selection mode
+            try {
+                List<WebElement> cancels = driver.findElements(By.xpath(
+                        "//button[normalize-space()='Cancel']"));
+                for (WebElement c : cancels) {
+                    if (c.isDisplayed()) { safeClick(c); break; }
+                }
+            } catch (Exception ignore) {}
+            pause(800);
+
+            // Assertions (cleanup already done so failures don't leave bad state)
+            Assert.assertTrue(missing.isEmpty(),
+                    "Bulk Ops action toolbar is missing buttons: " + missing
+                    + ". Discovered visible buttons: " + visibleButtons
+                    + ". The FE may have renamed/removed bulk actions.");
+            Assert.assertTrue(Boolean.TRUE.equals(hasSelectedCounter),
+                    "'1 selected' counter not visible after checking 1 row — selection "
+                    + "feedback is missing or the regex needs widening.");
+
+            ExtentReportManager.logPass("Bulk Ops reveals all 5 action buttons + selection counter");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_Bulk_13_error");
+            Assert.fail("TC_Bulk_13 crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_Bulk_14 — Delete confirmation modal shows asset name + Cancel preserves
+    //
+    // User-confirmed via second screenshot: clicking Delete on a single
+    // selected row opens a "Delete Node" modal with:
+    //   Title: "Delete Node"
+    //   Body: 'Are you sure you want to delete "1 asset (Disconnect Switch 1)"?'
+    //   Body: 'This action cannot be undone.'
+    //   Buttons: [Cancel] [Delete]
+    //
+    // Falsifiable: the modal must show the EXACT selected asset's name in the
+    // body text. Cancel must close the modal without deleting (we then verify
+    // the asset is still in the grid). DO NOT click Delete — that would delete
+    // a real asset on the QA site.
+    // =================================================================
+    @Test(priority = 14, description = "Delete confirmation shows asset name + Cancel preserves the asset")
+    public void testTC_Bulk_14_DeleteConfirmationCancelPreserves() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_BULK_EDIT,
+            "TC_Bulk_14: Delete confirmation");
+        try {
+            assetPage.navigateToAssets();
+            pause(3000);
+
+            // Capture the FIRST visible asset name BEFORE entering selection mode —
+            // we'll match this against the confirmation body and verify it survives.
+            String firstAssetName = (String) js().executeScript(
+                    "var rows = document.querySelectorAll('.MuiDataGrid-row');"
+                    + "for (var r of rows) {"
+                    + "  if (!r.offsetWidth) continue;"
+                    + "  var cell = r.querySelector('[data-field=\"name\"], "
+                    + "[data-field=\"assetName\"], .MuiDataGrid-cell');"
+                    + "  if (cell) return (cell.textContent || '').trim();"
+                    + "}"
+                    + "return null;");
+            Assert.assertNotNull(firstAssetName,
+                    "Could not read first asset name from grid — TC_Bulk_14 needs an asset");
+            logStep("First asset name: " + firstAssetName);
+
+            // Bulk Ops + select first row (Selenium-native click on the
+            // checkbox CELL — see TC_Bulk_13 for the rationale)
+            WebElement bulkOpsBtn = findByText("Bulk Ops");
+            Assert.assertNotNull(bulkOpsBtn, "Bulk Ops button missing");
+            safeClick(bulkOpsBtn);
+            pause(2000);
+            List<WebElement> rowCheckboxes = driver.findElements(By.cssSelector(
+                    ".MuiDataGrid-row .MuiDataGrid-cellCheckbox, "
+                    + ".MuiDataGrid-row [role='checkbox']"));
+            Assert.assertFalse(rowCheckboxes.isEmpty(),
+                    "No row checkbox cells found in DataGrid after enabling Bulk Ops");
+            WebElement firstCheckbox = rowCheckboxes.get(0);
+            js().executeScript("arguments[0].scrollIntoView({block:'center'});", firstCheckbox);
+            pause(300);
+            try {
+                safeClick(firstCheckbox);
+            } catch (Exception ex) {
+                js().executeScript(
+                        "var cb = arguments[0].querySelector('input[type=\"checkbox\"]') "
+                        + "|| arguments[0]; cb.click();", firstCheckbox);
+            }
+            pause(2500);
+
+            // Click Delete in the bulk action toolbar
+            WebElement deleteBtn = null;
+            for (WebElement b : driver.findElements(By.xpath(
+                    "//button[normalize-space()='Delete']"))) {
+                if (b.isDisplayed()) { deleteBtn = b; break; }
+            }
+            Assert.assertNotNull(deleteBtn,
+                    "Delete button not visible in bulk action toolbar — see TC_Bulk_13");
+            safeClick(deleteBtn);
+            pause(2500);
+            logStepWithScreenshot("Delete confirmation modal opened");
+
+            // Verify modal structure: title "Delete Node" + body contains asset name +
+            // "This action cannot be undone." warning
+            String modalText = (String) js().executeScript(
+                    "var dlgs = document.querySelectorAll('[role=\"dialog\"], "
+                    + "[class*=\"MuiDialog\"]');"
+                    + "for (var d of dlgs) {"
+                    + "  if (!d.offsetWidth) continue;"
+                    + "  var t = (d.textContent || '').trim();"
+                    + "  if (t.toLowerCase().includes('delete')) return t;"
+                    + "}"
+                    + "return null;");
+            logStep("Modal text: " + modalText);
+            Assert.assertNotNull(modalText, "Delete confirmation modal didn't open");
+
+            String mt = modalText.toLowerCase();
+            // Title check (substring "Delete Node" — accept either case)
+            Assert.assertTrue(mt.contains("delete node"),
+                    "Modal title should be 'Delete Node'. Actual text: " + modalText);
+            // Asset-name reference check (substring of the actual first asset name)
+            String shortName = firstAssetName.length() > 30
+                    ? firstAssetName.substring(0, 30) : firstAssetName;
+            Assert.assertTrue(modalText.contains(shortName),
+                    "Modal body should reference the selected asset name '" + shortName
+                    + "' but didn't. Actual modal text: " + modalText);
+            // "Cannot be undone" warning check
+            Assert.assertTrue(mt.contains("cannot be undone"),
+                    "Modal should warn 'This action cannot be undone'. Actual: " + modalText);
+            logStep("Modal body verified: title + asset name + undo warning all present");
+
+            // Cancel — DO NOT click Delete (would mutate real QA data)
+            WebElement cancelInModal = null;
+            for (WebElement b : driver.findElements(By.xpath(
+                    "//*[@role='dialog']//button[normalize-space()='Cancel'] | "
+                    + "//*[contains(@class,'MuiDialog')]//button[normalize-space()='Cancel']"))) {
+                if (b.isDisplayed()) { cancelInModal = b; break; }
+            }
+            Assert.assertNotNull(cancelInModal, "Cancel button missing in Delete modal");
+            safeClick(cancelInModal);
+            pause(1500);
+
+            // Verify: modal closed AND asset still in grid
+            Boolean modalClosed = (Boolean) js().executeScript(
+                    "var dlgs = document.querySelectorAll('[role=\"dialog\"]');"
+                    + "for (var d of dlgs) {"
+                    + "  if (d.offsetWidth > 0 && (d.textContent || '').toLowerCase().includes('delete node')) return false;"
+                    + "}"
+                    + "return true;");
+            Assert.assertTrue(Boolean.TRUE.equals(modalClosed),
+                    "Delete modal didn't close after clicking Cancel");
+
+            // Cancel selection mode too
+            try {
+                List<WebElement> cancels = driver.findElements(By.xpath(
+                        "//button[normalize-space()='Cancel']"));
+                for (WebElement c : cancels) {
+                    if (c.isDisplayed()) { safeClick(c); break; }
+                }
+            } catch (Exception ignore) {}
+            pause(1000);
+
+            // Verify the asset is STILL in the grid (preserved, not deleted)
+            Boolean stillExists = (Boolean) js().executeScript(
+                    "var t = document.body ? document.body.textContent : '';"
+                    + "return t.includes(arguments[0]);", firstAssetName);
+            Assert.assertTrue(Boolean.TRUE.equals(stillExists),
+                    "Asset '" + firstAssetName + "' is missing from grid after Cancel — "
+                    + "Cancel should NOT delete the asset.");
+
+            ExtentReportManager.logPass("Delete confirmation shows correct asset name; "
+                    + "Cancel preserves the asset");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_Bulk_14_error");
+            Assert.fail("TC_Bulk_14 crashed: " + e.getMessage());
+        }
+    }
+
     // -------- helpers --------
 
     private File createSampleCsv() throws Exception {
