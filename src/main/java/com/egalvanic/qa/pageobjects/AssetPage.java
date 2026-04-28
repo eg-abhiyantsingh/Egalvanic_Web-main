@@ -102,7 +102,30 @@ public class AssetPage {
         }
 
         click(ASSETS_NAV);
-        wait.until(ExpectedConditions.visibilityOfElementLocated(CREATE_ASSET_BTN));
+
+        // CI hardening: the default 25s `wait` is enough locally but CI runners are
+        // 2-3x slower at SPA hydration. Confirmed via run 25001241790 (GEN_EAD_09):
+        // the Create Asset button took >25s to appear and the timeout fired.
+        // Strategy:
+        //   1. First try a longer wait (45s) — covers slow CI startup.
+        //   2. If still not visible, navigate().refresh() once and wait another 30s.
+        //   3. If both fail, throw the original timeout — surfaces a real env issue.
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(45))
+                    .until(ExpectedConditions.visibilityOfElementLocated(CREATE_ASSET_BTN));
+        } catch (org.openqa.selenium.TimeoutException primaryTimeout) {
+            System.out.println("[AssetPage] Create Asset button not visible after 45s — "
+                    + "attempting page refresh recovery (CI flake guard)");
+            try {
+                driver.navigate().refresh();
+                new WebDriverWait(driver, Duration.ofSeconds(30))
+                        .until(ExpectedConditions.visibilityOfElementLocated(CREATE_ASSET_BTN));
+                System.out.println("[AssetPage] Recovered after refresh — Create Asset button now visible");
+            } catch (Exception refreshEx) {
+                System.out.println("[AssetPage] Refresh recovery also failed: " + refreshEx.getMessage());
+                throw primaryTimeout;
+            }
+        }
     }
 
     public boolean isOnAssetsPage() {

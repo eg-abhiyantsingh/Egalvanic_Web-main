@@ -299,18 +299,40 @@ public class BugHuntGlobalTestNG extends BaseTest {
                 if ("slds".equals(kv[0])) sldCalls = Integer.parseInt(kv[1]);
             }
 
-            logStep("User roles API calls: " + roleCalls + " (expected 1, got " + roleCalls + ")");
-            logStep("SLDs API calls: " + sldCalls + " (expected 1, got " + sldCalls + ")");
-            logStepWithScreenshot("Connections page — duplicate calls active");
+            logStep("User roles API calls: " + roleCalls + " (expected ≤1)");
+            logStep("SLDs API calls: " + sldCalls + " (expected ≤1)");
+            logStepWithScreenshot("Connections page — API call counts");
 
-            // BUG confirmed if roles or SLDs called more than once
+            // SANITY PRECONDITION: if BOTH counts are 0, the page didn't exercise the
+            // expected API endpoints — could be session expired, page didn't load, or
+            // FE moved to different URL pattern. We can't conclude "bug fixed" in that
+            // case (false-positive risk). Skip honestly with a clear reason.
+            if (roleCalls == 0 && sldCalls == 0) {
+                throw new org.testng.SkipException(
+                        "Connections page did not issue any /roles or /slds calls — cannot "
+                        + "verify duplicate-call regression. Possible causes: session expired, "
+                        + "page failed to load, or API URL pattern changed. Investigate before "
+                        + "treating this as a 'bug fixed' signal.");
+            }
+
+            // BUG-007 was originally "Roles + SLDs are fetched twice on every page load".
+            // This test now serves as a REGRESSION DETECTOR: PASSES when the bug stays
+            // fixed (≤1 each), FAILS if duplicates re-appear.
+            //
+            // Earlier the assertion was assertTrue(hasDuplicates) which caused the test
+            // to FAIL whenever the bug was fixed — backwards for a CI guard. Switched
+            // to assertFalse + the sanity precondition above so:
+            //   - both 0          → SKIP (test couldn't run, NOT a fake pass)
+            //   - any >1          → FAIL (real regression)
+            //   - all ≤1 with ≥1  → PASS (bug confirmed fixed)
             boolean hasDuplicates = roleCalls > 1 || sldCalls > 1;
-            Assert.assertTrue(hasDuplicates,
-                    "BUG-007: No duplicate API calls detected. Roles=" + roleCalls +
-                    ", SLDs=" + sldCalls + ". Bug may be fixed.");
+            Assert.assertFalse(hasDuplicates,
+                    "BUG-007 REGRESSION: duplicate API calls detected. Roles=" + roleCalls
+                    + " (expected ≤1), SLDs=" + sldCalls + " (expected ≤1). "
+                    + "Each entity should be fetched once per page load.");
 
-            ExtentReportManager.logPass("BUG-007 confirmed: Roles called " + roleCalls +
-                    "x, SLDs called " + sldCalls + "x (should be 1x each)");
+            ExtentReportManager.logPass("BUG-007 verified FIXED: roles=" + roleCalls
+                    + ", slds=" + sldCalls + " (no duplicates).");
 
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG007_duplicate_api_error");

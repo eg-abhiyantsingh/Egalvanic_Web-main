@@ -421,7 +421,35 @@ public class AssetPart4TestNG extends BaseTest {
         if (freshInput == null) freshInput = findInputByLabel(fieldLabel);
         if (freshInput == null) freshInput = findInputByAriaLabel(fieldLabel);
         if (freshInput != null) input = freshInput;
-        String actual = input.getAttribute("value");
+
+        // CI hardening: getAttribute("value") can throw StaleElementReferenceException
+        // if React re-renders the input between the JS setter and the read. The pre-read
+        // re-finds (above) handle the common case, but in CI the DOM can mutate AGAIN
+        // between the re-find and the .getAttribute() call. Confirmed via CI run
+        // 25001241790 (MOTOR_EAD_13): SelfHeal exhausted 3 retries because each retry
+        // hit a fresh stale state. Solution: explicit retry loop that re-locates on each
+        // failure, up to 5 attempts. Far less intrusive than a new locator strategy.
+        String actual = null;
+        for (int attempt = 0; attempt < 5; attempt++) {
+            try {
+                actual = input.getAttribute("value");
+                break;
+            } catch (org.openqa.selenium.StaleElementReferenceException sere) {
+                logStep("[editTextField] stale on getAttribute(value) attempt "
+                        + (attempt + 1) + "/5 — re-locating input");
+                pause(250);
+                WebElement relocated = findInputByPlaceholder(fieldLabel);
+                if (relocated == null) relocated = findInputByLabel(fieldLabel);
+                if (relocated == null) relocated = findInputByAriaLabel(fieldLabel);
+                if (relocated == null) relocated = findInputInDrawerByLabel(fieldLabel);
+                if (relocated == null) {
+                    logStep("[editTextField] could not re-locate '" + fieldLabel
+                            + "' after stale — giving up");
+                    break;
+                }
+                input = relocated;
+            }
+        }
         logStep("Value set: '" + actual + "'");
         return actual;
     }

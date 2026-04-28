@@ -503,8 +503,7 @@ public class SiteSelectionTestNG {
                 AppConstants.FEATURE_SEARCH_SITES, "TC_SS_009_SearchCaseInsensitive");
         logStep("Verifying search is case-insensitive");
 
-        // Search uppercase — must open dropdown first. Since OPTIONS is now scoped to the
-        // open listbox (post-selector-fix), typing into a closed Autocomplete reports 0 options.
+        // Search uppercase — open dropdown first since OPTIONS is scoped to the open listbox.
         openFacilityDropdown();
         WebElement input = driver.findElement(FACILITY_INPUT);
         clearAndType(input, "TEST");
@@ -522,16 +521,32 @@ public class SiteSelectionTestNG {
         int lowercaseCount = waitForStableOptionCount();
         logStep("Results for 'test': " + lowercaseCount);
 
-        // Allow small difference due to async rendering timing (within 20%)
-        boolean closeEnough = Math.abs(uppercaseCount - lowercaseCount) <= Math.max(1, Math.max(uppercaseCount, lowercaseCount) / 5);
-        Assert.assertTrue(uppercaseCount == lowercaseCount || closeEnough,
-                "Search results differ significantly for uppercase (" + uppercaseCount + ") vs lowercase (" + lowercaseCount + ")");
-        logStep("Case-insensitive search confirmed: same results for both cases");
-
+        // Cleanup before assertions so failures still leave the dropdown closed.
         clearFacilityInput();
         closeFacilityDropdown();
 
-        ExtentReportManager.logPass("Search is case-insensitive. Both 'TEST' and 'test' return " + uppercaseCount + " results");
+        // Guard against tautological pass: if BOTH searches return 0, we cannot
+        // conclude case-insensitivity (we'd just be comparing 0 == 0). Skip with
+        // a clear reason so the result is honest, not a fake green.
+        if (uppercaseCount == 0 && lowercaseCount == 0) {
+            throw new org.testng.SkipException(
+                    "Both 'TEST' and 'test' returned 0 sites — no site name contains 'test' "
+                    + "(any case) on this account. Cannot verify case-insensitivity without "
+                    + "matching data. Test data prerequisite: at least one site with 'Test' "
+                    + "in the name must exist.");
+        }
+
+        // Real check: counts MUST be equal. The previous 20% tolerance is too loose —
+        // if the FE is genuinely case-insensitive, the results are the SAME query and
+        // counts should match exactly. Any difference indicates a real FE bug.
+        Assert.assertEquals(uppercaseCount, lowercaseCount,
+                "Case-insensitive search broken: 'TEST' returned " + uppercaseCount
+                + " sites but 'test' returned " + lowercaseCount
+                + ". Both must match for case-insensitivity.");
+        logStep("Case-insensitive search confirmed: " + uppercaseCount + " == " + lowercaseCount);
+
+        ExtentReportManager.logPass("Search is case-insensitive. Both 'TEST' and 'test' return "
+                + uppercaseCount + " results");
     }
 
     @Test(priority = 10, description = "TC_SS_010: Verify search no results state")
@@ -540,27 +555,54 @@ public class SiteSelectionTestNG {
                 AppConstants.FEATURE_SEARCH_SITES, "TC_SS_010_SearchNoResults");
         logStep("Verifying message when search finds no sites");
 
+        // CRITICAL FIX: open the dropdown FIRST. The OPTIONS locator is scoped to the
+        // open listbox (`//ul[@role='listbox']//li[@role='option']`), so when the
+        // dropdown is closed `driver.findElements(OPTIONS).size() == 0` regardless of
+        // whether the FE is in a true "no results" state. Previously this test passed
+        // tautologically — `noResults = options.isEmpty()` was always true even when
+        // matching sites existed, because the dropdown was never opened.
+        openFacilityDropdown();
         WebElement input = driver.findElement(FACILITY_INPUT);
         clearAndType(input, "XYZNONEXISTENT99999");
+        // Wait for the async filter to settle
         pause(1000);
 
+        // Sanity: confirm dropdown is still open (some FE implementations close it on
+        // empty result — that itself is a valid "no results" UX).
+        boolean dropdownStillOpen = isDropdownOpen();
         List<WebElement> options = driver.findElements(OPTIONS);
-        logStep("Options found for nonsense query: " + options.size());
+        int visibleOptionCount = (int) options.stream()
+                .filter(o -> {
+                    try { return o.isDisplayed(); } catch (Exception e) { return false; }
+                }).count();
+        logStep("Dropdown open after nonsense query: " + dropdownStillOpen
+                + " | visible options: " + visibleOptionCount);
 
-        // Should have no results or show a "No options" message
-        boolean noResults = options.isEmpty();
+        // Look for explicit "No options" affordance — MUI renders a "No options" item
+        // inside the listbox when the filter eliminates all entries.
         boolean hasNoOptionsMessage = !driver.findElements(By.xpath(
-                "//*[contains(text(),'No options') or contains(text(),'No sites') "
-                + "or contains(text(),'No results') or contains(text(),'not found')]")).isEmpty();
+                "//*[contains(normalize-space(text()),'No options') "
+                + "or contains(normalize-space(text()),'No sites') "
+                + "or contains(normalize-space(text()),'No results') "
+                + "or contains(normalize-space(text()),'not found')]")).isEmpty();
 
-        Assert.assertTrue(noResults || hasNoOptionsMessage,
-                "Search should show no results for nonsense query. Options: " + options.size());
-        logStep("No results state confirmed: noResults=" + noResults + ", hasMessage=" + hasNoOptionsMessage);
-
+        // Cleanup
         clearFacilityInput();
         closeFacilityDropdown();
 
-        ExtentReportManager.logPass("Search correctly shows no results for non-existent query");
+        // Real "no results" state: EITHER 0 visible matching options while dropdown
+        // was open, OR an explicit empty-state message appeared. Both are valid FE
+        // patterns. The previous version accepted "dropdown closed = 0 options"
+        // which was never a real signal.
+        boolean trueNoResults = (dropdownStillOpen && visibleOptionCount == 0);
+        Assert.assertTrue(trueNoResults || hasNoOptionsMessage,
+                "Search did not show 'no results' state for nonsense query. "
+                + "dropdownOpen=" + dropdownStillOpen + ", visibleOptions=" + visibleOptionCount
+                + ", hasNoOptionsMessage=" + hasNoOptionsMessage);
+        logStep("No-results confirmed: trueNoResults=" + trueNoResults
+                + ", hasMessage=" + hasNoOptionsMessage);
+
+        ExtentReportManager.logPass("Search correctly shows no-results state for non-existent query");
     }
 
     @Test(priority = 11, description = "TC_SS_011: Verify clearing search shows all sites")
