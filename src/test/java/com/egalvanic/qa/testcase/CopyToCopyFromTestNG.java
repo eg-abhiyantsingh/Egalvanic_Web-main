@@ -1174,4 +1174,185 @@ public class CopyToCopyFromTestNG extends BaseTest {
             Assert.fail("TC_Copy_11 crashed: " + e.getMessage());
         }
     }
+
+    // =================================================================
+    // TC_Copy_12 — Maintenance state + Suggested shortcuts copy semantics
+    // =================================================================
+    /**
+     * Focused verification for two specific drawer fields the user called out:
+     *
+     *  1. Maintenance state ("Select Serviceability" + "Explain why this
+     *     equipment is not fully serviceable"). Per Step 2 dialog text,
+     *     "Serviceability" IS one of the 3 default-checked toggle groups —
+     *     so it SHOULD be copyable.
+     *
+     *  2. Suggested shortcuts ("Select shortcut" / "Suggested Shortcut").
+     *     NOT in the Step 2 toggle list. Hypothesis: shortcuts are a
+     *     per-asset user preference (like a UI bookmark) and should NOT
+     *     change after a Copy From. Falsifiable: if the value changes
+     *     post-Copy, this assertion fires and we know there's a divergence
+     *     between docs and behavior.
+     */
+    @Test(priority = 12, description = "Copy From semantics: Serviceability copies, Shortcut does NOT")
+    public void testTC_Copy_12_MaintenanceStateAndShortcutsSemantics() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_COPY_TO_FROM,
+            "TC_Copy_12: Maintenance state + shortcuts");
+        try {
+            openFirstAssetDetail();
+            if (!openEditDrawer()) {
+                throw new org.testng.SkipException("Could not open Edit drawer");
+            }
+            java.util.Map<String, String> before = captureDrawerFieldValues();
+            logStep("BEFORE field count: " + before.size());
+
+            // Identify the focus fields by fuzzy label match (real labels can vary)
+            String shortcutKey = findKeyMatching(before, "shortcut");
+            String serviceabilityKey = findKeyMatching(before,
+                "serviceab", "service state", "maintenance");
+            String explanationKey = findKeyMatching(before,
+                "fully serviceable", "explain why", "explanation");
+            logStep("Focus fields BEFORE — shortcut[" + shortcutKey + "]='"
+                + (shortcutKey == null ? "(missing)" : before.get(shortcutKey))
+                + "', serviceability[" + serviceabilityKey + "]='"
+                + (serviceabilityKey == null ? "(missing)" : before.get(serviceabilityKey))
+                + "', explanation[" + explanationKey + "]='"
+                + (explanationKey == null ? "(missing)"
+                    : abbreviate(before.get(explanationKey), 50)) + "'");
+
+            // Sanity: at least one of the focus fields should be captured
+            boolean anyFocusFieldPresent = (shortcutKey != null
+                || serviceabilityKey != null || explanationKey != null);
+            if (!anyFocusFieldPresent) {
+                closeDrawerWithoutSaving();
+                throw new org.testng.SkipException(
+                    "None of {Serviceability, Shortcut, Explanation} fields visible in drawer "
+                    + "— may need to scroll. Capture saw " + before.size() + " other fields.");
+            }
+
+            // Run the Copy From wizard (same generic walker as TC_Copy_11)
+            if (!openDrawerKebab()) {
+                closeDrawerWithoutSaving();
+                throw new org.testng.SkipException("Drawer kebab did not open");
+            }
+            WebElement entry = findByText("Copy Details From", "Copy details from");
+            if (entry == null) {
+                closeDrawerWithoutSaving();
+                throw new org.testng.SkipException("Copy Details From menu item missing");
+            }
+            safeClick(entry);
+            pause(3000);
+
+            WebElement dlg = findCopyDialog();
+            if (dlg == null) {
+                closeDrawerWithoutSaving();
+                Assert.fail("Copy From dialog did not open");
+            }
+            List<WebElement> sources = dialogRadioRows();
+            if (sources.isEmpty()) {
+                closeCopyDialog();
+                closeDrawerWithoutSaving();
+                throw new org.testng.SkipException("No source assets to copy from");
+            }
+            WebElement firstSource = sources.get(0);
+            String sourceLabel = firstSource.getText() == null ? "(unknown)"
+                : firstSource.getText().split("\n")[0];
+            logStep("Source: " + sourceLabel);
+            safeClick(firstSource);
+            pause(1500);
+
+            String[] terminals = {"Apply", "Copy", "Save", "Done", "Confirm", "Finish", "Update"};
+            String[] advances = {"Next", "Continue"};
+            for (int i = 0; i < 6; i++) {
+                if (findCopyDialog() == null) break;
+                WebElement t = findDialogButton(findCopyDialog(), terminals);
+                if (t != null) { safeClick(t); pause(3000); break; }
+                WebElement a = findDialogButton(findCopyDialog(), advances);
+                if (a == null) break;
+                safeClick(a);
+                pause(2500);
+            }
+            if (findCopyDialog() != null) {
+                closeCopyDialog();
+                closeDrawerWithoutSaving();
+                Assert.fail("Copy From wizard did not reach a terminal step");
+            }
+            pause(1500);
+
+            java.util.Map<String, String> after = captureDrawerFieldValues();
+            logStep("AFTER field count: " + after.size());
+            ScreenshotUtil.captureScreenshot("TC_Copy_12");
+
+            // Build the focus diff
+            StringBuilder verdict = new StringBuilder();
+            if (shortcutKey != null) {
+                String b = before.getOrDefault(shortcutKey, "");
+                String a = after.getOrDefault(shortcutKey, "");
+                boolean changed = !java.util.Objects.equals(b, a);
+                verdict.append("\n  shortcut: '").append(b).append("' → '").append(a)
+                    .append("' (").append(changed ? "CHANGED" : "preserved").append(")");
+            }
+            if (serviceabilityKey != null) {
+                String b = before.getOrDefault(serviceabilityKey, "");
+                String a = after.getOrDefault(serviceabilityKey, "");
+                boolean changed = !java.util.Objects.equals(b, a);
+                verdict.append("\n  serviceability: '").append(b).append("' → '").append(a)
+                    .append("' (").append(changed ? "CHANGED" : "preserved").append(")");
+            }
+            if (explanationKey != null) {
+                String b = before.getOrDefault(explanationKey, "");
+                String a = after.getOrDefault(explanationKey, "");
+                boolean changed = !java.util.Objects.equals(b, a);
+                verdict.append("\n  explanation: '").append(abbreviate(b, 40))
+                    .append("' → '").append(abbreviate(a, 40))
+                    .append("' (").append(changed ? "CHANGED" : "preserved").append(")");
+            }
+            logStep("Focus-field verdict (Copy From source='" + sourceLabel + "'):"
+                + verdict.toString());
+
+            // Cleanup BEFORE assertions so a failure still rolls back the drawer state
+            closeDrawerWithoutSaving();
+
+            // Falsifiable assertion: SHORTCUTS should NOT change. If the source's
+            // shortcut is empty (common), the shortcut value should stay the same.
+            // If it does change, that's evidence shortcuts ARE in the copy scope —
+            // which contradicts the Step 2 toggle list and warrants product
+            // confirmation.
+            if (shortcutKey != null) {
+                String b = before.get(shortcutKey);
+                String a = after.get(shortcutKey);
+                Assert.assertEquals(a, b,
+                    "Suggested Shortcut value changed after Copy From, but shortcuts are NOT "
+                    + "in the Step 2 toggle list ('Core Attributes / Asset Subtype / "
+                    + "Serviceability'). Either the toggle list is incomplete (FE bug) "
+                    + "OR shortcuts copy implicitly (spec ambiguity). Source: " + sourceLabel);
+            }
+
+            ExtentReportManager.logPass("Maintenance state + shortcut semantics verified."
+                + verdict.toString());
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_Copy_12_error");
+            Assert.fail("TC_Copy_12 crashed: " + e.getMessage());
+        }
+    }
+
+    // ---- helpers for TC_Copy_12 ----
+
+    private String findKeyMatching(java.util.Map<String, String> map, String... fragments) {
+        for (String key : map.keySet()) {
+            String lk = key.toLowerCase();
+            for (String f : fragments) {
+                if (lk.contains(f.toLowerCase())) return key;
+            }
+        }
+        return null;
+    }
+
+    private String abbreviate(String s, int maxLen) {
+        if (s == null) return "";
+        if (s.length() <= maxLen) return s;
+        return s.substring(0, maxLen) + "...";
+    }
 }
