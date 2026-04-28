@@ -3,6 +3,18 @@ target/
 
 # Test output & screenshots
 test-output/
+# ...EXCEPT the bug-detection report — published to a stable raw GitHub URL
+# so claude.ai Routine Runs can fetch it directly. Auto-refreshed by CI.
+!test-output/
+test-output/screenshots/
+test-output/visual-baselines/
+test-output/visual-diffs/
+test-output/healed-locators.json
+test-output/*.png
+test-output/*.html
+test-output/*.txt
+# Allow only the JSON the routine reads:
+!test-output/bug-detection-report.json
 
 # Extent reports (generated per run)
 reports/

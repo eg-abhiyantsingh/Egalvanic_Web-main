@@ -55,6 +55,35 @@ jobs:
       - name: Compile project
         run: mvn compile -B -q
 
+      - name: Download latest test-output from parallel-suite-2
+        # Best-effort: pull artifacts from the most recent successful Parallel Suite 2 run
+        # so the analyzers see fresh data. If no recent run exists, the analyzers fall
+        # back to whatever bug-detection-report.json is already in the repo.
+        uses: dawidd6/action-download-artifact@v3
+        continue-on-error: true
+        with:
+          workflow: parallel-suite-2.yml
+          workflow_conclusion: ""
+          name_is_regexp: true
+          name: ^reports-s2-.*$
+          path: ./
+          if_no_artifact_found: warn
+
+      - name: Locate bug-detection-report.json from artifacts
+        # Each matrix job in parallel-suite-2 writes its own report; we pick the LARGEST
+        # (most failures recorded) and copy it into the canonical location.
+        run: |
+          mkdir -p test-output
+          BIGGEST=$(find . -name "bug-detection-report.json" -not -path "./test-output/*" 2>/dev/null | \
+            xargs -I{} stat -c "%s {}" {} 2>/dev/null | sort -rn | head -1 | awk '{print $2}')
+          if [ -n "$BIGGEST" ] && [ -f "$BIGGEST" ]; then
+            cp "$BIGGEST" test-output/bug-detection-report.json
+            echo "Using fresh report from artifacts: $BIGGEST"
+            wc -c test-output/bug-detection-report.json
+          else
+            echo "No fresh artifact found; analyzers will read whatever is in test-output/ (stale or repo-committed)."
+          fi
+
       - name: Look for fresh test-output report
         id: check_input
         run: |
@@ -120,6 +149,9 @@ jobs:
           DATE=$(date +%Y-%m-%d)
           git add "daily-summary/${DATE}.md" 2>/dev/null || true
           git add "daily-summary/security-${DATE}.md" 2>/dev/null || true
+          # Also publish the fresh raw bug-detection-report.json so claude.ai
+          # Routine Runs can fetch it via raw GitHub URL (per .gitignore allowlist).
+          git add test-output/bug-detection-report.json 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0

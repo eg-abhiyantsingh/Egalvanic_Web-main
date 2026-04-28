@@ -1,0 +1,14 @@
+[{
+  "exceptionType": "AssertionError",
+  "riskLevel": "MEDIUM",
+  "testDurationMs": 27396,
+  "confidence": 50,
+  "rootCause": "Unclassified failure \u2014 needs manual investigation",
+  "aiEnhanced": false,
+  "suggestedFix": "Review the stack trace and screenshot",
+  "pageUrl": "unavailable (driver error)",
+  "classification": "REAL_BUG",
+  "exceptionMessage": "TC_Copy_03 crashed: invalid session id: session deleted as the browser has closed the connection\nfrom disconnected: not connected to DevTools\n  (Session info: chrome=147.0.7727.102)\nBuild info: version: '4.29.0', revision: '5fc1ec94cb'\nSystem info: os.name: 'Mac OS X', os.arch: 'aarch64', os.version: '15.7.3', java.version: '17.0.17'\nDriver info: org.openqa.selenium.chrome.ChromeDriver\nCommand: [ffd30b6958bedda67be7a469120e44c0, findElements {using=xpath, value=//button[contains(normalize-space(",
+  "testName": "com.egalvanic.qa.testcase.CopyToCopyFromTestNG.testTC_Copy_03_CopyFromDialogPicker",
+  "timestamp": "2026-04-27T20:38:54.597127"
+}]
