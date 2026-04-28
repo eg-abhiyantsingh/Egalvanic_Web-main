@@ -1,14 +1,14 @@
 [{
   "exceptionType": "AssertionError",
   "riskLevel": "MEDIUM",
-  "testDurationMs": 31556,
-  "confidence": 50,
-  "rootCause": "Unclassified failure \u2014 needs manual investigation",
+  "testDurationMs": 39643,
+  "confidence": 75,
+  "rootCause": "Assertion failed \u2014 data mismatch between expected and actual",
   "aiEnhanced": false,
-  "suggestedFix": "Review the stack trace and screenshot",
+  "suggestedFix": "Verify the application behavior manually. Check API response data.",
   "pageUrl": "https://acme.qa.egalvanic.ai/assets/b6c7dcaf-5f60-492f-88bb-968e75d355af",
   "classification": "REAL_BUG",
-  "exceptionMessage": "Copy Details From entry not found in Edit Asset drawer kebab. Expected location: Asset row → Edit → kebab → 'Copy Details From...' expected object to not be null",
-  "testName": "com.egalvanic.qa.testcase.CopyToCopyFromTestNG.testTC_Copy_01_CopyFromEntry",
-  "timestamp": "2026-04-28T12:46:50.957897"
+  "exceptionMessage": "Copy From dialog has no selectable source assets (radio rows). Either no other assets exist for this account or the picker DOM changed. expected [false] but found [true]",
+  "testName": "com.egalvanic.qa.testcase.CopyToCopyFromTestNG.testTC_Copy_03_CopyFromDialogPicker",
+  "timestamp": "2026-04-28T13:06:56.08964"
 }]

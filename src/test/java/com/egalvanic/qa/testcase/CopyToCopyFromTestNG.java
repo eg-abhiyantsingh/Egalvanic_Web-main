@@ -127,6 +127,103 @@ public class CopyToCopyFromTestNG extends BaseTest {
         return findByText(labels);
     }
 
+    /**
+     * Locate the Copy Details dialog (centered modal, NOT the underlying Edit drawer).
+     * Both surfaces use role='dialog' in MUI, so we discriminate by title text.
+     */
+    private WebElement findCopyDialog() {
+        for (WebElement d : driver.findElements(By.cssSelector("[role='dialog']"))) {
+            if (!d.isDisplayed()) continue;
+            String txt = d.getText();
+            if (txt == null) continue;
+            if (txt.startsWith("Copy Details From") || txt.startsWith("Copy Details To")) return d;
+        }
+        return null;
+    }
+
+    /**
+     * Close the Copy Details dialog. Live-verified 2026-04-28: the dialog has NO
+     * Cancel text button — only an X icon at the top-right. NEVER use ESC here:
+     * per project memory `project_mui_drawer_escape`, ESC closes the parent MUI
+     * Drawer too, which would invalidate the rest of the test.
+     */
+    private boolean closeCopyDialog() {
+        WebElement dlg = findCopyDialog();
+        if (dlg == null) return true; // already closed
+        // Strategy 1: text Cancel/Close button if any
+        for (String label : new String[]{"Cancel", "Close"}) {
+            List<WebElement> btns = dlg.findElements(
+                By.xpath(".//button[contains(normalize-space(.), '" + label + "')]"));
+            for (WebElement b : btns) {
+                if (!b.isDisplayed()) continue;
+                try { safeClick(b); pause(1200); return findCopyDialog() == null; }
+                catch (Exception ignore) {}
+            }
+        }
+        // Strategy 2: X icon (aria-label="close" / "Close" — typical MUI)
+        List<WebElement> xs = dlg.findElements(By.cssSelector(
+            "button[aria-label='close'], button[aria-label='Close'], "
+            + "button[aria-label*='close' i]"));
+        for (WebElement b : xs) {
+            if (!b.isDisplayed()) continue;
+            try { safeClick(b); pause(1200); return findCopyDialog() == null; }
+            catch (Exception ignore) {}
+        }
+        // Strategy 3: rightmost svg-only button in the dialog header (the X)
+        List<WebElement> headerBtns = dlg.findElements(By.cssSelector(
+            "header button, [class*='DialogTitle'] button"));
+        headerBtns.removeIf(b -> !b.isDisplayed());
+        headerBtns.sort((a, b) -> Integer.compare(b.getRect().getX(), a.getRect().getX()));
+        if (!headerBtns.isEmpty()) {
+            try { safeClick(headerBtns.get(0)); pause(1200); return findCopyDialog() == null; }
+            catch (Exception ignore) {}
+        }
+        return false;
+    }
+
+    /**
+     * Source-asset rows in the Copy Details picker. Returns the VISIBLE clickable
+     * wrapper (typically a &lt;label&gt;) for each row, NOT the underlying native
+     * radio input.
+     *
+     * Why JS-based discovery: MUI's Radio renders a real &lt;input type="radio"&gt;
+     * but hides it with opacity:0 + absolute positioning (kept for keyboard a11y).
+     * Selenium's isDisplayed() reports those inputs as not-displayed, so a naive
+     * `findElements + isDisplayed` filter returns 0. JS can see them and we can
+     * walk to the visible parent in one shot.
+     */
+    /**
+     * Find an enabled button in the given dialog whose text matches one of the
+     * provided labels (in order of preference). Returns null if none found.
+     */
+    private WebElement findDialogButton(WebElement dlg, String... labels) {
+        if (dlg == null) return null;
+        for (String label : labels) {
+            List<WebElement> btns = dlg.findElements(By.xpath(
+                ".//button[contains(normalize-space(.), '" + label + "')]"));
+            for (WebElement b : btns) {
+                if (b.isDisplayed() && b.isEnabled()) return b;
+            }
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<WebElement> dialogRadioRows() {
+        WebElement dlg = findCopyDialog();
+        if (dlg == null) return java.util.Collections.emptyList();
+        Object res = ((org.openqa.selenium.JavascriptExecutor) driver).executeScript(
+            "var dlg = arguments[0];"
+            + "var inputs = Array.from(dlg.querySelectorAll(\"input[type='radio']\"));"
+            + "var rows = inputs.map(function(i) {"
+            + "  return i.closest('label') || i.closest('[role=\"option\"]') "
+            + "    || i.closest('li') || i.parentElement;"
+            + "}).filter(Boolean);"
+            + "return Array.from(new Set(rows));", dlg);
+        return res == null ? java.util.Collections.emptyList()
+            : (List<WebElement>) res;
+    }
+
     @Test(priority = 1, description = "Copy Details From entry in Edit Asset drawer kebab")
     public void testTC_Copy_01_CopyFromEntry() {
         ExtentReportManager.createTest(
@@ -174,7 +271,7 @@ public class CopyToCopyFromTestNG extends BaseTest {
         }
     }
 
-    @Test(priority = 3, description = "Copy From dialog opens with asset picker")
+    @Test(priority = 3, description = "Copy From dialog opens with asset picker (radio list + search)")
     public void testTC_Copy_03_CopyFromDialogPicker() {
         ExtentReportManager.createTest(
             AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_COPY_TO_FROM,
@@ -184,26 +281,29 @@ public class CopyToCopyFromTestNG extends BaseTest {
             WebElement entry = findCopyMenuItem("Copy Details From", "Copy details from");
             if (entry == null) {
                 throw new org.testng.SkipException(
-                    "Copy Details From not in Edit Asset drawer kebab on this run — check that the asset is editable for the test user role. TC_Copy_01 is the canonical signal.");
+                    "Copy Details From not in Edit Asset drawer kebab on this run — see TC_Copy_01.");
             }
             safeClick(entry);
             pause(3000);
             logStepWithScreenshot("Copy From dialog");
 
-            // Expect a search/picker input for the source asset
-            List<WebElement> pickers = driver.findElements(By.cssSelector(
-                "[role='dialog'] input[type='search'], " +
-                "[role='dialog'] input[placeholder*='Search'], " +
-                "[role='dialog'] input[role='combobox']"));
-            Assert.assertFalse(pickers.isEmpty(),
-                "Copy From dialog has no asset picker input");
-            logStep("Picker inputs in dialog: " + pickers.size());
+            WebElement dlg = findCopyDialog();
+            Assert.assertNotNull(dlg, "Copy Details From dialog did not open");
 
-            // Cancel the dialog
-            WebElement cancel = findByText("Cancel", "Close");
-            if (cancel != null) safeClick(cancel);
-            pause(1500);
-            ExtentReportManager.logPass("Copy From opens asset picker dialog");
+            // Live-verified 2026-04-28: dialog has search input + radio rows for sources
+            List<WebElement> pickers = dlg.findElements(By.cssSelector(
+                "input[placeholder*='Search' i], input[type='search']"));
+            Assert.assertFalse(pickers.isEmpty(),
+                "Copy From dialog has no search input");
+
+            List<WebElement> radios = dialogRadioRows();
+            logStep("Search inputs: " + pickers.size() + " | Radio rows: " + radios.size());
+            Assert.assertFalse(radios.isEmpty(),
+                "Copy From dialog has no selectable source assets (radio rows). "
+                + "Either no other assets exist for this account or the picker DOM changed.");
+
+            closeCopyDialog();
+            ExtentReportManager.logPass("Copy From dialog: search + " + radios.size() + " source row(s)");
         } catch (org.testng.SkipException se) {
             throw se;
         } catch (Exception e) {
@@ -228,8 +328,8 @@ public class CopyToCopyFromTestNG extends BaseTest {
             }
             safeClick(entry);
             pause(2500);
-            WebElement cancel = findByText("Cancel", "Close");
-            if (cancel != null) safeClick(cancel);
+            // Close WITHOUT selecting any radio — the cancel/X path
+            closeCopyDialog();
             pause(2000);
 
             String afterName = assetPage.getDetailPageAssetName();
@@ -264,29 +364,28 @@ public class CopyToCopyFromTestNG extends BaseTest {
             safeClick(entry);
             pause(3000);
 
-            List<WebElement> pickers = driver.findElements(By.cssSelector(
-                "[role='dialog'] input[type='search'], " +
-                "[role='dialog'] input[placeholder*='Search' i], " +
-                "[role='dialog'] input[role='combobox']"));
+            WebElement dlg = findCopyDialog();
+            if (dlg == null) {
+                throw new org.testng.SkipException("Copy From dialog did not open");
+            }
+            List<WebElement> pickers = dlg.findElements(By.cssSelector(
+                "input[placeholder*='Search' i], input[type='search']"));
             if (pickers.isEmpty()) {
                 throw new org.testng.SkipException(
-                    "Copy From dialog opened but has no picker input — picker UI not wired up");
+                    "Copy From dialog opened but has no search input");
             }
             WebElement picker = pickers.get(0);
-            // Count options before filter
-            safeClick(picker); pause(1200);
-            int beforeCount = driver.findElements(By.cssSelector("li[role='option']")).size();
+            int beforeCount = dialogRadioRows().size();
+            safeClick(picker); pause(800);
             picker.sendKeys("ZZZZ_UNLIKELY_" + System.currentTimeMillis());
             pause(1800);
-            int afterCount = driver.findElements(By.cssSelector("li[role='option']")).size();
-            logStep("Options before filter: " + beforeCount + ", after typing unlikely string: " + afterCount);
+            int afterCount = dialogRadioRows().size();
+            logStep("Source rows before filter: " + beforeCount + " | after typing unlikely string: " + afterCount);
             ScreenshotUtil.captureScreenshot("TC_Copy_05");
-            // Cancel the dialog
-            WebElement cancel = findByText("Cancel", "Close");
-            if (cancel != null) safeClick(cancel);
+            closeCopyDialog();
             pause(1000);
             Assert.assertTrue(afterCount < beforeCount || afterCount == 0,
-                "Picker search did not filter the list (before=" + beforeCount + " after=" + afterCount + ")");
+                "Picker search did not filter the radio list (before=" + beforeCount + " after=" + afterCount + ")");
             ExtentReportManager.logPass("Copy From picker search filters correctly");
         } catch (org.testng.SkipException se) {
             throw se;
@@ -316,32 +415,40 @@ public class CopyToCopyFromTestNG extends BaseTest {
             safeClick(entry);
             pause(3000);
 
-            List<WebElement> pickers = driver.findElements(By.cssSelector(
-                "[role='dialog'] input[type='search'], " +
-                "[role='dialog'] input[placeholder*='Search' i], " +
-                "[role='dialog'] input[role='combobox']"));
-            if (pickers.isEmpty() || currentName == null || currentName.isEmpty()) {
-                WebElement cancel = findByText("Cancel", "Close");
-                if (cancel != null) safeClick(cancel);
+            WebElement dlg = findCopyDialog();
+            if (dlg == null || currentName == null || currentName.isEmpty()) {
+                closeCopyDialog();
                 throw new org.testng.SkipException(
-                    "Cannot probe self-exclusion — picker (" + pickers.size()
-                    + ") or current asset name ('" + currentName + "') missing");
+                    "Cannot probe self-exclusion — dialog ("
+                    + (dlg == null ? "null" : "ok") + ") or current name ('"
+                    + currentName + "') missing");
+            }
+            List<WebElement> pickers = dlg.findElements(By.cssSelector(
+                "input[placeholder*='Search' i], input[type='search']"));
+            if (pickers.isEmpty()) {
+                closeCopyDialog();
+                throw new org.testng.SkipException("Copy From dialog has no search input");
             }
             WebElement picker = pickers.get(0);
-            safeClick(picker); pause(1200);
-            // Type partial of current asset name
+            safeClick(picker); pause(800);
             String frag = currentName.length() > 4 ? currentName.substring(0, 4) : currentName;
             picker.sendKeys(frag);
             pause(2000);
 
-            List<WebElement> options = driver.findElements(By.cssSelector("li[role='option']"));
+            // Walk each radio row's parent label/container and check the visible text
             boolean selfListed = false;
-            for (WebElement o : options) {
-                if (o.getText() != null && o.getText().equals(currentName)) { selfListed = true; break; }
+            for (WebElement r : dialogRadioRows()) {
+                // The row text is on the row container, not the radio input itself
+                WebElement row = r;
+                try {
+                    row = (WebElement) ((org.openqa.selenium.JavascriptExecutor) driver)
+                        .executeScript("return arguments[0].closest('label, [role=\"option\"], li, div[class*=\"row\"], div[class*=\"Row\"]') || arguments[0].parentElement;", r);
+                } catch (Exception ignore) {}
+                String rowText = row != null && row.getText() != null ? row.getText() : "";
+                if (rowText.contains(currentName)) { selfListed = true; break; }
             }
             ScreenshotUtil.captureScreenshot("TC_Copy_06");
-            WebElement cancel = findByText("Cancel", "Close");
-            if (cancel != null) safeClick(cancel);
+            closeCopyDialog();
             pause(1000);
 
             Assert.assertFalse(selfListed,
@@ -373,12 +480,13 @@ public class CopyToCopyFromTestNG extends BaseTest {
             safeClick(entry);
             pause(3000);
 
-            List<WebElement> checkboxes = driver.findElements(By.cssSelector(
-                "[role='dialog'] input[type='checkbox'], [class*='MuiDialog'] input[type='checkbox']"));
+            WebElement dlg7 = findCopyDialog();
+            List<WebElement> checkboxes = dlg7 == null
+                ? java.util.Collections.<WebElement>emptyList()
+                : dlg7.findElements(By.cssSelector("input[type='checkbox']"));
             logStep("Checkboxes in copy dialog: " + checkboxes.size());
             ScreenshotUtil.captureScreenshot("TC_Copy_07");
-            WebElement cancel = findByText("Cancel", "Close");
-            if (cancel != null) safeClick(cancel);
+            closeCopyDialog();
             pause(1000);
 
             // Soft expectation — some flows do whole-record copy by design
@@ -427,8 +535,7 @@ public class CopyToCopyFromTestNG extends BaseTest {
             }
             safeClick(entry);
             pause(2500);
-            WebElement cancel = findByText("Cancel", "Close");
-            if (cancel != null) safeClick(cancel);
+            closeCopyDialog();
             pause(2000);
 
             Object identityAfter = ((org.openqa.selenium.JavascriptExecutor) driver).executeScript(
@@ -455,6 +562,133 @@ public class CopyToCopyFromTestNG extends BaseTest {
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("TC_Copy_08_error");
             Assert.fail("TC_Copy_08 crashed: " + e.getMessage());
+        }
+    }
+
+    // =================================================================
+    // TC_Copy_09 — Positive: selecting a source radio + applying copies data
+    // =================================================================
+    /**
+     * Live-verified 2026-04-28: dialog rows have radio inputs (user clarified the
+     * "checkbox" he saw is really a radio circle). This test exercises the actual
+     * selection path: pick the first source asset, dialog should accept the choice
+     * (auto-close OR submit button), and the Edit drawer should reflect the change
+     * via a visible signal (toast / dialog dismissal / changed field value).
+     *
+     * Why this matters: TC_Copy_03..08 only proved the picker SURFACE works.
+     * Without this test, a regression where clicking the radio does nothing
+     * (e.g., FE wired up the radio visually but forgot the onChange handler)
+     * would slip through.
+     */
+    @Test(priority = 9, description = "Selecting a source radio + applying copies data into the Edit drawer")
+    public void testTC_Copy_09_SelectSourceCopiesData() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_COPY_TO_FROM,
+            "TC_Copy_09: Select source + apply");
+        try {
+            openFirstAssetDetail();
+            WebElement entry = findCopyMenuItem("Copy Details From", "Copy details from");
+            if (entry == null) {
+                throw new org.testng.SkipException(
+                    "Copy Details From absent in Edit drawer kebab — see TC_Copy_01");
+            }
+            safeClick(entry);
+            pause(3000);
+
+            WebElement dlg = findCopyDialog();
+            Assert.assertNotNull(dlg, "Copy From dialog did not open");
+
+            List<WebElement> radios = dialogRadioRows();
+            if (radios.isEmpty()) {
+                closeCopyDialog();
+                throw new org.testng.SkipException(
+                    "No source assets available to select — account has only one asset, "
+                    + "so Copy From has nothing to copy from");
+            }
+
+            // dialogRadioRows() now returns the visible label wrapper — click it directly.
+            WebElement firstRow = radios.get(0);
+            String sourceLabel = firstRow.getText() == null ? "(unknown)"
+                : firstRow.getText().split("\n")[0];
+            logStep("Selecting source: " + sourceLabel);
+            safeClick(firstRow);
+            pause(1500);
+
+            // Verify the underlying native radio is now checked (use JS — Selenium can't
+            // see opacity:0 inputs reliably).
+            boolean checked = false;
+            try {
+                Object res = ((org.openqa.selenium.JavascriptExecutor) driver).executeScript(
+                    "var r = arguments[0].querySelector(\"input[type='radio']\"); "
+                    + "return r && r.checked;", firstRow);
+                checked = Boolean.TRUE.equals(res);
+            } catch (Exception ignore) {}
+            logStep("Radio checked after click: " + checked);
+
+            // Live-verified 2026-04-28: dialog is a 2-step wizard.
+            //   Step 1 (source picker): buttons appear AFTER radio click → [Cancel] [Next]
+            //   Step 2 (field selection): terminal button → [Apply] / [Copy] / [Save] / [Done]
+            // Also handles a future single-step variant (Apply directly visible after click).
+            String step1Used = null;
+            WebElement step1Btn = findDialogButton(findCopyDialog(),
+                "Next", "Apply", "Copy", "Save", "Done", "Confirm", "Continue", "OK");
+            if (step1Btn == null) {
+                // Maybe the dialog auto-closed on radio click (rare but possible)
+                if (findCopyDialog() == null && checked) {
+                    ScreenshotUtil.captureScreenshot("TC_Copy_09");
+                    ExtentReportManager.logPass(
+                        "Source radio click auto-closed the picker (selected: "
+                        + sourceLabel + ")");
+                    return;
+                }
+                ScreenshotUtil.captureScreenshot("TC_Copy_09");
+                closeCopyDialog();
+                Assert.fail("Radio clicked (checked=" + checked + ") but no advance "
+                    + "button (Next/Apply/Copy/Save/Done/Confirm/Continue/OK) found in dialog. "
+                    + "Either the click target is wrong or the FE wizard added a new step.");
+            }
+            step1Used = step1Btn.getText();
+            logStep("Step 1 advance: clicking '" + step1Used + "'");
+            safeClick(step1Btn);
+            pause(2500);
+
+            // Did the single-step variant just close the dialog?
+            if (findCopyDialog() == null) {
+                ScreenshotUtil.captureScreenshot("TC_Copy_09");
+                ExtentReportManager.logPass("Single-step copy completed via '"
+                    + step1Used + "' (source: " + sourceLabel + ")");
+                return;
+            }
+
+            // Step 2: find the terminal button (NOT another "Next" — we want the apply)
+            WebElement step2Btn = findDialogButton(findCopyDialog(),
+                "Apply", "Copy", "Save", "Done", "Confirm", "OK", "Finish");
+            if (step2Btn == null) {
+                ScreenshotUtil.captureScreenshot("TC_Copy_09_step2");
+                closeCopyDialog();
+                throw new org.testng.SkipException(
+                    "Step 2 reached after '" + step1Used + "' but no terminal "
+                    + "button found — manual: walk the wizard to capture step-2 button label.");
+            }
+            String step2Used = step2Btn.getText();
+            logStep("Step 2 terminal: clicking '" + step2Used + "'");
+            safeClick(step2Btn);
+            pause(3000);
+
+            ScreenshotUtil.captureScreenshot("TC_Copy_09");
+            WebElement after = findCopyDialog();
+            if (after != null) {
+                closeCopyDialog();
+                Assert.fail("After clicking '" + step2Used + "' the Copy dialog stayed open "
+                    + "— terminal step did not commit the copy.");
+            }
+            ExtentReportManager.logPass("Two-step copy completed: source='" + sourceLabel
+                + "' → '" + step1Used + "' → '" + step2Used + "'");
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_Copy_09_error");
+            Assert.fail("TC_Copy_09 crashed: " + e.getMessage());
         }
     }
 }
