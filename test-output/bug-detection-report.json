@@ -1,14 +1,14 @@
 [{
   "exceptionType": "AssertionError",
   "riskLevel": "MEDIUM",
-  "testDurationMs": 39643,
+  "testDurationMs": 46561,
   "confidence": 75,
   "rootCause": "Assertion failed \u2014 data mismatch between expected and actual",
   "aiEnhanced": false,
   "suggestedFix": "Verify the application behavior manually. Check API response data.",
-  "pageUrl": "https://acme.qa.egalvanic.ai/assets/b6c7dcaf-5f60-492f-88bb-968e75d355af",
+  "pageUrl": "https://acme.qa.egalvanic.ai/assets/1ac4f70f-1689-4c85-9820-1f6128465f04",
   "classification": "REAL_BUG",
-  "exceptionMessage": "Copy From dialog has no selectable source assets (radio rows). Either no other assets exist for this account or the picker DOM changed. expected [false] but found [true]",
-  "testName": "com.egalvanic.qa.testcase.CopyToCopyFromTestNG.testTC_Copy_03_CopyFromDialogPicker",
-  "timestamp": "2026-04-28T13:06:56.08964"
+  "exceptionMessage": "Copy From completed but ZERO drawer fields changed. Either the source asset has identical data to the target (unlikely if names differ) OR the FE wired Apply but the copy didn't write to drawer state. Source: Light, target: AutoTest_20260406_092222 expected [false] but found [true]",
+  "testName": "com.egalvanic.qa.testcase.CopyToCopyFromTestNG.testTC_Copy_10_FullCopyFromMutatesData",
+  "timestamp": "2026-04-28T13:51:42.86933"
 }]
