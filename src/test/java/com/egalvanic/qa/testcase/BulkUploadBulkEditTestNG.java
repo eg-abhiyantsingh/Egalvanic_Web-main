@@ -48,6 +48,67 @@ public class BulkUploadBulkEditTestNG extends BaseTest {
     }
 
     /**
+     * Open the "Bulk Edit ▼" dropdown on the Assets page toolbar, then find
+     * and return the menu item matching one of the given label substrings.
+     * Returns null if the dropdown didn't open OR the item isn't there.
+     *
+     * Live-verified 2026-04-28: Bulk Edit ▼ contains exactly 3 items:
+     *   - Bulk Export      (downloads XLSX)
+     *   - Bulk Import      (opens import dialog)
+     *   - Download Template
+     *
+     * Used by TC_Bulk_01/02/05/06/07 — those tests originally looked for
+     * top-level buttons with names like "Bulk Upload" that DON'T EXIST in
+     * production. The labels are nested inside this dropdown.
+     */
+    private WebElement findBulkEditMenuItem(String... candidateLabels) {
+        // Click the Bulk Edit dropdown trigger
+        List<WebElement> bulkEditBtns = driver.findElements(By.xpath(
+            "//button[normalize-space()='Bulk Edit'] | "
+            + "//button[contains(normalize-space(.), 'Bulk Edit')] | "
+            + "//*[@role='button'][contains(normalize-space(.), 'Bulk Edit')]"));
+        WebElement bulkEditBtn = null;
+        for (WebElement b : bulkEditBtns) {
+            if (b.isDisplayed()) { bulkEditBtn = b; break; }
+        }
+        if (bulkEditBtn == null) return null;
+        try {
+            js().executeScript("arguments[0].scrollIntoView({block:'center'});", bulkEditBtn);
+            pause(300);
+            safeClick(bulkEditBtn);
+            pause(1500);
+        } catch (Exception ignore) {
+            return null;
+        }
+        // Find any menu item whose text contains one of the candidate labels
+        for (String label : candidateLabels) {
+            List<WebElement> items = driver.findElements(By.xpath(
+                "//*[@role='menuitem' and contains(normalize-space(.), '" + label + "')] | "
+                + "//li[contains(@class, 'MuiMenuItem')][contains(normalize-space(.), '" + label + "')]"));
+            for (WebElement it : items) {
+                if (it.isDisplayed()) return it;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Open the Bulk Edit dropdown and click "Bulk Import" to open the import
+     * dialog. Returns true if the click succeeded.
+     */
+    private boolean openBulkImportDialog() {
+        WebElement importItem = findBulkEditMenuItem("Bulk Import", "Import");
+        if (importItem == null) return false;
+        try {
+            safeClick(importItem);
+            pause(2500);
+            return true;
+        } catch (Exception ignore) {
+            return false;
+        }
+    }
+
+    /**
      * Open the page-level kebab / more menu if present. Returns true if opened.
      */
     private boolean openMoreMenu() {
@@ -65,29 +126,36 @@ public class BulkUploadBulkEditTestNG extends BaseTest {
     // =================================================================
     // TC_Bulk_01 — Bulk Upload entry point visible
     // =================================================================
-    @Test(priority = 1, description = "Bulk Upload entry point (button or menu item) is present on Assets")
+    @Test(priority = 1, description = "Bulk Import entry point reachable via Bulk Edit ▼ dropdown")
     public void testTC_Bulk_01_BulkUploadEntryPoint() {
         ExtentReportManager.createTest(
             AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_BULK_UPLOAD,
-            "TC_Bulk_01: Bulk Upload entry");
+            "TC_Bulk_01: Bulk Import entry");
         try {
             assetPage.navigateToAssets();
             pause(3000);
             logStepWithScreenshot("Assets page loaded");
 
-            WebElement entry = findByText("Bulk Upload", "Bulk Import", "Import Assets", "Upload CSV");
-            if (entry == null) {
-                // Maybe it's behind a kebab menu
-                if (openMoreMenu()) {
-                    entry = findByText("Bulk Upload", "Bulk Import", "Import Assets", "Upload CSV");
-                }
-            }
+            // Live-verified 2026-04-28: Bulk Import is NOT a top-level button.
+            // It lives inside the Bulk Edit ▼ dropdown on the Assets toolbar.
+            // Earlier this test searched for "Bulk Upload" / "Bulk Import" /
+            // "Import Assets" / "Upload CSV" as direct buttons — none exist
+            // in production. Routed through the dropdown helper.
+            WebElement entry = findBulkEditMenuItem("Bulk Import", "Bulk Upload", "Import");
             ScreenshotUtil.captureScreenshot("TC_Bulk_01");
             Assert.assertNotNull(entry,
-                "Bulk Upload entry point not found on Assets — expected button or menu item " +
-                "'Bulk Upload' / 'Bulk Import' / 'Import Assets' / 'Upload CSV'");
-            logStep("Bulk Upload entry point found: " + entry.getText());
-            ExtentReportManager.logPass("Bulk Upload entry point present");
+                "Bulk Import entry point not reachable via Bulk Edit ▼ dropdown. "
+                + "Expected menu item 'Bulk Import' (or 'Bulk Upload'/'Import' "
+                + "for label resilience).");
+            logStep("Bulk Import entry point found: " + entry.getText());
+
+            // Cleanup: ESC to close the dropdown so the next test starts clean
+            try {
+                driver.findElement(By.tagName("body")).sendKeys(org.openqa.selenium.Keys.ESCAPE);
+            } catch (Exception ignore) {}
+            pause(500);
+
+            ExtentReportManager.logPass("Bulk Import entry point present in Bulk Edit ▼");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("TC_Bulk_01_error");
             Assert.fail("TC_Bulk_01 crashed: " + e.getMessage());
@@ -97,23 +165,20 @@ public class BulkUploadBulkEditTestNG extends BaseTest {
     // =================================================================
     // TC_Bulk_02 — Bulk Upload dialog opens and accepts file selection
     // =================================================================
-    @Test(priority = 2, description = "Bulk Upload dialog opens and accepts CSV/XLSX file",
+    @Test(priority = 2, description = "Bulk Import dialog opens via Bulk Edit ▼ dropdown and accepts a CSV/XLSX file",
           dependsOnMethods = "testTC_Bulk_01_BulkUploadEntryPoint", alwaysRun = false)
     public void testTC_Bulk_02_BulkUploadDialog() {
         ExtentReportManager.createTest(
             AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_BULK_UPLOAD,
-            "TC_Bulk_02: Bulk Upload dialog");
+            "TC_Bulk_02: Bulk Import dialog");
         try {
             assetPage.navigateToAssets();
             pause(2500);
-            WebElement entry = findByText("Bulk Upload", "Bulk Import", "Import Assets", "Upload CSV");
-            if (entry == null && openMoreMenu()) {
-                entry = findByText("Bulk Upload", "Bulk Import", "Import Assets", "Upload CSV");
-            }
-            Assert.assertNotNull(entry, "Bulk Upload entry missing — TC_Bulk_01 should have caught this");
-            safeClick(entry);
-            pause(2500);
-            logStepWithScreenshot("Bulk Upload dialog opened");
+            // Open dropdown → click Bulk Import to reach the file-upload dialog
+            Assert.assertTrue(openBulkImportDialog(),
+                "Could not open Bulk Import dialog via Bulk Edit ▼ dropdown — "
+                + "see TC_Bulk_01 for entry-point check");
+            logStepWithScreenshot("Bulk Import dialog opened");
 
             // Expect a file input OR a dropzone
             js().executeScript(
@@ -254,29 +319,38 @@ public class BulkUploadBulkEditTestNG extends BaseTest {
     // =================================================================
     // TC_Bulk_05 — Template download available in Bulk Upload dialog
     // =================================================================
-    @Test(priority = 5, description = "Bulk Upload dialog offers a downloadable CSV template")
+    @Test(priority = 5, description = "Download Template item available in Bulk Edit ▼ dropdown")
     public void testTC_Bulk_05_TemplateDownload() {
         ExtentReportManager.createTest(
             AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_BULK_UPLOAD,
-            "TC_Bulk_05: Template download");
+            "TC_Bulk_05: Template download item");
         try {
             assetPage.navigateToAssets();
             pause(2500);
-            WebElement entry = findByText("Bulk Upload", "Bulk Import", "Import Assets", "Upload CSV");
-            if (entry == null && openMoreMenu()) {
-                entry = findByText("Bulk Upload", "Bulk Import", "Import Assets", "Upload CSV");
-            }
-            if (entry == null) { logWarning("No Bulk Upload entry — skip"); return; }
-            safeClick(entry);
-            pause(2500);
 
-            WebElement template = findByText("Download Template", "CSV Template", "Sample CSV",
-                "Example", "Template", "Download Sample");
+            // Live-verified: "Download Template" is a SIBLING menu item in
+            // the Bulk Edit ▼ dropdown — NOT nested inside the Bulk Import
+            // dialog. Per user screenshot the dropdown contains 3 items:
+            // Bulk Export, Bulk Import, Download Template. Earlier this test
+            // looked for the link inside an opened Bulk Upload dialog —
+            // wrong surface.
+            WebElement template = findBulkEditMenuItem("Download Template",
+                "CSV Template", "Template", "Download Sample");
             ScreenshotUtil.captureScreenshot("TC_Bulk_05");
             Assert.assertNotNull(template,
-                "Bulk Upload dialog has no template/sample download link — users won't know the CSV format");
-            logStep("Template link: " + template.getText());
-            ExtentReportManager.logPass("Template download link present in Bulk Upload");
+                "'Download Template' item not found in Bulk Edit ▼ dropdown. "
+                + "Users won't know the CSV/XLSX format if the template "
+                + "isn't easily discoverable.");
+            logStep("Template item found: " + template.getText());
+
+            // Cleanup: ESC to close the dropdown (DO NOT click Download — that
+            // would trigger an actual file download we'd need to clean up)
+            try {
+                driver.findElement(By.tagName("body")).sendKeys(org.openqa.selenium.Keys.ESCAPE);
+            } catch (Exception ignore) {}
+            pause(500);
+
+            ExtentReportManager.logPass("Download Template item present in Bulk Edit ▼");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("TC_Bulk_05_error");
             Assert.fail("TC_Bulk_05 crashed: " + e.getMessage());
@@ -294,13 +368,11 @@ public class BulkUploadBulkEditTestNG extends BaseTest {
         try {
             assetPage.navigateToAssets();
             pause(2500);
-            WebElement entry = findByText("Bulk Upload", "Bulk Import", "Import Assets", "Upload CSV");
-            if (entry == null && openMoreMenu()) {
-                entry = findByText("Bulk Upload", "Bulk Import", "Import Assets", "Upload CSV");
+            // Open Bulk Import dialog via the Bulk Edit ▼ dropdown (real surface)
+            if (!openBulkImportDialog()) {
+                logWarning("Could not open Bulk Import dialog via Bulk Edit ▼ — skip");
+                return;
             }
-            if (entry == null) { logWarning("No Bulk Upload entry — skip"); return; }
-            safeClick(entry);
-            pause(2500);
 
             File bad = new File("/tmp/bulk-bad.csv");
             // CSV with only garbage columns, no required headers
@@ -313,20 +385,27 @@ public class BulkUploadBulkEditTestNG extends BaseTest {
             inputs.get(inputs.size() - 1).sendKeys(bad.getAbsolutePath());
             pause(4000);
 
-            // Look for any validation/error indication
-            List<WebElement> errors = driver.findElements(By.xpath(
-                "//*[contains(normalize-space(.), 'error') or contains(normalize-space(.), 'invalid') or " +
-                "contains(normalize-space(.), 'required') or contains(normalize-space(.), 'missing') or " +
-                "contains(normalize-space(.), 'format')]"));
-            int visibleErrors = 0;
-            for (WebElement e : errors) {
-                if (e.isDisplayed() && e.getText().length() < 300) visibleErrors++;
-            }
-            logStep("Validation messages visible: " + visibleErrors);
+            // Live-verified 2026-04-28: Bulk Import accepts ONLY .xlsx/.xls (not .csv).
+            // Uploading a .csv file shows: "Please select a valid Excel file (.xlsx or .xls)"
+            // — that's the user-visible validation feedback. The previous regex looked
+            // for words like 'error/invalid/required/missing/format', none of which
+            // appear in the actual message. Widened to catch "valid Excel" / "Please
+            // select" / generic invalid-file copy.
+            String validationText = (String) js().executeScript(
+                "var t = document.body ? document.body.textContent : '';"
+                + "var patterns = [/please select.*valid/i, /valid (excel|xlsx|xls)/i, "
+                + "/invalid file/i, /not a valid/i, /unsupported file/i, "
+                + "/wrong format/i, /must be.*\\.(xlsx|xls)/i];"
+                + "for (var p of patterns) { var m = t.match(p); if (m) return m[0]; }"
+                + "return null;");
+            logStep("Validation message matched: " + validationText);
             ScreenshotUtil.captureScreenshot("TC_Bulk_06");
-            Assert.assertTrue(visibleErrors > 0,
-                "No validation error shown for malformed CSV — may accept silently");
-            ExtentReportManager.logPass("Malformed CSV triggers validation feedback");
+            Assert.assertNotNull(validationText,
+                "No validation feedback shown for invalid file (.csv uploaded but FE "
+                + "should reject — only .xlsx/.xls accepted). Either FE silently "
+                + "accepts the wrong file type OR the validation copy changed.");
+            ExtentReportManager.logPass("Wrong-file-type validation feedback shown: '"
+                + validationText + "'");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("TC_Bulk_06_error");
             Assert.fail("TC_Bulk_06 crashed: " + e.getMessage());
@@ -344,13 +423,11 @@ public class BulkUploadBulkEditTestNG extends BaseTest {
         try {
             assetPage.navigateToAssets();
             pause(2500);
-            WebElement entry = findByText("Bulk Upload", "Bulk Import", "Import Assets", "Upload CSV");
-            if (entry == null && openMoreMenu()) {
-                entry = findByText("Bulk Upload", "Bulk Import", "Import Assets", "Upload CSV");
+            // Open Bulk Import dialog via the Bulk Edit ▼ dropdown (real surface)
+            if (!openBulkImportDialog()) {
+                logWarning("Could not open Bulk Import dialog via Bulk Edit ▼ — skip");
+                return;
             }
-            if (entry == null) { logWarning("No Bulk Upload entry — skip"); return; }
-            safeClick(entry);
-            pause(2500);
 
             File good = createSampleCsv();
             js().executeScript("document.querySelectorAll('input[type=\"file\"]').forEach(function(i){" +

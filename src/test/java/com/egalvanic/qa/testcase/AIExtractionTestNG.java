@@ -39,6 +39,34 @@ public class AIExtractionTestNG extends BaseTest {
     private JavascriptExecutor js() { return (JavascriptExecutor) driver; }
 
     /**
+     * Open the Edit Asset drawer for the first asset in the grid. The AI
+     * extraction button ("Extract from Photos") lives in this drawer — NOT
+     * the Create form. Live-verified 2026-04-28: Create form (Add Asset
+     * drawer) only collects basic info; AI extraction needs a class definition
+     * which only exists post-creation.
+     *
+     * Returns true if the drawer is open + showing edit fields.
+     */
+    private boolean openEditAssetDrawerForFirstAsset() {
+        try {
+            assetPage.navigateToAssets();
+            pause(3000);
+            List<WebElement> rows = driver.findElements(By.cssSelector(".MuiDataGrid-row"));
+            if (rows.isEmpty()) return false;
+            safeClick(rows.get(0));
+            pause(3500);
+            assetPage.clickKebabMenuItem("Edit Asset");
+            pause(2500);
+            String body = driver.findElement(By.tagName("body")).getText();
+            return body.contains("Edit Asset") || body.contains("BASIC INFO");
+        } catch (Exception e) {
+            System.out.println("[AIExtractionTestNG] openEditAssetDrawerForFirstAsset failed: "
+                    + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Locate the AI extraction trigger button anywhere on the page (works for
      * both the asset Create form and the asset Edit drawer).
      *
@@ -122,13 +150,13 @@ public class AIExtractionTestNG extends BaseTest {
             "TC_AIExt_02: Extraction populates fields");
 
         try {
-            // Form may still be open from previous test; if not, reopen
+            // Drawer may still be open from previous test; if not, reopen via the
+            // Edit drawer surface (post-refactor — Create form doesn't have AI extract)
             List<WebElement> openForm = driver.findElements(
                 By.cssSelector("[role='dialog'], [class*='MuiDrawer-paper']"));
             if (openForm.isEmpty() || !openForm.get(0).isDisplayed()) {
-                assetPage.navigateToAssets();
-                assetPage.openCreateAssetForm();
-                pause(2500);
+                Assert.assertTrue(openEditAssetDrawerForFirstAsset(),
+                    "Could not reopen Edit Asset drawer — see TC_AIExt_01");
             }
 
             WebElement btn = findAIExtractButton();
@@ -194,8 +222,9 @@ public class AIExtractionTestNG extends BaseTest {
 
         try {
             assetPage.navigateToAssets();
-            assetPage.openCreateAssetForm();
-            pause(2500);
+            // Refactored: AI extraction button lives in Edit drawer, not Create form
+            Assert.assertTrue(openEditAssetDrawerForFirstAsset(),
+                "Could not open Edit Asset drawer for first asset — see TC_AIExt_01");
             WebElement btn = findAIExtractButton();
             if (btn == null) {
                 logWarning("AI Extraction button not found — skipping TC_AIExt_03");
@@ -236,8 +265,9 @@ public class AIExtractionTestNG extends BaseTest {
             "TC_AIExt_04: Loading indicator");
         try {
             assetPage.navigateToAssets();
-            assetPage.openCreateAssetForm();
-            pause(2500);
+            // Refactored: AI extraction button lives in Edit drawer, not Create form
+            Assert.assertTrue(openEditAssetDrawerForFirstAsset(),
+                "Could not open Edit Asset drawer for first asset — see TC_AIExt_01");
             WebElement btn = findAIExtractButton();
             if (btn == null) { logWarning("AI Extraction missing — skipping"); return; }
             safeClick(btn);
@@ -282,8 +312,9 @@ public class AIExtractionTestNG extends BaseTest {
             "TC_AIExt_05: Editable after extraction");
         try {
             assetPage.navigateToAssets();
-            assetPage.openCreateAssetForm();
-            pause(2500);
+            // Refactored: AI extraction button lives in Edit drawer, not Create form
+            Assert.assertTrue(openEditAssetDrawerForFirstAsset(),
+                "Could not open Edit Asset drawer for first asset — see TC_AIExt_01");
 
             // Fill at least one editable field manually to simulate the user's post-extraction edit
             List<WebElement> textInputs = driver.findElements(By.cssSelector(
@@ -320,8 +351,9 @@ public class AIExtractionTestNG extends BaseTest {
             "TC_AIExt_06: Overwrite behavior");
         try {
             assetPage.navigateToAssets();
-            assetPage.openCreateAssetForm();
-            pause(2500);
+            // Refactored: AI extraction button lives in Edit drawer, not Create form
+            Assert.assertTrue(openEditAssetDrawerForFirstAsset(),
+                "Could not open Edit Asset drawer for first asset — see TC_AIExt_01");
             WebElement btn = findAIExtractButton();
             if (btn == null) { logWarning("AI Extract missing — skip"); return; }
 
@@ -378,8 +410,9 @@ public class AIExtractionTestNG extends BaseTest {
             "TC_AIExt_07: Invalid file rejected");
         try {
             assetPage.navigateToAssets();
-            assetPage.openCreateAssetForm();
-            pause(2500);
+            // Refactored: AI extraction button lives in Edit drawer, not Create form
+            Assert.assertTrue(openEditAssetDrawerForFirstAsset(),
+                "Could not open Edit Asset drawer for first asset — see TC_AIExt_01");
             WebElement btn = findAIExtractButton();
             if (btn == null) { logWarning("AI Extract missing — skip"); return; }
             safeClick(btn);
@@ -465,8 +498,9 @@ public class AIExtractionTestNG extends BaseTest {
             "TC_AIExt_09: No pre-fill");
         try {
             assetPage.navigateToAssets();
-            assetPage.openCreateAssetForm();
-            pause(2500);
+            // Refactored: AI extraction button lives in Edit drawer, not Create form
+            Assert.assertTrue(openEditAssetDrawerForFirstAsset(),
+                "Could not open Edit Asset drawer for first asset — see TC_AIExt_01");
 
             // Read form fields BEFORE opening AI dialog
             String modelBefore = readFieldValue("model");
@@ -509,8 +543,9 @@ public class AIExtractionTestNG extends BaseTest {
             "TC_AIExt_10: Submit gated");
         try {
             assetPage.navigateToAssets();
-            assetPage.openCreateAssetForm();
-            pause(2500);
+            // Refactored: AI extraction button lives in Edit drawer, not Create form
+            Assert.assertTrue(openEditAssetDrawerForFirstAsset(),
+                "Could not open Edit Asset drawer for first asset — see TC_AIExt_01");
             WebElement btn = findAIExtractButton();
             if (btn == null) { logWarning("AI Extract missing — skip"); return; }
             safeClick(btn);
@@ -602,155 +637,6 @@ public class AIExtractionTestNG extends BaseTest {
             return f.getAbsolutePath();
         } catch (Exception e) {
             return "/tmp/nameplate.png";
-        }
-    }
-
-    // ================================================================
-    // TC_AIExt_08 — Bulk Ops AI Extract entry point on Assets page
-    //
-    // User-corrected 2026-04-28: the primary AI extraction surface is NOT
-    // the per-asset "Extract from Photos" button in the Edit drawer's CORE
-    // ATTRIBUTES — that's a secondary per-asset trigger. The MAIN AI extract
-    // workflow lives behind the "Bulk Ops" button on the Assets page toolbar.
-    //
-    // Earlier in this file, TC_AIExt_01..06 all open the Create form (wrong
-    // surface). TC_AIExt_07 was attempted on the in-drawer button but the
-    // no-photo error doesn't fire reliably on every asset class state — the
-    // test surface didn't match the user's screenshot context.
-    //
-    // This test verifies the Bulk Ops menu opens and the AI Extract option
-    // is discoverable. Full extraction flow (select assets, run, verify
-    // populated fields) is a follow-up that needs product knowledge of the
-    // Bulk Ops menu structure — flagged in changelog.
-    // ================================================================
-    @Test(priority = 8, description = "Bulk Ops menu on Assets page exposes AI Extract option",
-          enabled = false /* disabled — see TODO above */)
-    public void testTC_AIExt_08_BulkOpsHasAIExtract() {
-        ExtentReportManager.createTest(
-            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_AI_EXTRACTION,
-            "TC_AIExt_08: Bulk Ops AI Extract entry");
-
-        try {
-            assetPage.navigateToAssets();
-            pause(3000);
-            logStepWithScreenshot("Assets page loaded — looking for Bulk Ops button");
-
-            // The Bulk Ops button lives in the page toolbar next to "+ Create
-            // Asset" / "Bulk Edit" / "SKM". Per user direction this is the
-            // surface where the primary AI Extract workflow lives.
-            List<WebElement> bulkOpsBtns = driver.findElements(By.xpath(
-                    "//button[normalize-space()='Bulk Ops'] | "
-                    + "//button[contains(normalize-space(.), 'Bulk Ops')] | "
-                    + "//*[@role='button'][contains(normalize-space(.), 'Bulk Ops')]"));
-            WebElement bulkOpsBtn = null;
-            for (WebElement b : bulkOpsBtns) {
-                if (b.isDisplayed()) { bulkOpsBtn = b; break; }
-            }
-            Assert.assertNotNull(bulkOpsBtn,
-                    "Bulk Ops button not found on Assets page toolbar. Expected next to "
-                    + "'+ Create Asset' / 'Bulk Edit' / 'SKM'. If the FE renamed the button "
-                    + "OR moved it behind a flag, update this selector.");
-            logStep("Found Bulk Ops button: '" + bulkOpsBtn.getText() + "'");
-
-            // Click Bulk Ops — live-verified: this enables BULK SELECTION MODE
-            // (top toolbar shows "Select items to edit or delete" + "Cancel",
-            // each row gains a leftmost checkbox). The action menu doesn't
-            // appear until we select at least one row.
-            js().executeScript("arguments[0].scrollIntoView({block:'center'});", bulkOpsBtn);
-            pause(300);
-            safeClick(bulkOpsBtn);
-            pause(2500);
-            logStepWithScreenshot("Bulk Ops clicked — selection mode active");
-
-            // Verify selection mode actually activated
-            Boolean selectionModeOn = (Boolean) js().executeScript(
-                    "var t = document.body ? document.body.textContent : '';"
-                    + "return t.includes('Select items to edit') "
-                    + "|| t.includes('Select items') "
-                    + "|| document.querySelectorAll('.MuiDataGrid-row [type=\"checkbox\"]').length > 0;");
-            Assert.assertTrue(Boolean.TRUE.equals(selectionModeOn),
-                    "Bulk Ops click didn't activate selection mode. Expected 'Select items "
-                    + "to edit or delete' header OR row checkboxes to appear.");
-            logStep("Selection mode activated: " + selectionModeOn);
-
-            // Check the FIRST row's checkbox to enable the action menu/toolbar.
-            // Use the React native-setter pattern — MUI's hidden inputs don't
-            // respond to plain Selenium clicks (same trick from TC_Misc_02c).
-            Boolean rowChecked = (Boolean) js().executeScript(
-                    "var rows = document.querySelectorAll('.MuiDataGrid-row');"
-                    + "for (var r of rows) {"
-                    + "  if (!r.offsetWidth) continue;"
-                    + "  var cb = r.querySelector('input[type=\"checkbox\"]');"
-                    + "  if (cb) {"
-                    + "    var setter = Object.getOwnPropertyDescriptor("
-                    + "      window.HTMLInputElement.prototype, 'checked').set;"
-                    + "    setter.call(cb, true);"
-                    + "    cb.dispatchEvent(new Event('change', { bubbles: true }));"
-                    + "    cb.click();"
-                    + "    return true;"
-                    + "  }"
-                    + "}"
-                    + "return false;");
-            Assert.assertTrue(Boolean.TRUE.equals(rowChecked),
-                    "Could not check the first row's checkbox in selection mode");
-            pause(2000);
-            logStepWithScreenshot("First row checked — action menu should appear");
-
-            // After selection, the FE typically reveals action buttons in the
-            // toolbar OR a dropdown/popover. Dump every visible interactable
-            // element on the page so future failures show what's actually there.
-            @SuppressWarnings("unchecked")
-            List<String> actionButtons = (List<String>) js().executeScript(
-                    "var btns = document.querySelectorAll('button, [role=\"button\"], "
-                    + "[role=\"menuitem\"], li.MuiMenuItem-root');"
-                    + "var out = [];"
-                    + "for (var b of btns) {"
-                    + "  if (!b.offsetWidth) continue;"
-                    + "  var t = (b.textContent || '').trim();"
-                    + "  if (t.length > 0 && t.length < 60 && t !== 'Cancel') out.push(t);"
-                    + "}"
-                    + "return Array.from(new Set(out));");
-            logStep("Visible buttons after row selection: " + actionButtons);
-
-            // Falsifiable: at least ONE button must reference AI / Extract /
-            // Photos. The exact label varies — accept any known variant.
-            String[] aiExtractKeywords = {
-                    "ai extract", "ai extraction", "extract from photo",
-                    "extract photos", "ai photo", "photo extract", "smart extract"
-            };
-            String matched = null;
-            if (actionButtons != null) {
-                for (String item : actionButtons) {
-                    String lower = item.toLowerCase();
-                    for (String keyword : aiExtractKeywords) {
-                        if (lower.contains(keyword)) { matched = item; break; }
-                    }
-                    if (matched != null) break;
-                }
-            }
-
-            // Cleanup: cancel selection mode
-            try {
-                List<WebElement> cancels = driver.findElements(By.xpath(
-                        "//button[normalize-space()='Cancel']"));
-                for (WebElement c : cancels) {
-                    if (c.isDisplayed()) { safeClick(c); break; }
-                }
-            } catch (Exception ignore) {}
-            pause(500);
-
-            Assert.assertNotNull(matched,
-                    "Bulk Ops selection mode active + 1 row selected, but no AI Extract "
-                    + "option found among visible buttons. Discovered buttons: "
-                    + actionButtons + ". Expected one matching: "
-                    + java.util.Arrays.toString(aiExtractKeywords) + ". The AI Extract "
-                    + "option may require a different selection state OR live behind a "
-                    + "secondary menu/popover.");
-
-            ExtentReportManager.logPass("Bulk Ops AI Extract option found: '" + matched + "'");
-        } catch (Exception e) {
-            ScreenshotUtil.captureScreenshot("TC_AIExt_08_error");
-            Assert.fail("TC_AIExt_08 crashed: " + e.getMessage());
         }
     }
 
