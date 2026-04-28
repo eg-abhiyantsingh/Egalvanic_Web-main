@@ -1,0 +1,132 @@
+name: Daily AI Analysis (Routine Run)
+
+# ============================================================
+# DAILY AI ANALYSIS — "Routine Run" executor
+# ============================================================
+# Reads test-output/bug-detection-report.json + ready-bug/ markdown,
+# generates daily-summary/<date>.md (failure exec summary) and
+# daily-summary/security-<date>.md (OWASP triage). Commits back to main.
+#
+# Free setup: GitHub-only, no S3, no Slack webhooks, no paid infra.
+# Output readable at raw GitHub URL.
+# ============================================================
+
+on:
+  schedule:
+    - cron: '0 4 * * *'  # daily 04:00 UTC
+  workflow_run:
+    workflows: ["Parallel Suite 2 — Curated Bug Verification + AI + Smoke + Load + BCES-IQ"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-ai-analysis
+  cancel-in-progress: false
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Compile project
+        run: mvn compile -B -q
+
+      - name: Look for fresh test-output report
+        id: check_input
+        run: |
+          if [ -f "test-output/bug-detection-report.json" ]; then
+            echo "Found fresh report"
+            wc -c test-output/bug-detection-report.json
+          else
+            echo "No fresh report — analyzers will produce 'no failures' summary"
+          fi
+
+      - name: Run DailyFailureAnalyzer
+        env:
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        run: |
+          mvn exec:java \
+            -Dexec.mainClass="com.egalvanic.qa.utils.ai.DailyFailureAnalyzer" \
+            -Dexec.classpathScope=compile \
+            -B -q
+
+      - name: Run APISecurityScanner
+        env:
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        run: |
+          mvn exec:java \
+            -Dexec.mainClass="com.egalvanic.qa.utils.ai.APISecurityScanner" \
+            -Dexec.classpathScope=compile \
+            -B -q
+
+      - name: Display generated summaries in step summary
+        if: always()
+        env:
+          TODAY: ${{ github.run_id }}
+        run: |
+          echo "Generated daily-summary/ files:"
+          ls -la daily-summary/ || echo "(none)"
+          DATE=$(date +%Y-%m-%d)
+          if [ -f "daily-summary/${DATE}.md" ]; then
+            {
+              echo "## Daily Failure Summary"
+              echo ""
+              cat "daily-summary/${DATE}.md"
+              echo ""
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ -f "daily-summary/security-${DATE}.md" ]; then
+            {
+              echo "## Daily Security Scan"
+              echo ""
+              cat "daily-summary/security-${DATE}.md"
+              echo ""
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Commit summaries to main
+        if: always()
+        run: |
+          if [ -z "$(ls -A daily-summary/*.md 2>/dev/null)" ]; then
+            echo "No summaries to commit."
+            exit 0
+          fi
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          DATE=$(date +%Y-%m-%d)
+          git add "daily-summary/${DATE}.md" 2>/dev/null || true
+          git add "daily-summary/security-${DATE}.md" 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "[bot] Daily AI analysis ${DATE}"
+          git push origin HEAD:main || {
+            echo "Push failed — concurrent push to main; will re-run next trigger."
+            exit 0
+          }
+          echo "Pushed daily summaries."

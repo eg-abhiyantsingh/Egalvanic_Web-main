@@ -104,6 +104,16 @@
                     </suiteXmlFiles>
                 </configuration>
             </plugin>
+
+            <!-- exec-maven-plugin: lets us run main()-style utilities like
+                 DailyFailureAnalyzer + APISecurityScanner from the GitHub
+                 Actions workflow with `mvn exec:java -Dexec.mainClass=...`
+                 (Use Cases 1, 2, 4 from the routine-runs spec) -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+            </plugin>
         </plugins>
     </build>
 </project>
