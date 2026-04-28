@@ -534,6 +534,106 @@ public class BulkUploadBulkEditTestNG extends BaseTest {
         }
     }
 
+    // =================================================================
+    // TC_Bulk_12 — Bulk Edit dropdown menu structure
+    //
+    // User-confirmed 2026-04-28 via screenshot: clicking the "Bulk Edit ▼"
+    // button on the Assets page toolbar opens a dropdown with exactly 3
+    // options — Bulk Export, Bulk Import, Download Template. The existing
+    // tests (TC_Bulk_01 / 05 / 06 / 07) look for "Bulk Upload" / "Bulk Import"
+    // as TOP-LEVEL buttons, which don't exist in production — they're nested
+    // inside the Bulk Edit dropdown. That's why those tests fail silently
+    // OR fall through to no-op branches.
+    //
+    // This test verifies the dropdown structure with falsifiable assertions:
+    // each of the 3 menu items must appear in the menu after clicking the
+    // dropdown trigger. If the FE removes one OR adds new items in a way
+    // that breaks the contract, this fires immediately.
+    // =================================================================
+    @Test(priority = 12, description = "Bulk Edit dropdown reveals Bulk Export, Bulk Import, Download Template")
+    public void testTC_Bulk_12_BulkEditDropdownItems() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_BULK_EDIT,
+            "TC_Bulk_12: Bulk Edit dropdown items");
+        try {
+            assetPage.navigateToAssets();
+            pause(3000);
+            logStepWithScreenshot("Assets page loaded");
+
+            // Find the "Bulk Edit" button — it has a chevron (▼) indicating dropdown
+            List<WebElement> candidates = driver.findElements(By.xpath(
+                    "//button[normalize-space()='Bulk Edit'] | "
+                    + "//button[contains(normalize-space(.), 'Bulk Edit')] | "
+                    + "//*[@role='button'][contains(normalize-space(.), 'Bulk Edit')]"));
+            WebElement bulkEditBtn = null;
+            for (WebElement b : candidates) {
+                if (b.isDisplayed()) { bulkEditBtn = b; break; }
+            }
+            Assert.assertNotNull(bulkEditBtn,
+                    "Bulk Edit dropdown button not found on Assets page toolbar. "
+                    + "Expected next to '+ Create Asset' / 'SKM' / 'Bulk Ops'.");
+            logStep("Found Bulk Edit button: '" + bulkEditBtn.getText() + "'");
+
+            // Click to open the dropdown
+            js().executeScript("arguments[0].scrollIntoView({block:'center'});", bulkEditBtn);
+            pause(300);
+            safeClick(bulkEditBtn);
+            pause(1500);
+            logStepWithScreenshot("Bulk Edit dropdown opened");
+
+            // Dump every visible menu item — falsifiable signal of what the
+            // dropdown actually contains.
+            @SuppressWarnings("unchecked")
+            List<String> menuItems = (List<String>) js().executeScript(
+                    "var items = document.querySelectorAll('[role=\"menuitem\"], "
+                    + "li.MuiMenuItem-root, [class*=\"MenuItem\"]');"
+                    + "var out = [];"
+                    + "for (var i of items) {"
+                    + "  if (!i.offsetWidth) continue;"
+                    + "  var t = (i.textContent || '').trim();"
+                    + "  if (t.length > 0 && t.length < 80) out.push(t);"
+                    + "}"
+                    + "return Array.from(new Set(out));");
+            logStep("Bulk Edit menu items discovered: " + menuItems);
+
+            // Expected 3 items per user screenshot. Use substring matching so
+            // small label tweaks (e.g., "Bulk Export Assets") still pass.
+            String[] expectedItems = {
+                    "Bulk Export",
+                    "Bulk Import",
+                    "Download Template"
+            };
+            java.util.List<String> missing = new java.util.ArrayList<>();
+            for (String expected : expectedItems) {
+                boolean found = false;
+                if (menuItems != null) {
+                    for (String item : menuItems) {
+                        if (item.contains(expected)) { found = true; break; }
+                    }
+                }
+                if (!found) missing.add(expected);
+            }
+
+            // Cleanup: close the dropdown via Escape
+            try {
+                driver.findElement(By.tagName("body")).sendKeys(org.openqa.selenium.Keys.ESCAPE);
+            } catch (Exception ignore) {}
+            pause(500);
+
+            // Falsifiable: all 3 items must be present
+            Assert.assertTrue(missing.isEmpty(),
+                    "Bulk Edit dropdown is missing expected items: " + missing
+                    + ". Discovered items: " + menuItems
+                    + ". The FE may have renamed/removed items, or the dropdown "
+                    + "structure changed.");
+            ExtentReportManager.logPass("Bulk Edit dropdown contains all 3 expected items: "
+                    + java.util.Arrays.toString(expectedItems));
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_Bulk_12_error");
+            Assert.fail("TC_Bulk_12 crashed: " + e.getMessage());
+        }
+    }
+
     // -------- helpers --------
 
     private File createSampleCsv() throws Exception {
