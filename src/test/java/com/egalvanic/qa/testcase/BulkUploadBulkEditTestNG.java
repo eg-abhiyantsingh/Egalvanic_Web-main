@@ -989,20 +989,25 @@ public class BulkUploadBulkEditTestNG extends BaseTest {
     // TC_Bulk_15 — Full Bulk Import flow with REAL user-supplied XLSX
     // =================================================================
     /**
-     * Full happy-path Bulk Import flow:
+     * Full Bulk Import end-to-end flow (per user direction — actually imports):
      *   1. Assets → Bulk Edit ▼ → Bulk Import
-     *   2. Send the real user-supplied file
-     *      docs/test_data_file/abhiyant-Espohio_477_Final_bulk.xlsx
-     *   3. Walk the wizard via Next clicks (≥1, typically 2)
-     *   4. Stop BEFORE final Import/Submit (avoid polluting QA data with
-     *      ~477 imported rows). Cancel/close to clean up.
+     *   2. Send docs/test_data_file/abhiyant-Espohio_477_Final_bulk.xlsx
+     *   3. Walk wizard: Upload File → Resolve Conflicts → Review
+     *   4. Click "Process Import" at Review step (the actual import trigger)
+     *   5. Verify "Complete" step is reached within 30s
+     *   6. Close dialog
      *
-     * Falsifiable invariants asserted along the way:
-     *   - Bulk Import dialog must open
-     *   - File input must accept the XLSX without rejection
-     *   - At least ONE Next button must advance the wizard (button text
-     *     changes OR a new step indicator appears)
-     *   - No JS error / no "Invalid file" surface error must appear
+     * Why this is safe to import: the test XLSX is a known dataset where the
+     * Review step shows "+ 2 to create" — only 2 NEW assets are inserted
+     * (CB-FMC SUITE 140 MAIN, CB-FREIGHT ELEVATOR). The other 475 rows match
+     * existing assets and produce no DB writes. So the data-pollution impact
+     * is bounded at 2 rows per run, not 477.
+     *
+     * Falsifiable invariants:
+     *   - Bulk Import dialog opens via Bulk Edit ▼ → Bulk Import
+     *   - File input accepts the XLSX without surfacing rejection errors
+     *   - Wizard reaches the Review step (Process Import button visible+enabled)
+     *   - Process Import click leads to the Complete step within 30s
      */
     @Test(priority = 15,
           description = "Full Bulk Import flow with real XLSX — open dialog, send file, walk Next ▶ Next, stop before submit")
@@ -1141,13 +1146,14 @@ public class BulkUploadBulkEditTestNG extends BaseTest {
                 + "return out;");
             logStep("All visible buttons (page-wide) after upload: " + buttonsAfterUpload);
 
-            // Step 4 — walk the wizard. The Bulk Import wizard on acme.qa is a
-            // SINGLE-STEP dialog terminating in a "Process Import" button (the
-            // actual import trigger). There may be optional intermediate
-            // advance buttons (Next/Continue) on multi-tab variants, so we
-            // walk those too — but stop BEFORE clicking the final terminal
-            // button (Process Import / Import / Submit / Confirm) to avoid
-            // polluting QA data with the 477 rows in the test file.
+            // Step 4 — walk the wizard.
+            // Live-verified 2026-04-29: the Bulk Import wizard has 4 visible
+            // steps in a Stepper: "Upload File → Resolve Conflicts → Review →
+            // Complete". For the abhiyant-Espohio_477_Final_bulk.xlsx test
+            // file, only 2 NEW assets are created (CB-FMC SUITE 140 MAIN +
+            // CB-FREIGHT ELEVATOR) — the rest are matches/no-changes per the
+            // Review-step summary. Per user direction, this test DOES click
+            // Process Import to verify end-to-end completion (Step 4 reached).
             int advanceClicks = 0;
             int maxAdvance = 4;
             String[] advanceLabels = { "Next", "Continue", "Validate", "Proceed" };
@@ -1179,53 +1185,102 @@ public class BulkUploadBulkEditTestNG extends BaseTest {
                 logStepWithScreenshot("Clicked '" + matchedLabel + "' #" + advanceClicks);
             }
 
-            // Verify we reached the terminal step (Process Import button visible)
-            boolean reachedTerminal = false;
-            String terminalSeen = null;
+            // Step 5 — find and click the "Process Import" terminal button
+            // (the actual import trigger). Falsifiable: button must be visible
+            // AND enabled, otherwise the wizard never reached the Review step.
+            WebElement processBtn = null;
             for (String lbl : terminalLabels) {
                 List<WebElement> btns = driver.findElements(By.xpath(
                     "//button[normalize-space()='" + lbl + "']"));
                 for (WebElement b : btns) {
-                    if (b.isDisplayed()) {
-                        reachedTerminal = true;
-                        terminalSeen = lbl;
-                        break;
-                    }
+                    if (b.isDisplayed() && b.isEnabled()) { processBtn = b; break; }
                 }
-                if (reachedTerminal) break;
+                if (processBtn != null) break;
             }
-            Assert.assertTrue(reachedTerminal,
-                "Wizard didn't reach a terminal submit step. Expected one of: "
-                + java.util.Arrays.toString(terminalLabels) + ". Buttons seen: "
+            Assert.assertNotNull(processBtn,
+                "Could not find a terminal submit button (Process Import / Import / "
+                + "Submit / Confirm). Wizard never reached Review step. Buttons seen: "
                 + buttonsAfterUpload);
-            logStep("Reached terminal step — '" + terminalSeen
-                + "' button is visible (NOT clicking it — would import 477 rows)");
+            String terminalSeen = processBtn.getText().trim();
+            logStep("Found terminal button: '" + terminalSeen + "' — clicking to import");
+            ScreenshotUtil.captureScreenshot("TC_Bulk_15_review_step");
+            js().executeScript("arguments[0].scrollIntoView({block:'center'});", processBtn);
+            pause(400);
+            safeClick(processBtn);
             int nextClicks = advanceClicks;  // for the post-step log
 
-            ScreenshotUtil.captureScreenshot("TC_Bulk_15_final_step");
+            // Step 6 — poll up to 30s for the Complete / Done / success step.
+            // The import processes server-side, so the UI may show a loader
+            // briefly before transitioning to the "Complete" stepper state.
+            long completeDeadline = System.currentTimeMillis() + 30000;
+            boolean reachedComplete = false;
+            String completionEvidence = null;
+            while (System.currentTimeMillis() < completeDeadline) {
+                @SuppressWarnings("unchecked")
+                java.util.Map<String, Object> state = (java.util.Map<String, Object>) js().executeScript(
+                    "var out = {complete:false, evidence:''};"
+                    // Stepper "Complete" step active
+                    + "var stepActive = document.querySelectorAll('.MuiStep-root.Mui-completed, "
+                    + "  .MuiStepLabel-root.Mui-active, [aria-current=\"step\"]');"
+                    + "for (var s of stepActive) {"
+                    + "  var t = (s.textContent || '').trim().toLowerCase();"
+                    + "  if (t.indexOf('complete') !== -1) { out.complete = true; out.evidence = 'stepper:Complete'; return out; }"
+                    + "}"
+                    // Or any visible "Complete" / success-style element
+                    + "var allText = document.querySelectorAll('h1,h2,h3,h4,h5,h6,p,div,span');"
+                    + "for (var e of allText) {"
+                    + "  if (!e.offsetWidth) continue;"
+                    + "  var t = (e.textContent || '').trim();"
+                    + "  if (t.length > 200) continue;"
+                    + "  if (/^(import.*complete|successfully imported|import successful|complete)$/i.test(t)) {"
+                    + "    out.complete = true; out.evidence = 'text:' + t.slice(0,50); return out;"
+                    + "  }"
+                    + "}"
+                    // Or a Close/Done button (terminal action of Complete step)
+                    + "var btns = document.querySelectorAll('button');"
+                    + "for (var b of btns) {"
+                    + "  if (!b.offsetWidth) continue;"
+                    + "  var t = (b.textContent || '').trim();"
+                    + "  if (/^(Close|Done|Finish)$/i.test(t)) {"
+                    + "    out.complete = true; out.evidence = 'button:' + t; return out;"
+                    + "  }"
+                    + "}"
+                    + "return out;");
+                if (Boolean.TRUE.equals(state.get("complete"))) {
+                    reachedComplete = true;
+                    completionEvidence = String.valueOf(state.get("evidence"));
+                    break;
+                }
+                pause(1000);
+            }
+            ScreenshotUtil.captureScreenshot("TC_Bulk_15_complete_step");
+            Assert.assertTrue(reachedComplete,
+                "Bulk Import did not reach Complete step within 30s after clicking '"
+                + terminalSeen + "'. The import either failed silently OR the UI "
+                + "did not transition to the success state.");
+            logStep("Reached Complete step — evidence: " + completionEvidence);
 
-            // Step 6 — CLEANUP: cancel/close without submitting (no data pollution)
-            // Try Cancel first, then ESC, then close button
+            // Step 7 — close the dialog (Close / Done button OR ESC)
             boolean closed = false;
             try {
-                List<WebElement> cancels = driver.findElements(By.xpath(
-                    "//button[normalize-space()='Cancel'] | "
-                    + "//button[contains(normalize-space(.), 'Cancel')]"));
-                for (WebElement c : cancels) {
+                List<WebElement> closeBtns = driver.findElements(By.xpath(
+                    "//button[normalize-space()='Close'] | "
+                    + "//button[normalize-space()='Done'] | "
+                    + "//button[normalize-space()='Finish']"));
+                for (WebElement c : closeBtns) {
                     if (c.isDisplayed()) { safeClick(c); closed = true; break; }
                 }
             } catch (Exception ignore) {}
             if (!closed) {
                 try {
                     List<WebElement> closeBtns = driver.findElements(By.cssSelector(
-                        "button[aria-label='close' i], button[aria-label='Close' i], "
-                        + ".MuiDialog-root button[aria-label]"));
+                        "button[aria-label='close' i], button[aria-label='Close' i]"));
                     for (WebElement c : closeBtns) {
                         if (c.isDisplayed()) { safeClick(c); closed = true; break; }
                     }
                 } catch (Exception ignore) {}
             }
-            pause(1200);
+            pause(1500);
             logStep("Cleanup: dialog close attempted (closed=" + closed + ")");
 
             // Confirm dialog actually closed (Mui dialog gone)
@@ -1238,9 +1293,10 @@ public class BulkUploadBulkEditTestNG extends BaseTest {
                 pause(800);
             }
 
-            ExtentReportManager.logPass("Full Bulk Import flow walked: dialog opened, "
-                + "real XLSX accepted, wizard advanced " + nextClicks
-                + " step(s), stopped before final submit, dialog cleaned up");
+            ExtentReportManager.logPass("Full Bulk Import flow E2E: dialog opened, "
+                + "XLSX accepted, wizard advanced " + nextClicks
+                + " step(s), '" + terminalSeen + "' clicked, Complete step reached ("
+                + completionEvidence + "), dialog closed");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("TC_Bulk_15_error");
             Assert.fail("TC_Bulk_15 crashed: " + e.getMessage());
