@@ -334,6 +334,12 @@ public class BugHuntGlobalTestNG extends BaseTest {
             ExtentReportManager.logPass("BUG-007 verified FIXED: roles=" + roleCalls
                     + ", slds=" + sldCalls + " (no duplicates).");
 
+        } catch (org.testng.SkipException se) {
+            // Don't swallow — let TestNG record as SKIP (not FAIL).
+            // Without this, the 0/0 sanity precondition I added gets converted
+            // to a test failure by the generic catch below — exactly what
+            // happened in CI run 25054293207.
+            throw se;
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG007_duplicate_api_error");
             Assert.fail("BUG-007 test failed: " + e.getMessage());

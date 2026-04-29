@@ -356,13 +356,25 @@ public class AssetPart3TestNG extends BaseTest {
     private String editTextField(String fieldLabel, String newValue) {
         logStep("Editing '" + fieldLabel + "' → '" + newValue + "'");
         JavascriptExecutor js = (JavascriptExecutor) driver;
-        // Prefer drawer-scoped lookup (avoids matching the read-only detail table)
-        WebElement input = findInputInDrawerByLabel(fieldLabel);
-        if (input == null) input = findInputByPlaceholder(fieldLabel);
-        if (input == null) input = findInputByLabel(fieldLabel);
-        if (input == null) input = findInputByAriaLabel(fieldLabel);
+
+        // CI hardening: CI run 25054293207 had GEN_EAD_10 fail with
+        // "editTextField should find and set 'Power Factor' field" — null return
+        // because all 4 find strategies returned null when called immediately.
+        // The Edit drawer's CORE ATTRIBUTES fields can render with lag in CI
+        // (slower SPA hydration). Add a 5s retry-with-poll loop before giving up.
+        WebElement input = null;
+        long findDeadline = System.currentTimeMillis() + 5000;
+        while (System.currentTimeMillis() < findDeadline) {
+            input = findInputInDrawerByLabel(fieldLabel);
+            if (input == null) input = findInputByPlaceholder(fieldLabel);
+            if (input == null) input = findInputByLabel(fieldLabel);
+            if (input == null) input = findInputByAriaLabel(fieldLabel);
+            if (input != null) break;
+            pause(500);
+        }
         if (input == null) {
-            logStep("Field '" + fieldLabel + "' not found");
+            logStep("Field '" + fieldLabel + "' not found after 5s polling — "
+                    + "either field doesn't exist on this asset class OR DOM rendering stalled");
             return null;
         }
         js.executeScript("arguments[0].scrollIntoView({behavior:'smooth',block:'center'});", input);

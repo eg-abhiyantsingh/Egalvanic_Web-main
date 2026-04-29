@@ -584,10 +584,32 @@ public class IssueTestNG extends BaseTest {
         issuePage.searchIssues("zzz_nothing");
         pause(1500);
         issuePage.clearSearch();
-        pause(1500);
-        int restored = issuePage.getRowCount();
 
-        Assert.assertEquals(restored, total, "Clear search should restore full list");
+        // CI failure 25054293207 showed total=10 but restored=0 after fixed pause(1500).
+        // The clear-search re-fetch is async — fixed pauses are flaky in CI where
+        // network round-trips are slower. Poll for the row count to return to ≥1
+        // (the list refilled) within 10s, then verify it matches total.
+        int restored = 0;
+        long deadline = System.currentTimeMillis() + 10000;
+        while (System.currentTimeMillis() < deadline) {
+            restored = issuePage.getRowCount();
+            if (restored >= total) break;
+            pause(500);
+        }
+        logStep("Polled restoration: total=" + total + ", restored=" + restored);
+
+        // Honest precondition: if the page started with 0 rows, the test
+        // can't verify "restoration" — skip rather than fake-pass on 0 == 0.
+        if (total == 0) {
+            throw new org.testng.SkipException(
+                "Issue list started empty (total=0) — cannot verify clear-search "
+                + "restoration without baseline rows");
+        }
+
+        Assert.assertEquals(restored, total,
+                "Clear search should restore full list within 10s polling. "
+                + "If restored is 0, the FE didn't re-fetch issues after clearing — "
+                + "real regression. If restored < total, partial-load issue.");
         logStepWithScreenshot("Clear search");
         ExtentReportManager.logPass("Clear search: " + total + " → 0 → " + restored);
     }
