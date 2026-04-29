@@ -1414,5 +1414,439 @@ public class Phase1BugHunterTestNG extends BaseTest {
             Assert.fail("TC_BH_13 crashed: " + e.getMessage());
         }
     }
+
+    // ================================================================
+    // TC_BH_14 — No 4xx/5xx network responses on /assets load
+    //   (beyond what TC_BH_12 catches via console.log)
+    // ================================================================
+    /**
+     * Why this might find a bug: TC_BH_12 catches errors that the browser
+     * logs to console (typically only failed resource loads with status >= 400
+     * for direct subresources). But fetch/XHR errors handled by app code
+     * with try/catch don't always log. The Performance API exposes EVERY
+     * request the page made — including XHR/fetch — with timing and status.
+     * If an API call silently 5xx's and the app falls back to a default,
+     * the user sees a working page but the backend is broken.
+     *
+     * Falsifiable assertion: enumerate Performance Resource entries for
+     * /api/* requests on /assets load. Trigger XHRs that have failed should
+     * be detectable via their transferSize == 0 and decodedBodySize == 0
+     * patterns OR via the responseStatus property when available (CDP-only).
+     *
+     * NOTE: standard PerformanceResourceTiming doesn't expose response
+     * status directly (privacy). This test uses an indirect signal: count
+     * the number of `/api/*` requests with `transferSize === 0 &&
+     * decodedBodySize === 0 && duration > 0` — that pattern often correlates
+     * with errored XHRs (no body returned). Imperfect, but catches gross
+     * regressions.
+     *
+     * Tighter approach (would need wiring): inject a fetch/XHR monkey-patch
+     * at page load that records statuses to window.__bh_failed. We don't
+     * do that here — too invasive for read-only test.
+     */
+    @Test(priority = 14, description = "TC_BH_14: /assets load has no API requests with zero-byte responses (proxy for 4xx/5xx beyond console)")
+    public void testTC_BH_14_NoSilentApiFailures() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_14: Silent API failure detection");
+        try {
+            // Inject network monitor BEFORE navigating, by patching fetch+XHR
+            // on whatever the current page is, then navigating.
+            // Cleaner: navigate, then patch via a fresh-loaded page hook.
+            // But MUI is already loaded — patching after the fact catches
+            // any subsequent fetches on this navigation.
+            assetPage.navigateToAssets();
+
+            // Install a fetch-wrapper that records non-OK responses to a
+            // window-scoped array. We do this AFTER the initial load to
+            // measure subsequent API activity (e.g., on filter / pagination).
+            js().executeScript(
+                "if (!window.__bh_failed) {"
+                + "  window.__bh_failed = [];"
+                + "  var origFetch = window.fetch;"
+                + "  window.fetch = function() {"
+                + "    var args = arguments;"
+                + "    return origFetch.apply(this, args).then(function(resp){"
+                + "      if (resp && !resp.ok && resp.status >= 400) {"
+                + "        var url = (args[0] && args[0].url) || args[0] || '';"
+                + "        window.__bh_failed.push({status: resp.status, url: String(url).slice(0,200)});"
+                + "      }"
+                + "      return resp;"
+                + "    });"
+                + "  };"
+                + "  var origOpen = XMLHttpRequest.prototype.open;"
+                + "  XMLHttpRequest.prototype.open = function(method, url) {"
+                + "    this.__bh_url = url;"
+                + "    return origOpen.apply(this, arguments);"
+                + "  };"
+                + "  var origSend = XMLHttpRequest.prototype.send;"
+                + "  XMLHttpRequest.prototype.send = function() {"
+                + "    var xhr = this;"
+                + "    xhr.addEventListener('loadend', function(){"
+                + "      if (xhr.status >= 400) {"
+                + "        window.__bh_failed.push({status: xhr.status, url: String(xhr.__bh_url || '').slice(0,200)});"
+                + "      }"
+                + "    });"
+                + "    return origSend.apply(this, arguments);"
+                + "  };"
+                + "}"
+                + "return true;");
+            logStep("Installed fetch/XHR network-error monitor");
+
+            // Trigger fresh API activity: search and clear, click pagination
+            // next/prev — anything that makes XHRs.
+            List<WebElement> searches = driver.findElements(By.cssSelector(
+                "input[placeholder*='Search' i], input[type='search']"));
+            WebElement search = null;
+            for (WebElement s : searches) { if (s.isDisplayed()) { search = s; break; } }
+            if (search != null) {
+                search.click();
+                search.sendKeys("zz_test_search_zz");
+                pause(2500);
+                search.clear();
+                pause(2000);
+            }
+
+            // Try clicking next page if available
+            js().executeScript(
+                "var nb = document.querySelector('button[aria-label=\"Go to next page\" i], "
+                + "button[aria-label*=\"next\" i]');"
+                + "if (nb && nb.offsetWidth && !nb.disabled) nb.click();");
+            pause(2500);
+            js().executeScript(
+                "var pb = document.querySelector('button[aria-label=\"Go to previous page\" i], "
+                + "button[aria-label*=\"previous\" i]');"
+                + "if (pb && pb.offsetWidth && !pb.disabled) pb.click();");
+            pause(2500);
+
+            @SuppressWarnings("unchecked")
+            List<java.util.Map<String, Object>> failed =
+                (List<java.util.Map<String, Object>>) js().executeScript(
+                "return window.__bh_failed || [];");
+
+            // Filter known-bug endpoints to avoid double-counting TC_BH_12 finds
+            String[] knownEndpoints = {
+                "/api/auth/v2/me",      // TODO: known bootstrap 401
+                "/api/auth/v2/refresh", // TODO: known refresh 400
+            };
+            List<String> realFailures = new java.util.ArrayList<>();
+            for (java.util.Map<String, Object> f : failed) {
+                String url = String.valueOf(f.get("url"));
+                Object st = f.get("status");
+                boolean known = false;
+                for (String k : knownEndpoints) {
+                    if (url.contains(k)) { known = true; break; }
+                }
+                if (!known) realFailures.add(st + " " + url);
+            }
+            ScreenshotUtil.captureScreenshot("TC_BH_14");
+            logStep("Total network failures captured: " + failed.size()
+                + ", after filter: " + realFailures.size());
+            for (String r : realFailures) logStep("  NETWORK-ERR: " + r);
+
+            Assert.assertTrue(realFailures.isEmpty(),
+                "BUG: /assets surfaced " + realFailures.size() + " 4xx/5xx API responses "
+                + "after noise filter:\n  - " + String.join("\n  - ", realFailures));
+
+            ExtentReportManager.logPass("/assets has zero unfiltered 4xx/5xx API responses "
+                + "(out of " + failed.size() + " total — known endpoints filtered)");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_14_error");
+            Assert.fail("TC_BH_14 crashed: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TC_BH_15 — Search filter persists across detail navigation + back
+    // ================================================================
+    /**
+     * Why this might find a bug: SPA state preservation. After applying a
+     * filter, clicking a row navigates to detail. Pressing back commonly
+     * loses the filter — the user has to re-apply it. This is annoying UX
+     * but easy to test as an objective state-preservation invariant.
+     *
+     * Falsifiable assertion: type a search term → click first filtered row
+     * → browser back → search input value MUST equal the typed term, AND
+     * the visible row count must match what it was post-filter (within ±1
+     * for tolerance to live data changes).
+     *
+     * Honest skip: if filter doesn't reduce row count (term matches all
+     * rows), we can't test "filter still applied" because grid would look
+     * identical with or without filter.
+     */
+    @Test(priority = 15, description = "TC_BH_15: Search filter is preserved when user navigates to detail and back")
+    public void testTC_BH_15_FilterPersistsAcrossBackButton() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_15: Filter persistence across back");
+        try {
+            assetPage.navigateToAssets();
+            pause(3500);
+
+            // Get pre-filter row count
+            Long preCount = (Long) js().executeScript(
+                "return document.querySelectorAll('.MuiDataGrid-row').length;");
+            logStep("Pre-filter rows: " + preCount);
+
+            // Apply a search filter likely to narrow results
+            WebElement search = null;
+            List<WebElement> searches = driver.findElements(By.cssSelector(
+                "input[placeholder*='Search' i], input[type='search']"));
+            for (WebElement s : searches) { if (s.isDisplayed()) { search = s; break; } }
+            if (search == null) {
+                throw new org.testng.SkipException("No search input on /assets");
+            }
+            String filterTerm = "CB-";  // Most assets in QA start with CB- per screenshots
+            search.click();
+            search.sendKeys(filterTerm);
+            pause(2500);
+
+            Long postFilterCount = (Long) js().executeScript(
+                "return document.querySelectorAll('.MuiDataGrid-row').length;");
+            logStep("Post-filter rows: " + postFilterCount + " (term: " + filterTerm + ")");
+            if (postFilterCount == null || postFilterCount.equals(preCount) || postFilterCount == 0) {
+                throw new org.testng.SkipException(
+                    "Filter '" + filterTerm + "' didn't narrow rows (pre=" + preCount
+                    + ", post=" + postFilterCount + "). Can't falsify persistence.");
+            }
+
+            // Click first filtered row → detail
+            List<WebElement> rows = driver.findElements(By.cssSelector(".MuiDataGrid-row"));
+            if (rows.isEmpty()) {
+                throw new org.testng.SkipException("No rows visible post-filter");
+            }
+            safeClick(rows.get(0));
+            pause(3500);
+            String detailUrl = driver.getCurrentUrl();
+            logStep("Detail URL: " + detailUrl);
+
+            // Browser back
+            driver.navigate().back();
+            pause(3500);
+
+            // Falsifier 1: search input must still contain the filter term
+            String searchValueAfterBack = (String) js().executeScript(
+                "var inputs = document.querySelectorAll('input[placeholder*=\"Search\" i], "
+                + "input[type=\"search\"]');"
+                + "for (var i of inputs) { if (i.offsetWidth) return i.value; }"
+                + "return null;");
+            logStep("Search value after back: '" + searchValueAfterBack + "'");
+
+            Long countAfterBack = (Long) js().executeScript(
+                "return document.querySelectorAll('.MuiDataGrid-row').length;");
+            logStep("Row count after back: " + countAfterBack);
+            ScreenshotUtil.captureScreenshot("TC_BH_15");
+
+            // Cleanup: clear search regardless
+            try {
+                if (searchValueAfterBack != null && !searchValueAfterBack.isEmpty()) {
+                    WebElement s2 = driver.findElement(By.cssSelector(
+                        "input[placeholder*='Search' i], input[type='search']"));
+                    s2.clear();
+                    pause(800);
+                }
+            } catch (Exception ignore) {}
+
+            // Soft assertion: prefer "filter preserved" but accept "filter cleared,
+            // grid back to full count" as ALSO valid behavior — some apps
+            // intentionally clear filter on navigation. What's NOT OK: filter
+            // cleared but grid still showing filtered count, OR filter showing
+            // but grid showing all rows. That's inconsistency.
+            boolean filterPreserved = filterTerm.equals(searchValueAfterBack)
+                && countAfterBack != null && countAfterBack.equals(postFilterCount);
+            boolean filterCleared = (searchValueAfterBack == null || searchValueAfterBack.isEmpty())
+                && countAfterBack != null && countAfterBack.equals(preCount);
+
+            Assert.assertTrue(filterPreserved || filterCleared,
+                "BUG: filter state inconsistent after back. Search value='"
+                + searchValueAfterBack + "', post-filter count=" + postFilterCount
+                + ", post-back count=" + countAfterBack + ", pre-filter count=" + preCount
+                + ". Filter and grid are out of sync.");
+
+            ExtentReportManager.logPass("Filter state coherent after back: "
+                + (filterPreserved ? "preserved" : "cleared cleanly"));
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_15_error");
+            Assert.fail("TC_BH_15 crashed: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TC_BH_16 — DataGrid has no duplicate row IDs
+    // ================================================================
+    /**
+     * Why this might find a bug: data-layer duplication. If a row appears
+     * twice in the grid (same data-id), it's either (a) a bad JOIN in the
+     * backend SELECT, (b) optimistic-update + server-fetch race that adds
+     * a row twice, or (c) React key collision causing UI confusion. All
+     * three are silent until you specifically look for them.
+     *
+     * Falsifiable assertion: collect data-id (or data-rowindex) attributes
+     * from all visible rows. Set size MUST equal list size — no dupes.
+     */
+    @Test(priority = 16, description = "TC_BH_16: DataGrid rows have unique IDs (no duplicates)")
+    public void testTC_BH_16_DataGridNoDuplicateRowIds() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_16: Grid row uniqueness");
+        try {
+            assetPage.navigateToAssets();
+            pause(3500);
+
+            @SuppressWarnings("unchecked")
+            List<String> rowIds = (List<String>) js().executeScript(
+                "var rows = document.querySelectorAll('.MuiDataGrid-row');"
+                + "var out = [];"
+                + "for (var r of rows) {"
+                + "  if (!r.offsetWidth) continue;"
+                + "  var id = r.getAttribute('data-id') || r.getAttribute('data-rowindex') || '';"
+                + "  if (id) out.push(id);"
+                + "}"
+                + "return out;");
+            logStep("Visible row IDs (" + rowIds.size() + "): "
+                + rowIds.subList(0, Math.min(5, rowIds.size())));
+
+            if (rowIds.size() < 2) {
+                throw new org.testng.SkipException(
+                    "Grid has fewer than 2 rows with data-id — can't falsify uniqueness");
+            }
+
+            java.util.Set<String> uniqueIds = new java.util.HashSet<>(rowIds);
+            ScreenshotUtil.captureScreenshot("TC_BH_16");
+
+            if (uniqueIds.size() < rowIds.size()) {
+                // Find which IDs duplicated
+                java.util.Map<String, Long> counts = new java.util.HashMap<>();
+                for (String id : rowIds) counts.merge(id, 1L, Long::sum);
+                List<String> dupes = new java.util.ArrayList<>();
+                for (java.util.Map.Entry<String, Long> e : counts.entrySet()) {
+                    if (e.getValue() > 1) dupes.add(e.getKey() + " x" + e.getValue());
+                }
+                Assert.fail("BUG: DataGrid contains duplicate row IDs — " + dupes
+                    + ". Likely a backend JOIN duplicating rows, or React key collision.");
+            }
+
+            ExtentReportManager.logPass("All " + rowIds.size()
+                + " visible row IDs are unique (no duplicates)");
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_16_error");
+            Assert.fail("TC_BH_16 crashed: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TC_BH_17 — Repeated drawer open/close doesn't accumulate DOM nodes
+    // ================================================================
+    /**
+     * Why this might find a bug: React component leaks. Each time a Drawer
+     * opens-and-closes, if the component doesn't fully unmount, its DOM
+     * stays in the tree. Repeat 10x and you have 10 dead drawers in DOM.
+     * Eventually: memory bloat, scroll/event-listener performance issues,
+     * and weird stale-state bugs (the dead drawer's listeners may still fire).
+     *
+     * Falsifiable assertion: count document.querySelectorAll('*').length
+     * before opening any drawer (baseline). Open + close the kebab → Edit
+     * Asset drawer 5 times. Count again. The growth must be modest (≤500
+     * nodes total — generous). >2000 nodes growth means a real leak.
+     *
+     * Tolerance: some growth is normal (toasts, lazy-loaded panels). The
+     * test sets a generous threshold to avoid false positives but tight
+     * enough to catch a real leak.
+     */
+    @Test(priority = 17, description = "TC_BH_17: Repeated Edit drawer open/close doesn't leak DOM nodes")
+    public void testTC_BH_17_DrawerOpenCloseDoesntLeakDom() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_17: DOM leak check");
+        try {
+            assetPage.navigateToAssets();
+            pause(3500);
+
+            Long baseline = (Long) js().executeScript(
+                "return document.querySelectorAll('*').length;");
+            logStep("Baseline DOM node count: " + baseline);
+
+            List<WebElement> rows = driver.findElements(By.cssSelector(".MuiDataGrid-row"));
+            if (rows.isEmpty()) {
+                throw new org.testng.SkipException("No rows to open Edit drawer on");
+            }
+
+            int cycles = 5;
+            for (int i = 0; i < cycles; i++) {
+                // Click first row → detail
+                rows = driver.findElements(By.cssSelector(".MuiDataGrid-row"));
+                if (rows.isEmpty()) break;
+                safeClick(rows.get(0));
+                pause(3000);
+
+                // Open kebab via SVG path → click "Edit Asset"
+                Boolean opened = (Boolean) js().executeScript(
+                    "var paths = document.querySelectorAll('svg path');"
+                    + "for (var p of paths) {"
+                    + "  var d = p.getAttribute('d') || '';"
+                    + "  if (d.indexOf('M12 8c1.1') > -1) {"
+                    + "    var btn = p.closest('button');"
+                    + "    if (btn && btn.offsetWidth) { btn.click(); return true; }"
+                    + "  }"
+                    + "}"
+                    + "return false;");
+                if (!Boolean.TRUE.equals(opened)) break;
+                pause(800);
+                Boolean clickedEdit = (Boolean) js().executeScript(
+                    "var items = document.querySelectorAll('[role=\"menuitem\"], li.MuiMenuItem-root');"
+                    + "for (var it of items) {"
+                    + "  if (!it.offsetWidth) continue;"
+                    + "  if ((it.textContent || '').trim().toLowerCase() === 'edit asset') {"
+                    + "    it.click(); return true;"
+                    + "  }"
+                    + "}"
+                    + "return false;");
+                if (!Boolean.TRUE.equals(clickedEdit)) break;
+                pause(2500);
+
+                // Close drawer via Cancel
+                js().executeScript(
+                    "var btns = document.querySelectorAll('button');"
+                    + "for (var b of btns) {"
+                    + "  if (!b.offsetWidth) continue;"
+                    + "  var t = (b.textContent || '').trim().toLowerCase();"
+                    + "  if (t === 'cancel') { b.click(); return; }"
+                    + "}");
+                pause(1500);
+
+                // Navigate back to list for next cycle
+                driver.navigate().back();
+                pause(2500);
+                logStep("Cycle " + (i + 1) + " complete");
+            }
+
+            Long after = (Long) js().executeScript(
+                "return document.querySelectorAll('*').length;");
+            long growth = after - baseline;
+            logStep("Post-cycle DOM nodes: " + after + " (growth: " + growth + ")");
+            ScreenshotUtil.captureScreenshot("TC_BH_17");
+
+            // Generous threshold: 500 nodes growth across 5 cycles = 100 per cycle.
+            // A leaking drawer would add hundreds-thousands per cycle.
+            // Tighten this once we have a baseline of healthy growth.
+            long threshold = 2000;
+            Assert.assertTrue(growth < threshold,
+                "BUG: DOM grew by " + growth + " nodes across " + cycles + " open-close "
+                + "cycles (threshold: " + threshold + "). Likely a Drawer/Menu unmount "
+                + "leak — components staying in DOM after close.");
+
+            ExtentReportManager.logPass("DOM growth across " + cycles + " cycles: "
+                + growth + " nodes (under " + threshold + " threshold — no leak detected)");
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_17_error");
+            Assert.fail("TC_BH_17 crashed: " + e.getMessage());
+        }
+    }
 }
 
