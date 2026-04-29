@@ -1848,5 +1848,773 @@ public class Phase1BugHunterTestNG extends BaseTest {
             Assert.fail("TC_BH_17 crashed: " + e.getMessage());
         }
     }
+
+    // ================================================================
+    // TC_BH_18 — Every asset detail tab loads without erroring
+    // ================================================================
+    /**
+     * Why this might find a bug: tabs are lazy-loaded. The default tab
+     * (Core Attributes) is always exercised by happy-path tests, but the
+     * other tabs (OCP, Connections, Issues, Tasks, Photos, Attachments) may
+     * regress silently — the tab is clickable, but clicking it triggers a
+     * data fetch that fails, leaving an empty panel or "loading…" stuck.
+     *
+     * Falsifiable assertion: for each visible tab on /assets/<uuid>:
+     *   - Click the tab
+     *   - Wait 3s for content to render
+     *   - Assert that AT LEAST ONE of: tab content panel has visible
+     *     children OR a known empty-state message appears OR a non-loading
+     *     state is reached. Tab stuck on "Loading..." for >5s = failure.
+     *
+     * This catches regressions where a backend endpoint feeding a tab dies
+     * (404/500), or a frontend component throws on mount.
+     *
+     * Cleanup: navigate back to /assets at end.
+     */
+    @Test(priority = 18, description = "TC_BH_18: All asset detail tabs load without sticking on loader / empty content")
+    public void testTC_BH_18_AllDetailTabsLoad() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_18: Detail tabs lazy-load");
+        try {
+            assetPage.navigateToAssets();
+            pause(3500);
+
+            List<WebElement> rows = driver.findElements(By.cssSelector(".MuiDataGrid-row"));
+            if (rows.isEmpty()) {
+                throw new org.testng.SkipException("No rows in grid to test detail tabs");
+            }
+            safeClick(rows.get(0));
+            pause(3500);
+
+            @SuppressWarnings("unchecked")
+            List<String> tabNames = (List<String>) js().executeScript(
+                "var tabs = document.querySelectorAll('[role=\"tab\"], .MuiTab-root');"
+                + "var out = [];"
+                + "for (var t of tabs) {"
+                + "  if (!t.offsetWidth) continue;"
+                + "  var name = (t.textContent || '').trim();"
+                + "  if (name && name.length < 30) out.push(name);"
+                + "}"
+                + "return out;");
+            logStep("Detected " + tabNames.size() + " tabs: " + tabNames);
+
+            if (tabNames.size() < 2) {
+                throw new org.testng.SkipException(
+                    "Detail page has fewer than 2 tabs — can't test multi-tab loading");
+            }
+
+            List<String> failures = new java.util.ArrayList<>();
+            for (String tabName : tabNames) {
+                try {
+                    // Click the tab
+                    Boolean clicked = (Boolean) js().executeScript(
+                        "var tabs = document.querySelectorAll('[role=\"tab\"], .MuiTab-root');"
+                        + "for (var t of tabs) {"
+                        + "  if (!t.offsetWidth) continue;"
+                        + "  if ((t.textContent || '').trim() === arguments[0]) {"
+                        + "    t.click(); return true;"
+                        + "  }"
+                        + "}"
+                        + "return false;", tabName);
+                    if (!Boolean.TRUE.equals(clicked)) {
+                        failures.add(tabName + " (couldn't click)");
+                        continue;
+                    }
+                    pause(3500);
+
+                    // The app doesn't use the standard role="tabpanel" pattern,
+                    // so check overall page state: page must have many visible
+                    // children (DOM healthy) AND not be stuck with multiple
+                    // visible loaders/skeletons.
+                    @SuppressWarnings("unchecked")
+                    java.util.Map<String, Object> state =
+                        (java.util.Map<String, Object>) js().executeScript(
+                        "var loaders = document.querySelectorAll("
+                        + "  '.MuiCircularProgress-root, .MuiSkeleton-root, "
+                        + "  [role=\"progressbar\"]');"
+                        + "var visibleLoaders = 0;"
+                        + "for (var l of loaders) { if (l.offsetWidth) visibleLoaders++; }"
+                        + "var bodyChildren = 0;"
+                        + "document.body.querySelectorAll('*').forEach(function(c){"
+                        + "  if (c.offsetWidth && c.offsetHeight) bodyChildren++;"
+                        + "});"
+                        + "return {"
+                        + "  visibleLoaders: visibleLoaders,"
+                        + "  bodyChildren: bodyChildren"
+                        + "};");
+                    long bodyChildren = ((Number) state.get("bodyChildren")).longValue();
+                    long visibleLoaders = ((Number) state.get("visibleLoaders")).longValue();
+                    logStep("Tab '" + tabName + "': bodyChildren=" + bodyChildren
+                        + ", visibleLoaders=" + visibleLoaders);
+
+                    if (bodyChildren < 50) {
+                        failures.add(tabName + " (only " + bodyChildren
+                            + " visible elements on page — DOM collapsed)");
+                    } else if (visibleLoaders >= 3) {
+                        failures.add(tabName + " (stuck with " + visibleLoaders
+                            + " visible loaders/skeletons after 3.5s)");
+                    }
+                } catch (Exception inner) {
+                    String msg = inner.getMessage() == null ? "null" : inner.getMessage();
+                    failures.add(tabName + " (exception: "
+                        + msg.substring(0, Math.min(100, msg.length())) + ")");
+                }
+            }
+            ScreenshotUtil.captureScreenshot("TC_BH_18");
+
+            Assert.assertTrue(failures.isEmpty(),
+                "BUG: " + failures.size() + " of " + tabNames.size()
+                + " detail tabs failed to load:\n  - "
+                + String.join("\n  - ", failures));
+
+            ExtentReportManager.logPass("All " + tabNames.size()
+                + " detail tabs loaded with content: " + tabNames);
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_18_error");
+            Assert.fail("TC_BH_18 crashed: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TC_BH_19 — Numeric field "Replacement Cost" rejects non-numeric input
+    // ================================================================
+    /**
+     * Why this might find a bug: type coercion at the input layer is a
+     * frequent footgun. A "number" field rendered as <input type="text">
+     * (instead of type="number") accepts "abc" without complaint. The user
+     * types "abc 100" intending to enter cost, the form silently saves
+     * "abc 100" as a string into a NUMERIC database column. On reload, the
+     * field shows the original numeric value (the string was rejected at
+     * DB layer with NULL or 0), creating user confusion and lost data.
+     *
+     * Falsifiable assertion: open Edit drawer → find Replacement Cost
+     * input → type "abc!@#" via React native-setter → check the input's
+     * .value property. EITHER (a) value is empty or numeric-only (input
+     * filtered the chars — good), OR (b) input has a sibling validation
+     * error visible. NOT OK: value contains "abc!@#" and Save button is
+     * still enabled with no error.
+     *
+     * Cleanup: click Cancel — no save.
+     */
+    @Test(priority = 19, description = "TC_BH_19: Replacement Cost field rejects non-numeric input or surfaces validation error")
+    public void testTC_BH_19_NumericFieldRejectsNonNumeric() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_19: Numeric input validation");
+        try {
+            assetPage.navigateToAssets();
+            pause(3500);
+
+            List<WebElement> rows = driver.findElements(By.cssSelector(".MuiDataGrid-row"));
+            if (rows.isEmpty()) {
+                throw new org.testng.SkipException("No rows for Edit drawer");
+            }
+            safeClick(rows.get(0));
+            pause(3500);
+            assetPage.clickKebabMenuItem("Edit Asset");
+            pause(2500);
+
+            // Find the Replacement Cost input — labels in MUI usually appear
+            // as <label> sibling or above the input. Use spatial proximity.
+            String junkInput = "abc!@#xyz";
+            @SuppressWarnings("unchecked")
+            java.util.Map<String, Object> result =
+                (java.util.Map<String, Object>) js().executeScript(
+                "var labels = document.querySelectorAll('label, .MuiFormLabel-root, "
+                + "  .MuiInputLabel-root, span, p, div');"
+                + "var costLabel = null;"
+                + "for (var l of labels) {"
+                + "  if (!l.offsetWidth) continue;"
+                + "  var t = (l.textContent || '').trim().toLowerCase();"
+                + "  if ((t === 'replacement cost' || t === 'replacement cost *') && t.length < 30) {"
+                + "    costLabel = l; break;"
+                + "  }"
+                + "}"
+                + "if (!costLabel) return {found: false, reason: 'no-label'};"
+                + "var lr = costLabel.getBoundingClientRect();"
+                + "var inputs = document.querySelectorAll('input');"
+                + "var best = null; var bestDist = 9999;"
+                + "for (var i of inputs) {"
+                + "  if (!i.offsetWidth) continue;"
+                + "  var ir = i.getBoundingClientRect();"
+                + "  var dy = ir.top - lr.bottom;"
+                + "  var dx = Math.abs(ir.left - lr.left);"
+                + "  if (dy < -10 || dy > 120) continue;"
+                + "  if (dx > 350) continue;"
+                + "  var d = Math.abs(dy) + dx * 0.5;"
+                + "  if (d < bestDist) { bestDist = d; best = i; }"
+                + "}"
+                + "if (!best) return {found: false, reason: 'no-input-near-label'};"
+                + "best.scrollIntoView({block: 'center'});"
+                + "var inputType = best.type;"
+                + "var inputMode = best.inputMode || best.getAttribute('inputmode') || '';"
+                + "var origValue = best.value;"
+                + "var nativeSetter = Object.getOwnPropertyDescriptor("
+                + "  window.HTMLInputElement.prototype, 'value').set;"
+                + "nativeSetter.call(best, arguments[0]);"
+                + "best.dispatchEvent(new Event('input', {bubbles:true}));"
+                + "best.dispatchEvent(new Event('change', {bubbles:true}));"
+                + "best.dispatchEvent(new Event('blur', {bubbles:true}));"
+                + "return {"
+                + "  found: true,"
+                + "  inputType: inputType,"
+                + "  inputMode: inputMode,"
+                + "  origValue: origValue,"
+                + "  newValue: best.value"
+                + "};", junkInput);
+
+            if (!Boolean.TRUE.equals(result.get("found"))) {
+                throw new org.testng.SkipException(
+                    "Replacement Cost input not located via label proximity (reason: "
+                    + result.get("reason") + ") — UI may have changed.");
+            }
+            String inputType = String.valueOf(result.get("inputType"));
+            String inputMode = String.valueOf(result.get("inputMode"));
+            String origValue = String.valueOf(result.get("origValue"));
+            String newValue = String.valueOf(result.get("newValue"));
+            logStep("Replacement Cost input: type='" + inputType + "', inputMode='"
+                + inputMode + "', originalValue='" + origValue + "', after junk='"
+                + newValue + "'");
+
+            pause(800);
+
+            // Check for validation error visible after blur
+            Boolean hasError = (Boolean) js().executeScript(
+                "var errs = document.querySelectorAll('.MuiFormHelperText-root.Mui-error, "
+                + "  .Mui-error, [aria-invalid=\"true\"]');"
+                + "for (var e of errs) {"
+                + "  if (e.offsetWidth) return true;"
+                + "}"
+                + "return false;");
+            // Check if Save button is disabled
+            Boolean saveDisabled = (Boolean) js().executeScript(
+                "var btns = document.querySelectorAll('button');"
+                + "for (var b of btns) {"
+                + "  if (!b.offsetWidth) continue;"
+                + "  var t = (b.textContent || '').trim().toLowerCase();"
+                + "  if (t.indexOf('save') !== -1) return b.disabled;"
+                + "}"
+                + "return false;");
+            ScreenshotUtil.captureScreenshot("TC_BH_19");
+            logStep("Validation: hasError=" + hasError
+                + ", saveDisabled=" + saveDisabled);
+
+            // Cleanup: click Cancel — no save
+            try {
+                js().executeScript(
+                    "var btns = document.querySelectorAll('button');"
+                    + "for (var b of btns) {"
+                    + "  if (!b.offsetWidth) continue;"
+                    + "  var t = (b.textContent || '').trim().toLowerCase();"
+                    + "  if (t === 'cancel') { b.click(); return; }"
+                    + "}");
+                pause(1200);
+            } catch (Exception ignore) {}
+
+            // Acceptable behaviors (in order of strictness):
+            //   A. Input filtered out non-numeric chars (newValue is "" or just digits)
+            //   B. Input is type="number" or has inputMode="numeric"/"decimal"
+            //      (browser may have rejected at input layer)
+            //   C. Validation error is visible OR Save is disabled
+            // NOT OK: junk preserved AND no error AND Save enabled
+            boolean filtered = newValue.isEmpty() || newValue.matches("[0-9.,\\-]+");
+            boolean numericInput = "number".equals(inputType)
+                || inputMode.equals("numeric") || inputMode.equals("decimal");
+            boolean validated = Boolean.TRUE.equals(hasError)
+                || Boolean.TRUE.equals(saveDisabled);
+
+            Assert.assertTrue(filtered || numericInput || validated,
+                "BUG: Replacement Cost accepted non-numeric input '" + junkInput
+                + "' as-is (newValue='" + newValue + "', type='" + inputType
+                + "', inputMode='" + inputMode + "'), no validation error, "
+                + "Save still enabled. Likely a string-into-numeric-column corruption risk.");
+
+            ExtentReportManager.logPass("Replacement Cost handled non-numeric correctly: "
+                + (filtered ? "filtered" : numericInput ? "numeric input type"
+                  : validated ? "validation surfaced" : "?"));
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_19_error");
+            Assert.fail("TC_BH_19 crashed: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TC_BH_20 — Kebab menu items are identical across re-opens (idempotency)
+    // ================================================================
+    /**
+     * Why this might find a bug: state corruption on menu close-reopen.
+     * Symptoms: first open shows ["Edit Asset", "Delete Asset"], second open
+     * shows ["Delete Asset"] only — because of a subtle React effect that
+     * mutated the items array on close. Or worse: items appended each time
+     * → second open has 4, third has 6, etc.
+     *
+     * Falsifiable assertion: open the kebab menu twice (with explicit close
+     * via toggle in between), capture menu items each time, the two lists
+     * MUST be identical (same items, same order).
+     *
+     * Note: TC_BH_13 found that ESC + outside-click + toggle ALL fail to
+     * close the kebab on the detail page. We rely on the kebab toggle
+     * working as a workaround — TC_BH_13's findings showed toggle DID
+     * close it in some cases. If toggle still doesn't close here, we
+     * SkipException with reference to TC_BH_13.
+     */
+    @Test(priority = 20, description = "TC_BH_20: Kebab menu items are identical across re-opens (no state corruption)")
+    public void testTC_BH_20_KebabIdempotentAcrossReopens() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_20: Kebab idempotent");
+        try {
+            assetPage.navigateToAssets();
+            pause(3500);
+            List<WebElement> rows = driver.findElements(By.cssSelector(".MuiDataGrid-row"));
+            if (rows.isEmpty()) throw new org.testng.SkipException("No rows");
+            safeClick(rows.get(0));
+            pause(3500);
+
+            String openKebabJs =
+                "var paths = document.querySelectorAll('svg path');"
+                + "for (var p of paths) {"
+                + "  var d = p.getAttribute('d') || '';"
+                + "  if (d.indexOf('M12 8c1.1') > -1) {"
+                + "    var btn = p.closest('button');"
+                + "    if (btn && btn.offsetWidth) { btn.click(); return true; }"
+                + "  }"
+                + "}"
+                + "return false;";
+            String collectItemsJs =
+                "var items = document.querySelectorAll('[role=\"menuitem\"], "
+                + "  li.MuiMenuItem-root');"
+                + "var out = [];"
+                + "for (var i of items) {"
+                + "  if (!i.offsetWidth || !i.offsetHeight) continue;"
+                + "  if (i.closest('[aria-hidden=\"true\"]')) continue;"
+                + "  out.push((i.textContent || '').trim());"
+                + "}"
+                + "return out;";
+
+            // Open #1
+            Boolean opened1 = (Boolean) js().executeScript(openKebabJs);
+            if (!Boolean.TRUE.equals(opened1)) {
+                throw new org.testng.SkipException("Kebab not openable on detail");
+            }
+            pause(1500);
+            @SuppressWarnings("unchecked")
+            List<String> items1 = (List<String>) js().executeScript(collectItemsJs);
+            logStep("Open #1 menu items (" + items1.size() + "): " + items1);
+            ScreenshotUtil.captureScreenshot("TC_BH_20_open1");
+
+            // Close via toggle (clicking kebab again). If toggle doesn't work,
+            // navigate back+forward to force a re-render — this is more
+            // expensive but reliable.
+            js().executeScript(openKebabJs);
+            pause(1500);
+            @SuppressWarnings("unchecked")
+            List<String> midCheck = (List<String>) js().executeScript(collectItemsJs);
+            logStep("After toggle (should be empty): " + midCheck);
+            if (!midCheck.isEmpty()) {
+                // Toggle didn't close (matches TC_BH_13 finding). Use back+forward
+                // to force re-render of the detail page.
+                logStep("Toggle didn't close — navigating back+forward to reset");
+                driver.navigate().back();
+                pause(2500);
+                driver.navigate().forward();
+                pause(3500);
+            }
+
+            // Open #2
+            Boolean opened2 = (Boolean) js().executeScript(openKebabJs);
+            if (!Boolean.TRUE.equals(opened2)) {
+                throw new org.testng.SkipException("Kebab not openable on 2nd attempt");
+            }
+            pause(1500);
+            @SuppressWarnings("unchecked")
+            List<String> items2 = (List<String>) js().executeScript(collectItemsJs);
+            logStep("Open #2 menu items (" + items2.size() + "): " + items2);
+            ScreenshotUtil.captureScreenshot("TC_BH_20_open2");
+
+            Assert.assertEquals(items1, items2,
+                "BUG: kebab menu items differ between open #1 and #2. "
+                + "#1: " + items1 + ", #2: " + items2 + ". State corruption.");
+
+            ExtentReportManager.logPass("Kebab menu items identical across reopens: " + items1);
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_20_error");
+            Assert.fail("TC_BH_20 crashed: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TC_BH_21 — Edit drawer for row 2 shows row 2's data, not row 1's
+    // ================================================================
+    /**
+     * Why this might find a bug: React form state leak. If the Edit drawer
+     * is the SAME mounted component reused across rows, and its internal
+     * state isn't reset on close, opening it for row 2 might show row 1's
+     * Asset Name (the form's stale lastValue). The save button would then
+     * patch row 2's record with row 1's data — a silent data corruption.
+     *
+     * This is a classic React anti-pattern: stale state on remount.
+     * Modern React with `key={row.id}` forces unmount-remount; without it,
+     * state can persist.
+     *
+     * Falsifiable assertion: open Edit drawer for row 1 → capture Asset Name
+     * shown in drawer. Cancel. Open Edit drawer for row 2 → capture Asset
+     * Name. The two values MUST differ (assuming row 1.name != row 2.name).
+     * Also: row 2's drawer Asset Name must equal row 2's grid name.
+     *
+     * Honest skip: if rows 1 and 2 have identical names, we can't falsify.
+     */
+    @Test(priority = 21, description = "TC_BH_21: Edit drawer for row 2 shows row 2's data, not stale row 1 data")
+    public void testTC_BH_21_CrossRowDrawerStateIsolation() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_21: Cross-row state isolation");
+        try {
+            assetPage.navigateToAssets();
+            pause(3500);
+
+            @SuppressWarnings("unchecked")
+            List<String> rowNames = (List<String>) js().executeScript(
+                "var rows = document.querySelectorAll('.MuiDataGrid-row');"
+                + "var out = [];"
+                + "for (var r of rows) {"
+                + "  if (!r.offsetWidth) continue;"
+                + "  var cell = r.querySelector('[data-field=\"name\"], "
+                + "    [data-field=\"assetName\"], .MuiDataGrid-cell');"
+                + "  if (cell) out.push((cell.textContent || '').trim());"
+                + "  if (out.length >= 5) break;"
+                + "}"
+                + "return out;");
+            logStep("Top row names: " + rowNames);
+            if (rowNames.size() < 2) {
+                throw new org.testng.SkipException("Need ≥2 rows to test cross-row isolation");
+            }
+            String row1Name = rowNames.get(0);
+            String row2Name = null;
+            int row2Index = -1;
+            for (int i = 1; i < rowNames.size(); i++) {
+                if (!row1Name.equals(rowNames.get(i))) {
+                    row2Name = rowNames.get(i);
+                    row2Index = i;
+                    break;
+                }
+            }
+            if (row2Name == null) {
+                throw new org.testng.SkipException(
+                    "Top rows have identical names — can't falsify cross-row isolation");
+            }
+            logStep("Row 1 grid name: '" + row1Name + "', Row " + (row2Index + 1)
+                + " grid name: '" + row2Name + "'");
+
+            // Open Edit drawer for row 1
+            List<WebElement> rows = driver.findElements(By.cssSelector(".MuiDataGrid-row"));
+            safeClick(rows.get(0));
+            pause(3500);
+            assetPage.clickKebabMenuItem("Edit Asset");
+            pause(2500);
+
+            String row1DrawerName = (String) js().executeScript(
+                "var inputs = document.querySelectorAll('[class*=\"MuiDrawer-paper\"] input');"
+                + "for (var i of inputs) {"
+                + "  if (!i.offsetWidth) continue;"
+                + "  var ph = (i.placeholder || '').toLowerCase();"
+                + "  if (ph.indexOf('asset name') !== -1 || ph.indexOf('enter asset name') !== -1) {"
+                + "    return i.value;"
+                + "  }"
+                + "}"
+                + "return null;");
+            logStep("Row 1 drawer Asset Name: '" + row1DrawerName + "'");
+            ScreenshotUtil.captureScreenshot("TC_BH_21_row1_drawer");
+
+            // Cancel drawer
+            js().executeScript(
+                "var btns = document.querySelectorAll('button');"
+                + "for (var b of btns) {"
+                + "  if (!b.offsetWidth) continue;"
+                + "  var t = (b.textContent || '').trim().toLowerCase();"
+                + "  if (t === 'cancel') { b.click(); return; }"
+                + "}");
+            pause(1500);
+            // Navigate back to list
+            driver.navigate().back();
+            pause(3000);
+
+            // Open Edit drawer for row 2
+            rows = driver.findElements(By.cssSelector(".MuiDataGrid-row"));
+            safeClick(rows.get(row2Index));
+            pause(3500);
+            assetPage.clickKebabMenuItem("Edit Asset");
+            pause(2500);
+
+            String row2DrawerName = (String) js().executeScript(
+                "var inputs = document.querySelectorAll('[class*=\"MuiDrawer-paper\"] input');"
+                + "for (var i of inputs) {"
+                + "  if (!i.offsetWidth) continue;"
+                + "  var ph = (i.placeholder || '').toLowerCase();"
+                + "  if (ph.indexOf('asset name') !== -1 || ph.indexOf('enter asset name') !== -1) {"
+                + "    return i.value;"
+                + "  }"
+                + "}"
+                + "return null;");
+            logStep("Row 2 drawer Asset Name: '" + row2DrawerName + "'");
+            ScreenshotUtil.captureScreenshot("TC_BH_21_row2_drawer");
+
+            // Cleanup
+            try {
+                js().executeScript(
+                    "var btns = document.querySelectorAll('button');"
+                    + "for (var b of btns) {"
+                    + "  if (!b.offsetWidth) continue;"
+                    + "  var t = (b.textContent || '').trim().toLowerCase();"
+                    + "  if (t === 'cancel') { b.click(); return; }"
+                    + "}");
+                pause(1200);
+            } catch (Exception ignore) {}
+
+            // Falsifier 1: row 2's drawer must show row 2's name (not row 1's)
+            Assert.assertNotEquals(row2DrawerName, row1DrawerName,
+                "BUG: row 2's Edit drawer shows the SAME Asset Name as row 1 ('"
+                + row1DrawerName + "'). React form state leaked across rows.");
+            // Falsifier 2: row 2's drawer name should match row 2's grid name
+            Assert.assertEquals(row2DrawerName, row2Name,
+                "BUG: row 2's Edit drawer Asset Name ('" + row2DrawerName
+                + "') doesn't match row 2's grid Asset Name ('" + row2Name + "').");
+
+            ExtentReportManager.logPass("Cross-row state isolation OK: row1='"
+                + row1DrawerName + "', row2='" + row2DrawerName + "'");
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_21_error");
+            Assert.fail("TC_BH_21 crashed: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TC_BH_22 — /connections page surfaces no SEVERE console errors
+    // ================================================================
+    /**
+     * Why this might find a bug: TC_BH_12 covers /assets but Phase 1 includes
+     * /connections too. Different surface = different render path = different
+     * potential bugs. This is the same idea as TC_BH_12 applied to a NEW
+     * surface — a "horizontal scan" pattern that's cheap to add and high-yield.
+     *
+     * Falsifiable: same as TC_BH_12. Filter the same known bugs (PLuG, /me,
+     * /refresh) since they fire on every page; assert the rest is clean.
+     */
+    @Test(priority = 22, description = "TC_BH_22: /connections page loads with zero unfiltered SEVERE console errors")
+    public void testTC_BH_22_ConnectionsPageNoConsoleErrors() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_22: Connections console health");
+        try {
+            driver.get("https://acme.qa.egalvanic.ai/connections");
+            pause(5000);
+
+            org.openqa.selenium.logging.LogEntries entries;
+            try {
+                entries = driver.manage().logs()
+                    .get(org.openqa.selenium.logging.LogType.BROWSER);
+            } catch (Exception e) {
+                throw new org.testng.SkipException(
+                    "Browser log collection unsupported: " + e.getMessage());
+            }
+
+            // Same noise filter as TC_BH_12 — TODO entries indicate KNOWN
+            // bugs on this app that should be filed and fixed
+            String[] knownNoise = {
+                "beamer",
+                "[plug]", "pluG", "plug widget",   // TODO: PLuG init auth bug
+                "/api/auth/v2/me",                  // TODO: /me 401 bug
+                "/api/auth/v2/refresh",             // TODO: /refresh 400 bug
+                "google-analytics", "gtag",
+                "stripe", "intercom",
+                "fonts.googleapis", "fonts.gstatic",
+                "favicon.ico",
+                "DevTools",
+                "preloaded using link preload",
+            };
+            List<String> realErrors = new java.util.ArrayList<>();
+            for (org.openqa.selenium.logging.LogEntry e : entries) {
+                if (!"SEVERE".equals(e.getLevel().getName())) continue;
+                String msg = e.getMessage();
+                if (msg == null) continue;
+                String lc = msg.toLowerCase();
+                boolean noisy = false;
+                for (String n : knownNoise) {
+                    if (lc.contains(n.toLowerCase())) { noisy = true; break; }
+                }
+                if (!noisy) realErrors.add(msg.substring(0, Math.min(msg.length(), 200)));
+            }
+            ScreenshotUtil.captureScreenshot("TC_BH_22");
+            logStep("Connections SEVERE total: " + entries.getAll().size()
+                + ", after filter: " + realErrors.size());
+            for (String r : realErrors) logStep("  CONSOLE-ERR: " + r);
+
+            Assert.assertTrue(realErrors.isEmpty(),
+                "BUG: /connections surfaced " + realErrors.size()
+                + " SEVERE console errors after noise filter:\n  - "
+                + String.join("\n  - ", realErrors));
+
+            ExtentReportManager.logPass("/connections has zero unfiltered SEVERE console errors");
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_22_error");
+            Assert.fail("TC_BH_22 crashed: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TC_BH_23 — F5 (browser refresh) while Edit drawer is open recovers cleanly
+    // ================================================================
+    /**
+     * Why this might find a bug: SPA state recovery on hard refresh.
+     * Common failure modes:
+     *   - Drawer stays open after refresh with corrupted state (form fields
+     *     showing "undefined" or empty but Save still enabled)
+     *   - Page shows infinite loader (state hydration races against drawer
+     *     mount)
+     *   - URL doesn't reflect drawer state (no recovery path) AND drawer
+     *     stays open with stale data
+     *
+     * Falsifiable assertion: open Edit drawer for row 1 → trigger F5
+     * (driver.navigate().refresh()) → wait 5s → assert: page is on /assets
+     * URL OR detail URL, grid/page rendered with content (≥1 row visible
+     * if list, ≥1 detail panel if detail), and either (a) drawer cleanly
+     * closed (most common — refresh resets transient UI state) OR (b)
+     * drawer reopened with the SAME data (deep state restoration — rare
+     * but valid). NOT OK: drawer open with garbage state.
+     */
+    @Test(priority = 23, description = "TC_BH_23: Browser refresh while Edit drawer is open recovers cleanly (no garbage state)")
+    public void testTC_BH_23_RefreshWithDrawerOpenRecovers() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_23: F5 with drawer open");
+        try {
+            assetPage.navigateToAssets();
+            pause(3500);
+
+            List<WebElement> rows = driver.findElements(By.cssSelector(".MuiDataGrid-row"));
+            if (rows.isEmpty()) throw new org.testng.SkipException("No rows");
+            safeClick(rows.get(0));
+            pause(3500);
+            assetPage.clickKebabMenuItem("Edit Asset");
+            pause(2500);
+
+            // Confirm drawer is actually open before refresh
+            Long modalDrawersBefore = (Long) js().executeScript(
+                "var modals = new Set();"
+                + "document.querySelectorAll('.MuiDrawer-modal').forEach(function(d){"
+                + "  if (!d.offsetWidth) return;"
+                + "  if (d.classList.contains('MuiDrawer-docked')) return;"
+                + "  modals.add(d);"
+                + "});"
+                + "return modals.size;");
+            logStep("Modal drawers BEFORE refresh: " + modalDrawersBefore);
+            if (modalDrawersBefore == null || modalDrawersBefore == 0L) {
+                throw new org.testng.SkipException(
+                    "Edit drawer didn't open — can't test refresh-while-open");
+            }
+            ScreenshotUtil.captureScreenshot("TC_BH_23_before_refresh");
+
+            // F5 — hard refresh
+            String urlBeforeRefresh = driver.getCurrentUrl();
+            driver.navigate().refresh();
+            pause(6000);  // Generous wait for SPA hydration
+            String urlAfterRefresh = driver.getCurrentUrl();
+            logStep("URL before refresh: " + urlBeforeRefresh);
+            logStep("URL after refresh:  " + urlAfterRefresh);
+
+            // Capture post-refresh state
+            @SuppressWarnings("unchecked")
+            java.util.Map<String, Object> postState =
+                (java.util.Map<String, Object>) js().executeScript(
+                "var modals = new Set();"
+                + "document.querySelectorAll('.MuiDrawer-modal').forEach(function(d){"
+                + "  if (!d.offsetWidth) return;"
+                + "  if (d.classList.contains('MuiDrawer-docked')) return;"
+                + "  modals.add(d);"
+                + "});"
+                + "var loaders = document.querySelectorAll("
+                + "  '.MuiCircularProgress-root, .MuiSkeleton-root, "
+                + "  [role=\"progressbar\"]');"
+                + "var visibleLoaders = 0;"
+                + "for (var l of loaders) { if (l.offsetWidth) visibleLoaders++; }"
+                + "var bodyChildren = 0;"
+                + "document.body.querySelectorAll('*').forEach(function(c){"
+                + "  if (c.offsetWidth && c.offsetHeight) bodyChildren++;"
+                + "});"
+                + "var rows = document.querySelectorAll('.MuiDataGrid-row');"
+                + "var visibleRows = 0;"
+                + "for (var r of rows) { if (r.offsetWidth) visibleRows++; }"
+                + "return {"
+                + "  modalDrawers: modals.size,"
+                + "  visibleLoaders: visibleLoaders,"
+                + "  bodyChildren: bodyChildren,"
+                + "  visibleRows: visibleRows"
+                + "};");
+            long modalDrawersAfter = ((Number) postState.get("modalDrawers")).longValue();
+            long visibleLoaders = ((Number) postState.get("visibleLoaders")).longValue();
+            long bodyChildren = ((Number) postState.get("bodyChildren")).longValue();
+            long visibleRows = ((Number) postState.get("visibleRows")).longValue();
+            logStep("Post-refresh: modalDrawers=" + modalDrawersAfter
+                + ", visibleLoaders=" + visibleLoaders
+                + ", bodyChildren=" + bodyChildren
+                + ", visibleRows=" + visibleRows);
+            ScreenshotUtil.captureScreenshot("TC_BH_23_after_refresh");
+
+            // Falsifier 1: page must have rendered structure (DOM not collapsed)
+            Assert.assertTrue(bodyChildren > 50,
+                "BUG: post-refresh DOM collapsed (only " + bodyChildren
+                + " visible elements). Page didn't recover from F5.");
+            // Falsifier 2: not stuck on loaders 6s after refresh
+            Assert.assertTrue(visibleLoaders < 5,
+                "BUG: post-refresh stuck with " + visibleLoaders
+                + " visible loaders 6s after F5 — hydration didn't complete.");
+            // Falsifier 3: if drawer is reopened with stale state, the form
+            // inputs would be empty/undefined. We don't auto-detect that
+            // perfectly here, but we DO check: if drawer is open, its inputs
+            // must have non-empty placeholders or values (not corrupted).
+            if (modalDrawersAfter > 0) {
+                Boolean drawerHealthy = (Boolean) js().executeScript(
+                    "var paper = document.querySelector('.MuiDrawer-modal "
+                    + "  .MuiDrawer-paper, .MuiModal-root .MuiDrawer-paper');"
+                    + "if (!paper || !paper.offsetWidth) return false;"
+                    + "var inputs = paper.querySelectorAll('input');"
+                    + "if (inputs.length === 0) return false;"
+                    + "var anyMeaningful = false;"
+                    + "for (var i of inputs) {"
+                    + "  if (i.value && i.value.length > 0) { anyMeaningful = true; break; }"
+                    + "  if (i.placeholder && i.placeholder.length > 0) {"
+                    + "    anyMeaningful = true; break;"
+                    + "  }"
+                    + "}"
+                    + "return anyMeaningful;");
+                Assert.assertTrue(Boolean.TRUE.equals(drawerHealthy),
+                    "BUG: post-refresh drawer is open but its form inputs have no values "
+                    + "and no placeholders — corrupted-state regression.");
+                logStep("Drawer reopened post-refresh with healthy state (deep restoration)");
+            } else {
+                logStep("Drawer cleanly closed on refresh (most common SPA behavior)");
+            }
+
+            ExtentReportManager.logPass("F5 with drawer open recovered cleanly: "
+                + (modalDrawersAfter > 0 ? "drawer reopened with state" : "drawer closed")
+                + ", DOM healthy (" + bodyChildren + " elements)");
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_23_error");
+            Assert.fail("TC_BH_23 crashed: " + e.getMessage());
+        }
+    }
 }
 
