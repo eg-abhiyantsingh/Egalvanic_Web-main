@@ -2616,5 +2616,709 @@ public class Phase1BugHunterTestNG extends BaseTest {
             Assert.fail("TC_BH_23 crashed: " + e.getMessage());
         }
     }
+
+    // ================================================================
+    // TC_BH_24 — Deep-link to /assets/<uuid> loads cleanly (URL bookmarking)
+    // ================================================================
+    /**
+     * Why this might find a bug: SPA cold-start at a deep URL is a
+     * different code path than SPA-internal navigation. Common breaks:
+     *   - The detail page assumes /assets list was loaded first (caches
+     *     the asset's parent context); deep-link bypasses that → the
+     *     detail page sees `undefined` for parent state → blank or crash
+     *   - Auth context isn't set up before the detail's `useEffect` fires
+     *     → 401 → redirect to login → user blocked even when authed
+     *   - Route-guard logic only handles redirect FROM /assets, not TO
+     *     /assets/<uuid> directly → 404 page
+     *
+     * Strategy: navigate to /assets normally (capture a real asset UUID),
+     * then navigate cold to /assets/<uuid> via driver.get(). Assert that
+     * the URL stays on /assets/<uuid> (no redirect to /assets or /login)
+     * AND the page renders detail content (≥1 visible heading or core
+     * attribute table).
+     */
+    @Test(priority = 24, description = "TC_BH_24: Deep-link to /assets/<uuid> loads detail page cleanly (no redirect, no 404)")
+    public void testTC_BH_24_DeepLinkLoadsDetail() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_24: Deep-link to detail");
+        try {
+            // Step 1: visit /assets normally and capture a real UUID
+            assetPage.navigateToAssets();
+            pause(3500);
+            List<WebElement> rows = driver.findElements(By.cssSelector(".MuiDataGrid-row"));
+            if (rows.isEmpty()) throw new org.testng.SkipException("No rows");
+            safeClick(rows.get(0));
+            pause(3500);
+            String detailUrl = driver.getCurrentUrl();
+            logStep("Captured detail URL: " + detailUrl);
+            Assert.assertTrue(detailUrl.contains("/assets/")
+                && !detailUrl.endsWith("/assets") && !detailUrl.endsWith("/assets/"),
+                "URL after row click doesn't look like a detail page: " + detailUrl);
+
+            // Step 2: navigate AWAY (back to a different page), then deep-link
+            // back to the detail URL — this simulates a fresh visit to
+            // a bookmarked URL, even though we still have the auth cookies.
+            driver.get("https://acme.qa.egalvanic.ai/dashboards/site-overview");
+            pause(3500);
+            String dashUrl = driver.getCurrentUrl();
+            logStep("Navigated away to: " + dashUrl);
+
+            // Step 3: cold deep-link to the detail URL
+            driver.get(detailUrl);
+
+            // Poll up to 20s for hydration to complete: heading visible OR
+            // 404 marker present. Cold-start needs longer than warm SPA nav
+            // because the auth bootstrap + asset fetch must serialize.
+            long pollDeadline = System.currentTimeMillis() + 20000;
+            while (System.currentTimeMillis() < pollDeadline) {
+                Boolean ready = (Boolean) js().executeScript(
+                    "var headings = document.querySelectorAll('h1, h2, h3, "
+                    + "  .MuiTypography-h1, .MuiTypography-h2, .MuiTypography-h3, "
+                    + "  .MuiTypography-h4, .MuiTypography-h5');"
+                    + "for (var h of headings) {"
+                    + "  if (h.offsetWidth) {"
+                    + "    var t = (h.textContent || '').trim();"
+                    + "    if (t.length > 0 && t.length < 200) return true;"
+                    + "  }"
+                    + "}"
+                    + "var bodyText = (document.body.textContent || '').toLowerCase();"
+                    + "if (bodyText.indexOf('not found') !== -1 "
+                    + "  || bodyText.indexOf('404') !== -1) return true;"
+                    + "return false;");
+                if (Boolean.TRUE.equals(ready)) break;
+                pause(1000);
+            }
+            long waitedMs = 20000 - (pollDeadline - System.currentTimeMillis());
+            logStep("Cold-start hydration completed (or timed out) after " + waitedMs + "ms");
+
+            String urlAfterDeepLink = driver.getCurrentUrl();
+            logStep("URL after deep-link: " + urlAfterDeepLink);
+
+            // Falsifier 1: URL must not have redirected away from detail
+            Assert.assertEquals(urlAfterDeepLink, detailUrl,
+                "BUG: deep-link to detail URL was redirected. Expected '"
+                + detailUrl + "', got '" + urlAfterDeepLink + "'. Route-guard "
+                + "or auth bootstrap likely doesn't handle direct detail entry.");
+
+            // Falsifier 2: detail content must render (heading + ≥50 visible
+            // elements + no 404 markers)
+            @SuppressWarnings("unchecked")
+            java.util.Map<String, Object> state =
+                (java.util.Map<String, Object>) js().executeScript(
+                "var bodyText = (document.body.textContent || '').toLowerCase();"
+                + "var bodyChildren = 0;"
+                + "document.body.querySelectorAll('*').forEach(function(c){"
+                + "  if (c.offsetWidth && c.offsetHeight) bodyChildren++;"
+                + "});"
+                + "var has404 = bodyText.indexOf('not found') !== -1 "
+                + "  || bodyText.indexOf('404') !== -1 "
+                + "  || bodyText.indexOf('page does not exist') !== -1;"
+                + "var headings = document.querySelectorAll('h1, h2, h3, "
+                + "  .MuiTypography-h1, .MuiTypography-h2, .MuiTypography-h3, "
+                + "  .MuiTypography-h4, .MuiTypography-h5');"
+                + "var visibleHeadings = 0;"
+                + "for (var h of headings) { if (h.offsetWidth) visibleHeadings++; }"
+                + "return {"
+                + "  bodyChildren: bodyChildren,"
+                + "  has404: has404,"
+                + "  visibleHeadings: visibleHeadings,"
+                + "  bodyTextLen: bodyText.length"
+                + "};");
+            long bodyChildren = ((Number) state.get("bodyChildren")).longValue();
+            boolean has404 = Boolean.TRUE.equals(state.get("has404"));
+            long visibleHeadings = ((Number) state.get("visibleHeadings")).longValue();
+            ScreenshotUtil.captureScreenshot("TC_BH_24");
+            logStep("Deep-link state: bodyChildren=" + bodyChildren
+                + ", visibleHeadings=" + visibleHeadings + ", has404=" + has404);
+
+            Assert.assertFalse(has404,
+                "BUG: deep-link to detail URL shows a 404 / 'not found' page. "
+                + "Routing regression — detail route doesn't accept direct entry.");
+            Assert.assertTrue(bodyChildren > 50,
+                "BUG: deep-link page DOM collapsed (only " + bodyChildren
+                + " visible elements). Likely a hydration crash on direct entry.");
+            Assert.assertTrue(visibleHeadings >= 1,
+                "BUG: deep-link page has 0 visible headings. Detail content likely "
+                + "didn't render — check console errors or auth state.");
+
+            ExtentReportManager.logPass("Deep-link to detail loaded cleanly: "
+                + bodyChildren + " visible elements, " + visibleHeadings + " headings");
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_24_error");
+            Assert.fail("TC_BH_24 crashed: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TC_BH_25 — Search input debounces — rapid typing fires bounded network calls
+    // ================================================================
+    /**
+     * Why this might find a bug: search inputs without debounce send a
+     * fetch on every keystroke. Typing "circuit breaker" (15 chars) →
+     * 15 API calls in ~2 seconds. Costs:
+     *   - Backend rate-limit pressure
+     *   - Race: response for "circui" arrives AFTER "circuit breaker",
+     *     stale results overwrite fresh ones in the grid
+     *   - Wasted bandwidth
+     * Industry standard: debounce 200-500ms. Result: typing 15 chars at
+     * 100ms/char = 1 final API call after the user stops.
+     *
+     * Strategy: monkey-patch fetch+XHR (same pattern as TC_BH_14) to
+     * record every /api/* request. Type 10 chars rapidly into search
+     * input (50ms between keystrokes via JS sendKey-style char dispatch).
+     * Wait 1.5s for debounce to settle. Count requests whose URL contains
+     * "search" or our query-substring. Must be ≤3 (generous: allows for
+     * an initial-load fetch + 1 debounced search + 1 follow-up).
+     *
+     * If >3, the input either has no debounce or the debounce window is
+     * smaller than the typing speed.
+     */
+    @Test(priority = 25, description = "TC_BH_25: Search input debounces — rapid typing fires ≤3 network requests")
+    public void testTC_BH_25_SearchInputDebounce() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_25: Search debounce");
+        try {
+            assetPage.navigateToAssets();
+            pause(3500);
+
+            // Install network monitor (idempotent)
+            js().executeScript(
+                "if (!window.__bh_search_calls) {"
+                + "  window.__bh_search_calls = [];"
+                + "  var origFetch = window.fetch;"
+                + "  window.fetch = function() {"
+                + "    var args = arguments;"
+                + "    var url = (args[0] && args[0].url) || args[0] || '';"
+                + "    window.__bh_search_calls.push(String(url).slice(0, 200));"
+                + "    return origFetch.apply(this, args);"
+                + "  };"
+                + "  var origOpen = XMLHttpRequest.prototype.open;"
+                + "  XMLHttpRequest.prototype.open = function(method, url) {"
+                + "    this.__bh_url = url;"
+                + "    return origOpen.apply(this, arguments);"
+                + "  };"
+                + "  var origSend = XMLHttpRequest.prototype.send;"
+                + "  XMLHttpRequest.prototype.send = function() {"
+                + "    var xhr = this;"
+                + "    if (xhr.__bh_url) window.__bh_search_calls.push(String(xhr.__bh_url).slice(0,200));"
+                + "    return origSend.apply(this, arguments);"
+                + "  };"
+                + "}"
+                + "window.__bh_search_calls.length = 0;"  // reset before typing
+                + "return true;");
+            logStep("Network monitor installed + reset");
+
+            WebElement search = null;
+            List<WebElement> searches = driver.findElements(By.cssSelector(
+                "input[placeholder*='Search' i], input[type='search']"));
+            for (WebElement s : searches) {
+                if (s.isDisplayed()) { search = s; break; }
+            }
+            if (search == null) throw new org.testng.SkipException("No search input");
+
+            // Type 10 chars rapidly. Use Selenium sendKeys which fires
+            // input events naturally — that's what real keyboards do.
+            String query = "ABCDEFGHIJ";
+            search.click();
+            search.clear();
+            pause(300);
+            for (char c : query.toCharArray()) {
+                search.sendKeys(String.valueOf(c));
+                // Tiny pause to look like typing — but faster than typical
+                // debounce window so we test that debounce IS working
+                pause(60);
+            }
+            logStep("Typed 10 chars: " + query);
+
+            // Wait for debounce to settle and final fetch to fire
+            pause(1800);
+
+            @SuppressWarnings("unchecked")
+            List<String> allCalls = (List<String>) js().executeScript(
+                "return window.__bh_search_calls || [];");
+            // Filter to API calls that look search-related: URL contains
+            // /api/ AND either contains the query, or has "search" / "filter"
+            // / "name" in path or query string. We're generous to avoid
+            // false positives — not-search API calls (analytics, /me) shouldn't count.
+            String queryLower = query.toLowerCase();
+            List<String> searchCalls = new java.util.ArrayList<>();
+            for (String url : allCalls) {
+                if (url == null) continue;
+                String u = url.toLowerCase();
+                if (!u.contains("/api/")) continue;
+                boolean searchish = u.contains(queryLower)
+                    || u.contains("search") || u.contains("filter")
+                    || u.contains("query") || u.contains("name=")
+                    || u.contains("q=");
+                if (searchish) searchCalls.add(url);
+            }
+            ScreenshotUtil.captureScreenshot("TC_BH_25");
+            logStep("Total network calls during search: " + allCalls.size()
+                + ", search-related: " + searchCalls.size());
+            for (String c : searchCalls) logStep("  search-call: " + c);
+
+            // Cleanup: clear search
+            try { search.clear(); pause(500); } catch (Exception ignore) {}
+
+            Assert.assertTrue(searchCalls.size() <= 3,
+                "BUG: search input fired " + searchCalls.size() + " API calls "
+                + "for 10 keystrokes (expected ≤3 with debounce). "
+                + "Each keystroke is firing its own fetch — no debounce. "
+                + "Calls captured:\n  - " + String.join("\n  - ", searchCalls));
+
+            ExtentReportManager.logPass("Search debounced correctly: "
+                + searchCalls.size() + " search-related API calls for 10 keystrokes "
+                + "(≤3 threshold)");
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_25_error");
+            Assert.fail("TC_BH_25 crashed: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TC_BH_26 — Tab key reaches ≥10 distinct interactive elements (a11y)
+    // ================================================================
+    /**
+     * Why this might find a bug: keyboard accessibility regressions. A
+     * button rendered as a `<div onClick={...}>` instead of `<button>` is
+     * unreachable by Tab key — invisible to screen reader users and to
+     * anyone who can't use a mouse. Same for `tabindex="-1"` overrides.
+     *
+     * The /assets page has many interactive elements (sidebar links,
+     * Create Asset, Bulk Edit ▼, SKM ▼, Bulk Ops, search, grid checkboxes,
+     * pagination buttons, kebab buttons). A keyboard user must be able to
+     * reach a meaningful number of them via Tab.
+     *
+     * Falsifiable assertion: from a known starting focus (body), press
+     * Tab 30 times. Track each focused element's tagName + identifying
+     * attributes. The set of UNIQUE focused elements must be ≥10.
+     *
+     * Why ≥10 (and not "all"): focus traps in modals are intentional;
+     * some elements may be programmatically focused but not Tab-stopped.
+     * 10 is a generous threshold that catches "almost nothing is
+     * focusable" regressions without false-positives on rare elements.
+     */
+    @Test(priority = 26, description = "TC_BH_26: Tab key reaches ≥10 distinct interactive elements on /assets (a11y)")
+    public void testTC_BH_26_TabReachesInteractiveElements() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_26: Tab a11y reachability");
+        try {
+            assetPage.navigateToAssets();
+            pause(3500);
+
+            // Focus the body element to start from a known anchor
+            js().executeScript("document.body.tabIndex = -1; document.body.focus();");
+            pause(300);
+
+            // The wrapped SelfHealingDriver doesn't implement Interactive,
+            // so org.openqa.selenium.interactions.Actions can't be used here.
+            // Instead, we Tab using sendKeys on the active element each
+            // iteration — this advances focus the same way a real Tab keypress
+            // would, since the browser handles Tab natively from any focused
+            // element.
+
+            java.util.Set<String> uniqueFocused = new java.util.LinkedHashSet<>();
+            int presses = 30;
+            for (int i = 0; i < presses; i++) {
+                try {
+                    WebElement active = driver.switchTo().activeElement();
+                    active.sendKeys(org.openqa.selenium.Keys.TAB);
+                } catch (Exception sendEx) {
+                    // If the active element refuses sendKeys (e.g., body),
+                    // fall back to body sendKeys
+                    try {
+                        driver.findElement(By.tagName("body"))
+                            .sendKeys(org.openqa.selenium.Keys.TAB);
+                    } catch (Exception ignore) {}
+                }
+                pause(80);
+                String focusedSig = (String) js().executeScript(
+                    "var a = document.activeElement;"
+                    + "if (!a || a === document.body) return 'BODY';"
+                    + "var sig = a.tagName;"
+                    + "if (a.id) sig += '#' + a.id;"
+                    + "if (a.getAttribute('aria-label')) "
+                    + "  sig += '[al=' + a.getAttribute('aria-label').slice(0,30) + ']';"
+                    + "if (a.getAttribute('placeholder')) "
+                    + "  sig += '[ph=' + a.getAttribute('placeholder').slice(0,30) + ']';"
+                    + "if (a.textContent) {"
+                    + "  var t = a.textContent.trim();"
+                    + "  if (t.length > 0 && t.length < 40) sig += '[t=' + t + ']';"
+                    + "}"
+                    + "if (a.className && typeof a.className === 'string') {"
+                    + "  sig += '.' + a.className.split(' ').slice(0,2).join('.');"
+                    + "}"
+                    + "return sig;");
+                if (focusedSig != null && !"BODY".equals(focusedSig)) {
+                    uniqueFocused.add(focusedSig);
+                }
+            }
+            ScreenshotUtil.captureScreenshot("TC_BH_26");
+            logStep("Tab presses: " + presses + ", unique focused elements: "
+                + uniqueFocused.size());
+            int counter = 0;
+            for (String s : uniqueFocused) {
+                if (counter++ >= 12) break;
+                logStep("  focused: " + s);
+            }
+
+            Assert.assertTrue(uniqueFocused.size() >= 10,
+                "BUG: only " + uniqueFocused.size() + " unique elements reachable "
+                + "via Tab (expected ≥10). Many interactive elements are likely "
+                + "rendered as <div onClick> or have tabindex='-1'. Keyboard "
+                + "and screen-reader users blocked. Sample: " + uniqueFocused);
+
+            ExtentReportManager.logPass("Tab navigation reached "
+                + uniqueFocused.size() + " unique interactive elements (≥10 OK)");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_26_error");
+            Assert.fail("TC_BH_26 crashed: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TC_BH_27 — /issues page surfaces no SEVERE console errors
+    // ================================================================
+    /**
+     * Why this might find a bug: extends TC_BH_12 (/assets) and TC_BH_22
+     * (/connections) to the /issues surface — third major Phase 1 page.
+     * Each page has different render path, different data fetches, so
+     * the same noise filter may hide DIFFERENT real bugs per surface.
+     *
+     * Same noise filter as TC_BH_12 + TC_BH_22 (3 known bugs filtered).
+     */
+    @Test(priority = 27, description = "TC_BH_27: /issues page loads with zero unfiltered SEVERE console errors")
+    public void testTC_BH_27_IssuesPageNoConsoleErrors() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_27: Issues console health");
+        try {
+            driver.get("https://acme.qa.egalvanic.ai/issues");
+            pause(5000);
+
+            org.openqa.selenium.logging.LogEntries entries;
+            try {
+                entries = driver.manage().logs()
+                    .get(org.openqa.selenium.logging.LogType.BROWSER);
+            } catch (Exception e) {
+                throw new org.testng.SkipException(
+                    "Browser log collection unsupported: " + e.getMessage());
+            }
+
+            String[] knownNoise = {
+                "beamer",
+                "[plug]", "pluG", "plug widget",
+                "/api/auth/v2/me",
+                "/api/auth/v2/refresh",
+                "google-analytics", "gtag",
+                "stripe", "intercom",
+                "fonts.googleapis", "fonts.gstatic",
+                "favicon.ico",
+                "DevTools",
+                "preloaded using link preload",
+            };
+            List<String> realErrors = new java.util.ArrayList<>();
+            for (org.openqa.selenium.logging.LogEntry e : entries) {
+                if (!"SEVERE".equals(e.getLevel().getName())) continue;
+                String msg = e.getMessage();
+                if (msg == null) continue;
+                String lc = msg.toLowerCase();
+                boolean noisy = false;
+                for (String n : knownNoise) {
+                    if (lc.contains(n.toLowerCase())) { noisy = true; break; }
+                }
+                if (!noisy) realErrors.add(msg.substring(0, Math.min(msg.length(), 200)));
+            }
+            ScreenshotUtil.captureScreenshot("TC_BH_27");
+            logStep("Issues SEVERE total: " + entries.getAll().size()
+                + ", after filter: " + realErrors.size());
+            for (String r : realErrors) logStep("  CONSOLE-ERR: " + r);
+
+            Assert.assertTrue(realErrors.isEmpty(),
+                "BUG: /issues surfaced " + realErrors.size()
+                + " SEVERE console errors after noise filter:\n  - "
+                + String.join("\n  - ", realErrors));
+
+            ExtentReportManager.logPass("/issues has zero unfiltered SEVERE console errors");
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_27_error");
+            Assert.fail("TC_BH_27 crashed: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TC_BH_28 — Sort visual indicator (arrow icon) reflects sort direction
+    // ================================================================
+    /**
+     * Why this might find a bug: counterpart to TC_BH_07. That test verified
+     * the DATA actually re-orders when you click a sort header. THIS test
+     * verifies the VISUAL indicator (up/down arrow icon) matches what the
+     * data shows. A common bug: sort works but arrow stays neutral, OR
+     * arrow flips but data doesn't change (TC_BH_07 catches the latter).
+     * Together, the two tests cover both directions of visual/data divergence.
+     *
+     * Strategy: click Asset Name header twice. After each click, inspect
+     * the column header for sort-direction signals: aria-sort attribute,
+     * MUI's MuiDataGrid-iconButtonContainer rotated icon, or specific
+     * ascending/descending class. The signals after click 1 must DIFFER
+     * from after click 2 (asc vs desc) — otherwise the arrow isn't reacting.
+     *
+     * Honest skip: if the column header doesn't expose any sort-direction
+     * signal at all (no aria-sort, no SVG transform), we can't falsify.
+     */
+    @Test(priority = 28, description = "TC_BH_28: Asset Name column sort indicator (arrow) flips between clicks")
+    public void testTC_BH_28_SortIndicatorMatchesDirection() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_28: Sort indicator visual");
+        try {
+            assetPage.navigateToAssets();
+            pause(3500);
+
+            String collectIndicatorsJs =
+                "var hdrs = document.querySelectorAll('.MuiDataGrid-columnHeader');"
+                + "for (var h of hdrs) {"
+                + "  if (!h.offsetWidth) continue;"
+                + "  var t = (h.textContent || '').trim().toLowerCase();"
+                + "  if (t.indexOf('asset name') === -1 && t !== 'name') continue;"
+                + "  var ariaSort = h.getAttribute('aria-sort') || 'none';"
+                + "  var iconBtn = h.querySelector('.MuiDataGrid-iconButtonContainer, "
+                + "    .MuiDataGrid-sortIcon');"
+                + "  var iconClass = iconBtn ? (iconBtn.className || '').toString() : '';"
+                + "  var sortIcon = h.querySelector('.MuiDataGrid-sortIcon, "
+                + "    [data-testid*=\"ArrowUpward\"], [data-testid*=\"ArrowDownward\"]');"
+                + "  var sortIconTransform = sortIcon ? "
+                + "    (sortIcon.style.transform || getComputedStyle(sortIcon).transform || '') : '';"
+                + "  var sortIconTestid = sortIcon ? "
+                + "    (sortIcon.getAttribute('data-testid') || '') : '';"
+                + "  return {"
+                + "    ariaSort: ariaSort,"
+                + "    iconClass: iconClass,"
+                + "    sortIconTransform: sortIconTransform,"
+                + "    sortIconTestid: sortIconTestid"
+                + "  };"
+                + "}"
+                + "return null;";
+
+            String clickHeaderJs =
+                "var hdrs = document.querySelectorAll('.MuiDataGrid-columnHeader');"
+                + "for (var h of hdrs) {"
+                + "  if (!h.offsetWidth) continue;"
+                + "  var t = (h.textContent || '').trim().toLowerCase();"
+                + "  if (t.indexOf('asset name') === -1 && t !== 'name') continue;"
+                + "  h.click();"
+                + "  return true;"
+                + "}"
+                + "return false;";
+
+            // Initial indicator (no sort applied)
+            @SuppressWarnings("unchecked")
+            java.util.Map<String, Object> initial =
+                (java.util.Map<String, Object>) js().executeScript(collectIndicatorsJs);
+            if (initial == null) {
+                throw new org.testng.SkipException("Asset Name column header not found");
+            }
+            logStep("Initial sort indicator: " + initial);
+
+            // First click → asc
+            Boolean clicked1 = (Boolean) js().executeScript(clickHeaderJs);
+            Assert.assertTrue(Boolean.TRUE.equals(clicked1), "Couldn't click header");
+            pause(2000);
+            @SuppressWarnings("unchecked")
+            java.util.Map<String, Object> afterAsc =
+                (java.util.Map<String, Object>) js().executeScript(collectIndicatorsJs);
+            logStep("After 1st click (asc): " + afterAsc);
+
+            // Second click → desc
+            js().executeScript(clickHeaderJs);
+            pause(2000);
+            @SuppressWarnings("unchecked")
+            java.util.Map<String, Object> afterDesc =
+                (java.util.Map<String, Object>) js().executeScript(collectIndicatorsJs);
+            logStep("After 2nd click (desc): " + afterDesc);
+            ScreenshotUtil.captureScreenshot("TC_BH_28");
+
+            // The asc indicator MUST differ from the desc indicator
+            // (different aria-sort OR different transform OR different testid)
+            String ascSig = String.valueOf(afterAsc.get("ariaSort")) + "|"
+                + String.valueOf(afterAsc.get("sortIconTestid")) + "|"
+                + String.valueOf(afterAsc.get("sortIconTransform"));
+            String descSig = String.valueOf(afterDesc.get("ariaSort")) + "|"
+                + String.valueOf(afterDesc.get("sortIconTestid")) + "|"
+                + String.valueOf(afterDesc.get("sortIconTransform"));
+            logStep("Asc signature: " + ascSig);
+            logStep("Desc signature: " + descSig);
+
+            if (ascSig.equals("none||") && descSig.equals("none||")) {
+                throw new org.testng.SkipException(
+                    "Column header doesn't expose any sort-direction signal "
+                    + "(no aria-sort, no sort icon found). Can't falsify visual indicator.");
+            }
+
+            Assert.assertNotEquals(ascSig, descSig,
+                "BUG: sort indicator (aria-sort + icon) is IDENTICAL after asc vs desc "
+                + "clicks. The arrow visual is not reflecting the sort direction. "
+                + "Asc='" + ascSig + "', Desc='" + descSig + "'.");
+
+            ExtentReportManager.logPass("Sort indicator changes correctly: asc='"
+                + ascSig + "' → desc='" + descSig + "'");
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_28_error");
+            Assert.fail("TC_BH_28 crashed: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TC_BH_29 — Every sidebar nav link resolves to a valid page (no 404)
+    // ================================================================
+    /**
+     * Why this might find a bug: routing regressions. The sidebar lists
+     * top-level pages: Site Overview, Sales Overview, Ops Overview, Panel
+     * Schedules, Arc Flash Readiness, Equipment Library, SLDs, Assets,
+     * Connections, etc. Each is a route. If a deploy renames a route or
+     * removes a backing page, the sidebar link still SHOWS but clicking
+     * it dead-ends — 404 page or blank screen.
+     *
+     * Strategy: collect all sidebar nav links → for each, navigate to its
+     * href → wait for load → assert no "Not Found" / "404" markers AND
+     * page DOM has reasonable content (≥50 visible elements).
+     *
+     * Honest skip: if a link has href="#" or javascript:void(0), skip it
+     * (those are intentional non-nav buttons).
+     *
+     * Cleanup: navigate back to /assets at end so subsequent tests start
+     * from a known state.
+     */
+    @Test(priority = 29, description = "TC_BH_29: All sidebar nav links resolve to valid pages (no 404, no blank)")
+    public void testTC_BH_29_SidebarNavLinksResolve() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_29: Sidebar nav health");
+        try {
+            assetPage.navigateToAssets();
+            pause(3500);
+
+            @SuppressWarnings("unchecked")
+            List<java.util.Map<String, Object>> navLinks =
+                (List<java.util.Map<String, Object>>) js().executeScript(
+                "var anchors = document.querySelectorAll('a[href]');"
+                + "var out = [];"
+                + "for (var a of anchors) {"
+                + "  if (!a.offsetWidth) continue;"
+                + "  var nav = a.closest('nav, .MuiDrawer-docked, [role=\"navigation\"]');"
+                + "  if (!nav) continue;"
+                + "  var href = a.getAttribute('href');"
+                + "  if (!href || href === '#' || href.startsWith('javascript:')) continue;"
+                + "  if (href.startsWith('http') && !href.includes('egalvanic.ai')) continue;"
+                + "  var text = (a.textContent || '').trim();"
+                + "  if (!text) continue;"
+                + "  out.push({href: href, text: text.slice(0, 40)});"
+                + "}"
+                + "var seen = new Set();"
+                + "var dedup = [];"
+                + "for (var l of out) {"
+                + "  if (seen.has(l.href)) continue;"
+                + "  seen.add(l.href);"
+                + "  dedup.push(l);"
+                + "}"
+                + "return dedup;");
+            logStep("Detected " + navLinks.size() + " unique sidebar nav links");
+            for (java.util.Map<String, Object> l : navLinks) {
+                logStep("  link: '" + l.get("text") + "' → " + l.get("href"));
+            }
+            if (navLinks.size() < 3) {
+                throw new org.testng.SkipException(
+                    "Fewer than 3 sidebar links found — selector may need adjustment");
+            }
+
+            // Cap to first 8 to keep test under 5 minutes
+            int linksToTest = Math.min(8, navLinks.size());
+            List<String> failures = new java.util.ArrayList<>();
+            for (int i = 0; i < linksToTest; i++) {
+                java.util.Map<String, Object> link = navLinks.get(i);
+                String href = String.valueOf(link.get("href"));
+                String text = String.valueOf(link.get("text"));
+                String absoluteUrl = href.startsWith("http") ? href
+                    : ("https://acme.qa.egalvanic.ai" + (href.startsWith("/") ? href : "/" + href));
+
+                try {
+                    driver.get(absoluteUrl);
+
+                    // Poll up to 12s for hydration: bodyChildren > 30 OR
+                    // a 404 marker appears. Per round-5 lesson, cold-start
+                    // navigation needs longer than warm SPA nav.
+                    long pollDeadline = System.currentTimeMillis() + 12000;
+                    long bodyChildren = 0;
+                    boolean has404 = false;
+                    String actualUrl = absoluteUrl;
+                    while (System.currentTimeMillis() < pollDeadline) {
+                        @SuppressWarnings("unchecked")
+                        java.util.Map<String, Object> state =
+                            (java.util.Map<String, Object>) js().executeScript(
+                            "var bodyText = (document.body.textContent || '').toLowerCase();"
+                            + "var has404 = bodyText.indexOf('not found') !== -1 "
+                            + "  || bodyText.indexOf('page does not exist') !== -1 "
+                            + "  || (bodyText.indexOf('404') !== -1 && bodyText.length < 500);"
+                            + "var bodyChildren = 0;"
+                            + "document.body.querySelectorAll('*').forEach(function(c){"
+                            + "  if (c.offsetWidth && c.offsetHeight) bodyChildren++;"
+                            + "});"
+                            + "return {"
+                            + "  has404: has404,"
+                            + "  bodyChildren: bodyChildren,"
+                            + "  url: window.location.href"
+                            + "};");
+                        bodyChildren = ((Number) state.get("bodyChildren")).longValue();
+                        has404 = Boolean.TRUE.equals(state.get("has404"));
+                        actualUrl = String.valueOf(state.get("url"));
+                        if (has404 || bodyChildren > 30) break;
+                        pause(800);
+                    }
+                    logStep("Link '" + text + "': bodyChildren=" + bodyChildren
+                        + ", has404=" + has404 + ", actualUrl=" + actualUrl);
+
+                    if (has404) {
+                        failures.add("'" + text + "' (" + href + ") → 404 page");
+                    } else if (bodyChildren < 30) {
+                        failures.add("'" + text + "' (" + href + ") → DOM collapsed after 12s "
+                            + "(" + bodyChildren + " visible elements)");
+                    }
+                } catch (Exception inner) {
+                    failures.add("'" + text + "' (" + href + ") → exception: "
+                        + inner.getMessage().substring(0,
+                            Math.min(80, inner.getMessage().length())));
+                }
+            }
+            ScreenshotUtil.captureScreenshot("TC_BH_29");
+
+            // Cleanup: back to /assets
+            try { driver.get("https://acme.qa.egalvanic.ai/assets"); pause(2000); }
+            catch (Exception ignore) {}
+
+            Assert.assertTrue(failures.isEmpty(),
+                "BUG: " + failures.size() + " of " + linksToTest
+                + " sidebar links resolved to broken pages:\n  - "
+                + String.join("\n  - ", failures));
+
+            ExtentReportManager.logPass("All " + linksToTest
+                + " tested sidebar links resolved to valid pages");
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_29_error");
+            Assert.fail("TC_BH_29 crashed: " + e.getMessage());
+        }
+    }
 }
 
