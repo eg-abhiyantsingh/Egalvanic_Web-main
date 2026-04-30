@@ -4013,5 +4013,509 @@ public class Phase1BugHunterTestNG extends BaseTest {
             Assert.fail("TC_BH_35 crashed: " + e.getMessage());
         }
     }
+
+    // ================================================================
+    // TC_BH_36 — Duplicate API requests on /assets load (≤2 per URL+method)
+    // ================================================================
+    /**
+     * Why this might find a bug: useEffect double-mount. React 18+ in
+     * StrictMode intentionally mounts effects twice during dev to catch
+     * cleanup bugs. In prod that doesn't happen, but if a developer
+     * mishandles dependency arrays, the SAME useEffect can fire twice in
+     * production too — making the same fetch twice. Wasteful, sometimes
+     * triggers race conditions (response B overwrites response A).
+     *
+     * BUG007 (existing test) catches duplicates of `/api/me` specifically.
+     * This test generalizes: ANY URL+method appearing >2 times within
+     * the first 5s of /assets load is suspicious.
+     *
+     * Strategy: install fetch+XHR monkey-patch BEFORE navigating, then
+     * navigate, then read recorded calls. Group by URL+method, count
+     * occurrences. Anything >2 is a finding.
+     *
+     * Why threshold of 2 (not 1): one initial call + one possible refetch
+     * (e.g., user toggled site) is fine. Three calls within 5s of cold
+     * load is duplicate work.
+     */
+    @Test(priority = 36, description = "TC_BH_36: No /api/* URL+method appears >2 times within first 5s of /assets load")
+    public void testTC_BH_36_NoDuplicateApiRequests() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_36: Duplicate API request detection");
+        try {
+            // Navigate to a different page first so we can install the monkey-patch
+            // BEFORE landing on /assets and capture its initial requests
+            driver.get("https://acme.qa.egalvanic.ai/dashboards/site-overview");
+            pause(3000);
+            js().executeScript(
+                "window.__bh_dup_calls = [];"
+                + "var origFetch = window.fetch;"
+                + "window.fetch = function() {"
+                + "  var args = arguments;"
+                + "  var url = (args[0] && args[0].url) || args[0] || '';"
+                + "  var method = (args[1] && args[1].method) || 'GET';"
+                + "  if (args[0] && args[0].method) method = args[0].method;"
+                + "  window.__bh_dup_calls.push({"
+                + "    method: method, url: String(url).slice(0, 200),"
+                + "    t: Date.now()"
+                + "  });"
+                + "  return origFetch.apply(this, args);"
+                + "};"
+                + "var origOpen = XMLHttpRequest.prototype.open;"
+                + "XMLHttpRequest.prototype.open = function(method, url) {"
+                + "  this.__bh_method = method;"
+                + "  this.__bh_url = url;"
+                + "  return origOpen.apply(this, arguments);"
+                + "};"
+                + "var origSend = XMLHttpRequest.prototype.send;"
+                + "XMLHttpRequest.prototype.send = function() {"
+                + "  if (this.__bh_url) window.__bh_dup_calls.push({"
+                + "    method: this.__bh_method || 'GET',"
+                + "    url: String(this.__bh_url).slice(0, 200),"
+                + "    t: Date.now()"
+                + "  });"
+                + "  return origSend.apply(this, arguments);"
+                + "};"
+                + "return true;");
+            logStep("Network monitor installed before /assets navigation");
+
+            // Now navigate to /assets and capture initial load
+            driver.get("https://acme.qa.egalvanic.ai/assets");
+            pause(5000);
+
+            @SuppressWarnings("unchecked")
+            List<java.util.Map<String, Object>> calls =
+                (List<java.util.Map<String, Object>>) js().executeScript(
+                "return window.__bh_dup_calls || [];");
+            logStep("Total /api/* + other calls captured: " + calls.size());
+
+            // Group by URL+method, count
+            java.util.Map<String, Integer> counts = new java.util.HashMap<>();
+            for (java.util.Map<String, Object> c : calls) {
+                String url = String.valueOf(c.get("url"));
+                if (!url.contains("/api/")) continue;
+                String method = String.valueOf(c.get("method")).toUpperCase();
+                // Strip query string for grouping (same endpoint with diff
+                // params is NOT a duplicate)
+                String urlNoQuery = url.contains("?") ? url.substring(0, url.indexOf("?")) : url;
+                String key = method + " " + urlNoQuery;
+                counts.merge(key, 1, Integer::sum);
+            }
+
+            // Find duplicates: count > 2
+            int duplicateThreshold = 2;
+            // Filter known dups: BUG007 already covers /api/me; we don't double-flag
+            String[] knownDuplicates = {
+                "/api/auth/v2/me",
+                "/api/auth/v2/refresh",
+                // Re-issued by RBAC bootstrap on every nav
+                "/api/connections/roles",
+            };
+            List<String> findings = new java.util.ArrayList<>();
+            for (java.util.Map.Entry<String, Integer> e : counts.entrySet()) {
+                if (e.getValue() <= duplicateThreshold) continue;
+                String key = e.getKey();
+                boolean known = false;
+                for (String k : knownDuplicates) {
+                    if (key.contains(k)) { known = true; break; }
+                }
+                if (!known) findings.add(e.getValue() + "× " + key);
+            }
+            ScreenshotUtil.captureScreenshot("TC_BH_36");
+            logStep("Unique URL+method keys: " + counts.size()
+                + ", duplicates above threshold: " + findings.size());
+            for (String f : findings) logStep("  DUP: " + f);
+
+            Assert.assertTrue(findings.isEmpty(),
+                "BUG: " + findings.size() + " API endpoints fired >"
+                + duplicateThreshold + " times within first 5s of /assets load. "
+                + "Likely useEffect double-mount or missing request dedup:\n  - "
+                + String.join("\n  - ", findings));
+
+            ExtentReportManager.logPass("No duplicate /api/* requests above threshold "
+                + duplicateThreshold + " (excluding " + knownDuplicates.length
+                + " known-duplicate endpoints)");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_36_error");
+            Assert.fail("TC_BH_36 crashed: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TC_BH_37 — JS heap doesn't balloon across page navigation cycles
+    // ================================================================
+    /**
+     * Why this might find a bug: long-session memory leaks. A user who
+     * keeps the app open for hours, navigating between Assets/Connections/
+     * Issues, will see the page slow down if components don't fully
+     * unmount their event listeners, timers, or refs. Eventually the tab
+     * crashes with "Aw Snap!".
+     *
+     * TC_BH_17 covered DOM-node leak across drawer cycles. THIS test
+     * covers JS heap leak across PAGE navigation cycles — different leak
+     * pattern (event listeners on global objects, lingering websockets,
+     * never-cleared setIntervals).
+     *
+     * Strategy: read `performance.memory.usedJSHeapSize` (Chromium-only)
+     * before nav cycles → navigate /assets → /connections → /issues →
+     * /assets, repeat 3 times → measure heap after. Force a GC if API
+     * exposes one. Growth threshold: 50MB. Generous because the React
+     * tree on each page legitimately allocates memory; what we're
+     * catching is UNBOUNDED growth.
+     *
+     * Honest skip: if `performance.memory` is unavailable (non-Chromium
+     * or browser doesn't expose it), skip with explanation.
+     */
+    @Test(priority = 37, description = "TC_BH_37: JS heap doesn't grow >50MB across 3 navigation cycles")
+    public void testTC_BH_37_HeapDoesntLeakAcrossNavigation() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_37: Heap leak across nav");
+        try {
+            assetPage.navigateToAssets();
+            pause(4000);
+
+            Long baseline = (Long) js().executeScript(
+                "return (performance.memory && performance.memory.usedJSHeapSize) "
+                + "? performance.memory.usedJSHeapSize : null;");
+            if (baseline == null) {
+                throw new org.testng.SkipException(
+                    "performance.memory unavailable in this browser/context — "
+                    + "cannot measure heap growth");
+            }
+            logStep("Baseline JS heap: " + (baseline / 1024 / 1024) + " MB");
+
+            String[] cycle = {
+                "https://acme.qa.egalvanic.ai/assets",
+                "https://acme.qa.egalvanic.ai/connections",
+                "https://acme.qa.egalvanic.ai/issues",
+            };
+            int cycles = 3;
+            for (int i = 0; i < cycles; i++) {
+                for (String url : cycle) {
+                    driver.get(url);
+                    pause(2500);
+                }
+                logStep("Cycle " + (i + 1) + " complete");
+            }
+
+            // Hint to the engine that GC could run (not guaranteed)
+            try {
+                js().executeScript(
+                    "if (window.gc) { window.gc(); } else if (window.CollectGarbage) "
+                    + "{ window.CollectGarbage(); }");
+            } catch (Exception ignore) {}
+            pause(2000);
+
+            Long after = (Long) js().executeScript(
+                "return performance.memory.usedJSHeapSize;");
+            long baselineMb = baseline / 1024 / 1024;
+            long afterMb = after / 1024 / 1024;
+            long growthMb = afterMb - baselineMb;
+            ScreenshotUtil.captureScreenshot("TC_BH_37");
+            logStep("Post-cycles heap: " + afterMb + " MB (growth: " + growthMb + " MB)");
+
+            long thresholdMb = 50;
+            Assert.assertTrue(growthMb < thresholdMb,
+                "BUG: JS heap grew " + growthMb + " MB across " + cycles
+                + " navigation cycles (threshold: " + thresholdMb + " MB). "
+                + "Likely event-listener leak, retained closure, or lingering "
+                + "subscription that never unmounts.");
+
+            ExtentReportManager.logPass("JS heap growth across " + cycles
+                + " nav cycles: " + growthMb + " MB (under " + thresholdMb
+                + " MB threshold — no leak detected)");
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_37_error");
+            Assert.fail("TC_BH_37 crashed: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TC_BH_38 — Initial DOM size budget (<5000 elements on /assets)
+    // ================================================================
+    /**
+     * Why this might find a bug: render-the-world anti-pattern. The
+     * /assets DataGrid shows 25 rows per page. Each row probably has
+     * ~15-20 cells/elements. With sidebar + toolbar + footer that's
+     * maybe 700-1000 elements total. If the DOM has >5000, something
+     * is off:
+     *   - Pagination broken (rendering all 1951 rows instead of 25)
+     *   - Hidden duplicates from a render loop bug
+     *   - Each cell rendered N times due to a mapping mistake
+     *
+     * Lighthouse flags >800 nodes as a perf concern, >1500 as a strict
+     * issue. Our threshold is 5000 — generous to allow for sidebar +
+     * tooltips + portals. Tighten once a clean baseline is established.
+     */
+    @Test(priority = 38, description = "TC_BH_38: /assets DOM has <5000 total nodes (Lighthouse render budget)")
+    public void testTC_BH_38_InitialDomSizeBudget() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_38: DOM size budget");
+        try {
+            assetPage.navigateToAssets();
+            pause(4500);
+
+            @SuppressWarnings("unchecked")
+            java.util.Map<String, Object> stats =
+                (java.util.Map<String, Object>) js().executeScript(
+                "var total = document.querySelectorAll('*').length;"
+                + "var deepest = 0;"
+                + "function depth(n) {"
+                + "  if (!n.children || n.children.length === 0) return 1;"
+                + "  var max = 0;"
+                + "  for (var c of n.children) {"
+                + "    var d = depth(c);"
+                + "    if (d > max) max = d;"
+                + "  }"
+                + "  return max + 1;"
+                + "}"
+                + "deepest = depth(document.body);"
+                + "var rows = document.querySelectorAll('.MuiDataGrid-row').length;"
+                + "return {"
+                + "  totalNodes: total,"
+                + "  deepestPath: deepest,"
+                + "  visibleGridRows: rows"
+                + "};");
+            long totalNodes = ((Number) stats.get("totalNodes")).longValue();
+            long deepestPath = ((Number) stats.get("deepestPath")).longValue();
+            long gridRows = ((Number) stats.get("visibleGridRows")).longValue();
+            ScreenshotUtil.captureScreenshot("TC_BH_38");
+            logStep("DOM stats: total=" + totalNodes + ", deepestPath=" + deepestPath
+                + ", visibleGridRows=" + gridRows);
+
+            int totalThreshold = 5000;
+            int depthThreshold = 32;  // Lighthouse strict
+            Assert.assertTrue(totalNodes < totalThreshold,
+                "BUG: /assets DOM has " + totalNodes + " total nodes (threshold "
+                + totalThreshold + "). Render-the-world anti-pattern — "
+                + "pagination may be broken (rendering all rows instead of 25), "
+                + "or each row's cells render N times.");
+            Assert.assertTrue(deepestPath < depthThreshold,
+                "BUG: /assets DOM has depth " + deepestPath + " (threshold "
+                + depthThreshold + "). Excessive nesting hurts paint perf.");
+
+            ExtentReportManager.logPass("DOM size OK: " + totalNodes
+                + " nodes (≤" + totalThreshold + "), depth " + deepestPath
+                + " (≤" + depthThreshold + "), " + gridRows + " visible grid rows");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_38_error");
+            Assert.fail("TC_BH_38 crashed: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TC_BH_39 — First Contentful Paint < 3s on /assets
+    // ================================================================
+    /**
+     * Why this might find a bug: Core Web Vital. FCP = time from
+     * navigation start to first text/image render. Google's RAIL model:
+     *   - <1.0s = Good
+     *   - 1.0-3.0s = Needs Improvement
+     *   - >3.0s = Poor
+     *
+     * Our threshold: <3s. Test catches regressions where someone adds
+     * a render-blocking script or pulls a critical resource above-the-
+     * fold from a slow CDN.
+     *
+     * Strategy: use PerformancePaintTiming via
+     * `performance.getEntriesByType('paint')` — returns
+     * 'first-paint' and 'first-contentful-paint' entries. Read FCP's
+     * `startTime` (ms relative to navigation start).
+     */
+    @Test(priority = 39, description = "TC_BH_39: First Contentful Paint on /assets is <3000ms (Core Web Vital)")
+    public void testTC_BH_39_FirstContentfulPaintFast() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_39: First Contentful Paint");
+        try {
+            // Navigate fresh to capture clean timing
+            driver.get("https://acme.qa.egalvanic.ai/assets");
+            pause(5000);  // generous wait for paint timing to settle
+
+            @SuppressWarnings("unchecked")
+            java.util.Map<String, Object> paint =
+                (java.util.Map<String, Object>) js().executeScript(
+                "var paints = performance.getEntriesByType('paint');"
+                + "var fp = null, fcp = null;"
+                + "for (var p of paints) {"
+                + "  if (p.name === 'first-paint') fp = p.startTime;"
+                + "  else if (p.name === 'first-contentful-paint') fcp = p.startTime;"
+                + "}"
+                + "return {firstPaint: fp, firstContentfulPaint: fcp};");
+            Object fcpRaw = paint.get("firstContentfulPaint");
+            Object fpRaw = paint.get("firstPaint");
+            if (fcpRaw == null) {
+                throw new org.testng.SkipException(
+                    "First Contentful Paint timing unavailable — browser may not "
+                    + "have populated paint entries");
+            }
+            long fcpMs = Math.round(((Number) fcpRaw).doubleValue());
+            long fpMs = fpRaw == null ? -1 : Math.round(((Number) fpRaw).doubleValue());
+            ScreenshotUtil.captureScreenshot("TC_BH_39");
+            logStep("First Paint: " + fpMs + "ms, First Contentful Paint: " + fcpMs + "ms");
+
+            int thresholdMs = 3000;
+            Assert.assertTrue(fcpMs < thresholdMs,
+                "BUG: First Contentful Paint on /assets is " + fcpMs + "ms "
+                + "(threshold <" + thresholdMs + "ms = Google RAIL 'Poor'). "
+                + "Likely a render-blocking resource above-the-fold.");
+
+            ExtentReportManager.logPass("FCP: " + fcpMs + "ms (under " + thresholdMs
+                + "ms threshold; Google RAIL: "
+                + (fcpMs < 1000 ? "Good" : fcpMs < 3000 ? "Needs Improvement" : "Poor")
+                + ")");
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_39_error");
+            Assert.fail("TC_BH_39 crashed: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TC_BH_40 — No mixed content (HTTP resources on HTTPS page)
+    // ================================================================
+    /**
+     * Why this might find a bug: HTTPS security policy. If the page is
+     * served via HTTPS but loads any resource (img/script/css/iframe/api)
+     * over HTTP, the browser:
+     *   - Blocks "active" mixed content (script/iframe) entirely
+     *   - Warns about "passive" mixed content (img/css/font)
+     *   - Strips the secure padlock from the URL bar
+     *
+     * Browsers also log a console warning. Our TC_BH_30 catches console
+     * warnings broadly; THIS test specifically inspects the DOM + the
+     * Performance Resource entries for any http:// (not https://) URL.
+     *
+     * Strategy: collect all `<img src>`, `<script src>`, `<link href>`,
+     * `<iframe src>` AND PerformanceResourceTiming `name` fields on the
+     * page. Filter to URLs starting with `http://` (case-insensitive).
+     * Also exclude `http://localhost` and data: URIs (legitimate dev
+     * scenarios).
+     *
+     * Threshold: 0 mixed-content URLs. This is a hard security rule.
+     */
+    @Test(priority = 40, description = "TC_BH_40: /assets has zero mixed-content (HTTP on HTTPS) resources")
+    public void testTC_BH_40_NoMixedContent() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_40: Mixed-content");
+        try {
+            assetPage.navigateToAssets();
+            pause(4500);
+
+            // Confirm we're on HTTPS
+            String pageUrl = driver.getCurrentUrl();
+            if (!pageUrl.startsWith("https://")) {
+                throw new org.testng.SkipException(
+                    "Page is not served over HTTPS — mixed-content rule doesn't apply");
+            }
+
+            @SuppressWarnings("unchecked")
+            List<String> mixedContentUrls = (List<String>) js().executeScript(
+                "var urls = [];"
+                + "document.querySelectorAll('img[src], script[src], link[href], "
+                + "  iframe[src], audio[src], video[src], source[src]').forEach(function(el){"
+                + "  var u = el.getAttribute('src') || el.getAttribute('href') || '';"
+                + "  if (u.toLowerCase().startsWith('http://') "
+                + "    && !u.startsWith('http://localhost') "
+                + "    && !u.startsWith('http://127.0.0.1')) {"
+                + "    urls.push(u.slice(0, 200));"
+                + "  }"
+                + "});"
+                + "performance.getEntriesByType('resource').forEach(function(p){"
+                + "  if (p.name.toLowerCase().startsWith('http://') "
+                + "    && !p.name.startsWith('http://localhost') "
+                + "    && !p.name.startsWith('http://127.0.0.1')) {"
+                + "    urls.push(p.name.slice(0, 200));"
+                + "  }"
+                + "});"
+                + "var seen = new Set();"
+                + "var dedup = [];"
+                + "for (var u of urls) { if (!seen.has(u)) { seen.add(u); dedup.push(u); } }"
+                + "return dedup;");
+            ScreenshotUtil.captureScreenshot("TC_BH_40");
+            logStep("Mixed-content URLs found: " + mixedContentUrls.size());
+            for (String u : mixedContentUrls) logStep("  MIXED: " + u);
+
+            Assert.assertTrue(mixedContentUrls.isEmpty(),
+                "BUG: " + mixedContentUrls.size() + " HTTP resource(s) loaded "
+                + "on HTTPS page. Browser will warn or block these:\n  - "
+                + String.join("\n  - ", mixedContentUrls));
+
+            ExtentReportManager.logPass("No mixed content — all resources loaded over HTTPS");
+        } catch (org.testng.SkipException se) {
+            throw se;
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_40_error");
+            Assert.fail("TC_BH_40 crashed: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // TC_BH_41 — Cookie size budget (<4KB total per RFC 2109)
+    // ================================================================
+    /**
+     * Why this might find a bug: cookies are sent on EVERY same-origin
+     * request. If the auth cookie is 8KB, every API call carries 8KB of
+     * upload overhead — multiplied by hundreds of calls per session,
+     * that's serious bandwidth tax.
+     *
+     * Common causes of cookie bloat:
+     *   - Encoding the entire user object into a session cookie
+     *     (instead of a short session ID + server-side store)
+     *   - Multiple uncoordinated cookies from migrations (old + new)
+     *   - 3rd-party widget cookies accumulating
+     *
+     * RFC 2109 limits: ≤4096 bytes per cookie, ≤20 cookies per domain.
+     * Browsers may enforce stricter limits.
+     *
+     * Strategy: read all cookies via WebDriver `manage().getCookies()`,
+     * sum byte length of name+value pairs (closely approximates what's
+     * sent in the Cookie: header). Assert total <4KB.
+     */
+    @Test(priority = 41, description = "TC_BH_41: Total cookie size on egalvanic.ai is under 4KB (RFC 2109)")
+    public void testTC_BH_41_CookieSizeBudget() {
+        ExtentReportManager.createTest(
+            AppConstants.MODULE_BUG_HUNT, FEATURE_BH,
+            "TC_BH_41: Cookie size budget");
+        try {
+            assetPage.navigateToAssets();
+            pause(3000);
+
+            java.util.Set<org.openqa.selenium.Cookie> cookies =
+                driver.manage().getCookies();
+            int totalBytes = 0;
+            int count = 0;
+            List<String> sizes = new java.util.ArrayList<>();
+            for (org.openqa.selenium.Cookie c : cookies) {
+                int size = c.getName().length() + (c.getValue() == null ? 0 : c.getValue().length()) + 1;  // name=value;
+                totalBytes += size;
+                count++;
+                sizes.add(c.getName() + "=" + size + "B");
+            }
+            ScreenshotUtil.captureScreenshot("TC_BH_41");
+            logStep("Cookie count: " + count + ", total size: " + totalBytes + " bytes");
+            for (String s : sizes) logStep("  " + s);
+
+            int threshold = 4096;  // RFC 2109
+            Assert.assertTrue(totalBytes < threshold,
+                "BUG: total cookie size on egalvanic.ai is " + totalBytes
+                + " bytes (threshold <" + threshold + "B per RFC 2109). "
+                + "Bandwidth tax on every API call. Likely a session cookie "
+                + "encoding too much data — should be a short session ID + "
+                + "server-side store.");
+
+            ExtentReportManager.logPass("Cookie size OK: " + count
+                + " cookies, " + totalBytes + " bytes total (<" + threshold + "B)");
+        } catch (Exception e) {
+            ScreenshotUtil.captureScreenshot("TC_BH_41_error");
+            Assert.fail("TC_BH_41 crashed: " + e.getMessage());
+        }
+    }
 }
 
