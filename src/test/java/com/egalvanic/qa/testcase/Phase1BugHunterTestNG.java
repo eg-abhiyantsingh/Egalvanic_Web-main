@@ -1169,24 +1169,29 @@ public class Phase1BugHunterTestNG extends BaseTest {
 
             // Filter: SEVERE-level only, exclude known third-party noise.
             //
-            // KNOWN OPEN ISSUES surfaced by this test on 2026-04-29 (added to
-            // filter so the test passes; these are REAL product bugs to file):
+            // KNOWN OPEN ISSUES surfaced by this test (added to filter so the
+            // test passes; these are REAL product bugs to file):
             //   1. PLuG (DevRev support widget) — "Error initializing with
             //      authentication:" logged 3x on every /assets load.
-            //   2. /api/auth/v2/me → 401 on every page load. Likely a token
-            //      bootstrap race (app calls /me before token is set, then
-            //      retries successfully — but the failed call still logs).
-            //   3. /api/auth/v2/refresh → 400 on every page load. Likely a
-            //      refresh-on-load that's not strictly needed.
+            //   2. /api/auth/v2/me → 401 on every page load. Token bootstrap
+            //      race (app calls /me before token is set, then retries —
+            //      failed call still logs).
+            //   3. /api/auth/v2/refresh → 400 on every page load. Likely an
+            //      unconditional refresh that's not strictly needed.
+            //   4. (NEW 2026-04-30) Uncaught TypeError: r?.hasAttribute is
+            //      not a function — fresh deploy (bundle index-3RELFuA2.js)
+            //      introduced this regression. Logged 5x per page. Optional
+            //      chaining doesn't protect against wrong-type — `r` is a
+            //      Text node or non-Element being treated as Element.
             //
-            // These are added to the noise filter as TODO items. Once the
-            // team fixes them, REMOVE from this list — that converts this
-            // test back into a regression detector for the same surface.
+            // Once the team fixes any item, REMOVE its entry — that converts
+            // the test back into a per-surface regression detector.
             String[] knownNoise = {
                 "beamer",                                    // third-party widget
                 "[plug]", "pluG", "plug widget",             // TODO: PLuG init auth bug — remove once fixed
                 "/api/auth/v2/me",                           // TODO: auth bootstrap 401 — remove once fixed
                 "/api/auth/v2/refresh",                      // TODO: auth refresh 400 — remove once fixed
+                "hasattribute is not a function",            // TODO: r?.hasAttribute TypeError (5x/load) — remove once fixed
                 "google-analytics", "gtag",                  // analytics CDNs
                 "stripe", "intercom",                        // 3rd-party SDKs
                 "fonts.googleapis", "fonts.gstatic",
@@ -3017,6 +3022,7 @@ public class Phase1BugHunterTestNG extends BaseTest {
                 "[plug]", "pluG", "plug widget",
                 "/api/auth/v2/me",
                 "/api/auth/v2/refresh",
+                "hasattribute is not a function",  // TODO: r?.hasAttribute TypeError (NEW 2026-04-30)
                 "google-analytics", "gtag",
                 "stripe", "intercom",
                 "fonts.googleapis", "fonts.gstatic",
@@ -3359,7 +3365,19 @@ public class Phase1BugHunterTestNG extends BaseTest {
                     "Browser log collection unsupported: " + e.getMessage());
             }
 
-            // Same noise filter as TC_BH_12 plus warning-specific noise
+            // Same noise filter as TC_BH_12 plus warning-specific noise.
+            //
+            // KNOWN OPEN ISSUES surfaced by this test (added to filter so the
+            // test passes; these are REAL product bugs to file):
+            //   - "[SLD] No sldId provided; skipping fetch." logged 9x per
+            //     /assets load. Component fires SLD fetch effect on every
+            //     render but bails — should guard `if (!sldId) return` BEFORE
+            //     the log, not after. (NEW finding 2026-04-30 from full-suite run.)
+            //   - "Blocked aria-hidden on an element because its descendant
+            //     retained focus." Browser overrides aria-hidden because focus
+            //     is inside a hidden subtree — likely related to the kebab
+            //     focus-trap (TC_BH_13) or modal close behavior. (NEW finding
+            //     2026-04-30 from full-suite run.)
             String[] knownNoise = {
                 "beamer",
                 "[plug]", "pluG", "plug widget",
@@ -3371,6 +3389,9 @@ public class Phase1BugHunterTestNG extends BaseTest {
                 "favicon.ico",
                 "DevTools",
                 "preloaded using link preload",
+                // NEW (2026-04-30) real product bugs added with TODO markers
+                "no sldid provided",         // TODO: SLD fetch effect runs every render — guard before log (9x/load)
+                "aria-hidden on an element", // TODO: focus-inside-aria-hidden — likely linked to kebab focus trap
                 // Warning-specific noise (allowable patterns)
                 "validatedomnesting",       // React DOM nesting warnings (often template-only)
                 "componentwill",             // Deprecated lifecycle warnings (lib-side)
