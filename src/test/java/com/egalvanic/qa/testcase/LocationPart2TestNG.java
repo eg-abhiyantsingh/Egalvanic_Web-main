@@ -73,15 +73,70 @@ public class LocationPart2TestNG extends BaseTest {
     @Override
     public void testSetup() {
         super.testSetup();
+
+        // STRENGTHENED 2026-05-01 for CI/long-suite resilience.
+        //
+        // The original setup just called ensureOnLocationsPage(), which only
+        // navigates if !isOnLocationsPage(). That's correct for happy paths
+        // but not enough when this class runs as part of a 100+ test suite
+        // (Location + Task = 135 TCs over 110 minutes in CI). By the time
+        // these tests run, the browser may have:
+        //   - A leaked modal/dialog from a prior test
+        //   - An "app update" alert that re-fired
+        //   - A stale page state where isOnLocationsPage() returns true but
+        //     the tree didn't actually re-render
+        //
+        // This setup defensively cleans up + verifies tree is actually
+        // interactable before yielding to the test body. ~3-5s overhead
+        // per test, but eliminates the ~29 cascading failures we saw in
+        // CI runs when this class executes deep into a long suite.
+        //
+        // PROOF: full LocationPart2 class runs 42/42 PASS locally in 14 min.
+        // CI failed those same tests when run after 100+ prior tests in the
+        // same JVM. State pollution, not real bugs.
         try {
+            // 1. Dismiss any leaked modal/dialog/backdrop from a previous test
+            try {
+                ((JavascriptExecutor) driver).executeScript(
+                    "document.querySelectorAll('.MuiBackdrop-root').forEach(b => b.click());"
+                    + "document.dispatchEvent(new KeyboardEvent('keydown',"
+                    + "  {key:'Escape',bubbles:true}));");
+                pause(400);
+            } catch (Exception ignore) {}
+
+            // 2. Dismiss any "app update" alert re-fired by SPA navigation
+            try { waitAndDismissAppAlert(); } catch (Exception ignore) {}
+
+            // 3. Ensure on Locations page (light path — only navigates if needed)
             ensureOnLocationsPage();
+
+            // 4. Verify the location tree is actually rendered before the test
+            //    body runs. If the page reports "we're on locations" but the
+            //    tree didn't render, force-refresh.
+            boolean treeReady = false;
+            long deadline = System.currentTimeMillis() + 5000;
+            while (System.currentTimeMillis() < deadline) {
+                try {
+                    Long itemCount = (Long) ((JavascriptExecutor) driver).executeScript(
+                        "return document.querySelectorAll("
+                        + "'[class*=\"MuiTreeItem\"], [class*=\"MuiListItem\"]').length;");
+                    if (itemCount != null && itemCount > 0) { treeReady = true; break; }
+                } catch (Exception ignore) {}
+                pause(500);
+            }
+            if (!treeReady) {
+                logStep("Locations tree didn't render in 5s — force navigating");
+                driver.get(AppConstants.BASE_URL + "/locations");
+                pause(2500);
+                waitAndDismissAppAlert();
+            }
         } catch (Exception e) {
-            logStep("ensureOnLocationsPage failed (" + e.getClass().getSimpleName()
+            logStep("Robust setup failed (" + e.getClass().getSimpleName()
                     + ") — recovering via dashboard round-trip");
             try {
                 driver.get(AppConstants.BASE_URL + "/dashboard");
                 pause(2000);
-                waitAndDismissAppAlert(); // driver.get() re-triggers "app update" alert
+                waitAndDismissAppAlert();
                 locationPage.navigateToLocations();
                 pause(2000);
             } catch (Exception e2) {
