@@ -1363,7 +1363,7 @@ public class AuthenticationTestNG {
             for (int i = 0; i < attemptCount; i++) {
                 Object rawStatus = js.executeScript(
                         "var xhr = new XMLHttpRequest();"
-                        + "xhr.open('POST', '/api/auth/login', false);"
+                        + "xhr.open('POST', window.location.origin + '/api/auth/login', false);"
                         + "xhr.setRequestHeader('Content-Type', 'application/json');"
                         + "xhr.send(JSON.stringify({email: arguments[0], password: arguments[1], subdomain: 'acme'}));"
                         + "return xhr.status;", email, wrongPw);

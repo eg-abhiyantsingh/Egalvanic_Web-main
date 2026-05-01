@@ -27,11 +27,19 @@ public class BugHuntWorkOrdersTestNG extends BaseTest {
     // BUG-015: Work Orders Grid Missing Status Column
     // ================================================================
 
-    @Test(priority = 1, description = "BUG-015: Verify Work Orders grid has no Status column")
+    /**
+     * BUG-015 — was a regression detector for "Status column missing on
+     * Work Orders grid". As of 2026-05-01 the bug is FIXED — Status column
+     * is now present. Test inverted from "assertFalse(hasStatusColumn)" to
+     * "assertTrue(hasStatusColumn)" — now serves as a forward-looking
+     * regression detector that fires if Status column ever disappears
+     * again.
+     */
+    @Test(priority = 1, description = "BUG-015 (POST-FIX): Work Orders grid still has Status column (regression detector)")
     public void testBUG015_MissingStatusColumn() {
         ExtentReportManager.createTest(
                 AppConstants.MODULE_BUG_HUNT, AppConstants.FEATURE_WO_GRID,
-                "BUG-015: Missing Status Column");
+                "BUG-015: Status Column present (post-fix detector)");
 
         try {
             driver.get(AppConstants.BASE_URL + "/sessions");
@@ -55,11 +63,12 @@ public class BugHuntWorkOrdersTestNG extends BaseTest {
             boolean hasStatusColumn = headers.toLowerCase().contains("status");
             logStep("Status column present: " + hasStatusColumn);
 
-            Assert.assertFalse(hasStatusColumn,
-                    "BUG-015: Status column IS now present. Bug may be fixed. Columns: " + headers);
+            // FLIPPED 2026-05-01 (was assertFalse — bug now fixed in product)
+            Assert.assertTrue(hasStatusColumn,
+                    "REGRESSION: Status column has DISAPPEARED again. BUG-015 was "
+                    + "fixed previously and the column was present. Columns now: " + headers);
 
-            ExtentReportManager.logPass("BUG-015 confirmed: Work Orders grid columns are [" +
-                    headers + "] — no Status column");
+            ExtentReportManager.logPass("BUG-015 fix is intact — Status column present in: " + headers);
 
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG015_status_error");

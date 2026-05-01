@@ -281,4 +281,17 @@
         </classes>
     </test>
 
+    <!-- ============================================================ -->
+    <!-- 40. PHASE 1 BUG HUNTER — 41 ADVERSARIAL/SILENT-STATE TESTS  -->
+    <!-- Added 2026-05-01. Covers cross-view consistency, validation, -->
+    <!-- silent network/console errors, a11y focus traps, perf SLAs,  -->
+    <!-- DOM/heap budgets, mixed content, cookie size, etc.           -->
+    <!-- 10 real product bugs surfaced (filtered with TODO markers).  -->
+    <!-- ============================================================ -->
+    <test name="40. Phase 1 Bug Hunter — Adversarial (41 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.Phase1BugHunterTestNG"/>
+        </classes>
+    </test>
+
 </suite>
