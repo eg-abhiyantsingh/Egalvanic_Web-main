@@ -431,8 +431,20 @@ public class AssetSmokeTestNG extends BaseTest {
             assetPage.openEditForFirstAsset();
             logStep("Opened edit form");
 
-            String originalClass = assetPage.getAssetClassValue();
-            String originalAssetName = assetPage.getAssetNameValue();
+            // STRENGTHENED 2026-05-04: poll up to 8s for the asset name
+            // input to actually populate. Without polling, getAssetNameValue()
+            // can return "" because the React form hasn't finished hydrating
+            // when called. CI saw "Before: , After: ATS 1" — the empty Before
+            // value caused the assertion to fire incorrectly later.
+            String originalAssetName = "";
+            String originalClass = "";
+            long popDeadline = System.currentTimeMillis() + 8000;
+            while (System.currentTimeMillis() < popDeadline) {
+                originalAssetName = assetPage.getAssetNameValue();
+                if (originalAssetName != null && !originalAssetName.isEmpty()) break;
+                pause(500);
+            }
+            originalClass = assetPage.getAssetClassValue();
             logStep("Original values — class: " + originalClass + ", name: " + originalAssetName);
             logStepWithScreenshot("Edit form opened with original values");
 

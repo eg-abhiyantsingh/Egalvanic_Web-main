@@ -470,6 +470,19 @@ public class AuthSmokeTestNG {
         try {
             logStep("Attempting login with invalid credentials");
 
+            // STRENGTHENED 2026-05-04: clear cookies + localStorage to ensure
+            // a clean unauthenticated state. Prior tests in this class log in
+            // as Admin/PM/Tech and don't sign out — so when this test runs,
+            // the user is still authenticated and "invalid" credentials submit
+            // appears to succeed (test fails with "navigated away" since the
+            // already-authenticated session redirected past /login).
+            try {
+                driver.manage().deleteAllCookies();
+                ((JavascriptExecutor) driver).executeScript(
+                        "try { localStorage.clear(); sessionStorage.clear(); } catch(e){}");
+                logStep("Cleared cookies + localStorage to start with clean session");
+            } catch (Exception ignore) {}
+
             navigateToLoginPage();
             loginPage.login(AppConstants.INVALID_EMAIL, AppConstants.INVALID_PASSWORD);
             logStep("Invalid credentials submitted");
