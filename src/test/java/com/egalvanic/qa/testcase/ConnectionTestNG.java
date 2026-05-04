@@ -729,15 +729,42 @@ public class ConnectionTestNG extends BaseTest {
         ExtentReportManager.logPass("Search by source node works");
     }
 
+    /**
+     * Wait for the connection grid row count to stabilize (same value across
+     * 2 consecutive reads 600ms apart) — handles MUI DataGrid's async filter
+     * application where a fixed pause races with the re-render.
+     *
+     * STRENGTHENED 2026-05-04: replaces fixed pause(N) reads in SF_002 / SF_003
+     * which were failing with "expected [0] but found [1]" — the read happened
+     * before the grid finished re-filtering.
+     */
+    private int getStableDataRowCount(long timeoutMs) {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        int prev = -1;
+        int stableHits = 0;
+        while (System.currentTimeMillis() < deadline) {
+            int now = connectionPage.getDataRowCount();  // only counts rows with data-id
+            if (now == prev) {
+                stableHits++;
+                if (stableHits >= 2) return now;
+            } else {
+                stableHits = 0;
+                prev = now;
+            }
+            pause(600);
+        }
+        return prev >= 0 ? prev : connectionPage.getDataRowCount();
+    }
+
     @Test(priority = 51, description = "TC_SF_002: Search with invalid term returns no results")
     public void testSF_002_SearchInvalid() {
         ExtentReportManager.createTest(MODULE, FEATURE_ADD, "TC_SF_002_SearchInvalid");
         ensureConnectionExists();
 
         connectionPage.searchConnections("zzz_nonexistent_xyz_99999");
-        pause(2000);
-        int filtered = connectionPage.getGridRowCount();
-        logStep("Search for invalid term: " + filtered + " results");
+        // Poll up to 8s for grid to stabilize after filter
+        int filtered = getStableDataRowCount(8000);
+        logStep("Search for invalid term (stabilized): " + filtered + " results");
         Assert.assertEquals(filtered, 0, "Invalid search should return 0 results");
 
         // Clear search
@@ -753,15 +780,14 @@ public class ConnectionTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_ADD, "TC_SF_003_ClearSearch");
         ensureConnectionExists();
 
-        int totalBefore = connectionPage.getGridRowCount();
+        // Poll for initial load to stabilize before capturing baseline
+        int totalBefore = getStableDataRowCount(8000);
 
         connectionPage.searchConnections("zzz_nonexistent");
-        pause(1500);
-        int filtered = connectionPage.getGridRowCount();
+        int filtered = getStableDataRowCount(8000);
 
         connectionPage.searchConnections("");
-        pause(1500);
-        int restored = connectionPage.getGridRowCount();
+        int restored = getStableDataRowCount(8000);
 
         logStep("Total=" + totalBefore + ", Filtered=" + filtered + ", Restored=" + restored);
         Assert.assertEquals(restored, totalBefore,

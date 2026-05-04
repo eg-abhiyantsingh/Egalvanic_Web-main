@@ -256,6 +256,25 @@ public class ConnectionPage {
     }
 
     /**
+     * Returns only the count of REAL data rows (those with data-id attribute).
+     *
+     * STRENGTHENED 2026-05-04: getGridRowCount() above counts ALL rows
+     * matching role=row, which can include MUI's empty-state placeholder
+     * row when a filter returns zero matches. SF_002 / SF_003 tests were
+     * failing with "expected [0] but found [1]" because of that placeholder.
+     * This method filters to real records only via the data-id attribute.
+     */
+    public int getDataRowCount() {
+        try {
+            return driver.findElements(
+                By.cssSelector("[role='rowgroup'] [role='row'][data-id]")
+            ).size();
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    /**
      * Check if the grid has data rows (not empty).
      */
     public boolean isGridPopulated() {

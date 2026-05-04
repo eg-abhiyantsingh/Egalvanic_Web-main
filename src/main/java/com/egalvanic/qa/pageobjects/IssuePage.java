@@ -60,11 +60,25 @@ public class IssuePage {
             "//label[contains(text(),'Priority')]/following::input[1]"
                     + " | //input[@placeholder='Priority' or @placeholder='Select priority' or @placeholder='Select a priority']");
 
-    // Issue Class dropdown (required, placeholder = "Select an issue class")
+    // Issue Class dropdown (required, placeholder varies across builds).
+    //
+    // STRENGTHENED 2026-05-04: CI saw IssuesSmoke.testCreateIssue time out
+    // for 25s waiting on this locator. Added more variants:
+    //   - placeholder partial-match (contains)
+    //   - aria-label match
+    //   - role=combobox inside dialog (last-resort spatial)
+    // The original 4 placeholders + label-following-input are kept first
+    // for fast match when the build matches one of them.
     private static final By ISSUE_CLASS_INPUT = By.xpath(
             "//input[@placeholder='Select an issue class' or @placeholder='Select issue class'"
                     + " or @placeholder='Issue Class' or @placeholder='Select a class']"
-                    + " | //label[contains(text(),'Issue Class')]/following::input[1]");
+                    + " | //label[contains(text(),'Issue Class')]/following::input[1]"
+                    + " | //input[contains(translate(@placeholder, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',"
+                    + " 'abcdefghijklmnopqrstuvwxyz'), 'issue class')]"
+                    + " | //input[contains(translate(@aria-label, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',"
+                    + " 'abcdefghijklmnopqrstuvwxyz'), 'issue class')]"
+                    + " | //*[contains(text(),'Issue Class')]/ancestor::*[self::div or self::label]"
+                    + "[1]/following::input[@role='combobox' or contains(@class,'MuiAutocomplete')][1]");
 
     // Asset dropdown (placeholder = "Select an asset")
     private static final By ASSET_INPUT = By.xpath(

@@ -104,11 +104,24 @@ public class AssetPart3TestNG extends BaseTest {
 
     private void ensureOnAssetsPage() {
         // Always navigate back — detail/edit pages also contain "asset" in URL
-        // so isOnAssetsPage() alone is unreliable after navigating to detail
+        // so isOnAssetsPage() alone is unreliable after navigating to detail.
+        //
+        // STRENGTHENED 2026-05-04: CI run 25204867049 saw assetPage
+        // .navigateToAssets() fail to click //nav//a[@href='/assets']
+        // (sidebar may be collapsed, healing also failed). Falling back to
+        // direct URL navigation makes this resilient to nav-link locator
+        // drift. See LC_EAD_10 failure (37s) for the original symptom.
         String url = driver.getCurrentUrl();
         boolean onListPage = url.endsWith("/assets") || url.endsWith("/assets/");
         if (!onListPage) {
-            assetPage.navigateToAssets();
+            try {
+                assetPage.navigateToAssets();
+            } catch (Exception navEx) {
+                logStep("nav-link click failed (" + navEx.getClass().getSimpleName()
+                        + ") — falling back to direct URL navigation");
+                driver.get(AppConstants.BASE_URL + "/assets");
+                pause(2500);
+            }
             pause(1000);
         }
     }
