@@ -461,8 +461,20 @@ public class AssetSmokeTestNG extends BaseTest {
             assetPage.openEditForFirstAsset();
             pause(2000);
 
-            String afterCancelClass = assetPage.getAssetClassValue();
-            String afterCancelName = assetPage.getAssetNameValue();
+            // STRENGTHENED 2026-05-04: poll for the input to populate AFTER
+            // re-opening the form. Without polling here, getAssetNameValue()
+            // can return "" because React form re-mount hasn't finished
+            // hydrating. CI saw "Before: AutoTest_..., After: " — the empty
+            // After triggered a false-positive assertion failure.
+            String afterCancelName = "";
+            String afterCancelClass = "";
+            long afterDeadline = System.currentTimeMillis() + 8000;
+            while (System.currentTimeMillis() < afterDeadline) {
+                afterCancelName = assetPage.getAssetNameValue();
+                if (afterCancelName != null && !afterCancelName.isEmpty()) break;
+                pause(500);
+            }
+            afterCancelClass = assetPage.getAssetClassValue();
             logStep("After cancel — class: " + afterCancelClass + ", name: " + afterCancelName);
 
             // Name and class should be unchanged
