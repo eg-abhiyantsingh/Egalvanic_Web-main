@@ -1,0 +1,31 @@
+# Core PDF + geometry
+PyMuPDF>=1.24.0          # vector extraction, page rendering
+pdfplumber>=0.11.0       # alternate PDF text extraction (fallback)
+
+# Data models + validation
+pydantic>=2.5.0          # typed schema validation
+
+# Vision (optional for vector PDFs; required for raster)
+opencv-python-headless>=4.9.0
+numpy>=1.26.0
+scikit-image>=0.22.0
+Pillow>=10.0.0
+
+# Graph
+networkx>=3.2
+
+# Spreadsheet I/O
+openpyxl>=3.1.0
+pandas>=2.1.0
+
+# OCR (optional — only needed for raster PDFs)
+# paddleocr>=2.7.0      # uncomment if you need OCR
+# pytesseract>=0.3.10   # alternative OCR (needs system tesseract)
+
+# AI reasoning (optional — only needed for hybrid pipeline)
+# anthropic>=0.34.0     # Claude API
+# openai>=1.30.0        # GPT API
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0

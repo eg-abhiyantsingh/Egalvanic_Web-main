@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+build/
+dist/
+*.egg
+.installed.cfg
+
+# Virtual envs
+venv/
+.venv/
+env/
+ENV/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Project data — uncomment lines to ignore large/private files
+# data/raw_pdfs/*.pdf
+# data/rendered_pages/*.png
+# data/exports/*.xlsx
+data/extracted_json/*.json
+# Keep .gitkeep markers
+!data/**/.gitkeep
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Secrets
+.env
+.env.local
+*.pem
