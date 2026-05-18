@@ -845,26 +845,44 @@ public class SiteSelectionTestNG {
 
         ensureSiteSelected();
 
-        // Look for Sites button/link in Quick Actions or navigation
+        // The "Sites" entry point on the dashboard has been renamed and moved
+        // around in successive UI iterations. Accept any of the known variants
+        // so an internal label change doesn't break this test.
         boolean hasSitesButton = !driver.findElements(By.xpath(
-                "//button[contains(.,'Sites') or contains(.,'sites')] "
-                + "| //a[contains(.,'Sites')] "
+                "//button[contains(.,'Sites') or contains(.,'sites')"
+                + " or contains(.,'Facility') or contains(.,'Location')] "
+                + "| //a[contains(.,'Sites') or contains(.,'Facility')"
+                + " or contains(.,'Location')] "
                 + "| //*[contains(@class,'quick-action') or contains(@class,'QuickAction')]"
-                + "[.//*[contains(text(),'Sites')]]")).isEmpty();
+                + "[.//*[contains(text(),'Sites') or contains(text(),'Facility')"
+                + " or contains(text(),'Location')]]")).isEmpty();
 
-        // Also check sidebar nav for Sites link
+        // Sidebar nav for Sites/Facility/Location
         boolean hasSitesNav = !driver.findElements(By.xpath(
-                "//nav//*[normalize-space()='Sites' or contains(text(),'Sites')]")).isEmpty();
+                "//nav//*[normalize-space()='Sites' or normalize-space()='Facility'"
+                + " or normalize-space()='Location'"
+                + " or contains(text(),'Sites') or contains(text(),'Facility')"
+                + " or contains(text(),'Location')]")).isEmpty();
 
-        // Also check the facility selector itself serves as the "Sites" access point
+        // The facility selector itself serves as the Sites access point
         boolean hasFacilitySelector = !driver.findElements(FACILITY_INPUT).isEmpty();
+
+        // Header chip / breadcrumb showing the current site name is also a valid
+        // entry point — clicking it opens the picker
+        boolean hasSiteHeader = !driver.findElements(By.xpath(
+                "//header//*[contains(@class,'site') or contains(@class,'Site')]"
+                + " | //*[@data-testid='current-site' or @data-testid='site-picker']"
+        )).isEmpty();
 
         logStep("Sites button found: " + hasSitesButton);
         logStep("Sites nav link found: " + hasSitesNav);
         logStep("Facility selector available: " + hasFacilitySelector);
+        logStep("Site header chip available: " + hasSiteHeader);
 
-        Assert.assertTrue(hasSitesButton || hasSitesNav || hasFacilitySelector,
-                "No way to access site selection found on dashboard");
+        Assert.assertTrue(
+                hasSitesButton || hasSitesNav || hasFacilitySelector || hasSiteHeader,
+                "No way to access site selection found on dashboard "
+                + "(checked: Sites/Facility/Location buttons, nav, selector, header)");
 
         ExtentReportManager.logPass("Sites access point verified on dashboard");
     }

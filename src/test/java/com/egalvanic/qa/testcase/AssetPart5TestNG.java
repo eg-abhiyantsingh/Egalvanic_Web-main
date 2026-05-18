@@ -658,6 +658,14 @@ public class AssetPart5TestNG extends BaseTest {
             pause(2000);
             options = driver.findElements(By.xpath("//li[@role='option']"));
         }
+        // Subtype options are fetched async (/asset_classes/{id}/subtypes).
+        // Poll up to 8s for the list to populate so we don't fail with []
+        // when the dropdown opens before the fetch resolves.
+        long subtypeDeadline = System.currentTimeMillis() + 8000;
+        while (options.isEmpty() && System.currentTimeMillis() < subtypeDeadline) {
+            pause(500);
+            options = driver.findElements(By.xpath("//li[@role='option']"));
+        }
         List<String> actualOptions = new ArrayList<>();
         for (WebElement opt : options) {
             String text = opt.getText().trim();
