@@ -35,8 +35,18 @@ public class ConnectionPage {
             "//input[@placeholder='Select source node']");
     private static final By TARGET_NODE_INPUT = By.xpath(
             "//input[@placeholder='Select target node']");
+    // Five-fallback locator — placeholder text has drifted historically;
+    // the first match wins so order matters (most specific → most generic).
     private static final By CONNECTION_TYPE_INPUT = By.xpath(
-            "//input[@placeholder='Select connection type']");
+            "//input[@placeholder='Select connection type']"
+            + " | //input[@placeholder='Select Connection Type']"
+            + " | //input[@placeholder='Select a connection type']"
+            + " | //input[contains(translate(@placeholder,"
+            + "'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),"
+            + "'connection type')]"
+            + " | //label[contains(translate(text(),"
+            + "'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),"
+            + "'connection type')]/following::input[1]");
 
     // Search (web uses capital "C" in "Connections")
     private static final By SEARCH_INPUT = By.xpath(

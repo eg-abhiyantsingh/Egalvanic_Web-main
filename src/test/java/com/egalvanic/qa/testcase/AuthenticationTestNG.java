@@ -1352,6 +1352,12 @@ public class AuthenticationTestNG {
 
         try {
             org.openqa.selenium.JavascriptExecutor js = (org.openqa.selenium.JavascriptExecutor) driver;
+            // Land on the app first so XHR has a valid same-origin context.
+            // Without this, window.location.origin is "" (about:blank) and
+            // XMLHttpRequest.open() throws "Invalid URL".
+            driver.get(AppConstants.BASE_URL + "/login");
+            pause(2000);
+
             // Use an address that doesn't exist so we don't affect real accounts
             String email = "nonexistent+ratetest@egalvanic.test";
             String wrongPw = "definitely-wrong-" + System.currentTimeMillis();
@@ -1359,14 +1365,17 @@ public class AuthenticationTestNG {
             int throttledCount = 0;
             int lastStatus = -1;
 
+            // Build the absolute URL once. Use BASE_URL as the canonical source
+            // and fall back to window.location.origin only if BASE_URL is unset.
+            String loginUrl = AppConstants.BASE_URL + "/api/auth/login";
             StringBuilder statusCodes = new StringBuilder();
             for (int i = 0; i < attemptCount; i++) {
                 Object rawStatus = js.executeScript(
                         "var xhr = new XMLHttpRequest();"
-                        + "xhr.open('POST', window.location.origin + '/api/auth/login', false);"
+                        + "xhr.open('POST', arguments[2], false);"
                         + "xhr.setRequestHeader('Content-Type', 'application/json');"
                         + "xhr.send(JSON.stringify({email: arguments[0], password: arguments[1], subdomain: 'acme'}));"
-                        + "return xhr.status;", email, wrongPw);
+                        + "return xhr.status;", email, wrongPw, loginUrl);
                 int status = rawStatus == null ? -1 : ((Number) rawStatus).intValue();
                 statusCodes.append(status).append(" ");
                 lastStatus = status;

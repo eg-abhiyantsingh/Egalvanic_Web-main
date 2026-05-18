@@ -132,11 +132,14 @@ public class BugHuntDashboardTestNG extends BaseTest {
             logStep("Company/alliance-config API called: " + consoleHasCompanyError);
             logStepWithScreenshot("Dashboard — company info check");
 
-            Assert.assertTrue(alertVisible || consoleHasCompanyError,
-                    "BUG-012: No company info alert and no alliance-config API call. Bug may be fixed.");
+            // Regression watchdog: this should now PASS (bug fixed in production).
+            // If alert/API failure returns, fail loudly so we re-open the ticket.
+            Assert.assertFalse(alertVisible || consoleHasCompanyError,
+                    "BUG-012 REGRESSION: 'Company information not available' is back. " +
+                    "alertVisible=" + alertVisible + ", alliance-config API called=" +
+                    consoleHasCompanyError);
 
-            ExtentReportManager.logPass("BUG-012 confirmed: Company alert visible=" +
-                    alertVisible + ", API called=" + consoleHasCompanyError);
+            ExtentReportManager.logPass("BUG-012 fix holds: no company-info alert, no alliance-config API call");
 
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG012_company_error");

@@ -297,11 +297,15 @@ public class BugHuntPagesTestNG extends BaseTest {
 
             logStep("Select View label count: " + selectViewLabels);
 
-            Assert.assertTrue(selectViewLabels > 1,
-                    "BUG-026: Only " + selectViewLabels + " 'Select View' label(s). Bug may be fixed.");
+            // Regression watchdog: at most one 'Select View' label should ever
+            // be visible. The bug was duplicate rendering (>=2 labels).
+            Assert.assertTrue(selectViewLabels <= 1,
+                    "BUG-026 REGRESSION: " + selectViewLabels +
+                    " 'Select View' label(s) detected — duplicate dropdown is back. " +
+                    dropdownCount);
 
-            ExtentReportManager.logPass("BUG-026 confirmed: " + selectViewLabels +
-                    " 'Select View' labels — duplicate render. " + dropdownCount);
+            ExtentReportManager.logPass("BUG-026 fix holds: " + selectViewLabels +
+                    " 'Select View' label(s) — duplicate render gone. " + dropdownCount);
 
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG026_slds_error");
