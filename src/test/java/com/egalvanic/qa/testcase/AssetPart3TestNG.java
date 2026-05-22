@@ -671,15 +671,78 @@ public class AssetPart3TestNG extends BaseTest {
             pause(1000);
         }
 
-        // Step 3: Poll for the specific field value (case-insensitive match)
+        // Step 3: Poll for the specific field value. We try several DOM shapes
+        // because the new web version uses a different layout for some
+        // attributes (Serial Number, etc.) — sometimes a definition-list /
+        // key-value pair instead of a Material UI table row.
+        //
+        // Match strategies (in order of strictness):
+        //   1. <table> row whose any cell EQUALS the label (case-insensitive)
+        //   2. <table> row whose any cell CONTAINS the label
+        //   3. <dl><dt>label</dt><dd>value</dd> definition-list
+        //   4. MUI list / grid with a label span next to a value span
+        //   5. Any element with text === label whose nextSibling has text
+        //
+        // Accept common label aliases — "Serial Number" → ["Serial Number",
+        // "Serial No.", "S/N", "Serial #"]
         String script =
-                "var rows = document.querySelectorAll('table.MuiTable-root tr');"
+                "var raw = arguments[0];"
+                + "var lower = raw.toLowerCase();"
+                + "var aliases = {"
+                + "  'serial number': ['serial number','serial no','s/n','serial #','serial']"
+                + "};"
+                + "var keys = aliases[lower] || [lower];"
+                + "function match(text, exact) {"
+                + "  var t = (text || '').trim().toLowerCase();"
+                + "  for (var k = 0; k < keys.length; k++) {"
+                + "    if (exact ? t === keys[k] : t.indexOf(keys[k]) !== -1) return true;"
+                + "  }"
+                + "  return false;"
+                + "}"
+                // Strategy 1+2: table rows
+                + "var rows = document.querySelectorAll('table tr');"
                 + "for (var r of rows) {"
-                + "  var cells = r.querySelectorAll('td');"
+                + "  var cells = r.querySelectorAll('td, th');"
                 + "  for (var c of cells) {"
-                + "    if (c.textContent.trim().toLowerCase() === arguments[0].toLowerCase()) {"
+                + "    if (match(c.textContent, true)) {"
                 + "      var all = r.querySelectorAll('td');"
-                + "      return all[all.length - 1].textContent.trim();"
+                + "      if (all.length > 0) return all[all.length - 1].textContent.trim();"
+                + "    }"
+                + "  }"
+                + "}"
+                + "for (var r of rows) {"
+                + "  var cells = r.querySelectorAll('td, th');"
+                + "  for (var c of cells) {"
+                + "    if (match(c.textContent, false)) {"
+                + "      var all = r.querySelectorAll('td');"
+                + "      if (all.length > 0) return all[all.length - 1].textContent.trim();"
+                + "    }"
+                + "  }"
+                + "}"
+                // Strategy 3: <dl><dt>...<dd>...
+                + "var dts = document.querySelectorAll('dt');"
+                + "for (var dt of dts) {"
+                + "  if (match(dt.textContent, false)) {"
+                + "    var dd = dt.nextElementSibling;"
+                + "    while (dd && dd.tagName !== 'DD') dd = dd.nextElementSibling;"
+                + "    if (dd) return dd.textContent.trim();"
+                + "  }"
+                + "}"
+                // Strategy 4: MUI Box / Stack with label + value siblings
+                + "var labels = document.querySelectorAll("
+                + "  '[class*=\"attribute\"] span, [class*=\"Attribute\"] span,"
+                + "  [class*=\"detail\"] span, [class*=\"property\"] span,"
+                + "  div > span, p > span');"
+                + "for (var lbl of labels) {"
+                + "  if (match(lbl.textContent, false)) {"
+                + "    var sib = lbl.nextElementSibling;"
+                + "    if (sib && sib.textContent.trim()) return sib.textContent.trim();"
+                + "    var p = lbl.parentElement;"
+                + "    if (p && p.children.length >= 2) {"
+                + "      var last = p.children[p.children.length - 1];"
+                + "      if (last !== lbl && last.textContent.trim()) {"
+                + "        return last.textContent.trim();"
+                + "      }"
                 + "    }"
                 + "  }"
                 + "}"

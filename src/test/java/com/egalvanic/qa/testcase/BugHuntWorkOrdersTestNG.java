@@ -43,20 +43,39 @@ public class BugHuntWorkOrdersTestNG extends BaseTest {
 
         try {
             driver.get(AppConstants.BASE_URL + "/sessions");
-            pause(6000);
+            pause(3000);
+
+            // Poll up to 30s for the grid to actually render before reading columns.
+            // The earlier 6s pause was not enough in the new web build — first run
+            // produced an empty headers string because the MUI DataGrid was still
+            // hydrating.
+            String headers = "";
+            long deadline = System.currentTimeMillis() + 30_000;
+            while (System.currentTimeMillis() < deadline && headers.isEmpty()) {
+                headers = (String) js().executeScript(
+                    // Try MUI DataGrid v6/v7 selectors first, then ARIA role,
+                    // then any element looking like a header row.
+                    "var sels = ["
+                    + "'[class*=\"MuiDataGrid-columnHeaderTitle\"]',"
+                    + "'[role=\"columnheader\"]',"
+                    + "'[class*=\"columnHeader\"] [class*=\"Title\"]',"
+                    + "'[data-field][role=\"columnheader\"]'"
+                    + "];"
+                    + "for (var s = 0; s < sels.length; s++) {"
+                    + "  var cols = document.querySelectorAll(sels[s]);"
+                    + "  if (cols.length === 0) continue;"
+                    + "  var names = [];"
+                    + "  for (var i = 0; i < cols.length; i++) {"
+                    + "    var text = cols[i].textContent.trim();"
+                    + "    if (text) names.push(text);"
+                    + "  }"
+                    + "  if (names.length > 0) return names.join(', ');"
+                    + "}"
+                    + "return '';");
+                if (headers.isEmpty()) pause(1000);
+            }
 
             logStep("Navigated to Work Orders page");
-
-            // Get all column headers
-            String headers = (String) js().executeScript(
-                "var cols = document.querySelectorAll('[role=\"columnheader\"]');" +
-                "var names = [];" +
-                "for (var i = 0; i < cols.length; i++) {" +
-                "  var text = cols[i].textContent.trim();" +
-                "  if (text) names.push(text);" +
-                "}" +
-                "return names.join(', ');");
-
             logStep("Work Order columns: " + headers);
             logStepWithScreenshot("Work Orders grid — column headers");
 
