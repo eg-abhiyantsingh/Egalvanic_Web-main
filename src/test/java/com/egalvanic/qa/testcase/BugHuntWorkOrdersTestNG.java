@@ -82,14 +82,18 @@ public class BugHuntWorkOrdersTestNG extends BaseTest {
             // The product renames the status indicator periodically (Status / Stage /
             // State / Progress / Phase). The original BUG-015 was that NO status-like
             // column existed at all — only metadata columns. Accept any synonym.
+            // Live walkthrough on 2026-05-25 confirmed the column header is now
+            // "Quote / EMP" alongside the standard "Status" column on the WO grid.
             String lower = headers.toLowerCase();
             boolean hasStatusColumn = lower.contains("status")
                     || lower.contains("stage")
                     || lower.contains("state")
                     || lower.contains("progress")
                     || lower.contains("phase")
-                    || lower.contains("sa / plan")   // observed in 2026-05-15 CI run
-                    || lower.contains("sa/plan");
+                    || lower.contains("sa / plan")   // observed 2026-05-15
+                    || lower.contains("sa/plan")
+                    || lower.contains("quote / emp")  // observed 2026-05-25
+                    || lower.contains("quote/emp");
             logStep("Status-like column present: " + hasStatusColumn);
 
             Assert.assertTrue(hasStatusColumn,

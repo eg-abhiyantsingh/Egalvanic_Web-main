@@ -294,4 +294,19 @@
         </classes>
     </test>
 
+    <!-- ============================================================ -->
+    <!-- 41. NEW MODULES SMOKE (17 TCs) — May 2026 web expansion      -->
+    <!-- Smoke for the 10+ modules added in the May 2026 release:     -->
+    <!-- Sales (Overview, Opportunities, Goals, Accounts),            -->
+    <!-- Ops Dashboard, Panel Schedules, Arc Flash Readiness,         -->
+    <!-- Equipment Library, Equipment Designations, EMPs,             -->
+    <!-- Condition Assessment, Report Builder, Forms, Audit Log,      -->
+    <!-- Z University. Plus new dashboard KPI cards.                  -->
+    <!-- ============================================================ -->
+    <test name="41. New Modules Smoke — May 2026 (17 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.NewModulesSmokeTestNG"/>
+        </classes>
+    </test>
+
 </suite>

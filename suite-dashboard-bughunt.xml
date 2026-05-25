@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="Full Suite — Dashboard + BugHunt (105 TCs)" verbose="1">
+<suite name="Full Suite — Dashboard + BugHunt + New Modules Smoke (122 TCs)" verbose="1">
 
     <listeners>
         <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
@@ -57,6 +57,12 @@
     <test name="Bug Hunt — Legacy (30 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.BugHuntTestNG"/>
+        </classes>
+    </test>
+
+    <test name="New Modules Smoke (17 TCs — May 2026 web update)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.NewModulesSmokeTestNG"/>
         </classes>
     </test>
 
