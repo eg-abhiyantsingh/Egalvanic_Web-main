@@ -147,22 +147,22 @@ jobs:
       # Environment Setup
       # ──────────────────────────────────────────────
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.3.1
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v4.8.0
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
 
       - name: Install Chrome
-        uses: browser-actions/setup-chrome@v1
+        uses: browser-actions/setup-chrome@v1.7.3
         with:
           chrome-version: 'stable'
 
       - name: Cache Maven dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v4.3.0
         with:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
@@ -299,7 +299,7 @@ jobs:
       # ──────────────────────────────────────────────
       - name: Upload test reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: reports-s2-${{ matrix.group }}
           path: |
@@ -315,7 +315,7 @@ jobs:
 
       - name: Upload result JSON
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: result-s2-${{ matrix.group }}
           path: results/${{ matrix.group }}.json
@@ -332,7 +332,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.3.1
 
       - name: Download all result JSONs
         uses: actions/download-artifact@v4.3.0
@@ -438,7 +438,7 @@ jobs:
 
       - name: Upload consolidated report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: consolidated-client-report-suite2
           path: |
@@ -453,7 +453,7 @@ jobs:
       # ──────────────────────────────────────────────
       - name: Upload curated bug report PDF
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: curated-bug-report-client
           path: |
