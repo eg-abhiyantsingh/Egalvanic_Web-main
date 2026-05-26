@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>eGalvanic Web — Consolidated Automation Report</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    background: #f5f6fa; color: #1a202c; line-height: 1.5; font-size: 14px;
+  }
+  .header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+    color: #fff; padding: 32px 40px;
+  }
+  .header h1 { font-size: 24px; font-weight: 600; letter-spacing: 0.3px; }
+  .header .meta { font-size: 13px; color: #cbd5e1; margin-top: 6px; }
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px 32px; }
+  .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    background: #fff; border-radius: 10px; padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08); border-left: 4px solid;
+  }
+  .stat-card.passed { border-left-color: #10b981; }
+  .stat-card.failed { border-left-color: #ef4444; }
+  .stat-card.runs   { border-left-color: #3b82f6; }
+  .stat-card.coverage { border-left-color: #8b5cf6; }
+  .stat-card .label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-card .value { font-size: 28px; font-weight: 700; margin-top: 6px; }
+  .stat-card .sub  { font-size: 12px; color: #6b7280; margin-top: 4px; }
+  .section { background: #fff; border-radius: 10px; padding: 24px;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 24px; }
+  .section h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #1e3a8a; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #e5e7eb; }
+  th { background: #f9fafb; font-weight: 600; font-size: 12px;
+       text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; }
+  tr:hover { background: #f9fafb; }
+  .bar { display: inline-block; height: 10px; background: #ef4444; border-radius: 2px; vertical-align: middle; }
+  .pct-bar { display: inline-block; width: 120px; height: 8px; background: #e5e7eb; border-radius: 4px; vertical-align: middle; margin-right: 8px; position: relative; }
+  .pct-fill { position: absolute; top: 0; left: 0; height: 100%; background: #10b981; border-radius: 4px; }
+  .badge { display: inline-block; padding: 2px 8px; font-size: 11px; font-weight: 600;
+           border-radius: 4px; }
+  .badge.success { background: #d1fae5; color: #065f46; }
+  .badge.warning { background: #fef3c7; color: #92400e; }
+  .badge.failure { background: #fee2e2; color: #991b1b; }
+  .timeline-row { display: grid; grid-template-columns: 100px 1fr 80px 80px 100px; gap: 12px;
+                   padding: 10px 0; border-bottom: 1px solid #e5e7eb; align-items: center; font-size: 13px; }
+  .timeline-row.head { font-weight: 600; color: #6b7280; font-size: 11px; text-transform: uppercase; }
+  code { background: #f3f4f6; padding: 1px 6px; border-radius: 3px; font-size: 12px; font-family: 'Menlo', monospace; }
+  .footer { padding: 24px 32px; text-align: center; color: #6b7280; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>eGalvanic Web — Consolidated Automation Report</h1>
+  <div class="meta">Generated 2026-05-26 18:27 IST &nbsp;·&nbsp; Workflow: <code>Parallel Full Suite — Core Regression (961 TCs)</code> &nbsp;·&nbsp; Tenant: <code>acme.qa.egalvanic.ai</code></div>
+</div>
+<div class="container">
+
+  <!-- Summary cards -->
+  <div class="summary">
+    <div class="stat-card passed">
+      <div class="label">Latest Pass Rate</div>
+      <div class="value">78.8%</div>
+      <div class="sub">749 / 950 tests in run 26393022469</div>
+    </div>
+    <div class="stat-card failed">
+      <div class="label">Latest Failures</div>
+      <div class="value">201</div>
+      <div class="sub">210 distinct test names</div>
+    </div>
+    <div class="stat-card runs">
+      <div class="label">Runs Analyzed</div>
+      <div class="value">9</div>
+      <div class="sub">since 2026-04-27</div>
+    </div>
+    <div class="stat-card coverage">
+      <div class="label">Coverage</div>
+      <div class="value">978</div>
+      <div class="sub">961 core + 17 new module smokes (May 25)</div>
+    </div>
+  </div>
+
+  <!-- Trajectory -->
+  <div class="section">
+    <h2>Run trajectory (9 most recent successful runs)</h2>
+    <div class="timeline-row head">
+      <div>Date</div><div>Failure bar (capped at 279)</div>
+      <div>Passed</div><div>Failed</div><div>Run ID</div>
+    </div>
+    <div class="timeline-row">
+      <div>2026-04-27</div>
+      <div><span class="bar" style="width:27px"></span></div>
+      <div><span class="badge success">935</span></div>
+      <div><span class="badge warning">13</span></div>
+      <div><code>25001241790</code></div>
+    </div>
+    <div class="timeline-row">
+      <div>2026-04-28</div>
+      <div><span class="bar" style="width:23px"></span></div>
+      <div><span class="badge success">959</span></div>
+      <div><span class="badge warning">11</span></div>
+      <div><code>25054293207</code></div>
+    </div>
+    <div class="timeline-row">
+      <div>2026-05-01</div>
+      <div><span class="bar" style="width:19px"></span></div>
+      <div><span class="badge success">419</span></div>
+      <div><span class="badge warning">9</span></div>
+      <div><code>25204867049</code></div>
+    </div>
+    <div class="timeline-row">
+      <div>2026-05-04</div>
+      <div><span class="bar" style="width:10px"></span></div>
+      <div><span class="badge success">944</span></div>
+      <div><span class="badge success">5</span></div>
+      <div><code>25332204860</code></div>
+    </div>
+    <div class="timeline-row">
+      <div>2026-05-08</div>
+      <div><span class="bar" style="width:90px"></span></div>
+      <div><span class="badge success">907</span></div>
+      <div><span class="badge failure">42</span></div>
+      <div><code>25542085220</code></div>
+    </div>
+    <div class="timeline-row">
+      <div>2026-05-15</div>
+      <div><span class="bar" style="width:21px"></span></div>
+      <div><span class="badge success">940</span></div>
+      <div><span class="badge warning">10</span></div>
+      <div><code>25918658591</code></div>
+    </div>
+    <div class="timeline-row">
+      <div>2026-05-18</div>
+      <div><span class="bar" style="width:17px"></span></div>
+      <div><span class="badge success">942</span></div>
+      <div><span class="badge warning">8</span></div>
+      <div><code>26038756040</code></div>
+    </div>
+    <div class="timeline-row">
+      <div>2026-05-22</div>
+      <div><span class="bar" style="width:600px"></span></div>
+      <div><span class="badge success">599</span></div>
+      <div><span class="badge failure">279</span></div>
+      <div><code>26294314258</code></div>
+    </div>
+    <div class="timeline-row">
+      <div>2026-05-25</div>
+      <div><span class="bar" style="width:432px"></span></div>
+      <div><span class="badge success">749</span></div>
+      <div><span class="badge failure">201</span></div>
+      <div><code>26393022469</code></div>
+    </div>
+  </div>
+
+  <!-- Per-module breakdown (latest) -->
+  <div class="section">
+    <h2>Latest run — per-module breakdown (run 26393022469 · 2026-05-25)</h2>
+    <table>
+      <thead><tr><th>Module / Parallel Job</th><th>Pass Rate</th><th>Passed</th><th>Failed</th><th>Skipped</th><th>Total</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Asset Part 5 (76 TCs)</td>
+          <td><span class="pct-bar"><span class="pct-fill" style="width:120px"></span></span>100.0%</td>
+          <td>76</td><td>0</td><td>0</td><td>76</td>
+        </tr>
+        <tr>
+          <td>SLD Module (71 TCs)</td>
+          <td><span class="pct-bar"><span class="pct-fill" style="width:118px"></span></span>98.6%</td>
+          <td>70</td><td>1</td><td>0</td><td>71</td>
+        </tr>
+        <tr>
+          <td>Asset Parts 1-2 (69 TCs)</td>
+          <td><span class="pct-bar"><span class="pct-fill" style="width:114px"></span></span>95.7%</td>
+          <td>66</td><td>3</td><td>0</td><td>69</td>
+        </tr>
+        <tr>
+          <td>Work Order + Issue (234 TCs)</td>
+          <td><span class="pct-bar"><span class="pct-fill" style="width:114px"></span></span>95.3%</td>
+          <td>223</td><td>11</td><td>0</td><td>234</td>
+        </tr>
+        <tr>
+          <td>Dashboard + BugHunt (105 TCs)</td>
+          <td><span class="pct-bar"><span class="pct-fill" style="width:114px"></span></span>95.3%</td>
+          <td>81</td><td>4</td><td>0</td><td>85</td>
+        </tr>
+        <tr>
+          <td>Location + Task (135 TCs)</td>
+          <td><span class="pct-bar"><span class="pct-fill" style="width:99px"></span></span>83.0%</td>
+          <td>112</td><td>23</td><td>0</td><td>135</td>
+        </tr>
+        <tr>
+          <td>Auth + Site + Connection (130 TCs)</td>
+          <td><span class="pct-bar"><span class="pct-fill" style="width:63px"></span></span>52.5%</td>
+          <td>73</td><td>66</td><td>0</td><td>139</td>
+        </tr>
+        <tr>
+          <td>Asset Part 4 (65 TCs)</td>
+          <td><span class="pct-bar"><span class="pct-fill" style="width:48px"></span></span>40.0%</td>
+          <td>26</td><td>39</td><td>0</td><td>65</td>
+        </tr>
+        <tr>
+          <td>Asset Part 3 (76 TCs)</td>
+          <td><span class="pct-bar"><span class="pct-fill" style="width:34px"></span></span>28.9%</td>
+          <td>22</td><td>54</td><td>0</td><td>76</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Recurring failures -->
+  <div class="section">
+    <h2>Top recurring failures across all analyzed runs</h2>
+    <table>
+      <thead><tr><th>Test</th><th>Times failed</th><th>Classification</th></tr></thead>
+      <tbody>
+        <tr><td><code>AuthenticationTestNG.testTC_SEC_02_LoginRateLimitAfterFailures</code></td>
+            <td>9 of 9 runs</td>
+            <td><span class="badge failure">Real product security</span></td></tr>
+        <tr><td><code>BugHuntTestNG.testBUG16_SignInButtonDisabledStates</code></td>
+            <td>9 of 9 runs</td>
+            <td><span class="badge warning">Inverted regression-watchdog</span></td></tr>
+        <tr><td><code>BugHuntWorkOrdersTestNG.testBUG015_MissingStatusColumn</code></td>
+            <td>6 of 9 runs</td>
+            <td><span class="badge warning">Inverted regression-watchdog</span></td></tr>
+        <tr><td><code>BugHuntPagesTestNG.testBUG026_SLDsDuplicateDropdown</code></td>
+            <td>5 of 9 runs</td>
+            <td><span class="badge warning">Inverted regression-watchdog</span></td></tr>
+        <tr><td><code>ConnectionTestNG.testSF_002_SearchInvalid</code></td>
+            <td>4 of 9 runs</td>
+            <td><span class="badge warning">Test-infra / locator drift</span></td></tr>
+        <tr><td><code>ConnectionTestNG.testSF_003_ClearSearch</code></td>
+            <td>4 of 9 runs</td>
+            <td><span class="badge warning">Test-infra / locator drift</span></td></tr>
+        <tr><td><code>AssetPart1TestNG.testAS01_AssetsScreenLoads</code></td>
+            <td>3 of 9 runs</td>
+            <td><span class="badge warning">Test-infra / locator drift</span></td></tr>
+        <tr><td><code>AssetPart1TestNG.testATS_ECR_17_SubtypeEnabledAfterClass</code></td>
+            <td>3 of 9 runs</td>
+            <td><span class="badge warning">Test-infra / locator drift</span></td></tr>
+        <tr><td><code>AssetPart3TestNG.testGEN_EAD_09_EditManufacturer</code></td>
+            <td>3 of 9 runs</td>
+            <td><span class="badge warning">Test-infra / locator drift</span></td></tr>
+        <tr><td><code>AssetPart3TestNG.testGEN_EAD_11_EditSerialNumber</code></td>
+            <td>3 of 9 runs</td>
+            <td><span class="badge warning">Test-infra / locator drift</span></td></tr>
+        <tr><td><code>AssetPart3TestNG.testLC_EAD_10_EditAmpereRating</code></td>
+            <td>3 of 9 runs</td>
+            <td><span class="badge warning">Test-infra / locator drift</span></td></tr>
+        <tr><td><code>AssetPart4TestNG.testMOTOR_EAD_13_EditDutyCycle</code></td>
+            <td>3 of 9 runs</td>
+            <td><span class="badge warning">Test-infra / locator drift</span></td></tr>
+        <tr><td><code>BugHuntDashboardTestNG.testBUG012_CompanyInfoNotAvailable</code></td>
+            <td>3 of 9 runs</td>
+            <td><span class="badge warning">Inverted regression-watchdog</span></td></tr>
+        <tr><td><code>BugHuntGlobalTestNG.testBUG007_DuplicateAPICalls</code></td>
+            <td>3 of 9 runs</td>
+            <td><span class="badge warning">Inverted regression-watchdog</span></td></tr>
+        <tr><td><code>BugHuntGlobalTestNG.testBUG018_BeamerLeaksUserData</code></td>
+            <td>3 of 9 runs</td>
+            <td><span class="badge warning">Inverted regression-watchdog</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Recent commits -->
+  <div class="section">
+    <h2>Recent commits (impact on automation)</h2>
+    <table>
+      <thead><tr><th>SHA</th><th>Date</th><th>Message</th></tr></thead>
+      <tbody>
+        <tr><td><code>43e8ed4</code></td><td>2026-05-26</td><td>ci: pin all floating @vN action tags to specific patch versions</td></tr>
+        <tr><td><code>51e2dd9</code></td><td>2026-05-26</td><td>ci: pin actions/download-artifact to v4.3.0 (fix orphan SHA failure)</td></tr>
+        <tr><td><code>7b8fd2d</code></td><td>2026-05-26</td><td>[bot] Daily AI analysis 2026-05-26</td></tr>
+        <tr><td><code>bbf7804</code></td><td>2026-05-25</td><td>Add NewModulesSmokeTestNG: smoke coverage for May 2026 new modules</td></tr>
+        <tr><td><code>6917254</code></td><td>2026-05-25</td><td>[bot] Daily AI analysis 2026-05-25</td></tr>
+        <tr><td><code>c603292</code></td><td>2026-05-24</td><td>[bot] Daily AI analysis 2026-05-24</td></tr>
+        <tr><td><code>f01f158</code></td><td>2026-05-23</td><td>[bot] Daily AI analysis 2026-05-23</td></tr>
+        <tr><td><code>5574ece</code></td><td>2026-05-22</td><td>CI run 26038756040: fix last 2 failures (new web version)</td></tr>
+        <tr><td><code>fc1e294</code></td><td>2026-05-22</td><td>[bot] Daily AI analysis 2026-05-22</td></tr>
+        <tr><td><code>70f419b</code></td><td>2026-05-21</td><td>[bot] Daily AI analysis 2026-05-21</td></tr>
+        <tr><td><code>37104e0</code></td><td>2026-05-20</td><td>[bot] Daily AI analysis 2026-05-20</td></tr>
+        <tr><td><code>44587c6</code></td><td>2026-05-19</td><td>[bot] Daily AI analysis 2026-05-19</td></tr>
+        <tr><td><code>89918fe</code></td><td>2026-05-18</td><td>CI run 25918658591: fix remaining 6 test-code issues</td></tr>
+        <tr><td><code>0891302</code></td><td>2026-05-18</td><td>CI run 25918658591: fix 4 test-infra failures</td></tr>
+        <tr><td><code>d60aa18</code></td><td>2026-05-18</td><td>[bot] Daily AI analysis 2026-05-18</td></tr>
+        <tr><td><code>1c1549c</code></td><td>2026-05-17</td><td>[bot] Daily AI analysis 2026-05-17</td></tr>
+        <tr><td><code>2da94e3</code></td><td>2026-05-16</td><td>[bot] Daily AI analysis 2026-05-16</td></tr>
+        <tr><td><code>4ff914a</code></td><td>2026-05-15</td><td>[bot] Daily AI analysis 2026-05-15</td></tr>
+        <tr><td><code>16ae04a</code></td><td>2026-05-14</td><td>[bot] Daily AI analysis 2026-05-14</td></tr>
+        <tr><td><code>9a23492</code></td><td>2026-05-13</td><td>[bot] Daily AI analysis 2026-05-13</td></tr>
+        <tr><td><code>2ed53b5</code></td><td>2026-05-12</td><td>[bot] Daily AI analysis 2026-05-12</td></tr>
+        <tr><td><code>b59ea6c</code></td><td>2026-05-11</td><td>SLD pipeline: switchgear-position naming + multi-PDF orchestrator</td></tr>
+        <tr><td><code>9fbf909</code></td><td>2026-05-11</td><td>[bot] Daily AI analysis 2026-05-11</td></tr>
+        <tr><td><code>eb1d54a</code></td><td>2026-05-10</td><td>[bot] Daily AI analysis 2026-05-10</td></tr>
+        <tr><td><code>57e92a9</code></td><td>2026-05-09</td><td>[bot] Daily AI analysis 2026-05-09</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+<div class="footer">
+  eGalvanic Web Automation · Consolidated Report · Generated by automation tooling.
+  Last 9 successful CI runs analyzed.
+</div>
+</body>
+</html>
