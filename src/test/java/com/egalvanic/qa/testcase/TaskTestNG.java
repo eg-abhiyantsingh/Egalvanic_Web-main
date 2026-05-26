@@ -415,6 +415,11 @@ public class TaskTestNG extends BaseTest {
                         return false;
                     }
                 });
+        // The drawer's Title input visible doesn't mean the WHOLE drawer is
+        // rendered — sections below (Task Photos, Before/After/General tabs)
+        // are lazy-loaded. Give them a moment to attach before the caller
+        // reads page text. Tests like TC_CT_010_PhotoTabs depend on this.
+        pause(1500);
     }
 
     private int countGridRows() {
