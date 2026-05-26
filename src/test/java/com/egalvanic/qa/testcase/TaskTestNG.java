@@ -118,9 +118,16 @@ public class TaskTestNG extends BaseTest {
     private static final By GRID_ROWS = By.cssSelector("[role='rowgroup'] [role='row']");
     private static final By COLUMN_HEADERS = By.cssSelector("[role='columnheader']");
 
-    // Search
+    // Search — the new web version capitalized the placeholder
+    // ("Search Tasks..."). Listing the specific variants FIRST means
+    // findElements returns the right input as element [0]; the broad
+    // contains() is a last-resort fallback.
     private static final By SEARCH_INPUT = By.xpath(
-            "//input[@placeholder='Search tasks...' or contains(@placeholder,'Search')]");
+            "//input[@placeholder='Search Tasks...' "
+            + "or @placeholder='Search tasks...' "
+            + "or @placeholder='Search task' "
+            + "or starts-with(@placeholder,'Search Task') "
+            + "or contains(@placeholder,'Search')]");
 
     // View toggles
     private static final By LIST_VIEW_BTN = By.xpath(
@@ -373,18 +380,35 @@ public class TaskTestNG extends BaseTest {
                 "return false;");
         }
         pause(2000);
+        // Dismiss any transient backdrop the click may have triggered (Beamer
+        // overlay, app-update banner, MUI Modal scrim) so the drawer's input
+        // becomes interactable.
+        dismissBackdrops();
 
-        // Wait for drawer form to load (Title input becomes visible)
-        new WebDriverWait(driver, Duration.ofSeconds(15))
+        // Wait up to 25s for drawer form to load. Earlier 15s was too tight
+        // on slower CI runners. Accept ANY of the form's known inputs as
+        // proof the drawer is open + interactive.
+        new WebDriverWait(driver, Duration.ofSeconds(25))
                 .until(d -> {
                     try {
-                        // Check for any input inside the drawer area
+                        // 1. Title input is the canonical signal — check visible variants
                         List<WebElement> titles = d.findElements(TITLE_INPUT);
-                        if (!titles.isEmpty() && titles.get(0).isDisplayed()) return true;
-                        // Fallback: check for drawer heading "Add Task"
+                        for (WebElement t : titles) {
+                            if (t.isDisplayed()) return true;
+                        }
+                        // 2. Drawer heading "Add Task" / "Create Task" etc.
                         List<WebElement> headers = d.findElements(DRAWER_HEADER);
                         for (WebElement h : headers) {
                             if (h.isDisplayed()) return true;
+                        }
+                        // 3. Any input with task-related placeholder visible
+                        List<WebElement> taskInputs = d.findElements(By.xpath(
+                                "//input[contains(@placeholder,'task') "
+                                + "or contains(@placeholder,'Task') "
+                                + "or contains(@placeholder,'asset') "
+                                + "or contains(@placeholder,'procedure')]"));
+                        for (WebElement i : taskInputs) {
+                            if (i.isDisplayed()) return true;
                         }
                         return false;
                     } catch (Exception e) {
@@ -1016,9 +1040,18 @@ public class TaskTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_SEARCH, "TC_SF_001_SearchInputPresent");
         logStep("Checking search input");
 
+        // Multiple inputs may match the SEARCH locator (filter sidebar + grid
+        // toolbar). Pick the first VISIBLE one rather than blindly taking
+        // inputs[0] which on the new web may be a hidden duplicate.
         List<WebElement> inputs = driver.findElements(SEARCH_INPUT);
         Assert.assertFalse(inputs.isEmpty(), "Search input should be present");
-        Assert.assertTrue(inputs.get(0).isDisplayed(), "Search input should be visible");
+        WebElement visible = inputs.stream()
+                .filter(WebElement::isDisplayed)
+                .findFirst()
+                .orElse(null);
+        Assert.assertNotNull(visible,
+                "At least one Search input should be visible. Found "
+                + inputs.size() + " in DOM but none displayed.");
         logStep("PASS: Search input is present and visible");
     }
 
