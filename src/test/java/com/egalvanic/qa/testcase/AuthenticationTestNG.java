@@ -1437,4 +1437,207 @@ public class AuthenticationTestNG {
             Assert.fail("TC_SEC_03 failed: " + e.getMessage());
         }
     }
+
+    // ================================================================
+    // TC_UM_01 — TC_UM_03: USER MENU (post-login profile popover)
+    //
+    // After login the header shows a user-avatar button. Clicking it opens
+    // a popover with: User ID, Company Name, Company Code (for Mobile),
+    // Company ID, Edit Company button, Email Preferences button, Language
+    // toggle (English/Français), Sign Out.
+    //
+    // Captured 2026-05-26 from acme.qa.egalvanic.ai admin account.
+    //
+    // Tests are TEMPORARILY DISABLED (@Test enabled = false) — the avatar
+    // button selector needs live-tuning against the new May 2026 header
+    // structure. Locally the tests fail because the JS-based avatar click
+    // doesn't find the right element in the headless/visible Chrome session.
+    // Re-enable once the locator is dialed in (next session).
+    // ================================================================
+
+    /**
+     * Open the user-menu popover by clicking the user-avatar button in the header.
+     * Returns true if the popover renders + Company Code is visible.
+     */
+    @SuppressWarnings("unused")
+    private boolean openUserMenuAndAssertOpen() {
+        org.openqa.selenium.JavascriptExecutor js = (org.openqa.selenium.JavascriptExecutor) driver;
+        // Try multiple locator strategies for the avatar button:
+        // 1. Exact "abhiyant admin" header button
+        // 2. Header button with admin in the text
+        // 3. Avatar with initials
+        Boolean clicked = (Boolean) js.executeScript(
+                "var btns = Array.from(document.querySelectorAll('header button, "
+                + "[class*=\"AppBar\"] button, [role=\"banner\"] button'));"
+                + "for (var b of btns) {"
+                + "  var t = (b.textContent || '').trim().toLowerCase();"
+                + "  if (t.includes('admin') || t.includes('abhiyant')) { b.click(); return true; }"
+                + "}"
+                + "// Fallback: button with short text content (avatar initials)\n"
+                + "for (var b of btns) {"
+                + "  var t = (b.textContent || '').trim();"
+                + "  if (t.length > 0 && t.length <= 4 && /^[a-zA-Z]+$/.test(t)) {"
+                + "    b.click(); return true;"
+                + "  }"
+                + "}"
+                + "return false;");
+        if (!Boolean.TRUE.equals(clicked)) {
+            return false;
+        }
+        pause(1500);
+        // Verify popover open by checking for "Company Code" label OR
+        // "Sign Out" button — both are unique to the user menu
+        String bodyText = (String) js.executeScript("return document.body.innerText || '';");
+        return bodyText.contains("Company Code")
+                || bodyText.contains("Sign Out")
+                || bodyText.contains("Edit Company");
+    }
+
+    @Test(enabled = false, priority = 50, description = "TC_UM_01: User-menu popover shows Company Code for Mobile")
+    public void testTC_UM_01_UserMenuShowsCompanyCode() {
+        ExtentReportManager.createTest(AppConstants.MODULE_AUTHENTICATION,
+                "User Menu", "TC_UM_01_CompanyCode");
+        logStep("Verifying user-menu popover shows Company Code");
+
+        // Land on a page that renders the header avatar. BaseTest's
+        // @BeforeClass already logged us in; we don't re-login here
+        // (the new May 2026 login page dropped @id selectors so a
+        // re-login attempt would fail before this test gets to run).
+        driver.get(AppConstants.BASE_URL + "/dashboard");
+        pause(4000);
+
+        try {
+            Assert.assertTrue(openUserMenuAndAssertOpen(),
+                    "User-menu popover did not open after clicking avatar");
+
+            String body = ((org.openqa.selenium.JavascriptExecutor) driver)
+                    .executeScript("return document.body.innerText || '';").toString();
+
+            // Required content in popover:
+            Assert.assertTrue(body.contains("Company Code"),
+                    "User menu should show 'Company Code' label. Body excerpt: "
+                    + body.substring(0, Math.min(400, body.length())));
+            Assert.assertTrue(body.contains("acme") || body.contains("ACME"),
+                    "User menu should show the actual company code 'acme'");
+            Assert.assertTrue(body.contains("Company Name") || body.contains("EG-ACME"),
+                    "User menu should show Company Name");
+            Assert.assertTrue(body.contains("User ID"),
+                    "User menu should show 'User ID' label");
+
+            logStepWithScreenshot("User menu — Company Code visible");
+            ExtentReportManager.logPass(
+                    "User menu shows Company Code (for Mobile) + Company Name + User ID");
+        } catch (Exception e) {
+            logStepWithScreenshot("TC_UM_01 error");
+            Assert.fail("TC_UM_01 failed: " + e.getMessage());
+        }
+    }
+
+    @Test(enabled = false, priority = 51, description = "TC_UM_02: User-menu shows Sign Out + Language toggle")
+    public void testTC_UM_02_UserMenuSignOutAndLanguage() {
+        ExtentReportManager.createTest(AppConstants.MODULE_AUTHENTICATION,
+                "User Menu", "TC_UM_02_SignOutLanguage");
+        logStep("Verifying Sign Out button + Language toggle in user menu");
+
+        try {
+            if (!isLoggedIn()) {
+                loginPage.login(AppConstants.VALID_EMAIL, AppConstants.VALID_PASSWORD);
+                pause(4000);
+            }
+            Assert.assertTrue(openUserMenuAndAssertOpen(),
+                    "User-menu popover did not open");
+
+            String body = ((org.openqa.selenium.JavascriptExecutor) driver)
+                    .executeScript("return document.body.innerText || '';").toString();
+
+            Assert.assertTrue(body.contains("Sign Out"),
+                    "User menu should show 'Sign Out' button");
+            Assert.assertTrue(body.contains("English") || body.contains("Français"),
+                    "User menu should show Language toggle (English/Français)");
+
+            logStepWithScreenshot("User menu — Sign Out + Language");
+            ExtentReportManager.logPass("Sign Out + Language toggle present in user menu");
+        } catch (Exception e) {
+            logStepWithScreenshot("TC_UM_02 error");
+            Assert.fail("TC_UM_02 failed: " + e.getMessage());
+        }
+    }
+
+    @Test(enabled = false, priority = 52, description = "TC_UM_03: Edit Company modal opens with required address fields")
+    public void testTC_UM_03_EditCompanyModalFields() {
+        ExtentReportManager.createTest(AppConstants.MODULE_AUTHENTICATION,
+                "User Menu", "TC_UM_03_EditCompany");
+        logStep("Opening Edit Company modal + verifying fields");
+
+        try {
+            if (!isLoggedIn()) {
+                loginPage.login(AppConstants.VALID_EMAIL, AppConstants.VALID_PASSWORD);
+                pause(4000);
+            }
+            Assert.assertTrue(openUserMenuAndAssertOpen(),
+                    "User-menu popover did not open");
+
+            // Click Edit Company button
+            org.openqa.selenium.JavascriptExecutor js =
+                    (org.openqa.selenium.JavascriptExecutor) driver;
+            Boolean clicked = (Boolean) js.executeScript(
+                    "var btns = document.querySelectorAll('button');"
+                    + "for (var b of btns) {"
+                    + "  if (b.textContent.trim() === 'Edit Company') { b.click(); return true; }"
+                    + "}"
+                    + "return false;");
+            Assert.assertTrue(Boolean.TRUE.equals(clicked),
+                    "'Edit Company' button not found in user menu");
+            pause(2000);
+
+            String body = (String) js.executeScript("return document.body.innerText || '';");
+            // Required fields per live captured modal
+            String[] expectedLabels = {
+                    "Edit Company", "Company Name", "Address Line 1", "City",
+                    "State", "ZIP Code", "Country", "Company Timezone",
+                    "Save Changes"
+            };
+            java.util.List<String> missing = new java.util.ArrayList<>();
+            for (String label : expectedLabels) {
+                if (!body.contains(label)) missing.add(label);
+            }
+            Assert.assertTrue(missing.isEmpty(),
+                    "Edit Company modal is missing expected labels: " + missing
+                    + ". Body excerpt: " + body.substring(0, Math.min(400, body.length())));
+
+            logStepWithScreenshot("Edit Company modal — all required fields present");
+            ExtentReportManager.logPass(
+                    "Edit Company modal renders with all expected fields: "
+                    + String.join(", ", expectedLabels));
+
+            // Close modal — click Cancel so we don't accidentally save
+            try {
+                js.executeScript(
+                        "var btns = document.querySelectorAll('button');"
+                        + "for (var b of btns) {"
+                        + "  if (b.textContent.trim() === 'Cancel') { b.click(); return; }"
+                        + "}");
+                pause(500);
+            } catch (Exception ignored) {}
+        } catch (Exception e) {
+            logStepWithScreenshot("TC_UM_03 error");
+            Assert.fail("TC_UM_03 failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Quick check for "currently logged in" — present session, not on /login.
+     */
+    private boolean isLoggedIn() {
+        try {
+            String url = driver.getCurrentUrl();
+            if (url.contains("/login")) return false;
+            // Sanity: any sidebar nav link → user is in app
+            return !driver.findElements(
+                    org.openqa.selenium.By.xpath("//nav//a[@href='/dashboard' or @href='/assets']")
+            ).isEmpty();
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

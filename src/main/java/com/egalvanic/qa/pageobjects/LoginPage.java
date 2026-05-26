@@ -20,11 +20,19 @@ public class LoginPage {
 
     WebDriver driver;
 
-    // PageFactory elements
-    @FindBy(id = "email")
+    // PageFactory elements — locator chain tolerates the May 2026 login page
+    // which dropped the id="email"/"password" attributes in favor of MUI
+    // accessibility (aria-label / placeholder / type-based selectors).
+    @FindBy(xpath = "//input[@id='email'] | //input[@type='email']"
+            + " | //input[@name='email']"
+            + " | //input[@placeholder='Email Address' or @placeholder='Email']"
+            + " | //input[@aria-label='Email Address' or @aria-label='Email']")
     WebElement emailField;
 
-    @FindBy(id = "password")
+    @FindBy(xpath = "//input[@id='password'] | //input[@type='password']"
+            + " | //input[@name='password']"
+            + " | //input[@placeholder='Password']"
+            + " | //input[@aria-label='Password']")
     WebElement passwordField;
 
     @FindBy(xpath = "//button[@type='submit'][contains(.,'Sign In') or contains(.,'Sign in') or contains(.,'Login')]")
