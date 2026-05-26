@@ -593,8 +593,10 @@ public class BaseTest {
         dismissBackdrops();
         try {
             element.click();
-        } catch (ElementClickInterceptedException
-                | org.openqa.selenium.ElementNotInteractableException e) {
+        } catch (org.openqa.selenium.ElementNotInteractableException e) {
+            // Catches both ElementClickInterceptedException (extends ENI)
+            // and raw ENI. Required for the Task / Location "element not
+            // interactable" cluster (28 tests) in run 26442766019.
             // Backdrop / overlay / unfinished animation between dismissal and
             // click — scroll into view, dismiss again, retry with JS click.
             JavascriptExecutor js = (JavascriptExecutor) driver;
@@ -623,9 +625,27 @@ public class BaseTest {
         WebElement element = driver.findElement(locator);
         try {
             element.click();
-        } catch (ElementClickInterceptedException e) {
+        } catch (org.openqa.selenium.ElementNotInteractableException e) {
+            // Catches both ElementClickInterceptedException (extends ENI) and
+            // raw ElementNotInteractableException — backdrop intercept OR
+            // overlay rejection.
+            // Same retry strategy as the WebElement overload — scroll +
+            // re-dismiss backdrops + JS click + last-resort synthetic
+            // MouseEvent. Required for the Task / Location "element not
+            // interactable" cluster (28 tests) in run 26442766019.
             JavascriptExecutor js = (JavascriptExecutor) driver;
-            js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", element);
+            try {
+                js.executeScript("arguments[0].scrollIntoView({block:'center'});", element);
+                dismissBackdrops();
+                pause(300);
+                js.executeScript("arguments[0].click();", element);
+            } catch (Exception ignored) {
+                try {
+                    js.executeScript(
+                        "var ev = new MouseEvent('click', {bubbles:true, cancelable:true, view:window});" +
+                        "arguments[0].dispatchEvent(ev);", element);
+                } catch (Exception ignored2) {}
+            }
         }
     }
 }

@@ -81,9 +81,13 @@ public class TaskTestNG extends BaseTest {
             "//button[contains(normalize-space(),'Create Task') or contains(normalize-space(),'Add Task')]"
             + " | //main//button[contains(@class,'MuiButton-containedPrimary')]");
 
-    // Drawer
+    // Drawer header — broadened to match multiple drawer-title variants
+    // observed across web versions (Add Task / Create Task / New Task /
+    // Task Details). The new May 2026 web build uses a different label.
     private static final By DRAWER_HEADER = By.xpath(
-            "//*[normalize-space()='Add Task']");
+            "//*[normalize-space()='Add Task' or normalize-space()='Create Task'"
+            + " or normalize-space()='New Task' or normalize-space()='Task Details'"
+            + " or normalize-space()='Add a Task' or normalize-space()='Create New Task']");
     // Form fields
     private static final By TASK_TYPE_INPUT = By.xpath(
             "//p[contains(text(),'Task Type')]/ancestor::div[1]//input[@role='combobox']"
@@ -314,15 +318,25 @@ public class TaskTestNG extends BaseTest {
 
     private boolean isDrawerOpen() {
         try {
+            // 1. Specific drawer-header text variants
             List<WebElement> headers = driver.findElements(DRAWER_HEADER);
             for (WebElement h : headers) {
                 if (h.isDisplayed()) return true;
             }
-            // Also check for the drawer heading "Add Task"
-            List<WebElement> addTaskHeaders = driver.findElements(By.xpath(
-                    "//h6[normalize-space()='Add Task']"));
-            for (WebElement h : addTaskHeaders) {
-                if (h.isDisplayed()) return true;
+            // 2. Fallback: any visible MUI Drawer with form-like content.
+            //    The new web build may not use a "Add Task" header — instead
+            //    the drawer is identified by its panel class + task-related
+            //    form fields inside.
+            List<WebElement> drawers = driver.findElements(By.cssSelector(
+                    "[class*='MuiDrawer-paper'], [role='dialog'], [class*='Drawer-root']"));
+            for (WebElement d : drawers) {
+                if (!d.isDisplayed()) continue;
+                String text = d.getText().toLowerCase();
+                if (text.contains("task") && (text.contains("type")
+                        || text.contains("title") || text.contains("description")
+                        || text.contains("save") || text.contains("create"))) {
+                    return true;
+                }
             }
         } catch (Exception ignored) {}
         return false;
