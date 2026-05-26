@@ -75,18 +75,18 @@
 
 <div class="summary">
   <div class="stat-card card-total"><div class="number">824</div><div class="label">Total Tests</div></div>
-  <div class="stat-card card-passed"><div class="number">801</div><div class="label">Passed</div></div>
-  <div class="stat-card card-failed"><div class="number">22</div><div class="label">Failed</div></div>
+  <div class="stat-card card-passed"><div class="number">804</div><div class="label">Passed</div></div>
+  <div class="stat-card card-failed"><div class="number">19</div><div class="label">Failed</div></div>
   <div class="stat-card card-skipped"><div class="number">1</div><div class="label">Skipped</div></div>
 </div>
 
 <div class="progress-wrap">
   <div class="progress-bar">
-    <div class="progress-pass" style="width:97.2%"></div>
-    <div class="progress-fail" style="width:2.7%"></div>
+    <div class="progress-pass" style="width:97.6%"></div>
+    <div class="progress-fail" style="width:2.3%"></div>
     <div class="progress-skip" style="width:0.1%"></div>
   </div>
-  <div class="progress-label">97.2% pass rate</div>
+  <div class="progress-label">97.6% pass rate</div>
 </div>
 
 <div class="excl-note">
@@ -2355,22 +2355,16 @@
       </div>
     </div>
   </div>
-  <div class="module module-has-fail " onclick="this.classList.toggle('collapsed')">
+  <div class="module module-all-pass collapsed" onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
       <div class="module-name">
         <span class="toggle">&#9660;</span>Location + Task
       </div>
       <div class="module-stats">
-        <span class="mini-badge mini-pass">132 passed</span> <span class="mini-badge mini-fail">1 failed</span>
+        <span class="mini-badge mini-pass">133 passed</span>
       </div>
     </div>
     <div class="test-list">
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_CT_001_CreateTaskButtonVisible</span>
-        <span class="test-duration">0s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Task button should be visible expected [true] but found [false]</div>
-      </div>
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">BL_001_BuildingListDisplay</span>
         <span class="test-duration">0s</span>
@@ -3044,6 +3038,12 @@
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTC_CT_001_CreateTaskButtonVisible<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">0s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">testTC_CT_002_CreateTaskDrawerOpens<span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">6s</span>
         <span class="badge badge-pass">PASS</span>
@@ -3171,7 +3171,7 @@
         <span class="toggle">&#9660;</span>Work Order + Issue
       </div>
       <div class="module-stats">
-        <span class="mini-badge mini-pass">227 passed</span> <span class="mini-badge mini-fail">7 failed</span>
+        <span class="mini-badge mini-pass">228 passed</span> <span class="mini-badge mini-fail">6 failed</span>
       </div>
     </div>
     <div class="test-list">
@@ -3204,12 +3204,6 @@
         <span class="test-duration">10s</span>
         <span class="badge badge-fail">FAIL</span>
         <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Work order list should load within 10 seconds. Actual: 10852ms expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_SL_004_SAPlanColumn</span>
-        <span class="test-duration">0s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Grid should have SA / Plan column expected [true] but found [false]</div>
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">testTC_WOL_001_PageLoads</span>
@@ -4579,6 +4573,12 @@
         <span class="badge badge-pass">PASS</span>
         
       </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTC_SL_004_SAPlanColumn<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">0s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
     </div>
   </div>
   <div class="module module-has-fail " onclick="this.classList.toggle('collapsed')">
@@ -4587,16 +4587,10 @@
         <span class="toggle">&#9660;</span>Dashboard + BugHunt
       </div>
       <div class="module-stats">
-        <span class="mini-badge mini-pass">78 passed</span> <span class="mini-badge mini-fail">12 failed</span> <span class="mini-badge mini-skip">1 skipped</span>
+        <span class="mini-badge mini-pass">79 passed</span> <span class="mini-badge mini-fail">11 failed</span> <span class="mini-badge mini-skip">1 skipped</span>
       </div>
     </div>
     <div class="test-list">
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testBUG015_MissingStatusColumn</span>
-        <span class="test-duration">34s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">BUG-015 REGRESSION: no status-like column found on Work Orders grid. Expected one of: Status, Stage, State, Progress, Phase, SA/Plan. Columns now:  expected [true] but found [false]</div>
-      </div>
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">testBUG09_SQLInjectionInEmail</span>
         <span class="test-duration">27s</span>
@@ -5137,14 +5131,20 @@
         <span class="badge badge-pass">PASS</span>
         
       </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testBUG015_MissingStatusColumn<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">34s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
     </div>
   </div>
 </div>
 
 <div class="footer">
   Run ID: 26442766019 &bull; Branch: main &bull; Commit: 7b8fd2d &bull;
-  <a href="https://github.com/eg-abhiyantsingh/Egalvanic_Web-main/actions/runs/26442766019">View on GitHub Actions</a> &bull; Generated 2026-05-26 20:41
-  &bull; SLD + Connection excluded &bull; 204 tests locally re-verified
+  <a href="https://github.com/eg-abhiyantsingh/Egalvanic_Web-main/actions/runs/26442766019">View on GitHub Actions</a> &bull; Generated 2026-05-26 21:09
+  &bull; SLD + Connection excluded &bull; 207 tests locally re-verified
 </div>
 
 </body>
