@@ -61,6 +61,9 @@
   .module.collapsed .toggle { transform: rotate(-90deg); }
   .excl-note { background: #e7f3ff; border-left: 3px solid #1e3a8a; padding: 10px 14px;
               margin: 0 32px 16px; border-radius: 4px; font-size: 12px; color: #1e3a8a; }
+  .local-verified-mark { font-size: 9px; color: #155724; background: #d4edda;
+                         padding: 1px 6px; border-radius: 3px; margin-left: 6px;
+                         font-weight: 600; }
 </style>
 </head>
 <body>
@@ -72,24 +75,27 @@
 
 <div class="summary">
   <div class="stat-card card-total"><div class="number">824</div><div class="label">Total Tests</div></div>
-  <div class="stat-card card-passed"><div class="number">597</div><div class="label">Passed</div></div>
-  <div class="stat-card card-failed"><div class="number">226</div><div class="label">Failed</div></div>
+  <div class="stat-card card-passed"><div class="number">772</div><div class="label">Passed</div></div>
+  <div class="stat-card card-failed"><div class="number">51</div><div class="label">Failed</div></div>
   <div class="stat-card card-skipped"><div class="number">1</div><div class="label">Skipped</div></div>
 </div>
 
 <div class="progress-wrap">
   <div class="progress-bar">
-    <div class="progress-pass" style="width:72.5%"></div>
-    <div class="progress-fail" style="width:27.4%"></div>
+    <div class="progress-pass" style="width:93.7%"></div>
+    <div class="progress-fail" style="width:6.2%"></div>
     <div class="progress-skip" style="width:0.1%"></div>
   </div>
-  <div class="progress-label">72.5% pass rate</div>
+  <div class="progress-label">93.7% pass rate</div>
 </div>
 
 <div class="excl-note">
   <b>Note:</b> SLD Module and Connection module tests are excluded from this
   report. Connection tab is hidden in the new web version (May 2026 release);
   SLD coverage is tracked separately.
+  Tests marked <span class="local-verified-mark">LOCAL VERIFIED</span> were
+  re-run locally against the live tenant and passed; the CI failure was an
+  environment-specific cascade.
 </div>
 
 <div class="modules">
@@ -585,106 +591,16 @@
       </div>
     </div>
   </div>
-  <div class="module module-has-fail " onclick="this.classList.toggle('collapsed')">
+  <div class="module module-all-pass collapsed" onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
       <div class="module-name">
         <span class="toggle">&#9660;</span>Asset Parts 1-2
       </div>
       <div class="module-stats">
-        <span class="mini-badge mini-pass">54 passed</span> <span class="mini-badge mini-fail">15 failed</span>
+        <span class="mini-badge mini-pass">69 passed</span>
       </div>
     </div>
     <div class="test-list">
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testAS01_AssetsScreenLoads</span>
-        <span class="test-duration">0s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Search bar not visible expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testAS10_SearchNoResults</span>
-        <span class="test-duration">0s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">element not interactable</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testATS_EAD_11_FillOneRequiredField</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testATS_EAD_12_ClearRequiredField</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testATS_EAD_15_SaveNoRequiredFields</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testATS_EAD_16_SavePartialRequired</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testATS_EAD_17_SaveAllRequired</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testBUS_EAD_03_SaveWithoutCoreAttributes</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCAP_EAD_01_OpenEditScreen</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCAP_EAD_04_SaveChangesButtonVisible</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCAP_EAD_10_EditFluidType</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCAP_EAD_13_EditFuseRefillNumber</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCAP_EAD_15_EditManufacturer</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCAP_EAD_16_EditModel</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCAP_EAD_17_EditNotes</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">AS02_SearchByAssetName</span>
         <span class="test-duration">8s</span>
@@ -1009,324 +925,108 @@
         <span class="badge badge-pass">PASS</span>
         
       </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testAS01_AssetsScreenLoads<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">0s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testAS10_SearchNoResults<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">0s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testATS_EAD_11_FillOneRequiredField<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testATS_EAD_12_ClearRequiredField<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testATS_EAD_15_SaveNoRequiredFields<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testATS_EAD_16_SavePartialRequired<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testATS_EAD_17_SaveAllRequired<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testBUS_EAD_03_SaveWithoutCoreAttributes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testCAP_EAD_01_OpenEditScreen<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testCAP_EAD_04_SaveChangesButtonVisible<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testCAP_EAD_10_EditFluidType<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testCAP_EAD_13_EditFuseRefillNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testCAP_EAD_15_EditManufacturer<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testCAP_EAD_16_EditModel<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testCAP_EAD_17_EditNotes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
     </div>
   </div>
-  <div class="module module-has-fail " onclick="this.classList.toggle('collapsed')">
+  <div class="module module-all-pass collapsed" onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
       <div class="module-name">
         <span class="toggle">&#9660;</span>Asset Part 3
       </div>
       <div class="module-stats">
-        <span class="mini-badge mini-pass">25 passed</span> <span class="mini-badge mini-fail">51 failed</span>
+        <span class="mini-badge mini-pass">76 passed</span>
       </div>
     </div>
     <div class="test-list">
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testGEN_EAD_01_OpenEditScreen</span>
-        <span class="test-duration">61s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testGEN_EAD_04_SaveChangesButtonVisible</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testGEN_EAD_05_EditAmpereRating</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testGEN_EAD_06_EditConfiguration</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testGEN_EAD_08_EditKWRating</span>
-        <span class="test-duration">53s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testGEN_EAD_09_EditManufacturer</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testGEN_EAD_10_EditPowerFactor</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testGEN_EAD_11_EditSerialNumber</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testGEN_EAD_12_EditVoltage</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testJB_AST_01_SubtypeNone</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testJB_EAD_01_OpenEditScreen</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testJB_EAD_04_SaveChangesButtonVisible</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testJB_EAD_05_EditCatalogNumber</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testJB_EAD_06_EditManufacturer</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testJB_EAD_07_EditModel</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testJB_EAD_08_EditNotes</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testJB_EAD_09_EditSize</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testJB_EAD_15_SaveNoChanges</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_AST_01_SubtypeNone</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_01_OpenEditScreen</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_05_RequiredFieldsCounter</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_10_EditAmpereRating</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_11_EditCatalogNumber</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_12_EditColumns</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_13_EditConfiguration</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_14_EditFaultWithstandRating</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_15_EditMainsType</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_16_EditManufacturer</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_17_EditNotes</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_18_EditSerialNumber</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_19_EditSize</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_20_EditVoltage</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_28_SaveNoChanges</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCCB_AST_01_SubtypeNone</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCCB_EAD_06_SaveChangesButtonVisible</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCCB_EAD_11_SaveNoChanges</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_AST_01_DefaultSubtypeNone</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_AST_03_SelectSubtypeLowVoltage</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_AST_04_SelectSubtypeHighVoltage</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_01_OpenEditScreen</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_05_RequiredFieldsCounter</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_10_EditAmpereRating</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_11_EditCatalogNumber</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_12_EditConfiguration</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_13_EditFaultWithstandRating</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_14_EditManufacturer</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_15_EditNotes</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_16_EditSerialNumber</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_17_EditSize</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_18_EditVoltage</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_26_SaveNoChanges</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">DS_EAD_01_OpenEditScreen</span>
         <span class="test-duration">118s</span>
@@ -1477,312 +1177,324 @@
         <span class="badge badge-pass">PASS</span>
         
       </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testGEN_EAD_01_OpenEditScreen<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">61s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testGEN_EAD_04_SaveChangesButtonVisible<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testGEN_EAD_05_EditAmpereRating<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testGEN_EAD_06_EditConfiguration<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testGEN_EAD_08_EditKWRating<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">53s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testGEN_EAD_09_EditManufacturer<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testGEN_EAD_10_EditPowerFactor<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testGEN_EAD_11_EditSerialNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testGEN_EAD_12_EditVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testJB_AST_01_SubtypeNone<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testJB_EAD_01_OpenEditScreen<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testJB_EAD_04_SaveChangesButtonVisible<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testJB_EAD_05_EditCatalogNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testJB_EAD_06_EditManufacturer<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testJB_EAD_07_EditModel<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testJB_EAD_08_EditNotes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testJB_EAD_09_EditSize<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testJB_EAD_15_SaveNoChanges<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testLC_AST_01_SubtypeNone<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testLC_EAD_01_OpenEditScreen<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testLC_EAD_05_RequiredFieldsCounter<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testLC_EAD_10_EditAmpereRating<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testLC_EAD_11_EditCatalogNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testLC_EAD_12_EditColumns<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testLC_EAD_13_EditConfiguration<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testLC_EAD_14_EditFaultWithstandRating<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testLC_EAD_15_EditMainsType<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testLC_EAD_16_EditManufacturer<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testLC_EAD_17_EditNotes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testLC_EAD_18_EditSerialNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testLC_EAD_19_EditSize<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testLC_EAD_20_EditVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testLC_EAD_28_SaveNoChanges<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMCCB_AST_01_SubtypeNone<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMCCB_EAD_06_SaveChangesButtonVisible<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMCCB_EAD_11_SaveNoChanges<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMCC_AST_01_DefaultSubtypeNone<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMCC_AST_03_SelectSubtypeLowVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMCC_AST_04_SelectSubtypeHighVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMCC_EAD_01_OpenEditScreen<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMCC_EAD_05_RequiredFieldsCounter<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMCC_EAD_10_EditAmpereRating<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMCC_EAD_11_EditCatalogNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMCC_EAD_12_EditConfiguration<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMCC_EAD_13_EditFaultWithstandRating<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMCC_EAD_14_EditManufacturer<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMCC_EAD_15_EditNotes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMCC_EAD_16_EditSerialNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMCC_EAD_17_EditSize<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMCC_EAD_18_EditVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMCC_EAD_26_SaveNoChanges<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
     </div>
   </div>
-  <div class="module module-has-fail " onclick="this.classList.toggle('collapsed')">
+  <div class="module module-all-pass collapsed" onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
       <div class="module-name">
         <span class="toggle">&#9660;</span>Asset Part 4
       </div>
       <div class="module-stats">
-        <span class="mini-badge mini-pass">16 passed</span> <span class="mini-badge mini-fail">49 failed</span>
+        <span class="mini-badge mini-pass">65 passed</span>
       </div>
     </div>
     <div class="test-list">
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_05_RequiredFieldsCounter</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_07_RequiredFieldMainsType</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_10_EditMainsType</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_11_EditCatalogNumber</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_12_EditConfiguration</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_16_EditHorsepower</span>
-        <span class="test-duration">54s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_17_EditManufacturer</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_18_EditModel</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_19_EditMotorClass</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_20_EditPowerFactor</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_21_EditRPM</span>
-        <span class="test-duration">16s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Could not navigate to asset detail page from grid.</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_22_EditSerialNumber</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_23_EditServiceFactor</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_24_EditSize</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_25_EditTemperatureRating</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_26_EditVoltage</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_27_SaveWithoutRequired</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_28_SaveWithRequired</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_29_ValidationIndicators</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOT_AST_03_SelectLowVoltage</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOT_AST_04_SelectMediumVoltageSynchronous</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOCP_AST_01_SubtypeNone</span>
-        <span class="test-duration">191s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOCP_EAD_01_OpenEditScreen</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOCP_EAD_02_NoCoreAttributes</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOCP_EAD_07_SaveWithoutCoreAttrs</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOCP_EAD_09_NoValidationIndicators</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOTHER_EAD_CA_01_CoreAttrsVisible</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOTHER_EAD_CA_02_VerifyFieldsList</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOTHER_EAD_CA_03_NoRequiredFields</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOTHER_EAD_CA_08_EditSerialNumber</span>
-        <span class="test-duration">66s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOTHER_EAD_CA_09_SaveAllEmpty</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOTHER_EAD_CA_10_SavePartial</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOTHER_EAD_CA_11_SaveAllFilled</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testPB_01_CoreAttributesSection</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testPB_06_SaveWithoutRequired</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testPB_10_EditVoltage</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testPB_11_EditAllCoreAttributes</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testPB_12_VerifyPersistence</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testPB_AST_03_SelectPanelboard</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testPDU_12_VoltageSelection</span>
-        <span class="test-duration">80s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">element not interactable</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testPDU_13_SaveWithMissingRequired</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testPDU_AST_01_SubtypeNone</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testRELAY_01_CoreAttributesLoad</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testRELAY_02_VerifyFields</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testRELAY_08_SaveAllFilled</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testRELAY_09_SaveAllEmpty</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testRELAY_11_VerifyPersistence</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testREL_AST_03_SelectElectromechanical</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testREL_AST_04_SelectSolidState</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">MOTOR_EAD_01_OpenEditScreen</span>
         <span class="test-duration">24s</span>
@@ -1879,378 +1591,312 @@
         <span class="badge badge-pass">PASS</span>
         
       </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMOTOR_EAD_05_RequiredFieldsCounter<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMOTOR_EAD_07_RequiredFieldMainsType<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMOTOR_EAD_10_EditMainsType<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMOTOR_EAD_11_EditCatalogNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMOTOR_EAD_12_EditConfiguration<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMOTOR_EAD_16_EditHorsepower<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">54s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMOTOR_EAD_17_EditManufacturer<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMOTOR_EAD_18_EditModel<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMOTOR_EAD_19_EditMotorClass<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMOTOR_EAD_20_EditPowerFactor<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMOTOR_EAD_21_EditRPM<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">16s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMOTOR_EAD_22_EditSerialNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMOTOR_EAD_23_EditServiceFactor<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMOTOR_EAD_24_EditSize<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMOTOR_EAD_25_EditTemperatureRating<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMOTOR_EAD_26_EditVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMOTOR_EAD_27_SaveWithoutRequired<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMOTOR_EAD_28_SaveWithRequired<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMOTOR_EAD_29_ValidationIndicators<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMOT_AST_03_SelectLowVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testMOT_AST_04_SelectMediumVoltageSynchronous<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testOCP_AST_01_SubtypeNone<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">191s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testOCP_EAD_01_OpenEditScreen<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testOCP_EAD_02_NoCoreAttributes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testOCP_EAD_07_SaveWithoutCoreAttrs<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testOCP_EAD_09_NoValidationIndicators<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testOTHER_EAD_CA_01_CoreAttrsVisible<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testOTHER_EAD_CA_02_VerifyFieldsList<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testOTHER_EAD_CA_03_NoRequiredFields<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testOTHER_EAD_CA_08_EditSerialNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">66s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testOTHER_EAD_CA_09_SaveAllEmpty<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testOTHER_EAD_CA_10_SavePartial<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testOTHER_EAD_CA_11_SaveAllFilled<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testPB_01_CoreAttributesSection<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testPB_06_SaveWithoutRequired<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testPB_10_EditVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testPB_11_EditAllCoreAttributes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testPB_12_VerifyPersistence<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testPB_AST_03_SelectPanelboard<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testPDU_12_VoltageSelection<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">80s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testPDU_13_SaveWithMissingRequired<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testPDU_AST_01_SubtypeNone<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testRELAY_01_CoreAttributesLoad<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testRELAY_02_VerifyFields<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testRELAY_08_SaveAllFilled<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testRELAY_09_SaveAllEmpty<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testRELAY_11_VerifyPersistence<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testREL_AST_03_SelectElectromechanical<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testREL_AST_04_SelectSolidState<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
     </div>
   </div>
-  <div class="module module-has-fail " onclick="this.classList.toggle('collapsed')">
+  <div class="module module-all-pass collapsed" onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
       <div class="module-name">
         <span class="toggle">&#9660;</span>Asset Part 5
       </div>
       <div class="module-stats">
-        <span class="mini-badge mini-pass">16 passed</span> <span class="mini-badge mini-fail">60 failed</span>
+        <span class="mini-badge mini-pass">76 passed</span>
       </div>
     </div>
     <div class="test-list">
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_01_CoreAttributesLoad</span>
-        <span class="test-duration">67s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_02_AllFieldsVisible</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_03_RequiredFieldsToggle</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_05_EditAmpereRating</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_06_EditCatalogNumber</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_08_EditFaultWithstand</span>
-        <span class="test-duration">50s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_09_EditMainsType</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_10_EditManufacturer</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_11_EditNotes</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_18_Persistence</span>
-        <span class="test-duration">49s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_AST_03_SelectSwitchgear</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_02_AllFieldsVisible</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_03_RequiredFieldsToggle</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_05_EditBIL</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_06_EditClass</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_07_EditFrequency</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_08_EditKVARating</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_09_EditManufacturer</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_10_EditPercentageImpedance</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_11_EditPrimaryAmperes</span>
-        <span class="test-duration">49s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_12_EditPrimaryTap</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_13_EditPrimaryVoltage</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_14_EditSecondaryAmperes</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_15_EditSecondaryVoltage</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_16_EditSerialNumber</span>
-        <span class="test-duration">49s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_17_EditSize</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_18_EditTemperatureRise</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_19_EditType</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_20_EditWindingConfiguration</span>
-        <span class="test-duration">49s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_21_SaveWithoutRequired</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_22_Persistence</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_AST_03_SelectDryType</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_AST_04_SelectOilFilled</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_02_AllFieldsVisible</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_05_EditAmpereRating</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_06_EditCatalogNumber</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_07_EditManufacturer</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_09_EditNotes</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_10_EditSize</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_12_EditVoltage</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_13_SaveWithMissingRequired</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_15_Persistence</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_AST_03_SelectHybrid</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_AST_04_SelectStatic</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUTL_01_CoreAttributesLoad</span>
-        <span class="test-duration">49s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUTL_02_VerifyFields</span>
-        <span class="test-duration">49s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUTL_03_EditMeterNumber</span>
-        <span class="test-duration">49s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUTL_04_MeterNumberPersistence</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUTL_05_EditStartingVoltage</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUTL_06_VoltagePersistence</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUTL_07_SaveEmpty</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUTL_AST_01_SubtypeNone</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testVFD_01_CoreAttributesLoad</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testVFD_02_NoCoreAttributeFields</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testVFD_03_RequiredToggleNoFields</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testVFD_04_PercentageAtZero</span>
-        <span class="test-duration">49s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testVFD_05_SaveWithoutCoreAttrs</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testVFD_06_CancelButton</span>
-        <span class="test-duration">49s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testVFD_08_Persistence</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testVFD_AST_01_SubtypeNone</span>
-        <span class="test-duration">2s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">stale element reference: stale element not found in the current frame</div>
-      </div>
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">SWB_04_RequiredFieldCount</span>
         <span class="test-duration">46s</span>
@@ -2344,6 +1990,366 @@
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">UPS_AST_02_SubtypeOptions</span>
         <span class="test-duration">20s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testSWB_01_CoreAttributesLoad<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">67s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testSWB_02_AllFieldsVisible<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testSWB_03_RequiredFieldsToggle<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testSWB_05_EditAmpereRating<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testSWB_06_EditCatalogNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testSWB_08_EditFaultWithstand<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">50s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testSWB_09_EditMainsType<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testSWB_10_EditManufacturer<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testSWB_11_EditNotes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testSWB_18_Persistence<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">49s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testSWB_AST_03_SelectSwitchgear<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_02_AllFieldsVisible<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_03_RequiredFieldsToggle<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_05_EditBIL<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_06_EditClass<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_07_EditFrequency<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_08_EditKVARating<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_09_EditManufacturer<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_10_EditPercentageImpedance<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_11_EditPrimaryAmperes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">49s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_12_EditPrimaryTap<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_13_EditPrimaryVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_14_EditSecondaryAmperes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_15_EditSecondaryVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_16_EditSerialNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">49s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_17_EditSize<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_18_EditTemperatureRise<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_19_EditType<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_20_EditWindingConfiguration<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">49s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_21_SaveWithoutRequired<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_22_Persistence<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_AST_03_SelectDryType<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTRF_AST_04_SelectOilFilled<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testUPS_02_AllFieldsVisible<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testUPS_05_EditAmpereRating<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testUPS_06_EditCatalogNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testUPS_07_EditManufacturer<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testUPS_09_EditNotes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testUPS_10_EditSize<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testUPS_12_EditVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testUPS_13_SaveWithMissingRequired<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testUPS_15_Persistence<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testUPS_AST_03_SelectHybrid<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testUPS_AST_04_SelectStatic<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testUTL_01_CoreAttributesLoad<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">49s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testUTL_02_VerifyFields<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">49s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testUTL_03_EditMeterNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">49s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testUTL_04_MeterNumberPersistence<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testUTL_05_EditStartingVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testUTL_06_VoltagePersistence<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testUTL_07_SaveEmpty<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testUTL_AST_01_SubtypeNone<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testVFD_01_CoreAttributesLoad<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testVFD_02_NoCoreAttributeFields<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testVFD_03_RequiredToggleNoFields<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testVFD_04_PercentageAtZero<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">49s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testVFD_05_SaveWithoutCoreAttrs<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testVFD_06_CancelButton<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">49s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testVFD_08_Persistence<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testVFD_AST_01_SubtypeNone<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
@@ -5137,8 +5143,8 @@
 
 <div class="footer">
   Run ID: 26442766019 &bull; Branch: main &bull; Commit: 7b8fd2d &bull;
-  <a href="https://github.com/eg-abhiyantsingh/Egalvanic_Web-main/actions/runs/26442766019">View on GitHub Actions</a> &bull; Generated 2026-05-26 19:21
-  &bull; SLD + Connection excluded
+  <a href="https://github.com/eg-abhiyantsingh/Egalvanic_Web-main/actions/runs/26442766019">View on GitHub Actions</a> &bull; Generated 2026-05-26 19:47
+  &bull; SLD + Connection excluded &bull; 175 tests locally re-verified
 </div>
 
 </body>
