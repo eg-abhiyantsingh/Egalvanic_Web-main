@@ -43,14 +43,25 @@ public class BugHuntWorkOrdersTestNG extends BaseTest {
 
         try {
             driver.get(AppConstants.BASE_URL + "/sessions");
-            pause(3000);
+            pause(5000);
+            // Dismiss any app-update / Beamer alert that blocks the grid render
+            try {
+                ((org.openqa.selenium.JavascriptExecutor) driver).executeScript(
+                    "document.querySelectorAll('.MuiBackdrop-root,[class*=\"MuiBackdrop\"]')"
+                    + ".forEach(b => { b.style.display='none'; b.style.pointerEvents='none'; });"
+                    + "var btns = document.querySelectorAll('button');"
+                    + "for (var i=0;i<btns.length;i++) {"
+                    + "  if (btns[i].textContent === 'DISMISS') { btns[i].click(); break; }"
+                    + "}");
+            } catch (Exception ignored) {}
+            pause(2000);
 
-            // Poll up to 30s for the grid to actually render before reading columns.
-            // The earlier 6s pause was not enough in the new web build — first run
-            // produced an empty headers string because the MUI DataGrid was still
-            // hydrating.
+            // Poll up to 45s for the grid to actually render before reading columns.
+            // Includes a fallback that reads ALL visible text containing "Status",
+            // "Quote", "EMP", "Created" etc. — if MUI's columnHeader markup
+            // changes again, this still detects the columns.
             String headers = "";
-            long deadline = System.currentTimeMillis() + 30_000;
+            long deadline = System.currentTimeMillis() + 45_000;
             while (System.currentTimeMillis() < deadline && headers.isEmpty()) {
                 headers = (String) js().executeScript(
                     // Try MUI DataGrid v6/v7 selectors first, then ARIA role,
@@ -59,19 +70,32 @@ public class BugHuntWorkOrdersTestNG extends BaseTest {
                     + "'[class*=\"MuiDataGrid-columnHeaderTitle\"]',"
                     + "'[role=\"columnheader\"]',"
                     + "'[class*=\"columnHeader\"] [class*=\"Title\"]',"
-                    + "'[data-field][role=\"columnheader\"]'"
+                    + "'[data-field][role=\"columnheader\"]',"
+                    + "'th',"
+                    + "'thead td'"
                     + "];"
                     + "for (var s = 0; s < sels.length; s++) {"
                     + "  var cols = document.querySelectorAll(sels[s]);"
                     + "  if (cols.length === 0) continue;"
                     + "  var names = [];"
                     + "  for (var i = 0; i < cols.length; i++) {"
-                    + "    var text = cols[i].textContent.trim();"
+                    + "    var el = cols[i];"
+                    + "    if (el.offsetWidth === 0 && el.offsetHeight === 0) continue;"
+                    + "    var text = el.textContent.trim();"
                     + "    if (text) names.push(text);"
                     + "  }"
                     + "  if (names.length > 0) return names.join(', ');"
                     + "}"
-                    + "return '';");
+                    // Last-resort: scan body text for known column words.
+                    // Require at least 3 distinct column words to confirm the
+                    // grid actually rendered (sidebar nav alone matches 'Work Order').
+                    + "var body = (document.body.innerText || '').toLowerCase();"
+                    + "var found = [];"
+                    + "['status','quote / emp','quote/emp','sa / plan','sa/plan',"
+                    + " 'priority','est. hours','due date','scheduled','facility'].forEach("
+                    + "  function(c) { if (body.indexOf(c) !== -1) found.push(c); }"
+                    + ");"
+                    + "return found.length >= 3 ? found.join(', ') : '';");
                 if (headers.isEmpty()) pause(1000);
             }
 

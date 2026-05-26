@@ -1263,15 +1263,21 @@ public class WorkOrderTestNG extends BaseTest {
         logStep("PASS: Created column date format is consistent");
     }
 
-    @Test(priority = 73, description = "TC_SL_004: Verify SA / Plan column displays correctly")
+    @Test(priority = 73, description = "TC_SL_004: Verify SA / Plan (or renamed Quote / EMP) column displays")
     public void testTC_SL_004_SAPlanColumn() {
         ExtentReportManager.createTest(MODULE, FEATURE_STATUS, "TC_SL_004_SAPlanColumn");
-        logStep("Checking SA / Plan column");
+        logStep("Checking SA / Plan column (renamed to 'Quote / EMP' in May 2026 web)");
 
+        // Column renamed: "SA / Plan" → "Quote / EMP" in the May 2026 web update.
+        // Live walkthrough on 2026-05-26 confirmed the new label.
         String pageText = getPageText();
-        Assert.assertTrue(pageText.contains("SA / Plan") || pageText.contains("SA/Plan"),
-                "Grid should have SA / Plan column");
-        logStep("PASS: SA / Plan column present");
+        boolean hasColumn = pageText.contains("SA / Plan")
+                || pageText.contains("SA/Plan")
+                || pageText.contains("Quote / EMP")
+                || pageText.contains("Quote/EMP");
+        Assert.assertTrue(hasColumn,
+                "Grid should have SA / Plan (or Quote / EMP) column");
+        logStep("PASS: SA / Plan / Quote / EMP column present");
     }
 
     // ================================================================

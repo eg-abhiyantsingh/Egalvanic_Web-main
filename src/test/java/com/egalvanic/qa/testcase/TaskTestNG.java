@@ -680,16 +680,26 @@ public class TaskTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_CREATE, "TC_CT_001_CreateTaskButtonVisible");
         logStep("Checking Create Task button visibility");
 
+        // The XPath may match multiple elements including a hidden one inside
+        // a closed drawer template. Filter to the first VISIBLE match.
+        // Live page (2026-05-26) shows the button labeled "Add Tasks" (plural).
         List<WebElement> btns = driver.findElements(CREATE_TASK_BTN);
-        if (btns.isEmpty()) {
+        WebElement visible = btns.stream()
+                .filter(WebElement::isDisplayed)
+                .findFirst()
+                .orElse(null);
+
+        if (visible == null) {
             // Fallback: find via JS in case XPath engine doesn't match
             JavascriptExecutor js = (JavascriptExecutor) driver;
             Boolean found = (Boolean) js.executeScript(
                 "var btns = document.querySelectorAll('main button');" +
                 "for (var i = 0; i < btns.length; i++) {" +
-                "  var txt = btns[i].textContent.trim().toLowerCase();" +
+                "  var b = btns[i];" +
+                "  if (b.offsetWidth === 0 || b.offsetHeight === 0) continue;" +
+                "  var txt = b.textContent.trim().toLowerCase();" +
                 "  if (txt.indexOf('create task') !== -1 || txt.indexOf('add task') !== -1 ||" +
-                "      btns[i].classList.contains('MuiButton-containedPrimary')) {" +
+                "      b.classList.contains('MuiButton-containedPrimary')) {" +
                 "    return true;" +
                 "  }" +
                 "}" +
@@ -698,8 +708,7 @@ public class TaskTestNG extends BaseTest {
                     "Create Task / Add Task button should be present (checked via JS fallback)");
             logStep("PASS: Create Task button found via JS fallback");
         } else {
-            Assert.assertTrue(btns.get(0).isDisplayed(), "Create Task button should be visible");
-            logStep("PASS: Create Task button is visible");
+            logStep("PASS: Create Task button is visible (filtered to displayed)");
         }
     }
 
