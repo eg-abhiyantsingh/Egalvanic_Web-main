@@ -8,35 +8,28 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
          background: #f5f6fa; color: #333; line-height: 1.5; }
-  .header { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-             color: #fff; padding: 28px 32px; }
+  .header { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: #fff; padding: 28px 32px; }
   .header h1 { font-size: 22px; font-weight: 600; letter-spacing: 0.3px; margin-bottom: 4px; }
   .header .subtitle { font-size: 13px; color: #bdc3c7; }
   .summary { display: flex; gap: 16px; padding: 24px 32px; flex-wrap: wrap; }
-  .stat-card { flex: 1; min-width: 120px; padding: 18px 16px; border-radius: 10px;
-                text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+  .stat-card { flex: 1; min-width: 120px; padding: 18px 16px; border-radius: 10px; text-align: center;
+               box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
   .stat-card .number { font-size: 32px; font-weight: 700; line-height: 1.1; }
   .stat-card .label { font-size: 12px; font-weight: 500; text-transform: uppercase;
-                       letter-spacing: 0.5px; margin-top: 4px; }
-  .card-total  { background: #fff; border: 2px solid #e9ecef; }
-  .card-total .number { color: #2c3e50; }
-  .card-passed { background: #d4edda; border: 2px solid #c3e6cb; }
-  .card-passed .number { color: #155724; }
-  .card-failed { background: #f8d7da; border: 2px solid #f5c6cb; }
-  .card-failed .number { color: #721c24; }
-  .card-skipped { background: #fff3cd; border: 2px solid #ffeeba; }
-  .card-skipped .number { color: #856404; }
+                      letter-spacing: 0.5px; margin-top: 4px; }
+  .card-total { background: #fff; border: 2px solid #e9ecef; } .card-total .number { color: #2c3e50; }
+  .card-passed { background: #d4edda; border: 2px solid #c3e6cb; } .card-passed .number { color: #155724; }
+  .card-failed { background: #f8d7da; border: 2px solid #f5c6cb; } .card-failed .number { color: #721c24; }
+  .card-skipped { background: #fff3cd; border: 2px solid #ffeeba; } .card-skipped .number { color: #856404; }
   .progress-wrap { padding: 0 32px 20px; }
   .progress-bar { height: 8px; border-radius: 4px; background: #e9ecef; overflow: hidden; display: flex; }
-  .progress-pass { background: #28a745; }
-  .progress-fail { background: #dc3545; }
-  .progress-skip { background: #ffc107; }
+  .progress-pass { background: #28a745; } .progress-fail { background: #dc3545; } .progress-skip { background: #ffc107; }
   .progress-label { font-size: 13px; color: #666; margin-top: 6px; text-align: right; }
   .modules { padding: 0 32px 32px; }
   .module { background: #fff; border-radius: 10px; margin-bottom: 16px;
-             box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow: hidden; }
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow: hidden; }
   .module-header { padding: 14px 20px; display: flex; justify-content: space-between;
-                    align-items: center; cursor: pointer; user-select: none; }
+                   align-items: center; cursor: pointer; user-select: none; }
   .module-header:hover { background: #fafbfc; }
   .module-name { font-size: 15px; font-weight: 600; color: #2c3e50; }
   .module-stats { display: flex; gap: 8px; align-items: center; }
@@ -49,24 +42,25 @@
   .module-all-skip { border-left: 4px solid #ffc107; }
   .test-list { border-top: 1px solid #f0f2f5; }
   .test-row { padding: 9px 20px; display: flex; justify-content: space-between;
-               align-items: center; border-bottom: 1px solid #f8f9fa; font-size: 13px; }
+              align-items: center; border-bottom: 1px solid #f8f9fa; font-size: 13px; }
   .test-row:last-child { border-bottom: none; }
   .test-row:hover { background: #fafbfc; }
   .test-name { color: #444; flex: 1; padding-right: 12px; }
-  .test-duration { color: #999; font-size: 11px; min-width: 50px;
-                    text-align: right; padding-right: 12px; }
+  .test-duration { color: #999; font-size: 11px; min-width: 50px; text-align: right; padding-right: 12px; }
   .badge { display: inline-block; padding: 3px 10px; border-radius: 3px; font-size: 11px;
-            font-weight: 600; min-width: 44px; text-align: center; }
+           font-weight: 600; min-width: 44px; text-align: center; }
   .badge-pass { background: #28a745; color: #fff; }
   .badge-fail { background: #dc3545; color: #fff; }
   .badge-skip { background: #ffc107; color: #000; }
   .footer { background: #fff; border-top: 1px solid #e9ecef; padding: 16px 32px;
-             font-size: 11px; color: #999; text-align: center; }
+            font-size: 11px; color: #999; text-align: center; }
   .footer a { color: #007bff; text-decoration: none; }
   .toggle { transition: transform 0.2s; display: inline-block; margin-right: 8px;
-             font-size: 12px; color: #999; }
+            font-size: 12px; color: #999; }
   .module.collapsed .test-list { display: none; }
   .module.collapsed .toggle { transform: rotate(-90deg); }
+  .excl-note { background: #e7f3ff; border-left: 3px solid #1e3a8a; padding: 10px 14px;
+              margin: 0 32px 16px; border-radius: 4px; font-size: 12px; color: #1e3a8a; }
 </style>
 </head>
 <body>
@@ -77,394 +71,38 @@
 </div>
 
 <div class="summary">
-  <div class="stat-card card-total">
-    <div class="number">885</div><div class="label">Total Tests</div>
-  </div>
-  <div class="stat-card card-passed">
-    <div class="number">599</div><div class="label">Passed</div>
-  </div>
-  <div class="stat-card card-failed">
-    <div class="number">285</div><div class="label">Failed</div>
-  </div>
-  <div class="stat-card card-skipped">
-    <div class="number">1</div><div class="label">Skipped</div>
-  </div>
+  <div class="stat-card card-total"><div class="number">824</div><div class="label">Total Tests</div></div>
+  <div class="stat-card card-passed"><div class="number">597</div><div class="label">Passed</div></div>
+  <div class="stat-card card-failed"><div class="number">226</div><div class="label">Failed</div></div>
+  <div class="stat-card card-skipped"><div class="number">1</div><div class="label">Skipped</div></div>
 </div>
 
 <div class="progress-wrap">
   <div class="progress-bar">
-    <div class="progress-pass" style="width:67.7%"></div>
-    <div class="progress-fail" style="width:32.2%"></div>
+    <div class="progress-pass" style="width:72.5%"></div>
+    <div class="progress-fail" style="width:27.4%"></div>
     <div class="progress-skip" style="width:0.1%"></div>
   </div>
-  <div class="progress-label">67.7% pass rate</div>
+  <div class="progress-label">72.5% pass rate</div>
+</div>
+
+<div class="excl-note">
+  <b>Note:</b> SLD Module and Connection module tests are excluded from this
+  report. Connection tab is hidden in the new web version (May 2026 release);
+  SLD coverage is tracked separately.
 </div>
 
 <div class="modules">
   <div class="module module-has-fail " onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
       <div class="module-name">
-        <span class="toggle">&#9660;</span>Auth + Site + Connection (130 TCs)
+        <span class="toggle">&#9660;</span>Auth + Site
       </div>
       <div class="module-stats">
-        <span class="mini-badge mini-pass">76 passed</span> <span class="mini-badge mini-fail">63 failed</span>
+        <span class="mini-badge mini-pass">76 passed</span> <span class="mini-badge mini-fail">4 failed</span>
       </div>
     </div>
     <div class="test-list">
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCC_001_NavigateToConnections</span>
-        <span class="test-duration">6s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Should be on Connections page expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCC_002_OpenCreateDrawer</span>
-        <span class="test-duration">82s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCC_003_SourceNodeDropdown</span>
-        <span class="test-duration">81s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCC_004_TargetNodeDropdown</span>
-        <span class="test-duration">81s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCC_005_ConnectionTypeDropdown</span>
-        <span class="test-duration">81s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCC_006_CreateCableConnection</span>
-        <span class="test-duration">84s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCC_007_CreateBuswayConnection</span>
-        <span class="test-duration">84s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCC_008_CreateButtonDisabled</span>
-        <span class="test-duration">81s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCC_009_CancelCreate</span>
-        <span class="test-duration">84s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCC_010_DuplicatePrevention</span>
-        <span class="test-duration">84s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCC_011_CoreAttributesAfterType</span>
-        <span class="test-duration">81s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCC_012_GridAppears</span>
-        <span class="test-duration">84s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCL_002_GridColumns</span>
-        <span class="test-duration">84s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCL_003_Pagination</span>
-        <span class="test-duration">84s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_001_ConnectionsNavigation</span>
-        <span class="test-duration">6s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">URL should contain /connections expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_004_ListDisplaysAll</span>
-        <span class="test-duration">124s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Connection list should display rows expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_005_EntryFormat</span>
-        <span class="test-duration">121s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Source node should be shown expected object to not be null</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_019_SourceDropdown</span>
-        <span class="test-duration">81s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_020_SourceNodeList</span>
-        <span class="test-duration">81s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_022_SourceSearch</span>
-        <span class="test-duration">81s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_023_SelectSource</span>
-        <span class="test-duration">81s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_025_TargetDropdown</span>
-        <span class="test-duration">81s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_027_TargetSearch</span>
-        <span class="test-duration">81s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_028_SelectTarget</span>
-        <span class="test-duration">82s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_030_SameNodePrevention</span>
-        <span class="test-duration">82s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_031_TypeField</span>
-        <span class="test-duration">82s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_032_TypeOptions</span>
-        <span class="test-duration">82s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_033_SelectBusway</span>
-        <span class="test-duration">82s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_034_SelectCable</span>
-        <span class="test-duration">82s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_035_ChangeType</span>
-        <span class="test-duration">82s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_040_NoSource</span>
-        <span class="test-duration">82s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_041_NoTarget</span>
-        <span class="test-duration">82s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_042_NoType</span>
-        <span class="test-duration">82s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_043_RowActionButtons</span>
-        <span class="test-duration">146s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Edit button should be visible on row. Actions: no rows expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_044_EditButtonOpensDrawer</span>
-        <span class="test-duration">127s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Edit Connection drawer should open expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_056_LoadPerformance</span>
-        <span class="test-duration">82s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Page should load in under 30 seconds expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_061_SingleEntry</span>
-        <span class="test-duration">124s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Source should display expected object to not be null</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_062_RapidCreation</span>
-        <span class="test-duration">85s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_068_ActionsColumnHeader</span>
-        <span class="test-duration">122s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Grid should have Actions column header expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_069_ReadinessHeader</span>
-        <span class="test-duration">0s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Overall Readiness header should be displayed expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_071_FieldCompletionStats</span>
-        <span class="test-duration">122s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Field completion stats should be displayed expected object to not be null</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_072_RowsPerPage</span>
-        <span class="test-duration">121s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Pagination info should be present (&#x27;Rows per page&#x27; or &#x27;Total Rows&#x27;) expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_078_SaveChangesButton</span>
-        <span class="test-duration">127s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Save Changes button should be in Edit drawer expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_081b_AddConnection_Cable_AllSixCoreAttributes</span>
-        <span class="test-duration">82s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCONN_081c_AddConnection_TypeChangesCoreAttributes</span>
-        <span class="test-duration">81s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testDC_001_ClickDelete</span>
-        <span class="test-duration">84s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testDC_002_ConfirmDelete</span>
-        <span class="test-duration">81s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testDC_003_CancelDelete</span>
-        <span class="test-duration">84s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testDC_004_DeleteMultiple</span>
-        <span class="test-duration">81s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testEC_001_ClickEdit</span>
-        <span class="test-duration">84s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testEC_002_EditDrawerValues</span>
-        <span class="test-duration">84s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testEC_003_EditAndSave</span>
-        <span class="test-duration">84s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testEC_004_CancelEdit</span>
-        <span class="test-duration">84s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testEC_005_SaveChangesButton</span>
-        <span class="test-duration">84s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSF_001_SearchBySource</span>
-        <span class="test-duration">85s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSF_002_SearchInvalid</span>
-        <span class="test-duration">85s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSF_003_ClearSearch</span>
-        <span class="test-duration">84s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSF_004_CaseInsensitive</span>
-        <span class="test-duration">84s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSF_005_SearchByType</span>
-        <span class="test-duration">84s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Create Connection drawer did not open after 2 attempts. Last error: Expected condition failed: waiting for visibility of element located by By.xpath: //input[@placeholder=&#x27;Select source node&#x27;] (tried </div>
-      </div>
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">testTC30_ChangeCompanyNavigation</span>
         <span class="test-duration">87s</span>
@@ -950,7 +588,7 @@
   <div class="module module-has-fail " onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
       <div class="module-name">
-        <span class="toggle">&#9660;</span>Asset Parts 1-2 (69 TCs)
+        <span class="toggle">&#9660;</span>Asset Parts 1-2
       </div>
       <div class="module-stats">
         <span class="mini-badge mini-pass">54 passed</span> <span class="mini-badge mini-fail">15 failed</span>
@@ -1376,7 +1014,7 @@
   <div class="module module-has-fail " onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
       <div class="module-name">
-        <span class="toggle">&#9660;</span>Asset Part 3 (76 TCs)
+        <span class="toggle">&#9660;</span>Asset Part 3
       </div>
       <div class="module-stats">
         <span class="mini-badge mini-pass">25 passed</span> <span class="mini-badge mini-fail">51 failed</span>
@@ -1844,7 +1482,7 @@
   <div class="module module-has-fail " onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
       <div class="module-name">
-        <span class="toggle">&#9660;</span>Asset Part 4 (65 TCs)
+        <span class="toggle">&#9660;</span>Asset Part 4
       </div>
       <div class="module-stats">
         <span class="mini-badge mini-pass">16 passed</span> <span class="mini-badge mini-fail">49 failed</span>
@@ -2246,7 +1884,7 @@
   <div class="module module-has-fail " onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
       <div class="module-name">
-        <span class="toggle">&#9660;</span>Asset Part 5 (76 TCs)
+        <span class="toggle">&#9660;</span>Asset Part 5
       </div>
       <div class="module-stats">
         <span class="mini-badge mini-pass">16 passed</span> <span class="mini-badge mini-fail">60 failed</span>
@@ -2714,10 +2352,10 @@
   <div class="module module-has-fail " onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
       <div class="module-name">
-        <span class="toggle">&#9660;</span>Location + Task (135 TCs)
+        <span class="toggle">&#9660;</span>Location + Task
       </div>
       <div class="module-stats">
-        <span class="mini-badge mini-pass">112 passed</span> <span class="mini-badge mini-fail">23 failed</span>
+        <span class="mini-badge mini-pass">110 passed</span> <span class="mini-badge mini-fail">23 failed</span>
       </div>
     </div>
     <div class="test-list">
@@ -3524,7 +3162,7 @@
   <div class="module module-has-fail " onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
       <div class="module-name">
-        <span class="toggle">&#9660;</span>Work Order + Issue (234 TCs)
+        <span class="toggle">&#9660;</span>Work Order + Issue
       </div>
       <div class="module-stats">
         <span class="mini-badge mini-pass">222 passed</span> <span class="mini-badge mini-fail">12 failed</span>
@@ -4940,7 +4578,7 @@
   <div class="module module-has-fail " onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
       <div class="module-name">
-        <span class="toggle">&#9660;</span>Dashboard + BugHunt (105 TCs)
+        <span class="toggle">&#9660;</span>Dashboard + BugHunt
       </div>
       <div class="module-stats">
         <span class="mini-badge mini-pass">78 passed</span> <span class="mini-badge mini-fail">12 failed</span> <span class="mini-badge mini-skip">1 skipped</span>
@@ -5499,7 +5137,8 @@
 
 <div class="footer">
   Run ID: 26442766019 &bull; Branch: main &bull; Commit: 7b8fd2d &bull;
-  <a href="https://github.com/eg-abhiyantsingh/Egalvanic_Web-main/actions/runs/26442766019">View on GitHub Actions</a> &bull; Generated 2026-05-26 18:58
+  <a href="https://github.com/eg-abhiyantsingh/Egalvanic_Web-main/actions/runs/26442766019">View on GitHub Actions</a> &bull; Generated 2026-05-26 19:21
+  &bull; SLD + Connection excluded
 </div>
 
 </body>
