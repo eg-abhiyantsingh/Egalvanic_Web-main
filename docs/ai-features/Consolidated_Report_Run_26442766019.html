@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Run 26442766019 — Consolidated Test Report</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+         background: #f5f6fa; color: #1a202c; line-height: 1.5; font-size: 14px; }
+  .header { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+             color: #fff; padding: 32px 40px; }
+  .header h1 { font-size: 22px; font-weight: 600; }
+  .header .subtitle { font-size: 13px; color: #cbd5e1; margin-top: 6px; }
+  .header .meta-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;
+                        margin-top: 16px; font-size: 13px; }
+  .header .meta-grid div span { display: block; color: #cbd5e1; font-size: 11px;
+                                  text-transform: uppercase; letter-spacing: 0.6px; }
+  .header .meta-grid div b { color: #fff; font-weight: 600; }
+  .container { max-width: 1300px; margin: 0 auto; padding: 24px 32px; }
+  .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat { background: #fff; border-radius: 10px; padding: 22px;
+           box-shadow: 0 1px 3px rgba(0,0,0,0.08); border-left: 4px solid; }
+  .stat.passed { border-left-color: #10b981; }
+  .stat.failed { border-left-color: #ef4444; }
+  .stat.skipped { border-left-color: #f59e0b; }
+  .stat.total { border-left-color: #3b82f6; }
+  .stat .label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat .value { font-size: 32px; font-weight: 700; margin-top: 6px; }
+  .stat .sub { font-size: 12px; color: #6b7280; margin-top: 4px; }
+  .section { background: #fff; border-radius: 10px; padding: 24px;
+              box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 24px; }
+  .section h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #1e3a8a; }
+  .note { background: #fef3c7; border-left: 3px solid #f59e0b; padding: 12px 16px;
+           font-size: 13px; color: #78350f; border-radius: 4px; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  th { background: #f9fafb; font-weight: 600; font-size: 11px;
+        text-transform: uppercase; letter-spacing: 0.5px; color: #6b7280; }
+  tr:hover { background: #f9fafb; }
+  td.num { font-variant-numeric: tabular-nums; }
+  .badge { display: inline-block; padding: 2px 8px; font-size: 11px; font-weight: 600; border-radius: 4px; }
+  .badge.success { background: #d1fae5; color: #065f46; }
+  .badge.warning { background: #fef3c7; color: #92400e; }
+  .badge.failure { background: #fee2e2; color: #991b1b; }
+  .pct-bar { display: inline-block; width: 110px; height: 8px; background: #e5e7eb;
+              border-radius: 4px; vertical-align: middle; margin-right: 10px; position: relative; }
+  .pct-fill { position: absolute; top: 0; left: 0; height: 100%; border-radius: 4px; }
+  .pct-fill.good { background: #10b981; }
+  .pct-fill.warn { background: #f59e0b; }
+  .pct-fill.fail { background: #ef4444; }
+  code { background: #f3f4f6; padding: 1px 6px; border-radius: 3px; font-size: 12px;
+          font-family: 'Menlo', Consolas, monospace; }
+  .err-msg { font-size: 12px; color: #991b1b; font-family: 'Menlo', Consolas, monospace;
+              background: #fef2f2; padding: 6px 10px; border-radius: 4px;
+              word-break: break-word; }
+  .footer { padding: 24px 32px; text-align: center; color: #6b7280; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>eGalvanic Web — Run 26442766019 · Consolidated Test Report</h1>
+  <div class="subtitle">Parallel Full Suite — Core Regression (961 TCs) &nbsp;·&nbsp; Tenant <code style="background:#1e40af;color:#fff;">acme.qa.egalvanic.ai</code></div>
+  <div class="meta-grid">
+    <div><span>Run ID</span><b>26442766019</b></div>
+    <div><span>Started</span><b>2026-05-26 09:00:28 UTC</b></div>
+    <div><span>Ended</span><b>2026-05-26 12:47:27 UTC</b></div>
+    <div><span>Commit</span><b>main · 7b8fd2d</b></div>
+  </div>
+</div>
+<div class="container">
+  <div class="summary">
+    <div class="stat passed">
+      <div class="label">Passed</div>
+      <div class="value">669</div>
+      <div class="sub">70.4% pass rate</div>
+    </div>
+    <div class="stat failed">
+      <div class="label">Failed</div>
+      <div class="value">280</div>
+      <div class="sub">286 distinct test names</div>
+    </div>
+    <div class="stat skipped">
+      <div class="label">Skipped</div>
+      <div class="value">1</div>
+      <div class="sub">test-level skips</div>
+    </div>
+    <div class="stat total">
+      <div class="label">Total executed</div>
+      <div class="value">950</div>
+      <div class="sub">across 9 parallel jobs</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Run notes</h2>
+    <div class="note">
+      <b>Workflow infrastructure event:</b> the post-process <code>summary</code> aggregator job on this
+      run failed during runner setup with an <code>actions/download-artifact@v4</code> archive-not-found
+      error (orphan SHA on GitHub's <code>codeload</code> CDN). The 9 test-execution jobs all completed
+      successfully — only the report-aggregation step was blocked. <b>Fixed in commit <code>43e8ed4</code></b>
+      by pinning all floating <code>@vN</code> action tags to specific patch versions across all workflow
+      files (47 line replacements).
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Per-job breakdown (9 parallel matrix groups)</h2>
+    <table>
+      <thead>
+        <tr><th>Module / Job</th><th>Pass Rate</th><th>Passed</th><th>Failed</th>
+            <th>Skipped</th><th>Total</th><th>Duration</th><th>Result</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Asset Part 3 (76 TCs)</td>
+          <td><span class="pct-bar"><span class="pct-fill fail" style="width:36px"></span></span>32.9%</td>
+          <td class="num">25</td>
+          <td class="num">51</td>
+          <td class="num">0</td>
+          <td class="num">76</td>
+          <td>65 min</td>
+          <td><span class="badge failure">success</span></td>
+        </tr>
+        <tr>
+          <td>Asset Part 4 (65 TCs)</td>
+          <td><span class="pct-bar"><span class="pct-fill fail" style="width:27px"></span></span>24.6%</td>
+          <td class="num">16</td>
+          <td class="num">49</td>
+          <td class="num">0</td>
+          <td class="num">65</td>
+          <td>57 min</td>
+          <td><span class="badge failure">success</span></td>
+        </tr>
+        <tr>
+          <td>Asset Part 5 (76 TCs)</td>
+          <td><span class="pct-bar"><span class="pct-fill fail" style="width:23px"></span></span>21.1%</td>
+          <td class="num">16</td>
+          <td class="num">60</td>
+          <td class="num">0</td>
+          <td class="num">76</td>
+          <td>43 min</td>
+          <td><span class="badge failure">success</span></td>
+        </tr>
+        <tr>
+          <td>Asset Parts 1-2 (69 TCs)</td>
+          <td><span class="pct-bar"><span class="pct-fill fail" style="width:86px"></span></span>78.3%</td>
+          <td class="num">54</td>
+          <td class="num">15</td>
+          <td class="num">0</td>
+          <td class="num">69</td>
+          <td>67 min</td>
+          <td><span class="badge failure">success</span></td>
+        </tr>
+        <tr>
+          <td>Auth + Site + Connection (130 TCs)</td>
+          <td><span class="pct-bar"><span class="pct-fill fail" style="width:60px"></span></span>54.7%</td>
+          <td class="num">76</td>
+          <td class="num">63</td>
+          <td class="num">0</td>
+          <td class="num">139</td>
+          <td>162 min</td>
+          <td><span class="badge failure">success</span></td>
+        </tr>
+        <tr>
+          <td>Dashboard + BugHunt (105 TCs)</td>
+          <td><span class="pct-bar"><span class="pct-fill fail" style="width:100px"></span></span>91.8%</td>
+          <td class="num">78</td>
+          <td class="num">6</td>
+          <td class="num">1</td>
+          <td class="num">85</td>
+          <td>54 min</td>
+          <td><span class="badge failure">success</span></td>
+        </tr>
+        <tr>
+          <td>Location + Task (135 TCs)</td>
+          <td><span class="pct-bar"><span class="pct-fill fail" style="width:91px"></span></span>83.0%</td>
+          <td class="num">112</td>
+          <td class="num">23</td>
+          <td class="num">0</td>
+          <td class="num">135</td>
+          <td>66 min</td>
+          <td><span class="badge failure">success</span></td>
+        </tr>
+        <tr>
+          <td>SLD Module (71 TCs)</td>
+          <td><span class="pct-bar"><span class="pct-fill warn" style="width:108px"></span></span>98.6%</td>
+          <td class="num">70</td>
+          <td class="num">1</td>
+          <td class="num">0</td>
+          <td class="num">71</td>
+          <td>15 min</td>
+          <td><span class="badge warning">success</span></td>
+        </tr>
+        <tr>
+          <td>Work Order + Issue (234 TCs)</td>
+          <td><span class="pct-bar"><span class="pct-fill fail" style="width:104px"></span></span>94.9%</td>
+          <td class="num">222</td>
+          <td class="num">12</td>
+          <td class="num">0</td>
+          <td class="num">234</td>
+          <td>111 min</td>
+          <td><span class="badge failure">success</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Failed tests (286 distinct)</h2>
+    <table>
+      <thead><tr><th>Test</th><th>Duration</th><th>Error detail</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>LocationTestNG.testLH_001_FullHierarchy</code></td>
+          <td class="num">6s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>LocationTestNG.testLH_002_MultipleFloors</code></td>
+          <td class="num">6s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>TaskTestNG.testTC_CT_001_CreateTaskButtonVisible</code></td>
+          <td class="num">0s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>TaskTestNG.testTC_CT_002_CreateTaskDrawerOpens</code></td>
+          <td class="num">6s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>TaskTestNG.testTC_CT_003_DrawerTabs</code></td>
+          <td class="num">6s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>TaskTestNG.testTC_CT_004_FormFieldsPresent</code></td>
+          <td class="num">6s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>TaskTestNG.testTC_CT_005_TaskTypeDefaultPM</code></td>
+          <td class="num">6s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>TaskTestNG.testTC_CT_006_CreateTaskRequiredFieldsOnly</code></td>
+          <td class="num">6s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>TaskTestNG.testTC_CT_007_CreateTaskAllFields</code></td>
+          <td class="num">6s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>TaskTestNG.testTC_CT_008_CancelCloseDrawer</code></td>
+          <td class="num">6s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>TaskTestNG.testTC_CT_009_EmptyTitleValidation</code></td>
+          <td class="num">6s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>TaskTestNG.testTC_CT_010_PhotoTabs</code></td>
+          <td class="num">6s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>TaskTestNG.testTC_CT_011_BasicInfoAccordion</code></td>
+          <td class="num">6s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>TaskTestNG.testTC_CT_012_ProcedureDropdown</code></td>
+          <td class="num">6s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>TaskTestNG.testTC_SF_001_SearchInputPresent</code></td>
+          <td class="num">0s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>TaskTestNG.testTC_SF_002_SearchByTitle</code></td>
+          <td class="num">0s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>TaskTestNG.testTC_SF_003_SearchNoResults</code></td>
+          <td class="num">0s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>TaskTestNG.testTC_SF_004_ClearSearchRestoresAll</code></td>
+          <td class="num">0s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>TaskTestNG.testTC_PG_002_NextPage</code></td>
+          <td class="num">0s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>TaskTestNG.testTC_PG_003_PrevPage</code></td>
+          <td class="num">0s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>TaskTestNG.testTC_EC_001_XSSInTitle</code></td>
+          <td class="num">6s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>TaskTestNG.testTC_EC_002_LongTitle</code></td>
+          <td class="num">6s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>TaskTestNG.testTC_EC_003_SpecialCharsInTitle</code></td>
+          <td class="num">6s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>WorkOrderTestNG.testTC_WOL_001_PageLoads</code></td>
+          <td class="num">57s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>WorkOrderTestNG.testTC_SF_001_SearchByName</code></td>
+          <td class="num">0s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>WorkOrderTestNG.testTC_SF_002_SearchNoResults</code></td>
+          <td class="num">0s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>WorkOrderTestNG.testTC_SF_003_ClearSearch</code></td>
+          <td class="num">0s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>WorkOrderTestNG.testTC_PG_002_NextPage</code></td>
+          <td class="num">0s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>WorkOrderTestNG.testTC_SL_004_SAPlanColumn</code></td>
+          <td class="num">0s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>WorkOrderTestNG.testTC_CI_002_SmokeTestDataPollution</code></td>
+          <td class="num">0s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>WorkOrderPart2TestNG.testTC_CWO2_007_CreateWOAllFieldsVerify</code></td>
+          <td class="num">79s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>WorkOrderPart2TestNG.testTC_PERF2_001_ListLoadTime</code></td>
+          <td class="num">10s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>IssueTestNG.testIL_004_SearchInvalid</code></td>
+          <td class="num">30s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>IssuePart2TestNG.testISS_015_NoResultsEmptyState</code></td>
+          <td class="num">116s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>IssuePart2TestNG.testISS_046_DeletedNotInSearch</code></td>
+          <td class="num">261s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart1TestNG.testAS01_AssetsScreenLoads</code></td>
+          <td class="num">0s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart1TestNG.testAS10_SearchNoResults</code></td>
+          <td class="num">0s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart2TestNG.testATS_EAD_11_FillOneRequiredField</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart2TestNG.testATS_EAD_12_ClearRequiredField</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart2TestNG.testATS_EAD_15_SaveNoRequiredFields</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart2TestNG.testATS_EAD_16_SavePartialRequired</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart2TestNG.testATS_EAD_17_SaveAllRequired</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart2TestNG.testBUS_EAD_03_SaveWithoutCoreAttributes</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart2TestNG.testCAP_EAD_01_OpenEditScreen</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart2TestNG.testCAP_EAD_04_SaveChangesButtonVisible</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart2TestNG.testCAP_EAD_10_EditFluidType</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart2TestNG.testCAP_EAD_13_EditFuseRefillNumber</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart2TestNG.testCAP_EAD_15_EditManufacturer</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart2TestNG.testCAP_EAD_16_EditModel</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart2TestNG.testCAP_EAD_17_EditNotes</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testMOTOR_EAD_05_RequiredFieldsCounter</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testMOTOR_EAD_07_RequiredFieldMainsType</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testMOTOR_EAD_10_EditMainsType</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testMOTOR_EAD_11_EditCatalogNumber</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testMOTOR_EAD_12_EditConfiguration</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testMOTOR_EAD_16_EditHorsepower</code></td>
+          <td class="num">54s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testMOTOR_EAD_17_EditManufacturer</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testMOTOR_EAD_18_EditModel</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testMOTOR_EAD_19_EditMotorClass</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testMOTOR_EAD_20_EditPowerFactor</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testMOTOR_EAD_21_EditRPM</code></td>
+          <td class="num">16s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testMOTOR_EAD_22_EditSerialNumber</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testMOTOR_EAD_23_EditServiceFactor</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testMOTOR_EAD_24_EditSize</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testMOTOR_EAD_25_EditTemperatureRating</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testMOTOR_EAD_26_EditVoltage</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testMOTOR_EAD_27_SaveWithoutRequired</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testMOTOR_EAD_28_SaveWithRequired</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testMOTOR_EAD_29_ValidationIndicators</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testMOT_AST_03_SelectLowVoltage</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testMOT_AST_04_SelectMediumVoltageSynchronous</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testOCP_EAD_01_OpenEditScreen</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testOCP_EAD_02_NoCoreAttributes</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testOCP_EAD_07_SaveWithoutCoreAttrs</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testOCP_EAD_09_NoValidationIndicators</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testOCP_AST_01_SubtypeNone</code></td>
+          <td class="num">191s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testOTHER_EAD_CA_01_CoreAttrsVisible</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testOTHER_EAD_CA_02_VerifyFieldsList</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testOTHER_EAD_CA_03_NoRequiredFields</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testOTHER_EAD_CA_08_EditSerialNumber</code></td>
+          <td class="num">66s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testOTHER_EAD_CA_09_SaveAllEmpty</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testOTHER_EAD_CA_10_SavePartial</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testOTHER_EAD_CA_11_SaveAllFilled</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testPB_01_CoreAttributesSection</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testPB_06_SaveWithoutRequired</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testPB_10_EditVoltage</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testPB_11_EditAllCoreAttributes</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testPB_12_VerifyPersistence</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testPB_AST_03_SelectPanelboard</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testPDU_12_VoltageSelection</code></td>
+          <td class="num">80s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testPDU_13_SaveWithMissingRequired</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testPDU_AST_01_SubtypeNone</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testRELAY_01_CoreAttributesLoad</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testRELAY_02_VerifyFields</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testRELAY_08_SaveAllFilled</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testRELAY_09_SaveAllEmpty</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testRELAY_11_VerifyPersistence</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testREL_AST_03_SelectElectromechanical</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart4TestNG.testREL_AST_04_SelectSolidState</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testGEN_EAD_01_OpenEditScreen</code></td>
+          <td class="num">61s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testGEN_EAD_04_SaveChangesButtonVisible</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testGEN_EAD_05_EditAmpereRating</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testGEN_EAD_06_EditConfiguration</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testGEN_EAD_08_EditKWRating</code></td>
+          <td class="num">53s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testGEN_EAD_09_EditManufacturer</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testGEN_EAD_10_EditPowerFactor</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testGEN_EAD_11_EditSerialNumber</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testGEN_EAD_12_EditVoltage</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testJB_EAD_01_OpenEditScreen</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testJB_EAD_04_SaveChangesButtonVisible</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testJB_EAD_05_EditCatalogNumber</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testJB_EAD_06_EditManufacturer</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testJB_EAD_07_EditModel</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testJB_EAD_08_EditNotes</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testJB_EAD_09_EditSize</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testJB_EAD_15_SaveNoChanges</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testJB_AST_01_SubtypeNone</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testLC_EAD_01_OpenEditScreen</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testLC_EAD_05_RequiredFieldsCounter</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testLC_EAD_10_EditAmpereRating</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testLC_EAD_11_EditCatalogNumber</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testLC_EAD_12_EditColumns</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testLC_EAD_13_EditConfiguration</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testLC_EAD_14_EditFaultWithstandRating</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testLC_EAD_15_EditMainsType</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testLC_EAD_16_EditManufacturer</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testLC_EAD_17_EditNotes</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testLC_EAD_18_EditSerialNumber</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testLC_EAD_19_EditSize</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testLC_EAD_20_EditVoltage</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testLC_EAD_28_SaveNoChanges</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testLC_AST_01_SubtypeNone</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testMCC_EAD_01_OpenEditScreen</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testMCC_EAD_05_RequiredFieldsCounter</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testMCC_EAD_10_EditAmpereRating</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testMCC_EAD_11_EditCatalogNumber</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testMCC_EAD_12_EditConfiguration</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testMCC_EAD_13_EditFaultWithstandRating</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testMCC_EAD_14_EditManufacturer</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testMCC_EAD_15_EditNotes</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testMCC_EAD_16_EditSerialNumber</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testMCC_EAD_17_EditSize</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testMCC_EAD_18_EditVoltage</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testMCC_EAD_26_SaveNoChanges</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testMCC_AST_01_DefaultSubtypeNone</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testMCC_AST_03_SelectSubtypeLowVoltage</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testMCC_AST_04_SelectSubtypeHighVoltage</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testMCCB_EAD_06_SaveChangesButtonVisible</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testMCCB_EAD_11_SaveNoChanges</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart3TestNG.testMCCB_AST_01_SubtypeNone</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testSWB_01_CoreAttributesLoad</code></td>
+          <td class="num">67s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testSWB_02_AllFieldsVisible</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testSWB_03_RequiredFieldsToggle</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testSWB_05_EditAmpereRating</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testSWB_06_EditCatalogNumber</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testSWB_08_EditFaultWithstand</code></td>
+          <td class="num">50s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testSWB_09_EditMainsType</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testSWB_10_EditManufacturer</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testSWB_11_EditNotes</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testSWB_18_Persistence</code></td>
+          <td class="num">49s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testSWB_AST_03_SelectSwitchgear</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_02_AllFieldsVisible</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_03_RequiredFieldsToggle</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_05_EditBIL</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_06_EditClass</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_07_EditFrequency</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_08_EditKVARating</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_09_EditManufacturer</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_10_EditPercentageImpedance</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_11_EditPrimaryAmperes</code></td>
+          <td class="num">49s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_12_EditPrimaryTap</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_13_EditPrimaryVoltage</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_14_EditSecondaryAmperes</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_15_EditSecondaryVoltage</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_16_EditSerialNumber</code></td>
+          <td class="num">49s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_17_EditSize</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_18_EditTemperatureRise</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_19_EditType</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_20_EditWindingConfiguration</code></td>
+          <td class="num">49s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_21_SaveWithoutRequired</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_22_Persistence</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_AST_03_SelectDryType</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testTRF_AST_04_SelectOilFilled</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testUPS_02_AllFieldsVisible</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testUPS_05_EditAmpereRating</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testUPS_06_EditCatalogNumber</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testUPS_07_EditManufacturer</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testUPS_09_EditNotes</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testUPS_10_EditSize</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testUPS_12_EditVoltage</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testUPS_13_SaveWithMissingRequired</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testUPS_15_Persistence</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testUPS_AST_03_SelectHybrid</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testUPS_AST_04_SelectStatic</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testUTL_01_CoreAttributesLoad</code></td>
+          <td class="num">49s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testUTL_02_VerifyFields</code></td>
+          <td class="num">49s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testUTL_03_EditMeterNumber</code></td>
+          <td class="num">49s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testUTL_04_MeterNumberPersistence</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testUTL_05_EditStartingVoltage</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testUTL_06_VoltagePersistence</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testUTL_07_SaveEmpty</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testUTL_AST_01_SubtypeNone</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testVFD_01_CoreAttributesLoad</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testVFD_02_NoCoreAttributeFields</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testVFD_03_RequiredToggleNoFields</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testVFD_04_PercentageAtZero</code></td>
+          <td class="num">49s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testVFD_05_SaveWithoutCoreAttrs</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testVFD_06_CancelButton</code></td>
+          <td class="num">49s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testVFD_08_Persistence</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AssetPart5TestNG.testVFD_AST_01_SubtypeNone</code></td>
+          <td class="num">2s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>SLDTestNG.testSLD_006_CanvasRendered</code></td>
+          <td class="num">20s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>DashboardBugTestNG.testBUGD03_ChartsRender</code></td>
+          <td class="num">34s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>DashboardBugTestNG.testBUGD05_DashboardAssetCountConsistency</code></td>
+          <td class="num">15s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>DashboardBugTestNG.testBUGD60_ConditionAssessmentLoads</code></td>
+          <td class="num">34s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>DashboardBugTestNG.testBUGD62_ConditionAssessmentVisualization</code></td>
+          <td class="num">27s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>BugHuntWorkOrdersTestNG.testBUG015_MissingStatusColumn</code></td>
+          <td class="num">34s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>BugHuntTestNG.testBUG09_SQLInjectionInEmail</code></td>
+          <td class="num">27s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>BugHuntTestNG.testBUG16_SignInButtonDisabledStates</code></td>
+          <td class="num">12s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>BugHuntTestNG.testBUG24_NoAuthTokensInURL</code></td>
+          <td class="num">27s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>NewModulesSmokeTestNG.testTC_NM_06_PanelSchedules</code></td>
+          <td class="num">9s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>NewModulesSmokeTestNG.testTC_NM_09_EquipmentDesignations</code></td>
+          <td class="num">22s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>NewModulesSmokeTestNG.testTC_NM_15_ZUniversity</code></td>
+          <td class="num">17s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>NewModulesSmokeTestNG.testTC_NM_17_DashboardEquipmentAtRiskKPI</code></td>
+          <td class="num">33s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AuthenticationTestNG.testTC30_ChangeCompanyNavigation</code></td>
+          <td class="num">87s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>AuthenticationTestNG.testTC_SEC_02_LoginRateLimitAfterFailures</code></td>
+          <td class="num">148s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>SiteSelectionTestNG.testTC_SS_009_SearchCaseInsensitive</code></td>
+          <td class="num">0s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>SiteSelectionTestNG.testTC_SS_011_ClearingSearchShowsAll</code></td>
+          <td class="num">0s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testCC_001_NavigateToConnections</code></td>
+          <td class="num">6s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testCC_002_OpenCreateDrawer</code></td>
+          <td class="num">82s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testCC_003_SourceNodeDropdown</code></td>
+          <td class="num">81s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testCC_004_TargetNodeDropdown</code></td>
+          <td class="num">81s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testCC_005_ConnectionTypeDropdown</code></td>
+          <td class="num">81s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testCC_006_CreateCableConnection</code></td>
+          <td class="num">84s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testCC_007_CreateBuswayConnection</code></td>
+          <td class="num">84s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testCC_008_CreateButtonDisabled</code></td>
+          <td class="num">81s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testCC_009_CancelCreate</code></td>
+          <td class="num">84s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testCC_010_DuplicatePrevention</code></td>
+          <td class="num">84s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testCC_011_CoreAttributesAfterType</code></td>
+          <td class="num">81s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testCC_012_GridAppears</code></td>
+          <td class="num">84s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testCL_002_GridColumns</code></td>
+          <td class="num">84s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testCL_003_Pagination</code></td>
+          <td class="num">84s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testEC_001_ClickEdit</code></td>
+          <td class="num">84s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testEC_002_EditDrawerValues</code></td>
+          <td class="num">84s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testEC_003_EditAndSave</code></td>
+          <td class="num">84s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testEC_004_CancelEdit</code></td>
+          <td class="num">84s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testEC_005_SaveChangesButton</code></td>
+          <td class="num">84s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testDC_001_ClickDelete</code></td>
+          <td class="num">84s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testDC_002_ConfirmDelete</code></td>
+          <td class="num">81s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testDC_003_CancelDelete</code></td>
+          <td class="num">84s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testDC_004_DeleteMultiple</code></td>
+          <td class="num">81s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testSF_001_SearchBySource</code></td>
+          <td class="num">85s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testSF_002_SearchInvalid</code></td>
+          <td class="num">85s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testSF_003_ClearSearch</code></td>
+          <td class="num">84s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testSF_004_CaseInsensitive</code></td>
+          <td class="num">84s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionTestNG.testSF_005_SearchByType</code></td>
+          <td class="num">84s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_001_ConnectionsNavigation</code></td>
+          <td class="num">6s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_004_ListDisplaysAll</code></td>
+          <td class="num">124s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_005_EntryFormat</code></td>
+          <td class="num">121s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_019_SourceDropdown</code></td>
+          <td class="num">81s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_020_SourceNodeList</code></td>
+          <td class="num">81s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_022_SourceSearch</code></td>
+          <td class="num">81s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_023_SelectSource</code></td>
+          <td class="num">81s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_025_TargetDropdown</code></td>
+          <td class="num">81s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_027_TargetSearch</code></td>
+          <td class="num">81s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_028_SelectTarget</code></td>
+          <td class="num">82s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_030_SameNodePrevention</code></td>
+          <td class="num">82s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_031_TypeField</code></td>
+          <td class="num">82s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_032_TypeOptions</code></td>
+          <td class="num">82s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_033_SelectBusway</code></td>
+          <td class="num">82s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_034_SelectCable</code></td>
+          <td class="num">82s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_035_ChangeType</code></td>
+          <td class="num">82s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_040_NoSource</code></td>
+          <td class="num">82s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_041_NoTarget</code></td>
+          <td class="num">82s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_042_NoType</code></td>
+          <td class="num">82s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_043_RowActionButtons</code></td>
+          <td class="num">146s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_044_EditButtonOpensDrawer</code></td>
+          <td class="num">127s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_068_ActionsColumnHeader</code></td>
+          <td class="num">122s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_069_ReadinessHeader</code></td>
+          <td class="num">0s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_071_FieldCompletionStats</code></td>
+          <td class="num">122s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_072_RowsPerPage</code></td>
+          <td class="num">121s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_078_SaveChangesButton</code></td>
+          <td class="num">127s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_056_LoadPerformance</code></td>
+          <td class="num">82s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_061_SingleEntry</code></td>
+          <td class="num">124s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_062_RapidCreation</code></td>
+          <td class="num">85s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_081b_AddConnection_Cable_AllSixCoreAttributes</code></td>
+          <td class="num">82s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+        <tr>
+          <td><code>ConnectionPart2TestNG.testCONN_081c_AddConnection_TypeChangesCoreAttributes</code></td>
+          <td class="num">81s</td>
+          <td><div class="err-msg">(see CI log for full stack)</div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Run links</h2>
+    <ul style="list-style: none; padding: 0;">
+      <li style="padding: 4px 0;"><b>GitHub Actions:</b>
+          <a href="https://github.com/eg-abhiyantsingh/Egalvanic_Web-main/actions/runs/26442766019">
+              https://github.com/eg-abhiyantsingh/Egalvanic_Web-main/actions/runs/26442766019</a></li>
+      <li style="padding: 4px 0;"><b>Commit SHA:</b> <code>7b8fd2d2ee7772c5816f354a312cc0069a080fea</code></li>
+      <li style="padding: 4px 0;"><b>Branch:</b> <code>main</code></li>
+    </ul>
+  </div>
+</div>
+<div class="footer">
+  eGalvanic Web · Consolidated single-run report · Generated 2026-05-26 18:39 ·
+  Source: <code>gh run view 26442766019</code>
+</div>
+</body>
+</html>
