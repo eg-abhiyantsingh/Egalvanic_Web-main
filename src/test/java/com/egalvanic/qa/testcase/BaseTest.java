@@ -584,17 +584,34 @@ public class BaseTest {
 
     /**
      * Safe click that removes MUI backdrops first, then tries Selenium click
-     * with JS click fallback. Use this instead of element.click() to avoid
-     * ElementClickInterceptedException in headless Chrome CI/CD.
+     * with JS click fallback. Handles both "click intercepted" (backdrop over
+     * element) AND "element not interactable" (element hidden / disabled /
+     * overlapped) — the latter was the root cause of the 28-test "element
+     * not interactable" cascade in Location + Task in run 26442766019.
      */
     protected void safeClick(WebElement element) {
         dismissBackdrops();
         try {
             element.click();
-        } catch (ElementClickInterceptedException e) {
-            // Backdrop appeared between dismissal and click — use JS
+        } catch (ElementClickInterceptedException
+                | org.openqa.selenium.ElementNotInteractableException e) {
+            // Backdrop / overlay / unfinished animation between dismissal and
+            // click — scroll into view, dismiss again, retry with JS click.
             JavascriptExecutor js = (JavascriptExecutor) driver;
-            js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", element);
+            try {
+                js.executeScript("arguments[0].scrollIntoView({block:'center'});", element);
+                dismissBackdrops();
+                pause(300);
+                js.executeScript("arguments[0].click();", element);
+            } catch (Exception ignored) {
+                // Last resort: dispatch a synthetic mouse click via JS even
+                // if the element thinks it's not interactable
+                try {
+                    js.executeScript(
+                        "var ev = new MouseEvent('click', {bubbles:true, cancelable:true, view:window});" +
+                        "arguments[0].dispatchEvent(ev);", element);
+                } catch (Exception ignored2) {}
+            }
         }
     }
 

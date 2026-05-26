@@ -105,7 +105,14 @@ public class AssetPart2TestNG extends BaseTest {
     // ================================================================
 
     /**
-     * Ensures the browser is on the Assets list page.
+     * Ensures the browser is on the Assets list page AND that the grid
+     * has settled (no in-flight React re-renders).
+     *
+     * Without the settle-wait, individual tests start while React is
+     * still hydrating from the prior test's drawer close — and any
+     * WebElement reference captured early goes stale within ~1.5s.
+     * This was the root cause of the 171-test "stale element reference"
+     * cascade in run 26442766019.
      */
     private void ensureOnAssetsPage() {
         String url = driver.getCurrentUrl();
@@ -114,6 +121,25 @@ public class AssetPart2TestNG extends BaseTest {
             assetPage.navigateToAssets();
             pause(1000);
         }
+        // Wait for the search input to be PRESENT and STABLE. We poll
+        // the same element reference twice 500ms apart — if it survives,
+        // React has finished its current render pass.
+        try {
+            for (int attempt = 0; attempt < 8; attempt++) {
+                java.util.List<org.openqa.selenium.WebElement> inputs =
+                        driver.findElements(org.openqa.selenium.By.xpath(
+                                "//input[@placeholder='Search' or @placeholder='Search Assets...']"));
+                if (inputs.isEmpty()) { pause(500); continue; }
+                // Sanity: re-find — if same element still resolves, DOM is stable
+                pause(500);
+                java.util.List<org.openqa.selenium.WebElement> inputs2 =
+                        driver.findElements(org.openqa.selenium.By.xpath(
+                                "//input[@placeholder='Search' or @placeholder='Search Assets...']"));
+                if (!inputs2.isEmpty() && inputs.size() == inputs2.size()) {
+                    return;  // stable
+                }
+            }
+        } catch (Exception ignored) {}
     }
 
     /**

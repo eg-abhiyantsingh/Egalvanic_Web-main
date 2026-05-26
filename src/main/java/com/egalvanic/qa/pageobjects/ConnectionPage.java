@@ -118,32 +118,34 @@ public class ConnectionPage {
      * button, so the drawer never opens and the wait for SOURCE_NODE_INPUT times out.
      */
     public void openCreateConnectionDrawer() {
-        int maxAttempts = 2;
+        // Bumped from 2 → 4 attempts and relaxed the top-position constraint
+        // from < 300px → < 600px because the May 2026 web version's taller
+        // header + sticky nav + filter row pushes the page-level "Create
+        // Connection" button below 300px. Also distinguishes the header
+        // button from the in-drawer submit button via "not inside a drawer"
+        // (instead of just top coordinate) — which is the real semantic.
+        int maxAttempts = 4;
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
-                // Dismiss any "App Update Available" alert BEFORE clicking
-                // — this is the #1 reason the button click silently fails in CI
                 dismissAppAlert();
 
-                // Click the "Create Connection" button in page header (top area)
-                // r.top < 300 distinguishes the page-level header button from the
-                // submit button inside an already-open drawer (which is lower)
                 js.executeScript(
                     "var btns = document.querySelectorAll('button');" +
                     "for (var b of btns) {" +
                     "  var text = b.textContent.trim();" +
-                    "  if (text === 'Create Connection' || text.includes('Create Connection')) {" +
-                    "    var r = b.getBoundingClientRect();" +
-                    "    if (r.width > 0 && r.top < 300) { b.click(); return; }" +
-                    "  }" +
+                    "  if (text !== 'Create Connection' && !text.includes('Create Connection')) continue;" +
+                    "  // Skip submit buttons inside an already-open drawer\n" +
+                    "  var insideDrawer = b.closest('[class*=\"MuiDrawer-paper\"]');" +
+                    "  if (insideDrawer) continue;" +
+                    "  var r = b.getBoundingClientRect();" +
+                    "  if (r.width > 0 && r.height > 0 && r.top < 600) { b.click(); return; }" +
                     "}"
                 );
-                pause(2000);
+                pause(2500);
 
-                // Wait for drawer to open — SOURCE_NODE_INPUT appears inside the drawer
                 wait.until(ExpectedConditions.visibilityOfElementLocated(SOURCE_NODE_INPUT));
-                System.out.println("[ConnectionPage] Create Connection drawer opened");
-                return; // success
+                System.out.println("[ConnectionPage] Create Connection drawer opened (attempt " + attempt + ")");
+                return;
             } catch (Exception e) {
                 if (attempt < maxAttempts) {
                     System.out.println("[ConnectionPage] openCreateConnectionDrawer attempt "
@@ -151,9 +153,8 @@ public class ConnectionPage {
                             + ") — dismissing overlays and retrying...");
                     dismissOverlays();
                     dismissAppAlert();
-                    pause(1000);
+                    pause(1500);
                 } else {
-                    // Re-throw on final attempt so caller sees the real error
                     throw new RuntimeException(
                             "Create Connection drawer did not open after " + maxAttempts
                             + " attempts. Last error: " + e.getMessage(), e);
