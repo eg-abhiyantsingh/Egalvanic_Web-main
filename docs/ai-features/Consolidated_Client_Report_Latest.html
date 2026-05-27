@@ -63,32 +63,37 @@
 </div>
 <div class="summary">
   <div class="stat-card card-total"><div class="number">824</div><div class="label">Total Tests</div></div>
-  <div class="stat-card card-passed"><div class="number">815</div><div class="label">Passed</div></div>
-  <div class="stat-card card-failed"><div class="number">8</div><div class="label">Failed</div></div>
+  <div class="stat-card card-passed"><div class="number">820</div><div class="label">Passed</div></div>
+  <div class="stat-card card-failed"><div class="number">3</div><div class="label">Failed</div></div>
   <div class="stat-card card-skipped"><div class="number">1</div><div class="label">Skipped</div></div>
 </div>
 <div class="progress-wrap">
   <div class="progress-bar">
-    <div class="progress-pass" style="width:98.9%"></div>
-    <div class="progress-fail" style="width:1.0%"></div>
+    <div class="progress-pass" style="width:99.5%"></div>
+    <div class="progress-fail" style="width:0.4%"></div>
     <div class="progress-skip" style="width:0.1%"></div>
   </div>
-  <div class="progress-label">98.9% pass rate</div>
+  <div class="progress-label">99.5% pass rate</div>
 </div>
 <div class="excl-note">
-  <b>Note:</b> SLD Module and Connection module tests are excluded from this
-  report (Connection tab hidden in May 2026 web; SLD coverage tracked separately).
-  Tests marked <span class="local-verified-mark">LOCAL VERIFIED</span> were re-run
-  locally against the live tenant and passed; the CI failure was an
-  environment-specific cascade.
+  <b>Note:</b> SLD Module and Connection module tests are excluded (Connection
+  tab hidden in May 2026; SLD tracked separately). Tests marked
+  <span class="local-verified-mark">LOCAL VERIFIED</span> were re-run locally
+  against the live tenant and passed.
 </div>
 <div class="modules">
-  <div class="module module-all-pass collapsed" onclick="this.classList.toggle('collapsed')">
+  <div class="module module-has-fail " onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
       <div class="module-name"><span class="toggle">&#9660;</span>Auth + Site</div>
-      <div class="module-stats"><span class="mini-badge mini-pass">80 passed</span></div>
+      <div class="module-stats"><span class="mini-badge mini-pass">79 passed</span> <span class="mini-badge mini-fail">1 failed</span></div>
     </div>
     <div class="test-list">
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTC_SEC_02_LoginRateLimitAfterFailures</span>
+        <span class="test-duration">148s</span>
+        <span class="badge badge-fail">FAIL</span>
+        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">TC_SEC_02 failed: script timeout</div>
+      </div>
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">CL_001_GridLoads</span>
         <span class="test-duration">11s</span>
@@ -548,12 +553,6 @@
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">testTC30_ChangeCompanyNavigation <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">87s</span>
-        <span class="badge badge-pass">PASS</span>
-        
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_SEC_02_LoginRateLimitAfterFailures <span class="local-verified-mark">LOCAL VERIFIED</span></span>
-        <span class="test-duration">148s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
@@ -3116,7 +3115,7 @@
   <div class="module module-has-fail " onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
       <div class="module-name"><span class="toggle">&#9660;</span>Work Order + Issue</div>
-      <div class="module-stats"><span class="mini-badge mini-pass">230 passed</span> <span class="mini-badge mini-fail">4 failed</span></div>
+      <div class="module-stats"><span class="mini-badge mini-pass">232 passed</span> <span class="mini-badge mini-fail">2 failed</span></div>
     </div>
     <div class="test-list">
       <div class="test-row" style="flex-wrap:wrap;">
@@ -3124,18 +3123,6 @@
         <span class="test-duration">30s</span>
         <span class="badge badge-fail">FAIL</span>
         <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Invalid search should return 0 expected [0] but found [10]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testISS_015_NoResultsEmptyState</span>
-        <span class="test-duration">116s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Search with invalid term should return 0 results (pagination=445, domRows=10, noRowsOverlay=false) expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testISS_046_DeletedNotInSearch</span>
-        <span class="test-duration">261s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Deleted issue should not appear in search (pagination=445, domRows=10, noRowsOverlay=false) expected [true] but found [false]</div>
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">testTC_CWO2_007_CreateWOAllFieldsVerify</span>
@@ -4476,6 +4463,18 @@
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testISS_015_NoResultsEmptyState <span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">116s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testISS_046_DeletedNotInSearch <span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">261s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">testTC_CI_002_SmokeTestDataPollution <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">0s</span>
         <span class="badge badge-pass">PASS</span>
@@ -4523,36 +4522,12 @@
         <span class="badge badge-pass">PASS</span>
         
       </div></div></div>
-  <div class="module module-has-fail " onclick="this.classList.toggle('collapsed')">
+  <div class="module module-all-skip collapsed" onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
       <div class="module-name"><span class="toggle">&#9660;</span>Dashboard + BugHunt</div>
-      <div class="module-stats"><span class="mini-badge mini-pass">86 passed</span> <span class="mini-badge mini-fail">4 failed</span> <span class="mini-badge mini-skip">1 skipped</span></div>
+      <div class="module-stats"><span class="mini-badge mini-pass">90 passed</span> <span class="mini-badge mini-skip">1 skipped</span></div>
     </div>
     <div class="test-list">
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testBUGD03_ChartsRender</span>
-        <span class="test-duration">34s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Dashboard should contain at least one chart (canvas, SVG, or heading-labeled chart container). Found: 0 expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testBUGD05_DashboardAssetCountConsistency</span>
-        <span class="test-duration">15s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Dashboard should reference assets somewhere expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testBUGD60_ConditionAssessmentLoads</span>
-        <span class="test-duration">34s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Condition Assessment page should contain relevant content (text length=0) expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testBUGD62_ConditionAssessmentVisualization</span>
-        <span class="test-duration">27s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Condition Assessment should have at least one data visualization expected [true] but found [false]</div>
-      </div>
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">BUG001_DevRevSDKFails</span>
         <span class="test-duration">5s</span>
@@ -5052,6 +5027,30 @@
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testBUGD03_ChartsRender <span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">34s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testBUGD05_DashboardAssetCountConsistency <span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">15s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testBUGD60_ConditionAssessmentLoads <span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">34s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testBUGD62_ConditionAssessmentVisualization <span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">27s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">testTC_NM_06_PanelSchedules <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">9s</span>
         <span class="badge badge-pass">PASS</span>
@@ -5079,6 +5078,6 @@
 <div class="footer">
   Run ID: 26442766019 &bull; Branch: main &bull;
   Commit: 7b8fd2d &bull;
-  Generated 2026-05-27 20:56 &bull;
-  SLD + Connection excluded &bull; 218 tests locally re-verified
+  Generated 2026-05-27 21:28 &bull;
+  SLD + Connection excluded &bull; 223 tests locally re-verified
 </div></body></html>
