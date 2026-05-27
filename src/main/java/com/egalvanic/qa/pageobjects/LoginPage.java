@@ -191,9 +191,16 @@ public class LoginPage {
      * Wait for the login page to load within a timeout
      */
     public boolean waitForPageLoaded(int timeoutSeconds) {
+        // The new May 2026 login page dropped @id="email". Match by any of
+        // id / type / placeholder / aria-label, same as the LoginPage
+        // PageFactory locator chain.
+        org.openqa.selenium.By emailFieldAny = org.openqa.selenium.By.xpath(
+                "//input[@id='email'] | //input[@type='email']"
+                + " | //input[@placeholder='Email Address' or @placeholder='Email']"
+                + " | //input[@aria-label='Email Address' or @aria-label='Email']");
         try {
             new WebDriverWait(driver, Duration.ofSeconds(timeoutSeconds))
-                    .until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
+                    .until(ExpectedConditions.visibilityOfElementLocated(emailFieldAny));
             return true;
         } catch (Exception e) {
             return false;

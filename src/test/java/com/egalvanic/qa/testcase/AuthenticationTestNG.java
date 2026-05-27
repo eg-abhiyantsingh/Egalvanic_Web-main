@@ -1365,24 +1365,39 @@ public class AuthenticationTestNG {
             int throttledCount = 0;
             int lastStatus = -1;
 
-            // Build the absolute URL once. Use BASE_URL as the canonical source
-            // and fall back to window.location.origin only if BASE_URL is unset.
+            // Build the absolute URL once.
             String loginUrl = AppConstants.BASE_URL + "/api/auth/login";
+            // Use async fetch + AbortController via executeAsyncScript so any
+            // single request that hangs gets aborted after 5s — prevents the
+            // overall Selenium script timeout (was 148s on prior runs because
+            // synchronous XHR.send blocked indefinitely on a slow attempt).
+            driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(60));
             StringBuilder statusCodes = new StringBuilder();
             for (int i = 0; i < attemptCount; i++) {
-                Object rawStatus = js.executeScript(
-                        "var xhr = new XMLHttpRequest();"
-                        + "xhr.open('POST', arguments[2], false);"
-                        + "xhr.setRequestHeader('Content-Type', 'application/json');"
-                        + "xhr.send(JSON.stringify({email: arguments[0], password: arguments[1], subdomain: 'acme'}));"
-                        + "return xhr.status;", email, wrongPw, loginUrl);
-                int status = rawStatus == null ? -1 : ((Number) rawStatus).intValue();
+                int status;
+                try {
+                    Object rawStatus = js.executeAsyncScript(
+                            "var callback = arguments[arguments.length - 1];"
+                            + "var ctrl = new AbortController();"
+                            + "var timer = setTimeout(function() { ctrl.abort(); callback(-1); }, 5000);"
+                            + "fetch(arguments[2], {"
+                            + "  method: 'POST',"
+                            + "  headers: {'Content-Type': 'application/json'},"
+                            + "  body: JSON.stringify({email: arguments[0], password: arguments[1], subdomain: 'acme'}),"
+                            + "  signal: ctrl.signal"
+                            + "}).then(function(r) { clearTimeout(timer); callback(r.status); })"
+                            + " .catch(function() { clearTimeout(timer); callback(-1); });",
+                            email, wrongPw, loginUrl);
+                    status = rawStatus == null ? -1 : ((Number) rawStatus).intValue();
+                } catch (Exception fetchEx) {
+                    status = -1;
+                }
                 statusCodes.append(status).append(" ");
                 lastStatus = status;
                 if (status == 429 || status == 423 || status == 403) {
                     throttledCount++;
                 }
-                pause(150);  // tiny delay between attempts
+                pause(150);
             }
             logStepWithScreenshot("Status codes across " + attemptCount + " attempts: " + statusCodes);
 

@@ -264,10 +264,17 @@ public class WorkOrderTestNG extends BaseTest {
         logStep("Verifying Work Orders page loads");
 
         driver.get(WO_URL);
-        pause(3000);
+        pause(5000);                       // longer initial pause for new-web hydration
+        waitAndDismissAppAlert();          // dismiss any in-flight app-update banner
         waitForGrid();
 
-        boolean gridPresent = !driver.findElements(GRID).isEmpty();
+        // Accept multiple grid markers — MUI DataGrid v6/v7 sometimes
+        // delays `role=grid` attachment. Any of these present means the
+        // grid actually rendered.
+        boolean gridPresent = !driver.findElements(GRID).isEmpty()
+                || !driver.findElements(By.cssSelector("[class*='MuiDataGrid-root']")).isEmpty()
+                || !driver.findElements(By.cssSelector("[class*='MuiDataGrid-columnHeaders']")).isEmpty()
+                || !driver.findElements(By.cssSelector("[role='columnheader']")).isEmpty();
         logStepWithScreenshot("Work Orders page loaded");
 
         Assert.assertTrue(gridPresent, "Work Orders page should display a data grid");

@@ -58,7 +58,8 @@ public class NewModulesSmokeTestNG extends BaseTest {
         // Allow up to 30s for the SPA to hydrate. The Egalvanic SPA stages
         // its render: route resolves first, then the module bundle loads,
         // then API calls populate the grid/cards.
-        long deadline = System.currentTimeMillis() + 30_000;
+        long start = System.currentTimeMillis();
+        long deadline = start + 30_000;
         boolean rendered = false;
         while (System.currentTimeMillis() < deadline) {
             try {
@@ -70,20 +71,31 @@ public class NewModulesSmokeTestNG extends BaseTest {
                     return false;
                 }
                 // If the SPA bounced us to /dashboard, the route is missing
-                // or feature-gated.
-                if (!currentUrl.contains(path) && currentUrl.contains("/dashboard")) {
-                    logStep("Bounced back to /dashboard — module path may be feature-flagged off");
+                // or feature-gated. Wait at least 5 seconds before deciding
+                // — the initial route may briefly show /dashboard during
+                // hydration before transitioning to the target path.
+                long elapsed = System.currentTimeMillis() - start;
+                if (elapsed > 5_000
+                        && !currentUrl.contains(path)
+                        && currentUrl.contains("/dashboard")) {
+                    logStep("Bounced back to /dashboard after " + elapsed
+                            + "ms — module path may be feature-flagged off");
                     return false;
                 }
                 // Look for any of the expected text strings to confirm the
                 // right page rendered. Use JS for tolerance to nested DOM.
+                // Match CASE-INSENSITIVELY because the app uppercases many
+                // labels via CSS text-transform (e.g. dashboard KPI cards
+                // render as "EQUIPMENT AT RISK" even though source is
+                // "Equipment at Risk").
                 if (expectedTextAnyOf != null && expectedTextAnyOf.length > 0) {
                     String body = (String) ((JavascriptExecutor) driver).executeScript(
                             "return (document.body && document.body.innerText) || '';");
+                    String bodyLower = body.toLowerCase();
                     for (String expected : expectedTextAnyOf) {
-                        if (body.contains(expected)) {
+                        if (bodyLower.contains(expected.toLowerCase())) {
                             rendered = true;
-                            logStep("Found expected text: " + expected);
+                            logStep("Found expected text (case-insensitive): " + expected);
                             break;
                         }
                     }
@@ -98,15 +110,19 @@ public class NewModulesSmokeTestNG extends BaseTest {
     }
 
     /**
-     * Look for the module shell — at minimum, a <main> element with non-empty
-     * content. Filters out the "404" / "Not Found" / "Application Error"
-     * landing shells the SPA serves for unknown routes.
+     * Look for the module shell. Accepts:
+     *   (a) <main> element with non-empty content, OR
+     *   (b) An <iframe> inside <main> (e.g. Z University renders external
+     *       learning content via iframe — main itself is empty)
+     * Filters out the "404" / "Not Found" / "Application Error" landing
+     * shells the SPA serves for unknown routes.
      */
     private boolean smokeAssertShellRendered() {
         try {
             List<WebElement> mains = driver.findElements(By.tagName("main"));
             if (mains.isEmpty()) return false;
-            String mainText = mains.get(0).getText().toLowerCase();
+            WebElement main = mains.get(0);
+            String mainText = main.getText().toLowerCase();
             // Negative markers — if these appear we did NOT land on a real page
             String[] notFoundMarkers = {
                     "404", "not found", "page not found",
@@ -119,7 +135,20 @@ public class NewModulesSmokeTestNG extends BaseTest {
                     return false;
                 }
             }
-            return !mainText.isEmpty();
+            if (!mainText.isEmpty()) return true;
+            // (b) iframe fallback — Z University and similar pages embed
+            //     external content via iframe, so main.text is empty but
+            //     the page IS rendering. An iframe whose src is set proves
+            //     content was loaded into the shell.
+            List<WebElement> iframes = main.findElements(By.tagName("iframe"));
+            for (WebElement f : iframes) {
+                String src = f.getDomAttribute("src");
+                if (src != null && !src.isEmpty() && !src.equals("about:blank")) {
+                    logStep("Module shell renders via iframe: " + src.substring(0, Math.min(80, src.length())));
+                    return true;
+                }
+            }
+            return false;
         } catch (Exception e) {
             return false;
         }

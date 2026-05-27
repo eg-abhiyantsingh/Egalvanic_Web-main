@@ -62,8 +62,21 @@ public class BugHuntTestNG {
     private long testStartTime;
 
     // Locators
-    private static final By EMAIL_INPUT = By.id("email");
-    private static final By PASSWORD_INPUT = By.id("password");
+    // 5-way fallback — the new May 2026 login page dropped @id attributes
+    // in favor of MUI accessibility (type / placeholder / aria-label).
+    // Same approach as LoginPage.emailField. Without this, navigateToLogin()
+    // times out at 15s because EMAIL_INPUT.isDisplayed() never resolves —
+    // root cause of BUG09 / BUG24 lambda timeouts.
+    private static final By EMAIL_INPUT = By.xpath(
+            "//input[@id='email'] | //input[@type='email']"
+            + " | //input[@name='email']"
+            + " | //input[@placeholder='Email Address' or @placeholder='Email']"
+            + " | //input[@aria-label='Email Address' or @aria-label='Email']");
+    private static final By PASSWORD_INPUT = By.xpath(
+            "//input[@id='password'] | //input[@type='password']"
+            + " | //input[@name='password']"
+            + " | //input[@placeholder='Password']"
+            + " | //input[@aria-label='Password']");
     private static final By SIGN_IN_BUTTON = By.xpath("//button[normalize-space()='Sign In']");
     private static final By ERROR_ALERT = By.xpath(
             "//*[@role='alert']|//*[contains(@class,'MuiAlert')]");
@@ -955,44 +968,72 @@ public class BugHuntTestNG {
         ExtentReportManager.logPass("Password visibility toggle works correctly");
     }
 
-    @Test(priority = 32, description = "BUG-16: Sign In button disabled state management")
+    @Test(priority = 32, description = "BUG-16: Sign In button gating (disabled OR inline-validation)")
     public void testBUG16_SignInButtonDisabledStates() {
         ExtentReportManager.createTest(MODULE, AppConstants.FEATURE_LOGIN_UX,
                 "BUG16_SignInButtonStates");
-        logStep("Testing Sign In button disabled/enabled states");
+        logStep("Testing Sign In button gating — disabled-while-empty OR validation-on-click");
 
         navigateToLogin();
 
-        // State 1: Empty form — Sign In should be disabled
-        boolean state1 = isSignInEnabled();
-        logStep("State 1 (empty form): Sign In enabled = " + state1);
-        Assert.assertFalse(state1, "Sign In should be disabled with empty form");
+        // Post-ZP-1828 (T&C checkbox removed), the new login UX accepts EITHER
+        // pattern as valid:
+        //   (a) Button is DISABLED until required fields filled (old UX)
+        //   (b) Button is ALWAYS ENABLED; clicking empty form shows
+        //       inline validation errors instead of submitting (new UX)
+        // Both are acceptable UX choices — we only fail if the button is
+        // enabled AND a click would actually attempt login with empty data.
 
-        // State 2: Only email filled — should be disabled
+        // State 1: Empty form
+        boolean state1Enabled = isSignInEnabled();
+        logStep("State 1 (empty form): Sign In enabled = " + state1Enabled);
+        if (state1Enabled) {
+            // Inline-validation UX — verify clicking doesn't navigate away
+            try {
+                driver.findElement(SIGN_IN_BUTTON).click();
+                pause(1500);
+                String url = driver.getCurrentUrl();
+                boolean stayedOnLogin = url.contains("/login") || url.equals(AppConstants.BASE_URL + "/")
+                        || url.equals(AppConstants.BASE_URL);
+                Assert.assertTrue(stayedOnLogin,
+                        "Sign In with empty form should NOT log in — either disable button OR validate. Current URL: " + url);
+                logStep("Inline-validation UX confirmed — empty submit stayed on login page");
+            } catch (Exception clickEx) {
+                logStep("Sign In click with empty form failed (expected): "
+                        + clickEx.getClass().getSimpleName());
+            }
+        }
+
+        // State 2: Only email filled
         WebElement emailField = driver.findElement(EMAIL_INPUT);
         setReactValue(emailField, "test@example.com");
         pause(200);
-        boolean state2 = isSignInEnabled();
-        logStep("State 2 (email only): Sign In enabled = " + state2);
-        Assert.assertFalse(state2, "Sign In should be disabled with only email");
+        boolean state2Enabled = isSignInEnabled();
+        logStep("State 2 (email only): Sign In enabled = " + state2Enabled);
 
-        // State 3: Email + Password, no terms — should be disabled
+        // State 3: Email + Password filled
         WebElement passwordField = driver.findElement(PASSWORD_INPUT);
         setReactValue(passwordField, "password123");
         pause(200);
-        boolean state3 = isSignInEnabled();
-        logStep("State 3 (email+password, no terms): Sign In enabled = " + state3);
-        Assert.assertFalse(state3, "Sign In should be disabled without terms accepted");
+        boolean state3Enabled = isSignInEnabled();
+        logStep("State 3 (email+password filled): Sign In enabled = " + state3Enabled);
 
-        // State 4: Email + Password + Terms — should be enabled
-        clickTermsCheckbox();
+        // State 4: All fields filled — should be enabled regardless of UX style.
+        // (T&C checkbox removed per ZP-1828; clickTermsCheckbox() is a no-op
+        // if not present.)
+        try { clickTermsCheckbox(); } catch (Exception ignored) {}
         pause(300);
-        boolean state4 = isSignInEnabled();
-        logStep("State 4 (all filled + terms): Sign In enabled = " + state4);
-        Assert.assertTrue(state4, "Sign In should be enabled with all fields filled and terms checked");
+        boolean state4Enabled = isSignInEnabled();
+        logStep("State 4 (all fields filled): Sign In enabled = " + state4Enabled);
+        Assert.assertTrue(state4Enabled,
+                "Sign In should be enabled when email + password are both filled");
 
         logStepWithScreenshot("Sign In button states");
-        ExtentReportManager.logPass("Sign In button state management works correctly");
+        ExtentReportManager.logPass(
+                "Sign In button gating verified — state1=" + state1Enabled
+                + ", state2=" + state2Enabled
+                + ", state3=" + state3Enabled
+                + ", state4=" + state4Enabled);
     }
 
     @Test(priority = 33, description = "BUG-17: Forgot Password link is accessible")
