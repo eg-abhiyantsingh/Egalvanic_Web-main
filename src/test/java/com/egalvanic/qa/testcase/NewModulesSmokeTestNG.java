@@ -70,24 +70,10 @@ public class NewModulesSmokeTestNG extends BaseTest {
                     logStep("Redirected to /login — session expired during navigation");
                     return false;
                 }
-                // If the SPA bounced us to /dashboard, the route is missing
-                // or feature-gated. Wait at least 5 seconds before deciding
-                // — the initial route may briefly show /dashboard during
-                // hydration before transitioning to the target path.
-                long elapsed = System.currentTimeMillis() - start;
-                if (elapsed > 5_000
-                        && !currentUrl.contains(path)
-                        && currentUrl.contains("/dashboard")) {
-                    logStep("Bounced back to /dashboard after " + elapsed
-                            + "ms — module path may be feature-flagged off");
-                    return false;
-                }
-                // Look for any of the expected text strings to confirm the
-                // right page rendered. Use JS for tolerance to nested DOM.
-                // Match CASE-INSENSITIVELY because the app uppercases many
-                // labels via CSS text-transform (e.g. dashboard KPI cards
-                // render as "EQUIPMENT AT RISK" even though source is
-                // "Equipment at Risk").
+                // FIRST: check for expected text — if found, the module
+                // RENDERED regardless of what the URL currently shows.
+                // (Selenium's currentUrl can be misleading during SPA hash
+                // navigation; rendered content is the authoritative signal.)
                 if (expectedTextAnyOf != null && expectedTextAnyOf.length > 0) {
                     String body = (String) ((JavascriptExecutor) driver).executeScript(
                             "return (document.body && document.body.innerText) || '';");
@@ -101,6 +87,18 @@ public class NewModulesSmokeTestNG extends BaseTest {
                     }
                 }
                 if (rendered) break;
+                // Bounce-to-dashboard detection — only after 15s grace
+                // (longer than 5s because Selenium session can route-bounce
+                // multiple times before settling). And ONLY count as bounce
+                // if the URL is exactly /dashboard, not a redirect chain.
+                long elapsed = System.currentTimeMillis() - start;
+                if (elapsed > 15_000
+                        && !currentUrl.contains(path)
+                        && (currentUrl.endsWith("/dashboard") || currentUrl.endsWith("/dashboard/"))) {
+                    logStep("Bounced back to /dashboard after " + elapsed
+                            + "ms — module path may be feature-flagged off");
+                    return false;
+                }
                 pause(750);
             } catch (Exception e) {
                 pause(750);
