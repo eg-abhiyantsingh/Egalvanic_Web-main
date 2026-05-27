@@ -221,7 +221,11 @@ public class BaseTest {
             // navigation and driver.get() redirects to login — which is NOT an
             // Application Error page, so isApplicationErrorPage() returns false.
             if (!isApplicationErrorPage()) {
-                if (driver.findElements(By.id("email")).size() > 0) {
+                if (driver.findElements(By.xpath(
+                    "//input[@id='email'] | //input[@type='email']"
+                    + " | //input[@name='email']"
+                    + " | //input[@placeholder='Email Address' or @placeholder='Email']"
+                    + " | //input[@aria-label='Email Address' or @aria-label='Email']")).size() > 0) {
                     System.out.println("[BaseTest] Unexpected login page detected — session may have expired. Re-logging in...");
                     loginPage.login(AppConstants.VALID_EMAIL, AppConstants.VALID_PASSWORD);
                     pause(2000);
@@ -259,7 +263,11 @@ public class BaseTest {
             }
 
             // If we ended up on the login page, re-login
-            if (driver.findElements(By.id("email")).size() > 0) {
+            if (driver.findElements(By.xpath(
+                    "//input[@id='email'] | //input[@type='email']"
+                    + " | //input[@name='email']"
+                    + " | //input[@placeholder='Email Address' or @placeholder='Email']"
+                    + " | //input[@aria-label='Email Address' or @aria-label='Email']")).size() > 0) {
                 System.out.println("[BaseTest] Re-logging in after recovery...");
                 loginPage.login(AppConstants.VALID_EMAIL, AppConstants.VALID_PASSWORD);
                 pause(2000);
@@ -337,7 +345,11 @@ public class BaseTest {
                 // Check if already logged in (nav present, no login form) — can happen
                 // when multiple test classes run sequentially sharing a browser session
                 boolean hasNav = !driver.findElements(By.cssSelector("nav")).isEmpty();
-                boolean hasLoginForm = !driver.findElements(By.id("email")).isEmpty();
+                boolean hasLoginForm = !driver.findElements(By.xpath(
+                    "//input[@id='email'] | //input[@type='email']"
+                    + " | //input[@name='email']"
+                    + " | //input[@placeholder='Email Address' or @placeholder='Email']"
+                    + " | //input[@aria-label='Email Address' or @aria-label='Email']")).isEmpty();
                 if (hasNav && !hasLoginForm) {
                     System.out.println("[BaseTest] Already logged in (nav present, no login form). URL: " + driver.getCurrentUrl());
                     waitAndDismissAppAlert();
@@ -365,10 +377,15 @@ public class BaseTest {
                     }
                 }
 
-                // Wait for login page to load (use 60s on first attempt for cold CI starts)
+                // Wait for login page to load (use 60s on first attempt for cold CI starts).
+                // May 2026 release dropped id="email" — use the same 5-way fallback the LoginPage uses.
                 int loginTimeout = (attempt == 1) ? 60 : AppConstants.DEFAULT_TIMEOUT;
                 new WebDriverWait(driver, Duration.ofSeconds(loginTimeout))
-                        .until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
+                        .until(ExpectedConditions.visibilityOfElementLocated(By.xpath(
+                                "//input[@id='email'] | //input[@type='email']"
+                                + " | //input[@name='email']"
+                                + " | //input[@placeholder='Email Address' or @placeholder='Email']"
+                                + " | //input[@aria-label='Email Address' or @aria-label='Email']")));
 
                 loginPage.login(AppConstants.VALID_EMAIL, AppConstants.VALID_PASSWORD);
                 pause(2000);
