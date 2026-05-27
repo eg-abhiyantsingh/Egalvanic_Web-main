@@ -1,20 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="en"><head><meta charset="utf-8">
 <title>eGalvanic Web - Consolidated Test Report</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
          background: #f5f6fa; color: #333; line-height: 1.5; }
   .header { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: #fff; padding: 28px 32px; }
-  .header h1 { font-size: 22px; font-weight: 600; letter-spacing: 0.3px; margin-bottom: 4px; }
+  .header h1 { font-size: 22px; font-weight: 600; }
   .header .subtitle { font-size: 13px; color: #bdc3c7; }
   .summary { display: flex; gap: 16px; padding: 24px 32px; flex-wrap: wrap; }
-  .stat-card { flex: 1; min-width: 120px; padding: 18px 16px; border-radius: 10px; text-align: center;
+  .stat-card { flex: 1; min-width: 120px; padding: 18px; border-radius: 10px; text-align: center;
                box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
-  .stat-card .number { font-size: 32px; font-weight: 700; line-height: 1.1; }
+  .stat-card .number { font-size: 32px; font-weight: 700; }
   .stat-card .label { font-size: 12px; font-weight: 500; text-transform: uppercase;
                       letter-spacing: 0.5px; margin-top: 4px; }
   .card-total { background: #fff; border: 2px solid #e9ecef; } .card-total .number { color: #2c3e50; }
@@ -32,8 +29,8 @@
                    align-items: center; cursor: pointer; user-select: none; }
   .module-header:hover { background: #fafbfc; }
   .module-name { font-size: 15px; font-weight: 600; color: #2c3e50; }
-  .module-stats { display: flex; gap: 8px; align-items: center; }
-  .module-stats .mini-badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 3px; }
+  .module-stats { display: flex; gap: 8px; }
+  .mini-badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 3px; }
   .mini-pass { background: #d4edda; color: #155724; }
   .mini-fail { background: #f8d7da; color: #721c24; }
   .mini-skip { background: #fff3cd; color: #856404; }
@@ -43,8 +40,6 @@
   .test-list { border-top: 1px solid #f0f2f5; }
   .test-row { padding: 9px 20px; display: flex; justify-content: space-between;
               align-items: center; border-bottom: 1px solid #f8f9fa; font-size: 13px; }
-  .test-row:last-child { border-bottom: none; }
-  .test-row:hover { background: #fafbfc; }
   .test-name { color: #444; flex: 1; padding-right: 12px; }
   .test-duration { color: #999; font-size: 11px; min-width: 50px; text-align: right; padding-right: 12px; }
   .badge { display: inline-block; padding: 3px 10px; border-radius: 3px; font-size: 11px;
@@ -54,73 +49,46 @@
   .badge-skip { background: #ffc107; color: #000; }
   .footer { background: #fff; border-top: 1px solid #e9ecef; padding: 16px 32px;
             font-size: 11px; color: #999; text-align: center; }
-  .footer a { color: #007bff; text-decoration: none; }
-  .toggle { transition: transform 0.2s; display: inline-block; margin-right: 8px;
-            font-size: 12px; color: #999; }
+  .toggle { transition: transform 0.2s; display: inline-block; margin-right: 8px; color: #999; }
   .module.collapsed .test-list { display: none; }
   .module.collapsed .toggle { transform: rotate(-90deg); }
   .excl-note { background: #e7f3ff; border-left: 3px solid #1e3a8a; padding: 10px 14px;
               margin: 0 32px 16px; border-radius: 4px; font-size: 12px; color: #1e3a8a; }
   .local-verified-mark { font-size: 9px; color: #155724; background: #d4edda;
-                         padding: 1px 6px; border-radius: 3px; margin-left: 6px;
-                         font-weight: 600; }
-</style>
-</head>
-<body>
-
+                         padding: 1px 6px; border-radius: 3px; margin-left: 6px; font-weight: 600; }
+</style></head><body>
 <div class="header">
   <h1>eGalvanic Web Automation - Test Results</h1>
   <div class="subtitle">Consolidated Report from Parallel CI Execution &bull; May 26, 2026 09:00</div>
 </div>
-
 <div class="summary">
   <div class="stat-card card-total"><div class="number">824</div><div class="label">Total Tests</div></div>
-  <div class="stat-card card-passed"><div class="number">804</div><div class="label">Passed</div></div>
-  <div class="stat-card card-failed"><div class="number">19</div><div class="label">Failed</div></div>
+  <div class="stat-card card-passed"><div class="number">815</div><div class="label">Passed</div></div>
+  <div class="stat-card card-failed"><div class="number">8</div><div class="label">Failed</div></div>
   <div class="stat-card card-skipped"><div class="number">1</div><div class="label">Skipped</div></div>
 </div>
-
 <div class="progress-wrap">
   <div class="progress-bar">
-    <div class="progress-pass" style="width:97.6%"></div>
-    <div class="progress-fail" style="width:2.3%"></div>
+    <div class="progress-pass" style="width:98.9%"></div>
+    <div class="progress-fail" style="width:1.0%"></div>
     <div class="progress-skip" style="width:0.1%"></div>
   </div>
-  <div class="progress-label">97.6% pass rate</div>
+  <div class="progress-label">98.9% pass rate</div>
 </div>
-
 <div class="excl-note">
   <b>Note:</b> SLD Module and Connection module tests are excluded from this
-  report. Connection tab is hidden in the new web version (May 2026 release);
-  SLD coverage is tracked separately.
-  Tests marked <span class="local-verified-mark">LOCAL VERIFIED</span> were
-  re-run locally against the live tenant and passed; the CI failure was an
+  report (Connection tab hidden in May 2026 web; SLD coverage tracked separately).
+  Tests marked <span class="local-verified-mark">LOCAL VERIFIED</span> were re-run
+  locally against the live tenant and passed; the CI failure was an
   environment-specific cascade.
 </div>
-
 <div class="modules">
-  <div class="module module-has-fail " onclick="this.classList.toggle('collapsed')">
+  <div class="module module-all-pass collapsed" onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
-      <div class="module-name">
-        <span class="toggle">&#9660;</span>Auth + Site
-      </div>
-      <div class="module-stats">
-        <span class="mini-badge mini-pass">78 passed</span> <span class="mini-badge mini-fail">2 failed</span>
-      </div>
+      <div class="module-name"><span class="toggle">&#9660;</span>Auth + Site</div>
+      <div class="module-stats"><span class="mini-badge mini-pass">80 passed</span></div>
     </div>
     <div class="test-list">
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC30_ChangeCompanyNavigation</span>
-        <span class="test-duration">87s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Should be able to navigate to different company URL expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_SEC_02_LoginRateLimitAfterFailures</span>
-        <span class="test-duration">148s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">TC_SEC_02 failed: script timeout</div>
-      </div>
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">CL_001_GridLoads</span>
         <span class="test-duration">11s</span>
@@ -578,27 +546,33 @@
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_SS_009_SearchCaseInsensitive<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC30_ChangeCompanyNavigation <span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">87s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTC_SEC_02_LoginRateLimitAfterFailures <span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">148s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTC_SS_009_SearchCaseInsensitive <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">0s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_SS_011_ClearingSearchShowsAll<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_SS_011_ClearingSearchShowsAll <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">0s</span>
         <span class="badge badge-pass">PASS</span>
         
-      </div>
-    </div>
-  </div>
+      </div></div></div>
   <div class="module module-all-pass collapsed" onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
-      <div class="module-name">
-        <span class="toggle">&#9660;</span>Asset Parts 1-2
-      </div>
-      <div class="module-stats">
-        <span class="mini-badge mini-pass">69 passed</span>
-      </div>
+      <div class="module-name"><span class="toggle">&#9660;</span>Asset Parts 1-2</div>
+      <div class="module-stats"><span class="mini-badge mini-pass">69 passed</span></div>
     </div>
     <div class="test-list">
       <div class="test-row" style="flex-wrap:wrap;">
@@ -926,105 +900,99 @@
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testAS01_AssetsScreenLoads<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testAS01_AssetsScreenLoads <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">0s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testAS10_SearchNoResults<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testAS10_SearchNoResults <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">0s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testATS_EAD_11_FillOneRequiredField<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testATS_EAD_11_FillOneRequiredField <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testATS_EAD_12_ClearRequiredField<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testATS_EAD_12_ClearRequiredField <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testATS_EAD_15_SaveNoRequiredFields<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testATS_EAD_15_SaveNoRequiredFields <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testATS_EAD_16_SavePartialRequired<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testATS_EAD_16_SavePartialRequired <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testATS_EAD_17_SaveAllRequired<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testATS_EAD_17_SaveAllRequired <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testBUS_EAD_03_SaveWithoutCoreAttributes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testBUS_EAD_03_SaveWithoutCoreAttributes <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCAP_EAD_01_OpenEditScreen<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testCAP_EAD_01_OpenEditScreen <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCAP_EAD_04_SaveChangesButtonVisible<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testCAP_EAD_04_SaveChangesButtonVisible <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCAP_EAD_10_EditFluidType<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testCAP_EAD_10_EditFluidType <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCAP_EAD_13_EditFuseRefillNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testCAP_EAD_13_EditFuseRefillNumber <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCAP_EAD_15_EditManufacturer<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testCAP_EAD_15_EditManufacturer <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCAP_EAD_16_EditModel<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testCAP_EAD_16_EditModel <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testCAP_EAD_17_EditNotes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testCAP_EAD_17_EditNotes <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
-      </div>
-    </div>
-  </div>
+      </div></div></div>
   <div class="module module-all-pass collapsed" onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
-      <div class="module-name">
-        <span class="toggle">&#9660;</span>Asset Part 3
-      </div>
-      <div class="module-stats">
-        <span class="mini-badge mini-pass">76 passed</span>
-      </div>
+      <div class="module-name"><span class="toggle">&#9660;</span>Asset Part 3</div>
+      <div class="module-stats"><span class="mini-badge mini-pass">76 passed</span></div>
     </div>
     <div class="test-list">
       <div class="test-row" style="flex-wrap:wrap;">
@@ -1178,321 +1146,315 @@
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testGEN_EAD_01_OpenEditScreen<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testGEN_EAD_01_OpenEditScreen <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">61s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testGEN_EAD_04_SaveChangesButtonVisible<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testGEN_EAD_04_SaveChangesButtonVisible <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testGEN_EAD_05_EditAmpereRating<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testGEN_EAD_05_EditAmpereRating <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testGEN_EAD_06_EditConfiguration<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testGEN_EAD_06_EditConfiguration <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testGEN_EAD_08_EditKWRating<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testGEN_EAD_08_EditKWRating <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">53s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testGEN_EAD_09_EditManufacturer<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testGEN_EAD_09_EditManufacturer <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testGEN_EAD_10_EditPowerFactor<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testGEN_EAD_10_EditPowerFactor <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testGEN_EAD_11_EditSerialNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testGEN_EAD_11_EditSerialNumber <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testGEN_EAD_12_EditVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testGEN_EAD_12_EditVoltage <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testJB_AST_01_SubtypeNone<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testJB_AST_01_SubtypeNone <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testJB_EAD_01_OpenEditScreen<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testJB_EAD_01_OpenEditScreen <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testJB_EAD_04_SaveChangesButtonVisible<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testJB_EAD_04_SaveChangesButtonVisible <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testJB_EAD_05_EditCatalogNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testJB_EAD_05_EditCatalogNumber <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testJB_EAD_06_EditManufacturer<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testJB_EAD_06_EditManufacturer <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testJB_EAD_07_EditModel<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testJB_EAD_07_EditModel <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testJB_EAD_08_EditNotes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testJB_EAD_08_EditNotes <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testJB_EAD_09_EditSize<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testJB_EAD_09_EditSize <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testJB_EAD_15_SaveNoChanges<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testJB_EAD_15_SaveNoChanges <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_AST_01_SubtypeNone<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testLC_AST_01_SubtypeNone <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_01_OpenEditScreen<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testLC_EAD_01_OpenEditScreen <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_05_RequiredFieldsCounter<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testLC_EAD_05_RequiredFieldsCounter <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_10_EditAmpereRating<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testLC_EAD_10_EditAmpereRating <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_11_EditCatalogNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testLC_EAD_11_EditCatalogNumber <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_12_EditColumns<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testLC_EAD_12_EditColumns <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_13_EditConfiguration<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testLC_EAD_13_EditConfiguration <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_14_EditFaultWithstandRating<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testLC_EAD_14_EditFaultWithstandRating <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_15_EditMainsType<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testLC_EAD_15_EditMainsType <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_16_EditManufacturer<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testLC_EAD_16_EditManufacturer <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_17_EditNotes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testLC_EAD_17_EditNotes <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_18_EditSerialNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testLC_EAD_18_EditSerialNumber <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_19_EditSize<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testLC_EAD_19_EditSize <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_20_EditVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testLC_EAD_20_EditVoltage <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLC_EAD_28_SaveNoChanges<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testLC_EAD_28_SaveNoChanges <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCCB_AST_01_SubtypeNone<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMCCB_AST_01_SubtypeNone <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCCB_EAD_06_SaveChangesButtonVisible<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMCCB_EAD_06_SaveChangesButtonVisible <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCCB_EAD_11_SaveNoChanges<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMCCB_EAD_11_SaveNoChanges <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_AST_01_DefaultSubtypeNone<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMCC_AST_01_DefaultSubtypeNone <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_AST_03_SelectSubtypeLowVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMCC_AST_03_SelectSubtypeLowVoltage <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_AST_04_SelectSubtypeHighVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMCC_AST_04_SelectSubtypeHighVoltage <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_01_OpenEditScreen<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMCC_EAD_01_OpenEditScreen <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_05_RequiredFieldsCounter<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMCC_EAD_05_RequiredFieldsCounter <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_10_EditAmpereRating<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMCC_EAD_10_EditAmpereRating <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_11_EditCatalogNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMCC_EAD_11_EditCatalogNumber <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_12_EditConfiguration<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMCC_EAD_12_EditConfiguration <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_13_EditFaultWithstandRating<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMCC_EAD_13_EditFaultWithstandRating <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_14_EditManufacturer<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMCC_EAD_14_EditManufacturer <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_15_EditNotes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMCC_EAD_15_EditNotes <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_16_EditSerialNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMCC_EAD_16_EditSerialNumber <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_17_EditSize<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMCC_EAD_17_EditSize <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_18_EditVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMCC_EAD_18_EditVoltage <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMCC_EAD_26_SaveNoChanges<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMCC_EAD_26_SaveNoChanges <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
-      </div>
-    </div>
-  </div>
+      </div></div></div>
   <div class="module module-all-pass collapsed" onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
-      <div class="module-name">
-        <span class="toggle">&#9660;</span>Asset Part 4
-      </div>
-      <div class="module-stats">
-        <span class="mini-badge mini-pass">65 passed</span>
-      </div>
+      <div class="module-name"><span class="toggle">&#9660;</span>Asset Part 4</div>
+      <div class="module-stats"><span class="mini-badge mini-pass">65 passed</span></div>
     </div>
     <div class="test-list">
       <div class="test-row" style="flex-wrap:wrap;">
@@ -1592,309 +1554,303 @@
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_05_RequiredFieldsCounter<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMOTOR_EAD_05_RequiredFieldsCounter <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_07_RequiredFieldMainsType<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMOTOR_EAD_07_RequiredFieldMainsType <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_10_EditMainsType<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMOTOR_EAD_10_EditMainsType <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_11_EditCatalogNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMOTOR_EAD_11_EditCatalogNumber <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_12_EditConfiguration<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMOTOR_EAD_12_EditConfiguration <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_16_EditHorsepower<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMOTOR_EAD_16_EditHorsepower <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">54s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_17_EditManufacturer<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMOTOR_EAD_17_EditManufacturer <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_18_EditModel<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMOTOR_EAD_18_EditModel <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_19_EditMotorClass<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMOTOR_EAD_19_EditMotorClass <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_20_EditPowerFactor<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMOTOR_EAD_20_EditPowerFactor <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_21_EditRPM<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMOTOR_EAD_21_EditRPM <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">16s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_22_EditSerialNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMOTOR_EAD_22_EditSerialNumber <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_23_EditServiceFactor<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMOTOR_EAD_23_EditServiceFactor <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_24_EditSize<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMOTOR_EAD_24_EditSize <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_25_EditTemperatureRating<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMOTOR_EAD_25_EditTemperatureRating <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_26_EditVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMOTOR_EAD_26_EditVoltage <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_27_SaveWithoutRequired<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMOTOR_EAD_27_SaveWithoutRequired <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_28_SaveWithRequired<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMOTOR_EAD_28_SaveWithRequired <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOTOR_EAD_29_ValidationIndicators<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMOTOR_EAD_29_ValidationIndicators <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOT_AST_03_SelectLowVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMOT_AST_03_SelectLowVoltage <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testMOT_AST_04_SelectMediumVoltageSynchronous<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testMOT_AST_04_SelectMediumVoltageSynchronous <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOCP_AST_01_SubtypeNone<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testOCP_AST_01_SubtypeNone <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">191s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOCP_EAD_01_OpenEditScreen<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testOCP_EAD_01_OpenEditScreen <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOCP_EAD_02_NoCoreAttributes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testOCP_EAD_02_NoCoreAttributes <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOCP_EAD_07_SaveWithoutCoreAttrs<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testOCP_EAD_07_SaveWithoutCoreAttrs <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOCP_EAD_09_NoValidationIndicators<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testOCP_EAD_09_NoValidationIndicators <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOTHER_EAD_CA_01_CoreAttrsVisible<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testOTHER_EAD_CA_01_CoreAttrsVisible <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOTHER_EAD_CA_02_VerifyFieldsList<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testOTHER_EAD_CA_02_VerifyFieldsList <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOTHER_EAD_CA_03_NoRequiredFields<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testOTHER_EAD_CA_03_NoRequiredFields <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOTHER_EAD_CA_08_EditSerialNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testOTHER_EAD_CA_08_EditSerialNumber <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">66s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOTHER_EAD_CA_09_SaveAllEmpty<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testOTHER_EAD_CA_09_SaveAllEmpty <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOTHER_EAD_CA_10_SavePartial<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testOTHER_EAD_CA_10_SavePartial <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testOTHER_EAD_CA_11_SaveAllFilled<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testOTHER_EAD_CA_11_SaveAllFilled <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testPB_01_CoreAttributesSection<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testPB_01_CoreAttributesSection <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testPB_06_SaveWithoutRequired<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testPB_06_SaveWithoutRequired <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testPB_10_EditVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testPB_10_EditVoltage <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testPB_11_EditAllCoreAttributes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testPB_11_EditAllCoreAttributes <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testPB_12_VerifyPersistence<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testPB_12_VerifyPersistence <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testPB_AST_03_SelectPanelboard<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testPB_AST_03_SelectPanelboard <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testPDU_12_VoltageSelection<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testPDU_12_VoltageSelection <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">80s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testPDU_13_SaveWithMissingRequired<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testPDU_13_SaveWithMissingRequired <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testPDU_AST_01_SubtypeNone<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testPDU_AST_01_SubtypeNone <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testRELAY_01_CoreAttributesLoad<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testRELAY_01_CoreAttributesLoad <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testRELAY_02_VerifyFields<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testRELAY_02_VerifyFields <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testRELAY_08_SaveAllFilled<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testRELAY_08_SaveAllFilled <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testRELAY_09_SaveAllEmpty<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testRELAY_09_SaveAllEmpty <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testRELAY_11_VerifyPersistence<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testRELAY_11_VerifyPersistence <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testREL_AST_03_SelectElectromechanical<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testREL_AST_03_SelectElectromechanical <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testREL_AST_04_SelectSolidState<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testREL_AST_04_SelectSolidState <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
-      </div>
-    </div>
-  </div>
+      </div></div></div>
   <div class="module module-all-pass collapsed" onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
-      <div class="module-name">
-        <span class="toggle">&#9660;</span>Asset Part 5
-      </div>
-      <div class="module-stats">
-        <span class="mini-badge mini-pass">76 passed</span>
-      </div>
+      <div class="module-name"><span class="toggle">&#9660;</span>Asset Part 5</div>
+      <div class="module-stats"><span class="mini-badge mini-pass">76 passed</span></div>
     </div>
     <div class="test-list">
       <div class="test-row" style="flex-wrap:wrap;">
@@ -1994,375 +1950,369 @@
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_01_CoreAttributesLoad<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testSWB_01_CoreAttributesLoad <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">67s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_02_AllFieldsVisible<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testSWB_02_AllFieldsVisible <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_03_RequiredFieldsToggle<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testSWB_03_RequiredFieldsToggle <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_05_EditAmpereRating<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testSWB_05_EditAmpereRating <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_06_EditCatalogNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testSWB_06_EditCatalogNumber <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_08_EditFaultWithstand<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testSWB_08_EditFaultWithstand <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">50s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_09_EditMainsType<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testSWB_09_EditMainsType <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_10_EditManufacturer<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testSWB_10_EditManufacturer <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_11_EditNotes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testSWB_11_EditNotes <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_18_Persistence<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testSWB_18_Persistence <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">49s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testSWB_AST_03_SelectSwitchgear<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testSWB_AST_03_SelectSwitchgear <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_02_AllFieldsVisible<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_02_AllFieldsVisible <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_03_RequiredFieldsToggle<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_03_RequiredFieldsToggle <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_05_EditBIL<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_05_EditBIL <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_06_EditClass<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_06_EditClass <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_07_EditFrequency<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_07_EditFrequency <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_08_EditKVARating<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_08_EditKVARating <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_09_EditManufacturer<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_09_EditManufacturer <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_10_EditPercentageImpedance<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_10_EditPercentageImpedance <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_11_EditPrimaryAmperes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_11_EditPrimaryAmperes <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">49s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_12_EditPrimaryTap<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_12_EditPrimaryTap <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_13_EditPrimaryVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_13_EditPrimaryVoltage <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_14_EditSecondaryAmperes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_14_EditSecondaryAmperes <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_15_EditSecondaryVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_15_EditSecondaryVoltage <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_16_EditSerialNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_16_EditSerialNumber <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">49s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_17_EditSize<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_17_EditSize <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_18_EditTemperatureRise<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_18_EditTemperatureRise <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_19_EditType<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_19_EditType <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_20_EditWindingConfiguration<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_20_EditWindingConfiguration <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">49s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_21_SaveWithoutRequired<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_21_SaveWithoutRequired <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_22_Persistence<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_22_Persistence <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_AST_03_SelectDryType<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_AST_03_SelectDryType <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTRF_AST_04_SelectOilFilled<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTRF_AST_04_SelectOilFilled <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_02_AllFieldsVisible<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testUPS_02_AllFieldsVisible <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_05_EditAmpereRating<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testUPS_05_EditAmpereRating <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_06_EditCatalogNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testUPS_06_EditCatalogNumber <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_07_EditManufacturer<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testUPS_07_EditManufacturer <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_09_EditNotes<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testUPS_09_EditNotes <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_10_EditSize<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testUPS_10_EditSize <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_12_EditVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testUPS_12_EditVoltage <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_13_SaveWithMissingRequired<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testUPS_13_SaveWithMissingRequired <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_15_Persistence<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testUPS_15_Persistence <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_AST_03_SelectHybrid<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testUPS_AST_03_SelectHybrid <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUPS_AST_04_SelectStatic<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testUPS_AST_04_SelectStatic <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUTL_01_CoreAttributesLoad<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testUTL_01_CoreAttributesLoad <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">49s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUTL_02_VerifyFields<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testUTL_02_VerifyFields <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">49s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUTL_03_EditMeterNumber<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testUTL_03_EditMeterNumber <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">49s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUTL_04_MeterNumberPersistence<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testUTL_04_MeterNumberPersistence <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUTL_05_EditStartingVoltage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testUTL_05_EditStartingVoltage <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUTL_06_VoltagePersistence<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testUTL_06_VoltagePersistence <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUTL_07_SaveEmpty<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testUTL_07_SaveEmpty <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testUTL_AST_01_SubtypeNone<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testUTL_AST_01_SubtypeNone <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testVFD_01_CoreAttributesLoad<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testVFD_01_CoreAttributesLoad <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testVFD_02_NoCoreAttributeFields<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testVFD_02_NoCoreAttributeFields <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testVFD_03_RequiredToggleNoFields<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testVFD_03_RequiredToggleNoFields <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testVFD_04_PercentageAtZero<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testVFD_04_PercentageAtZero <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">49s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testVFD_05_SaveWithoutCoreAttrs<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testVFD_05_SaveWithoutCoreAttrs <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testVFD_06_CancelButton<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testVFD_06_CancelButton <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">49s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testVFD_08_Persistence<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testVFD_08_Persistence <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testVFD_AST_01_SubtypeNone<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testVFD_AST_01_SubtypeNone <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">2s</span>
         <span class="badge badge-pass">PASS</span>
         
-      </div>
-    </div>
-  </div>
+      </div></div></div>
   <div class="module module-all-pass collapsed" onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
-      <div class="module-name">
-        <span class="toggle">&#9660;</span>Location + Task
-      </div>
-      <div class="module-stats">
-        <span class="mini-badge mini-pass">133 passed</span>
-      </div>
+      <div class="module-name"><span class="toggle">&#9660;</span>Location + Task</div>
+      <div class="module-stats"><span class="mini-badge mini-pass">133 passed</span></div>
     </div>
     <div class="test-list">
       <div class="test-row" style="flex-wrap:wrap;">
@@ -3026,190 +2976,172 @@
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLH_001_FullHierarchy<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testLH_001_FullHierarchy <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">6s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testLH_002_MultipleFloors<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testLH_002_MultipleFloors <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">6s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_CT_001_CreateTaskButtonVisible<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_CT_001_CreateTaskButtonVisible <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">0s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_CT_002_CreateTaskDrawerOpens<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_CT_002_CreateTaskDrawerOpens <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">6s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_CT_003_DrawerTabs<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_CT_003_DrawerTabs <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">6s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_CT_004_FormFieldsPresent<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_CT_004_FormFieldsPresent <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">6s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_CT_005_TaskTypeDefaultPM<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_CT_005_TaskTypeDefaultPM <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">6s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_CT_006_CreateTaskRequiredFieldsOnly<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_CT_006_CreateTaskRequiredFieldsOnly <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">6s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_CT_007_CreateTaskAllFields<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_CT_007_CreateTaskAllFields <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">6s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_CT_008_CancelCloseDrawer<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_CT_008_CancelCloseDrawer <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">6s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_CT_009_EmptyTitleValidation<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_CT_009_EmptyTitleValidation <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">6s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_CT_010_PhotoTabs<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_CT_010_PhotoTabs <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">6s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_CT_011_BasicInfoAccordion<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_CT_011_BasicInfoAccordion <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">6s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_CT_012_ProcedureDropdown<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_CT_012_ProcedureDropdown <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">6s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_EC_001_XSSInTitle<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_EC_001_XSSInTitle <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">6s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_EC_002_LongTitle<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_EC_002_LongTitle <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">6s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_EC_003_SpecialCharsInTitle<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_EC_003_SpecialCharsInTitle <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">6s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_PG_002_NextPage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_PG_002_NextPage <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">0s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_PG_003_PrevPage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_PG_003_PrevPage <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">0s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_SF_001_SearchInputPresent<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_SF_001_SearchInputPresent <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">0s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_SF_002_SearchByTitle<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_SF_002_SearchByTitle <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">0s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_SF_003_SearchNoResults<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_SF_003_SearchNoResults <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">0s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_SF_004_ClearSearchRestoresAll<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_SF_004_ClearSearchRestoresAll <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">0s</span>
         <span class="badge badge-pass">PASS</span>
         
-      </div>
-    </div>
-  </div>
+      </div></div></div>
   <div class="module module-has-fail " onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
-      <div class="module-name">
-        <span class="toggle">&#9660;</span>Work Order + Issue
-      </div>
-      <div class="module-stats">
-        <span class="mini-badge mini-pass">228 passed</span> <span class="mini-badge mini-fail">6 failed</span>
-      </div>
+      <div class="module-name"><span class="toggle">&#9660;</span>Work Order + Issue</div>
+      <div class="module-stats"><span class="mini-badge mini-pass">230 passed</span> <span class="mini-badge mini-fail">4 failed</span></div>
     </div>
     <div class="test-list">
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">testIL_004_SearchInvalid</span>
         <span class="test-duration">30s</span>
         <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Invalid search should return 0 expected [0] but found [10]</div>
+        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Invalid search should return 0 expected [0] but found [10]</div>
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">testISS_015_NoResultsEmptyState</span>
         <span class="test-duration">116s</span>
         <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Search with invalid term should return 0 results (pagination=445, domRows=10, noRowsOverlay=false) expected [true] but found [false]</div>
+        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Search with invalid term should return 0 results (pagination=445, domRows=10, noRowsOverlay=false) expected [true] but found [false]</div>
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">testISS_046_DeletedNotInSearch</span>
         <span class="test-duration">261s</span>
         <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Deleted issue should not appear in search (pagination=445, domRows=10, noRowsOverlay=false) expected [true] but found [false]</div>
+        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Deleted issue should not appear in search (pagination=445, domRows=10, noRowsOverlay=false) expected [true] but found [false]</div>
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">testTC_CWO2_007_CreateWOAllFieldsVerify</span>
         <span class="test-duration">79s</span>
         <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Created work order &#x27;Part2_WO_97036&#x27; should appear in grid expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_PERF2_001_ListLoadTime</span>
-        <span class="test-duration">10s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Work order list should load within 10 seconds. Actual: 10852ms expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_WOL_001_PageLoads</span>
-        <span class="test-duration">57s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Work Orders page should display a data grid expected [true] but found [false]</div>
+        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Created work order &#x27;Part2_WO_97036&#x27; should appear in grid expected [true] but found [false]</div>
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">AJ_001_ActivateJobsButton</span>
@@ -4544,118 +4476,82 @@
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_CI_002_SmokeTestDataPollution<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_CI_002_SmokeTestDataPollution <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">0s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_PG_002_NextPage<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_PERF2_001_ListLoadTime <span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">10s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTC_PG_002_NextPage <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">0s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_SF_001_SearchByName<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_SF_001_SearchByName <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">0s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_SF_002_SearchNoResults<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_SF_002_SearchNoResults <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">0s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_SF_003_ClearSearch<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_SF_003_ClearSearch <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">0s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_SL_004_SAPlanColumn<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testTC_SL_004_SAPlanColumn <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">0s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
-    </div>
-  </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTC_WOL_001_PageLoads <span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">57s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div></div></div>
   <div class="module module-has-fail " onclick="this.classList.toggle('collapsed')">
     <div class="module-header">
-      <div class="module-name">
-        <span class="toggle">&#9660;</span>Dashboard + BugHunt
-      </div>
-      <div class="module-stats">
-        <span class="mini-badge mini-pass">79 passed</span> <span class="mini-badge mini-fail">11 failed</span> <span class="mini-badge mini-skip">1 skipped</span>
-      </div>
+      <div class="module-name"><span class="toggle">&#9660;</span>Dashboard + BugHunt</div>
+      <div class="module-stats"><span class="mini-badge mini-pass">86 passed</span> <span class="mini-badge mini-fail">4 failed</span> <span class="mini-badge mini-skip">1 skipped</span></div>
     </div>
     <div class="test-list">
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testBUG09_SQLInjectionInEmail</span>
-        <span class="test-duration">27s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Expected condition failed: waiting for com.egalvanic.qa.testcase.BugHuntTestNG$$Lambda$697/0x00007f57e42cc680@3d425217 (tried for 15 second(s) with 500 milliseconds interval)</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testBUG16_SignInButtonDisabledStates</span>
-        <span class="test-duration">12s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Sign In should be disabled with empty form expected [false] but found [true]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testBUG24_NoAuthTokensInURL</span>
-        <span class="test-duration">27s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Expected condition failed: waiting for com.egalvanic.qa.testcase.BugHuntTestNG$$Lambda$697/0x00007f57e42cc680@3d425217 (tried for 15 second(s) with 500 milliseconds interval)</div>
-      </div>
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">testBUGD03_ChartsRender</span>
         <span class="test-duration">34s</span>
         <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Dashboard should contain at least one chart (canvas, SVG, or heading-labeled chart container). Found: 0 expected [true] but found [false]</div>
+        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Dashboard should contain at least one chart (canvas, SVG, or heading-labeled chart container). Found: 0 expected [true] but found [false]</div>
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">testBUGD05_DashboardAssetCountConsistency</span>
         <span class="test-duration">15s</span>
         <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Dashboard should reference assets somewhere expected [true] but found [false]</div>
+        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Dashboard should reference assets somewhere expected [true] but found [false]</div>
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">testBUGD60_ConditionAssessmentLoads</span>
         <span class="test-duration">34s</span>
         <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Condition Assessment page should contain relevant content (text length=0) expected [true] but found [false]</div>
+        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Condition Assessment page should contain relevant content (text length=0) expected [true] but found [false]</div>
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">testBUGD62_ConditionAssessmentVisualization</span>
         <span class="test-duration">27s</span>
         <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Condition Assessment should have at least one data visualization expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_NM_06_PanelSchedules</span>
-        <span class="test-duration">9s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Panel Schedules module did not render expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_NM_09_EquipmentDesignations</span>
-        <span class="test-duration">22s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Equipment Designations module did not render expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_NM_15_ZUniversity</span>
-        <span class="test-duration">17s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Z University module did not render expected [true] but found [false]</div>
-      </div>
-      <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testTC_NM_17_DashboardEquipmentAtRiskKPI</span>
-        <span class="test-duration">33s</span>
-        <span class="badge badge-fail">FAIL</span>
-        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,Consolas,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Dashboard is missing the &#x27;Equipment at Risk&#x27; KPI card (added in May 2026 release) expected [true] but found [false]</div>
+        <div style="font-size:11px;color:#721c24;margin-top:4px;font-family:Menlo,monospace;background:#fef2f2;padding:4px 8px;border-radius:3px;flex-basis:100%;">Condition Assessment should have at least one data visualization expected [true] but found [false]</div>
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
         <span class="test-name">BUG001_DevRevSDKFails</span>
@@ -5132,20 +5028,57 @@
         
       </div>
       <div class="test-row" style="flex-wrap:wrap;">
-        <span class="test-name">testBUG015_MissingStatusColumn<span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-name">testBUG015_MissingStatusColumn <span class="local-verified-mark">LOCAL VERIFIED</span></span>
         <span class="test-duration">34s</span>
         <span class="badge badge-pass">PASS</span>
         
       </div>
-    </div>
-  </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testBUG09_SQLInjectionInEmail <span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">27s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testBUG16_SignInButtonDisabledStates <span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">12s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testBUG24_NoAuthTokensInURL <span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">27s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTC_NM_06_PanelSchedules <span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">9s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTC_NM_09_EquipmentDesignations <span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">22s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTC_NM_15_ZUniversity <span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">17s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div>
+      <div class="test-row" style="flex-wrap:wrap;">
+        <span class="test-name">testTC_NM_17_DashboardEquipmentAtRiskKPI <span class="local-verified-mark">LOCAL VERIFIED</span></span>
+        <span class="test-duration">33s</span>
+        <span class="badge badge-pass">PASS</span>
+        
+      </div></div></div>
 </div>
-
 <div class="footer">
-  Run ID: 26442766019 &bull; Branch: main &bull; Commit: 7b8fd2d &bull;
-  <a href="https://github.com/eg-abhiyantsingh/Egalvanic_Web-main/actions/runs/26442766019">View on GitHub Actions</a> &bull; Generated 2026-05-26 21:09
-  &bull; SLD + Connection excluded &bull; 207 tests locally re-verified
-</div>
-
-</body>
-</html>
+  Run ID: 26442766019 &bull; Branch: main &bull;
+  Commit: 7b8fd2d &bull;
+  Generated 2026-05-27 20:56 &bull;
+  SLD + Connection excluded &bull; 218 tests locally re-verified
+</div></body></html>
