@@ -1,22 +1,22 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════════
-# FULL TEST SUITE DASHBOARD — 1,130 TCs across 14 Groups
+# FULL TEST SUITE DASHBOARD — Active Modules
 # ═══════════════════════════════════════════════════════════════════════
 # Runs module groups individually with LIVE per-test progress updates.
-#   Group  1:  Auth + Site + Connection    (130 TCs)
+#   Group  1:  Auth + Site                 ( 56 TCs)  ← Connection excluded (hidden in May 2026)
 #   Group  2:  Location + Task             (135 TCs)
 #   Group  3:  Work Order + Issue          (234 TCs)
 #   Group  4:  Asset Parts 1-2             ( 69 TCs)
 #   Group  5:  Asset Part 3               ( 76 TCs)
 #   Group  6:  Asset Parts 4-5            (141 TCs)
-#   Group  7:  SLD                        ( 71 TCs)
-#   Group  8:  Dashboard + BugHunt        (105 TCs)
-#   Group  9:  Load + API + Critical Path  ( 62 TCs)
-#   Group 10:  Smoke Suites               ( 37 TCs)
-#   Group 11:  AI Form Creation           ( 56 TCs)
-#   Group 12:  Monkey Exploratory          (  4 TCs)
-#   Group 13:  Visual Regression           (  7 TCs)
-#   Group 14:  AI Page Analyzer            (  3 TCs)
+#   Group  7:  Dashboard + BugHunt        (105 TCs)
+#   Group  8:  Load + API + Critical Path  ( 62 TCs)
+#   Group  9:  Smoke Suites               ( 37 TCs)
+#   Group 10:  AI Form Creation           ( 56 TCs)
+#   Group 11:  Monkey Exploratory          (  4 TCs)
+#   Group 12:  Visual Regression           (  7 TCs)
+#   Group 13:  AI Page Analyzer            (  3 TCs)
+# Excluded (hidden/deprecated in May 2026): Connection (74 TCs), SLD (71 TCs)
 #
 # Architecture (same as smoke-dashboard.sh):
 #   1. Maven runs in background → output to temp log file
@@ -34,15 +34,15 @@ set +e  # Don't exit on error — we handle failures ourselves
 # ─────────────────────────────────────────────────────
 # GROUP DEFINITIONS
 # ─────────────────────────────────────────────────────
+# Connection (74 TCs) and SLD (71 TCs) modules excluded — hidden/deprecated in May 2026 web.
 ALL_GROUPS=(
-  "auth-site-connection"
+  "auth-site"
   "location-task"
   "workorder-issue"
   "asset-1-2"
   "asset-3"
   "asset-4"
   "asset-5"
-  "sld"
   "dashboard-bughunt"
   "load-api"
   "smoke"
@@ -54,14 +54,13 @@ ALL_GROUPS=(
   "bces-iq-smoke"
 )
 ALL_GROUP_NAMES=(
-  "Auth + Site + Connection"
+  "Auth + Site"
   "Location + Task"
   "Work Order + Issue"
   "Asset Parts 1-2"
   "Asset Part 3"
   "Asset Part 4"
   "Asset Part 5"
-  "SLD Module"
   "Dashboard + BugHunt"
   "Load + API + Critical Path"
   "Smoke Suites"
@@ -72,16 +71,15 @@ ALL_GROUP_NAMES=(
   "Curated Bug Verification"
   "BCES-IQ Tenant Smoke"
 )
-ALL_GROUP_TESTS=(130 135 234 69 76 65 76 71 105 62 37 56 4 7 3 8 3)
+ALL_GROUP_TESTS=(56 135 234 69 76 65 76 105 62 37 56 4 7 3 8 3)
 ALL_GROUP_XMLS=(
-  "suite-auth-site-connection.xml"
+  "suite-auth-site.xml"
   "suite-location-task.xml"
   "suite-workorder-issue.xml"
   "suite-asset-1-2.xml"
   "suite-asset-3.xml"
   "suite-asset-4.xml"
   "suite-asset-5.xml"
-  "suite-sld.xml"
   "suite-dashboard-bughunt.xml"
   "suite-load-api.xml"
   "smoke-testng.xml"
@@ -98,23 +96,25 @@ ALL_GROUP_XMLS=(
 # ─────────────────────────────────────────────────────
 get_group_index() {
   case "$1" in
-    auth-site-connection) echo 0 ;;
+    auth-site)            echo 0 ;;
     location-task)        echo 1 ;;
     workorder-issue)      echo 2 ;;
     asset-1-2)            echo 3 ;;
     asset-3)              echo 4 ;;
     asset-4)              echo 5 ;;
     asset-5)              echo 6 ;;
-    sld)                  echo 7 ;;
-    dashboard-bughunt)    echo 8 ;;
-    load-api)             echo 9 ;;
-    smoke)                echo 10 ;;
-    ai-form)              echo 11 ;;
-    monkey)               echo 12 ;;
-    visual-regression)    echo 13 ;;
-    ai-analyzer)          echo 14 ;;
-    curated-bug-verification) echo 15 ;;
-    bces-iq-smoke)        echo 16 ;;
+    dashboard-bughunt)    echo 7 ;;
+    load-api)             echo 8 ;;
+    smoke)                echo 9 ;;
+    ai-form)              echo 10 ;;
+    monkey)               echo 11 ;;
+    visual-regression)    echo 12 ;;
+    ai-analyzer)          echo 13 ;;
+    curated-bug-verification) echo 14 ;;
+    bces-iq-smoke)        echo 15 ;;
+    # Backwards-compat aliases for old workflow dispatch values.
+    # Connection and SLD modules are excluded from CI in May 2026 release.
+    auth-site-connection) echo 0 ;;
     *)                    echo -1 ;;
   esac
 }
@@ -131,7 +131,7 @@ else
   IDX=$(get_group_index "$SELECTED")
   if [ "$IDX" -eq -1 ]; then
     echo "Unknown group: $SELECTED"
-    echo "   Valid: all, auth-site-connection, location-task, workorder-issue, asset-1-2, asset-3, asset-4, asset-5, sld, dashboard-bughunt, load-api, smoke, ai-form, monkey, visual-regression, ai-analyzer, curated-bug-verification, bces-iq-smoke"
+    echo "   Valid: all, auth-site, location-task, workorder-issue, asset-1-2, asset-3, asset-4, asset-5, dashboard-bughunt, load-api, smoke, ai-form, monkey, visual-regression, ai-analyzer, curated-bug-verification, bces-iq-smoke"
     exit 1
   fi
   RUN_GROUPS=("${ALL_GROUPS[$IDX]}")

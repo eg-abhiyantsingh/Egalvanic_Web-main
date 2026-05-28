@@ -9,16 +9,16 @@ name: Web Automation Test
 # Architecture:
 #
 #   ── Run All ──
-#   smoke                     → Full Smoke Dashboard — all 7 modules with live progress (~35 min)
+#   smoke                     → Full Smoke Dashboard — all 6 modules with live progress (~30 min)
 #
 #   ── Individual Smoke CRUD Modules ──
 #   smoke-auth                → Auth & Login (6 tests)
 #   smoke-site-selection      → Site Selection (4 tests)
 #   smoke-asset-crud          → Asset CRUD (9 tests)
-#   smoke-connection-crud     → Connection CRUD (3 tests)
 #   smoke-location-crud       → Location CRUD (4 tests)
 #   smoke-issue-crud          → Issues CRUD (5 tests)
 #   smoke-workorder-crud      → Work Order CRUD (6 tests)
+#   (smoke-connection-crud removed — Connection tab hidden in May 2026 web)
 #
 # Requirements:
 #   Secrets: EMAIL_PASSWORD (optional)
@@ -37,7 +37,6 @@ on:
           - 'smoke-auth'
           - 'smoke-site-selection'
           - 'smoke-asset-crud'
-          - 'smoke-connection-crud'
           - 'smoke-location-crud'
           - 'smoke-issue-crud'
           - 'smoke-workorder-crud'
@@ -146,9 +145,6 @@ jobs:
               ;;
             smoke-asset-crud)
               run_mvn smoke-asset-testng.xml
-              ;;
-            smoke-connection-crud)
-              run_mvn smoke-connection-testng.xml
               ;;
             smoke-location-crud)
               run_mvn smoke-location-testng.xml

@@ -1,24 +1,23 @@
-name: Smoke Tests — Quick Critical Path (37 TCs)
+name: Smoke Tests — Quick Critical Path (34 TCs)
 
 # ============================================================
 # WEB SMOKE TEST SUITE - Quick Critical Path Validation
 # ============================================================
-# Tests: 37 tests across 7 modules
+# Tests: 34 tests across 6 modules
+# (Connection CRUD excluded — module hidden in May 2026 web release)
 #
 # Modules:
 #   Module 1: Auth & Login      (6 tests) — Admin → PM → Technician → FM → Client Portal → Invalid
 #   Module 2: Site Selection    (4 tests) — Selector Present → Dropdown → Select Site → Context Persists
 #   Module 3: Asset CRUD        (9 tests) — Create → Read → Update → OCP → Detail → Search → EditCancel → Lifecycle → Delete
-#   Module 4: Connection CRUD   (3 tests) — Add Loadside → Verify → Delete
-#   Module 5: Location CRUD     (4 tests) — Create Hierarchy → Read → Update → Delete
-#   Module 6: Issues CRUD       (5 tests) — Create → Search → ActivateJobs → Photos → Delete
-#   Module 7: Work Order CRUD   (6 tests) — Create → Edit → IRPhotos → Locations → Tasks → Filter
+#   Module 4: Location CRUD     (4 tests) — Create Hierarchy → Read → Update → Delete
+#   Module 5: Issues CRUD       (5 tests) — Create → Search → ActivateJobs → Photos → Delete
+#   Module 6: Work Order CRUD   (6 tests) — Create → Edit → IRPhotos → Locations → Tasks → Filter
 #
 # Per-module TestNG XMLs:
 #   smoke-auth-testng.xml
 #   smoke-site-testng.xml
 #   smoke-asset-testng.xml
-#   smoke-connection-testng.xml
 #   smoke-location-testng.xml
 #   smoke-issues-testng.xml
 #   smoke-workorder-testng.xml
@@ -38,7 +37,6 @@ on:
           - auth
           - site-selection
           - asset
-          - connection
           - location
           - issues
           - workorder

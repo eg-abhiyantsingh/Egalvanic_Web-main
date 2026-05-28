@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<!--
+  May 2026 web release: Connection module is hidden in UI.
+  This suite covers Auth + Site only. Connection tests live in
+  suite-auth-site-connection.xml but are excluded from CI by parallel-suite.yml.
+-->
+<suite name="Full Suite — Auth + Site (56 TCs)" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <test name="Full Authentication Tests (26 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AuthenticationTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Full Site Selection Tests (30 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.SiteSelectionTestNG"/>
+        </classes>
+    </test>
+
+</suite>

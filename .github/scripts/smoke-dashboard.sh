@@ -27,14 +27,14 @@ set +e  # Don't exit on error — we handle failures ourselves
 # ─────────────────────────────────────────────────────
 # MODULE DEFINITIONS (all available modules)
 # ─────────────────────────────────────────────────────
-ALL_MODULES=("auth-login" "site-selection" "asset-crud" "connection-crud" "location-crud" "issues-crud" "workorder-crud")
-ALL_MODULE_NAMES=("Auth & Login" "Site Selection" "Asset CRUD" "Connection CRUD" "Location CRUD" "Issues CRUD" "Work Order CRUD")
-ALL_MODULE_TESTS=(6 4 9 3 4 5 6)
+# Connection-crud module excluded — Connection tab hidden in May 2026 web release.
+ALL_MODULES=("auth-login" "site-selection" "asset-crud" "location-crud" "issues-crud" "workorder-crud")
+ALL_MODULE_NAMES=("Auth & Login" "Site Selection" "Asset CRUD" "Location CRUD" "Issues CRUD" "Work Order CRUD")
+ALL_MODULE_TESTS=(6 4 9 4 5 6)
 ALL_MODULE_XMLS=(
   "smoke-auth-testng.xml"
   "smoke-site-testng.xml"
   "smoke-asset-testng.xml"
-  "smoke-connection-testng.xml"
   "smoke-location-testng.xml"
   "smoke-issues-testng.xml"
   "smoke-workorder-testng.xml"
@@ -42,18 +42,17 @@ ALL_MODULE_XMLS=(
 
 # ─────────────────────────────────────────────────────
 # MODULE SELECTION (via SMOKE_MODULE env var)
-# Accepts: all, auth, site-selection, asset, connection,
-#          location, issues, workorder
+# Accepts: all, auth, site-selection, asset, location, issues, workorder
+# (connection excluded — module hidden in May 2026 release)
 # ─────────────────────────────────────────────────────
 get_module_index() {
   case "$1" in
     auth)            echo 0 ;;
     site-selection)  echo 1 ;;
     asset)           echo 2 ;;
-    connection)      echo 3 ;;
-    location)        echo 4 ;;
-    issues)          echo 5 ;;
-    workorder)       echo 6 ;;
+    location)        echo 3 ;;
+    issues)          echo 4 ;;
+    workorder)       echo 5 ;;
     *)               echo -1 ;;
   esac
 }
@@ -69,7 +68,7 @@ else
   IDX=$(get_module_index "$SELECTED")
   if [ "$IDX" -eq -1 ]; then
     echo "❌ Unknown module: $SELECTED"
-    echo "   Valid options: all, auth, site-selection, asset, connection, location, issues, workorder"
+    echo "   Valid options: all, auth, site-selection, asset, location, issues, workorder"
     exit 1
   fi
   MODULES=("${ALL_MODULES[$IDX]}")

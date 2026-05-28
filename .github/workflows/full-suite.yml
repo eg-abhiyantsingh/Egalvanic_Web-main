@@ -1,21 +1,21 @@
-name: Full Test Suite — All Modules (1,060 TCs)
+name: Full Test Suite — Active Modules
 
 # ============================================================
 # FULL TEST SUITE — Sequential Dashboard Execution
 # ============================================================
-# Total: 1,060 tests across 10 groups
+# Connection (74 TCs) and SLD (71 TCs) modules excluded —
+# hidden/deprecated in May 2026 web release.
 #
 # Groups:
-#   Group  1: Auth + Site + Connection    (130 TCs)
+#   Group  1: Auth + Site                 ( 56 TCs)
 #   Group  2: Location + Task             (135 TCs)
 #   Group  3: Work Order + Issue          (234 TCs)
 #   Group  4: Asset Parts 1-2             ( 69 TCs)
 #   Group  5: Asset Part 3               ( 76 TCs)
 #   Group  6: Asset Parts 4-5            (141 TCs)
-#   Group  7: SLD                        ( 71 TCs)
-#   Group  8: Dashboard + BugHunt        (105 TCs)
-#   Group  9: Load + API + Critical Path  ( 62 TCs)
-#   Group 10: Smoke Suites               ( 37 TCs)
+#   Group  7: Dashboard + BugHunt        (105 TCs)
+#   Group  8: Load + API + Critical Path  ( 62 TCs)
+#   Group  9: Smoke Suites               ( 37 TCs)
 #
 # Dashboard script: .github/scripts/full-suite-dashboard.sh
 # ============================================================
@@ -29,13 +29,12 @@ on:
         type: choice
         options:
           - all
-          - auth-site-connection
+          - auth-site
           - location-task
           - workorder-issue
           - asset-1-2
           - asset-3
           - asset-4-5
-          - sld
           - dashboard-bughunt
           - load-api
           - smoke

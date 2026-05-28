@@ -13,16 +13,16 @@ name: Parallel Full Suite — Core Regression (961 TCs)
 #   Parallel  (this workflow):   ~1-1.5 hours (groups run simultaneously)
 #   Speedup: ~3-4x
 #
-# Groups (9 parallel jobs):
-#   Group  1: Auth + Site + Connection    (130 TCs)  ~25 min
+# Groups (8 parallel jobs):
+#   Group  1: Auth + Site                 ( 56 TCs)  ~15 min  (Connection hidden in May 2026)
 #   Group  2: Location + Task             (135 TCs)  ~30 min
 #   Group  3: Work Order + Issue          (234 TCs)  ~55 min  [bottleneck]
 #   Group  4: Asset Parts 1-2             ( 69 TCs)  ~20 min
 #   Group  5: Asset Part 3               ( 76 TCs)  ~20 min
 #   Group  6: Asset Part 4               ( 65 TCs)  ~20 min
 #   Group  7: Asset Part 5               ( 76 TCs)  ~20 min
-#   Group  8: SLD                        ( 71 TCs)  ~15 min
-#   Group  9: Dashboard + BugHunt        (105 TCs)  ~30 min
+#   Group  8: Dashboard + BugHunt        (105 TCs)  ~30 min
+# Excluded (modules deprecated/hidden in May 2026): Connection (74 TCs), SLD (71 TCs)
 #
 # Moved to parallel-suite-2.yml:
 #   Smoke Suites, Load + API + Critical Path, AI Form, Monkey, Visual, AI Analyzer
@@ -61,17 +61,18 @@ jobs:
 
     strategy:
       fail-fast: false
-      max-parallel: 9
+      max-parallel: 8
 
       matrix:
         include:
           # stagger: seconds to wait before starting tests.
           # Prevents simultaneous login requests from overwhelming
           # the server and triggering session conflicts.
-          - group: auth-site-connection
-            name: "Auth + Site + Connection"
-            xml: suite-auth-site-connection.xml
-            tests: 130
+          # Connection module is hidden in May 2026 web — excluded from CI.
+          - group: auth-site
+            name: "Auth + Site"
+            xml: suite-auth-site.xml
+            tests: 56
             stagger: 0
 
           - group: location-task
@@ -110,11 +111,7 @@ jobs:
             tests: 76
             stagger: 55
 
-          - group: sld
-            name: "SLD Module"
-            xml: suite-sld.xml
-            tests: 71
-            stagger: 60
+          # SLD module excluded from CI in May 2026 release (deprecated UI).
 
           - group: dashboard-bughunt
             name: "Dashboard + BugHunt"
