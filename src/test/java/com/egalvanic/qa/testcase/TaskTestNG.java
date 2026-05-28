@@ -399,8 +399,44 @@ public class TaskTestNG extends BaseTest {
         return false;
     }
 
+    // Dismiss any non-Create-Task MUI Dialog that the new web's auto-features open
+    // (e.g., "Signatures" OCR-extraction modal triggered by SignaturesDevices polling).
+    // These cover the page and block subsequent interactions, so we Escape them out
+    // before any test that needs to click the Create Task button.
+    private void dismissUnexpectedDialogs() {
+        try {
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            Object closed = js.executeScript(
+                "var dialogs = document.querySelectorAll('[role=\"dialog\"], .MuiDialog-paper');"
+                + "var n = 0;"
+                + "for (var i = 0; i < dialogs.length; i++) {"
+                + "  var d = dialogs[i];"
+                + "  var r = d.getBoundingClientRect();"
+                + "  if (r.width === 0 || r.height === 0) continue;"
+                + "  var hdr = (d.textContent || '').slice(0, 80);"
+                + "  if (hdr.indexOf('Add Task') >= 0 || hdr.indexOf('Create Task') >= 0) continue;"
+                + "  var btn = d.querySelector("
+                + "    'button[aria-label*=\"close\" i], button[aria-label*=\"Close\"], button svg[data-testid=\"CloseIcon\"]'"
+                + "  );"
+                + "  if (btn) {"
+                + "    var clickEl = btn.closest('button') || btn;"
+                + "    clickEl.click();"
+                + "    n++;"
+                + "  }"
+                + "}"
+                + "return n;");
+            if (closed instanceof Long && ((Long) closed) > 0) {
+                logStep("Dismissed " + closed + " unexpected dialog(s)");
+                pause(600);
+            }
+        } catch (Exception ignored) {}
+    }
+
     private void openCreateTaskDrawer() {
         if (isDrawerOpen()) return;
+
+        // Pre-flight: kill any auto-opened Signatures/OCR modal that would block the Create Task click.
+        dismissUnexpectedDialogs();
 
         // Strategy 1: Wait for Create Task button via locator
         boolean foundBtn = false;
@@ -434,6 +470,8 @@ public class TaskTestNG extends BaseTest {
         // overlay, app-update banner, MUI Modal scrim) so the drawer's input
         // becomes interactable.
         dismissBackdrops();
+        // Also kill any auto-opened modal (Signatures/OCR) that landed instead of the drawer.
+        dismissUnexpectedDialogs();
 
         // Wait up to 25s for drawer form to load. Earlier 15s was too tight
         // on slower CI runners. Accept ANY of the form's known inputs as
