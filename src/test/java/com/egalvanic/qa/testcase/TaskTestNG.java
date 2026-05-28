@@ -141,6 +141,44 @@ public class TaskTestNG extends BaseTest {
                 "No visible search input on Tasks page");
     }
 
+    // Type into the search input robustly even if React re-mounts mid-interaction.
+    // Falls back to native input-value-setter + 'input' event dispatch (React-compatible).
+    private void typeIntoSearch(String text) {
+        org.openqa.selenium.WebDriverException last = null;
+        for (int attempt = 0; attempt < 3; attempt++) {
+            try {
+                WebElement el = findVisibleSearchInput();
+                try {
+                    el.click();
+                    el.sendKeys(Keys.chord(Keys.CONTROL, "a"));
+                    el.sendKeys(Keys.DELETE);
+                    el = findVisibleSearchInput(); // re-find — React may have re-mounted
+                    el.sendKeys(text);
+                    return;
+                } catch (org.openqa.selenium.ElementNotInteractableException ignored) {
+                    // React Suspense re-mounted the input; set via native JS setter (no focus required)
+                    JavascriptExecutor js = (JavascriptExecutor) driver;
+                    el = findVisibleSearchInput();
+                    js.executeScript(
+                        "var setter = Object.getOwnPropertyDescriptor("
+                        + "window.HTMLInputElement.prototype, 'value').set;"
+                        + "setter.call(arguments[0], '');"
+                        + "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));"
+                        + "setter.call(arguments[0], arguments[1]);"
+                        + "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));",
+                        el, text);
+                    return;
+                }
+            } catch (org.openqa.selenium.StaleElementReferenceException
+                    | org.openqa.selenium.ElementNotInteractableException e) {
+                last = e;
+                pause(500);
+            }
+        }
+        throw new org.openqa.selenium.WebDriverException(
+                "typeIntoSearch failed after 3 attempts", last);
+    }
+
     // View toggles
     private static final By LIST_VIEW_BTN = By.xpath(
             "//button[contains(@aria-label,'list') or normalize-space()='list view']");
@@ -1104,19 +1142,13 @@ public class TaskTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_SEARCH, "TC_SF_002_SearchByTitle");
         logStep("Searching for task 'T1'");
 
-        WebElement search = findVisibleSearchInput();
-        safeClick(search);
-        search.sendKeys(Keys.chord(Keys.CONTROL, "a"));
-        search.sendKeys("T1");
+        typeIntoSearch("T1");
         pause(3000);
 
         int rows = countGridRows();
         logStep("Search results for 'T1': " + rows + " rows");
         logStepWithScreenshot("Search results");
 
-        // T1 is a known task — verify search input was accepted
-        String inputValue = search.getDomProperty("value");
-        logStep("Search input value: " + inputValue);
         String pageText = getPageText();
         boolean hasResult = pageText.contains("T1") || rows > 0;
         logStep("Search found results: " + hasResult);
@@ -1124,8 +1156,7 @@ public class TaskTestNG extends BaseTest {
         Assert.assertTrue(hasResult, "Search for 'T1' should return results");
 
         // Clear search
-        search.sendKeys(Keys.chord(Keys.CONTROL, "a"));
-        search.sendKeys(Keys.DELETE);
+        typeIntoSearch("");
         pause(1500);
 
         logStep("PASS: Search by title works");
@@ -1136,10 +1167,7 @@ public class TaskTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_SEARCH, "TC_SF_003_SearchNoResults");
         logStep("Searching for non-existent task");
 
-        WebElement search = findVisibleSearchInput();
-        safeClick(search);
-        search.sendKeys(Keys.chord(Keys.CONTROL, "a"));
-        search.sendKeys("ZZZZNONEXISTENT99999");
+        typeIntoSearch("ZZZZNONEXISTENT99999");
         pause(3000);
 
         int rows = countGridRows();
@@ -1148,8 +1176,7 @@ public class TaskTestNG extends BaseTest {
         Assert.assertTrue(rows == 0, "Non-existent search should return 0 results. Got: " + rows);
 
         // Clear
-        search.sendKeys(Keys.chord(Keys.CONTROL, "a"));
-        search.sendKeys(Keys.DELETE);
+        typeIntoSearch("");
         pause(1500);
 
         logStep("PASS: Non-existent search returns empty");
@@ -1163,19 +1190,15 @@ public class TaskTestNG extends BaseTest {
         int initialRows = countGridRows();
         logStep("Initial row count: " + initialRows);
 
-        // Search to filter
-        WebElement search = findVisibleSearchInput();
-        safeClick(search);
-        search.sendKeys(Keys.chord(Keys.CONTROL, "a"));
-        search.sendKeys("offline");
+        // Search to filter — typeIntoSearch handles React re-mounts.
+        typeIntoSearch("offline");
         pause(3000);
 
         int filteredRows = countGridRows();
         logStep("Filtered row count: " + filteredRows);
 
-        // Clear search by selecting all and deleting
-        search.sendKeys(Keys.chord(Keys.CONTROL, "a"));
-        search.sendKeys(Keys.DELETE);
+        // Clear search
+        typeIntoSearch("");
         pause(3000);
 
         int restoredRows = countGridRows();
