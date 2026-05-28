@@ -400,34 +400,53 @@ public class TaskTestNG extends BaseTest {
     }
 
     // Dismiss any non-Create-Task MUI Dialog that the new web's auto-features open
-    // (e.g., "Signatures" OCR-extraction modal triggered by SignaturesDevices polling).
-    // These cover the page and block subsequent interactions, so we Escape them out
-    // before any test that needs to click the Create Task button.
+    // (e.g., "Signatures" OCR-extraction modal triggered by SignaturesDevices polling,
+    // visible header text "Signatures" with Examine/Propagate tabs). These cover the
+    // page and block the Create Task drawer.
     private void dismissUnexpectedDialogs() {
         try {
             JavascriptExecutor js = (JavascriptExecutor) driver;
-            Object closed = js.executeScript(
-                "var dialogs = document.querySelectorAll('[role=\"dialog\"], .MuiDialog-paper');"
+            Object closedObj = js.executeScript(
+                "var dialogs = document.querySelectorAll('[role=\"dialog\"], .MuiDialog-paper, .MuiModal-root > div > div');"
                 + "var n = 0;"
                 + "for (var i = 0; i < dialogs.length; i++) {"
                 + "  var d = dialogs[i];"
                 + "  var r = d.getBoundingClientRect();"
                 + "  if (r.width === 0 || r.height === 0) continue;"
-                + "  var hdr = (d.textContent || '').slice(0, 80);"
+                + "  var hdr = (d.textContent || '').slice(0, 200);"
                 + "  if (hdr.indexOf('Add Task') >= 0 || hdr.indexOf('Create Task') >= 0) continue;"
-                + "  var btn = d.querySelector("
-                + "    'button[aria-label*=\"close\" i], button[aria-label*=\"Close\"], button svg[data-testid=\"CloseIcon\"]'"
-                + "  );"
-                + "  if (btn) {"
-                + "    var clickEl = btn.closest('button') || btn;"
-                + "    clickEl.click();"
+                // Try EVERY button inside the dialog whose aria-label or content looks like close
+                + "  var btns = d.querySelectorAll('button');"
+                + "  var clicked = false;"
+                + "  for (var j = 0; j < btns.length; j++) {"
+                + "    var b = btns[j];"
+                + "    var lbl = (b.getAttribute('aria-label') || '').toLowerCase();"
+                + "    var txt = (b.textContent || '').trim().toLowerCase();"
+                + "    var hasCloseIcon = b.querySelector('svg[data-testid=\"CloseIcon\"], [class*=\"CloseIcon\"]');"
+                + "    if (lbl.indexOf('close') >= 0 || txt === '' && hasCloseIcon"
+                + "        || txt === 'cancel' || txt === 'close') {"
+                + "      b.click(); n++; clicked = true; break;"
+                + "    }"
+                + "  }"
+                + "  if (!clicked) {"
+                // Fallback: hide the dialog directly via CSS so it stops blocking interactions
+                + "    d.style.display = 'none';"
+                + "    var bd = d.closest('.MuiModal-root');"
+                + "    if (bd) bd.style.display = 'none';"
                 + "    n++;"
                 + "  }"
                 + "}"
                 + "return n;");
-            if (closed instanceof Long && ((Long) closed) > 0) {
+            long closed = (closedObj instanceof Long) ? (Long) closedObj : 0L;
+            if (closed > 0) {
                 logStep("Dismissed " + closed + " unexpected dialog(s)");
                 pause(600);
+                // Also press Escape via Selenium to handle any keyboard-only modals
+                try {
+                    new org.openqa.selenium.interactions.Actions(driver)
+                            .sendKeys(Keys.ESCAPE).perform();
+                    pause(300);
+                } catch (Exception ignored) {}
             }
         } catch (Exception ignored) {}
     }
