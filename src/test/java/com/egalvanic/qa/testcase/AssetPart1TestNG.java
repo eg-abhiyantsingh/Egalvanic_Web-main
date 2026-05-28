@@ -60,7 +60,9 @@ public class AssetPart1TestNG extends BaseTest {
     private static final By CANCEL_BTN = By.xpath("//button[normalize-space()='Cancel']");
     private static final By ADD_ASSET_PANEL = By.xpath(
             "//*[normalize-space()='Add Asset' or contains(text(),'BASIC INFO')]");
-    private static final By SEARCH_INPUT = By.xpath("//input[contains(@placeholder,'Search')]");
+    // Match the asset-specific search input first; new web has an invisible duplicate "Search" input.
+    private static final By SEARCH_INPUT = By.xpath(
+            "//input[contains(@placeholder,'Search Assets')] | //input[contains(@placeholder,'Search')]");
 
     @Override
     @BeforeClass
@@ -123,11 +125,15 @@ public class AssetPart1TestNG extends BaseTest {
         Assert.assertFalse(createBtns.isEmpty(), "Create Asset button not found");
         logStep("Create Asset button present");
 
-        // Verify search bar exists
+        // Verify search bar exists — pick the first VISIBLE match (new web has an invisible duplicate).
         List<WebElement> searchInputs = driver.findElements(SEARCH_INPUT);
         Assert.assertFalse(searchInputs.isEmpty(), "Search bar not found");
-        Assert.assertTrue(searchInputs.get(0).isDisplayed(), "Search bar not visible");
-        logStep("Search bar present and visible");
+        WebElement visibleSearch = searchInputs.stream()
+                .filter(WebElement::isDisplayed)
+                .findFirst()
+                .orElse(null);
+        Assert.assertNotNull(visibleSearch, "No visible search bar among " + searchInputs.size() + " matches");
+        logStep("Search bar present and visible (placeholder='" + visibleSearch.getDomAttribute("placeholder") + "')");
 
         // Verify asset grid/list loads
         boolean gridLoaded = assetPage.isGridPopulated();
@@ -314,8 +320,13 @@ public class AssetPart1TestNG extends BaseTest {
         int beforeCount = driver.findElements(gridRows).size();
         logStep("Grid rows before search: " + beforeCount);
 
-        // Search for nonsense using direct Selenium input (React-compatible)
-        WebElement search = driver.findElement(SEARCH_INPUT);
+        // Search for nonsense using direct Selenium input (React-compatible).
+        // New web has an invisible duplicate "Search" input — pick the first VISIBLE.
+        WebElement search = driver.findElements(SEARCH_INPUT).stream()
+                .filter(WebElement::isDisplayed)
+                .findFirst()
+                .orElseThrow(() -> new org.openqa.selenium.NoSuchElementException(
+                        "No visible search input on Assets page"));
         // Use JS to clear — Keys.COMMAND is macOS-only, fails on Linux CI
         ((JavascriptExecutor) driver).executeScript(
                 "var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"

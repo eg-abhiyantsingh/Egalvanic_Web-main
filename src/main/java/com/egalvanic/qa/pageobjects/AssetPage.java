@@ -57,7 +57,9 @@ public class AssetPage {
     private static final By SAVE_CHANGES_BTN = By.xpath("//button[normalize-space()='Save Changes' or contains(.,'Save Changes')]");
 
     // Data grid actions
-    private static final By SEARCH_INPUT = By.xpath("//input[contains(@placeholder,'Search')]");
+    // Prefer the asset-specific placeholder; new web has an invisible duplicate input with bare "Search".
+    private static final By SEARCH_INPUT = By.xpath(
+            "//input[contains(@placeholder,'Search Assets')] | //input[contains(@placeholder,'Search')]");
     private static final By CONFIRM_DELETE_BTN = By.xpath("//button[contains(@class,'MuiButton-containedError') and contains(.,'Delete')]");
 
     // Success / form indicators
