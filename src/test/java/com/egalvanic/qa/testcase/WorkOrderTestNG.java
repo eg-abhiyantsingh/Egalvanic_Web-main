@@ -76,6 +76,19 @@ public class WorkOrderTestNG extends BaseTest {
     private static final By COLUMN_HEADERS = By.cssSelector("[role='columnheader']");
     private static final By SEARCH_INPUT = By.xpath(
             "//input[@placeholder='Search work orders...' or contains(@placeholder,'Search')]");
+
+    // Returns the first VISIBLE search input. New web has an invisible duplicate input
+    // with placeholder='Search' that XPath matches first; using findElement(SEARCH_INPUT)
+    // on its own returns the hidden one and sendKeys fails with ElementNotInteractable.
+    private WebElement findVisibleSearchInput() {
+        for (WebElement el : driver.findElements(SEARCH_INPUT)) {
+            try {
+                if (el.isDisplayed()) return el;
+            } catch (Exception ignored) {}
+        }
+        throw new org.openqa.selenium.NoSuchElementException(
+                "No visible search input on Work Orders page");
+    }
     private static final By NEXT_PAGE_BTN = By.xpath(
             "//button[contains(@aria-label,'next page') or contains(@aria-label,'Go to next page')]");
     private static final By PREV_PAGE_BTN = By.xpath(
@@ -685,7 +698,7 @@ public class WorkOrderTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_SEARCH, "TC_SF_001_SearchByName");
         logStep("Searching for 'SmokeTest'");
 
-        WebElement search = driver.findElement(SEARCH_INPUT);
+        WebElement search = findVisibleSearchInput();
         clearSearchInput(search);
         search.sendKeys("SmokeTest");
         pause(2000);
@@ -706,7 +719,7 @@ public class WorkOrderTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_SEARCH, "TC_SF_002_SearchNoResults");
         logStep("Searching for non-existent work order");
 
-        WebElement search = driver.findElement(SEARCH_INPUT);
+        WebElement search = findVisibleSearchInput();
         clearSearchInput(search);
         search.sendKeys("ZZZZNONEXISTENT99999");
         pause(2000);
@@ -727,7 +740,7 @@ public class WorkOrderTestNG extends BaseTest {
 
         int initialRows = countGridRows();
 
-        WebElement search = driver.findElement(SEARCH_INPUT);
+        WebElement search = findVisibleSearchInput();
         clearSearchInput(search);
         search.sendKeys("SmokeTest");
         pause(2000);
@@ -1167,9 +1180,14 @@ public class WorkOrderTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_PAGINATION, "TC_PG_002_NextPage");
         logStep("Testing next page");
 
-        List<WebElement> nextBtns = driver.findElements(NEXT_PAGE_BTN);
-        if (!nextBtns.isEmpty() && nextBtns.get(0).isEnabled()) {
-            nextBtns.get(0).click();
+        // Pick first VISIBLE next-page button (new web has hidden duplicates).
+        WebElement nextBtn = driver.findElements(NEXT_PAGE_BTN).stream()
+                .filter(WebElement::isDisplayed)
+                .filter(WebElement::isEnabled)
+                .findFirst()
+                .orElse(null);
+        if (nextBtn != null) {
+            nextBtn.click();
             pause(2000);
 
             int rows = countGridRows();
@@ -1177,9 +1195,13 @@ public class WorkOrderTestNG extends BaseTest {
             Assert.assertTrue(rows > 0, "Next page should have rows");
 
             // Go back
-            List<WebElement> prevBtns = driver.findElements(PREV_PAGE_BTN);
-            if (!prevBtns.isEmpty() && prevBtns.get(0).isEnabled()) {
-                prevBtns.get(0).click();
+            WebElement prevBtn = driver.findElements(PREV_PAGE_BTN).stream()
+                    .filter(WebElement::isDisplayed)
+                    .filter(WebElement::isEnabled)
+                    .findFirst()
+                    .orElse(null);
+            if (prevBtn != null) {
+                prevBtn.click();
                 pause(1500);
             }
         } else {
@@ -1317,7 +1339,7 @@ public class WorkOrderTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_CLEANUP, "TC_CI_002_SmokeTestDataPollution");
         logStep("Detecting SmokeTest data pollution");
 
-        WebElement search = driver.findElement(SEARCH_INPUT);
+        WebElement search = findVisibleSearchInput();
         clearSearchInput(search);
         search.sendKeys("SmokeTest");
         pause(2000);
@@ -1414,7 +1436,7 @@ public class WorkOrderTestNG extends BaseTest {
 
         // Search for auto-created WO
         try {
-            WebElement search = driver.findElement(SEARCH_INPUT);
+            WebElement search = findVisibleSearchInput();
             clearSearchInput(search);
             search.sendKeys("AutoTest_");
             pause(2000);
