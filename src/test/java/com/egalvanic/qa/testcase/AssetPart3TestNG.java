@@ -590,6 +590,24 @@ public class AssetPart3TestNG extends BaseTest {
                     drawerPrefix + "//p[starts-with(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),'" + lower + "')]"
                     + "/following-sibling::div//textarea"));
             if (!inputs.isEmpty()) return inputs.get(0);
+            // Strategy 7: spaceless lowercase — handles labels like "K V A Rating" matching
+            // DOM text "KVA Rating" (units acronym squashed). Strip spaces in BOTH sides.
+            String spaceless = lower.replace(" ", "");
+            if (!spaceless.isEmpty() && !spaceless.equals(lower)) {
+                inputs = driver.findElements(By.xpath(
+                        drawerPrefix + "//p[starts-with("
+                        + "translate(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),' ','')"
+                        + ",'" + spaceless + "')]"
+                        + "/following-sibling::div//input"));
+                if (!inputs.isEmpty()) return inputs.get(0);
+                // Strategy 8: spaceless + combobox layout
+                inputs = driver.findElements(By.xpath(
+                        drawerPrefix + "//p[starts-with("
+                        + "translate(translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),' ','')"
+                        + ",'" + spaceless + "')]"
+                        + "/parent::div/following-sibling::div//input"));
+                if (!inputs.isEmpty()) return inputs.get(0);
+            }
         } catch (Exception ignored) {}
         return null;
     }

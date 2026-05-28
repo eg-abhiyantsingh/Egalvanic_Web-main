@@ -1575,12 +1575,15 @@ public class DashboardBugTestNG extends BaseTest {
         navigateTo(INSIGHTS_URL);
         pause(3000);
 
-        // Find search input
+        // Find search input — new web has an invisible duplicate; pick first VISIBLE.
         List<WebElement> searchInputs = driver.findElements(By.cssSelector(
                 "input[placeholder*='Search'], input[placeholder*='search'], input[type='search']"));
+        WebElement search = searchInputs.stream()
+                .filter(WebElement::isDisplayed)
+                .findFirst()
+                .orElse(null);
 
-        if (!searchInputs.isEmpty()) {
-            WebElement search = searchInputs.get(0);
+        if (search != null) {
             search.clear();
             search.sendKeys("Switchboard");
             pause(1500);

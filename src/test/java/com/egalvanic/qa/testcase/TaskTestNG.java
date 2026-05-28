@@ -121,13 +121,25 @@ public class TaskTestNG extends BaseTest {
     // Search — the new web version capitalized the placeholder
     // ("Search Tasks..."). Listing the specific variants FIRST means
     // findElements returns the right input as element [0]; the broad
-    // contains() is a last-resort fallback.
+    // contains() is a last-resort fallback. The new web ALSO renders an
+    // invisible duplicate input with placeholder='Search' — callers must
+    // use findVisibleSearchInput() instead of driver.findElement(SEARCH_INPUT).
     private static final By SEARCH_INPUT = By.xpath(
             "//input[@placeholder='Search Tasks...' "
             + "or @placeholder='Search tasks...' "
             + "or @placeholder='Search task' "
             + "or starts-with(@placeholder,'Search Task') "
             + "or contains(@placeholder,'Search')]");
+
+    private WebElement findVisibleSearchInput() {
+        for (WebElement el : driver.findElements(SEARCH_INPUT)) {
+            try {
+                if (el.isDisplayed()) return el;
+            } catch (Exception ignored) {}
+        }
+        throw new org.openqa.selenium.NoSuchElementException(
+                "No visible search input on Tasks page");
+    }
 
     // View toggles
     private static final By LIST_VIEW_BTN = By.xpath(
@@ -469,13 +481,31 @@ public class TaskTestNG extends BaseTest {
     }
 
     private void clearAndType(By locator, String text) {
-        WebElement el = driver.findElement(locator);
-        safeClick(el);
-        el.sendKeys(Keys.chord(Keys.CONTROL, "a"));
-        el.sendKeys(Keys.DELETE);
-        pause(200);
-        el.sendKeys(text);
-        pause(300);
+        // React (especially the Create Task drawer's Title field) re-renders mid-interaction.
+        // Re-find the element before each action to defeat StaleElementReferenceException,
+        // and retry up to 3 times if React swaps the input under us.
+        org.openqa.selenium.StaleElementReferenceException lastStale = null;
+        for (int attempt = 0; attempt < 3; attempt++) {
+            try {
+                WebElement el = driver.findElement(locator);
+                safeClick(el);
+                pause(150);
+                el = driver.findElement(locator); // re-find after click
+                el.sendKeys(Keys.chord(Keys.CONTROL, "a"));
+                el.sendKeys(Keys.DELETE);
+                pause(200);
+                el = driver.findElement(locator); // re-find after clear
+                el.sendKeys(text);
+                pause(300);
+                return;
+            } catch (org.openqa.selenium.StaleElementReferenceException e) {
+                lastStale = e;
+                pause(400);
+            }
+        }
+        throw new org.openqa.selenium.StaleElementReferenceException(
+                "clearAndType could not type into " + locator + " after 3 attempts",
+                lastStale);
     }
 
     private String getTodayFormatted() {
@@ -834,7 +864,7 @@ public class TaskTestNG extends BaseTest {
         if (!found) {
             // Try searching for it
             try {
-                WebElement search = driver.findElement(SEARCH_INPUT);
+                WebElement search = findVisibleSearchInput();
                 search.clear();
                 search.sendKeys(createdTaskTitle);
                 pause(2000);
@@ -1074,7 +1104,7 @@ public class TaskTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_SEARCH, "TC_SF_002_SearchByTitle");
         logStep("Searching for task 'T1'");
 
-        WebElement search = driver.findElement(SEARCH_INPUT);
+        WebElement search = findVisibleSearchInput();
         safeClick(search);
         search.sendKeys(Keys.chord(Keys.CONTROL, "a"));
         search.sendKeys("T1");
@@ -1106,7 +1136,7 @@ public class TaskTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_SEARCH, "TC_SF_003_SearchNoResults");
         logStep("Searching for non-existent task");
 
-        WebElement search = driver.findElement(SEARCH_INPUT);
+        WebElement search = findVisibleSearchInput();
         safeClick(search);
         search.sendKeys(Keys.chord(Keys.CONTROL, "a"));
         search.sendKeys("ZZZZNONEXISTENT99999");
@@ -1134,7 +1164,7 @@ public class TaskTestNG extends BaseTest {
         logStep("Initial row count: " + initialRows);
 
         // Search to filter
-        WebElement search = driver.findElement(SEARCH_INPUT);
+        WebElement search = findVisibleSearchInput();
         safeClick(search);
         search.sendKeys(Keys.chord(Keys.CONTROL, "a"));
         search.sendKeys("offline");
@@ -1595,7 +1625,7 @@ public class TaskTestNG extends BaseTest {
 
         // Search for AutoTest tasks
         try {
-            WebElement search = driver.findElement(SEARCH_INPUT);
+            WebElement search = findVisibleSearchInput();
             search.clear();
             search.sendKeys("AutoTest_" + TS);
             pause(2000);
@@ -1617,7 +1647,7 @@ public class TaskTestNG extends BaseTest {
 
                 cleaned++;
                 ensureOnTasksPage();
-                search = driver.findElement(SEARCH_INPUT);
+                search = findVisibleSearchInput();
                 search.clear();
                 search.sendKeys("AutoTest_" + TS);
                 pause(2000);
