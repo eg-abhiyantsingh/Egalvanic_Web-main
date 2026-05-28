@@ -1,7 +1,8 @@
-name: Parallel Full Suite — Core Regression (961 TCs)
+name: Parallel Full Suite — Core Regression (816 TCs)
 
 # ============================================================
-# PARALLEL FULL SUITE — 9 Groups Running Simultaneously
+# PARALLEL FULL SUITE — 8 Groups Running Simultaneously
+# (Connection + SLD excluded — hidden/deprecated in May 2026)
 # ============================================================
 #
 # Architecture:
