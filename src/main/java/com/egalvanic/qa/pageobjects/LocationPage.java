@@ -658,15 +658,47 @@ public class LocationPage {
     }
 
     private void typeField(By by, String text) {
-        WebElement el = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
-        el.click();
-        // Select all existing text and replace — el.clear() doesn't work with React controlled inputs
-        String selectAll = org.openqa.selenium.Keys.chord(org.openqa.selenium.Keys.CONTROL, "a");
-        String selectAllMac = org.openqa.selenium.Keys.chord(org.openqa.selenium.Keys.COMMAND, "a");
-        try { el.sendKeys(selectAll); } catch (Exception ignored) {}
-        try { el.sendKeys(selectAllMac); } catch (Exception ignored) {}
-        pause(100);
-        el.sendKeys(text);
+        // React Drawer / Dialog re-renders the input subtree after open animation
+        // completes, so an element handle from immediately-after-click goes stale by
+        // the time sendKeys fires (ElementNotInteractableException in CI).
+        // Strategy: re-find before each action; fall back to JS native-value setter
+        // (which works even without focus) if sendKeys still fails.
+        org.openqa.selenium.WebDriverException last = null;
+        for (int attempt = 0; attempt < 3; attempt++) {
+            try {
+                WebElement el = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
+                el.click();
+                pause(150);
+                el = wait.until(ExpectedConditions.visibilityOfElementLocated(by)); // re-find
+                String selectAll = org.openqa.selenium.Keys.chord(org.openqa.selenium.Keys.CONTROL, "a");
+                String selectAllMac = org.openqa.selenium.Keys.chord(org.openqa.selenium.Keys.COMMAND, "a");
+                try { el.sendKeys(selectAll); } catch (Exception ignored) {}
+                try { el.sendKeys(selectAllMac); } catch (Exception ignored) {}
+                pause(100);
+                el = wait.until(ExpectedConditions.visibilityOfElementLocated(by)); // re-find again
+                el.sendKeys(text);
+                return;
+            } catch (org.openqa.selenium.ElementNotInteractableException
+                    | org.openqa.selenium.StaleElementReferenceException e) {
+                last = e;
+                pause(500);
+            }
+        }
+        // Final fallback: JS-based React-compatible value setter
+        try {
+            WebElement el = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
+            js.executeScript(
+                "var setter = Object.getOwnPropertyDescriptor("
+                + "window.HTMLInputElement.prototype, 'value').set;"
+                + "setter.call(arguments[0], '');"
+                + "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));"
+                + "setter.call(arguments[0], arguments[1]);"
+                + "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));"
+                + "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
+                el, text);
+        } catch (Exception ignored) {
+            if (last != null) throw last;
+        }
     }
 
     private void waitForDialog() {

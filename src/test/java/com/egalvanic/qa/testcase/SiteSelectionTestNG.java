@@ -176,8 +176,14 @@ public class SiteSelectionTestNG {
                     });
             pause(1000);
 
-            // Check if we're still logged in or need to re-login
-            boolean hasLoginForm = !driver.findElements(By.id("email")).isEmpty();
+            // Check if we're still logged in or need to re-login.
+            // May 2026 login page dropped id="email" — match via the same 5-way fallback
+            // as LoginPage / BaseTest so session expiry is actually detected.
+            boolean hasLoginForm = !driver.findElements(By.xpath(
+                    "//input[@id='email'] | //input[@type='email']"
+                    + " | //input[@name='email']"
+                    + " | //input[@placeholder='Email Address' or @placeholder='Email']"
+                    + " | //input[@aria-label='Email Address' or @aria-label='Email']")).isEmpty();
             if (hasLoginForm) {
                 System.out.println("[SiteSelection] Session expired after reset — re-logging in");
                 loginAsAdmin();
