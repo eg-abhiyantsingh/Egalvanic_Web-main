@@ -102,6 +102,11 @@
                     <suiteXmlFiles>
                         <suiteXmlFile>${suiteXmlFile}</suiteXmlFile>
                     </suiteXmlFiles>
+                    <!-- Bigger heap + GC tuning — the per-module ExtentReports tree
+                         holds base64 JPEG screenshots in memory until flushReports().
+                         A 500-test suite × 5 screenshots × 40 KB JPEG ≈ 100 MB; 2 GB
+                         leaves comfortable headroom and ImageIO re-encode overhead. -->
+                    <argLine>-Xmx2g -XX:+UseG1GC</argLine>
                 </configuration>
             </plugin>
 

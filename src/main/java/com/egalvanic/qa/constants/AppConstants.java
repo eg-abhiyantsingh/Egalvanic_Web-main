@@ -264,8 +264,32 @@ public class AppConstants {
     public static final String EMAIL_PASSWORD = getEnv("EMAIL_PASSWORD", "onmzhjxnacinjfun");
     public static final String EMAIL_TO = "abhiyant.singh@egalvanic.com";
     public static final String EMAIL_SUBJECT = "eGalvanic Web Automation - Test Report";
+    // Default to ON — user requested email delivery for every run.
+    // Set SEND_EMAIL_ENABLED=false in env to disable for ad-hoc debug runs.
     public static final boolean SEND_EMAIL_ENABLED =
-            Boolean.parseBoolean(getEnv("SEND_EMAIL_ENABLED", "false"));
+            Boolean.parseBoolean(getEnv("SEND_EMAIL_ENABLED", "true"));
+
+    // DETAILED REPORT DELIVERY
+    // We do NOT email Detailed Reports — they're too large with all the screenshots.
+    // Instead, the workflow uploads reports/detail-report/ as a CI artifact and the
+    // email body includes the download URL. Keep this flag for backward compatibility;
+    // setting it true will re-enable the ZIP attachment path (capped at 20 MB).
+    public static final boolean ATTACH_DETAILED_REPORT =
+            Boolean.parseBoolean(getEnv("ATTACH_DETAILED_REPORT", "false"));
+    public static final long EMAIL_ATTACHMENT_MAX_BYTES = 20L * 1024L * 1024L;
+
+    // ============================================
+    // REPORT SCREENSHOT CONFIGURATION
+    // ============================================
+    // When true, safeClick captures a screenshot after each click. ON by default —
+    // gives the maximum number of screenshots so reviewers see what every action did.
+    // Memory pressure is bounded by:
+    //   - JPEG q60 + 1280px downscale in ScreenshotUtil (~30 KB per shot)
+    //   - ImageIO.setUseCache(false) to avoid disk-cache leaks
+    //   - Surefire -Xmx2g argLine in pom.xml
+    // Set to "false" if you ever see a forked-VM crash on very large suites.
+    public static final boolean AUTO_SCREENSHOT_EVERY_CLICK =
+            Boolean.parseBoolean(getEnv("AUTO_SCREENSHOT_EVERY_CLICK", "true"));
 
     // ============================================
     // HELPER METHODS

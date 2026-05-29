@@ -124,7 +124,11 @@ public class BaseTest {
         System.out.println(FlakinessPrevention.getStatsSummary());
 
         System.out.println("Reports generated:");
-        System.out.println("   - Detailed: " + ExtentReportManager.getDetailedReportPath());
+        for (java.util.Map.Entry<String, String> e :
+                ExtentReportManager.getDetailedReportPathsByModule().entrySet()) {
+            int fails = ExtentReportManager.getFailsByModule().getOrDefault(e.getKey(), 0);
+            System.out.println("   - Detailed [" + e.getKey() + "] (" + fails + "F): " + e.getValue());
+        }
         System.out.println("   - Client:   " + ExtentReportManager.getClientReportPath());
         System.out.println("   - Bug Detection: test-output/bug-detection-report.json");
         System.out.println("   - Healed Locators: test-output/healed-locators.json");
@@ -208,6 +212,11 @@ public class BaseTest {
         testStartTime = System.currentTimeMillis();
         recoverFromErrorPage();
         dismissBackdrops();
+        // Auto-capture the starting page state on every test so the Detailed Report
+        // shows what the test was looking at when it began.
+        try {
+            ExtentReportManager.captureScreenshot("Initial page state");
+        } catch (Exception ignored) {}
     }
 
     /**
@@ -312,6 +321,12 @@ public class BaseTest {
             }
         } else if (result.getStatus() == ITestResult.SKIP) {
             ExtentReportManager.logSkip("Test skipped: " + result.getMethod().getMethodName());
+        } else if (result.getStatus() == ITestResult.SUCCESS) {
+            // Auto-capture the final page state on every PASS so the Detailed Report
+            // always has a visual end-state, not just step screenshots.
+            try {
+                ExtentReportManager.captureScreenshot("Final page state");
+            } catch (Exception ignored) {}
         }
 
         ExtentReportManager.removeTests();
@@ -606,29 +621,37 @@ public class BaseTest {
      * overlapped) — the latter was the root cause of the 28-test "element
      * not interactable" cascade in Location + Task in run 26442766019.
      */
+    /**
+     * Capture a screenshot after a click action, gated by AUTO_SCREENSHOT_EVERY_CLICK.
+     * Quietly no-ops if disabled or if ExtentReport has no active test.
+     */
+    private void postClickScreenshot() {
+        if (!AppConstants.AUTO_SCREENSHOT_EVERY_CLICK) return;
+        try {
+            ExtentReportManager.captureScreenshot(null);
+        } catch (Exception ignored) {}
+    }
+
     protected void safeClick(WebElement element) {
         dismissBackdrops();
         try {
             element.click();
+            postClickScreenshot();
+            return;
         } catch (org.openqa.selenium.ElementNotInteractableException e) {
-            // Catches both ElementClickInterceptedException (extends ENI)
-            // and raw ENI. Required for the Task / Location "element not
-            // interactable" cluster (28 tests) in run 26442766019.
-            // Backdrop / overlay / unfinished animation between dismissal and
-            // click — scroll into view, dismiss again, retry with JS click.
             JavascriptExecutor js = (JavascriptExecutor) driver;
             try {
                 js.executeScript("arguments[0].scrollIntoView({block:'center'});", element);
                 dismissBackdrops();
                 pause(300);
                 js.executeScript("arguments[0].click();", element);
+                postClickScreenshot();
             } catch (Exception ignored) {
-                // Last resort: dispatch a synthetic mouse click via JS even
-                // if the element thinks it's not interactable
                 try {
                     js.executeScript(
                         "var ev = new MouseEvent('click', {bubbles:true, cancelable:true, view:window});" +
                         "arguments[0].dispatchEvent(ev);", element);
+                    postClickScreenshot();
                 } catch (Exception ignored2) {}
             }
         }
@@ -642,25 +665,22 @@ public class BaseTest {
         WebElement element = driver.findElement(locator);
         try {
             element.click();
+            postClickScreenshot();
+            return;
         } catch (org.openqa.selenium.ElementNotInteractableException e) {
-            // Catches both ElementClickInterceptedException (extends ENI) and
-            // raw ElementNotInteractableException — backdrop intercept OR
-            // overlay rejection.
-            // Same retry strategy as the WebElement overload — scroll +
-            // re-dismiss backdrops + JS click + last-resort synthetic
-            // MouseEvent. Required for the Task / Location "element not
-            // interactable" cluster (28 tests) in run 26442766019.
             JavascriptExecutor js = (JavascriptExecutor) driver;
             try {
                 js.executeScript("arguments[0].scrollIntoView({block:'center'});", element);
                 dismissBackdrops();
                 pause(300);
                 js.executeScript("arguments[0].click();", element);
+                postClickScreenshot();
             } catch (Exception ignored) {
                 try {
                     js.executeScript(
                         "var ev = new MouseEvent('click', {bubbles:true, cancelable:true, view:window});" +
                         "arguments[0].dispatchEvent(ev);", element);
+                    postClickScreenshot();
                 } catch (Exception ignored2) {}
             }
         }

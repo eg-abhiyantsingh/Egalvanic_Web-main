@@ -9,8 +9,11 @@ import com.egalvanic.qa.constants.AppConstants;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,10 +29,18 @@ import java.util.Map;
  */
 public class ExtentReportManager {
 
-    private static ExtentReports detailedReport;
+    // Per-module Detailed Reports — one HTML file per Module so reviewers can open just
+    // the module they care about (Auth, Asset, WO, etc.) and see all its screenshots.
+    // Insertion-ordered so generation order matches first-seen order.
+    private static final Map<String, ExtentReports> detailedByModule = new LinkedHashMap<>();
+    private static final Map<String, String> detailedPathsByModule = new LinkedHashMap<>();
+    // Per-module fail counters — used by EmailUtil to prioritize attachments under the size cap.
+    private static final Map<String, Integer> failsByModule = new HashMap<>();
+
     private static ExtentReports clientReport;
 
     private static ThreadLocal<ExtentTest> detailedTest = new ThreadLocal<>();
+    private static ThreadLocal<String> activeModule = new ThreadLocal<>();
     private static ThreadLocal<ExtentTest> clientTest = new ThreadLocal<>();
 
     // Hierarchical nodes for Client Report
@@ -37,7 +48,6 @@ public class ExtentReportManager {
     private static Map<String, ExtentTest> clientFeatureNodes = new HashMap<>();
 
     private static String timestamp;
-    private static String detailedReportPath;
     private static String clientReportPath;
 
     private ExtentReportManager() {
@@ -48,7 +58,7 @@ public class ExtentReportManager {
      * Initialize both reports
      */
     public static void initReports() {
-        if (detailedReport != null) {
+        if (clientReport != null) {
             System.out.println("Extent Reports already initialized - skipping");
             return;
         }
@@ -57,25 +67,30 @@ public class ExtentReportManager {
         new File(AppConstants.DETAILED_REPORT_PATH).mkdirs();
         new File(AppConstants.CLIENT_REPORT_PATH).mkdirs();
 
-        initDetailedReport();
+        // Per-module Detailed Reports are created lazily on first test of each module.
         initClientReport();
 
-        System.out.println("Both Extent Reports initialized");
+        System.out.println("Reports initialized — Client Report ready; Detailed Reports will create per module on demand");
     }
 
     /**
-     * Initialize Detailed Report - Full details with screenshots
+     * Lazily initialize a Detailed Report for a single module. Called the first time
+     * createTest(module, ...) is invoked for a given module name. Idempotent.
      */
-    private static void initDetailedReport() {
-        detailedReportPath = AppConstants.DETAILED_REPORT_PATH + "Detailed_Report_" + timestamp + ".html";
+    private static ExtentReports getOrCreateModuleReport(String moduleName) {
+        ExtentReports existing = detailedByModule.get(moduleName);
+        if (existing != null) return existing;
 
-        ExtentSparkReporter spark = new ExtentSparkReporter(detailedReportPath);
-        spark.config().setDocumentTitle("eGalvanic Web Automation - Detailed Report");
-        spark.config().setReportName("Detailed Test Execution Report");
+        String safeName = moduleName == null ? "_Unknown" : moduleName.replaceAll("[^a-zA-Z0-9_-]+", "_");
+        String path = AppConstants.DETAILED_REPORT_PATH
+                + "Detailed_Report_" + safeName + "_" + timestamp + ".html";
+
+        ExtentSparkReporter spark = new ExtentSparkReporter(path);
+        spark.config().setDocumentTitle("eGalvanic Web Automation - " + moduleName + " Detailed Report");
+        spark.config().setReportName(moduleName + " — Detailed Test Execution");
         spark.config().setTheme(Theme.DARK);
         spark.config().setTimeStampFormat("yyyy-MM-dd HH:mm:ss");
         spark.config().setEncoding("UTF-8");
-
         spark.config().setCss(
             ".badge-primary { background-color: #007bff; } " +
             ".badge-success { background-color: #28a745; } " +
@@ -87,19 +102,23 @@ public class ExtentReportManager {
             ".media-container img { max-width: 100%; height: auto; }"
         );
 
-        detailedReport = new ExtentReports();
-        detailedReport.attachReporter(spark);
+        ExtentReports report = new ExtentReports();
+        report.attachReporter(spark);
+        report.setSystemInfo("Application", "eGalvanic Web App");
+        report.setSystemInfo("Module", moduleName);
+        report.setSystemInfo("Platform", "Web");
+        report.setSystemInfo("Browser", AppConstants.BROWSER);
+        report.setSystemInfo("Base URL", AppConstants.BASE_URL);
+        report.setSystemInfo("Framework", "Selenium + Page Object Model");
+        report.setSystemInfo("Report Type", "DETAILED (Internal QA)");
+        report.setSystemInfo("Environment", "QA");
+        report.setSystemInfo("Executed By", System.getProperty("user.name"));
 
-        detailedReport.setSystemInfo("Application", "eGalvanic Web App");
-        detailedReport.setSystemInfo("Platform", "Web");
-        detailedReport.setSystemInfo("Browser", AppConstants.BROWSER);
-        detailedReport.setSystemInfo("Base URL", AppConstants.BASE_URL);
-        detailedReport.setSystemInfo("Framework", "Selenium + Page Object Model");
-        detailedReport.setSystemInfo("Report Type", "DETAILED (Internal QA)");
-        detailedReport.setSystemInfo("Environment", "QA");
-        detailedReport.setSystemInfo("Executed By", System.getProperty("user.name"));
-
-        System.out.println("Detailed Report initialized: " + detailedReportPath);
+        detailedByModule.put(moduleName, report);
+        detailedPathsByModule.put(moduleName, path);
+        failsByModule.put(moduleName, 0);
+        System.out.println("Detailed Report initialized for module '" + moduleName + "': " + path);
+        return report;
     }
 
     /**
@@ -172,13 +191,21 @@ public class ExtentReportManager {
     }
 
     /**
-     * Create test with Module > Feature > Test Name hierarchy
+     * Create test with Module > Feature > Test Name hierarchy.
+     * The Detailed Report is per-module — each module gets its own HTML file,
+     * lazy-created the first time a test names that module.
      */
     public static void createTest(String moduleName, String featureName, String testName) {
-        // DETAILED REPORT: Flat test with categories
-        ExtentTest detailed = detailedReport.createTest(testName);
-        detailed.assignCategory(moduleName, featureName);
+        // DETAILED REPORT: per-module — create or reuse this module's ExtentReports,
+        // then create the test inside it with Feature as category for grouping.
+        String safeModule = (moduleName == null || moduleName.isEmpty()) ? "_Unknown" : moduleName;
+        ExtentReports moduleReport = getOrCreateModuleReport(safeModule);
+        ExtentTest detailed = moduleReport.createTest(testName);
+        if (featureName != null) {
+            detailed.assignCategory(featureName);
+        }
         detailedTest.set(detailed);
+        activeModule.set(safeModule);
 
         // CLIENT REPORT: Hierarchical Module > Feature > Test
         String moduleKey = moduleName;
@@ -214,7 +241,9 @@ public class ExtentReportManager {
         ExtentTest test = detailedTest.get();
         if (test != null) {
             test.log(Status.INFO, step);
-            String base64 = ScreenshotUtil.getScreenshotAsBase64();
+            // Compressed JPEG (~4x smaller than PNG) keeps the report under email size limits
+            // while still being readable for UI screenshots.
+            String base64 = ScreenshotUtil.getCompressedScreenshotAsBase64();
             if (base64 != null) {
                 try {
                     test.addScreenCaptureFromBase64String(base64);
@@ -222,6 +251,34 @@ public class ExtentReportManager {
                     System.out.println("Screenshot attachment failed: " + e.getMessage());
                 }
             }
+        }
+    }
+
+    /**
+     * Log a step + capture a screenshot every time (for high-detail reports).
+     * Alias for logStepWithScreenshot — kept short for inline use in tests.
+     */
+    public static void step(String message) {
+        logStepWithScreenshot(message);
+    }
+
+    /**
+     * Capture a screenshot without a step message — used by BaseTest lifecycle
+     * hooks to record page state at test boundaries.
+     */
+    public static void captureScreenshot(String caption) {
+        ExtentTest test = detailedTest.get();
+        if (test == null) return;
+        String base64 = ScreenshotUtil.getCompressedScreenshotAsBase64();
+        if (base64 == null) return;
+        try {
+            if (caption != null && !caption.isEmpty()) {
+                test.info(caption).addScreenCaptureFromBase64String(base64);
+            } else {
+                test.addScreenCaptureFromBase64String(base64);
+            }
+        } catch (Exception e) {
+            System.out.println("Screenshot attachment failed: " + e.getMessage());
         }
     }
 
@@ -267,7 +324,7 @@ public class ExtentReportManager {
             if (throwable != null) {
                 detailed.log(Status.FAIL, throwable);
             }
-            String base64 = ScreenshotUtil.getScreenshotAsBase64();
+            String base64 = ScreenshotUtil.getCompressedScreenshotAsBase64();
             if (base64 != null) {
                 try {
                     detailed.addScreenCaptureFromBase64String(base64);
@@ -279,6 +336,11 @@ public class ExtentReportManager {
         ExtentTest client = clientTest.get();
         if (client != null) {
             client.fail("FAIL");
+        }
+        // Per-module counter for email prioritization
+        String module = activeModule.get();
+        if (module != null) {
+            failsByModule.merge(module, 1, Integer::sum);
         }
         incrementFailed();
     }
@@ -301,13 +363,20 @@ public class ExtentReportManager {
 
     public static void removeTests() {
         detailedTest.remove();
+        activeModule.remove();
         clientTest.remove();
     }
 
     public static void flushReports() {
-        if (detailedReport != null) {
-            detailedReport.flush();
-            System.out.println("Detailed Report generated: " + detailedReportPath);
+        // Flush every per-module Detailed Report
+        List<String> detailedPaths = new ArrayList<>();
+        for (Map.Entry<String, ExtentReports> e : detailedByModule.entrySet()) {
+            e.getValue().flush();
+            String path = detailedPathsByModule.get(e.getKey());
+            detailedPaths.add(path);
+            int fails = failsByModule.getOrDefault(e.getKey(), 0);
+            System.out.println("Detailed Report generated for module '" + e.getKey()
+                    + "' (" + fails + " failures): " + path);
         }
         if (clientReport != null) {
             clientReport.flush();
@@ -315,8 +384,8 @@ public class ExtentReportManager {
         }
 
         // Send report email (if enabled)
-        EmailUtil.sendReportEmail(detailedReportPath, clientReportPath,
-                totalPassed, totalFailed, totalSkipped);
+        EmailUtil.sendReportEmail(detailedPaths, detailedPathsByModule, failsByModule,
+                clientReportPath, totalPassed, totalFailed, totalSkipped);
     }
 
     // ================================================================
@@ -331,8 +400,23 @@ public class ExtentReportManager {
     public static void incrementFailed() { totalFailed++; }
     public static void incrementSkipped() { totalSkipped++; }
 
+    /** @deprecated Detailed Reports are now per-module — use {@link #getDetailedReportPaths()}. */
+    @Deprecated
     public static String getDetailedReportPath() {
-        return detailedReportPath;
+        if (detailedPathsByModule.isEmpty()) return null;
+        return detailedPathsByModule.values().iterator().next();
+    }
+
+    public static List<String> getDetailedReportPaths() {
+        return new ArrayList<>(detailedPathsByModule.values());
+    }
+
+    public static Map<String, String> getDetailedReportPathsByModule() {
+        return new LinkedHashMap<>(detailedPathsByModule);
+    }
+
+    public static Map<String, Integer> getFailsByModule() {
+        return new HashMap<>(failsByModule);
     }
 
     public static String getClientReportPath() {

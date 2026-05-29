@@ -14,9 +14,16 @@ import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Email Utility — sends test report HTML files via Gmail SMTP.
@@ -40,16 +47,23 @@ public class EmailUtil {
     private EmailUtil() {}
 
     /**
-     * Send test report email with Client report attached.
-     * Matches the eGalvanic iOS Automation email format.
+     * Send test report email with per-module Detailed Reports + Client report attached.
+     * Each module gets its own zipped Detailed Report so reviewers can open just the
+     * module they care about. Modules with failures are attached FIRST so they always
+     * make it under the 20 MB email cap; passing modules are dropped if needed.
      *
-     * @param detailedReportPath path to the detailed HTML report (not attached)
-     * @param clientReportPath   path to the client HTML report (attached)
-     * @param passed             number of passed tests
-     * @param failed             number of failed tests
-     * @param skipped            number of skipped tests
+     * @param detailedPaths        ordered list of all per-module Detailed Report paths
+     * @param pathsByModule        module name → Detailed Report path (for naming attachments)
+     * @param failsByModule        module name → failure count (used for prioritization)
+     * @param clientReportPath     path to the client HTML report (always attached)
+     * @param passed               total passed tests
+     * @param failed               total failed tests
+     * @param skipped              total skipped tests
      */
-    public static void sendReportEmail(String detailedReportPath, String clientReportPath,
+    public static void sendReportEmail(List<String> detailedPaths,
+                                       Map<String, String> pathsByModule,
+                                       Map<String, Integer> failsByModule,
+                                       String clientReportPath,
                                        int passed, int failed, int skipped) {
         if (!AppConstants.SEND_EMAIL_ENABLED) {
             System.out.println("[Email] Email sending is disabled (SEND_EMAIL_ENABLED=false)");
@@ -98,15 +112,13 @@ public class EmailUtil {
             String reportTimestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
             message.setSubject(AppConstants.EMAIL_SUBJECT + " - " + reportTimestamp);
 
-            // Build email body
+            // Build email body — attachments are evaluated first so the body
+            // can accurately reflect what's attached (HTML body is added LAST).
             Multipart multipart = new MimeMultipart();
 
-            // HTML body (matching iOS test report email format)
-            MimeBodyPart htmlBody = new MimeBodyPart();
-            htmlBody.setContent(buildEmailBody(reportTimestamp), "text/html; charset=utf-8");
-            multipart.addBodyPart(htmlBody);
+            long totalAttachedBytes = 0L;
 
-            // Attach client report only (detailed report is internal for QA)
+            // Attach client report (always small — no screenshots)
             if (clientReportPath != null) {
                 File clientFile = new File(clientReportPath);
                 if (clientFile.exists()) {
@@ -114,11 +126,78 @@ public class EmailUtil {
                     attachment.attachFile(clientFile);
                     attachment.setFileName("Client_Report_" + reportTimestamp + ".html");
                     multipart.addBodyPart(attachment);
-                    System.out.println("[Email] Attached: " + clientFile.getName());
+                    totalAttachedBytes += clientFile.length();
+                    System.out.println("[Email] Attached: " + clientFile.getName()
+                            + " (" + formatBytes(clientFile.length()) + ")");
                 }
             }
 
-            message.setContent(multipart);
+            // Per-module Detailed Reports are NOT attached — they live as a CI artifact
+            // (workflow uploads reports/detail-report/) and the email body links to them.
+            // This avoids the 25 MB Gmail cap and lets us capture as many screenshots as we want.
+            // Backward-compat: if ATTACH_DETAILED_REPORT=true, still ZIP-attach (fails-DESC order, 20 MB cap).
+            List<String> moduleSummaries = new ArrayList<>();
+            if (detailedPaths != null && !detailedPaths.isEmpty() && pathsByModule != null) {
+                List<Map.Entry<String, String>> ordered = new ArrayList<>(pathsByModule.entrySet());
+                ordered.sort((a, b) -> {
+                    int fa = failsByModule == null ? 0 : failsByModule.getOrDefault(a.getKey(), 0);
+                    int fb = failsByModule == null ? 0 : failsByModule.getOrDefault(b.getKey(), 0);
+                    if (fa != fb) return Integer.compare(fb, fa); // fails-DESC
+                    return a.getKey().compareTo(b.getKey());      // then alpha
+                });
+                for (Map.Entry<String, String> e : ordered) {
+                    String module = e.getKey();
+                    File html = new File(e.getValue());
+                    if (!html.exists()) continue;
+                    int fc = failsByModule == null ? 0 : failsByModule.getOrDefault(module, 0);
+
+                    // Body summary line for the email
+                    moduleSummaries.add(module + " &mdash; "
+                            + fc + " failure" + (fc == 1 ? "" : "s") + ", "
+                            + formatBytes(html.length()) + " HTML  "
+                            + "<code style='font-size:11px;color:#999;'>"
+                            + html.getName() + "</code>");
+
+                    // Optional ZIP attach if explicitly enabled
+                    if (AppConstants.ATTACH_DETAILED_REPORT) {
+                        String safeName = module.replaceAll("[^a-zA-Z0-9_-]+", "_");
+                        File zipped = zipFile(html, safeName + "_Detailed_" + reportTimestamp + ".zip");
+                        if (zipped == null || !zipped.exists()) continue;
+                        long zipSize = zipped.length();
+                        long remaining = AppConstants.EMAIL_ATTACHMENT_MAX_BYTES - totalAttachedBytes;
+                        if (zipSize <= remaining) {
+                            MimeBodyPart attachment = new MimeBodyPart();
+                            attachment.attachFile(zipped);
+                            attachment.setFileName(zipped.getName());
+                            multipart.addBodyPart(attachment);
+                            totalAttachedBytes += zipSize;
+                            System.out.println("[Email] Attached: " + zipped.getName()
+                                    + " — module='" + module + "', fails=" + fc
+                                    + ", " + formatBytes(html.length()) + " → " + formatBytes(zipSize));
+                        } else {
+                            System.out.println("[Email] Detailed report for module '" + module
+                                    + "' over budget (" + formatBytes(zipSize)
+                                    + " > " + formatBytes(remaining) + ") — not attached");
+                        }
+                    }
+                }
+            }
+
+            // Stash for the body builder.
+            System.setProperty("egalvanic.email.modulesList", String.join("|", moduleSummaries));
+
+            // Now build the HTML body (after attachments so it can reflect their state)
+            // and add it as the FIRST part of the multipart so mail clients render it.
+            MimeBodyPart htmlBody = new MimeBodyPart();
+            htmlBody.setContent(buildEmailBody(reportTimestamp), "text/html; charset=utf-8");
+            // Add to the front by rebuilding the multipart with body first.
+            MimeMultipart finalParts = new MimeMultipart();
+            finalParts.addBodyPart(htmlBody);
+            for (int i = 0; i < multipart.getCount(); i++) {
+                finalParts.addBodyPart(multipart.getBodyPart(i));
+            }
+
+            message.setContent(finalParts);
             message.setSentDate(new Date());
 
             // Send
@@ -180,17 +259,40 @@ public class EmailUtil {
         // ATTACHED REPORTS — Matches iOS format
         // ============================================================
         sb.append("<p style='color:#333;font-size:14px;margin:20px 0 8px;font-weight:500;'>");
-        sb.append("Please find the attached test reports:</p>");
+        sb.append("Reports:</p>");
         sb.append("<ul style='color:#555;font-size:13px;margin:0 0 10px 0;padding-left:20px;line-height:1.8;'>");
-        sb.append("<li><strong>Client Report</strong></li>");
-        sb.append("</ul>");
+        sb.append("<li><strong>Client Report</strong> (attached) &mdash; module/feature pass-fail summary</li>");
 
-        // ============================================================
-        // GITHUB ACTIONS LINK (CI only)
-        // ============================================================
+        // Per-module Detailed Reports — link to CI artifact rather than attach (saves email size,
+        // gives reviewers browser-preview + indefinite retention).
+        String modulesList = System.getProperty("egalvanic.email.modulesList", "");
         String repoUrl = System.getenv("GITHUB_SERVER_URL");
         String repoName = System.getenv("GITHUB_REPOSITORY");
         String runId = System.getenv("GITHUB_RUN_ID");
+        if (!modulesList.isEmpty()) {
+            sb.append("<li><strong>Detailed Reports (per module, with screenshots)</strong> &mdash; ");
+            if (repoUrl != null && repoName != null && runId != null) {
+                String artifactsUrl = repoUrl + "/" + repoName + "/actions/runs/" + runId
+                        + "#artifacts";
+                sb.append("download from the <a href='").append(artifactsUrl)
+                        .append("'>CI run artifacts</a>:");
+            } else {
+                sb.append("available in local <code>reports/detail-report/</code>:");
+            }
+            sb.append("</li>");
+            sb.append("<ul style='color:#555;font-size:12px;margin:4px 0 0 0;padding-left:24px;line-height:1.6;'>");
+            for (String m : modulesList.split("\\|")) {
+                if (!m.isEmpty()) {
+                    sb.append("<li>").append(m).append("</li>");
+                }
+            }
+            sb.append("</ul>");
+        }
+        sb.append("</ul>");
+
+        // ============================================================
+        // GITHUB ACTIONS LINK (CI only) — reuses repoUrl/repoName/runId resolved above
+        // ============================================================
         if (repoUrl != null && repoName != null && runId != null) {
             String actionsUrl = repoUrl + "/" + repoName + "/actions/runs/" + runId;
             sb.append("<p style='margin:10px 0 0;'>");
@@ -234,5 +336,38 @@ public class EmailUtil {
     private static String capitalize(String s) {
         if (s == null || s.isEmpty()) return s;
         return s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase();
+    }
+
+    /**
+     * Zip a single file into the same parent directory under {@code zipName}.
+     * Returns the zip File, or null on failure.
+     */
+    private static File zipFile(File source, String zipName) {
+        File zip = new File(source.getParentFile(), zipName);
+        try (FileOutputStream fos = new FileOutputStream(zip);
+             ZipOutputStream zos = new ZipOutputStream(fos);
+             FileInputStream fis = new FileInputStream(source)) {
+            ZipEntry entry = new ZipEntry(source.getName());
+            zos.putNextEntry(entry);
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = fis.read(buf)) > 0) {
+                zos.write(buf, 0, n);
+            }
+            zos.closeEntry();
+            return zip;
+        } catch (Exception e) {
+            System.out.println("[Email] Failed to zip " + source.getName() + ": " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Human-readable byte size: 12.4 MB / 850 KB / 421 B.
+     */
+    private static String formatBytes(long bytes) {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return String.format("%.1f KB", bytes / 1024.0);
+        return String.format("%.1f MB", bytes / (1024.0 * 1024.0));
     }
 }
