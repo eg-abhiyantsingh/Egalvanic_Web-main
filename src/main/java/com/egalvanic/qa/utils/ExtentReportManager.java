@@ -237,20 +237,38 @@ public class ExtentReportManager {
         }
     }
 
+    /**
+     * Build an HTML log message that renders the screenshot INLINE in the step row
+     * (not as a collapsible "base64 img" badge). ExtentSpark renders log message text
+     * as HTML, so embedding a data-URI &lt;img&gt; tag puts the screenshot directly
+     * inside the step row.
+     */
+    private static String buildInlineScreenshotHtml(String message, String base64) {
+        StringBuilder sb = new StringBuilder();
+        if (message != null && !message.isEmpty()) {
+            sb.append("<div style='margin-bottom:6px;'>").append(message).append("</div>");
+        }
+        sb.append("<img src='data:image/jpeg;base64,").append(base64)
+          .append("' style='max-width:900px;width:100%;height:auto;");
+        sb.append("border:1px solid #444;border-radius:4px;display:block;margin-top:4px;' ");
+        sb.append("alt='step screenshot'/>");
+        return sb.toString();
+    }
+
     public static void logStepWithScreenshot(String step) {
         ExtentTest test = detailedTest.get();
-        if (test != null) {
-            test.log(Status.INFO, step);
-            // Compressed JPEG (~4x smaller than PNG) keeps the report under email size limits
-            // while still being readable for UI screenshots.
-            String base64 = ScreenshotUtil.getCompressedScreenshotAsBase64();
-            if (base64 != null) {
-                try {
-                    test.addScreenCaptureFromBase64String(base64);
-                } catch (Exception e) {
-                    System.out.println("Screenshot attachment failed: " + e.getMessage());
-                }
+        if (test == null) return;
+        String base64 = ScreenshotUtil.getCompressedScreenshotAsBase64();
+        if (base64 != null) {
+            try {
+                // Inline render — the <img> lives inside the step's log message HTML.
+                test.log(Status.INFO, buildInlineScreenshotHtml(step, base64));
+            } catch (Exception e) {
+                System.out.println("Screenshot attachment failed: " + e.getMessage());
+                test.log(Status.INFO, step);
             }
+        } else {
+            test.log(Status.INFO, step);
         }
     }
 
@@ -264,7 +282,7 @@ public class ExtentReportManager {
 
     /**
      * Capture a screenshot without a step message — used by BaseTest lifecycle
-     * hooks to record page state at test boundaries.
+     * hooks to record page state at test boundaries. Renders inline (not as a badge).
      */
     public static void captureScreenshot(String caption) {
         ExtentTest test = detailedTest.get();
@@ -272,11 +290,7 @@ public class ExtentReportManager {
         String base64 = ScreenshotUtil.getCompressedScreenshotAsBase64();
         if (base64 == null) return;
         try {
-            if (caption != null && !caption.isEmpty()) {
-                test.info(caption).addScreenCaptureFromBase64String(base64);
-            } else {
-                test.addScreenCaptureFromBase64String(base64);
-            }
+            test.log(Status.INFO, buildInlineScreenshotHtml(caption, base64));
         } catch (Exception e) {
             System.out.println("Screenshot attachment failed: " + e.getMessage());
         }
@@ -320,17 +334,25 @@ public class ExtentReportManager {
     public static void logFailWithScreenshot(String message, Throwable throwable) {
         ExtentTest detailed = detailedTest.get();
         if (detailed != null) {
-            detailed.log(Status.FAIL, message);
-            if (throwable != null) {
-                detailed.log(Status.FAIL, throwable);
-            }
             String base64 = ScreenshotUtil.getCompressedScreenshotAsBase64();
             if (base64 != null) {
+                // Inline render — fail message AND screenshot share one row with red border
+                String html = "<div style='margin-bottom:6px;'>" + message + "</div>"
+                        + "<img src='data:image/jpeg;base64," + base64
+                        + "' style='max-width:900px;width:100%;height:auto;"
+                        + "border:2px solid #dc3545;border-radius:4px;display:block;margin-top:4px;' "
+                        + "alt='failure screenshot'/>";
                 try {
-                    detailed.addScreenCaptureFromBase64String(base64);
+                    detailed.log(Status.FAIL, html);
                 } catch (Exception e) {
                     System.out.println("Screenshot attachment failed: " + e.getMessage());
+                    detailed.log(Status.FAIL, message);
                 }
+            } else {
+                detailed.log(Status.FAIL, message);
+            }
+            if (throwable != null) {
+                detailed.log(Status.FAIL, throwable);
             }
         }
         ExtentTest client = clientTest.get();
