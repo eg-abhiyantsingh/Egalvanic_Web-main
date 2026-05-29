@@ -187,7 +187,11 @@ jobs:
         continue-on-error: true
         env:
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-          SEND_EMAIL_ENABLED: "false"
+          # Send a per-module email AS SOON AS this job's tests finish — so reviewers
+          # don't have to wait for all 8 parallel groups before they get a Detailed Report.
+          # The email subject is prefixed with the matrix group name (e.g. "Asset Part 3").
+          SEND_EMAIL_ENABLED: "true"
+          EMAIL_SUBJECT_PREFIX: "[${{ matrix.name }}] "
           FULL_SUITE_GROUP: ${{ matrix.group }}
         run: |
           bash .github/scripts/full-suite-dashboard.sh

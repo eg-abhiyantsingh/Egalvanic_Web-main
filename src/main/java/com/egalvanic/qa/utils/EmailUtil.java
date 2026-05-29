@@ -110,7 +110,11 @@ public class EmailUtil {
 
             // Subject: matches iOS format — "eGalvanic Web Automation - Test Report - yyyyMMdd_HHmmss"
             String reportTimestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-            message.setSubject(AppConstants.EMAIL_SUBJECT + " - " + reportTimestamp);
+            // Subject prefix lets each parallel CI matrix job tag its email with the
+            // module name (set via EMAIL_SUBJECT_PREFIX env in the workflow). Empty in local runs.
+            String subjectPrefix = System.getenv("EMAIL_SUBJECT_PREFIX");
+            if (subjectPrefix == null) subjectPrefix = "";
+            message.setSubject(subjectPrefix + AppConstants.EMAIL_SUBJECT + " - " + reportTimestamp);
 
             // Build email body — attachments are evaluated first so the body
             // can accurately reflect what's attached (HTML body is added LAST).
