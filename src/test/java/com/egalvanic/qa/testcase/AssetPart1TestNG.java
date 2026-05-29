@@ -120,7 +120,13 @@ public class AssetPart1TestNG extends BaseTest {
                 "Not on Assets page. URL: " + driver.getCurrentUrl());
         logStep("On Assets page. URL: " + driver.getCurrentUrl());
 
-        // Verify Create Asset button is present (indicates toolbar loaded)
+        // Wait up to 30s for toolbar to render (slower in CI: cold cache, slower disk).
+        // isOnAssetsPage() returns true from URL alone, BEFORE the toolbar lazy-loads —
+        // CI was failing here in 6s because the find fired before the button mounted.
+        try {
+            new org.openqa.selenium.support.ui.WebDriverWait(driver, java.time.Duration.ofSeconds(30))
+                    .until(d -> !d.findElements(CREATE_SUBMIT_BTN).isEmpty());
+        } catch (Exception ignored) { /* fall through — assertFalse below will report */ }
         List<WebElement> createBtns = driver.findElements(CREATE_SUBMIT_BTN);
         Assert.assertFalse(createBtns.isEmpty(), "Create Asset button not found");
         logStep("Create Asset button present");
@@ -838,13 +844,13 @@ public class AssetPart1TestNG extends BaseTest {
         }
         pause(1000);
 
-        // Check subtype state after class selection
+        // Check subtype state after class selection — MUI Autocomplete re-render
+        // can take 5-8s in CI; poll for up to 15s instead of the old fixed 2s pause.
+        try {
+            new org.openqa.selenium.support.ui.WebDriverWait(driver, java.time.Duration.ofSeconds(15))
+                    .until(d -> !d.findElements(ASSET_SUBTYPE_INPUT).isEmpty());
+        } catch (Exception ignored) { /* fall through — assertion below will report */ }
         subtypeInputs = driver.findElements(ASSET_SUBTYPE_INPUT);
-        if (subtypeInputs.isEmpty()) {
-            // Wait a bit more for subtype to appear after class selection
-            pause(2000);
-            subtypeInputs = driver.findElements(ASSET_SUBTYPE_INPUT);
-        }
         Assert.assertFalse(subtypeInputs.isEmpty(),
                 "Subtype field not found after class selection");
         boolean enabledAfter = subtypeInputs.get(0).isEnabled();

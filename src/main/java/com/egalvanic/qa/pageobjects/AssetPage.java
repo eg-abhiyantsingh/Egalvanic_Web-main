@@ -426,9 +426,26 @@ public class AssetPage {
     public boolean isGridPopulated() {
         try {
             recoverFromErrorOverlay();
+
+            // Phase 0: wait for app shell to finish booting — driver.get() triggers a
+            // full SPA reload, so the page starts as "Loading..." with no DOM grid.
+            // CI cold-load takes ~20-30s; bail out as soon as the shell sidebar appears.
+            org.openqa.selenium.JavascriptExecutor js = (org.openqa.selenium.JavascriptExecutor) driver;
+            for (int i = 0; i < 30; i++) {
+                Object body = js.executeScript(
+                        "return document.body && document.body.innerText || '';");
+                String text = body == null ? "" : body.toString();
+                if ((text.contains("DASHBOARDS") || text.contains("Site Overview"))
+                        && !text.startsWith("Loading")) {
+                    break;
+                }
+                pause(1000);
+            }
+
             By gridRow = By.xpath("//div[contains(@class,'MuiDataGrid-row') and @data-rowindex]");
 
-            for (int i = 0; i < 10; i++) {
+            // Phase 1: rows appear (extended to 30s for CI; old 10s was too tight).
+            for (int i = 0; i < 30; i++) {
                 java.util.List<WebElement> rows = driver.findElements(gridRow);
                 if (!rows.isEmpty()) {
                     System.out.println("[AssetPage] Grid has " + rows.size() + " rows");
@@ -437,7 +454,7 @@ public class AssetPage {
                 pause(1000);
             }
 
-            System.out.println("[AssetPage] Grid is empty after waiting 10s");
+            System.out.println("[AssetPage] Grid is empty after waiting 30s");
             return false;
         } catch (Exception e) {
             System.out.println("[AssetPage] Error checking grid: " + e.getMessage());
