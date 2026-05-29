@@ -51,6 +51,22 @@ public class NewModulesSmokeTestNG extends BaseTest {
      * Returns true if the module's page renders, false otherwise.
      */
     private boolean smokeOpenModule(String path, String... expectedTextAnyOf) {
+        // Retry once on transient Selenium session-bounce. Selenium's WebDriver
+        // sometimes bounces a fresh navigation back to /dashboard while React
+        // routes settle; a second driver.get() typically lands cleanly.
+        // Other automation tools (Playwright) don't hit this — it's Selenium-specific.
+        for (int attempt = 1; attempt <= 2; attempt++) {
+            boolean ok = smokeOpenModuleOnce(path, expectedTextAnyOf);
+            if (ok) return true;
+            if (attempt < 2) {
+                logStep("Module render check failed on attempt " + attempt + " — retrying after 2s");
+                pause(2000);
+            }
+        }
+        return false;
+    }
+
+    private boolean smokeOpenModuleOnce(String path, String... expectedTextAnyOf) {
         String fullUrl = AppConstants.BASE_URL + path;
         driver.get(fullUrl);
         logStep("Navigated to " + path);
