@@ -44,3 +44,8 @@ Thumbs.db
 *.jar
 *.war
 *.zip
+
+# Developer product code — READ-ONLY reference clone (Egalvanic/eg-pz-frontend).
+# Lets us browse the frontend source for writing locators. NEVER committed to
+# this repo, NEVER pushed to the developer repo. Update with: git -C eg-pz-frontend-reference pull
+eg-pz-frontend-reference/
