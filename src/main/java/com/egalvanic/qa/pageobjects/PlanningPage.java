@@ -92,14 +92,33 @@ public class PlanningPage {
     // NAVIGATION + GRID READINESS
     // ================================================================
 
-    /** Returns the first VISIBLE search input (the new web renders a hidden duplicate). */
+    /**
+     * Returns the planning-specific VISIBLE search input. The page also has a generic
+     * top-bar "Search" box; typing into THAT does not filter the plan grid. So we
+     * strictly prefer the input whose placeholder contains "Work Order Planning", and
+     * only fall back to any visible "Search" input if the specific one isn't found.
+     */
     public WebElement visibleSearchInput() {
+        // Pass 1: planning-specific placeholder
+        for (WebElement el : driver.findElements(
+                By.xpath("//input[contains(@placeholder,'Search Work Order Planning')]"))) {
+            try { if (el.isDisplayed()) return el; } catch (Exception ignored) {}
+        }
+        // Pass 2: any visible generic search input (last resort)
         for (WebElement el : driver.findElements(SEARCH_INPUT)) {
-            try {
-                if (el.isDisplayed()) return el;
-            } catch (Exception ignored) {}
+            try { if (el.isDisplayed()) return el; } catch (Exception ignored) {}
         }
         throw new org.openqa.selenium.NoSuchElementException("No visible search input on Planning page");
+    }
+
+    /** Set a React-controlled input's value via the native setter + input/change events. */
+    private void reactSetValue(WebElement el, String value) {
+        js.executeScript(
+            "var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
+            + "s.call(arguments[0], arguments[1]);"
+            + "arguments[0].dispatchEvent(new Event('input',{bubbles:true}));"
+            + "arguments[0].dispatchEvent(new Event('change',{bubbles:true}));",
+            el, value);
     }
 
     /** Two-phase wait: app shell hydrated, then the DataGrid is present. */
@@ -152,55 +171,50 @@ public class PlanningPage {
     // SEARCH
     // ================================================================
 
-    /** Type into the planning search; JS native-setter fallback if React re-mounts the input. */
+    /**
+     * Filter the plan grid by {@code term}. Uses the native React value-setter as the
+     * PRIMARY mechanism (proven to reliably trigger the grid filter live), then verifies
+     * the box actually holds the term. Selenium sendKeys is only a secondary nudge.
+     */
     public void search(String term) {
-        org.openqa.selenium.WebDriverException last = null;
         for (int attempt = 0; attempt < 3; attempt++) {
             try {
                 WebElement box = visibleSearchInput();
-                box.click();
-                box.sendKeys(Keys.chord(Keys.CONTROL, "a"));
-                box.sendKeys(Keys.DELETE);
-                box = visibleSearchInput();
-                box.sendKeys(term);
+                // Clear then set via native setter (fires React onChange)
+                reactSetValue(box, "");
+                pause(150);
+                reactSetValue(box, term);
                 pause(2500);
-                return;
-            } catch (org.openqa.selenium.ElementNotInteractableException
-                    | org.openqa.selenium.StaleElementReferenceException e) {
-                last = e;
+                // Verify the value landed; if not, retry
+                String val = box.getDomProperty("value");
+                if (val != null && val.contains(term)) return;
+                // Secondary nudge with sendKeys in case the component needs key events
+                try {
+                    box = visibleSearchInput();
+                    box.sendKeys(" ");
+                    box.sendKeys(Keys.BACK_SPACE);
+                    pause(1500);
+                } catch (Exception ignored) {}
+                if (box.getDomProperty("value") != null && box.getDomProperty("value").contains(term)) return;
+            } catch (org.openqa.selenium.StaleElementReferenceException e) {
+                pause(500);
+            } catch (Exception e) {
                 pause(500);
             }
-        }
-        // Fallback: native React-compatible value setter
-        try {
-            WebElement box = visibleSearchInput();
-            js.executeScript(
-                "var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
-                + "s.call(arguments[0],'');arguments[0].dispatchEvent(new Event('input',{bubbles:true}));"
-                + "s.call(arguments[0],arguments[1]);arguments[0].dispatchEvent(new Event('input',{bubbles:true}));",
-                box, term);
-            pause(2500);
-        } catch (Exception ignored) {
-            if (last != null) throw last;
         }
     }
 
     public void clearSearch() {
-        try {
-            WebElement box = visibleSearchInput();
-            box.click();
-            box.sendKeys(Keys.chord(Keys.CONTROL, "a"));
-            box.sendKeys(Keys.DELETE);
-            pause(2000);
-        } catch (Exception e) {
-            // JS fallback
+        for (int attempt = 0; attempt < 3; attempt++) {
             try {
                 WebElement box = visibleSearchInput();
-                js.executeScript(
-                    "var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
-                    + "s.call(arguments[0],'');arguments[0].dispatchEvent(new Event('input',{bubbles:true}));", box);
-                pause(2000);
-            } catch (Exception ignored) {}
+                reactSetValue(box, "");
+                pause(1500);
+                String val = box.getDomProperty("value");
+                if (val == null || val.isEmpty()) return;
+            } catch (Exception e) {
+                pause(400);
+            }
         }
     }
 
@@ -241,13 +255,30 @@ public class PlanningPage {
      */
     public boolean createPlan(String planName, String description) {
         if (!isDialogOpen() && !openCreateDialog()) return false;
-        selectFirstComboOption("Plan Type");
-        selectFirstComboOption("Facility");
+        // Plan Type + Facility auto-default to valid values (verified live), so we only
+        // fill Plan Name (the sole field that gates the Create button). If Create stays
+        // disabled afterwards, a required combo was empty — then we pick its first option.
         typeByLabel("Plan Name", planName);
         if (description != null && !description.isEmpty()) {
             try { typeByLabel("Description", description); } catch (Exception ignored) {}
         }
+        pause(400);
+        if (!isCreateEnabled()) {
+            selectFirstComboOption("Plan Type");
+            selectFirstComboOption("Facility");
+            // re-assert the name in case a combo interaction blurred/cleared it
+            typeByLabel("Plan Name", planName);
+            pause(400);
+        }
         return submitCreate();
+    }
+
+    /** Is the dialog's Create button currently enabled? */
+    public boolean isCreateEnabled() {
+        for (WebElement b : driver.findElements(DIALOG_CREATE_SUBMIT)) {
+            try { if (b.isDisplayed() && b.isEnabled()) return true; } catch (Exception ignored) {}
+        }
+        return false;
     }
 
     public boolean submitCreate() {
@@ -283,9 +314,13 @@ public class PlanningPage {
     // EDIT
     // ================================================================
 
-    /** Open the Edit dialog for the row whose Name (title) matches; falls back to first row. */
+    /**
+     * Click the Edit button for the row whose Name (title) EXACTLY matches; falls back to
+     * the first row. NOTE: "Edit Plan" navigates to the full plan editor page
+     * (/quotes/{id}) — it is NOT a dialog. Returns true once the editor page is reached.
+     */
     public boolean openEditForPlan(String planName) {
-        WebElement row = findRowByName(planName);
+        WebElement row = planName == null ? null : findRowByExactName(planName);
         WebElement editBtn = null;
         if (row != null) {
             List<WebElement> btns = row.findElements(EDIT_PLAN_BTN);
@@ -296,22 +331,22 @@ public class PlanningPage {
             if (!any.isEmpty()) editBtn = any.get(0);
         }
         if (editBtn == null) return false;
+        String before = driver.getCurrentUrl();
         try { editBtn.click(); } catch (Exception e) { js.executeScript("arguments[0].click();", editBtn); }
-        return waitForDialog();
+        // Editor opens as a route change to /quotes/{id} (the plan/quote editor)
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(15)).until(d -> {
+                String u = d.getCurrentUrl();
+                return isOnEditorPage() || (!u.equals(before) && !u.endsWith("/planning"));
+            });
+        } catch (Exception ignored) {}
+        return isOnEditorPage();
     }
 
-    public boolean saveEdit() {
-        // Edit dialog may use "Save"/"Update" or reuse "Create"
-        for (By submit : new By[]{ DIALOG_SAVE_SUBMIT, DIALOG_CREATE_SUBMIT }) {
-            List<WebElement> btns = driver.findElements(submit);
-            for (WebElement b : btns) {
-                if (b.isDisplayed() && b.isEnabled()) {
-                    try { b.click(); } catch (Exception e) { js.executeScript("arguments[0].click();", b); }
-                    return waitForDialogClose();
-                }
-            }
-        }
-        return false;
+    /** True when the current URL is the plan editor (quote) page. */
+    public boolean isOnEditorPage() {
+        String u = driver.getCurrentUrl();
+        return u.contains("/quotes/") || u.contains("/plan/") || u.matches(".*/planning/[a-f0-9-]{6,}.*");
     }
 
     // ================================================================
@@ -319,7 +354,7 @@ public class PlanningPage {
     // ================================================================
 
     public boolean openDeleteForPlan(String planName) {
-        WebElement row = findRowByName(planName);
+        WebElement row = planName == null ? null : findRowByExactName(planName);
         WebElement delBtn = null;
         if (row != null) {
             List<WebElement> btns = row.findElements(DELETE_PLAN_BTN);
@@ -364,8 +399,35 @@ public class PlanningPage {
         return null;
     }
 
+    /**
+     * Find a grid row whose title cell EXACTLY equals the given name (case-insensitive,
+     * trimmed). Required because plan names can be prefixes of one another
+     * (e.g. "AutoPlan_X_del" vs "AutoPlan_X_delcancel") — a contains() match is ambiguous.
+     */
+    public WebElement findRowByExactName(String name) {
+        if (name == null) return null;
+        String target = name.trim().toLowerCase();
+        for (WebElement row : driver.findElements(GRID_ROWS)) {
+            try {
+                List<WebElement> titleCells = row.findElements(
+                        By.cssSelector(".MuiDataGrid-cell[data-field='title']"));
+                if (!titleCells.isEmpty()
+                        && titleCells.get(0).getText().trim().toLowerCase().equals(target)) {
+                    return row;
+                }
+            } catch (Exception ignored) {}
+        }
+        return null;
+    }
+
+    /** Contains-match presence (use for created-plan visibility where uniqueness is guaranteed). */
     public boolean isPlanInGrid(String name) {
         return findRowByName(name) != null || bodyText().toLowerCase().contains(name.toLowerCase());
+    }
+
+    /** Exact-match presence (use for delete/edit verification to avoid prefix collisions). */
+    public boolean isExactPlanInGrid(String name) {
+        return findRowByExactName(name) != null;
     }
 
     /** All Est. Hours (total_hours) cell texts in the current grid page. */
