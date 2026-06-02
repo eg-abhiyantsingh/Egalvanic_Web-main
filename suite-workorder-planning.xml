@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<!--
+  Work Order Planning [OPERATIONS] — 32 TCs
+  Route: /planning (distinct from Work Orders /sessions).
+  Scope: Plan CRUD, Search, Edit, Totals (Est. Hours), Edge.
+  Run: mvn test -DsuiteXmlFile=suite-workorder-planning.xml
+-->
+<suite name="Work Order Planning Suite (32 TCs)" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <test name="Work Order Planning — Plan CRUD / Search / Totals (32 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkOrderPlanningTestNG"/>
+        </classes>
+    </test>
+
+</suite>
