@@ -159,6 +159,16 @@ public class AppConstants {
     public static final String MODULE_WORK_ORDERS = "Work Orders";
     public static final String FEATURE_CREATE_WORK_ORDER = "Create Work Order";
     public static final String FEATURE_EDIT_WORK_ORDER = "Edit Work Order";
+
+    // Work Order Planning (OPERATIONS) — distinct module at /planning (NOT /sessions).
+    // A Plan is the template/definition that rolls up into Work Orders.
+    public static final String MODULE_WORK_ORDER_PLANNING = "Work Order Planning";
+    public static final String FEATURE_PLAN_LIST = "Plan List";
+    public static final String FEATURE_PLAN_SEARCH = "Plan Search";
+    public static final String FEATURE_PLAN_CREATE = "Create Plan";
+    public static final String FEATURE_PLAN_EDIT = "Edit Plan";
+    public static final String FEATURE_PLAN_DELETE = "Delete Plan";
+    public static final String FEATURE_PLAN_TOTALS = "Plan Totals";
     public static final String FEATURE_WO_IR_PHOTOS = "IR Photos";
     public static final String FEATURE_WO_LOCATIONS = "Locations";
     public static final String FEATURE_WO_TASKS = "Tasks";
