@@ -46,3 +46,8 @@ java -cp "target/classes:target/test-classes:$(cat /tmp/cp.txt)" \
 - `@AfterMethod` monitors console + network on every PASS; set
   `STRICT_HEALTH_GATES=true` to make those global checks hard-fail the build.
 - `BaseTest` honours `-Dchrome.binary` / `CHROME_BINARY` for non-managed Chrome.
+- `BaseTest` sets `acceptInsecureCerts(true)` — the QA host uses a self-signed /
+  internal-CA cert. A browser that doesn't trust it (Playwright Chromium, clean CI
+  image) otherwise gets stuck on Chrome's "Your connection is not private"
+  interstitial, the login form never renders, and login fails with a misleading
+  "Login failed after 3 attempts" timeout. If you see that, suspect TLS first.

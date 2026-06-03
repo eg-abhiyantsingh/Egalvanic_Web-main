@@ -157,6 +157,14 @@ public class BaseTest {
             opts.setBinary(AppConstants.CHROME_BINARY);
         }
 
+        // Accept the QA host's self-signed / internal-CA TLS certificate. Without
+        // this, a browser that doesn't trust the cert (e.g. a Playwright-managed
+        // Chromium or a clean CI image) is stuck on Chrome's "Your connection is
+        // not private" interstitial, the login form never renders, and BaseTest
+        // fails with a misleading "Login failed after 3 attempts" timeout.
+        opts.setAcceptInsecureCerts(true);
+        opts.addArguments("--ignore-certificate-errors");
+
         // Capture native SEVERE browser logs so BrowserErrorCapture can drain them
         // in addition to its JS-injected hooks.
         org.openqa.selenium.logging.LoggingPreferences logPrefs =
