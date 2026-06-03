@@ -52,6 +52,7 @@ ALL_GROUPS=(
   "ai-analyzer"
   "curated-bug-verification"
   "bces-iq-smoke"
+  "workorder-planning"
 )
 ALL_GROUP_NAMES=(
   "Auth + Site"
@@ -70,8 +71,9 @@ ALL_GROUP_NAMES=(
   "AI Page Analyzer"
   "Curated Bug Verification"
   "BCES-IQ Tenant Smoke"
+  "Work Order Planning"
 )
-ALL_GROUP_TESTS=(56 135 234 69 76 65 76 105 62 37 56 4 7 3 8 3)
+ALL_GROUP_TESTS=(56 135 234 69 76 65 76 105 62 37 56 4 7 3 8 3 32)
 ALL_GROUP_XMLS=(
   "suite-auth-site.xml"
   "suite-location-task.xml"
@@ -89,6 +91,7 @@ ALL_GROUP_XMLS=(
   "suite-ai-analyzer.xml"
   "deep-bug-verification-testng.xml"
   "smoke-bces-iq-testng.xml"
+  "suite-workorder-planning.xml"
 )
 
 # ─────────────────────────────────────────────────────
@@ -112,6 +115,7 @@ get_group_index() {
     ai-analyzer)          echo 13 ;;
     curated-bug-verification) echo 14 ;;
     bces-iq-smoke)        echo 15 ;;
+    workorder-planning)   echo 16 ;;
     # Backwards-compat aliases for old workflow dispatch values.
     # Connection and SLD modules are excluded from CI in May 2026 release.
     auth-site-connection) echo 0 ;;

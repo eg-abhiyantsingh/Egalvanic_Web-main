@@ -1,7 +1,7 @@
-name: Parallel Full Suite — Core Regression (816 TCs)
+name: Parallel Full Suite — Core Regression (848 TCs)
 
 # ============================================================
-# PARALLEL FULL SUITE — 8 Groups Running Simultaneously
+# PARALLEL FULL SUITE — 9 Groups Running Simultaneously
 # (Connection + SLD excluded — hidden/deprecated in May 2026)
 # ============================================================
 #
@@ -14,7 +14,7 @@ name: Parallel Full Suite — Core Regression (816 TCs)
 #   Parallel  (this workflow):   ~1-1.5 hours (groups run simultaneously)
 #   Speedup: ~3-4x
 #
-# Groups (8 parallel jobs):
+# Groups (9 parallel jobs):
 #   Group  1: Auth + Site                 ( 56 TCs)  ~15 min  (Connection hidden in May 2026)
 #   Group  2: Location + Task             (135 TCs)  ~30 min
 #   Group  3: Work Order + Issue          (234 TCs)  ~55 min  [bottleneck]
@@ -23,6 +23,7 @@ name: Parallel Full Suite — Core Regression (816 TCs)
 #   Group  6: Asset Part 4               ( 65 TCs)  ~20 min
 #   Group  7: Asset Part 5               ( 76 TCs)  ~20 min
 #   Group  8: Dashboard + BugHunt        (105 TCs)  ~30 min
+#   Group  9: Work Order Planning        ( 32 TCs)  ~12 min  (OPERATIONS, /planning)
 # Excluded (modules deprecated/hidden in May 2026): Connection (74 TCs), SLD (71 TCs)
 #
 # Moved to parallel-suite-2.yml:
@@ -62,7 +63,7 @@ jobs:
 
     strategy:
       fail-fast: false
-      max-parallel: 8
+      max-parallel: 9
 
       matrix:
         include:
@@ -119,6 +120,12 @@ jobs:
             xml: suite-dashboard-bughunt.xml
             tests: 105
             stagger: 70
+
+          - group: workorder-planning
+            name: "Work Order Planning"
+            xml: suite-workorder-planning.xml
+            tests: 32
+            stagger: 80
 
     name: "${{ matrix.name }} (${{ matrix.tests }} TCs)"
 
