@@ -8,7 +8,7 @@ name: Parallel Suite 2 — Curated Bug Verification + AI + Smoke + Load + BCES-I
 # regression gate (client-facing), lighter AI-powered and exploratory
 # test modules, plus a cross-tenant smoke for acme.bces-iq.com.
 #
-# Groups (9 parallel jobs):
+# Groups (10 parallel jobs):
 #   Group  1: Curated Bug Verification     (  8 TCs)  ~15 min  [CLIENT]
 #   Group  2: Smoke Suites                 ( 37 TCs)  ~10 min
 #   Group  3: Load + API + Critical Path   ( 62 TCs)  ~15 min
@@ -18,8 +18,9 @@ name: Parallel Suite 2 — Curated Bug Verification + AI + Smoke + Load + BCES-I
 #   Group  7: AI Page Analyzer             (  3 TCs)  ~10 min
 #   Group  8: BCES-IQ Tenant Smoke         (  3 TCs)  ~5 min   [NEW TENANT]
 #   Group  9: Documentation-Inspired Tests ( 17 TCs)  ~10 min  [NEW 2026-04-27]
+#   Group 10: Quality Gates (All Pages)    ( 67 TCs)  ~25 min  [NEW 2026-06-03: a11y+perf+boundary across all 28 routes]
 #
-# Total: ~197 TCs across 9 groups.
+# Total: ~264 TCs across 10 groups.
 #
 # The BCES-IQ group runs the SAME test framework against
 # https://acme.bces-iq.com using a different user (shubham.goswami+acme@...)
@@ -55,7 +56,7 @@ jobs:
 
     strategy:
       fail-fast: false
-      max-parallel: 9
+      max-parallel: 10
 
       matrix:
         include:
@@ -119,6 +120,19 @@ jobs:
             xml: suite-doc-inspired.xml
             tests: 17
             stagger: 65
+
+          # ──────────────────────────────────────────────
+          # NEW (2026-06-03): Cross-cutting Quality Gates — EVERY page
+          # Phase4QualityGatesTestNG runs axe-core WCAG a11y + client-side
+          # performance budgets + boundary/negative input + offline resilience
+          # across all 28 navigable routes (nav + standalone). Surfaces a11y,
+          # perf, and uncaught-JS-crash bugs that functional scripts miss.
+          # ──────────────────────────────────────────────
+          - group: quality-gates
+            name: "Quality Gates (All Pages)"
+            xml: suite-quality-gates.xml
+            tests: 67
+            stagger: 68
 
           # ──────────────────────────────────────────────
           # Cross-tenant: BCES-IQ tenant smoke
