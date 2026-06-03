@@ -4,8 +4,15 @@
 **Date:** 2026-06-03
 **Classification:** REAL_BUG (98% confidence — reproduced on ~every input across two live runs)
 **Severity:** HIGH (uncaught runtime exception fires on essentially every keystroke in a core search box)
-**Page URL:** https://acme.qa.egalvanic.ai/planning
+**Page URL:** https://acme.qa.egalvanic.ai/planning (+ detail screens — see update)
 **Bundle:** `assets/index-D8s0l98b.js` at `2729:221111`
+
+> **UPDATE 2026-06-03 (detail-page sweep):** The same `Qe is not a function` crash
+> also fires when opening **detail screens** — Issue detail threw it **7×**, and
+> Account and Opportunity detail threw it once each (`Phase4QualityGatesTestNG.testDetailPageHealth`).
+> So this is not a Planning-search-only defect: the broken `Qe` binding is hit on
+> multiple interaction paths app-wide. Same bundle location `index-*.js:2729:221111`.
+> Fixing the single `Qe` call site should resolve all of them.
 
 ## Summary
 

@@ -32,9 +32,22 @@ public class AIPageAnalyzerTestNG extends BaseTest {
     private static final String MODULE = "AI Page Analysis";
     private static final String FEATURE = "Page Discovery";
 
-    private static final String[] PAGES = {
-            "Dashboard", "Assets", "Locations", "Connections",
-            "Issues", "Jobs", "Tasks"
+    // {label, path}. Full navigable surface (SLD + Connections excluded — hidden in
+    // May 2026). The AI agent discovers testable elements + suggests scenarios on EVERY
+    // page, not a 7-page sample, so generated coverage tracks the whole app.
+    private static final String[][] PAGES = {
+            {"Dashboard", "/dashboard"}, {"Sales Overview", "/sales-overview"},
+            {"Ops Dashboard", "/ops-dashboard"}, {"Arc Flash", "/arc-flash"},
+            {"PM Readiness", "/pm-readiness"}, {"Reporting", "/reporting"},
+            {"Assets", "/assets"}, {"Locations", "/locations"}, {"Tasks", "/tasks"},
+            {"Issues", "/issues"}, {"Attachments", "/attachments"}, {"Planning", "/planning"},
+            {"EMPs", "/emps"}, {"Work Orders", "/sessions"}, {"Scheduling", "/scheduling"},
+            {"Goals", "/goals"}, {"Opportunities", "/opportunities"}, {"Accounts", "/accounts"},
+            {"Admin / Settings", "/admin"}, {"Audit Log", "/admin/audit-log"},
+            {"eg-Forms", "/eg-forms"}, {"Equipment Library", "/equipment-library"},
+            {"Maintenance", "/maintenance"}, {"Notes", "/notes"},
+            {"Panel Schedules", "/panel-schedules"}, {"Release Updates", "/release-updates"},
+            {"Z-University", "/z-university"}, {"Jobs", "/jobs"},
     };
 
     private final Map<String, PageAnalysis> allAnalyses = new LinkedHashMap<>();
@@ -50,9 +63,11 @@ public class AIPageAnalyzerTestNG extends BaseTest {
         int totalElements = 0;
         int totalScenarios = 0;
 
-        for (String page : PAGES) {
+        for (String[] entry : PAGES) {
+            String page = entry[0];
+            String path = entry[1];
             try {
-                navigateViaSidebar(page);
+                navigateToPath(path);
                 pause(2000);
                 FlakinessPrevention.waitForPageReady(driver);
                 dismissBackdrops();
@@ -121,7 +136,7 @@ public class AIPageAnalyzerTestNG extends BaseTest {
 
         // Analyze the Dashboard page with AI
         try {
-            navigateViaSidebar("Dashboard");
+            navigateToPath("/dashboard");
             pause(2000);
             FlakinessPrevention.waitForPageReady(driver);
             dismissBackdrops();
@@ -148,18 +163,8 @@ public class AIPageAnalyzerTestNG extends BaseTest {
     // HELPERS
     // ================================================================
 
-    private void navigateViaSidebar(String linkText) {
-        try {
-            org.openqa.selenium.JavascriptExecutor js = (org.openqa.selenium.JavascriptExecutor) driver;
-            js.executeScript(
-                "var items = document.querySelectorAll('span, a');" +
-                "for (var i = 0; i < items.length; i++) {" +
-                "  if (items[i].textContent.trim() === '" + linkText + "' && items[i].offsetWidth > 0) {" +
-                "    items[i].click(); return;" +
-                "  }" +
-                "}");
-        } catch (Exception e) {
-            driver.get(com.egalvanic.qa.constants.AppConstants.BASE_URL + "/" + linkText.toLowerCase());
-        }
+    /** Robust direct-URL navigation — works for every route regardless of sidebar visibility. */
+    private void navigateToPath(String path) {
+        driver.get(com.egalvanic.qa.constants.AppConstants.BASE_URL + path);
     }
 }

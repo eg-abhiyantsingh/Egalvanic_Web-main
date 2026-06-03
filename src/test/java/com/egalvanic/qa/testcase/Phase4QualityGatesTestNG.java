@@ -25,6 +25,12 @@ import java.time.Duration;
  *   - Slow / never-settling page loads                            [type I client-side]
  *   - Crashes/hangs on boundary + malicious input                 [type B + J]
  *   - Broken behavior when the network drops mid-flow             [type L]
+ *   - Broken images / blank / clipped layout on any page          [type K]
+ *   - Unhealthy or inaccessible DETAIL screens (drill-in)         [type H/K]
+ *   - Horizontal-overflow responsive breakage at phone widths     [type K]
+ *
+ * Coverage: all 50 navigable routes (NAV_ROUTES + standalone pages + Settings
+ * deep sub-views), every grid module's detail page, and a phone-viewport pass.
  *
  * Extends BaseTest → shares login + the auto health gate. Read-only (no data
  * mutation) so it's safe to run anywhere.
@@ -78,6 +84,31 @@ public class Phase4QualityGatesTestNG extends BaseTest {
             {"Release Updates",  "/release-updates", "main",                             10000L},
             {"Z-University",     "/z-university",     "main",                             14000L},
             {"Reporting Builder","/reporting/builder","main",                            12000L},
+            {"Reporting Legacy", "/reporting/legacy","main",                             12000L},
+            {"Jobs",             "/jobs",            "main",                             12000L},
+            {"Jobs v2",          "/jobs-v2",         "main",                             12000L},
+            {"AI Agent",         "/agent",           "main",                             14000L},
+            {"Analyzer",         "/analyzer",        "main",                             14000L},
+            // ── Settings/Admin deep sub-views (Settings.jsx, addressed via ?view=<key>) ──
+            // Each is a distinct screen reached through the Settings tab tree; covering
+            // them via direct ?view= deep-links exercises pages no functional suite touches.
+            {"Settings: Sites",            "/admin?view=sites",                       "main", 12000L},
+            {"Settings: Offices",          "/admin?view=offices",                     "main", 12000L},
+            {"Settings: Users",            "/admin?view=users",                       "main", 12000L},
+            {"Settings: Asset Classes",    "/admin?view=classes.assets.classes",      "main", 12000L},
+            {"Settings: Asset Core Attrs", "/admin?view=classes.assets.coreAttributes","main",12000L},
+            {"Settings: Asset Subtypes",   "/admin?view=classes.assets.subtypes",     "main", 12000L},
+            {"Settings: Issue Classes",    "/admin?view=classes.issues.classes",      "main", 12000L},
+            {"Settings: Issue Core Attrs", "/admin?view=classes.issues.coreAttributes","main",12000L},
+            {"Settings: PM Procedures",    "/admin?view=pm.procedures.list",          "main", 14000L},
+            {"Settings: PM Proc Masters",  "/admin?view=pm.procedures.masters",       "main", 14000L},
+            {"Settings: PM Shortcuts",     "/admin?view=pm.shortcuts",                "main", 12000L},
+            {"Settings: Test Equip Lib",   "/admin?view=pm.testEquipment.library",    "main", 12000L},
+            {"Settings: Test Equipment",   "/admin?view=pm.testEquipment.equipment",  "main", 12000L},
+            {"Settings: Material Library", "/admin?view=pm.materials.library",        "main", 12000L},
+            {"Settings: Material Presets", "/admin?view=pm.materials.presets",        "main", 12000L},
+            {"Settings: Labor Types",      "/admin?view=pm.labor.types",              "main", 12000L},
+            {"Settings: Labor Unions",     "/admin?view=pm.labor.unions",             "main", 12000L},
         };
     }
 
@@ -184,6 +215,131 @@ public class Phase4QualityGatesTestNG extends BaseTest {
             pause(1500);
         }
         ExtentReportManager.logPass("Page remained responsive + non-blank while offline");
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // Broken-asset + blank/clipped-page sweep across EVERY route. Cheap
+    // (no axe) so it runs the full route set: catches broken <img> (404 /
+    // naturalWidth 0), blank pages, error banners, and clipped layout that
+    // a functional test on a single happy-path element would never notice.
+    // ────────────────────────────────────────────────────────────────────
+    @Test(dataProvider = "routes",
+          description = "Assets+state: no broken images / blank / clipped layout per page")
+    public void testRouteAssetsAndState(String label, String path, String requiredCss, long budget) {
+        ExtentReportManager.createTest(MODULE, "Broken Assets + UI State", "Assets_" + label);
+        navigate(path);
+        skipIfNotRendered(label, path);
+        logStep("Checking images + UI state on " + label);
+        java.util.List<com.egalvanic.qa.utils.verify.AssetLoadVerifier.BrokenAsset> broken =
+                com.egalvanic.qa.utils.verify.AssetLoadVerifier.findBrokenImages(driver);
+        // UI state first (blank/error/clipped) — hard fail.
+        com.egalvanic.qa.utils.verify.UIStateValidator.assertHealthy(driver, label + " (" + path + ")");
+        // Then broken images — hard fail with the offending URLs.
+        com.egalvanic.qa.utils.verify.AssetLoadVerifier.assertAllImagesLoaded(driver, label + " (" + path + ")");
+        ExtentReportManager.logPass(label + " — all images loaded, page not blank/clipped"
+                + (broken.isEmpty() ? "" : " (note: " + broken.size() + " transient)"));
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // Detail-page coverage: drill into the FIRST row of each grid module and
+    // health-check the detail screen. Detail/editor pages are the biggest
+    // untested surface — functional suites mostly exercise the list grids.
+    // ────────────────────────────────────────────────────────────────────
+    @DataProvider(name = "gridModules")
+    public Object[][] gridModules() {
+        return new Object[][]{
+            {"Asset Detail",       "/assets"},
+            {"Work Order Detail",  "/sessions"},
+            {"Issue Detail",       "/issues"},
+            {"Account Detail",     "/accounts"},
+            {"Opportunity Detail", "/opportunities"},
+            {"Task Detail",        "/tasks"},
+            {"Location Detail",    "/locations"},
+        };
+    }
+
+    @Test(dataProvider = "gridModules",
+          description = "Detail page: open first row, detail screen must be healthy + accessible")
+    public void testDetailPageHealth(String label, String listPath) {
+        ExtentReportManager.createTest(MODULE, "Detail Page Health", "Detail_" + label);
+        navigate(listPath);
+        skipIfNotRendered(label, listPath);
+        String urlBefore = driver.getCurrentUrl();
+        // Find the first real data row (DataGrid row, ARIA row with an id, or table row).
+        java.util.List<org.openqa.selenium.WebElement> rows = driver.findElements(By.cssSelector(
+                ".MuiDataGrid-row, [role='row'][data-id], table tbody tr"));
+        org.openqa.selenium.WebElement row = rows.stream()
+                .filter(org.openqa.selenium.WebElement::isDisplayed).findFirst().orElse(null);
+        if (row == null) {
+            logStep("No data rows on " + label + " — nothing to drill into; skipping");
+            throw new org.testng.SkipException("No rows to open on " + listPath + " (empty grid)");
+        }
+        logStep("Opening first row of " + label);
+        try {
+            // Click a cell with content (more reliable than the row container) via JS.
+            org.openqa.selenium.WebElement target = row.findElements(
+                    By.cssSelector(".MuiDataGrid-cell, td, a, button")).stream()
+                    .filter(org.openqa.selenium.WebElement::isDisplayed).findFirst().orElse(row);
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click();", target);
+        } catch (Exception e) {
+            logStep("Row click note: " + e.getMessage());
+        }
+        pause(2500);
+        dismissBackdrops();
+        // Detail opened if the URL changed (e.g. /assets/<id>) OR a dialog/drawer appeared.
+        boolean urlChanged = !driver.getCurrentUrl().equals(urlBefore);
+        boolean overlay = !driver.findElements(By.cssSelector(
+                "[role='dialog'], .MuiDialog-root, .MuiDrawer-root .MuiBox-root")).isEmpty();
+        if (!urlChanged && !overlay) {
+            logStep(label + ": row click did not open a detail view — skipping (not a failure)");
+            throw new org.testng.SkipException("Row click on " + listPath + " opened no detail view");
+        }
+        logStepWithScreenshot(label + " detail opened");
+        // The detail screen must be healthy (no JS crash / failed XHR / blank) and accessible.
+        verifyPageHealth(label + " detail");
+        verifyAccessibility(label + " detail");
+        ExtentReportManager.logPass(label + " detail screen is healthy + accessible");
+    }
+
+    // ────────────────────────────────────────────────────────────────────
+    // Mobile-responsive layout: at a phone viewport the page must not
+    // overflow horizontally (a classic responsive bug) nor go blank/clipped.
+    // Representative key pages (not all 50) to keep runtime sane — the set is
+    // logged so coverage is explicit, not silently truncated.
+    // ────────────────────────────────────────────────────────────────────
+    @DataProvider(name = "keyPages")
+    public Object[][] keyPages() {
+        return new Object[][]{
+            {"Dashboard", "/dashboard"}, {"Assets", "/assets"}, {"Work Orders", "/sessions"},
+            {"Issues", "/issues"}, {"Planning", "/planning"}, {"Locations", "/locations"},
+            {"Tasks", "/tasks"}, {"Accounts", "/accounts"}, {"Scheduling", "/scheduling"},
+            {"Reporting", "/reporting"}, {"Admin", "/admin"}, {"Equipment Library", "/equipment-library"},
+        };
+    }
+
+    @Test(dataProvider = "keyPages",
+          description = "Responsive: no horizontal overflow / blank at 390px phone viewport")
+    public void testMobileResponsive(String label, String path) {
+        ExtentReportManager.createTest(MODULE, "Responsive (mobile)", "Mobile_" + label);
+        org.openqa.selenium.Dimension original = driver.manage().window().getSize();
+        try {
+            driver.manage().window().setSize(new org.openqa.selenium.Dimension(390, 844)); // iPhone-ish
+            navigate(path);
+            skipIfNotRendered(label, path);
+            logStep("Checking 390px layout for " + label);
+            // Horizontal overflow: document wider than the viewport by a real margin.
+            Long overflow = (Long) ((JavascriptExecutor) driver).executeScript(
+                    "return Math.max(0, (document.documentElement.scrollWidth||0) "
+                    + "- (document.documentElement.clientWidth||0));");
+            com.egalvanic.qa.utils.verify.UIStateValidator.assertHealthy(driver, label + " @390px");
+            if (overflow != null && overflow > 24) {
+                throw new AssertionError("[" + label + "] horizontal overflow at 390px viewport: "
+                        + overflow + "px wider than the screen (responsive bug)");
+            }
+            ExtentReportManager.logPass(label + " has no horizontal overflow at 390px");
+        } finally {
+            driver.manage().window().setSize(original);
+        }
     }
 
     // ── helpers ──

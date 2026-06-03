@@ -63,12 +63,22 @@ public final class UIStateValidator {
             rep.problems.add("BLANK probe failed: " + e.getMessage());
         }
 
-        // ERROR banner detection
+        // ERROR banner detection.
+        // NOTE: MUI sets role="alert" on EVERY Alert severity (info/warning/success/error),
+        // so we must NOT flag a bare role="alert" — a benign empty-state like
+        // "No SLD selected. Please select a site/SLD" is an info Alert, not a bug.
+        // Only error-SEVERITY MUI alerts, or role=alert text with error keywords, count.
         try {
             Object err = js.executeScript(
                 "var hits=[];" +
-                "document.querySelectorAll('.MuiAlert-standardError,.MuiAlert-filledError,[role=\"alert\"]').forEach(function(a){" +
+                "document.querySelectorAll('.MuiAlert-standardError,.MuiAlert-filledError,.MuiAlert-outlinedError').forEach(function(a){" +
                 "  if(a.offsetParent!==null){var t=(a.innerText||'').trim(); if(t) hits.push(t.slice(0,160));}});" +
+                "document.querySelectorAll('[role=\"alert\"]').forEach(function(a){" +
+                "  if(a.offsetParent===null) return;" +
+                "  if(((a.className||'')+'').indexOf('Error')>=0) return;" +   // MUI error already captured above
+                "  var t=(a.innerText||'').trim(); if(!t) return;" +
+                "  if(/error|failed|unable|went wrong|cannot|exception|crash|denied|forbidden/i.test(t)) hits.push(t.slice(0,160));" +
+                "});" +
                 "var body=(document.body && document.body.innerText)||'';" +
                 "['Application Error','We encountered an error','Something went wrong','Unexpected error','Cannot read properties']" +
                 "  .forEach(function(p){ if(body.indexOf(p)>=0) hits.push('crash-copy: '+p); });" +
