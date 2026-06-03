@@ -1,0 +1,68 @@
+name: Security (ZAP) + Load (k6) — non-functional gates
+
+# ============================================================
+# Manual-trigger non-functional suite. Kept separate from the functional
+# parallel-suite so an intrusive scan / heavy load run never blocks PRs.
+# Honest boundary: ZAP = automated DAST baseline (NOT a manual pentest);
+# k6 = server load/throughput (complements client-side PerfVerifier).
+# ============================================================
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Target base URL'
+        required: true
+        default: 'https://acme.qa.egalvanic.ai'
+      zap_mode:
+        description: 'ZAP mode'
+        type: choice
+        options: [baseline, full]
+        default: baseline
+      k6_profile:
+        description: 'k6 load profile'
+        type: choice
+        options: [load, stress, spike, soak]
+        default: load
+
+jobs:
+  zap-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4.3.1
+      - name: Run OWASP ZAP scan
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+          ZAP_MODE: ${{ inputs.zap_mode }}
+        run: bash security/zap-baseline-scan.sh || true   # report-and-continue; gate is inside script
+      - name: Upload ZAP report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: zap-report
+          path: security/zap-report.*
+
+  k6-load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4.3.1
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update && sudo apt-get install -y k6
+      - name: Run k6 ${{ inputs.k6_profile }} profile
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+          USER_EMAIL: ${{ secrets.USER_EMAIL }}
+          USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
+          PROFILE: ${{ inputs.k6_profile }}
+        run: k6 run --summary-export perf/k6-summary.json perf/k6-load-test.js
+      - name: Upload k6 summary
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: k6-summary
+          path: perf/k6-summary.json

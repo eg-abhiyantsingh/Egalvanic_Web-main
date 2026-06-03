@@ -49,3 +49,7 @@ Thumbs.db
 # Lets us browse the frontend source for writing locators. NEVER committed to
 # this repo, NEVER pushed to the developer repo. Update with: git -C eg-pz-frontend-reference pull
 eg-pz-frontend-reference/
+
+# Non-functional scan outputs (regenerated per run)
+security/zap-report.*
+perf/k6-summary.json
