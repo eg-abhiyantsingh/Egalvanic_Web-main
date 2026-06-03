@@ -78,6 +78,14 @@
             <artifactId>javafaker</artifactId>
             <version>1.0.2</version>
         </dependency>
+
+        <!-- axe-core Selenium binding for WCAG 2.x accessibility scanning.
+             Bundles axe.min.js and injects it via executeScript (CSP-safe). -->
+        <dependency>
+            <groupId>com.deque.html.axe-core</groupId>
+            <artifactId>selenium</artifactId>
+            <version>4.10.1</version>
+        </dependency>
     </dependencies>
 
     <build>

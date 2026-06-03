@@ -248,6 +248,23 @@ public class BaseTest {
     }
 
     /**
+     * Hard-assert no critical/serious WCAG accessibility violations on the current
+     * page (axe-core). Moderate/minor are logged only. Opt-in: call after a page
+     * is fully rendered. Catches contrast, missing labels, ARIA, alt-text, etc.
+     */
+    protected void verifyAccessibility(String context) {
+        com.egalvanic.qa.utils.verify.A11yVerifier.assertNoBlockingViolations(driver, context);
+    }
+
+    /**
+     * Hard-assert the current page loaded within {@code loadBudgetMs} (client-side
+     * Navigation Timing). Use a realistic per-module budget. Logs TTFB/DCL/load/FCP.
+     */
+    protected void verifyPerformance(String context, long loadBudgetMs) {
+        com.egalvanic.qa.utils.verify.PerfVerifier.assertWithinBudget(driver, context, loadBudgetMs);
+    }
+
+    /**
      * Re-install JS capture hooks after a full page reload / driver.get(), which
      * wipes injected state. Call this whenever a test reloads or hard-navigates.
      */
