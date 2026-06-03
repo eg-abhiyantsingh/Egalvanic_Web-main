@@ -1,0 +1,233 @@
+#!/usr/bin/env python3
+"""
+collect-failed-tests.py — turn CI/local test failures into a dated, re-runnable
+TestNG suite, and keep a history so failures are trackable over time.
+
+Why: after a CI run (or a local run) you want ONE file listing every test that
+failed, tagged with the date (e.g. "2026-06-03 — 40 failed"), that you can run
+locally to re-check just those tests:
+
+    mvn test -DsuiteXmlFile=failed-suites/failed-tests-latest.xml
+
+Outputs (under --out-dir, default ./failed-suites):
+  failed-tests-YYYY-MM-DD.xml   one TestNG suite per day (the dated record)
+  failed-tests-latest.xml       always a copy of the most recent dated suite
+  HISTORY.md                    one line per day: date, count, link (the tracker)
+
+Data source: surefire JUnit reports (target/surefire-reports/TEST-*.xml). A test
+counts as "failed" if its <testcase> has a <failure> or <error> child (NOT
+<skipped> — skips are not failures). Data-driven names like
+`testFoo[label](3)` are reduced to the bare method `testFoo` so the TestNG
+<include> re-runs that test (all its data rows).
+
+MODES
+  # Local one-shot: scan target/surefire-reports -> build today's dated suite
+  python3 .github/scripts/collect-failed-tests.py
+
+  # CI per-group: just emit a flat list of "FQCN#method" (run where surefire is)
+  python3 .github/scripts/collect-failed-tests.py --extract-only \
+      --reports-dir target/surefire-reports --out failed-lists/<group>.txt
+
+  # CI summary: merge all per-group lists into ONE dated suite (+ union if re-run)
+  python3 .github/scripts/collect-failed-tests.py --build \
+      --lists-dir failed-lists --date 2026-06-03 --label "Parallel Suite 2" --merge
+"""
+
+import argparse
+import datetime as _dt
+import glob
+import os
+import sys
+
+# Prefer defusedxml (immune to XXE / billion-laughs) when installed; the stdlib
+# fallback does not fetch EXTERNAL entities, and the inputs here are our own
+# CI-generated surefire reports, so the residual risk is nil either way.
+try:
+    import defusedxml.ElementTree as ET  # type: ignore
+except ImportError:
+    import xml.etree.ElementTree as ET
+
+
+def _bare_method(name: str) -> str:
+    """`testFoo[label, x](3)` -> `testFoo` (TestNG <include> takes the method name)."""
+    if not name:
+        return name
+    # strip a trailing TestNG invocation index like `(3)` first, then any [..] data label
+    cut = name.split("[", 1)[0]
+    cut = cut.split("(", 1)[0]
+    return cut.strip()
+
+
+def extract_failures(reports_dir: str):
+    """Return a sorted set of 'FQCN#method' that FAILED or ERRORED under reports_dir."""
+    failed = set()
+    if not os.path.isdir(reports_dir):
+        return failed
+    for path in glob.glob(os.path.join(reports_dir, "**", "*.xml"), recursive=True):
+        try:
+            root = ET.parse(path).getroot()
+        except Exception:
+            continue  # dumpstreams / malformed / non-XML — skip quietly
+        # JUnit surefire: <testsuite> (or <testsuites>) with <testcase> children.
+        for tc in root.iter("testcase"):
+            cls = (tc.get("classname") or "").strip()
+            method = _bare_method(tc.get("name") or "")
+            if not cls or not method:
+                continue
+            is_fail = any(child.tag in ("failure", "error") for child in tc)
+            if is_fail:
+                failed.add(f"{cls}#{method}")
+    return failed
+
+
+def read_lists(lists_dir: str):
+    """Union all 'FQCN#method' lines from every *.txt under lists_dir."""
+    failed = set()
+    if not os.path.isdir(lists_dir):
+        return failed
+    for path in glob.glob(os.path.join(lists_dir, "**", "*.txt"), recursive=True):
+        try:
+            with open(path, encoding="utf-8") as fh:
+                for line in fh:
+                    line = line.strip()
+                    if line and "#" in line and not line.startswith("#"):
+                        failed.add(line)
+        except Exception:
+            continue
+    return failed
+
+
+def read_existing_suite(path: str):
+    """Parse an existing dated suite back into a set of 'FQCN#method' (for --merge)."""
+    found = set()
+    if not os.path.isfile(path):
+        return found
+    try:
+        root = ET.parse(path).getroot()
+    except Exception:
+        return found
+    for cls in root.iter("class"):
+        fqcn = cls.get("name")
+        if not fqcn:
+            continue
+        for inc in cls.iter("include"):
+            m = inc.get("name")
+            if m:
+                found.add(f"{fqcn}#{m}")
+    return found
+
+
+def build_suite_xml(failed, date_str: str, label: str) -> str:
+    """Render a TestNG suite XML including exactly the failed methods, grouped by class."""
+    by_class = {}
+    for entry in sorted(failed):
+        cls, _, method = entry.partition("#")
+        by_class.setdefault(cls, set()).add(method)
+
+    suite_name = f"Failed Tests {date_str}"
+    lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">',
+        f"<!-- AUTO-GENERATED by collect-failed-tests.py. {len(failed)} failed test(s)"
+        f"{(' from ' + label) if label else ''} on {date_str}.",
+        "     Re-run locally:  mvn test -DsuiteXmlFile=failed-suites/failed-tests-latest.xml",
+        "     (data-driven tests re-run all their data rows.) -->",
+        f'<suite name="{suite_name}" verbose="1">',
+        f'    <test name="{suite_name}">',
+        "        <classes>",
+    ]
+    for cls in sorted(by_class):
+        lines.append(f'            <class name="{cls}">')
+        lines.append("                <methods>")
+        for method in sorted(by_class[cls]):
+            lines.append(f'                    <include name="{method}"/>')
+        lines.append("                </methods>")
+        lines.append("            </class>")
+    lines += ["        </classes>", "    </test>", "</suite>", ""]
+    return "\n".join(lines)
+
+
+def update_history(out_dir: str, date_str: str, count: int, label: str):
+    """Keep ONE line per date in HISTORY.md (newest first); rewrite the date's line if it exists."""
+    hist = os.path.join(out_dir, "HISTORY.md")
+    header = "# Failed-test history\n\nOne line per day. Run a day's failures with " \
+             "`mvn test -DsuiteXmlFile=failed-suites/failed-tests-<date>.xml`.\n\n"
+    label_txt = f" — {label}" if label else ""
+    line = f"- **{date_str}** — {count} failed test(s){label_txt} → " \
+           f"[failed-tests-{date_str}.xml](failed-tests-{date_str}.xml)\n"
+    entries = {}
+    if os.path.isfile(hist):
+        with open(hist, encoding="utf-8") as fh:
+            for ln in fh:
+                if ln.startswith("- **"):
+                    try:
+                        d = ln.split("**", 2)[1]
+                        entries[d] = ln
+                    except Exception:
+                        pass
+    entries[date_str] = line  # add/replace this date
+    with open(hist, "w", encoding="utf-8") as fh:
+        fh.write(header)
+        for d in sorted(entries, reverse=True):
+            fh.write(entries[d])
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Collect failed tests into a dated TestNG suite.")
+    ap.add_argument("--reports-dir", default="target/surefire-reports",
+                    help="surefire reports dir to scan (recursive). Default: target/surefire-reports")
+    ap.add_argument("--lists-dir", help="dir of *.txt lists (FQCN#method per line) to merge instead of scanning surefire")
+    ap.add_argument("--extract-only", action="store_true",
+                    help="only write the flat FQCN#method list (requires --out); no suite")
+    ap.add_argument("--out", help="output path for --extract-only")
+    ap.add_argument("--build", action="store_true", help="build the dated suite (default if not --extract-only)")
+    ap.add_argument("--date", help="date tag YYYY-MM-DD (default: today, local)")
+    ap.add_argument("--label", default="", help="human label for history/suite comment")
+    ap.add_argument("--out-dir", default="failed-suites", help="output dir (default: failed-suites)")
+    ap.add_argument("--merge", action="store_true", help="union with an existing dated suite if present")
+    args = ap.parse_args()
+
+    # gather failures
+    if args.lists_dir:
+        failed = read_lists(args.lists_dir)
+        source = f"lists in {args.lists_dir}"
+    else:
+        failed = extract_failures(args.reports_dir)
+        source = args.reports_dir
+
+    # extract-only: write the flat list and stop
+    if args.extract_only:
+        if not args.out:
+            print("ERROR: --extract-only requires --out", file=sys.stderr)
+            return 2
+        os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
+        with open(args.out, "w", encoding="utf-8") as fh:
+            for entry in sorted(failed):
+                fh.write(entry + "\n")
+        print(f"[collect-failed] {len(failed)} failed test(s) from {source} -> {args.out}")
+        return 0
+
+    # build the dated suite
+    date_str = args.date or _dt.date.today().isoformat()
+    os.makedirs(args.out_dir, exist_ok=True)
+    dated = os.path.join(args.out_dir, f"failed-tests-{date_str}.xml")
+
+    if args.merge:
+        failed |= read_existing_suite(dated)
+
+    xml = build_suite_xml(failed, date_str, args.label)
+    with open(dated, "w", encoding="utf-8") as fh:
+        fh.write(xml)
+    with open(os.path.join(args.out_dir, "failed-tests-latest.xml"), "w", encoding="utf-8") as fh:
+        fh.write(xml)
+    update_history(args.out_dir, date_str, len(failed), args.label)
+
+    print(f"[collect-failed] {date_str}: {len(failed)} failed test(s) from {source}")
+    print(f"[collect-failed] wrote {dated}")
+    print(f"[collect-failed] wrote {os.path.join(args.out_dir, 'failed-tests-latest.xml')}")
+    print(f"[collect-failed] updated {os.path.join(args.out_dir, 'HISTORY.md')}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

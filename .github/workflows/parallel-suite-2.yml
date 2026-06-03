@@ -46,6 +46,11 @@ concurrency:
   group: parallel-suite-2
   cancel-in-progress: false
 
+# The summary job commits the dated failed-tests suite back to main
+# (same [bot] pattern as daily-ai-analysis.yml).
+permissions:
+  contents: write
+
 jobs:
   # ============================================================
   # Phase 1: Run each group in parallel
@@ -239,6 +244,27 @@ jobs:
           bash .github/scripts/full-suite-dashboard.sh
 
       # ──────────────────────────────────────────────
+      # Extract this group's FAILED tests (FQCN#method) from its surefire
+      # reports, so the summary job can merge them into a dated re-runnable
+      # suite. Runs even if tests failed (continue-on-error above).
+      # ──────────────────────────────────────────────
+      - name: Extract failed tests
+        if: always()
+        run: |
+          mkdir -p failed-lists
+          python3 .github/scripts/collect-failed-tests.py --extract-only \
+            --reports-dir target/surefire-reports \
+            --out "failed-lists/${{ matrix.group }}.txt"
+
+      - name: Upload failed-tests list
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: failed-list-s2-${{ matrix.group }}
+          path: failed-lists/${{ matrix.group }}.txt
+          if-no-files-found: ignore
+
+      # ──────────────────────────────────────────────
       # Write Result JSON (for summary job)
       # ──────────────────────────────────────────────
       - name: Write result JSON
@@ -362,6 +388,46 @@ jobs:
         with:
           pattern: reports-s2-*
           path: all-reports
+
+      # ──────────────────────────────────────────────
+      # Build + commit the dated failed-tests suite (re-runnable locally,
+      # tracked over time). Merges all groups' failed lists; --merge unions
+      # with any suite already committed today (so Parallel Suite 1 and 2
+      # both feed the same dated file). reset-to-origin + rebuild + retry
+      # makes concurrent pushes from the two pipelines safe.
+      # ──────────────────────────────────────────────
+      - name: Download failed-tests lists
+        uses: actions/download-artifact@v4.3.0
+        with:
+          pattern: failed-list-s2-*
+          path: failed-lists-dl
+          merge-multiple: true
+
+      - name: Build + commit dated failed-tests suite
+        if: always()
+        run: |
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          DATE=$(date -u +%Y-%m-%d)
+          LABEL="Parallel Suite 2 (run ${{ github.run_number }})"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main && git reset --hard origin/main   # adopt latest (untracked failed-lists-dl survives)
+            python3 .github/scripts/collect-failed-tests.py --build \
+              --lists-dir failed-lists-dl --date "$DATE" --label "$LABEL" --merge
+            git add failed-suites/
+            if git diff --cached --quiet; then echo "No failed-tests changes."; break; fi
+            git commit -m "[bot] failed-tests suite ${DATE} — Parallel Suite 2"
+            if git push origin HEAD:main; then echo "Pushed failed-tests suite."; break; fi
+            echo "push race (attempt $attempt) — retrying"; sleep $(( (RANDOM % 5) + 2 ))
+          done
+
+      - name: Upload failed-tests suite artifact
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: failed-tests-suite-s2
+          path: failed-suites/
+          if-no-files-found: ignore
 
       - name: Aggregate results
         id: aggregate
