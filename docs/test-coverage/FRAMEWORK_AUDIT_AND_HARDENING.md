@@ -251,3 +251,20 @@ Per module, grouped by the 7 dimensions. Legend: ✅ scripted-strong · 🟡 scr
 5. **Add reload/back-button integrity tests with `StateIntegrityChecker.assertUnchanged`** on each CRUD grid, and start one ordered cross-module workflow class (create → open → export → delete) to expose order-dependent flows.
 
 > Everything in Phase 2 is built and compiling. The remaining work is *wiring* (calling the verifiers from module tests + `BaseTest`) and building the Phase-3 `ExplorerEngine` on top of the existing `MonkeyTestNG`/`AIPageAnalyzer` scaffold.
+
+---
+
+## Validation evidence (2026-06-03)
+
+**Verifier logic — deterministic.** `VerifierSelfValidation` drives headless Chrome over HTML fixtures with planted bugs: **14/14 checks pass** (every verifier catches its bug AND stays clean on the healthy fixture — no false positives).
+
+**Live end-to-end — real bugs found.** After wiring into `BaseTest` and fixing a TLS blocker (the QA host uses a self-signed cert; added `acceptInsecureCerts`), the reference test `AssetPart1TestNG.testAssetsPageHealthGates` ran against `acme.qa.egalvanic.ai` and the health gate **failed the test on its first live page** by surfacing 6 severe errors the existing green suite never reported:
+
+| Severity | Finding | Source |
+|---|---|---|
+| 🔴 High | `Uncaught TypeError: Qe is not a function` | app bundle `index-D8s0l98b.js` (front-end crash) |
+| 🔴 High | `502 Bad Gateway` on `/api/shortcut/by-node-class/{id}` | backend |
+| 🟠 Med | `400` on `/api/auth/v2/refresh` | auth refresh |
+| 🟡 Low | `401` on `/api/auth/v2/me` (expected pre-auth) | auth |
+
+This is the destructive-testing thesis demonstrated: a previously-green page is, in fact, throwing an uncaught JS error and hitting a 502 — caught the moment a real assertion looked for them.
