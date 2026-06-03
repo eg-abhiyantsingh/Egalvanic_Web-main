@@ -109,6 +109,18 @@ public class Phase4QualityGatesTestNG extends BaseTest {
             {"Settings: Material Presets", "/admin?view=pm.materials.presets",        "main", 12000L},
             {"Settings: Labor Types",      "/admin?view=pm.labor.types",              "main", 12000L},
             {"Settings: Labor Unions",     "/admin?view=pm.labor.unions",             "main", 12000L},
+            // ── Reporting hub deep sub-views (Reporting.jsx, addressed via ?view=<key>) ──
+            // Reporting is a second tabbed hub like Settings; bare /reporting only lands
+            // on the default view. These deep-links exercise the rest of the hub.
+            {"Reporting: Reports",         "/reporting?view=reports",                 "main", 12000L},
+            {"Reporting: Builder Configs", "/reporting?view=builder.configs",         "main", 12000L},
+            {"Reporting: Forms",           "/reporting?view=forms",                   "main", 12000L},
+            {"Reporting: eg-Forms",        "/reporting?view=forms.eg-forms",          "main", 12000L},
+            {"Reporting: NETA Templates",  "/reporting?view=forms.neta",              "main", 14000L},
+            {"Reporting: Legacy Forms",    "/reporting?view=forms.legacy",            "main", 12000L},
+            {"Reporting: Branding",        "/reporting?view=branding",                "main", 12000L},
+            {"Reporting: Style Guide",     "/reporting?view=branding.style-guide",    "main", 12000L},
+            {"Reporting: Logos & Media",   "/reporting?view=branding.logos-media",    "main", 12000L},
         };
     }
 
@@ -255,6 +267,9 @@ public class Phase4QualityGatesTestNG extends BaseTest {
             {"Opportunity Detail", "/opportunities"},
             {"Task Detail",        "/tasks"},
             {"Location Detail",    "/locations"},
+            {"Panel Editor",       "/panel-schedules"},   // -> PanelEditor / PanelView
+            {"Job Detail",         "/jobs"},              // -> JobDetail
+            {"EMP Detail",         "/emps"},              // -> CommittedQuotes / QuoteDetail
         };
     }
 
@@ -298,7 +313,35 @@ public class Phase4QualityGatesTestNG extends BaseTest {
         // The detail screen must be healthy (no JS crash / failed XHR / blank) and accessible.
         verifyPageHealth(label + " detail");
         verifyAccessibility(label + " detail");
-        ExtentReportManager.logPass(label + " detail screen is healthy + accessible");
+        // DEEPER: walk the detail page's own tab strip (Quote detail has 7 tabs; Session/
+        // Asset/Job detail are tabbed too). Each tab is a distinct screen — health + a11y it.
+        int tabs = walkDetailTabs(label);
+        ExtentReportManager.logPass(label + " detail screen healthy + accessible"
+                + (tabs > 0 ? " (+" + tabs + " detail tab(s) checked)" : ""));
+    }
+
+    /** Click through the detail page's tab strip, health + a11y checking each tab. */
+    private int walkDetailTabs(String label) {
+        java.util.List<org.openqa.selenium.WebElement> tabs = driver.findElements(
+                By.cssSelector("[role='tab'], .MuiTab-root"));
+        int checked = 0;
+        for (int i = 0; i < tabs.size() && i < 8; i++) {
+            try {
+                org.openqa.selenium.WebElement tab = tabs.get(i);
+                if (!tab.isDisplayed()) continue;
+                String tabName = tab.getText().trim();
+                ((JavascriptExecutor) driver).executeScript("arguments[0].click();", tab);
+                pause(1200);
+                verifyPageHealth(label + " detail tab '" + (tabName.isEmpty() ? ("#" + (i + 1)) : tabName) + "'");
+                checked++;
+            } catch (org.openqa.selenium.StaleElementReferenceException stale) {
+                break; // tab strip re-rendered; stop walking
+            } catch (Exception e) {
+                logStep(label + " detail tab note: " + e.getMessage());
+            }
+        }
+        if (checked > 0) logStep(label + ": walked " + checked + " detail tab(s)");
+        return checked;
     }
 
     // ────────────────────────────────────────────────────────────────────

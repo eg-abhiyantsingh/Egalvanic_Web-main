@@ -75,7 +75,7 @@ ALL_GROUP_NAMES=(
   "Work Order Planning"
   "Quality Gates (All Pages)"
 )
-ALL_GROUP_TESTS=(56 135 234 69 76 65 76 105 62 37 56 4 7 3 8 3 32 195)
+ALL_GROUP_TESTS=(56 135 234 69 76 65 76 105 62 37 56 4 7 3 8 3 32 225)
 ALL_GROUP_XMLS=(
   "suite-auth-site.xml"
   "suite-location-task.xml"
