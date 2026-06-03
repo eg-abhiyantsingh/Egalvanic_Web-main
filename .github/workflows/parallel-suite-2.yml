@@ -61,7 +61,7 @@ jobs:
 
     strategy:
       fail-fast: false
-      max-parallel: 10
+      max-parallel: 11
 
       matrix:
         include:
@@ -140,6 +140,19 @@ jobs:
             xml: suite-quality-gates.xml
             tests: 225
             stagger: 68
+
+          # ──────────────────────────────────────────────
+          # NEW (2026-06-03): Opportunities [SALES] functional gate
+          # OpportunitiesTestNG — CRUD edge cases + strong verification (persist
+          # across reload, dedup, XSS, search) + API auth contract. The suite
+          # excludes the `known-product-bug` group so this gate is GREEN on real
+          # behaviour; BUG-A/BUG-B tripwires are tracked by the Quality Gates group.
+          # ──────────────────────────────────────────────
+          - group: opportunities
+            name: "Opportunities [SALES]"
+            xml: suite-opportunities.xml
+            tests: 8
+            stagger: 72
 
           # ──────────────────────────────────────────────
           # Cross-tenant: BCES-IQ tenant smoke

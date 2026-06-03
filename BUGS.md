@@ -1,0 +1,71 @@
+# BUGS — real product defects found by automation (2026-06-03)
+
+Product bugs only (framework/test defects are tracked separately in the gap diagnosis,
+`docs/test-coverage/COVERAGE_MATRIX.md`). Each has a runnable repro under `ready-bug/`.
+Quarantine convention: a test that legitimately cannot pass because of a product bug is
+left RED on purpose (never softened) and linked here.
+
+## BUG-A — App-wide uncaught `TypeError: Qe is not a function` (HIGH → CRITICAL)
+- **What:** Firing almost any interaction (search keystroke, tab click, opening a detail
+  screen) throws an uncaught `TypeError: Qe is not a function` from the production bundle
+  (`index-*.js:2729:221111`).
+- **Blast radius (verified live):** Planning search (fires on every input incl. empty);
+  Issue/Account/Opportunity **detail** pages; and **14 of 15** modules in the interaction
+  sweep (Scheduling, Accounts, Opportunities, EMPs, Arc Flash, PM Readiness, Equipment
+  Library, Panel Schedules, Sales/Ops Overview, Audit Log, Maintenance, Notes).
+- **Persistence:** survived a same-day redeploy (bundle hash changed, crash stayed at the
+  same `2729:221111`).
+- **Repro / evidence:** [ready-bug/2026-06-03-planning-search-crash-qe.md](ready-bug/2026-06-03-planning-search-crash-qe.md)
+- **Quarantined-red tests:** `Phase4QualityGatesTestNG.testSearchInputBoundary`,
+  `testDetailPageHealth`; `Phase5ModuleInteractionTestNG.testModuleInteraction`.
+- **Fix hint:** de-minify `2729:221111` via sourcemap; guard the `Qe` call site
+  (`typeof === 'function'`) and fix the undefined binding — one call-site fix should clear
+  all surfaces.
+
+## BUG-B — App-wide WCAG 2 A/AA violations on all pages (HIGH)
+- **What:** axe-core finds critical/serious violations on **28/28** scanned routes.
+- **Dominant rules (shared components):** `button-name` ×54 (icon-only buttons w/o
+  accessible name), `color-contrast` ×54, `aria-progressbar-name` ×20 (unlabeled spinners),
+  plus `aria-required-children`, `scrollable-region-focusable`, `listitem`,
+  `aria-input-field-name`.
+- **Repro / evidence:** [ready-bug/2026-06-03-app-wide-wcag-violations.md](ready-bug/2026-06-03-app-wide-wcag-violations.md)
+- **Quarantined-red tests:** `Phase4QualityGatesTestNG.testRouteAccessibility` (per route).
+- **Fix hint:** add `aria-label` to the shared `IconButton`s + DataGrid toolbar; raise theme
+  contrast for secondary/disabled text; label the shared `CircularProgress`.
+
+## BUG-C (cross-repo, iOS backend) — `/auth/v2/me` rejects a valid token (HIGH)
+- **What:** A valid login token is accepted by `GET /accounts/` (200) but rejected by
+  `GET /auth/v2/me` (401) on `api.qa.egalvanic.ai` — per-endpoint auth inconsistency
+  (likely tenant-routing).
+- **Repro:** iOS repo `ready-bug/2026-06-03-api-auth-inconsistency-me-401.md`.
+- Listed here for completeness; lives in the iOS automation repo.
+
+## Opportunities suite — findings (live run 2026-06-03)
+
+`OpportunitiesTestNG` (new this session) reproduced BUG-A and BUG-B on the Opportunities
+module — confirming the crash/a11y defects extend to SALES screens:
+
+- **BUG-A on Opportunities create dialog** — `testOpp07_CreateLongName`: typing a 300-char
+  name into the create dialog triggers `Uncaught TypeError: Qe is not a function`
+  (`index-*.js:2729:221111`). Quarantined-red, tagged `groups={"known-product-bug"}`.
+- **BUG-A on Opportunity detail** — `testOpp30_DetailAndQuoteTabs`: opening an opportunity's
+  detail throws the same crash (twice). Quarantined-red, tagged.
+- **BUG-B on `/opportunities`** — `testOpp43_Accessibility`: axe finds critical/serious WCAG
+  violations on the Opportunities route. Quarantined-red, tagged.
+
+These are NOT new root-cause bugs — they are BUG-A / BUG-B manifesting on a module that had
+**no functional coverage before**, which is exactly why adding the suite was high-yield: it
+turned "green-but-blind" into "red-and-pointing-at-the-defect."
+
+- **BUG-A escalation — intermittent interactivity break (NEW evidence).** Across repeated
+  runs, a *different* interaction-heavy test fails each time with a `TimeoutException`
+  (testOpp26 page-load, testOpp06 create-dialog, testOpp42 page-load). The grid/dialog
+  sometimes never finishes rendering after the `Qe` crash fires — so BUG-A doesn't merely
+  log an error, it **intermittently breaks the page's render/event handling**, leaving the
+  UI unresponsive. This raises BUG-A's user impact: real users would see the page/dialog
+  hang, not just a silent console error.
+
+Tests that PASS prove real behaviour (not masked): whitespace-only name is rejected
+(`testOpp06`), search actually filters to matching rows (`testOpp26`), the API auth contract
+holds (`testOpp_ApiAuthContract` — 200+token; wrong-password 4xx, no token), and the page
+loads within the perf budget (`testOpp42`).

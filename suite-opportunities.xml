@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Opportunities [SALES] — full-spectrum module suite.
+  CRUD lifecycle edge cases + strong verification + a11y/perf + API auth contract.
+
+  Default run = the FUNCTIONAL GATE: it excludes the `known-product-bug` group so the
+  build is green when the real (non-bug) behaviour works, and goes RED only on a genuine
+  regression. The excluded tests are intentional RED tripwires for filed product bugs
+  (BUG-A `Qe is not a function`, BUG-B WCAG — see BUGS.md); their assertions are NOT
+  weakened, just quarantined out of the gate (BUG-A is also tracked red by the global
+  Quality Gates group).
+
+  Functional gate:        mvn test -DsuiteXmlFile=suite-opportunities.xml
+  Exercise the tripwires: mvn test -Dtest=OpportunitiesTestNG -Dgroups=known-product-bug
+-->
+<suite name="Opportunities Suite (CRUD + verification + a11y/perf + API)" verbose="1">
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+    <test name="Opportunities [SALES]">
+        <groups>
+            <run>
+                <exclude name="known-product-bug"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.egalvanic.qa.testcase.OpportunitiesTestNG"/>
+        </classes>
+    </test>
+</suite>
