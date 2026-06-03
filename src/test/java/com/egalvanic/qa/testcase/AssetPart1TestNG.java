@@ -1377,6 +1377,57 @@ public class AssetPart1TestNG extends BaseTest {
     }
 
     // ================================================================
+    // DESTRUCTIVE-TESTING HEALTH GATES (reference usage of utils/verify)
+    // ================================================================
+
+    /**
+     * AS-HEALTH-01: The Assets list must load without hanging, render its grid
+     * with no broken images, surface no severe JS errors, no failed app API
+     * calls, and no blank/error UI state. This proves the page genuinely works
+     * — unlike a bare isDisplayed() assertion.
+     */
+    @Test(priority = 50, description = "AS-HEALTH-01: Assets page passes all health gates")
+    public void testAssetsPageHealthGates() {
+        ExtentReportManager.createTest(MODULE, AppConstants.FEATURE_ASSET_LIST,
+                "AS-HEALTH-01: Assets page health gates");
+        ensureOnAssetsPage();
+        com.egalvanic.qa.utils.verify.HangDetector.assertResponsive(driver, "Assets list", 30);
+        // Grid must actually be present (strong, not presence-only)
+        verifyPageHealth("Assets list", ".MuiDataGrid-root");
+        // Every visible image (asset thumbnails/icons) must have rendered pixels
+        com.egalvanic.qa.utils.verify.AssetLoadVerifier.assertAllImagesLoaded(driver, "Assets list");
+        ExtentReportManager.logPass("Assets page: responsive, healthy UI, no broken images, no JS/network errors");
+    }
+
+    /**
+     * AS-HEALTH-02: Reloading the Assets grid must not lose, duplicate, or
+     * corrupt the rows it shows — a state-integrity check the suite lacked.
+     */
+    @Test(priority = 51, description = "AS-HEALTH-02: Asset grid survives reload with no data corruption")
+    public void testAssetGridReloadIntegrity() {
+        ExtentReportManager.createTest(MODULE, AppConstants.FEATURE_ASSET_LIST,
+                "AS-HEALTH-02: Asset grid reload integrity");
+        ensureOnAssetsPage();
+        com.egalvanic.qa.utils.ai.FlakinessPrevention.waitForDataGridReady(driver);
+
+        By rows = By.cssSelector("[class*='MuiDataGrid-row']");
+        com.egalvanic.qa.utils.verify.StateIntegrityChecker.Snapshot before =
+                com.egalvanic.qa.utils.verify.StateIntegrityChecker.snapshotRows(driver, rows);
+        logStep("Captured " + before.count() + " asset rows before reload");
+
+        driver.navigate().refresh();
+        reinstallHealthCapture();
+        com.egalvanic.qa.utils.verify.HangDetector.assertResponsive(driver, "Assets reload", 30);
+        ensureOnAssetsPage();
+        com.egalvanic.qa.utils.ai.FlakinessPrevention.waitForDataGridReady(driver);
+
+        com.egalvanic.qa.utils.verify.StateIntegrityChecker.Snapshot after =
+                com.egalvanic.qa.utils.verify.StateIntegrityChecker.snapshotRows(driver, rows);
+        com.egalvanic.qa.utils.verify.StateIntegrityChecker.assertUnchanged(before, after, "Assets grid reload");
+        ExtentReportManager.logPass("Asset grid identical after reload — no loss/duplication/corruption");
+    }
+
+    // ================================================================
     // HELPER METHODS
     // ================================================================
 

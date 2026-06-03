@@ -14,6 +14,10 @@ import com.egalvanic.qa.utils.ai.FlakinessPrevention;
 import com.egalvanic.qa.utils.ai.SelfHealingDriver;
 import com.egalvanic.qa.utils.ai.SelfHealingElement;
 import com.egalvanic.qa.utils.ai.SmartBugDetector;
+import com.egalvanic.qa.utils.verify.AssetLoadVerifier;
+import com.egalvanic.qa.utils.verify.BrowserErrorCapture;
+import com.egalvanic.qa.utils.verify.HangDetector;
+import com.egalvanic.qa.utils.verify.UIStateValidator;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -147,6 +151,19 @@ public class BaseTest {
         opts.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
         opts.setExperimentalOption("useAutomationExtension", false);
 
+        // Allow an explicit browser binary (CI images / Playwright-managed Chromium)
+        // when Selenium Manager can't auto-resolve. Empty by default.
+        if (!AppConstants.CHROME_BINARY.isEmpty()) {
+            opts.setBinary(AppConstants.CHROME_BINARY);
+        }
+
+        // Capture native SEVERE browser logs so BrowserErrorCapture can drain them
+        // in addition to its JS-injected hooks.
+        org.openqa.selenium.logging.LoggingPreferences logPrefs =
+                new org.openqa.selenium.logging.LoggingPreferences();
+        logPrefs.enable(org.openqa.selenium.logging.LogType.BROWSER, java.util.logging.Level.SEVERE);
+        opts.setCapability("goog:loggingPrefs", logPrefs);
+
         // Disable "Save password?" popup
         java.util.Map<String, Object> prefs = new java.util.HashMap<>();
         prefs.put("credentials_enable_service", false);
@@ -175,6 +192,11 @@ public class BaseTest {
         FlakinessPrevention.installNetworkInterceptor(driver);
         FlakinessPrevention.installConsoleErrorCapture(driver);
 
+        // Install destructive-testing health capture: full JS error capture
+        // (uncaught/promise/resource) + failed XHR/fetch (4xx/5xx) recording.
+        BrowserErrorCapture.install(driver);
+        AssetLoadVerifier.installFailedRequestCapture(driver);
+
         // Set driver for screenshot utility
         ScreenshotUtil.setDriver(driver);
 
@@ -193,6 +215,38 @@ public class BaseTest {
         // Re-install interceptors after login (page navigations reset JS state)
         FlakinessPrevention.installNetworkInterceptor(driver);
         FlakinessPrevention.installConsoleErrorCapture(driver);
+        BrowserErrorCapture.install(driver);
+        AssetLoadVerifier.installFailedRequestCapture(driver);
+    }
+
+    // ================================================================
+    // HEALTH GATES — reusable destructive-testing verifiers
+    // ================================================================
+
+    /**
+     * Hard-assert that the current page is healthy: responsive (not hung),
+     * no severe JS/console errors, no failed app XHR/fetch, and a valid UI
+     * state (not blank / no error banner). Call after navigations in module
+     * tests, optionally passing CSS selectors that MUST be present.
+     *
+     * 3rd-party noise (beamer/devrev/sentry/analytics/etc.) is whitelisted via
+     * AppConstants.HEALTH_GATE_IGNORE so only eGalvanic app failures fail the test.
+     */
+    protected void verifyPageHealth(String context, String... requiredCss) {
+        HangDetector.assertResponsive(driver, context, 30);
+        BrowserErrorCapture.assertNoSevereErrors(driver, context);
+        AssetLoadVerifier.assertNoFailedRequests(driver, context, AppConstants.HEALTH_GATE_IGNORE);
+        UIStateValidator.assertHealthy(driver, context, requiredCss);
+    }
+
+    /**
+     * Re-install JS capture hooks after a full page reload / driver.get(), which
+     * wipes injected state. Call this whenever a test reloads or hard-navigates.
+     */
+    protected void reinstallHealthCapture() {
+        BrowserErrorCapture.install(driver);
+        AssetLoadVerifier.installFailedRequestCapture(driver);
+        FlakinessPrevention.installNetworkInterceptor(driver);
     }
 
     @AfterClass
@@ -327,11 +381,69 @@ public class BaseTest {
             try {
                 ExtentReportManager.captureScreenshot("Final page state");
             } catch (Exception ignored) {}
+
+            // GLOBAL HEALTH GATE: every passing test is now also a JS-error and
+            // failed-request detector. By default this only WARNS (so the suite
+            // isn't flipped red before a baseline run); set STRICT_HEALTH_GATES=true
+            // to make these hard failures. 3rd-party noise is whitelisted.
+            runGlobalHealthGate(result);
         }
 
         ExtentReportManager.removeTests();
 
         System.out.println("Test completed in " + formatDuration(duration));
+    }
+
+    /**
+     * Inspect captured browser errors + failed requests after a passing test.
+     * WARN-only by default; flips the result to FAILURE when STRICT_HEALTH_GATES
+     * is set. Never throws (a throw here would be a TestNG config failure that
+     * skips later tests) — instead it mutates the ITestResult directly.
+     */
+    private void runGlobalHealthGate(ITestResult result) {
+        if (driver == null) return;
+        try {
+            java.util.List<String> issues = new java.util.ArrayList<>();
+
+            for (BrowserErrorCapture.JsError e : BrowserErrorCapture.getErrors(driver)) {
+                issues.add("JS " + e);
+            }
+            for (AssetLoadVerifier.FailedRequest f : AssetLoadVerifier.getFailedRequests(driver)) {
+                if (!isIgnoredHealth(f.url)) issues.add("NET " + f);
+            }
+
+            if (issues.isEmpty()) {
+                // scope detection per-test so the next test starts clean
+                BrowserErrorCapture.clear(driver);
+                return;
+            }
+
+            StringBuilder sb = new StringBuilder("Health gate found ")
+                    .append(issues.size()).append(" issue(s) on a passing test:");
+            for (String i : issues) sb.append("\n  - ").append(i);
+            String msg = sb.toString();
+
+            if (AppConstants.STRICT_HEALTH_GATES) {
+                result.setStatus(ITestResult.FAILURE);
+                result.setThrowable(new AssertionError(msg));
+                ExtentReportManager.logFail("[HealthGate-STRICT] " + msg);
+                ScreenshotUtil.captureScreenshot(result.getMethod().getMethodName() + "_HEALTHGATE");
+            } else {
+                logWarning("[HealthGate] " + msg + "\n  (set STRICT_HEALTH_GATES=true to fail the build)");
+            }
+            BrowserErrorCapture.clear(driver);
+        } catch (Exception e) {
+            System.out.println("[BaseTest] Health gate check failed: " + e.getMessage());
+        }
+    }
+
+    private boolean isIgnoredHealth(String url) {
+        if (url == null) return false;
+        String low = url.toLowerCase();
+        for (String ig : AppConstants.HEALTH_GATE_IGNORE) {
+            if (low.contains(ig)) return true;
+        }
+        return false;
     }
 
     // ================================================================

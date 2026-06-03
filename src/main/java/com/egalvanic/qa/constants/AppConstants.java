@@ -302,6 +302,29 @@ public class AppConstants {
             Boolean.parseBoolean(getEnv("AUTO_SCREENSHOT_EVERY_CLICK", "true"));
 
     // ============================================
+    // HEALTH GATES (destructive-testing verifiers)
+    // ============================================
+    // When true, BaseTest.@AfterMethod turns the global console-error and
+    // failed-request checks into HARD build failures on every passing test.
+    // Default OFF (warn-only) so the existing suite isn't flipped red before a
+    // baseline live run; flip to "true" in CI once known 3rd-party noise is
+    // whitelisted in BrowserErrorCapture / the assertNoFailedRequests call.
+    public static final boolean STRICT_HEALTH_GATES =
+            Boolean.parseBoolean(getEnv("STRICT_HEALTH_GATES", "false"));
+
+    // Optional explicit Chrome/Chromium binary (e.g. Playwright-managed browser
+    // or a CI image where Selenium Manager can't auto-resolve). Empty = let
+    // Selenium Manager resolve the browser automatically.
+    public static final String CHROME_BINARY = getEnv("CHROME_BINARY", "");
+
+    // Known 3rd-party origins whose console errors / failed requests are noise,
+    // not eGalvanic app bugs. Used by the global health gate whitelist.
+    public static final String[] HEALTH_GATE_IGNORE = {
+            "beamer", "devrev", "plug", "sentry", "analytics", "googletagmanager",
+            "hotjar", "intercom", "fullstory", "favicon.ico"
+    };
+
+    // ============================================
     // HELPER METHODS
     // ============================================
 
