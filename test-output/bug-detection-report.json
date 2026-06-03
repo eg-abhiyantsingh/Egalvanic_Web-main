@@ -1,14 +1,72 @@
-[{
-  "exceptionType": "AssertionError",
-  "riskLevel": "MEDIUM",
-  "testDurationMs": 46561,
-  "confidence": 75,
-  "rootCause": "Assertion failed \u2014 data mismatch between expected and actual",
-  "aiEnhanced": false,
-  "suggestedFix": "Verify the application behavior manually. Check API response data.",
-  "pageUrl": "https://acme.qa.egalvanic.ai/assets/1ac4f70f-1689-4c85-9820-1f6128465f04",
-  "classification": "REAL_BUG",
-  "exceptionMessage": "Copy From completed but ZERO drawer fields changed. Either the source asset has identical data to the target (unlikely if names differ) OR the FE wired Apply but the copy didn't write to drawer state. Source: Light, target: AutoTest_20260406_092222 expected [false] but found [true]",
-  "testName": "com.egalvanic.qa.testcase.CopyToCopyFromTestNG.testTC_Copy_10_FullCopyFromMutatesData",
-  "timestamp": "2026-04-28T13:51:42.86933"
-}]
+[
+  {
+    "exceptionType": "AssertionError",
+    "riskLevel": "MEDIUM",
+    "testDurationMs": 27165,
+    "confidence": 50,
+    "rootCause": "Unclassified failure \u2014 needs manual investigation",
+    "aiEnhanced": false,
+    "suggestedFix": "Review the stack trace and screenshot",
+    "pageUrl": "https://acme.qa.egalvanic.ai/issues/0f0546e6-e2b0-4e89-b581-26bded371085",
+    "classification": "REAL_BUG",
+    "exceptionMessage": "Browser console reported 7 severe error(s) during [Issue Detail detail]:\n  - [NATIVE_SEVERE] https://acme.qa.egalvanic.ai/assets/index-D8s0l98b.js 2729:221111 Uncaught TypeError: Qe is not a function  (chrome-log)\n  - [NATIVE_SEVERE] https://acme.qa.egalvanic.ai/assets/index-D8s0l98b.js 2729:221111 Uncaught TypeError: Qe is not a function  (chrome-log)\n  - [NATIVE_SEVERE] https://acme.qa.egalvanic.ai/assets/index-D8s0l98b.js 2729:221111 Uncaught TypeError: Qe is not a function  (chrome-log)\n  - ",
+    "testName": "com.egalvanic.qa.testcase.Phase4QualityGatesTestNG.testDetailPageHealth",
+    "timestamp": "2026-06-03T14:03:24.622866"
+  },
+  {
+    "exceptionType": "AssertionError",
+    "riskLevel": "MEDIUM",
+    "testDurationMs": 15357,
+    "confidence": 50,
+    "rootCause": "Unclassified failure \u2014 needs manual investigation",
+    "aiEnhanced": false,
+    "suggestedFix": "Review the stack trace and screenshot",
+    "pageUrl": "https://acme.qa.egalvanic.ai/accounts/2ad7e93a-45af-493c-b291-00cb25e26165",
+    "classification": "REAL_BUG",
+    "exceptionMessage": "Browser console reported 1 severe error(s) during [Account Detail detail]:\n  - [NATIVE_SEVERE] https://acme.qa.egalvanic.ai/assets/index-D8s0l98b.js 2729:221111 Uncaught TypeError: Qe is not a function  (chrome-log)\n",
+    "testName": "com.egalvanic.qa.testcase.Phase4QualityGatesTestNG.testDetailPageHealth",
+    "timestamp": "2026-06-03T14:03:40.250706"
+  },
+  {
+    "exceptionType": "AssertionError",
+    "riskLevel": "MEDIUM",
+    "testDurationMs": 15526,
+    "confidence": 50,
+    "rootCause": "Unclassified failure \u2014 needs manual investigation",
+    "aiEnhanced": false,
+    "suggestedFix": "Review the stack trace and screenshot",
+    "pageUrl": "https://acme.qa.egalvanic.ai/opportunities/568a899c-7441-4b36-b891-a7203abab00e",
+    "classification": "REAL_BUG",
+    "exceptionMessage": "Browser console reported 1 severe error(s) during [Opportunity Detail detail]:\n  - [NATIVE_SEVERE] https://acme.qa.egalvanic.ai/assets/index-D8s0l98b.js 2729:221111 Uncaught TypeError: Qe is not a function  (chrome-log)\n",
+    "testName": "com.egalvanic.qa.testcase.Phase4QualityGatesTestNG.testDetailPageHealth",
+    "timestamp": "2026-06-03T14:03:55.947844"
+  },
+  {
+    "exceptionType": "AssertionError",
+    "riskLevel": "MEDIUM",
+    "testDurationMs": 13581,
+    "confidence": 50,
+    "rootCause": "Unclassified failure \u2014 needs manual investigation",
+    "aiEnhanced": false,
+    "suggestedFix": "Review the stack trace and screenshot",
+    "pageUrl": "https://acme.qa.egalvanic.ai/assets",
+    "classification": "REAL_BUG",
+    "exceptionMessage": "Broken UI state on [Assets @390px]: ERROR banner/crash text visible: No SLD selected. Please select a site/SLD to view assets.\n  screenshot: /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/test-output/screenshots/UISTATE_Assets__390px_20260603_140505.png",
+    "testName": "com.egalvanic.qa.testcase.Phase4QualityGatesTestNG.testMobileResponsive",
+    "timestamp": "2026-06-03T14:05:05.448036"
+  },
+  {
+    "exceptionType": "AssertionError",
+    "riskLevel": "MEDIUM",
+    "testDurationMs": 17153,
+    "confidence": 50,
+    "rootCause": "Unclassified failure \u2014 needs manual investigation",
+    "aiEnhanced": false,
+    "suggestedFix": "Review the stack trace and screenshot",
+    "pageUrl": "https://acme.qa.egalvanic.ai/planning",
+    "classification": "REAL_BUG",
+    "exceptionMessage": "Broken UI state on [Planning @390px]: ERROR banner/crash text visible: No SLD selected. Please select a site/SLD to view plans.\n  screenshot: /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/test-output/screenshots/UISTATE_Planning__390px_20260603_140554.png",
+    "testName": "com.egalvanic.qa.testcase.Phase4QualityGatesTestNG.testMobileResponsive",
+    "timestamp": "2026-06-03T14:05:54.420852"
+  }
+]

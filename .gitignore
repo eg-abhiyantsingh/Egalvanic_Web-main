@@ -53,3 +53,6 @@ eg-pz-frontend-reference/
 # Non-functional scan outputs (regenerated per run)
 security/zap-report.*
 perf/k6-summary.json
+
+# Scratch/extracted data for the hidden SLD module (large binaries; not repo content)
+docs/sld-intelligence/
