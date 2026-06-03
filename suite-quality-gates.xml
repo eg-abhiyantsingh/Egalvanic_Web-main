@@ -1,18 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 <!--
-  Phase 4 cross-cutting quality gates — Accessibility (axe-core WCAG 2 A/AA),
-  client-side Performance, Boundary/negative input, and offline Resilience —
-  applied across every major module.
+  Quality gates across the whole app:
+   - Phase 4: Accessibility (axe-core WCAG 2 A/AA), client-side Performance,
+     Boundary/negative input, offline Resilience, broken-asset/blank-state,
+     detail-page health, and mobile-responsive — across all 50 routes.
+   - Phase 5: non-destructive DEEP INTERACTION (search / open+cancel create /
+     tabs) for the modules that previously had only load-smoke coverage
+     (Scheduling, Attachments, Maintenance, Notes, Accounts, Opportunities,
+     EMPs, Arc Flash, PM Readiness, Equipment Library, Panel Schedules,
+     Sales/Ops Overview, Z-University, Audit Log).
   Run: mvn test -DsuiteXmlFile=suite-quality-gates.xml
 -->
-<suite name="Quality Gates Suite (a11y + perf + boundary + resilience)" verbose="1">
+<suite name="Quality Gates Suite (a11y + perf + boundary + resilience + interaction)" verbose="1">
     <listeners>
         <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
     </listeners>
     <test name="Cross-cutting Quality Gates">
         <classes>
             <class name="com.egalvanic.qa.testcase.Phase4QualityGatesTestNG"/>
+            <class name="com.egalvanic.qa.testcase.Phase5ModuleInteractionTestNG"/>
         </classes>
     </test>
 </suite>

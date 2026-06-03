@@ -13,6 +13,21 @@
 > So this is not a Planning-search-only defect: the broken `Qe` binding is hit on
 > multiple interaction paths app-wide. Same bundle location `index-*.js:2729:221111`.
 > Fixing the single `Qe` call site should resolve all of them.
+>
+> **UPDATE 2026-06-03 (module-interaction sweep — escalates severity):** A
+> non-destructive interaction pass (`Phase5ModuleInteractionTestNG`: type in search /
+> click tabs / open+cancel create) crashed **14 of 15** modules with the identical
+> error — Scheduling, Accounts, Opportunities, EMPs, Arc Flash, PM Readiness,
+> Equipment Library, Panel Schedules, Sales Overview, Ops Dashboard, Audit Log,
+> Maintenance, Notes (Arc Flash threw it 5× on the first tab click). This means
+> **interacting with almost ANY module throws the uncaught `Qe` TypeError** — it is
+> effectively an app-wide interaction crash, not a per-page edge case.
+>
+> Also note: the bundle filename changed from `index-D8s0l98b.js` to
+> `index-Cm-90xNw.js` (a redeploy between the morning and afternoon runs) but the
+> crash remained at the **same `2729:221111`** — so the defect persists across builds
+> and is reproducible, not a transient artifact of one deploy. **Severity is HIGH→
+> arguably CRITICAL**: core interactions across the product throw uncaught exceptions.
 
 ## Summary
 

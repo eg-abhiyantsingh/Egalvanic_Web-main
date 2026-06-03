@@ -18,9 +18,9 @@ name: Parallel Suite 2 — Curated Bug Verification + AI + Smoke + Load + BCES-I
 #   Group  7: AI Page Analyzer             (  3 TCs)  ~10 min
 #   Group  8: BCES-IQ Tenant Smoke         (  3 TCs)  ~5 min   [NEW TENANT]
 #   Group  9: Documentation-Inspired Tests ( 17 TCs)  ~10 min  [NEW 2026-04-27]
-#   Group 10: Quality Gates (All Pages)    (180 TCs)  ~50 min  [NEW 2026-06-03: a11y+perf+assets+responsive+detail across all 50 routes]
+#   Group 10: Quality Gates (All Pages)    (195 TCs)  ~55 min  [NEW 2026-06-03: a11y+perf+assets+responsive+detail (all 50 routes) + deep interaction on thin modules]
 #
-# Total: ~377 TCs across 10 groups.
+# Total: ~392 TCs across 10 groups.
 #
 # The BCES-IQ group runs the SAME test framework against
 # https://acme.bces-iq.com using a different user (shubham.goswami+acme@...)
@@ -131,7 +131,7 @@ jobs:
           - group: quality-gates
             name: "Quality Gates (All Pages)"
             xml: suite-quality-gates.xml
-            tests: 180
+            tests: 195
             stagger: 68
 
           # ──────────────────────────────────────────────
