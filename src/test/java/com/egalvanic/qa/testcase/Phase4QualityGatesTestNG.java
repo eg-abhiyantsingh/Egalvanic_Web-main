@@ -92,6 +92,13 @@ public class Phase4QualityGatesTestNG extends BaseTest {
         };
     }
 
+    // KNOWN REAL BUG (2026-06-03, see ready-bug/2026-06-03-planning-search-crash-qe.md):
+    // Firing any input event on the Planning search box throws an uncaught
+    // "TypeError: Qe is not a function" (index-*.js). Verified live across two runs —
+    // it reproduces on essentially every input, INCLUDING empty, so the crash is in
+    // the search onChange/input handler itself, not a result-render edge case.
+    // These cases stay RED intentionally — the gate is correctly catching a live
+    // front-end crash, not flaking. Do NOT whitelist "Qe is not a function".
     @Test(dataProvider = "boundaryInputs",
           description = "Boundary/negative: bad search input must not crash/hang/XSS")
     public void testSearchInputBoundary(String label, String term) {

@@ -326,7 +326,14 @@ public class AppConstants {
     public static final String[] HEALTH_GATE_IGNORE = {
             "beamer", "devrev", "plug", "sentry", "analytics", "googletagmanager",
             "hotjar", "intercom", "fullstory", "favicon.ico",
-            "auth/v2/me", "auth/v2/refresh", "alliance-config"
+            "auth/v2/me", "auth/v2/refresh", "alliance-config",
+            // Transient infra / 3rd-party noise confirmed during the Phase-4 boundary
+            // triage (2026-06-03): the SLD overview endpoint intermittently 502s (SLD
+            // is a hidden module) and the branding service occasionally fails to fetch
+            // the alliance/company logo. Neither is caused by user input, so they must
+            // not mask the REAL crash the gate is meant to catch. (The genuine
+            // "Qe is not a function" search crash is deliberately NOT whitelisted.)
+            "api/sld", "BrandingService", "alliance partner and company branding"
     };
 
     // ============================================
