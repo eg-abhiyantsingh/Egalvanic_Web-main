@@ -148,12 +148,32 @@ public final class BrowserErrorCapture {
      * @throws AssertionError listing every captured error (fails the TestNG build)
      */
     public static void assertNoSevereErrors(WebDriver driver, String context) {
-        List<JsError> errors = getErrors(driver);
-        if (!errors.isEmpty()) {
+        assertNoSevereErrors(driver, context, new String[0]);
+    }
+
+    /**
+     * Hard-assert no severe console errors, ignoring any whose text contains one of
+     * {@code ignoreSubstrings} (3rd-party SDKs + baseline auth/transient noise). Keeps
+     * gate signal-quality high: fails on genuine app errors, not on environment noise
+     * that fires on every page load.
+     */
+    public static void assertNoSevereErrors(WebDriver driver, String context, String... ignoreSubstrings) {
+        List<JsError> real = new java.util.ArrayList<>();
+        for (JsError e : getErrors(driver)) {
+            String text = String.valueOf(e).toLowerCase();
+            boolean skip = false;
+            if (ignoreSubstrings != null) {
+                for (String ig : ignoreSubstrings) {
+                    if (ig != null && !ig.isEmpty() && text.contains(ig.toLowerCase())) { skip = true; break; }
+                }
+            }
+            if (!skip) real.add(e);
+        }
+        if (!real.isEmpty()) {
             StringBuilder sb = new StringBuilder();
-            sb.append("Browser console reported ").append(errors.size())
+            sb.append("Browser console reported ").append(real.size())
               .append(" severe error(s) during [").append(context).append("]:\n");
-            for (JsError e : errors) sb.append("  - ").append(e).append('\n');
+            for (JsError e : real) sb.append("  - ").append(e).append('\n');
             throw new AssertionError(sb.toString());
         }
     }

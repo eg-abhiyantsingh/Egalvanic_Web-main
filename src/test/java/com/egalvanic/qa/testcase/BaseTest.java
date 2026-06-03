@@ -242,7 +242,7 @@ public class BaseTest {
      */
     protected void verifyPageHealth(String context, String... requiredCss) {
         HangDetector.assertResponsive(driver, context, 30);
-        BrowserErrorCapture.assertNoSevereErrors(driver, context);
+        BrowserErrorCapture.assertNoSevereErrors(driver, context, AppConstants.HEALTH_GATE_IGNORE);
         AssetLoadVerifier.assertNoFailedRequests(driver, context, AppConstants.HEALTH_GATE_IGNORE);
         UIStateValidator.assertHealthy(driver, context, requiredCss);
     }
