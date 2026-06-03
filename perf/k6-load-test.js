@@ -22,8 +22,17 @@ import { Trend, Rate } from 'k6/metrics';
 
 const BASE = __ENV.BASE_URL || 'https://acme.qa.egalvanic.ai';
 const API = `${BASE}/api`;
-const EMAIL = __ENV.USER_EMAIL || 'abhiyant.singh+admin@egalvanic.com';
-const PASSWORD = __ENV.USER_PASSWORD || 'RP@egalvanic123';
+// Credentials are REQUIRED via env — never hardcode secrets in a committed script.
+const EMAIL = __ENV.USER_EMAIL;
+const PASSWORD = __ENV.USER_PASSWORD;
+if (!EMAIL || !PASSWORD) {
+  throw new Error('USER_EMAIL and USER_PASSWORD env vars are required (no hardcoded defaults).');
+}
+// Defence-in-depth: only ever send credentials to trusted eGalvanic hosts, so a
+// mis-set BASE_URL can't exfiltrate the login POST to an attacker-controlled origin.
+if (!/^https:\/\/[a-z0-9.-]+\.egalvanic\.ai(\/|$)/.test(BASE)) {
+  throw new Error('BASE_URL must be an https *.egalvanic.ai host. Refusing to send credentials to: ' + BASE);
+}
 const PROFILE = __ENV.PROFILE || 'load';
 
 const loginTime = new Trend('login_duration_ms');

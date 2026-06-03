@@ -10,8 +10,12 @@ on:
   workflow_dispatch:
     inputs:
       base_url:
-        description: 'Target base URL'
+        description: 'Target environment (allowlisted non-prod hosts only)'
         required: true
+        type: choice
+        options:
+          - 'https://acme.qa.egalvanic.ai'
+          - 'https://acme.staging.egalvanic.ai'
         default: 'https://acme.qa.egalvanic.ai'
       zap_mode:
         description: 'ZAP mode'
@@ -34,7 +38,7 @@ jobs:
         env:
           BASE_URL: ${{ inputs.base_url }}
           ZAP_MODE: ${{ inputs.zap_mode }}
-        run: bash security/zap-baseline-scan.sh || true   # report-and-continue; gate is inside script
+        run: bash security/zap-baseline-scan.sh           # script gates on HIGH-risk; upload step uses if: always()
       - name: Upload ZAP report
         if: always()
         uses: actions/upload-artifact@v4.6.2

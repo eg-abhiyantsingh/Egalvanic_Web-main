@@ -25,6 +25,13 @@ REPORT_JSON="zap-report.json"
 
 echo "── OWASP ZAP ${ZAP_MODE} scan → ${BASE_URL} ──"
 
+# Allowlist guard: never point an active scanner at an arbitrary / production host.
+# Only non-prod eGalvanic environments are permitted targets.
+case "${BASE_URL}" in
+  https://*.qa.egalvanic.ai|https://*.qa.egalvanic.ai/*|https://*.staging.egalvanic.ai|https://*.staging.egalvanic.ai/*) ;;
+  *) echo "ERROR: ${BASE_URL} is not an allowlisted QA/staging target. Refusing to scan." >&2; exit 2 ;;
+esac
+
 if ! command -v docker >/dev/null 2>&1; then
   echo "ERROR: Docker is required to run ZAP. Install Docker or use a host with ZAP." >&2
   exit 2
