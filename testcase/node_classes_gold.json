@@ -1,0 +1,2533 @@
+{
+  "classes": {
+    "ATS": {
+      "box": "No",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "protected-double-target",
+      "attributes": [
+        {
+          "name": "Catalog Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Contact Type",
+          "type": "select",
+          "options": [
+            "Normally Open (NO)",
+            "Normally Closed (NC)"
+          ],
+          "required": false
+        },
+        {
+          "name": "Interrupting Rating",
+          "type": "select",
+          "options": [
+            "10 kA",
+            "20 kA",
+            "30 kA",
+            "40 kA",
+            "50 kA",
+            "65 kA",
+            "80 kA",
+            "100 kA"
+          ],
+          "required": false
+        },
+        {
+          "name": "Ampere Rating",
+          "type": "select",
+          "options": [
+            "30A",
+            "60A",
+            "100A",
+            "200A",
+            "400A",
+            "600A",
+            "800A",
+            "1000A",
+            "1200A",
+            "1600A",
+            "2000A",
+            "2500A",
+            "3000A",
+            "4000A"
+          ],
+          "required": false
+        },
+        {
+          "name": "Manufacturer",
+          "type": "select",
+          "options": [
+            "ABB",
+            "Eaton",
+            "General Electric",
+            "Schneider Electric",
+            "Siemens",
+            "Cummins",
+            "Kohler",
+            "Westinghouse",
+            "Generac",
+            "ACC"
+          ],
+          "required": false
+        },
+        {
+          "name": "Mechanism Type",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Model",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Mains Type",
+          "type": "select",
+          "options": [
+            "MCB",
+            "MLO"
+          ],
+          "required": false
+        },
+        {
+          "name": "Serial Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Size",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Notes",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Voltage",
+          "type": "select",
+          "options": [
+            "120V",
+            "208V",
+            "240V",
+            "480V",
+            "600V",
+            "4160V"
+          ],
+          "required": false
+        },
+        {
+          "name": "Type",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        }
+      ]
+    },
+    "Battery": {
+      "box": "No",
+      "ocp": "No",
+      "needs_source": "No",
+      "orientation": "protected-source",
+      "attributes": []
+    },
+    "Busduct": {
+      "box": "Yes",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": []
+    },
+    "Busway": {
+      "box": "No",
+      "ocp": "No",
+      "needs_source": "No",
+      "orientation": "vertical-square",
+      "attributes": []
+    },
+    "Cable": {
+      "box": "No",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "vertical-square",
+      "attributes": []
+    },
+    "Capacitor": {
+      "box": "No",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": [
+        {
+          "name": "A Phase Serial Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "B Phase Serial Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Catalog Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "C Phase Serial Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Fluid Capacity",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Fluid Type",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Fuse Amperage",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Fuse Manufacturer",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Fuse Refill Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "K V A R Rating",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Manufacturer",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Model",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Notes",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "P C B Labeled",
+          "type": "textfield",
+          "options": [
+            "120V",
+            "208V",
+            "240V",
+            "480V",
+            "600V",
+            "4160V"
+          ],
+          "required": false
+        },
+        {
+          "name": "Spare Fuses",
+          "type": "textfield",
+          "options": [
+            "10A",
+            "20A",
+            "30A",
+            "40A",
+            "50A",
+            "60A",
+            "80",
+            "100A",
+            "200A",
+            "400A",
+            "600A",
+            "800A",
+            "1000A",
+            "1200A",
+            "1600A",
+            "2000A",
+            "2500A",
+            "3000A",
+            "4000A"
+          ],
+          "required": false
+        },
+        {
+          "name": "Style",
+          "type": "textfield",
+          "options": [
+            "10 kA",
+            "20 kA",
+            "30 kA",
+            "40 kA",
+            "50 kA",
+            "65 kA",
+            "80 kA",
+            "100 kA",
+            "200KA"
+          ],
+          "required": false
+        },
+        {
+          "name": "Type",
+          "type": "textfield",
+          "options": [
+            "ABB",
+            "Eaton",
+            "General Electric",
+            "Schneider Electric",
+            "Siemens",
+            "Cummins",
+            "Kohler",
+            "Westinghouse",
+            "Generac",
+            "ACC"
+          ],
+          "required": false
+        },
+        {
+          "name": "U F Rating",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Voltage",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Serial Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        }
+      ]
+    },
+    "Capacitor Bank": {
+      "box": "No",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "protected-endpoint",
+      "attributes": []
+    },
+    "Circuit Breaker": {
+      "box": "No",
+      "ocp": "Yes",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": [
+        {
+          "name": "Manufacturer",
+          "type": "select",
+          "options": [
+            "Square D",
+            "Eaton",
+            "Siemens",
+            "General Electric",
+            "ABB",
+            "Schneider Electric",
+            "Cutler-Hammer",
+            "Westinghouse",
+            "ITE",
+            "Allen-Bradley",
+            "Mitsubishi",
+            "Toshiba",
+            "LS Electric",
+            "Fuji Electric",
+            "Omron",
+            "Eaton Crouse-Hinds",
+            "Other"
+          ],
+          "required": false
+        },
+        {
+          "name": "Model",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Ampere Rating",
+          "type": "select",
+          "options": [
+            "15A",
+            "20A",
+            "30A",
+            "40A",
+            "50A",
+            "60A",
+            "70A",
+            "80A",
+            "90A",
+            "100A",
+            "125A",
+            "150A",
+            "175A",
+            "200A",
+            "225A",
+            "250A",
+            "300A",
+            "350A",
+            "400A",
+            "450A",
+            "500A",
+            "600A",
+            "700A",
+            "800A",
+            "900A",
+            "1000A",
+            "1200A",
+            "1600A",
+            "2000A",
+            "2500A",
+            "3000A",
+            "4000A"
+          ],
+          "required": false
+        },
+        {
+          "name": "Interrupting Rating",
+          "type": "select",
+          "options": [
+            "5 kA",
+            "10 kA",
+            "15 kA",
+            "20 kA",
+            "25 kA",
+            "30 kA",
+            "35 kA",
+            "40 kA",
+            "50 kA",
+            "65 kA",
+            "80 kA",
+            "100 kA",
+            "150 kA"
+          ],
+          "required": false
+        },
+        {
+          "name": "Voltage",
+          "type": "select",
+          "options": [
+            "120V",
+            "220V",
+            "240V",
+            "277V",
+            "480V",
+            "120/208V",
+            "208/120V",
+            "277/480V",
+            "480/277V",
+            "600V"
+          ],
+          "required": false
+        },
+        {
+          "name": "Catalog Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Notes",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Breaker Settings",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        }
+      ]
+    },
+    "Disconnect Switch": {
+      "box": "Yes",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": [
+        {
+          "name": "Voltage",
+          "type": "select",
+          "options": [
+            "120V",
+            "208V",
+            "240V",
+            "480V",
+            "600V",
+            "4160V"
+          ],
+          "required": false
+        },
+        {
+          "name": "Ampere Rating",
+          "type": "select",
+          "options": [
+            "10A",
+            "20A",
+            "30A",
+            "40A",
+            "50A",
+            "60A",
+            "80",
+            "100A",
+            "200A",
+            "400A",
+            "600A",
+            "800A",
+            "1000A",
+            "1200A",
+            "1600A",
+            "2000A",
+            "2500A",
+            "3000A",
+            "4000A"
+          ],
+          "required": false
+        },
+        {
+          "name": "Interrupting Rating",
+          "type": "select",
+          "options": [
+            "10 kA",
+            "20 kA",
+            "30 kA",
+            "40 kA",
+            "50 kA",
+            "65 kA",
+            "80 kA",
+            "100 kA",
+            "200KA"
+          ],
+          "required": false
+        },
+        {
+          "name": "Manufacturer",
+          "type": "select",
+          "options": [
+            "ABB",
+            "Eaton",
+            "General Electric",
+            "Schneider Electric",
+            "Siemens",
+            "Cummins",
+            "Kohler",
+            "Westinghouse",
+            "Generac",
+            "ACC"
+          ],
+          "required": false
+        },
+        {
+          "name": "Catalog Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Notes",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        }
+      ]
+    },
+    "Fuse": {
+      "box": "No",
+      "ocp": "Yes",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": [
+        {
+          "name": "fuseManufacturer",
+          "type": "select",
+          "options": [
+            "BUSSMANN",
+            "CEFCON",
+            "CUTLER-HAMMER",
+            "EATON",
+            "EDISON",
+            "FERRAZ SHAWMUT",
+            "GE",
+            "GOULD SHAWMUT",
+            "LITTELFUSE",
+            "SIEMENS",
+            "SQUARED D",
+            "WESTINGHOUSE"
+          ],
+          "required": false
+        },
+        {
+          "name": "fuseAmperage",
+          "type": "select",
+          "options": [
+            "15A",
+            "20A",
+            "30A",
+            "40A",
+            "50A",
+            "60A",
+            "70A",
+            "80A",
+            "90A",
+            "100A",
+            "125A",
+            "150A",
+            "175A",
+            "200A",
+            "225A",
+            "250A",
+            "300A",
+            "350A",
+            "400A",
+            "450A",
+            "500A",
+            "600A",
+            "700A",
+            "800A",
+            "900A",
+            "1000A",
+            "1200A",
+            "1600A",
+            "2000A",
+            "2500A",
+            "3000A",
+            "4000A"
+          ],
+          "required": false
+        },
+        {
+          "name": "KA Rating",
+          "type": "select",
+          "options": [
+            "5 kA",
+            "10 kA",
+            "14 kA",
+            "22 kA",
+            "25 kA",
+            "35 kA",
+            "42 kA",
+            "50 kA",
+            "65 kA",
+            "100 kA",
+            "200 kA"
+          ],
+          "required": false
+        },
+        {
+          "name": "Voltage",
+          "type": "select",
+          "options": [
+            "120V",
+            "220V",
+            "240V",
+            "250V",
+            "277V",
+            "480",
+            "600V"
+          ],
+          "required": false
+        },
+        {
+          "name": "notes",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Fuse Refill Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Spare Fuses",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Type",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        }
+      ]
+    },
+    "Generator": {
+      "box": "No",
+      "ocp": "No",
+      "needs_source": "No",
+      "orientation": "protected-source",
+      "attributes": [
+        {
+          "name": "voltage",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "K W Rating",
+          "type": "textfield",
+          "options": [
+            "MLO",
+            "MCB"
+          ],
+          "required": false
+        },
+        {
+          "name": "K V A Rating",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Power Factor",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Ampere Rating",
+          "type": "textfield",
+          "options": [
+            "120V",
+            "208V",
+            "240V",
+            "277V",
+            "347V",
+            "380V",
+            "400V",
+            "415V",
+            "480V",
+            "600V",
+            "120/208V",
+            "120/240V",
+            "208/120V",
+            "240/120V",
+            "277/480V",
+            "347/600V",
+            "230V",
+            "400/230V",
+            "415/240V"
+          ],
+          "required": false
+        },
+        {
+          "name": "manufacturer",
+          "type": "textfield",
+          "options": [
+            "15A",
+            "20A",
+            "30A",
+            "40A",
+            "50A",
+            "60A",
+            "70A",
+            "80A",
+            "90A",
+            "100A",
+            "125A",
+            "150A",
+            "175A",
+            "200A",
+            "225A",
+            "250A",
+            "300A",
+            "350A",
+            "400A",
+            "450A",
+            "500A",
+            "600A",
+            "700A",
+            "800A",
+            "900A",
+            "1000A",
+            "1200A",
+            "1600A",
+            "2000A",
+            "2500A",
+            "3000A",
+            "4000A"
+          ],
+          "required": false
+        },
+        {
+          "name": "Serial Number",
+          "type": "textfield",
+          "options": [
+            "ABB",
+            "Eaton",
+            "General Electric",
+            "Schneider Electric",
+            "Siemens",
+            "Cummins",
+            "Kohler",
+            "Westinghouse",
+            "Generac",
+            "ACC"
+          ],
+          "required": false
+        },
+        {
+          "name": "configuration",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        }
+      ]
+    },
+    "Junction Box": {
+      "box": "No",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "junction",
+      "attributes": [
+        {
+          "name": "Catalog Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Manufacturer",
+          "type": "textfield",
+          "options": [
+            "10 kA",
+            "14 kA",
+            "18 kA",
+            "22 kA",
+            "25 kA",
+            "30 kA",
+            "35 kA",
+            "42 kA",
+            "50 kA",
+            "65 kA",
+            "85 kA",
+            "100 kA",
+            "150 kA",
+            "200 kA"
+          ],
+          "required": false
+        },
+        {
+          "name": "Model",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Notes",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Size",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        }
+      ]
+    },
+    "Lighting Controls": {
+      "box": "No",
+      "ocp": "Yes",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": [
+        {
+          "name": "model",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "notes",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Relay Type",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "manufacturer",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Serial Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Rated Amps",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "voltage",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        }
+      ]
+    },
+    "Load": {
+      "box": "No",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "protected-endpoint",
+      "attributes": []
+    },
+    "Loadcenter": {
+      "box": "Yes",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": [
+        {
+          "name": "Size",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Mains Type",
+          "type": "select",
+          "options": [
+            "MLO",
+            "MCB"
+          ],
+          "required": false
+        }
+      ]
+    },
+    "MCC": {
+      "box": "Yes",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": [
+        {
+          "name": "Size",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Notes",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Voltage",
+          "type": "select",
+          "options": [
+            "120V",
+            "208V",
+            "240V",
+            "277V",
+            "347V",
+            "380V",
+            "400V",
+            "415V",
+            "480V",
+            "600V",
+            "120/208V",
+            "120/240V",
+            "208/120V",
+            "240/120V",
+            "277/480V",
+            "347/600V",
+            "230V",
+            "400/230V",
+            "415/240V"
+          ],
+          "required": false
+        },
+        {
+          "name": "Ampere Rating",
+          "type": "select",
+          "options": [
+            "15A",
+            "20A",
+            "30A",
+            "40A",
+            "50A",
+            "60A",
+            "70A",
+            "80A",
+            "90A",
+            "100A",
+            "125A",
+            "150A",
+            "175A",
+            "200A",
+            "225A",
+            "250A",
+            "300A",
+            "350A",
+            "400A",
+            "450A",
+            "500A",
+            "600A",
+            "700A",
+            "800A",
+            "900A",
+            "1000A",
+            "1200A",
+            "1600A",
+            "2000A",
+            "2500A",
+            "3000A",
+            "4000A"
+          ],
+          "required": false
+        },
+        {
+          "name": "Manufacturer",
+          "type": "select",
+          "options": [
+            "Square D",
+            "Eaton",
+            "Siemens",
+            "General Electric",
+            "ABB",
+            "Schneider Electric",
+            "Cutler-Hammer",
+            "Westinghouse",
+            "ITE",
+            "Allen-Bradley",
+            "Federal Pacific",
+            "Zinsco",
+            "Bussmann",
+            "Challenger",
+            "Mitsubishi",
+            "Omron",
+            "Cooper",
+            "Eaton Crouse-Hinds",
+            "Fujitsu",
+            "LS Electric",
+            "Siemens BTI",
+            "ACC",
+            "Other"
+          ],
+          "required": false
+        },
+        {
+          "name": "Serial Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Catalog Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Fault Withstand Rating",
+          "type": "select",
+          "options": [
+            "10 kA",
+            "14 kA",
+            "18 kA",
+            "22 kA",
+            "25 kA",
+            "30 kA",
+            "35 kA",
+            "42 kA",
+            "50 kA",
+            "65 kA",
+            "85 kA",
+            "100 kA",
+            "150 kA",
+            "200 kA"
+          ],
+          "required": false
+        }
+      ]
+    },
+    "MCC Bucket": {
+      "box": "No",
+      "ocp": "Yes",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": []
+    },
+    "Meter": {
+      "box": "No",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": []
+    },
+    "Motor": {
+      "box": "No",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "protected-endpoint",
+      "attributes": [
+        {
+          "name": "Catalog Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Duty Cycle",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Frame",
+          "type": "textfield",
+          "options": [
+            "MCB",
+            "MLO"
+          ],
+          "required": false
+        },
+        {
+          "name": "Full Load Amps",
+          "type": "textfield",
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "6"
+          ],
+          "required": false
+        },
+        {
+          "name": "Horsepower",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Manufacturer",
+          "type": "textfield",
+          "options": [
+            "120V",
+            "208V",
+            "240V",
+            "277V",
+            "347V",
+            "380V",
+            "400V",
+            "415V",
+            "480V",
+            "600V",
+            "120/208V",
+            "120/240V",
+            "208/120V",
+            "240/120V",
+            "277/480V",
+            "347/600V",
+            "230V",
+            "400/230V",
+            "415/240V"
+          ],
+          "required": false
+        },
+        {
+          "name": "Model",
+          "type": "textfield",
+          "options": [
+            "15A",
+            "20A",
+            "30A",
+            "40A",
+            "50A",
+            "60A",
+            "70A",
+            "80A",
+            "90A",
+            "100A",
+            "125A",
+            "150A",
+            "175A",
+            "200A",
+            "225A",
+            "250A",
+            "300A",
+            "350A",
+            "400A",
+            "450A",
+            "500A",
+            "600A",
+            "700A",
+            "800A",
+            "900A",
+            "1000A",
+            "1200A",
+            "1600A",
+            "2000A",
+            "2500A",
+            "3000A",
+            "4000A"
+          ],
+          "required": false
+        },
+        {
+          "name": "Motor Class",
+          "type": "textfield",
+          "options": [
+            "ABB",
+            "Eaton",
+            "General Electric",
+            "Schneider Electric",
+            "Siemens",
+            "Cummins",
+            "Kohler",
+            "Westinghouse",
+            "Generac",
+            "ACC"
+          ],
+          "required": false
+        },
+        {
+          "name": "Notes",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Power Factor",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "R P M",
+          "type": "textfield",
+          "options": [
+            "10 kA",
+            "14 kA",
+            "18 kA",
+            "22 kA",
+            "25 kA",
+            "30 kA",
+            "35 kA",
+            "42 kA",
+            "50 kA",
+            "65 kA",
+            "85 kA",
+            "100 kA",
+            "150 kA",
+            "200 kA"
+          ],
+          "required": false
+        },
+        {
+          "name": "Serial Number",
+          "type": "textfield",
+          "options": [
+            "15A",
+            "20A",
+            "30A",
+            "40A",
+            "50A",
+            "60A",
+            "70A",
+            "80A",
+            "90A",
+            "100A",
+            "125A",
+            "150A",
+            "175A",
+            "200A",
+            "225A",
+            "250A",
+            "300A",
+            "350A",
+            "400A",
+            "450A",
+            "500A",
+            "600A",
+            "700A",
+            "800A",
+            "900A",
+            "1000A",
+            "1200A",
+            "1600A",
+            "2000A",
+            "2500A",
+            "3000A",
+            "4000A"
+          ],
+          "required": false
+        },
+        {
+          "name": "Service Factor",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Size",
+          "type": "textfield",
+          "options": [
+            "10 kA",
+            "14 kA",
+            "18 kA",
+            "22 kA",
+            "25 kA",
+            "30 kA",
+            "35 kA",
+            "42 kA",
+            "50 kA",
+            "65 kA",
+            "85 kA",
+            "100 kA",
+            "150 kA",
+            "200 kA"
+          ],
+          "required": false
+        },
+        {
+          "name": "Temperature Rating",
+          "type": "textfield",
+          "options": [
+            "ABB",
+            "Eaton",
+            "General Electric",
+            "Schneider Electric",
+            "Siemens",
+            "Cummins",
+            "Kohler",
+            "Westinghouse",
+            "Generac",
+            "ACC"
+          ],
+          "required": false
+        },
+        {
+          "name": "Voltage",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Mains Type",
+          "type": "select",
+          "options": [
+            "MCB",
+            "MLO"
+          ],
+          "required": false
+        }
+      ]
+    },
+    "Motor Controller": {
+      "box": "No",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": []
+    },
+    "Motor Starter": {
+      "box": "Yes",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": []
+    },
+    "Other": {
+      "box": "Yes",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": [
+        {
+          "name": "Model",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Notes",
+          "type": "textfield",
+          "options": [
+            "120V",
+            "208V",
+            "240V",
+            "277V",
+            "347V",
+            "380V",
+            "400V",
+            "415V",
+            "480V",
+            "600V",
+            "120/208V",
+            "120/240V",
+            "208/120V",
+            "240/120V",
+            "277/480V",
+            "347/600V",
+            "230V",
+            "400/230V",
+            "415/240V"
+          ],
+          "required": false
+        },
+        {
+          "name": "Serial Number",
+          "type": "textfield",
+          "options": [
+            "MCB",
+            "MLO"
+          ],
+          "required": false
+        },
+        {
+          "name": "NP Volts",
+          "type": "textfield",
+          "options": [
+            "30A",
+            "60A",
+            "100A",
+            "200A",
+            "400A",
+            "600A",
+            "800A",
+            "1000A",
+            "1200A",
+            "1600A",
+            "2000A",
+            "2500A",
+            "3000A",
+            "4000A"
+          ],
+          "required": false
+        }
+      ]
+    },
+    "Other (OCP)": {
+      "box": "No",
+      "ocp": "Yes",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": []
+    },
+    "PDU": {
+      "box": "Yes",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": [
+        {
+          "name": "Ampere Rating",
+          "type": "select",
+          "options": [
+            "15A",
+            "20A",
+            "30A",
+            "40A",
+            "50A",
+            "60A",
+            "70A",
+            "80A",
+            "90A",
+            "100A",
+            "125A",
+            "150A",
+            "175A",
+            "200A",
+            "225A",
+            "250A",
+            "300A",
+            "350A",
+            "400A",
+            "450A",
+            "500A",
+            "600A",
+            "700A",
+            "800A",
+            "900A",
+            "1000A",
+            "1200A",
+            "1600A",
+            "2000A",
+            "2500A",
+            "3000A",
+            "4000A"
+          ],
+          "required": false
+        },
+        {
+          "name": "Catalog Number",
+          "type": "textfield",
+          "options": [
+            "Normally Open (NO)",
+            "Normally Closed (NC)"
+          ],
+          "required": false
+        },
+        {
+          "name": "Fault Withstand Rating",
+          "type": "select",
+          "options": [
+            "10 kA",
+            "14 kA",
+            "18 kA",
+            "22 kA",
+            "25 kA",
+            "30 kA",
+            "35 kA",
+            "42 kA",
+            "50 kA",
+            "65 kA",
+            "85 kA",
+            "100 kA",
+            "150 kA",
+            "200 kA"
+          ],
+          "required": false
+        },
+        {
+          "name": "Manufacturer",
+          "type": "select",
+          "options": [
+            "Square D",
+            "Eaton",
+            "Siemens",
+            "General Electric",
+            "ABB",
+            "Schneider Electric",
+            "Cutler-Hammer",
+            "Westinghouse",
+            "ITE",
+            "Allen-Bradley",
+            "Federal Pacific",
+            "Zinsco",
+            "Bussmann",
+            "Challenger",
+            "Mitsubishi",
+            "Omron",
+            "Cooper",
+            "Eaton Crouse-Hinds",
+            "Fujitsu",
+            "LS Electric",
+            "Siemens BTI",
+            "ACC",
+            "Other"
+          ],
+          "required": false
+        },
+        {
+          "name": "Notes",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Serial Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Size",
+          "type": "numberfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Voltage",
+          "type": "select",
+          "options": [
+            "120V",
+            "208V",
+            "240V",
+            "277V",
+            "347V",
+            "380V",
+            "400V",
+            "415V",
+            "480V",
+            "600V",
+            "120/208V",
+            "120/240V",
+            "208/120V",
+            "240/120V",
+            "277/480V",
+            "347/600V",
+            "230V",
+            "400/230V",
+            "415/240V"
+          ],
+          "required": false
+        },
+        {
+          "name": "Mains Type",
+          "type": "select",
+          "options": [
+            "MCB",
+            "MLO"
+          ],
+          "required": false
+        }
+      ]
+    },
+    "Panelboard": {
+      "box": "Yes",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": [
+        {
+          "name": "Size",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Mains Type",
+          "type": "select",
+          "options": [
+            "MCB",
+            "MLO"
+          ],
+          "required": false
+        },
+        {
+          "name": "Columns",
+          "type": "select",
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "6"
+          ],
+          "required": false
+        },
+        {
+          "name": "Notes",
+          "type": "textfield",
+          "options": [
+            "May Be"
+          ],
+          "required": false
+        },
+        {
+          "name": "Voltage",
+          "type": "select",
+          "options": [
+            "120V",
+            "208V",
+            "240V",
+            "277V",
+            "347V",
+            "380V",
+            "400V",
+            "415V",
+            "480V",
+            "600V",
+            "120/208V",
+            "120/240V",
+            "208/120V",
+            "240/120V",
+            "277/480V",
+            "347/600V",
+            "230V",
+            "400/230V",
+            "415/240V"
+          ],
+          "required": false
+        },
+        {
+          "name": "Ampere Rating",
+          "type": "select",
+          "options": [
+            "15A",
+            "20A",
+            "30A",
+            "40A",
+            "50A",
+            "60A",
+            "70A",
+            "80A",
+            "90A",
+            "100A",
+            "125A",
+            "150A",
+            "175A",
+            "200A",
+            "225A",
+            "250A",
+            "300A",
+            "350A",
+            "400A",
+            "450A",
+            "500A",
+            "600A",
+            "700A",
+            "800A",
+            "900A",
+            "1000A",
+            "1200A",
+            "1600A",
+            "2000A",
+            "2500A",
+            "3000A",
+            "4000A"
+          ],
+          "required": false
+        },
+        {
+          "name": "Manufacturer",
+          "type": "select",
+          "options": [
+            "Square D",
+            "Eaton",
+            "Siemens",
+            "General Electric",
+            "ABB",
+            "Schneider Electric",
+            "Cutler-Hammer",
+            "Westinghouse",
+            "ITE",
+            "Allen-Bradley",
+            "Federal Pacific",
+            "Zinsco",
+            "Bussmann",
+            "Challenger",
+            "Mitsubishi",
+            "Omron",
+            "Cooper",
+            "Eaton Crouse-Hinds",
+            "Fujitsu",
+            "LS Electric",
+            "Siemens BTI",
+            "ACC",
+            "Other"
+          ],
+          "required": false
+        },
+        {
+          "name": "Serial Number",
+          "type": "textfield",
+          "options": [
+            "120V",
+            "208V",
+            "240V",
+            "277V",
+            "347V",
+            "380V",
+            "400V",
+            "415V",
+            "480V",
+            "600V",
+            "120/208V",
+            "120/240V",
+            "208/120V",
+            "240/120V",
+            "277/480V",
+            "347/600V",
+            "230V",
+            "400/230V",
+            "415/240V"
+          ],
+          "required": false
+        },
+        {
+          "name": "Catalog Number",
+          "type": "textfield",
+          "options": [
+            "15A",
+            "20A",
+            "30A",
+            "40A",
+            "50A",
+            "60A",
+            "70A",
+            "80A",
+            "90A",
+            "100A",
+            "125A",
+            "150A",
+            "175A",
+            "200A",
+            "225A",
+            "250A",
+            "300A",
+            "350A",
+            "400A",
+            "450A",
+            "500A",
+            "600A",
+            "700A",
+            "800A",
+            "900A",
+            "1000A",
+            "1200A",
+            "1600A",
+            "2000A",
+            "2500A",
+            "3000A",
+            "4000A"
+          ],
+          "required": false
+        },
+        {
+          "name": "Fault Withstand Rating",
+          "type": "select",
+          "options": [
+            "10 kA",
+            "14 kA",
+            "18 kA",
+            "22 kA",
+            "25 kA",
+            "30 kA",
+            "35 kA",
+            "42 kA",
+            "50 kA",
+            "65 kA",
+            "85 kA",
+            "100 kA",
+            "150 kA",
+            "200 kA"
+          ],
+          "required": false
+        }
+      ]
+    },
+    "Rectifier": {
+      "box": "No",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": []
+    },
+    "Relay": {
+      "box": "No",
+      "ocp": "Yes",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": [
+        {
+          "name": "model",
+          "type": "textfield",
+          "options": [
+            "MCB",
+            "MLO"
+          ],
+          "required": false
+        },
+        {
+          "name": "notes",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Relay Type",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "manufacturer",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Serial Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        }
+      ]
+    },
+    "Series Reactor": {
+      "box": "No",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": []
+    },
+    "Shunt Reactor": {
+      "box": "No",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "protected-endpoint",
+      "attributes": []
+    },
+    "Switch": {
+      "box": "No",
+      "ocp": "Yes",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": []
+    },
+    "Switchboard": {
+      "box": "Yes",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": [
+        {
+          "name": "Size",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Notes",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Voltage",
+          "type": "select",
+          "options": [
+            "120V",
+            "208V",
+            "240V",
+            "277V",
+            "347V",
+            "380V",
+            "400V",
+            "415V",
+            "480V",
+            "600V",
+            "120/208V",
+            "120/240V",
+            "208/120V",
+            "240/120V",
+            "277/480V",
+            "347/600V",
+            "230V",
+            "400/230V",
+            "415/240V"
+          ],
+          "required": false
+        },
+        {
+          "name": "Ampere Rating",
+          "type": "select",
+          "options": [
+            "15A",
+            "20A",
+            "30A",
+            "40A",
+            "50A",
+            "60A",
+            "70A",
+            "80A",
+            "90A",
+            "100A",
+            "125A",
+            "150A",
+            "175A",
+            "200A",
+            "225A",
+            "250A",
+            "300A",
+            "350A",
+            "400A",
+            "450A",
+            "500A",
+            "600A",
+            "700A",
+            "800A",
+            "900A",
+            "1000A",
+            "1200A",
+            "1600A",
+            "2000A",
+            "2500A",
+            "3000A",
+            "4000A"
+          ],
+          "required": false
+        },
+        {
+          "name": "Manufacturer",
+          "type": "select",
+          "options": [
+            "Square D",
+            "Eaton",
+            "Siemens",
+            "General Electric",
+            "ABB",
+            "Schneider Electric",
+            "Cutler-Hammer",
+            "Westinghouse",
+            "ITE",
+            "Allen-Bradley",
+            "Federal Pacific",
+            "Zinsco",
+            "Bussmann",
+            "Challenger",
+            "Mitsubishi",
+            "Omron",
+            "Cooper",
+            "Eaton Crouse-Hinds",
+            "Fujitsu",
+            "LS Electric",
+            "Siemens BTI",
+            "ACC",
+            "Other"
+          ],
+          "required": false
+        },
+        {
+          "name": "Serial Number",
+          "type": "textfield",
+          "options": [
+            "120V",
+            "208V",
+            "240V",
+            "277V",
+            "480V",
+            "600V",
+            "2400V",
+            "4160V",
+            "7200V",
+            "12",
+            "470V",
+            "13",
+            "800V",
+            "24",
+            "000V",
+            "34",
+            "500V",
+            "69",
+            "000V"
+          ],
+          "required": false
+        },
+        {
+          "name": "Catalog Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Fault Withstand Rating",
+          "type": "select",
+          "options": [
+            "10 kA",
+            "14 kA",
+            "18 kA",
+            "22 kA",
+            "25 kA",
+            "30 kA",
+            "35 kA",
+            "42 kA",
+            "50 kA",
+            "65 kA",
+            "85 kA",
+            "100 kA",
+            "150 kA",
+            "200 kA"
+          ],
+          "required": false
+        },
+        {
+          "name": "Mains Type",
+          "type": "select",
+          "options": [
+            "MCB",
+            "MLO"
+          ],
+          "required": false
+        }
+      ]
+    },
+    "Tie Breaker": {
+      "box": "No",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "horizontal-square",
+      "attributes": []
+    },
+    "Transformer": {
+      "box": "No",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "protected-vertical",
+      "attributes": [
+        {
+          "name": "BIL",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Size",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Type",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Class",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Frequency",
+          "type": "select",
+          "options": [
+            "50 Hz",
+            "60 Hz",
+            "400 Hz"
+          ],
+          "required": false
+        },
+        {
+          "name": "KVA Rating",
+          "type": "select",
+          "options": [
+            "10 kVA",
+            "25 kVA",
+            "50 kVA",
+            "75 kVA",
+            "100 kVA",
+            "150 kVA",
+            "200 kVA",
+            "300 kVA",
+            "500 kVA",
+            "750 kVA",
+            "1000 kVA"
+          ],
+          "required": false
+        },
+        {
+          "name": "Primary Tap",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Manufacturer",
+          "type": "select",
+          "options": [
+            "ABB",
+            "Allen-Bradley",
+            "Allis-Chalmers",
+            "Baldor",
+            "Beckwith Electric",
+            "Bushing Electric",
+            "CG Power Systems",
+            "Cooper Power Systems",
+            "Cutler-Hammer",
+            "Delta Star",
+            "Eaton",
+            "Emerson Electric",
+            "Federal Pacific",
+            "Fisher Pierce",
+            "Fuji Electric",
+            "General Electric (GE)",
+            "Hammond Power Solutions",
+            "Hitachi Energy",
+            "Howard Industries",
+            "Hyundai Electric",
+            "Jefferson Electric",
+            "LS Electric",
+            "Magnetek",
+            "Mitsubishi Electric",
+            "Myers Power Products",
+            "Okonite",
+            "Omicron",
+            "Omron",
+            "Parker Hannifin",
+            "Pauwels Transformers",
+            "Pioneer Transformers",
+            "Powell Electrical Systems",
+            "Powersmiths",
+            "Prolec GE",
+            "Schneider Electric",
+            "S&C Electric Company",
+            "Simpson Electric",
+            "Siemens",
+            "Solid State Controls",
+            "SPX Transformer Solutions",
+            "Square D",
+            "Tamura Corporation",
+            "Tavrida Electric",
+            "TBEA Transformers",
+            "Thomas & Betts",
+            "Toshiba",
+            "Traeger Transformer",
+            "Vizimax",
+            "Voltran Transformers",
+            "WEG Electric",
+            "Westinghouse",
+            "Zettler Electronics",
+            "Other"
+          ],
+          "required": false
+        },
+        {
+          "name": "Serial Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Primary Amperes",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Primary Voltage",
+          "type": "select",
+          "options": [
+            "120V",
+            "208V",
+            "240V",
+            "277V",
+            "480V",
+            "600V",
+            "2400V",
+            "4160V",
+            "7200V",
+            "12",
+            "470V",
+            "13",
+            "800V",
+            "24",
+            "000V",
+            "34",
+            "500V",
+            "69",
+            "000V"
+          ],
+          "required": false
+        },
+        {
+          "name": "Temperature Rise",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Secondary Amperes",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Secondary Voltage",
+          "type": "select",
+          "options": [
+            "120V",
+            "208V",
+            "240V",
+            "277V",
+            "480V",
+            "600V",
+            "2",
+            "400V",
+            "4",
+            "160V",
+            "7",
+            "200V",
+            "12",
+            "470V",
+            "13",
+            "800V",
+            "24",
+            "000V",
+            "34",
+            "500V",
+            "120/208V",
+            "120/240V",
+            "277/480V"
+          ],
+          "required": false
+        },
+        {
+          "name": "Percentage Impedance",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Winding Configuration",
+          "type": "select",
+          "options": [
+            "Delta-Wye (\u0394-Y)",
+            "Delta-Delta (\u0394-\u0394)",
+            "Wye-Delta (Y-\u0394)",
+            "Wye-Wye (Y-Y)",
+            "Zig-Zag Wye (Z-Y)",
+            "Autotransformer",
+            "Open Delta (V-Connection)",
+            "Open Wye"
+          ],
+          "required": false
+        }
+      ]
+    },
+    "Transformer (3-Winding)": {
+      "box": "No",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "protected-double-source",
+      "attributes": []
+    },
+    "UPS": {
+      "box": "No",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": [
+        {
+          "name": "size",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "model",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "notes",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "manufacturer",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Catalog Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Mains Type",
+          "type": "select",
+          "options": [
+            "MCB",
+            "MLO"
+          ],
+          "required": false
+        }
+      ]
+    },
+    "Utility": {
+      "box": "No",
+      "ocp": "No",
+      "needs_source": "No",
+      "orientation": "protected-source",
+      "attributes": [
+        {
+          "name": "Meter Number",
+          "type": "textfield",
+          "options": [],
+          "required": false
+        },
+        {
+          "name": "Starting Voltage",
+          "type": "select",
+          "options": [
+            "120V",
+            "208V",
+            "240V",
+            "277V",
+            "480V",
+            "600V",
+            "2400V",
+            "4160V",
+            "7200V",
+            "12",
+            "470V",
+            "13",
+            "800V",
+            "24",
+            "000V",
+            "34",
+            "500V",
+            "69",
+            "000V"
+          ],
+          "required": false
+        }
+      ]
+    },
+    "VFD": {
+      "box": "Yes",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": []
+    },
+    "VFD Panel": {
+      "box": "Yes",
+      "ocp": "No",
+      "needs_source": "Yes",
+      "orientation": "vertical",
+      "attributes": []
+    }
+  },
+  "subtypes": {
+    "ATS": [
+      "Automatic Transfer Switch (<= 1000V)",
+      "Automatic Transfer Switch (> 1000V)",
+      "Transfer Switch (<= 1000V)",
+      "Transfer Switch (> 1000V)"
+    ],
+    "Other": [
+      "Battery Energy Storage System (ESS)",
+      "Electrical Vehicle Charging Station",
+      "Ni-Cad Battery",
+      "Solar Photovoltaic System",
+      "Valve-Regulated Lead-Acid Battery",
+      "Vented Lead-Acid Battery",
+      "Wind Power System"
+    ],
+    "Disconnect Switch": [
+      "Bolted-Pressure Switch (BPS)",
+      "Bypass-Isolation Switch (<= 1000V)",
+      "Bypass-Isolation Switch (> 1000V)",
+      "Disconnect Switch (<= 1000V)",
+      "Disconnect Switch (> 1000V)",
+      "Fused Disconnect Switch (<= 1000V)",
+      "Fused Disconnect Switch (>1000V)",
+      "High-Pressure Contact Switch (HPC)",
+      "Load-Interruptor Switch",
+      "Recloser (<= 1000V)",
+      "Recloser (> 1000V)",
+      "Scrubtype"
+    ],
+    "Panelboard": [
+      "Branch Panel",
+      "Control Panel",
+      "Panelboard",
+      "Power Panel"
+    ],
+    "Switchboard": [
+      "Distribution Panelboard",
+      "Switchboard",
+      "Switchgear (<= 1000V)",
+      "Switchgear (> 1000V)",
+      "Unitized Substation (USS) (<= 1000V)",
+      "Unitized Substation (USS) (> 1000V)"
+    ],
+    "Transformer": [
+      "Dry Transformer",
+      "Dry-Type Transformer (<= 600V)",
+      "Dry-Type Transformer (> 600V)",
+      "Oil-Filled Transformer"
+    ],
+    "Relay": [
+      "Electromechanical Relay",
+      "Microprocessor Relay",
+      "Solid-State Relay"
+    ],
+    "Fuse": [
+      "Fuse (<= 1000V)",
+      "Fuse (> 1000V)"
+    ],
+    "Load": [
+      "General Load",
+      "Resistive Load"
+    ],
+    "UPS": [
+      "Hybrid UPS System",
+      "I don't node",
+      "Rotary UPS System",
+      "Static UPS System"
+    ],
+    "Battery": [
+      "Lithium-Ion"
+    ],
+    "Circuit Breaker": [
+      "Low-Voltage Insulated Case Circuit Breaker",
+      "Low-Voltage Molded Case Circuit Breaker (<= 250A)",
+      "Low-Voltage Molded Case Circuit Breaker (> 250A)",
+      "Low-Voltage Power Circuit Breaker",
+      "Medium-Voltage Air Magnetic Circuit Breaker",
+      "Medium-Voltage Gas Insulated Circuit Breaker",
+      "Medium-Voltage Oil Insulated Circuit Breaker",
+      "Medium-Voltage Vacuum Circuit Breaker",
+      "Motor Circuit Protector"
+    ],
+    "Motor": [
+      "Low-Voltage Machine (<= 200hp)",
+      "Low-Voltage Machine (>200hp)",
+      "Medium-Voltage Induction Machine",
+      "Medium-Voltage Synchronous Machine"
+    ],
+    "MCC": [
+      "Motor Control Equipment (<= 1000V)",
+      "Motor Control Equipment (> 1000V)"
+    ],
+    "Capacitor": [
+      "Power Factor Correction"
+    ]
+  }
+}
