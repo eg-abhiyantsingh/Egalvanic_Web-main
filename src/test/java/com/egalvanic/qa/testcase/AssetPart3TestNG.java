@@ -1440,7 +1440,7 @@ public class AssetPart3TestNG extends BaseTest {
     @Test(priority = 50, description = "LC_EAD_01: Open Edit Asset Details for Load Center")
     public void testLC_EAD_01_OpenEditScreen() {
         ExtentReportManager.createTest(MODULE, FEATURE, "LC_EAD_01_OpenEditScreen");
-        if (!openEditForAssetClass("Load Center", "LC")) { skipIfNotFound("Load Center"); return; }
+        if (!openEditForAssetClass("Loadcenter", "LC")) { skipIfNotFound("Loadcenter"); return; }
         Assert.assertTrue(isSaveChangesButtonVisible(), "Edit form should be open for LC");
         ExtentReportManager.logPass("Edit Asset Details opens for Load Center");
     }
@@ -1448,7 +1448,7 @@ public class AssetPart3TestNG extends BaseTest {
     @Test(priority = 51, description = "LC_EAD_05: Verify required fields counter 0/6")
     public void testLC_EAD_05_RequiredFieldsCounter() {
         ExtentReportManager.createTest(MODULE, FEATURE, "LC_EAD_05_RequiredFields");
-        if (!openEditForAssetClass("Load Center", "LC")) { skipIfNotFound("Load Center"); return; }
+        if (!openEditForAssetClass("Loadcenter", "LC")) { skipIfNotFound("Loadcenter"); return; }
         expandCoreAttributes();
         String counter = getRequiredFieldsCounter();
         logStep("Required fields counter: " + counter);
@@ -1458,7 +1458,7 @@ public class AssetPart3TestNG extends BaseTest {
     @Test(priority = 52, description = "LC_EAD_10: Edit Ampere Rating")
     public void testLC_EAD_10_EditAmpereRating() {
         ExtentReportManager.createTest(MODULE, FEATURE, "LC_EAD_10_AmpereRating");
-        if (!openEditForAssetClass("Load Center", "LC")) { skipIfNotFound("Load Center"); return; }
+        if (!openEditForAssetClass("Loadcenter", "LC")) { skipIfNotFound("Loadcenter"); return; }
         expandCoreAttributes();
         String val = selectFirstDropdownOption("Ampere Rating");
         boolean saved = saveAndVerify();
@@ -1468,7 +1468,7 @@ public class AssetPart3TestNG extends BaseTest {
     @Test(priority = 53, description = "LC_EAD_11: Edit Catalog Number")
     public void testLC_EAD_11_EditCatalogNumber() {
         ExtentReportManager.createTest(MODULE, FEATURE, "LC_EAD_11_CatalogNumber");
-        if (!openEditForAssetClass("Load Center", "LC")) { skipIfNotFound("Load Center"); return; }
+        if (!openEditForAssetClass("Loadcenter", "LC")) { skipIfNotFound("Loadcenter"); return; }
         expandCoreAttributes();
         String val = editTextField("Catalog Number", "LC_CAT_" + System.currentTimeMillis());
         boolean saved = saveAndVerify();
@@ -1478,7 +1478,7 @@ public class AssetPart3TestNG extends BaseTest {
     @Test(priority = 54, description = "LC_EAD_12: Edit Columns")
     public void testLC_EAD_12_EditColumns() {
         ExtentReportManager.createTest(MODULE, FEATURE, "LC_EAD_12_Columns");
-        if (!openEditForAssetClass("Load Center", "LC")) { skipIfNotFound("Load Center"); return; }
+        if (!openEditForAssetClass("Loadcenter", "LC")) { skipIfNotFound("Loadcenter"); return; }
         expandCoreAttributes();
         String val = selectFirstDropdownOption("Columns");
         if (val == null) val = editTextField("Columns", "2");
@@ -1489,7 +1489,7 @@ public class AssetPart3TestNG extends BaseTest {
     @Test(priority = 55, description = "LC_EAD_13: Edit Configuration")
     public void testLC_EAD_13_EditConfiguration() {
         ExtentReportManager.createTest(MODULE, FEATURE, "LC_EAD_13_Configuration");
-        if (!openEditForAssetClass("Load Center", "LC")) { skipIfNotFound("Load Center"); return; }
+        if (!openEditForAssetClass("Loadcenter", "LC")) { skipIfNotFound("Loadcenter"); return; }
         expandCoreAttributes();
         String val = selectFirstDropdownOption("Configuration");
         boolean saved = saveAndVerify();
@@ -1499,7 +1499,7 @@ public class AssetPart3TestNG extends BaseTest {
     @Test(priority = 56, description = "LC_EAD_14: Edit Fault Withstand Rating")
     public void testLC_EAD_14_EditFaultWithstandRating() {
         ExtentReportManager.createTest(MODULE, FEATURE, "LC_EAD_14_FaultWithstand");
-        if (!openEditForAssetClass("Load Center", "LC")) { skipIfNotFound("Load Center"); return; }
+        if (!openEditForAssetClass("Loadcenter", "LC")) { skipIfNotFound("Loadcenter"); return; }
         expandCoreAttributes();
         String val = selectFirstDropdownOption("Fault Withstand");
         if (val == null) val = editTextField("Fault Withstand Rating", "65kAIC");
@@ -1510,7 +1510,7 @@ public class AssetPart3TestNG extends BaseTest {
     @Test(priority = 57, description = "LC_EAD_15: Edit Mains Type")
     public void testLC_EAD_15_EditMainsType() {
         ExtentReportManager.createTest(MODULE, FEATURE, "LC_EAD_15_MainsType");
-        if (!openEditForAssetClass("Load Center", "LC")) { skipIfNotFound("Load Center"); return; }
+        if (!openEditForAssetClass("Loadcenter", "LC")) { skipIfNotFound("Loadcenter"); return; }
         expandCoreAttributes();
         String val = selectFirstDropdownOption("Mains Type");
         boolean saved = saveAndVerify();
@@ -1520,7 +1520,7 @@ public class AssetPart3TestNG extends BaseTest {
     @Test(priority = 58, description = "LC_EAD_16: Edit Manufacturer")
     public void testLC_EAD_16_EditManufacturer() {
         ExtentReportManager.createTest(MODULE, FEATURE, "LC_EAD_16_Manufacturer");
-        if (!openEditForAssetClass("Load Center", "LC")) { skipIfNotFound("Load Center"); return; }
+        if (!openEditForAssetClass("Loadcenter", "LC")) { skipIfNotFound("Loadcenter"); return; }
         expandCoreAttributes();
         String val = selectFirstDropdownOption("Manufacturer");
         boolean saved = saveAndVerify();
@@ -1530,7 +1530,7 @@ public class AssetPart3TestNG extends BaseTest {
     @Test(priority = 59, description = "LC_EAD_17: Edit Notes")
     public void testLC_EAD_17_EditNotes() {
         ExtentReportManager.createTest(MODULE, FEATURE, "LC_EAD_17_Notes");
-        if (!openEditForAssetClass("Load Center", "LC")) { skipIfNotFound("Load Center"); return; }
+        if (!openEditForAssetClass("Loadcenter", "LC")) { skipIfNotFound("Loadcenter"); return; }
         expandCoreAttributes();
         String val = editTextField("Notes", "LC note " + System.currentTimeMillis());
         boolean saved = saveAndVerify();
@@ -1540,7 +1540,7 @@ public class AssetPart3TestNG extends BaseTest {
     @Test(priority = 60, description = "LC_EAD_18: Edit Serial Number")
     public void testLC_EAD_18_EditSerialNumber() {
         ExtentReportManager.createTest(MODULE, FEATURE, "LC_EAD_18_SerialNumber");
-        if (!openEditForAssetClass("Load Center", "LC")) { skipIfNotFound("Load Center"); return; }
+        if (!openEditForAssetClass("Loadcenter", "LC")) { skipIfNotFound("Loadcenter"); return; }
         expandCoreAttributes();
         String val = editTextField("Serial Number", "LC_SN_" + System.currentTimeMillis());
         boolean saved = saveAndVerify();
@@ -1550,7 +1550,7 @@ public class AssetPart3TestNG extends BaseTest {
     @Test(priority = 61, description = "LC_EAD_19: Edit Size")
     public void testLC_EAD_19_EditSize() {
         ExtentReportManager.createTest(MODULE, FEATURE, "LC_EAD_19_Size");
-        if (!openEditForAssetClass("Load Center", "LC")) { skipIfNotFound("Load Center"); return; }
+        if (!openEditForAssetClass("Loadcenter", "LC")) { skipIfNotFound("Loadcenter"); return; }
         expandCoreAttributes();
         String val = editTextField("Size", "42-space");
         boolean saved = saveAndVerify();
@@ -1560,7 +1560,7 @@ public class AssetPart3TestNG extends BaseTest {
     @Test(priority = 62, description = "LC_EAD_20: Edit Voltage")
     public void testLC_EAD_20_EditVoltage() {
         ExtentReportManager.createTest(MODULE, FEATURE, "LC_EAD_20_Voltage");
-        if (!openEditForAssetClass("Load Center", "LC")) { skipIfNotFound("Load Center"); return; }
+        if (!openEditForAssetClass("Loadcenter", "LC")) { skipIfNotFound("Loadcenter"); return; }
         expandCoreAttributes();
         String val = selectFirstDropdownOption("Voltage");
         boolean saved = saveAndVerify();
@@ -1570,7 +1570,7 @@ public class AssetPart3TestNG extends BaseTest {
     @Test(priority = 63, description = "LC_EAD_28: Verify Save with no changes")
     public void testLC_EAD_28_SaveNoChanges() {
         ExtentReportManager.createTest(MODULE, FEATURE, "LC_EAD_28_SaveNoChanges");
-        if (!openEditForAssetClass("Load Center", "LC")) { skipIfNotFound("Load Center"); return; }
+        if (!openEditForAssetClass("Loadcenter", "LC")) { skipIfNotFound("Loadcenter"); return; }
         boolean saved = saveAndVerify();
         ExtentReportManager.logPass("LC save without changes: success=" + saved);
     }
@@ -1578,7 +1578,7 @@ public class AssetPart3TestNG extends BaseTest {
     @Test(priority = 64, description = "LC_AST_01: Verify Asset Subtype shows None for Load Center")
     public void testLC_AST_01_SubtypeNone() {
         ExtentReportManager.createTest(MODULE, FEATURE, "LC_AST_01_SubtypeNone");
-        if (!openEditForAssetClass("Load Center", "LC")) { skipIfNotFound("Load Center"); return; }
+        if (!openEditForAssetClass("Loadcenter", "LC")) { skipIfNotFound("Loadcenter"); return; }
         verifyAssetSubtype(null);
         logStepWithScreenshot("LC subtype verification");
         ExtentReportManager.logPass("Load Center subtype verified");
@@ -1717,7 +1717,7 @@ public class AssetPart3TestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE, "MCC_AST_02_SubtypeOptions");
         if (!openCreateFormForClass("Motor Control Center")) { skipIfNotFound("MCC"); return; }
         // Verify dropdown has expected options
-        verifyAssetSubtype(null, "Motor Control Equipment (<=1000V)", "Motor Control Equipment (>1000V)");
+        verifyAssetSubtype(null, "Motor Control Equipment (<= 1000V)", "Motor Control Equipment (> 1000V)");
         logStepWithScreenshot("MCC subtype options");
         ExtentReportManager.logPass("MCC subtype dropdown has expected options");
     }
@@ -1726,7 +1726,7 @@ public class AssetPart3TestNG extends BaseTest {
     public void testMCC_AST_03_SelectSubtypeLowVoltage() {
         ExtentReportManager.createTest(MODULE, FEATURE, "MCC_AST_03_SubtypeLowVoltage");
         if (!openEditForAssetClass("Motor Control Center", "MCC")) { skipIfNotFound("MCC"); return; }
-        String val = selectDropdownValue("Subtype", "<=1000V");
+        String val = selectDropdownValue("Subtype", "Motor Control Equipment (<= 1000V)");
         if (val == null) val = selectDropdownValue("Subtype", "Motor Control");
         logStep("Selected subtype: " + val);
         boolean saved = saveAndVerify();
@@ -1737,7 +1737,7 @@ public class AssetPart3TestNG extends BaseTest {
     public void testMCC_AST_04_SelectSubtypeHighVoltage() {
         ExtentReportManager.createTest(MODULE, FEATURE, "MCC_AST_04_SubtypeHighVoltage");
         if (!openEditForAssetClass("Motor Control Center", "MCC")) { skipIfNotFound("MCC"); return; }
-        String val = selectDropdownValue("Subtype", ">1000V");
+        String val = selectDropdownValue("Subtype", "Motor Control Equipment (> 1000V)");
         logStep("Selected subtype: " + val);
         boolean saved = saveAndVerify();
         ExtentReportManager.logPass("MCC subtype >1000V selected: '" + val + "', saved=" + saved);

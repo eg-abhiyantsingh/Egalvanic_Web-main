@@ -1518,7 +1518,7 @@ public class AssetPart4TestNG extends BaseTest {
     @Test(priority = 60, description = "TC-PDU-01: Verify Core Attributes section loads with % indicator")
     public void testPDU_01_CoreAttributesLoad() {
         ExtentReportManager.createTest(MODULE, FEATURE, "PDU_01_CoreAttributes");
-        if (!openEditForAssetClass("Power Distribution Unit", "PDU")) { skipIfNotFound("PDU"); return; }
+        if (!openEditForAssetClass("PDU", "PDU")) { skipIfNotFound("PDU"); return; }
         boolean coreVisible = isCoreAttributesSectionVisible();
         expandCoreAttributes();
         String counter = getRequiredFieldsCounter();
@@ -1530,7 +1530,7 @@ public class AssetPart4TestNG extends BaseTest {
     @Test(priority = 61, description = "TC-PDU-12: Verify Voltage field selection")
     public void testPDU_12_VoltageSelection() {
         ExtentReportManager.createTest(MODULE, FEATURE, "PDU_12_Voltage");
-        if (!openEditForAssetClass("Power Distribution Unit", "PDU")) { skipIfNotFound("PDU"); return; }
+        if (!openEditForAssetClass("PDU", "PDU")) { skipIfNotFound("PDU"); return; }
         expandCoreAttributes();
         String val = selectFirstDropdownOption("Voltage");
         if (val == null) val = editTextField("Voltage", "480");
@@ -1541,7 +1541,7 @@ public class AssetPart4TestNG extends BaseTest {
     @Test(priority = 62, description = "TC-PDU-13: Save PDU with missing required fields (allowed)")
     public void testPDU_13_SaveWithMissingRequired() {
         ExtentReportManager.createTest(MODULE, FEATURE, "PDU_13_SaveMissing");
-        if (!openEditForAssetClass("Power Distribution Unit", "PDU")) { skipIfNotFound("PDU"); return; }
+        if (!openEditForAssetClass("PDU", "PDU")) { skipIfNotFound("PDU"); return; }
         boolean saved = saveAndVerify();
         logStep("PDU save with missing required: " + saved);
         ExtentReportManager.logPass("PDU save with missing required: saved=" + saved);
@@ -1550,7 +1550,7 @@ public class AssetPart4TestNG extends BaseTest {
     @Test(priority = 63, description = "PDU_AST_01: Verify Asset Subtype shows None for PDU")
     public void testPDU_AST_01_SubtypeNone() {
         ExtentReportManager.createTest(MODULE, FEATURE, "PDU_AST_01_SubtypeNone");
-        if (!openEditForAssetClass("Power Distribution Unit", "PDU")) { skipIfNotFound("PDU"); return; }
+        if (!openEditForAssetClass("PDU", "PDU")) { skipIfNotFound("PDU"); return; }
         verifyAssetSubtype(null);
         logStepWithScreenshot("PDU subtype");
         ExtentReportManager.logPass("PDU subtype field verified");
