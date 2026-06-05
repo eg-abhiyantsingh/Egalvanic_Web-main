@@ -855,8 +855,10 @@ public class AssetPart2TestNG extends BaseTest {
 
         expandCoreAttributes();
 
-        // Fill all common required fields
-        editTextField("Manufacturer", "FullSave_Mfg");
+        // Fill all common required fields. Manufacturer is a SELECT in the gold model
+        // (ABB/Eaton/Siemens/...), so pick a real option — typing free text into the
+        // Autocomplete cannot persist and would red this hard-asserted save.
+        selectDropdownValue("Manufacturer", "Siemens");
         selectFirstDropdownOption("Ampere Rating");
         selectFirstDropdownOption("Voltage");
         editTextField("Model", "FullSave_Model");
