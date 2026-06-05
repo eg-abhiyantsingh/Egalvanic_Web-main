@@ -63,11 +63,33 @@ These are genuine product defects (or re-confirmed filed bugs), not test issues.
 - `SecurityAuditTestNG.testBUG007_AuthCookiesSameSiteNone` — neither cookie found → can't assess.
 - `DeepBugVerificationTestNG.testBUG002_CSPBeamerFontsBlocked` — Beamer loaded no fonts this run.
 
-### Pending precise messages (core-regression classes, re-run in progress)
-`AssetPart1` (28), `Task` (16), `BugHunt` (8), `DashboardBug` (7), `WorkOrderPlanning` (6),
-`SiteSelection` (5) — hypothesis: AssetPart1 = gold-conformance (class create/edit + the
-type-then-click-first-option class picker) + Task = weak `pageText.contains` happy-path drift.
-Confirmed messages appended when the full-122 local re-run completes.
+### Core-regression classes — CONFIRMED (full-122 local re-run)
+
+Re-running the full dated set locally (`201 pass / 165 fail / 14 skip`) gave precise causes
+and one important correction:
+
+- **`AssetPart1` — CI 28 fails, local 1 fail → mostly ENVIRONMENTAL, not systematic.** At
+  latest code only `testAS08_OpenAssetDetails` fails locally ("Grid is empty expected true but
+  found false" — a data-state/inverted assertion). The 28 CI failures were a CI-run-specific
+  data/site state (empty asset grid that run), **not** a gold-conformance defect. → don't mass-
+  fix; stabilize the asset-data precondition / fix the one inverted assertion.
+- **`Task` (12) — Create Task drawer does not open (cascade).**
+  `testTC_CT_002_CreateTaskDrawerOpens` fails ("Add Task drawer should be open … false");
+  003/004/005/010/011 then fail "Should show X" because the drawer never opened; 006/008 and
+  EC_001/002/003 throw `ElementNotInteractableException` (interacting with the closed drawer);
+  `testTC_CT_009` throws `IndexOutOfBoundsException: Index -1` (a real test-logic bug). Root
+  cause = the create-task open action (button locator drift / backdrop interception) **or** a
+  real "drawer won't open" bug — needs a 1-test live check to classify. Fix the open helper +
+  the index-(-1) guard.
+- **`NewModulesSmoke` — Panel Schedules + Z-University "did not render" (true→false).** Real
+  (blank module) or feature-flag — confirmed reproducible. → route to dev / gate on flag.
+- `CriticalPath` (4), `AssetSmoke` (3), `BugHunt`/`DashboardBug` (1 each) — consistent with
+  groups C/D above (real bugs + gold-conformance).
+
+**Correction to the CI numbers:** the 122 CI entries include env-flaky failures (notably
+AssetPart1 ×28) that **pass locally at latest code** — so the *systematic* failure set is
+smaller than 122. The durable signal: ~2 app-wide bugs (BUG-A/B), ~8 real product bugs,
+~10 test/gold-conformance/flow fixes, and a chunk of CI-environment flakiness to stabilize.
 
 ## Bottom line
 - **179 recovered** at latest code — the gold-conformance work is paying off.
