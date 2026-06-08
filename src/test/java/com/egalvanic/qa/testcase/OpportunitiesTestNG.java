@@ -739,14 +739,122 @@ public class OpportunitiesTestNG extends BaseTest {
         ExtentReportManager.logPass("quote_count integers + total_value currency-shaped");
     }
 
-    @Test(priority = 37, description = "TC_OPP_25: Deleted-quote exclusion from count/value (needs quote lifecycle)")
+    // Now DRIVEABLE: the quote lifecycle was live-mapped 2026-06-08 (see
+    // docs/AI-FEATURES-CHANGELOG/2026-06-08-13-02-opportunity-quote-emp-end-to-end-flow-live-mapped.md).
+    @Test(priority = 37, description = "TC_OPP_25: A deleted quote is excluded from the opportunity's quote count")
     public void testOpp25_DeletedQuotesExcluded() {
         ExtentReportManager.createTest(MODULE, "Pipeline Status", "Opp_25_DeletedExcluded");
-        // Driving a quote soft-delete requires the quote-editor lifecycle (create quote -> delete),
-        // which isn't exposed from the Opportunities grid. Surfaced as a documented precondition gap,
-        // NOT a vacuous pass.
-        throw new SkipException("Requires quote-lifecycle setup (create + soft-delete a quote); "
-                + "exclusion logic is unit-test territory or needs a quote-editor helper. Documented gap.");
+        goToOpportunities();
+        if (!page.isGridPresent()) throw new SkipException("No grid/SLD");
+        String name = "QuoteDel_" + uid();
+        // create the opportunity
+        openCreateOrSkip(); page.setName(name); pause(300);
+        if (!page.waitForSaveEnabled(5000)) { page.clickCancel(); throw new SkipException("Create needs SLD select — precondition"); }
+        page.clickSave(); pause(2300); dismissBackdrops();
+        try {
+            if (!openOpportunityByName(name)) throw new SkipException("Created opportunity did not open its detail view");
+            if (!page.isAddQuotePresent()) throw new SkipException("Add Quote control not present on detail (precondition)");
+            // add ONE quote (standard — fastest path; type is irrelevant to the count)
+            page.clickAddQuote();
+            page.selectQuoteType("Standard");
+            page.createQuote();
+            Assert.assertTrue(page.waitForQuoteRow(8000),
+                    "After Create Quote the opportunity should show one quote (Rev 1).");
+            int afterAdd = page.quoteRowCount();
+            Assert.assertEquals(afterAdd, 1, "Exactly one active quote expected after adding one.");
+            // delete that quote
+            Assert.assertTrue(page.deleteFirstQuoteOnDetail(), "Should be able to delete the quote from the detail.");
+            pause(1500);
+            // CORE claim of TC_OPP_25: the deleted quote is excluded from the opportunity's count.
+            boolean emptied = page.quoteRowCount() == 0 || page.bodyText().contains("No rows");
+            Assert.assertTrue(emptied, "A deleted quote must be excluded from the opportunity's quote list (count → 0).");
+            // Secondary (reactivity) observation: re-open the detail and note whether Add Quote re-enabled.
+            // Logged, not hard-asserted — the exclusion above is the verified contract.
+            if (openOpportunityByName(name)) {
+                logStep("[TC_OPP_25] After deleting the only quote, Add Quote re-enabled = " + page.isAddQuoteEnabled());
+            }
+            ExtentReportManager.logPass("Quote added (count 1) then deleted (count 0) — deleted quote excluded");
+        } finally {
+            cleanupOpportunity(name);
+        }
+    }
+
+    // ── F. Quote lifecycle & EMP commit (live-mapped 2026-06-08) ──
+
+    @Test(priority = 42, description = "TC_OPP_QUOTE: An opportunity allows only ONE active quote at a time")
+    public void testOpp44_SingleActiveQuoteRule() {
+        ExtentReportManager.createTest(MODULE, "Quote Lifecycle", "Opp_44_SingleActiveQuote");
+        goToOpportunities();
+        if (!page.isGridPresent()) throw new SkipException("No grid/SLD");
+        String name = "QuoteOne_" + uid();
+        openCreateOrSkip(); page.setName(name); pause(300);
+        if (!page.waitForSaveEnabled(5000)) { page.clickCancel(); throw new SkipException("Create needs SLD select — precondition"); }
+        page.clickSave(); pause(2300); dismissBackdrops();
+        try {
+            if (!openOpportunityByName(name)) throw new SkipException("Created opportunity did not open its detail view");
+            if (!page.isAddQuotePresent()) throw new SkipException("Add Quote control not present on detail (precondition)");
+            Assert.assertTrue(page.isAddQuoteEnabled(), "A new opportunity (no quote) should allow adding a quote.");
+            page.clickAddQuote();
+            page.selectQuoteType("Standard");
+            page.createQuote();
+            Assert.assertTrue(page.waitForQuoteRow(8000), "Quote (Rev 1) should appear after Create Quote.");
+            // business rule: with one active quote, Add Quote is disabled with a 'reject existing' reason
+            Assert.assertFalse(page.isAddQuoteEnabled(),
+                    "With an active quote present, Add Quote must be disabled (single-active-quote rule).");
+            String reason = page.addQuoteDisabledReason().toLowerCase();
+            Assert.assertTrue(reason.contains("active quote") || reason.contains("reject"),
+                    "Disabled Add Quote should explain the single-active-quote rule. Tooltip: '" + reason + "'");
+            ExtentReportManager.logPass("Single-active-quote rule enforced: " + page.addQuoteDisabledReason());
+        } finally {
+            cleanupOpportunity(name);
+        }
+    }
+
+    @Test(priority = 43, description = "TC_OPP_25b/19-22: Accepting an EMP quote commits an EMP and drives the opp to Closed Won")
+    public void testOpp45_EmpCommitFromAcceptedQuote() {
+        ExtentReportManager.createTest(MODULE, "Quote Lifecycle", "Opp_45_EmpCommit");
+        goToOpportunities();
+        if (!page.isGridPresent()) throw new SkipException("No grid/SLD");
+        String name = "EmpFlow_" + uid();
+        String empNo = "EMP-AUTO-" + uid();
+        openCreateOrSkip(); page.setName(name); pause(300);
+        if (!page.waitForSaveEnabled(5000)) { page.clickCancel(); throw new SkipException("Create needs SLD select — precondition"); }
+        page.clickSave(); pause(2300); dismissBackdrops();
+        try {
+            if (!openOpportunityByName(name)) throw new SkipException("Created opportunity did not open its detail view");
+            if (!page.isAddQuotePresent()) throw new SkipException("Add Quote control not present on detail (precondition)");
+            // add an EMP-type quote
+            page.clickAddQuote();
+            page.selectQuoteType("EMP");
+            page.createQuote();
+            Assert.assertTrue(page.waitForQuoteRow(8000), "EMP quote (Rev 1) should appear after Create Quote.");
+            // open the quote editor and accept it
+            Assert.assertTrue(page.openFirstQuoteRow(), "Clicking the quote row should open the quote editor (/quotes/).");
+            page.setQuoteStatus("Accepted");
+            pause(1200);
+            // accepting an EMP quote prompts to commit an EMP number
+            Assert.assertTrue(page.isCreateEmpDialogOpen(),
+                    "Accepting an EMP quote should prompt the 'Create EMP' dialog.");
+            page.fillEmpNumberAndCreate(empNo);
+            pause(2000);
+            // the quote has become an EMP
+            Assert.assertTrue(page.isEmpDetail(empNo),
+                    "After commit, the page should be the EMP detail (Progress Reporting/Change Orders).");
+            // the EMP is listed in /emps
+            Assert.assertTrue(page.empExists(empNo),
+                    "Committed EMP '" + empNo + "' should appear in /emps.");
+            // accepting the quote drove the opportunity to Closed Won
+            goToOpportunities();
+            page.search(name);
+            WebElement row = page.findRowContaining(name);
+            Assert.assertNotNull(row, "Opportunity should still be present after EMP commit.");
+            String rowText = row.getText().toLowerCase();
+            Assert.assertTrue(rowText.contains("closed won"),
+                    "An Accepted quote should drive the opportunity to 'Closed Won'. Row: " + rowText);
+            ExtentReportManager.logPass("EMP '" + empNo + "' committed from Accepted quote; opportunity → Closed Won");
+        } finally {
+            cleanupOpportunity(name);   // deleting the opp cascades the bound EMP
+        }
     }
 
     // ── D. AI Opportunity (feature-flagged ai_opportunities) ──
@@ -855,6 +963,19 @@ public class OpportunitiesTestNG extends BaseTest {
             } catch (Exception ignore) { }
         }
         return null;
+    }
+
+    /** Search for an opportunity by name (gyu-scoped) and open its detail. Returns true if navigated. */
+    private boolean openOpportunityByName(String name) {
+        goToOpportunities();
+        page.search(name);
+        WebElement row = page.findRowContaining(name);
+        if (row == null) return false;
+        WebElement cell = row.findElements(By.cssSelector(".MuiDataGrid-cell, a")).stream()
+                .filter(WebElement::isDisplayed).findFirst().orElse(row);
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", cell);
+        pause(1600);
+        return driver.getCurrentUrl().contains("/opportunities/");
     }
 
     /** Remove a test-created opportunity by name via the UI (best-effort; logs if it can't). */

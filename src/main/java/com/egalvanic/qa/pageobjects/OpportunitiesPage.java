@@ -405,6 +405,236 @@ public class OpportunitiesPage {
                 .filter(WebElement::isDisplayed).count();
     }
 
+    // ════════════════════════ Quote / EMP lifecycle ════════════════════════
+    // Live-mapped 2026-06-08 (Playwright walkthrough on Site gyu). Flow:
+    //   opp detail → "Add Quote" → Add New Quote dialog (Standard | EMP type) → Create Quote
+    //   → quote "Rev N" (/quotes/:id, Draft) → status menu Accepted → "Quote Accepted - Create
+    //   EMP" dialog → EMP Number → Create EMP → EMP (On Track), bound to the opportunity.
+    //   Only ONE active quote per opp (Add Quote disables until the existing quote is rejected).
+
+    public static final By ADD_QUOTE_BTN  = By.xpath("//button[normalize-space()='Add Quote']");
+    public static final By CREATE_QUOTE_BTN = By.xpath("//div[@role='dialog']//button[normalize-space()='Create Quote']");
+    public static final By CREATE_EMP_BTN   = By.xpath("//div[@role='dialog']//button[normalize-space()='Create EMP']");
+    /** Detail/EMPs grids reuse the MUI DataGrid row class. */
+    public static final By QUOTE_ROW = By.cssSelector(".MuiDataGrid-row");
+
+    public boolean isAddQuotePresent() { return !driver.findElements(ADD_QUOTE_BTN).isEmpty(); }
+
+    /** On an opportunity detail page: Add Quote present AND enabled. */
+    public boolean isAddQuoteEnabled() {
+        List<WebElement> b = driver.findElements(ADD_QUOTE_BTN);
+        if (b.isEmpty()) return false;
+        WebElement el = b.get(0);
+        return el.isEnabled() && el.getAttribute("disabled") == null
+                && !"true".equals(el.getAttribute("aria-disabled"));
+    }
+
+    /** The tooltip/wrapper text explaining why Add Quote is disabled (single-active-quote rule). */
+    public String addQuoteDisabledReason() {
+        Object r = ((JavascriptExecutor) driver).executeScript(
+            "var b=document.evaluate(\"//button[normalize-space()='Add Quote']\",document,null,9,null).singleNodeValue;"
+          + "if(!b) return ''; var n=b;"
+          + "for(var i=0;i<5&&n;i++){ if(n.getAttribute){var t=n.getAttribute('title')||n.getAttribute('aria-label');"
+          + "  if(t&&t.length>5) return t;} n=n.parentElement; }"
+          + "return '';");
+        return r == null ? "" : r.toString();
+    }
+
+    /** Click Add Quote and wait for the "Add New Quote" dialog. */
+    public void clickAddQuote() {
+        WebElement b = wait.until(ExpectedConditions.elementToBeClickable(ADD_QUOTE_BTN));
+        jsClick(b);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(DIALOG));
+        sleepSettle();
+    }
+
+    /** Pick the Quote Type radio in the Add New Quote dialog ("EMP" or "Standard"). */
+    public void selectQuoteType(String type) {
+        String want = type.toLowerCase().contains("emp") ? "EMP Quote" : "Standard Quote";
+        WebElement radio = (WebElement) ((JavascriptExecutor) driver).executeScript(
+            "var want=arguments[0];"
+          + "var dlg=document.querySelector('[role=\"dialog\"]'); if(!dlg) return null;"
+          + "var all=dlg.querySelectorAll('*');"
+          + "for(var i=0;i<all.length;i++){var el=all[i];"
+          + "  if(el.children.length===0 && (el.textContent||'').trim()===want){"
+          + "    var c=el; for(var k=0;k<6&&c;k++){ if(c.querySelector && c.querySelector('input[type=radio],[role=radio]')) return c; c=c.parentElement; }"
+          + "    return el; } }"
+          + "return null;", want);
+        if (radio != null) jsClick(radio);
+        sleepSettle();
+    }
+
+    /** Click Create Quote and wait for the dialog to close. */
+    public void createQuote() {
+        WebElement b = wait.until(ExpectedConditions.elementToBeClickable(CREATE_QUOTE_BTN));
+        jsClick(b);
+        new WebDriverWait(driver, Duration.ofSeconds(15))
+                .until(ExpectedConditions.invisibilityOfElementLocated(CREATE_QUOTE_BTN));
+        sleepSettle();
+    }
+
+    /** Count of quote rows on the detail's quotes grid (the "No rows" overlay yields 0). */
+    public int quoteRowCount() {
+        return (int) driver.findElements(QUOTE_ROW).stream().filter(WebElement::isDisplayed).count();
+    }
+
+    /** Poll until a quote row whose text contains "Rev" appears (after Create Quote). */
+    public boolean waitForQuoteRow(long ms) {
+        long deadline = System.currentTimeMillis() + ms;
+        while (System.currentTimeMillis() < deadline) {
+            if (driver.findElements(QUOTE_ROW).stream().anyMatch(r -> {
+                try { return r.isDisplayed() && r.getText().contains("Rev"); } catch (Exception e) { return false; }
+            })) return true;
+            try { Thread.sleep(300); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
+        }
+        return false;
+    }
+
+    /** Click the first quote row on the detail → navigate to /quotes/:id. Returns true if it navigated. */
+    public boolean openFirstQuoteRow() {
+        WebElement row = driver.findElements(QUOTE_ROW).stream().filter(WebElement::isDisplayed).findFirst().orElse(null);
+        if (row == null) return false;
+        WebElement cell = row.findElements(By.cssSelector(".MuiDataGrid-cell")).stream()
+                .filter(WebElement::isDisplayed).findFirst().orElse(row);
+        jsClick(cell);
+        sleepSettle();
+        return driver.getCurrentUrl().contains("/quotes/");
+    }
+
+    /** Delete the first quote on the detail via its row "Delete Quote" control (confirms if prompted). */
+    public boolean deleteFirstQuoteOnDetail() {
+        WebElement del = (WebElement) ((JavascriptExecutor) driver).executeScript(
+            "var row=document.querySelector('.MuiDataGrid-row'); if(!row) return null;"
+          + "var b=row.querySelector('[aria-label=\"Delete Quote\" i],[title=\"Delete Quote\" i]');"
+          + "if(b) return b.closest('button')||b;"
+          + "var svg=row.querySelector('[data-testid*=\"Delete\" i]'); if(svg) return svg.closest('button')||svg;"
+          + "var btns=row.querySelectorAll('button'); return btns.length?btns[btns.length-1]:null;");
+        if (del == null) return false;
+        jsClick(del);
+        sleepSettle();
+        List<WebElement> confirm = driver.findElements(CONFIRM_DELETE_BTN);
+        if (!confirm.isEmpty()) { jsClick(confirm.get(0)); sleepSettle(); }
+        return true;
+    }
+
+    // The quote-editor header status control reads like "Draft ▾"; the trailing glyph is an
+    // icon, not reliably a specific char, so we locate the button by matching its text to a
+    // known quote-status word (arrow/whitespace stripped) instead of the glyph.
+    // The quote-editor status control is a MUI Chip rendered as div[role=button] (text like
+    // "Draft ▾"), NOT a <button> element — so we must query [role=button] too. We match by the
+    // status word (arrow/whitespace stripped) to stay specific.
+    private static final String STATUS_BTN_FINDER =
+            "var statuses=['draft','sent to customer','accepted','rejected','abandoned'];"
+          + "var btns=document.querySelectorAll('button,[role=button]');"
+          + "for(var i=0;i<btns.length;i++){"
+          + "  var t=(btns[i].textContent||'').replace(/[\\u25B0-\\u25FF\\u2190-\\u21FF\\u2300-\\u23FF\\u2304\\u02C5\\u25BE\\u25BC]/g,'').replace(/\\s+/g,' ').trim().toLowerCase();"
+          + "  for(var j=0;j<statuses.length;j++){ if(t===statuses[j]||t.indexOf(statuses[j])===0) return btns[i]; } }"
+          + "return null;";
+
+    /** Poll (bounded) for the quote-editor status button — the editor mounts async after navigation. */
+    public WebElement waitForStatusButton(long ms) {
+        long deadline = System.currentTimeMillis() + ms;
+        while (System.currentTimeMillis() < deadline) {
+            WebElement b = (WebElement) ((JavascriptExecutor) driver).executeScript(
+                    "return (function(){" + STATUS_BTN_FINDER + "})();");
+            if (b != null) return b;
+            try { Thread.sleep(400); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
+        }
+        return null;
+    }
+
+    /** Current quote status — from the header status button, else the Status combobox. */
+    public String currentQuoteStatus() {
+        Object r = ((JavascriptExecutor) driver).executeScript(
+            "var b=(function(){" + STATUS_BTN_FINDER + "})();"
+          + "if(b){return (b.textContent||'').replace(/[\\u25B0-\\u25FF\\u2190-\\u21FF\\u2300-\\u23FF\\u02C5]/g,'').trim();}"
+          + "var c=document.querySelector('[role=combobox]'); return c?(c.textContent||'').trim():'';");
+        return r == null ? "" : r.toString();
+    }
+
+    /**
+     * Open the quote status control and choose a status (Draft / Sent to Customer / Accepted /
+     * Rejected / Abandoned). The status renders either as a header button ("Draft ▾") OR, when
+     * the header control isn't present, as the Overview "Status" combobox — try both.
+     */
+    public void setQuoteStatus(String status) {
+        WebElement btn = waitForStatusButton(8000);
+        if (btn != null) {
+            jsClick(btn);
+        } else {
+            // Fallback: the Overview "Status" MUI Select combobox whose current text is a status.
+            WebElement combo = (WebElement) ((JavascriptExecutor) driver).executeScript(
+                "var statuses=['draft','sent to customer','accepted','rejected','abandoned'];"
+              + "var cs=document.querySelectorAll('[role=combobox],.MuiSelect-select');"
+              + "for(var i=0;i<cs.length;i++){var t=(cs[i].textContent||'').trim().toLowerCase();"
+              + "  for(var j=0;j<statuses.length;j++){ if(t.indexOf(statuses[j])>=0) return cs[i]; } }"
+              + "return null;");
+            if (combo == null) {
+                Object dump = ((JavascriptExecutor) driver).executeScript(
+                    "return Array.from(document.querySelectorAll('button,[role=combobox],.MuiSelect-select'))"
+                  + ".map(function(b){return (b.textContent||'').trim();}).filter(function(t){return t;}).slice(0,50).join(' | ');");
+                throw new IllegalStateException("Quote status control not found. URL=" + driver.getCurrentUrl()
+                        + " controls=[" + dump + "]");
+            }
+            jsClick(combo);
+        }
+        sleepSettle();
+        // a menu (header button) or listbox (combobox) is now open — pick the target
+        WebElement item = (WebElement) ((JavascriptExecutor) driver).executeScript(
+            "var want=arguments[0].toLowerCase();"
+          + "var items=document.querySelectorAll('li[role=menuitem],[role=menuitem],li[role=option],[role=option],li.MuiMenuItem-root');"
+          + "for(var i=0;i<items.length;i++){if((items[i].textContent||'').trim().toLowerCase()===want) return items[i];}"
+          + "for(var j=0;j<items.length;j++){if((items[j].textContent||'').toLowerCase().indexOf(want)>=0) return items[j];}"
+          + "return null;", status);
+        if (item == null) throw new IllegalStateException("Status option not found: " + status);
+        jsClick(item);
+        sleepSettle();
+    }
+
+    public boolean isCreateEmpDialogOpen() {
+        return driver.findElements(DIALOG).stream().anyMatch(d -> {
+            try { return d.isDisplayed() && d.getText().toLowerCase().contains("create emp"); }
+            catch (Exception e) { return false; }
+        });
+    }
+
+    /** In the "Quote Accepted - Create EMP" dialog, enter the EMP number and commit. */
+    public void fillEmpNumberAndCreate(String empNo) {
+        wait.until(ExpectedConditions.visibilityOfElementLocated(DIALOG));
+        WebElement input = driver.findElements(By.cssSelector(
+                "[role='dialog'] input[type='text'], [role='dialog'] input:not([type='hidden'])")).stream()
+                .filter(WebElement::isDisplayed).findFirst().orElse(null);
+        if (input == null) throw new IllegalStateException("EMP Number field not found");
+        input.click();
+        input.sendKeys(empNo);
+        WebElement create = wait.until(ExpectedConditions.elementToBeClickable(CREATE_EMP_BTN));
+        jsClick(create);
+        sleepSettle();
+    }
+
+    /** After committing: the page becomes an EMP detail — Progress Reporting / Change Orders tabs, or heading == EMP #. */
+    public boolean isEmpDetail(String empNo) {
+        boolean tab = !driver.findElements(By.xpath(
+                "//*[@role='tab'][contains(.,'Progress Reporting') or contains(.,'Change Orders')]")).isEmpty();
+        if (tab) return true;
+        return !driver.findElements(By.xpath("//h1|//h2|//h3|//h4|//h5"))
+                .stream().anyMatch(h -> { try { return h.getText().trim().equals(empNo); } catch (Exception e) { return false; } })
+                ? bodyText().contains(empNo) : true;
+    }
+
+    /** Navigate to /emps and check whether an EMP with the given number is listed. */
+    public boolean empExists(String empNo) {
+        driver.get(AppConstants.BASE_URL + "/emps");
+        sleepSettle();
+        List<WebElement> s = driver.findElements(By.cssSelector(
+                "input[placeholder*='Search EMP'], input[placeholder*='Search'], input[type='search']"));
+        if (!s.isEmpty()) { setReactInput(s.get(0), empNo); sleepSettle(); }
+        boolean inRows = driver.findElements(QUOTE_ROW).stream().anyMatch(r -> {
+            try { return r.getText().contains(empNo); } catch (Exception e) { return false; }
+        });
+        return inRows || bodyText().contains(empNo);
+    }
+
     // ── helpers ──
     private void setReactInput(WebElement input, String value) {
         ((JavascriptExecutor) driver).executeScript(
