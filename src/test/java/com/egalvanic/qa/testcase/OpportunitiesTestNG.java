@@ -803,11 +803,11 @@ public class OpportunitiesTestNG extends BaseTest {
             throw new SkipException("No 'New' opportunity button on this page (SLD/permission precondition)");
         }
         page.openCreateDialog();
-        // Ensure the required Facility (1st field) is selected — it defaults to the active Site
-        // in the live app but isn't always pre-committed on test sites, which would keep Create
-        // disabled. Safe for the name-required/whitespace tests (Name still empty -> Create stays off).
-        boolean fac = page.selectFirstFacility();
-        logStep("Facility selected in create dialog: " + fac);
+        // Per the walkthrough video: the Facility field is an autocomplete ALREADY pre-filled
+        // (and committed) to the active Site, and Create is disabled ONLY because the name is
+        // empty. So we DON'T touch Facility — re-opening the autocomplete and re-picking risks
+        // landing on a different facility (e.g. the duplicate 'Yuzi' entries), creating the opp
+        // off the active-site grid. Just type the Opportunity Name and Create enables.
     }
 
     /** Best-effort: find a row-level delete control (icon button / menu item). */
