@@ -478,6 +478,28 @@ jobs:
           retention-days: 30
 
       # ──────────────────────────────────────────────
+      # Consolidated DETAILED report — every module's full Detailed Report
+      # (steps + INLINE base64 screenshots) bundled into one navigable index.
+      # LARGE (tens of MB) -> uploaded as an ARTIFACT ONLY, never emailed.
+      # ──────────────────────────────────────────────
+      - name: Generate consolidated detailed report
+        if: always()
+        run: |
+          python3 .github/scripts/consolidated-detailed-report.py \
+            all-reports reports/consolidated-detailed \
+            --title "Consolidated Detailed Report — Parallel Full Suite (run ${{ github.run_number }})" \
+            --timestamp "$(date -u '+%Y-%m-%d %H:%M UTC')"
+
+      - name: Upload consolidated detailed report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: consolidated-detailed-report
+          path: reports/consolidated-detailed/
+          retention-days: 30
+          if-no-files-found: ignore
+
+      # ──────────────────────────────────────────────
       # Combined Step Summary
       # ──────────────────────────────────────────────
       - name: Generate combined summary
