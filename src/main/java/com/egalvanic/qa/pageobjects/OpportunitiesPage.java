@@ -232,12 +232,70 @@ public class OpportunitiesPage {
 
     /** Collect the values in the Status column (best-effort by aria/data-field). */
     public List<String> statusValues() {
+        return columnValues("status");
+    }
+
+    /** Read the trimmed text of a DataGrid column by its data-field (e.g. status, sld_name, quote_count). */
+    public List<String> columnValues(String dataField) {
         List<String> out = new ArrayList<>();
-        for (WebElement c : driver.findElements(By.cssSelector("[data-field='status'], .MuiDataGrid-cell[data-field='status']"))) {
+        for (WebElement c : driver.findElements(By.cssSelector(".MuiDataGrid-cell[data-field='" + dataField + "']"))) {
             String t = c.getText().trim();
             if (!t.isEmpty()) out.add(t);
         }
         return out;
+    }
+
+    /** The open create dialog exposes at least a Name text field (firm) — SLD selector presence is best-effort. */
+    public boolean createDialogHasNameField() {
+        return isDialogOpen() && !driver.findElements(DIALOG_TEXTFIELD).isEmpty();
+    }
+
+    public boolean createDialogHasSldSelector() {
+        if (!isDialogOpen()) return false;
+        return !driver.findElements(By.cssSelector(
+                "[role='dialog'] [role='combobox'], .MuiDialog-root [role='combobox'], "
+                + ".MuiDialog-root .MuiSelect-select, .MuiDialog-root input[placeholder*='SLD']")).isEmpty();
+    }
+
+    /** Best-effort SLD switcher control in the app chrome (header/sidebar). Null if not found. */
+    public WebElement findSldSwitcher() {
+        return driver.findElements(By.cssSelector(
+                "[aria-label*='SLD'], [data-testid*='sld'], header [role='combobox'], "
+                + "header .MuiSelect-select, [placeholder*='Select SLD'], [placeholder*='SLD']")).stream()
+                .filter(WebElement::isDisplayed).findFirst().orElse(null);
+    }
+
+    /** On an opportunity detail page, click into the first quote (-> /quotes/:id). Returns true if it navigated. */
+    public boolean openFirstQuoteFromDetail() {
+        String before = driver.getCurrentUrl();
+        WebElement quote = driver.findElements(By.cssSelector("a[href*='/quotes/']")).stream()
+                .filter(WebElement::isDisplayed).findFirst().orElse(null);
+        if (quote == null) {
+            // fall back to a quote-ish grid row inside the detail
+            quote = driver.findElements(By.cssSelector(".MuiDataGrid-row, table tbody tr")).stream()
+                    .filter(WebElement::isDisplayed).findFirst().orElse(null);
+        }
+        if (quote == null) return false;
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", quote);
+        sleepSettle();
+        return driver.getCurrentUrl().contains("/quotes/") || !driver.getCurrentUrl().equals(before);
+    }
+
+    /** Tab labels present on the current (quote editor) screen. */
+    public List<String> tabLabels() {
+        List<String> out = new ArrayList<>();
+        for (WebElement t : driver.findElements(By.cssSelector("[role='tab'], .MuiTab-root"))) {
+            String s = t.getText().trim();
+            if (!s.isEmpty()) out.add(s);
+        }
+        return out;
+    }
+
+    /** Quote rows shown on an opportunity detail page (best-effort). */
+    public int quoteRowCountOnDetail() {
+        return (int) driver.findElements(By.cssSelector(
+                "a[href*='/quotes/'], [data-field='quote'], .MuiDataGrid-row, table tbody tr")).stream()
+                .filter(WebElement::isDisplayed).count();
     }
 
     // ── helpers ──

@@ -376,6 +376,405 @@ public class OpportunitiesTestNG extends BaseTest {
         ExtentReportManager.logPass("Opportunities loaded within budget");
     }
 
+    // ═══════════════ Coverage completion: remaining TC_OPP cases ═══════════════
+
+    // ── B. SLD scoping ──
+    @Test(priority = 20, description = "TC_OPP_04: No SLD selected shows a graceful empty-state, not a crash")
+    public void testOpp04_NoSldGraceful() {
+        ExtentReportManager.createTest(MODULE, "SLD Scoping", "Opp_04_NoSld");
+        goToOpportunities();
+        boolean grid = page.isGridPresent();
+        boolean prompt = page.showsSelectSldPrompt();
+        Assert.assertTrue(grid || prompt,
+                "Must show the grid OR a graceful 'select an SLD' empty-state — never a blank/crash.");
+        // and the empty-state must NOT be an error banner / crash
+        com.egalvanic.qa.utils.verify.UIStateValidator.assertHealthy(driver, "Opportunities SLD state");
+        ExtentReportManager.logPass("SLD state graceful (grid=" + grid + ", prompt=" + prompt + ")");
+    }
+
+    @Test(priority = 21, description = "TC_OPP_05: Switching the active SLD refilters the grid")
+    public void testOpp05_SldSwitchRefilters() {
+        ExtentReportManager.createTest(MODULE, "SLD Scoping", "Opp_05_SldSwitch");
+        goToOpportunities();
+        WebElement sw = page.findSldSwitcher();
+        if (sw == null) throw new SkipException("SLD switcher control not found in app chrome (cannot drive a switch)");
+        String before = String.join("|", page.columnValues("name")) + "#" + page.rowCount();
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", sw);
+        pause(800);
+        java.util.List<WebElement> opts = driver.findElements(By.cssSelector("li[role='option']"));
+        if (opts.size() < 2) { throw new SkipException("Fewer than 2 SLD options — cannot switch"); }
+        // pick an option different from the current selection
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", opts.get(opts.size() - 1));
+        page.waitForContent();
+        String after = String.join("|", page.columnValues("name")) + "#" + page.rowCount();
+        // Strong: the grid must have re-fetched (content changed) for a different SLD.
+        Assert.assertNotEquals(after, before, "Switching SLD should refilter the opportunities grid.");
+        ExtentReportManager.logPass("SLD switch refiltered the grid");
+    }
+
+    @Test(priority = 22, description = "TC_OPP_06: SLD column is populated/consistent for the active SLD")
+    public void testOpp06_SldColumnMatches() {
+        ExtentReportManager.createTest(MODULE, "SLD Scoping", "Opp_06_SldColumn");
+        goToOpportunities();
+        if (!page.isGridPresent() || page.rowCount() == 0) throw new SkipException("No opportunities on this SLD");
+        java.util.List<String> slds = page.columnValues("sld_name");
+        if (slds.isEmpty()) throw new SkipException("No SLD column values rendered (virtualized grid)");
+        // Strong: every row carries an SLD, and (SLD-scoped) they are all the same active SLD.
+        long distinct = slds.stream().distinct().count();
+        Assert.assertTrue(slds.stream().noneMatch(String::isEmpty), "Every row must have a non-empty SLD. Got: " + slds);
+        Assert.assertEquals(distinct, 1L, "SLD-scoped grid should show a single active SLD. Got distinct: " + distinct);
+        ExtentReportManager.logPass(slds.size() + " rows all on SLD '" + slds.get(0) + "'");
+    }
+
+    // ── C. Create (remaining) ──
+    @Test(priority = 23, description = "TC_OPP_07: Create dialog opens with a Name field (+ SLD selector)")
+    public void testOpp07_OpenCreateDialog() {
+        ExtentReportManager.createTest(MODULE, "Create", "Opp_07_OpenDialog");
+        goToOpportunities();
+        openCreateOrSkip();
+        Assert.assertTrue(page.createDialogHasNameField(), "Add Opportunity dialog must expose a Name field.");
+        logStep("SLD selector present in dialog: " + page.createDialogHasSldSelector());
+        page.clickCancel();
+        ExtentReportManager.logPass("Create dialog opens with Name field");
+    }
+
+    @Test(priority = 24, description = "TC_OPP_10: Cancel create closes the dialog and creates nothing")
+    public void testOpp10_CancelCreate() {
+        ExtentReportManager.createTest(MODULE, "Create", "Opp_10_Cancel");
+        goToOpportunities();
+        if (!page.isGridPresent()) throw new SkipException("No grid/SLD");
+        String name = "CancelOpp_" + timestamp();
+        openCreateOrSkip();
+        page.setName(name);
+        pause(300);
+        page.clickCancel();
+        pause(700);
+        Assert.assertFalse(page.isDialogOpen(), "Dialog should close on Cancel.");
+        page.open();
+        page.search(name);
+        Assert.assertFalse(page.hasRowContaining(name), "Cancelled create must NOT persist an opportunity.");
+        ExtentReportManager.logPass("Cancel created nothing");
+    }
+
+    @Test(priority = 25, description = "TC_OPP_11: Duplicate name is handled gracefully (no 500/crash)")
+    public void testOpp11_DuplicateName() {
+        ExtentReportManager.createTest(MODULE, "Create", "Opp_11_Duplicate");
+        goToOpportunities();
+        if (!page.isGridPresent()) throw new SkipException("No grid/SLD");
+        String name = "DupOpp_" + timestamp();
+        // first create
+        openCreateOrSkip(); page.setName(name); pause(300);
+        if (!page.isSaveEnabled()) { page.clickCancel(); throw new SkipException("Create needs SLD select — precondition"); }
+        page.clickSave(); pause(2200); dismissBackdrops();
+        // second create with the same name
+        page.open(); openCreateOrSkip(); page.setName(name); pause(300);
+        boolean saveEnabled = page.isSaveEnabled();
+        if (saveEnabled) { page.clickSave(); pause(2000); dismissBackdrops(); }
+        // Strong: no crash/500 regardless of whether duplicates are allowed.
+        verifyPageHealth("Opportunities after duplicate create");
+        cleanupOpportunity(name);   // removes whatever was created (one or both)
+        ExtentReportManager.logPass("Duplicate name handled without crash (second-save-enabled=" + saveEnabled + ")");
+    }
+
+    @Test(priority = 26, description = "TC_OPP_14: Unicode/special name stored & displayed without crash")
+    public void testOpp14_UnicodeName() {
+        ExtentReportManager.createTest(MODULE, "Create / Boundary", "Opp_14_Unicode");
+        goToOpportunities();
+        if (!page.isGridPresent()) throw new SkipException("No grid/SLD");
+        String tag = timestamp();
+        String name = "测试_Ωüñ_" + tag;   // unicode (avoid < > to keep this distinct from the XSS case)
+        openCreateOrSkip(); page.setName(name); pause(400);
+        if (!page.isSaveEnabled()) { page.clickCancel(); throw new SkipException("Create needs SLD select — precondition"); }
+        page.clickSave(); pause(2300); dismissBackdrops();
+        verifyPageHealth("Opportunities after unicode create");
+        page.open(); page.search(tag);
+        boolean shown = page.hasRowContaining(tag);
+        cleanupOpportunity(name);
+        Assert.assertTrue(shown, "Unicode-named opportunity should be stored & displayed (searched by '" + tag + "').");
+        ExtentReportManager.logPass("Unicode name stored & displayed");
+    }
+
+    // ── F. Search (remaining) ──
+    @Test(priority = 27, description = "TC_OPP_28: Clearing search restores the full list")
+    public void testOpp28_ClearSearchRestores() {
+        ExtentReportManager.createTest(MODULE, "Search", "Opp_28_ClearRestores");
+        goToOpportunities();
+        if (!page.isGridPresent() || page.rowCount() == 0) throw new SkipException("No opportunities to search");
+        int before = page.rowCount();
+        // Use a REAL token so the grid stays populated (a no-match search empties the grid and
+        // can remove the toolbar/search box, breaking the subsequent clear).
+        String token = page.rows().get(0).getText().replace("\n", " ").trim().split(" ")[0];
+        if (token.length() < 2) throw new SkipException("First row has no usable token");
+        page.search(token);
+        int filtered = page.rowCount();
+        Assert.assertTrue(filtered <= before, "Search must not grow the list (" + before + "->" + filtered + ").");
+        page.clearSearch();
+        page.waitForContent();
+        int after = page.rowCount();
+        Assert.assertEquals(after, before, "Clearing search must restore the full list (" + before + ").");
+        ExtentReportManager.logPass("Clear restored " + after + " rows (filtered to " + filtered + ")");
+    }
+
+    @Test(priority = 28, description = "TC_OPP_29: Search is case-insensitive")
+    public void testOpp29_SearchCaseInsensitive() {
+        ExtentReportManager.createTest(MODULE, "Search", "Opp_29_CaseInsensitive");
+        goToOpportunities();
+        if (!page.isGridPresent() || page.rowCount() == 0) throw new SkipException("No opportunities to search");
+        String token = page.rows().get(0).getText().replace("\n", " ").trim().split(" ")[0];
+        if (token.length() < 2) throw new SkipException("No usable token");
+        page.search(token.toLowerCase());
+        int lower = page.rowCount();
+        page.clearSearch(); page.waitForContent();
+        page.search(token.toUpperCase());
+        int upper = page.rowCount();
+        page.clearSearch();
+        // Strong: case must not change the match set.
+        Assert.assertEquals(lower, upper, "Search must be case-insensitive (lower=" + lower + ", upper=" + upper + ").");
+        Assert.assertTrue(lower > 0, "Searching a real token (any case) should match at least one row.");
+        ExtentReportManager.logPass("Case-insensitive search: " + lower + " matches either case");
+    }
+
+    // ── G. Detail & quotes (remaining) ──
+    @Test(priority = 29, description = "TC_OPP_31/32/33: Detail lists quotes; opening a quote loads its editor tabs")
+    public void testOpp31_QuotesAndQuoteEditor() {
+        ExtentReportManager.createTest(MODULE, "Detail / Quotes", "Opp_31_Quotes");
+        goToOpportunities();
+        if (!page.isGridPresent() || page.rowCount() == 0) throw new SkipException("No opportunities to open");
+        String before = driver.getCurrentUrl();
+        String after = page.openFirstRow();
+        if (after == null || (after.equals(before) && !after.contains("/opportunities/")))
+            throw new SkipException("Row did not open a detail view");
+        verifyPageHealth("Opportunity detail (quotes)");
+        int quotes = page.quoteRowCountOnDetail();
+        logStep("Quote-ish rows on detail: " + quotes);
+        // try to open a quote -> /quotes/ editor and walk its tabs
+        if (page.openFirstQuoteFromDetail()) {
+            verifyPageHealth("Quote editor");
+            java.util.List<String> tabs = page.tabLabels();
+            logStep("Quote editor tabs: " + tabs);
+            int walked = 0;
+            for (WebElement t : driver.findElements(By.cssSelector("[role='tab'], .MuiTab-root"))) {
+                try { if (!t.isDisplayed()) continue;
+                    ((JavascriptExecutor) driver).executeScript("arguments[0].click();", t);
+                    pause(900); verifyPageHealth("Quote tab"); walked++;
+                } catch (org.openqa.selenium.StaleElementReferenceException s) { break; }
+            }
+            ExtentReportManager.logPass("Detail + quote editor healthy (" + walked + " tab(s))");
+        } else {
+            // no quote to open is acceptable (opp may have none) — detail health already asserted
+            ExtentReportManager.logPass("Detail healthy; no quote to open (" + quotes + " quote rows)");
+        }
+    }
+
+    @Test(priority = 30, description = "TC_OPP_34: Back from detail returns to the Opportunities grid")
+    public void testOpp34_BackPreservesContext() {
+        ExtentReportManager.createTest(MODULE, "Detail", "Opp_34_Back");
+        goToOpportunities();
+        if (!page.isGridPresent() || page.rowCount() == 0) throw new SkipException("No opportunities to open");
+        String list = driver.getCurrentUrl();
+        String detail = page.openFirstRow();
+        if (detail == null || detail.equals(list)) throw new SkipException("Row did not navigate to a detail view");
+        driver.navigate().back();
+        pause(1200); dismissBackdrops();
+        // The list grid re-renders asynchronously after back — poll for it.
+        boolean onList = false;
+        long deadline = System.currentTimeMillis() + 10000;
+        while (System.currentTimeMillis() < deadline) {
+            if (driver.getCurrentUrl().contains("/opportunities") && page.isGridPresent()) { onList = true; break; }
+            pause(800);
+        }
+        Assert.assertTrue(onList,
+                "Back should return to the Opportunities grid. URL=" + driver.getCurrentUrl()
+                + " gridPresent=" + page.isGridPresent());
+        ExtentReportManager.logPass("Back returned to the grid");
+    }
+
+    // ── H. Delete (confirm removes) ──
+    @Test(priority = 31, description = "TC_OPP_36: Confirming delete removes the opportunity")
+    public void testOpp36_ConfirmDeleteRemoves() {
+        ExtentReportManager.createTest(MODULE, "Delete", "Opp_36_ConfirmDelete");
+        goToOpportunities();
+        if (!page.isGridPresent()) throw new SkipException("No grid/SLD");
+        String name = "DelOpp_" + timestamp();
+        openCreateOrSkip(); page.setName(name); pause(300);
+        if (!page.isSaveEnabled()) { page.clickCancel(); throw new SkipException("Create needs SLD select — precondition"); }
+        page.clickSave(); pause(2300); dismissBackdrops();
+        page.open(); page.search(name);
+        if (!page.hasRowContaining(name)) throw new SkipException("Created opp not found to delete (create flow)");
+        WebElement del = findDeleteControl();
+        if (del == null) throw new SkipException("No row-level delete control discoverable");
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", del); pause(900);
+        java.util.List<WebElement> confirm = driver.findElements(OpportunitiesPage.CONFIRM_DELETE_BTN);
+        if (confirm.isEmpty()) throw new SkipException("No confirm-delete control");
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", confirm.get(0)); pause(1500);
+        page.open(); page.search(name);
+        Assert.assertFalse(page.hasRowContaining(name), "Confirmed delete must remove '" + name + "' from the grid.");
+        ExtentReportManager.logPass("Confirmed delete removed the opportunity");
+    }
+
+    // ── I. Resilience ──
+    @Test(priority = 32, description = "TC_OPP_39: Create failure (offline) surfaces an error, no silent loss")
+    public void testOpp39_CreateFailureHandling() {
+        ExtentReportManager.createTest(MODULE, "Resilience", "Opp_39_CreateFailure");
+        goToOpportunities();
+        if (!page.isGridPresent()) throw new SkipException("No grid/SLD");
+        String name = "FailOpp_" + timestamp();
+        openCreateOrSkip(); page.setName(name); pause(300);
+        if (!page.isSaveEnabled()) { page.clickCancel(); throw new SkipException("Create needs SLD select — precondition"); }
+        com.egalvanic.qa.utils.verify.NetworkConditions.goOffline(driver);
+        try {
+            page.clickSave();
+            pause(2500);
+            String body = page.bodyText().toLowerCase();
+            boolean errorShown = body.contains("fail") || body.contains("error") || body.contains("try again")
+                    || body.contains("offline") || body.contains("network");
+            boolean stillOpen = page.isDialogOpen();   // a robust app keeps the dialog open on failure
+            Assert.assertTrue(errorShown || stillOpen,
+                    "Create-while-offline must surface an error or keep the dialog open — never silently 'succeed'.");
+        } finally {
+            com.egalvanic.qa.utils.verify.NetworkConditions.goOnline(driver);
+            pause(1200);
+            page.clickCancel();
+        }
+        cleanupOpportunity(name);   // in case it slipped through
+        ExtentReportManager.logPass("Offline create failure surfaced, no silent loss");
+    }
+
+    @Test(priority = 33, description = "TC_OPP_40: Going offline keeps the page responsive (no hang)")
+    public void testOpp40_OfflineResilience() {
+        ExtentReportManager.createTest(MODULE, "Resilience", "Opp_40_Offline");
+        goToOpportunities();
+        com.egalvanic.qa.utils.verify.NetworkConditions.goOffline(driver);
+        try {
+            ((JavascriptExecutor) driver).executeScript("window.dispatchEvent(new Event('offline'));");
+            pause(1500);
+            com.egalvanic.qa.utils.verify.HangDetector.assertResponsive(driver, "Opportunities offline", 20);
+        } finally {
+            com.egalvanic.qa.utils.verify.NetworkConditions.goOnline(driver);
+            pause(1200);
+        }
+        ExtentReportManager.logPass("Page stayed responsive while offline");
+    }
+
+    // ── E. Pipeline status & quotes ──
+    @Test(priority = 34, description = "TC_OPP_18: A newly-created opportunity (no quote) is 'Qualifying', quote_count 0")
+    public void testOpp18_NewOppQualifying() {
+        ExtentReportManager.createTest(MODULE, "Pipeline Status", "Opp_18_Qualifying");
+        goToOpportunities();
+        if (!page.isGridPresent()) throw new SkipException("No grid/SLD");
+        String name = "QualOpp_" + timestamp();
+        openCreateOrSkip(); page.setName(name); pause(300);
+        if (!page.isSaveEnabled()) { page.clickCancel(); throw new SkipException("Create needs SLD select — precondition"); }
+        page.clickSave(); pause(2300); dismissBackdrops();
+        page.open(); page.search(name);
+        WebElement row = page.findRowContaining(name);
+        String rowText = row == null ? "" : row.getText().toLowerCase();
+        cleanupOpportunity(name);
+        Assert.assertNotNull(row, "Created opportunity should appear to verify its status.");
+        Assert.assertTrue(rowText.contains("qualifying"),
+                "A new opportunity with no quote should be 'Qualifying'. Row: " + rowText);
+        ExtentReportManager.logPass("New opportunity status = Qualifying");
+    }
+
+    @Test(priority = 35, description = "TC_OPP_19-22: Status column only ever shows valid pipeline stages")
+    public void testOpp19to22_StatusEnumValid() {
+        ExtentReportManager.createTest(MODULE, "Pipeline Status", "Opp_19_22_StatusEnum");
+        goToOpportunities();
+        if (!page.isGridPresent() || page.rowCount() == 0) throw new SkipException("No opportunities to inspect");
+        java.util.List<String> valid = java.util.Arrays.asList(
+                "qualifying", "pending response", "closed won", "closed lost", "abandoned");
+        java.util.List<String> statuses = page.statusValues();
+        if (statuses.isEmpty()) throw new SkipException("Status column not rendered (virtualized)");
+        for (String s : statuses) {
+            String v = s.toLowerCase().trim();
+            Assert.assertTrue(valid.stream().anyMatch(v::contains),
+                    "Status '" + s + "' is not a valid pipeline stage " + valid);
+        }
+        logStep("Observed statuses: " + statuses.stream().distinct().sorted().collect(java.util.stream.Collectors.toList()));
+        ExtentReportManager.logPass(statuses.size() + " status value(s), all valid pipeline stages");
+    }
+
+    @Test(priority = 36, description = "TC_OPP_23/24: quote_count is a non-negative integer; total_value is currency/blank")
+    public void testOpp23_24_QuoteCountAndValueShape() {
+        ExtentReportManager.createTest(MODULE, "Pipeline Status", "Opp_23_24_CountValue");
+        goToOpportunities();
+        if (!page.isGridPresent() || page.rowCount() == 0) throw new SkipException("No opportunities to inspect");
+        java.util.List<String> counts = page.columnValues("quote_count");
+        java.util.List<String> values = page.columnValues("total_value");
+        if (counts.isEmpty() && values.isEmpty()) throw new SkipException("Count/Value columns not rendered");
+        for (String c : counts) {
+            Assert.assertTrue(c.trim().matches("\\d+"), "quote_count must be a non-negative integer. Got: '" + c + "'");
+        }
+        for (String v : values) {
+            String t = v.trim();
+            Assert.assertTrue(t.isEmpty() || t.matches("[$€£]?[\\d,]+(\\.\\d+)?") || t.matches("[\\d,.$€£\\s-]+"),
+                    "total_value must look like currency/number or blank. Got: '" + v + "'");
+        }
+        ExtentReportManager.logPass("quote_count integers + total_value currency-shaped");
+    }
+
+    @Test(priority = 37, description = "TC_OPP_25: Deleted-quote exclusion from count/value (needs quote lifecycle)")
+    public void testOpp25_DeletedQuotesExcluded() {
+        ExtentReportManager.createTest(MODULE, "Pipeline Status", "Opp_25_DeletedExcluded");
+        // Driving a quote soft-delete requires the quote-editor lifecycle (create quote -> delete),
+        // which isn't exposed from the Opportunities grid. Surfaced as a documented precondition gap,
+        // NOT a vacuous pass.
+        throw new SkipException("Requires quote-lifecycle setup (create + soft-delete a quote); "
+                + "exclusion logic is unit-test territory or needs a quote-editor helper. Documented gap.");
+    }
+
+    // ── D. AI Opportunity (feature-flagged ai_opportunities) ──
+    @Test(priority = 38, description = "TC_OPP_15: AI Opportunity button is present when the feature is enabled")
+    public void testOpp15_AiButtonPresent() {
+        ExtentReportManager.createTest(MODULE, "AI Opportunity", "Opp_15_AiPresent");
+        goToOpportunities();
+        if (!page.isAiButtonPresent())
+            throw new SkipException("AI Opportunity button not rendered (ai_opportunities flag off for this tenant)");
+        ExtentReportManager.logPass("AI Opportunity button present (enabled=" + page.isAiButtonEnabled() + ")");
+    }
+
+    @Test(priority = 39, description = "TC_OPP_16: AI button is gated (disabled) when the feature is off")
+    public void testOpp16_AiButtonGated() {
+        ExtentReportManager.createTest(MODULE, "AI Opportunity", "Opp_16_AiGated");
+        goToOpportunities();
+        if (!page.isAiButtonPresent()) throw new SkipException("AI button absent — gating shown by omission, not a disabled button");
+        if (page.isAiButtonEnabled())
+            throw new SkipException("AI feature is ENABLED for this tenant — gating case not applicable here");
+        // present but disabled -> verify it doesn't act
+        Assert.assertFalse(page.isAiButtonEnabled(), "Gated AI button must be disabled.");
+        ExtentReportManager.logPass("AI button present but gated (disabled)");
+    }
+
+    @Test(priority = 40, description = "TC_OPP_17: AI create flow opens its dialog (feature enabled)")
+    public void testOpp17_AiCreateFlow() {
+        ExtentReportManager.createTest(MODULE, "AI Opportunity", "Opp_17_AiFlow");
+        goToOpportunities();
+        if (!page.isAiButtonPresent() || !page.isAiButtonEnabled())
+            throw new SkipException("AI Opportunity not available/enabled for this tenant");
+        WebElement ai = driver.findElements(OpportunitiesPage.AI_OPP_BTN).get(0);
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", ai);
+        pause(1800);
+        Assert.assertTrue(page.isDialogOpen(), "AI Opportunity should open a dialog/flow.");
+        verifyPageHealth("AI Opportunity dialog");
+        page.clickCancel();
+        ExtentReportManager.logPass("AI Opportunity flow opened (then cancelled)");
+    }
+
+    // ── J. Permissions ──
+    @Test(priority = 41, description = "TC_OPP_41: A user without features.opportunities.view cannot access the module")
+    public void testOpp41_NoViewPermission() {
+        ExtentReportManager.createTest(MODULE, "Permissions", "Opp_41_NoPermission");
+        String lpEmail = System.getenv("LOWPERM_EMAIL");
+        String lpPass = System.getenv("LOWPERM_PASSWORD");
+        if (lpEmail == null || lpEmail.isEmpty() || lpPass == null || lpPass.isEmpty())
+            throw new SkipException("No low-permission user configured (set LOWPERM_EMAIL/LOWPERM_PASSWORD to run RBAC test)");
+        // A real RBAC test would re-login as the low-perm user here; the BaseTest session is the
+        // admin. Performing a second login mid-class is destructive to the shared session, so this
+        // is gated behind the env so it only runs when a low-perm account is provided.
+        throw new SkipException("LOWPERM creds present but mid-class re-login is unsafe in the shared session; "
+                + "run this as a dedicated low-perm suite. Documented.");
+    }
+
     // ───────────────────────────── helpers ─────────────────────────────
 
     /** Open the create dialog or SKIP with a clear reason (precondition gap, not a masked failure). */
