@@ -175,10 +175,57 @@ public class OpportunitiesPage {
         return !driver.findElements(AI_OPP_BTN).isEmpty();
     }
 
-    /** Set the opportunity Name field inside the open create dialog. */
+    /**
+     * Set the "Opportunity Name" field in the create dialog.
+     * The dialog's FIRST field is "Facility" (a combobox, pre-filled with the current Site);
+     * the Name is the 2nd field. Targeting the first text input typed into Facility and left
+     * Name empty (Create stayed disabled). This locates the field labelled "Opportunity Name"
+     * (or the last non-combobox text input) and sets it via the React native value setter.
+     */
     public void setName(String name) {
-        WebElement field = wait.until(ExpectedConditions.visibilityOfElementLocated(DIALOG_TEXTFIELD));
-        setReactInput(field, name);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(DIALOG));
+        // Locate the Opportunity Name input (NOT the Facility combobox). Then type with REAL
+        // keystrokes — MUI/react-hook-form validation that gates the Create button only fires
+        // on genuine key events; a JS native-setter sets the value but leaves Create disabled.
+        WebElement field = (WebElement) ((JavascriptExecutor) driver).executeScript(
+            "var dlg=document.querySelector('[role=\"dialog\"],.MuiDialog-root'); if(!dlg) return null;"
+          + "var target=null;"
+          + "dlg.querySelectorAll('.MuiFormControl-root,.MuiTextField-root').forEach(function(c){"
+          + "  var l=c.querySelector('label'); var i=c.querySelector('input,textarea');"
+          + "  if(i && l && /opportunity name|^\\s*name/i.test(l.textContent||'') "
+          + "     && i.getAttribute('role')!=='combobox' && !target) target=i; });"
+          + "if(!target){var ins=dlg.querySelectorAll(\"input[type='text'],textarea\");"
+          + "  for(var k=ins.length-1;k>=0;k--){var i=ins[k];"
+          + "    if(i.getAttribute('role')!=='combobox' && !i.closest('.MuiAutocomplete-root') "
+          + "       && i.getAttribute('aria-haspopup')==null){target=i;break;}}}"
+          + "return target;");
+        if (field == null) {
+            field = wait.until(ExpectedConditions.visibilityOfElementLocated(DIALOG_TEXTFIELD));
+        }
+        try {
+            ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({block:'center'});", field);
+            field.click();
+            // clear any prefill, then real-type
+            String existing = field.getAttribute("value");
+            if (existing != null && !existing.isEmpty()) {
+                field.sendKeys(org.openqa.selenium.Keys.chord(org.openqa.selenium.Keys.CONTROL, "a"));
+                field.sendKeys(org.openqa.selenium.Keys.DELETE);
+            }
+            field.sendKeys(name);
+        } catch (Exception e) {
+            // last resort: native setter (value set even if validation lags)
+            setReactInput(field, name);
+        }
+    }
+
+    /** Poll for the Create/Save button to become enabled (form validation settles asynchronously). */
+    public boolean waitForSaveEnabled(long ms) {
+        long deadline = System.currentTimeMillis() + ms;
+        while (System.currentTimeMillis() < deadline) {
+            if (isSaveEnabled()) return true;
+            try { Thread.sleep(300); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
+        }
+        return isSaveEnabled();
     }
 
     public boolean isSaveEnabled() {
@@ -245,9 +292,69 @@ public class OpportunitiesPage {
         return out;
     }
 
+    /**
+     * Name of the active Site/Facility the grid is scoped to. The grid's facility column
+     * (data-field sld_name) is the reliable source (all rows share it); falls back to the
+     * header "Site:" selector. Returns "" if undetermined.
+     */
+    public String activeSiteName() {
+        List<String> fac = columnValues("sld_name");
+        if (!fac.isEmpty()) return fac.get(0).trim();
+        // header "Site:" selector value
+        for (WebElement el : driver.findElements(By.xpath(
+                "//*[normalize-space()='Site:' or normalize-space()='Site']"
+                + "/following::*[self::div or self::button or self::span][1]"))) {
+            try {
+                String t = el.getText().trim();
+                if (!t.isEmpty() && t.length() < 40) return t;
+            } catch (Exception ignore) { }
+        }
+        return "";
+    }
+
     /** The open create dialog exposes at least a Name text field (firm) — SLD selector presence is best-effort. */
     public boolean createDialogHasNameField() {
         return isDialogOpen() && !driver.findElements(DIALOG_TEXTFIELD).isEmpty();
+    }
+
+    /**
+     * Select the first option in the create dialog's "Facility" combobox (the required 1st field).
+     * It defaults to the active Site in the live app, but on some test sites it isn't pre-committed,
+     * leaving Create disabled — selecting an option satisfies the requirement. Returns true if a
+     * facility was chosen. Harmless if already set (re-selects the first option).
+     */
+    public boolean selectFirstFacility() {
+        if (!isDialogOpen()) return false;
+        WebElement combo = driver.findElements(By.cssSelector(
+                "[role='dialog'] [role='combobox'], .MuiDialog-root [role='combobox'], "
+                + ".MuiDialog-root .MuiSelect-select, .MuiDialog-root .MuiAutocomplete-root input")).stream()
+                .filter(WebElement::isDisplayed).findFirst().orElse(null);
+        if (combo == null) return false;
+        // The test Site and Facility name are identical, and the grid is scoped to the active
+        // Site — so we MUST pick the facility matching the active site (picking another would
+        // create the opp under a different facility, invisible in this grid). Prefer the grid's
+        // facility column (reliable), then the combobox prefill.
+        String active = activeSiteName();
+        if (active.isEmpty()) {
+            String v = combo.getAttribute("value");
+            active = (v == null || v.isEmpty()) ? combo.getText() : v;
+        }
+        active = active == null ? "" : active.trim();
+        jsClick(combo);
+        sleepSettle();
+        List<WebElement> opts = driver.findElements(By.cssSelector("li[role='option'], .MuiMenuItem-root, .MuiAutocomplete-option"))
+                .stream().filter(WebElement::isDisplayed).collect(java.util.stream.Collectors.toList());
+        if (opts.isEmpty()) return false;
+        WebElement pick = opts.get(0);
+        if (!active.isEmpty()) {
+            for (WebElement o : opts) {
+                String t = o.getText().trim();
+                if (t.equalsIgnoreCase(active) || t.contains(active) || active.contains(t)) { pick = o; break; }
+            }
+        }
+        jsClick(pick);
+        sleepSettle();
+        return true;
     }
 
     public boolean createDialogHasSldSelector() {
