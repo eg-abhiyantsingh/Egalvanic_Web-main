@@ -85,8 +85,13 @@ jobs:
         continue-on-error: true
         env:
           SEND_EMAIL_ENABLED: "false"
+          SUITE: ${{ steps.resolve.outputs.suite }}
         run: |
-          mvn -B test -DsuiteXmlFile="${{ steps.resolve.outputs.suite }}" 2>&1 | tail -40
+          # -Dheadless=true is REQUIRED on the display-less ubuntu runner (BaseTest reads
+          # the 'headless' system property -> --headless=new). The dashboard script and
+          # email-test.yml use the same flag; omitting it makes every classSetup (login)
+          # fail because a headed Chrome can't launch.
+          mvn -B test -DsuiteXmlFile="$SUITE" -Dheadless=true 2>&1 | tail -40
 
       - name: Triage — still-failing vs recovered
         if: always()
