@@ -1,0 +1,147 @@
+name: Re-run Failed Tests
+
+# ============================================================
+# Re-runs a dated failed-tests suite (failed-suites/failed-tests-<date>.xml,
+# produced by the parallel suites' collector) on a CI runner. Purpose:
+#   - run ONLY the previously-failing tests in CI (fast triage loop)
+#   - distill which still fail vs which were env-flaky (recovered) — the
+#     "still-failing" list is uploaded as an artifact (NOT merged into the
+#     daily accumulator, so it can't corrupt the running tally)
+#   - upload the consolidated DETAILED report (artifact only, never emailed)
+# ============================================================
+on:
+  workflow_dispatch:
+    inputs:
+      suite_date:
+        description: "Failed-suite to run: 'latest' or a date YYYY-MM-DD"
+        required: false
+        default: 'latest'
+
+concurrency:
+  group: rerun-failed-tests
+  cancel-in-progress: false
+
+jobs:
+  rerun:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.3.1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4.8.0
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1.7.3
+        with:
+          chrome-version: 'stable'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4.3.0
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-
+
+      - name: Resolve suite file
+        id: resolve
+        env:
+          SUITE_DATE: ${{ inputs.suite_date }}
+        run: |
+          DATE="${SUITE_DATE:-latest}"
+          # Validate the user input (no command injection): only 'latest' or YYYY-MM-DD.
+          if [ "$DATE" != "latest" ] && ! printf '%s' "$DATE" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
+            echo "::error::Invalid suite_date '$DATE' — use 'latest' or YYYY-MM-DD"
+            exit 1
+          fi
+          if [ "$DATE" = "latest" ]; then
+            SUITE="failed-suites/failed-tests-latest.xml"
+          else
+            SUITE="failed-suites/failed-tests-${DATE}.xml"
+          fi
+          if [ ! -f "$SUITE" ]; then
+            echo "::error::Suite file not found: $SUITE"
+            echo "Available:"; ls failed-suites/failed-tests-*.xml || true
+            exit 1
+          fi
+          COUNT=$(grep -c 'include name=' "$SUITE" || echo 0)
+          echo "suite=$SUITE" >> "$GITHUB_OUTPUT"
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "Re-running $COUNT failed test method(s) from $SUITE"
+
+      - name: Create output dirs
+        run: mkdir -p test-output/screenshots reports/detail-report reports/consolidated-detailed
+
+      - name: Compile
+        run: mvn -B -q test-compile
+
+      - name: Re-run failed tests
+        id: run
+        continue-on-error: true
+        env:
+          SEND_EMAIL_ENABLED: "false"
+        run: |
+          mvn -B test -DsuiteXmlFile="${{ steps.resolve.outputs.suite }}" 2>&1 | tail -40
+
+      - name: Triage — still-failing vs recovered
+        if: always()
+        run: |
+          mkdir -p rerun-out
+          # current still-failing set from this CI re-run
+          python3 .github/scripts/collect-failed-tests.py --extract-only \
+            --reports-dir target/surefire-reports --out rerun-out/still-failing.txt
+          BEFORE=${{ steps.resolve.outputs.count }}
+          STILL=$(wc -l < rerun-out/still-failing.txt | tr -d ' ')
+          {
+            echo "## Re-run Failed Tests"
+            echo ""
+            echo "- Suite: \`${{ steps.resolve.outputs.suite }}\`"
+            echo "- Re-ran: **${BEFORE}** failed test method(s)"
+            echo "- Still failing in CI: **${STILL}** (the rest recovered — env-flaky or fixed)"
+            echo ""
+            echo "### Still failing"
+            echo '```'
+            cat rerun-out/still-failing.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "STILL_FAILING=$STILL" >> "$GITHUB_ENV"
+
+      - name: Generate consolidated detailed report (artifact only)
+        if: always()
+        run: |
+          python3 .github/scripts/consolidated-detailed-report.py \
+            reports/detail-report reports/consolidated-detailed \
+            --title "Consolidated Detailed Report — Re-run Failed Tests (run ${{ github.run_number }})" \
+            --timestamp "$(date -u '+%Y-%m-%d %H:%M UTC')"
+
+      - name: Upload still-failing list
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: rerun-still-failing
+          path: rerun-out/still-failing.txt
+          if-no-files-found: ignore
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: rerun-reports
+          path: |
+            target/surefire-reports/
+            reports/detail-report/
+          retention-days: 14
+
+      - name: Upload consolidated detailed report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: rerun-consolidated-detailed-report
+          path: reports/consolidated-detailed/
+          retention-days: 14
+          if-no-files-found: ignore
