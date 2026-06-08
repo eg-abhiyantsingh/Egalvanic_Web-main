@@ -67,7 +67,7 @@ jobs:
 
     strategy:
       fail-fast: false
-      max-parallel: 11
+      max-parallel: 12
 
       matrix:
         include:
@@ -156,6 +156,17 @@ jobs:
             xml: suite-accounts.xml
             tests: 12
             stagger: 100
+
+          # ──────────────────────────────────────────────
+          # Goals [SALES] — was wired into NO suite before 2026-06-08. Functional gate
+          # (columns/create-dialog/status+operator enums/target shape/search) added
+          # alongside the pre-existing ZP bug tripwires. Excludes known-product-bug.
+          # ──────────────────────────────────────────────
+          - group: goals
+            name: "Goals [SALES]"
+            xml: suite-goals.xml
+            tests: 8
+            stagger: 110
 
     name: "${{ matrix.name }} (${{ matrix.tests }} TCs)"
 

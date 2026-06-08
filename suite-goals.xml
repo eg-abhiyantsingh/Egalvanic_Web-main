@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Goals [SALES] — module suite for /goals (was wired into NO suite before 2026-06-08).
+  Functional coverage (columns / create-dialog / status+operator enums / target shape /
+  search) added alongside the pre-existing ZP bug-regression tripwires.
+
+  Default run = the FUNCTIONAL GATE: excludes `known-product-bug` so the build is green on
+  real behaviour and red only on a regression. Excluded = the ZP-* bug-regression tripwires
+  (incl. the 2 destructive DEV-env canaries) + the BUG-A/BUG-B page tripwires (see BUGS.md);
+  assertions NOT weakened, just quarantined out of the gate.
+
+  Functional gate:        mvn test -DsuiteXmlFile=suite-goals.xml
+  Exercise the tripwires:  mvn test -Dtest=GoalsTestNG -Dgroups=known-product-bug
+-->
+<suite name="Goals Suite (functional + enums + a11y)" verbose="1">
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+    <test name="Goals [SALES]">
+        <groups>
+            <run>
+                <exclude name="known-product-bug"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.egalvanic.qa.testcase.GoalsTestNG"/>
+        </classes>
+    </test>
+</suite>

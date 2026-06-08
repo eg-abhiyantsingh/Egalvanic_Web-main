@@ -344,4 +344,21 @@
         </classes>
     </test>
 
+    <!-- ============================================================ -->
+    <!-- MODULE 44: GOALS [SALES] (functional gate)                  -->
+    <!-- Columns / create-dialog / status+operator enums / target    -->
+    <!-- shape / search. Excludes known-product-bug (ZP-* bug         -->
+    <!-- tripwires incl. destructive canaries + BUG-A/BUG-B).        -->
+    <!-- ============================================================ -->
+    <test name="44. Goals [SALES] (functional gate)">
+        <groups>
+            <run>
+                <exclude name="known-product-bug"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.egalvanic.qa.testcase.GoalsTestNG"/>
+        </classes>
+    </test>
+
 </suite>

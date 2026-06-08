@@ -222,7 +222,10 @@ public class GoalsTestNG extends BaseTest {
         }
     }
 
-    @Test(priority = 3, description = "TC_GOAL_03: Edit/Delete icons visible for Account Goals at 100% zoom")
+    // Quarantined RED tripwire — ZP-1329 still OPEN (live: 25 edit icons in DOM, 0 visible in
+    // viewport at 100% zoom). Assertion NOT weakened; excluded from the functional gate.
+    @Test(priority = 3, groups = {"known-product-bug"},
+          description = "TC_GOAL_03: Edit/Delete icons visible for Account Goals at 100% zoom [tripwire: ZP-1329]")
     public void testTC_GOAL_03_EditDeleteIconsVisibleAt100Zoom() {
         ExtentReportManager.createTest(MODULE, FEATURE_LAYOUT,
                 "TC_GOAL_03_EditDeleteIconsVisibleAt100Zoom (ZP-1329)");
@@ -371,7 +374,10 @@ public class GoalsTestNG extends BaseTest {
         }
     }
 
-    @Test(priority = 7, description = "TC_GOAL_07: Editing Time Period does not silently mutate Current value")
+    // Quarantined: DEV-env canary that EDITS + SAVES a real goal (mutating) — kept out of the
+    // routine functional gate (groups known-product-bug); exercised via -Dgroups=known-product-bug.
+    @Test(priority = 7, groups = {"known-product-bug"},
+          description = "TC_GOAL_07: Editing Time Period does not silently mutate Current value [ZP-1557, destructive canary]")
     public void testTC_GOAL_07_EditPeriodDoesNotMutateCurrentValue() {
         ExtentReportManager.createTest(MODULE, FEATURE_DATA,
                 "TC_GOAL_07_EditPeriodDoesNotMutateCurrentValue (ZP-1557)");
@@ -441,7 +447,9 @@ public class GoalsTestNG extends BaseTest {
         }
     }
 
-    @Test(priority = 8, description = "TC_GOAL_08: Editing Custom date doesn't silently change Cadence")
+    // Quarantined: DEV-env canary that EDITS + SAVES a real goal (mutating) — see TC_GOAL_07.
+    @Test(priority = 8, groups = {"known-product-bug"},
+          description = "TC_GOAL_08: Editing Custom date doesn't silently change Cadence [ZP-1558, destructive canary]")
     public void testTC_GOAL_08_CustomDateEditDoesNotChangeCadence() {
         ExtentReportManager.createTest(MODULE, FEATURE_DATA,
                 "TC_GOAL_08_CustomDateEditDoesNotChangeCadence (ZP-1558)");
@@ -493,6 +501,220 @@ public class GoalsTestNG extends BaseTest {
             logStepWithScreenshot("TC_GOAL_08 error state");
             Assert.fail("TC_GOAL_08 failed: " + e.getMessage());
         }
+    }
+
+    // ════════════════ Functional coverage (added 2026-06-08) ════════════════
+    // The 8 tests above are bug-tripwires (ZP-*); the module had NO basic functional
+    // coverage (columns / create-dialog / status+operator enums / health / a11y).
+    // These are gyu-agnostic (Goals are company-level), assert FUNCTION, and use the
+    // correct controls live-verified via Playwright: the trigger is "Add Goal" (the
+    // modal title is "Create Goal"); the grid columns are Scope/Account/Type/Operator/
+    // Target/Current/Cadence/Period/Status. Functional tests do NOT call verifyPageHealth.
+
+    private static final String GOALS_DIRECT_URL = AppConstants.BASE_URL + "/goals";
+    private static final By G_GRID = By.cssSelector(".MuiDataGrid-root, [role='grid']");
+    private static final By G_HEADER = By.cssSelector(".MuiDataGrid-columnHeaderTitle, [role='columnheader']");
+    private static final By G_SEARCH = By.cssSelector("input[type='search'], input[placeholder*='Search'], input[placeholder*='search']");
+    private static final By G_ADD_BTN = By.xpath("//button[normalize-space()='Add Goal' or normalize-space()='+ Add Goal' or contains(normalize-space(),'Add Goal')]");
+    private static final By G_DIALOG = By.cssSelector("[role='dialog'], .MuiDialog-root");
+    private static final By G_DIALOG_CREATE = By.xpath("//div[@role='dialog']//button[normalize-space()='Create' or normalize-space()='Save' or normalize-space()='Create Goal']");
+    private static final By G_DIALOG_CANCEL = By.xpath("//div[@role='dialog']//button[normalize-space()='Cancel' or normalize-space()='Close']");
+
+    /** Navigate to /goals (the real nav route) and settle. Returns true if a grid/Add-Goal rendered. */
+    private boolean goToGoalsDirect() {
+        driver.get(GOALS_DIRECT_URL);
+        waitAndDismissAppAlert();
+        long deadline = System.currentTimeMillis() + 20000;
+        while (System.currentTimeMillis() < deadline) {
+            if (!driver.findElements(G_GRID).isEmpty() || !driver.findElements(G_ADD_BTN).isEmpty()
+                    || getPageText().toLowerCase().contains("add goal")) return true;
+            pause(500);
+        }
+        return !driver.findElements(G_GRID).isEmpty();
+    }
+
+    private java.util.List<String> goalColumnHeaders() {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (WebElement h : driver.findElements(G_HEADER)) {
+            String t = h.getText().trim();
+            if (!t.isEmpty() && !out.contains(t)) out.add(t);
+        }
+        return out;
+    }
+
+    private java.util.List<String> goalColumnValues(String dataField) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (WebElement c : driver.findElements(By.cssSelector(".MuiDataGrid-cell[data-field='" + dataField + "']"))) {
+            String t = c.getText().trim();
+            if (!t.isEmpty()) out.add(t);
+        }
+        return out;
+    }
+
+    private boolean openAddGoalDialog() {
+        java.util.List<WebElement> b = driver.findElements(G_ADD_BTN);
+        if (b.isEmpty()) return false;
+        js().executeScript("arguments[0].click();", b.get(0));
+        long deadline = System.currentTimeMillis() + 8000;
+        while (System.currentTimeMillis() < deadline) {
+            if (driver.findElements(G_DIALOG).stream().anyMatch(WebElement::isDisplayed)) { pause(700); return true; }
+            pause(300);
+        }
+        return false;
+    }
+
+    private boolean isCreateEnabledInDialog() {
+        java.util.List<WebElement> b = driver.findElements(G_DIALOG_CREATE);
+        if (b.isEmpty()) return false;
+        WebElement s = b.get(0);
+        return s.isEnabled() && s.getAttribute("disabled") == null && !"true".equals(s.getAttribute("aria-disabled"));
+    }
+
+    private void cancelDialog() {
+        java.util.List<WebElement> c = driver.findElements(G_DIALOG_CANCEL);
+        if (!c.isEmpty()) js().executeScript("arguments[0].click();", c.get(0));
+        pause(700);
+    }
+
+    // Tripwire: app-wide "Qe is not a function" (BUG-A) fires on this route too.
+    @Test(priority = 20, groups = {"known-product-bug"},
+          description = "TC_GOAL_09: Goals page loads healthy — grid/empty state, no JS/network errors [tripwire: BUG-A]")
+    public void testTC_GOAL_09_PageLoadsHealthy() {
+        ExtentReportManager.createTest(MODULE, "Navigation", "TC_GOAL_09_LoadHealthy");
+        if (!goToGoalsDirect()) throw new org.testng.SkipException("Goals not accessible");
+        verifyPageHealth("Goals page");
+        ExtentReportManager.logPass("Goals page healthy");
+    }
+
+    @Test(priority = 21, description = "TC_GOAL_10: Goals grid exposes the expected columns (Type/Operator/Target/Cadence/Period/Status)")
+    public void testTC_GOAL_10_GridColumns() {
+        ExtentReportManager.createTest(MODULE, "Navigation", "TC_GOAL_10_Columns");
+        if (!goToGoalsDirect()) throw new org.testng.SkipException("Goals not accessible");
+        if (driver.findElements(G_GRID).isEmpty()) throw new org.testng.SkipException("No goals grid (empty state)");
+        java.util.List<String> headers = goalColumnHeaders();
+        logStep("Goal columns: " + headers);
+        String joined = String.join(" | ", headers).toLowerCase();
+        Assert.assertTrue(joined.contains("type"), "Grid must have a Type column. Got: " + headers);
+        Assert.assertTrue(joined.contains("operator"), "Grid must have an Operator column. Got: " + headers);
+        Assert.assertTrue(joined.contains("target"), "Grid must have a Target column. Got: " + headers);
+        Assert.assertTrue(joined.contains("status"), "Grid must have a Status column. Got: " + headers);
+        Assert.assertTrue(joined.contains("cadence") && joined.contains("period"),
+                "Grid must surface Cadence + Period columns. Got: " + headers);
+        ExtentReportManager.logPass("Goal columns present: " + headers);
+    }
+
+    @Test(priority = 22, description = "TC_GOAL_11: Add Goal opens the Create Goal dialog with required Goal Type / Operator / Target Value")
+    public void testTC_GOAL_11_AddGoalDialogFields() {
+        ExtentReportManager.createTest(MODULE, "Create", "TC_GOAL_11_DialogFields");
+        if (!goToGoalsDirect()) throw new org.testng.SkipException("Goals not accessible");
+        if (!openAddGoalDialog()) throw new org.testng.SkipException("Add Goal button not present (role-gated)");
+        WebElement dlg = driver.findElements(G_DIALOG).stream().filter(WebElement::isDisplayed).findFirst().orElse(null);
+        String txt = dlg == null ? "" : dlg.getText().toLowerCase();
+        cancelDialog();
+        Assert.assertTrue(txt.contains("goal type"), "Create Goal dialog must ask for a Goal Type. Text: " + txt);
+        Assert.assertTrue(txt.contains("operator"), "Create Goal dialog must ask for an Operator. Text: " + txt);
+        Assert.assertTrue(txt.contains("target value"), "Create Goal dialog must ask for a Target Value. Text: " + txt);
+        Assert.assertTrue(txt.contains("personal") && txt.contains("account"),
+                "Create Goal dialog should offer Personal/Account scope. Text: " + txt);
+        ExtentReportManager.logPass("Create Goal dialog exposes Goal Type / Operator / Target Value + scope");
+    }
+
+    @Test(priority = 23, description = "TC_GOAL_12: Create Goal marks Goal Type / Operator / Target Value as required (*)")
+    public void testTC_GOAL_12_RequiredFieldsMarked() {
+        ExtentReportManager.createTest(MODULE, "Create / Validation", "TC_GOAL_12_RequiredMarked");
+        if (!goToGoalsDirect()) throw new org.testng.SkipException("Goals not accessible");
+        if (!openAddGoalDialog()) throw new org.testng.SkipException("Add Goal not available");
+        java.util.List<String> required = new java.util.ArrayList<>();
+        for (WebElement l : driver.findElements(By.cssSelector("[role='dialog'] label"))) {
+            try { String t = l.getText().trim(); if (t.contains("*")) required.add(t.replace("*", "").trim()); }
+            catch (Exception ignore) { }
+        }
+        boolean enabledEmpty = isCreateEnabledInDialog();
+        cancelDialog();
+        String joined = String.join(" | ", required).toLowerCase();
+        Assert.assertTrue(joined.contains("goal type"), "Goal Type must be marked required (*). Required: " + required);
+        Assert.assertTrue(joined.contains("operator"), "Operator must be marked required (*). Required: " + required);
+        Assert.assertTrue(joined.contains("target value"), "Target Value must be marked required (*). Required: " + required);
+        // Observation (not asserted): unlike Opp/Account dialogs, Goals enables Create on an empty
+        // form (validates on submit rather than disabling). Logged for product awareness.
+        logStep("[TC_GOAL_12] Create enabled on empty form = " + enabledEmpty
+                + " (Goals validates on submit; Opp/Account disable-gate instead)");
+        ExtentReportManager.logPass("Create Goal marks Goal Type / Operator / Target Value required: " + required);
+    }
+
+    @Test(priority = 24, description = "TC_GOAL_13: Status column shows only valid goal statuses")
+    public void testTC_GOAL_13_StatusEnumValid() {
+        ExtentReportManager.createTest(MODULE, "Data Integrity", "TC_GOAL_13_StatusEnum");
+        if (!goToGoalsDirect()) throw new org.testng.SkipException("Goals not accessible");
+        java.util.List<String> statuses = goalColumnValues("eval_status");
+        if (statuses.isEmpty()) throw new org.testng.SkipException("Status column not rendered (virtualized/empty)");
+        java.util.List<String> valid = java.util.Arrays.asList(
+                "met", "not met", "in progress", "on track", "at risk", "achieved", "missed",
+                "active", "completed", "unknown", "no data", "n/a", "pending");
+        for (String s : statuses) {
+            String v = s.toLowerCase().trim();
+            Assert.assertTrue(valid.stream().anyMatch(v::contains),
+                    "Goal status '" + s + "' is not a recognized status " + valid);
+        }
+        logStep("Observed goal statuses: " + statuses.stream().distinct().sorted().collect(java.util.stream.Collectors.toList()));
+        ExtentReportManager.logPass(statuses.size() + " status value(s), all valid");
+    }
+
+    @Test(priority = 25, description = "TC_GOAL_14: Operator column shows only comparison operators")
+    public void testTC_GOAL_14_OperatorEnumValid() {
+        ExtentReportManager.createTest(MODULE, "Data Integrity", "TC_GOAL_14_OperatorEnum");
+        if (!goToGoalsDirect()) throw new org.testng.SkipException("Goals not accessible");
+        java.util.List<String> ops = goalColumnValues("operator_symbol");
+        if (ops.isEmpty()) throw new org.testng.SkipException("Operator column not rendered");
+        for (String o : ops) {
+            String v = o.trim();
+            Assert.assertTrue(v.matches("[<>=≤≥]{1,2}") || v.equalsIgnoreCase("<=") || v.equalsIgnoreCase(">="),
+                    "Operator '" + o + "' is not a valid comparison operator (< = > <= >=).");
+        }
+        ExtentReportManager.logPass("Operators valid: " + ops.stream().distinct().collect(java.util.stream.Collectors.toList()));
+    }
+
+    @Test(priority = 26, description = "TC_GOAL_15: Target / Current columns are currency/number-shaped")
+    public void testTC_GOAL_15_TargetCurrencyShape() {
+        ExtentReportManager.createTest(MODULE, "Data Integrity", "TC_GOAL_15_TargetShape");
+        if (!goToGoalsDirect()) throw new org.testng.SkipException("Goals not accessible");
+        java.util.List<String> targets = goalColumnValues("target_value");
+        if (targets.isEmpty()) throw new org.testng.SkipException("Target column not rendered");
+        for (String t : targets) {
+            String v = t.trim();
+            Assert.assertTrue(v.matches("[$€£]?[\\d,]+(\\.\\d+)?%?") || v.matches("[\\d,.$€£%\\s-]+"),
+                    "Target value must be currency/number-shaped. Got: '" + t + "'");
+        }
+        ExtentReportManager.logPass("Target values currency/number-shaped (" + targets.size() + ")");
+    }
+
+    @Test(priority = 27, description = "TC_GOAL_16: Search box accepts input without crashing the grid")
+    public void testTC_GOAL_16_SearchBoxResponsive() {
+        ExtentReportManager.createTest(MODULE, "Read / Search", "TC_GOAL_16_Search");
+        if (!goToGoalsDirect()) throw new org.testng.SkipException("Goals not accessible");
+        java.util.List<WebElement> s = driver.findElements(G_SEARCH);
+        if (s.isEmpty()) throw new org.testng.SkipException("No search box on Goals");
+        js().executeScript(
+            "var st=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
+          + "st.call(arguments[0], arguments[1]);"
+          + "arguments[0].dispatchEvent(new Event('input',{bubbles:true}));", s.get(0), "Revenue");
+        pause(1500);
+        String body = getPageText().toLowerCase();
+        Assert.assertFalse(body.contains("undefined is not") || body.contains("cannot read properties"),
+                "Typing in the Goals search must not surface a raw JS error.");
+        Assert.assertTrue(!driver.findElements(G_GRID).isEmpty() || body.contains("no "),
+                "Goals grid should remain rendered (or show an empty state) after a search keystroke.");
+        ExtentReportManager.logPass("Goals search box accepts input without crashing");
+    }
+
+    // Tripwire: app-wide WCAG violations (BUG-B) on /goals too.
+    @Test(priority = 28, groups = {"known-product-bug"},
+          description = "TC_GOAL_17: Accessibility — no critical/serious WCAG violations [tripwire: BUG-B]")
+    public void testTC_GOAL_17_Accessibility() {
+        ExtentReportManager.createTest(MODULE, "Accessibility", "TC_GOAL_17_A11y");
+        if (!goToGoalsDirect()) throw new org.testng.SkipException("Goals not accessible");
+        verifyAccessibility("Goals (/goals)");
+        ExtentReportManager.logPass("No critical/serious WCAG violations on Goals");
     }
 
     private static int countOccurrences(String haystack, String needle) {
