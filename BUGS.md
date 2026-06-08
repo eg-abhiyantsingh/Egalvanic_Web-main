@@ -40,6 +40,18 @@ left RED on purpose (never softened) and linked here.
 - **Repro:** iOS repo `ready-bug/2026-06-03-api-auth-inconsistency-me-401.md`.
 - Listed here for completeness; lives in the iOS automation repo.
 
+## BUG-D — Opportunities: rapid double-submit creates a DUPLICATE (MEDIUM-HIGH)
+- **What:** On the Create Opportunity dialog, clicking **Create twice in quick succession**
+  creates **two** opportunities with the same name — the Save/Create button isn't disabled
+  on first click and there's no debounce/idempotency guard.
+- **Repro:** Site `gyu` → New Opportunity → Facility (pre-filled) + name `AutoOppDup_<ts>` →
+  click **Create** twice rapidly → grid shows **2** rows named `AutoOppDup_<ts>`.
+- **Found by:** `OpportunitiesTestNG.testOpp13_RapidDoubleSubmitNoDuplicate`
+  ("Rapid double-submit created 2 opportunities … expected ≤1"). Quarantined-red, tagged
+  `groups={"known-product-bug"}`.
+- **Fix hint:** disable the Create button after first click (until the request resolves) and/or
+  de-dupe server-side per (facility,name) within a short window.
+
 ## Opportunities suite — findings (live run 2026-06-03)
 
 `OpportunitiesTestNG` (new this session) reproduced BUG-A and BUG-B on the Opportunities
