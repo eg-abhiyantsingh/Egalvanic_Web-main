@@ -309,4 +309,39 @@
         </classes>
     </test>
 
+    <!-- ============================================================ -->
+    <!-- MODULE 42: OPPORTUNITIES [SALES] (functional gate)           -->
+    <!-- CRUD edge cases + quote/EMP lifecycle + pipeline status +    -->
+    <!-- search/sort + API auth contract. Excludes known-product-bug  -->
+    <!-- (BUG-A/BUG-B tripwires) so the full suite stays green on      -->
+    <!-- real behaviour. Scoped to Site "gyu" via OPP_SITE.           -->
+    <!-- ============================================================ -->
+    <test name="42. Opportunities [SALES] (functional gate)">
+        <groups>
+            <run>
+                <exclude name="known-product-bug"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.egalvanic.qa.testcase.OpportunitiesTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ============================================================ -->
+    <!-- MODULE 43: ACCOUNTS [SALES] (functional gate)               -->
+    <!-- Read/columns/search + create-dialog validation (no submit)  -->
+    <!-- + detail/Contacts + confirmation-gated delete. Excludes      -->
+    <!-- known-product-bug (BUG-A/BUG-B/BUG-E tripwires).            -->
+    <!-- ============================================================ -->
+    <test name="43. Accounts [SALES] (functional gate)">
+        <groups>
+            <run>
+                <exclude name="known-product-bug"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AccountsTestNG"/>
+        </classes>
+    </test>
+
 </suite>

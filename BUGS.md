@@ -52,6 +52,29 @@ left RED on purpose (never softened) and linked here.
 - **Fix hint:** disable the Create button after first click (until the request resolves) and/or
   de-dupe server-side per (facility,name) within a short window.
 
+## BUG-E — API: flat list endpoints (`/opportunities/`, `/quotes/`, `/accounts/`) accept UNAUTHENTICATED reads (LOW-MEDIUM, BAC)
+- **What:** `GET /api/opportunities/`, `GET /api/quotes/` AND `GET /api/accounts/` return **200 with
+  no auth token**, while the company-scoped sibling `GET /api/company/{id}/opportunities` correctly
+  returns **401**. A systemic auth-enforcement inconsistency across the flat list endpoints
+  (OWASP API1/API5 — Broken Access Control).
+- **Impact (characterized live):** the unauthenticated flat endpoints return a **null-field
+  template** (all fields `null`), not real tenant data — so there is **no data leak**; severity is
+  bounded to the missing-auth inconsistency / attack-surface hygiene, not disclosure. Still a real
+  defect: a public GET that should be gated like its scoped sibling.
+- **Repro (no token):**
+  ```
+  curl -sk https://acme.qa.egalvanic.ai/api/opportunities/      # -> 200 (null template)
+  curl -sk https://acme.qa.egalvanic.ai/api/quotes/             # -> 200 (null template)
+  curl -sk https://acme.qa.egalvanic.ai/api/company/<id>/opportunities  # -> 401 (correct)
+  ```
+- **Found by:** `OpportunitiesTestNG.testOpp57_ApiFlatEndpointsShouldRequireAuth` (opportunities +
+  quotes) and `AccountsTestNG.testAcc_ApiFlatEndpointRequiresAuth` (accounts) — both assert the flat
+  endpoints SHOULD be 401/403; currently 200. Quarantined-red, tagged `groups={"known-product-bug"}`,
+  assertions NOT weakened. The companion green tests `testOpp56` (scoped endpoint enforces 401) and
+  `testOpp58` (authed list schema) prove the correct contract holds where it is enforced.
+- **Fix hint:** apply the same auth middleware/decorator used by `/company/{id}/...` to the flat
+  `/opportunities/` and `/quotes/` routes (or remove the un-scoped routes if unused).
+
 ## Opportunities suite — findings (live run 2026-06-03)
 
 `OpportunitiesTestNG` (new this session) reproduced BUG-A and BUG-B on the Opportunities
