@@ -36,18 +36,31 @@ import static io.restassured.RestAssured.given;
 public class OpportunitiesTestNG extends BaseTest {
 
     private static final String MODULE = "Opportunities";
+    // Opportunities data + a create Facility that matches the site live under site "gyu"
+    // (per the walkthrough video + owner note: the Site and Facility name are identical there,
+    // so the create dialog's pre-filled Facility matches the grid scope and rows are visible).
+    // BaseTest's default "Test Site" does NOT line up, so we scope this module to "gyu".
+    private static final String OPP_SITE = System.getenv().getOrDefault("OPP_SITE", "gyu");
     private OpportunitiesPage page;
 
     @BeforeClass
     @Override
     public void classSetup() {
-        super.classSetup();            // login + site selection
+        super.classSetup();            // login + default site selection
         page = new OpportunitiesPage(driver);
+        page.open();
+        selectSiteByName(OPP_SITE);    // scope to the data-rich site whose facility == site name
     }
 
     private void goToOpportunities() {
         page.open();
         dismissBackdrops();
+        // Stay scoped to OPP_SITE (persists across reloads, but re-assert cheaply if it drifted).
+        if (!OPP_SITE.equalsIgnoreCase(page.activeSiteName())) {
+            selectSiteByName(OPP_SITE);
+            page.open();
+            dismissBackdrops();
+        }
     }
 
     // ───────────────────────────── Load / structure ─────────────────────────────
@@ -185,11 +198,7 @@ public class OpportunitiesTestNG extends BaseTest {
         boolean persisted = page.hasRowContaining(name);
         // cleanup BEFORE asserting so a failed assert still leaves the env clean
         cleanupOpportunity(name);
-        if (!appeared) {
-            throw new SkipException("Headless create not confirmed for '" + name + "': the create dialog's "
-                + "Facility autocomplete doesn't reliably commit under --headless, so no findable opp is persisted "
-                + "(manual flow verified in testcase/opporunity.mov). Run headed to assert persistence. NOT a vacuous pass.");
-        }
+        Assert.assertTrue(appeared, "Created opportunity '" + name + "' did not appear in the grid after save.");
         Assert.assertTrue(persisted, "Created opportunity '" + name + "' did not persist across a page reload (phantom create).");
         ExtentReportManager.logPass("Create persisted across reload, then cleaned up: " + name);
     }
@@ -494,10 +503,7 @@ public class OpportunitiesTestNG extends BaseTest {
         page.open(); page.search(tag);
         boolean shown = page.hasRowContaining(tag);
         cleanupOpportunity(name);
-        if (!shown) {
-            throw new SkipException("Headless create not confirmed (Facility autocomplete commit unreliable under "
-                + "--headless); manual flow verified in testcase/opporunity.mov. Run headed to assert unicode storage.");
-        }
+        Assert.assertTrue(shown, "Unicode-named opportunity should be stored & displayed (searched by '" + tag + "').");
         ExtentReportManager.logPass("Unicode name stored & displayed");
     }
 
@@ -677,10 +683,7 @@ public class OpportunitiesTestNG extends BaseTest {
         WebElement row = page.findRowContaining(name);
         String rowText = row == null ? "" : row.getText().toLowerCase();
         cleanupOpportunity(name);
-        if (row == null) {
-            throw new SkipException("Headless create not confirmed (Facility autocomplete commit unreliable under "
-                + "--headless); manual flow verified in testcase/opporunity.mov. Run headed to assert Qualifying status.");
-        }
+        Assert.assertNotNull(row, "Created opportunity should appear to verify its status.");
         Assert.assertTrue(rowText.contains("qualifying") || rowText.contains("qualified"),
                 "A new opportunity with no quote should be 'Qualifying'. Row: " + rowText);
         ExtentReportManager.logPass("New opportunity status = Qualifying");
@@ -810,9 +813,22 @@ public class OpportunitiesTestNG extends BaseTest {
         // off the active-site grid. Just type the Opportunity Name and Create enables.
     }
 
-    /** Best-effort: find a row-level delete control (icon button / menu item). */
+    /** Best-effort: find a row-level delete control. Opportunities renders a red trash ICON
+     *  in the Actions column (per the walkthrough video), so look for that first; fall back
+     *  to a kebab/action menu. */
     private WebElement findDeleteControl() {
-        // try a kebab/action menu on the first row first
+        // 1) Direct delete/trash icon-button in the FIRST data row's Actions cell.
+        WebElement icon = (WebElement) ((JavascriptExecutor) driver).executeScript(
+            "var row=document.querySelector('.MuiDataGrid-row'); if(!row) return null;"
+          + "var svg=row.querySelector('[data-testid*=\"Delete\"],[data-testid*=\"delete\"],[data-testid*=\"Trash\"]');"
+          + "if(svg){return svg.closest('button')||svg;}"
+          + "var act=row.querySelector('.MuiDataGrid-cell[data-field=\"actions\"],.MuiDataGrid-actionsCell');"
+          + "if(act){var b=act.querySelector('button'); if(b) return b;}"
+          + "var aria=row.querySelector('[aria-label*=\"elete\" i],[title*=\"elete\" i]');"
+          + "if(aria) return aria;"
+          + "return null;");
+        if (icon != null) return icon;
+        // 2) Kebab/action menu fallback: open it, then pick a Delete menu item.
         List<WebElement> menus = driver.findElements(By.cssSelector(
                 ".MuiDataGrid-row [aria-label*='menu'], .MuiDataGrid-row button[aria-haspopup], .MuiDataGrid-actionsCell button"));
         if (!menus.isEmpty()) {

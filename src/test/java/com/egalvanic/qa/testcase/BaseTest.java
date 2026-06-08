@@ -650,6 +650,70 @@ public class BaseTest {
         }
     }
 
+    /**
+     * Select an arbitrary site/facility by name from the header "Site:" selector
+     * (input[placeholder='Select facility']). Generalises {@link #selectTestSite()} so a
+     * module can scope itself to a data-rich site (e.g. Opportunities -> "gyu", whose
+     * facility name matches the site so create + grid data line up). Returns true if selected.
+     */
+    protected boolean selectSiteByName(String name) {
+        try {
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            By facilityInput = By.xpath("//input[@placeholder='Select facility']");
+            try {
+                new WebDriverWait(driver, Duration.ofSeconds(15))
+                        .until(ExpectedConditions.presenceOfElementLocated(facilityInput));
+            } catch (Exception waitTimeout) {
+                System.out.println("[site] facility selector not found — cannot select '" + name + "'");
+                return false;
+            }
+            String currentValue = driver.findElement(facilityInput).getAttribute("value");
+            if (currentValue != null && currentValue.toLowerCase().contains(name.toLowerCase())) {
+                System.out.println("[site] already on '" + currentValue + "'");
+                return true;
+            }
+            WebElement input = driver.findElement(facilityInput);
+            input.click();
+            pause(500);
+            // type to filter (the selector is searchable) — react-native value set + input event
+            try {
+                js.executeScript(
+                    "var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
+                    + "s.call(arguments[0],arguments[1]);"
+                    + "arguments[0].dispatchEvent(new Event('input',{bubbles:true}));", input, name);
+                pause(700);
+            } catch (Exception ignored) {}
+            WebDriverWait w = new WebDriverWait(driver, Duration.ofSeconds(10));
+            try {
+                w.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//ul[@role='listbox']")));
+            } catch (Exception e) {
+                System.out.println("[site] dropdown did not open for '" + name + "'");
+                return false;
+            }
+            String lower = name.toLowerCase();
+            By option = By.xpath("//li[@role='option'][contains("
+                + "translate(normalize-space(),'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz'),"
+                + "'" + lower + "')]");
+            WebElement picked = new FluentWait<>(driver)
+                    .withTimeout(Duration.ofSeconds(10))
+                    .pollingEvery(Duration.ofMillis(200))
+                    .ignoring(NoSuchElementException.class)
+                    .ignoring(ElementClickInterceptedException.class)
+                    .until(d -> {
+                        for (WebElement li : d.findElements(option)) {
+                            try { li.click(); return li; } catch (Exception ignored) {}
+                        }
+                        return null;
+                    });
+            pause(600);
+            System.out.println("[site] selected '" + name + "'" + (picked != null ? "" : " (no exact option?)"));
+            return picked != null;
+        } catch (Exception e) {
+            System.out.println("[site] selectSiteByName('" + name + "') failed: " + e.getMessage());
+            return false;
+        }
+    }
+
     // ================================================================
     // HELPER / LOGGING METHODS
     // ================================================================
