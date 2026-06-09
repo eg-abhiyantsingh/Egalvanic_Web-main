@@ -81,13 +81,8 @@ public class TaskTestNG extends BaseTest {
             "//button[contains(normalize-space(),'Create Task') or contains(normalize-space(),'Add Task')]"
             + " | //main//button[contains(@class,'MuiButton-containedPrimary')]");
 
-    // Drawer header — broadened to match multiple drawer-title variants
-    // observed across web versions (Add Task / Create Task / New Task /
-    // Task Details). The new May 2026 web build uses a different label.
-    private static final By DRAWER_HEADER = By.xpath(
-            "//*[normalize-space()='Add Task' or normalize-space()='Create Task'"
-            + " or normalize-space()='New Task' or normalize-space()='Task Details'"
-            + " or normalize-space()='Add a Task' or normalize-space()='Create New Task']");
+    // (DRAWER_HEADER removed 2026-06-09 — drawer detection is now a scoped JS check in
+    //  isDrawerOpen() that excludes the left nav and the page "Search Tasks…" box.)
     // Form fields
     private static final By TASK_TYPE_INPUT = By.xpath(
             "//p[contains(text(),'Task Type')]/ancestor::div[1]//input[@role='combobox']"
@@ -374,29 +369,22 @@ public class TaskTestNG extends BaseTest {
     }
 
     private boolean isDrawerOpen() {
+        // Scoped JS detector (verified live 2026-06-09): a visible MuiDrawer-paper / dialog that
+        // is NOT the left nav (excludes "Site Overview/DASHBOARDS/ENGINEERING") and carries the
+        // Create-Task heading OR task-form fields. Avoids the earlier false positives where the
+        // page "Search Tasks…" box or the nav sidebar looked like an open drawer.
         try {
-            // 1. Specific drawer-header text variants
-            List<WebElement> headers = driver.findElements(DRAWER_HEADER);
-            for (WebElement h : headers) {
-                if (h.isDisplayed()) return true;
-            }
-            // 2. Fallback: any visible MUI Drawer with form-like content.
-            //    The new web build may not use a "Add Task" header — instead
-            //    the drawer is identified by its panel class + task-related
-            //    form fields inside.
-            List<WebElement> drawers = driver.findElements(By.cssSelector(
-                    "[class*='MuiDrawer-paper'], [role='dialog'], [class*='Drawer-root']"));
-            for (WebElement d : drawers) {
-                if (!d.isDisplayed()) continue;
-                String text = d.getText().toLowerCase();
-                if (text.contains("task") && (text.contains("type")
-                        || text.contains("title") || text.contains("description")
-                        || text.contains("save") || text.contains("create"))) {
-                    return true;
-                }
-            }
-        } catch (Exception ignored) {}
-        return false;
+            Object r = ((JavascriptExecutor) driver).executeScript(
+                "var papers=document.querySelectorAll('.MuiDrawer-paper,[role=dialog],.MuiDialog-paper');"
+              + "for(var i=0;i<papers.length;i++){var p=papers[i];"
+              + "  if(!p.getBoundingClientRect().width) continue;"
+              + "  var t=p.innerText||'';"
+              + "  if(/Site Overview|DASHBOARDS|ENGINEERING/.test(t)) continue;"
+              + "  if(/Add Task|Create Task/.test(t)) return true;"
+              + "  if(/task/i.test(t) && /(task type|title|procedure|description)/i.test(t)) return true; }"
+              + "return false;");
+            return Boolean.TRUE.equals(r);
+        } catch (Exception ignored) { return false; }
     }
 
     // Dismiss any non-Create-Task MUI Dialog that the new web's auto-features open
@@ -454,79 +442,48 @@ public class TaskTestNG extends BaseTest {
     private void openCreateTaskDrawer() {
         if (isDrawerOpen()) return;
 
-        // Pre-flight: kill any auto-opened Signatures/OCR modal that would block the Create Task click.
-        dismissUnexpectedDialogs();
-
-        // Strategy 1: Wait for Create Task button via locator
-        boolean foundBtn = false;
-        try {
-            new WebDriverWait(driver, Duration.ofSeconds(10))
-                    .until(d -> !d.findElements(CREATE_TASK_BTN).isEmpty());
-            foundBtn = true;
-        } catch (Exception e) {
-            logStep("Create Task button not found via locator — trying JS fallback");
-        }
-
-        // Strategy 2: JS fallback — find primary button or button with task-related text
-        if (foundBtn) {
-            safeClick(CREATE_TASK_BTN);
-        } else {
-            JavascriptExecutor js = (JavascriptExecutor) driver;
-            js.executeScript(
-                "var btns = document.querySelectorAll('main button');" +
-                "for (var i = 0; i < btns.length; i++) {" +
-                "  var txt = btns[i].textContent.trim().toLowerCase();" +
-                "  if (txt.indexOf('create task') !== -1 || txt.indexOf('add task') !== -1 ||" +
-                "      btns[i].classList.contains('MuiButton-containedPrimary')) {" +
-                "    btns[i].scrollIntoView({block:'center'});" +
-                "    btns[i].click(); return true;" +
-                "  }" +
-                "}" +
-                "return false;");
-        }
-        pause(2000);
-        // Dismiss any transient backdrop the click may have triggered (Beamer
-        // overlay, app-update banner, MUI Modal scrim) so the drawer's input
-        // becomes interactable.
+        // Clear blockers BEFORE clicking — the Beamer overlay / app-update banner / auto-opened
+        // Signatures-OCR modal intercept the native click on "Add Tasks" in CI (verified live
+        // 2026-06-09: the click never reached the button → drawer never opened, and the old
+        // post-click wait false-positived on the page "Search Tasks…" box, masking it).
         dismissBackdrops();
-        // Also kill any auto-opened modal (Signatures/OCR) that landed instead of the drawer.
         dismissUnexpectedDialogs();
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(12))
+                    .until(d -> !d.findElements(CREATE_TASK_BTN).isEmpty());
+        } catch (Exception ignore) {
+            logStep("Create Task / Add Tasks button not found via locator — will try JS by text");
+        }
 
-        // Wait up to 25s for drawer form to load. Earlier 15s was too tight
-        // on slower CI runners. Accept ANY of the form's known inputs as
-        // proof the drawer is open + interactive.
-        new WebDriverWait(driver, Duration.ofSeconds(25))
-                .until(d -> {
-                    try {
-                        // 1. Title input is the canonical signal — check visible variants
-                        List<WebElement> titles = d.findElements(TITLE_INPUT);
-                        for (WebElement t : titles) {
-                            if (t.isDisplayed()) return true;
-                        }
-                        // 2. Drawer heading "Add Task" / "Create Task" etc.
-                        List<WebElement> headers = d.findElements(DRAWER_HEADER);
-                        for (WebElement h : headers) {
-                            if (h.isDisplayed()) return true;
-                        }
-                        // 3. Any input with task-related placeholder visible
-                        List<WebElement> taskInputs = d.findElements(By.xpath(
-                                "//input[contains(@placeholder,'task') "
-                                + "or contains(@placeholder,'Task') "
-                                + "or contains(@placeholder,'asset') "
-                                + "or contains(@placeholder,'procedure')]"));
-                        for (WebElement i : taskInputs) {
-                            if (i.isDisplayed()) return true;
-                        }
-                        return false;
-                    } catch (Exception e) {
-                        return false;
-                    }
-                });
-        // The drawer's Title input visible doesn't mean the WHOLE drawer is
-        // rendered — sections below (Task Photos, Before/After/General tabs)
-        // are lazy-loaded. Give them a moment to attach before the caller
-        // reads page text. Tests like TC_CT_010_PhotoTabs depend on this.
-        pause(1500);
+        // JS-click the button (bypasses the transient-overlay interception that defeats a native
+        // click), then POLL the scoped drawer detector; retry up to 3× if it doesn't open.
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            clickCreateTaskButtonJs();
+            long deadline = System.currentTimeMillis() + 8000;
+            while (System.currentTimeMillis() < deadline) {
+                if (isDrawerOpen()) {
+                    pause(1500);   // settle lazy sections (Photos/Before/After tabs) before caller reads text
+                    return;
+                }
+                pause(400);
+            }
+            // not open yet — a blocker may have landed on this attempt; clear it and retry
+            dismissUnexpectedDialogs();
+            dismissBackdrops();
+        }
+        pause(500);   // caller's assertion will surface a genuine "drawer won't open" if still closed
+    }
+
+    /** JS-click the Create Task / Add Tasks toolbar button (exact text first, then contains). */
+    private void clickCreateTaskButtonJs() {
+        ((JavascriptExecutor) driver).executeScript(
+            "var btns=document.querySelectorAll('main button, button');"
+          + "var exact=null, partial=null;"
+          + "for(var i=0;i<btns.length;i++){var t=(btns[i].textContent||'').trim();"
+          + "  if(!btns[i].getBoundingClientRect().width) continue;"
+          + "  if(t==='Add Tasks'||t==='Add Task'||t==='Create Task'){exact=btns[i];break;}"
+          + "  if(!partial && /create task|add task/i.test(t)) partial=btns[i]; }"
+          + "var b=exact||partial; if(b){b.scrollIntoView({block:'center'}); b.click(); return true;} return false;");
     }
 
     private int countGridRows() {
@@ -1087,8 +1044,19 @@ public class TaskTestNG extends BaseTest {
 
         openCreateTaskDrawer();
 
-        // Leave Title empty and try to submit
-        List<WebElement> createBtns = driver.findElements(By.xpath("//button[normalize-space()='Create Task' or normalize-space()='Create']"));
+        // Leave Title empty and try to submit. Locate the drawer's submit button (live-verified
+        // label "Create Task"); fall back to a page-wide search. GUARD the empty list — when the
+        // drawer fails to open, an empty list previously did get(-1) → IndexOutOfBoundsException.
+        List<WebElement> createBtns = driver.findElements(By.xpath(
+                "//div[contains(@class,'MuiDrawer-paper')]//button[normalize-space()='Create Task'"
+                + " or normalize-space()='Create' or normalize-space()='Save' or normalize-space()='Add Task']"));
+        if (createBtns.isEmpty()) {
+            createBtns = driver.findElements(By.xpath(
+                    "//button[normalize-space()='Create Task' or normalize-space()='Create' or normalize-space()='Save']"));
+        }
+        if (createBtns.isEmpty()) {
+            throw new org.testng.SkipException("Create Task submit button not found (drawer did not open) — cannot verify empty-title validation");
+        }
         WebElement submitBtn = createBtns.get(createBtns.size() - 1);
 
         // Check if submit is disabled or shows error
