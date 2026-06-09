@@ -51,9 +51,11 @@ public class AccountsTestNG extends BaseTest {
 
     // ───────────────────────────── Load / structure ─────────────────────────────
 
-    // Tripwire: the app-wide "Qe is not a function" crash (BUG-A) fires on this route too.
+    // Quarantined tripwire — SALES pages intermittently emit a severe-error storm (BUG-A on Opp;
+    // the notes-fetch-returns-HTML storm seen on /goals, BUG-F). Page health is intermittently
+    // red app-wide, so this stays out of the functional gate. Assertion NOT weakened.
     @Test(priority = 1, groups = {"known-product-bug"},
-          description = "TC_ACC_01: Accounts page loads healthy — grid/empty state, no JS/network errors [tripwire: BUG-A]")
+          description = "TC_ACC_01: Accounts page loads healthy — no severe JS/network errors [tripwire: BUG-A / BUG-F]")
     public void testAcc01_PageLoadsHealthy() {
         ExtentReportManager.createTest(MODULE, "Navigation", "Acc_01_LoadHealthy");
         goToAccounts();
@@ -289,9 +291,10 @@ public class AccountsTestNG extends BaseTest {
         ExtentReportManager.logPass("No critical/serious WCAG violations on Accounts");
     }
 
-    // Tripwire: opening an account detail throws BUG-A (Qe crash).
+    // Quarantined tripwire — account detail health is intermittently red (severe-error storms,
+    // incl. the notes-fetch-returns-HTML issue BUG-F). Stays out of the functional gate.
     @Test(priority = 15, groups = {"known-product-bug"},
-          description = "TC_ACC_15: Account detail opens healthy [tripwire: BUG-A]")
+          description = "TC_ACC_15: Account detail opens healthy — no severe JS/network errors [tripwire: BUG-A / BUG-F]")
     public void testAcc15_DetailHealth() {
         ExtentReportManager.createTest(MODULE, "Detail", "Acc_15_DetailHealth");
         goToAccounts();

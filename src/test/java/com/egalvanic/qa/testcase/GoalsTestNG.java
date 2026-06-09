@@ -576,9 +576,12 @@ public class GoalsTestNG extends BaseTest {
         pause(700);
     }
 
-    // Tripwire: app-wide "Qe is not a function" (BUG-A) fires on this route too.
+    // Quarantined tripwire — /goals intermittently emits a SEVERE-error storm (verified live
+    // 2026-06-09: 81 severe errors, "Failed to fetch notes: ... '<!DOCTYPE' is not valid JSON" —
+    // the notes API returns HTML instead of JSON; see BUG-F). Health is intermittently red, so
+    // this stays out of the functional gate. Assertion NOT weakened.
     @Test(priority = 20, groups = {"known-product-bug"},
-          description = "TC_GOAL_09: Goals page loads healthy — grid/empty state, no JS/network errors [tripwire: BUG-A]")
+          description = "TC_GOAL_09: Goals page loads healthy — no severe JS/network errors [tripwire: BUG-A / BUG-F notes-fetch]")
     public void testTC_GOAL_09_PageLoadsHealthy() {
         ExtentReportManager.createTest(MODULE, "Navigation", "TC_GOAL_09_LoadHealthy");
         if (!goToGoalsDirect()) throw new org.testng.SkipException("Goals not accessible");

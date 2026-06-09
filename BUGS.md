@@ -75,6 +75,21 @@ left RED on purpose (never softened) and linked here.
 - **Fix hint:** apply the same auth middleware/decorator used by `/company/{id}/...` to the flat
   `/opportunities/` and `/quotes/` routes (or remove the un-scoped routes if unused).
 
+## BUG-F — Goals (and SALES pages): "notes" fetch returns HTML → severe-error storm (MEDIUM, intermittent)
+- **What:** On `/goals` the client's notes fetch intermittently receives **HTML (the SPA `<!DOCTYPE …>`
+  shell) instead of JSON**, so `JSON.parse` throws and the console fills with a storm of **NATIVE_SEVERE**
+  errors — observed **81 in one load**: `Failed to fetch notes: SyntaxError: Unexpected token '<',
+  "<!DOCTYPE "... is not valid JSON`. When it hits, page rendering degrades (subsequent Goals
+  grid/dialog elements intermittently fail to appear → tests SkipException).
+- **Intermittent:** a clean reload showed 0 severe errors; the next showed 81. So it's an
+  unstable/racy API response (the notes endpoint occasionally routing to the SPA fallback — same
+  HTML-instead-of-JSON shape as BUG-E's flat endpoints).
+- **Blast radius:** confirmed on `/goals`; the SALES page-health tripwires
+  `GoalsTestNG.testTC_GOAL_09`, `AccountsTestNG.testAcc01`/`testAcc15` are quarantined-red because
+  of this intermittent storm (kept OUT of the functional gate so it stays stable; assertions NOT weakened).
+- **Fix hint:** make the notes API always return JSON (proper 200 JSON or a 4xx JSON error), never
+  the SPA HTML fallback; and have the client guard `Content-Type`/parse failures instead of throwing.
+
 ## Opportunities suite — findings (live run 2026-06-03)
 
 `OpportunitiesTestNG` (new this session) reproduced BUG-A and BUG-B on the Opportunities
