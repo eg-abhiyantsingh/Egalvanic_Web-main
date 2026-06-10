@@ -131,19 +131,133 @@ the create/import/sync path is not persisting edge endpoints or node coordinates
 > stored raw but **escaped on render** (no execution via search) — downgrade to "input not
 > sanitized at write; output safe."
 
+---
+
+## Part 2 — deep INTERACTIVE / render-architecture findings (2026-06-10, session 2)
+
+Driven live with Playwright + GoJS-model introspection on gyu (6 nodes) and Wild Goose (490 nodes).
+Focus: actual edit/move/delete/export interactions + how the diagram is mounted & rendered.
+
+### SLD-BUG-14 (HIGH, perf/architecture) — The SLD canvas is **double-mounted**; every diagram renders TWICE
+- **What:** The `/slds` page mounts **TWO** GoJS `Diagram` instances for the same SLD — one inside a
+  **`display:none`** container (`MuiBox css-7ariaq`, measured **0×0 px**, GoJS canvas falls back to its
+  16×16 default at scale ~0.001) and one in the visible container. **Both fully load, parse and lay out
+  every node.** Verified live: selecting Wild Goose loaded **490 nodes into BOTH** the hidden (0×0) and
+  the visible diagram (`G.Diagram.fromDiv` enumeration returns 2 diagrams, both `nodes.count=490`).
+- **Evidence:** ancestor-chain dump (`gojs-diagram`→`css-a9lb7p`→`css-7ariaq[display:none]` all 0×0 vs
+  sibling `css-1hxddig` 1494×1047); the per-node processing, the `🔴 [AF not ready]` lines AND the whole
+  `/api/sld`+`lookup/nodes`+`node_classes`+`enum-*` fetch chain all run **twice** (this is the mechanism
+  behind SLD-BUG-03's duplicate fetches and the ~485-line ×2 console flood per heavy SLD).
+- **Why it matters:** doubles layout/render CPU + memory + backend fetches on the app's heaviest page;
+  for a 490-node SLD that is a second full GoJS layout into a canvas the user never sees. Unmount the
+  hidden duplicate (or render it lazily) and the duplicate-fetch waste (SLD-BUG-03) largely disappears.
+- **Caveat for testers:** because there are two diagrams, `G.Diagram.fromDiv` returns the **hidden** one
+  first — always pick the diagram whose div has width>10 & `display!=='none'` when introspecting, or you
+  will mis-read a 0×0 "blank" diagram as a render bug.
+
+### SLD-BUG-15 (HIGH) — **Export** produces no output and no feedback (silent no-op)
+- **What:** Clicking the **Export** button yields **nothing**: no file download (Playwright `download`
+  event never fires), no format-selection menu, no dialog/popover, **no network request, and no console
+  log or error.** Reproduced on **2 independent attempts** (visible-ref click + role-name click).
+- **Why it matters:** "export diagrams (PDF/PNG/JSON)" is an explicit v3 release-gate capability. A
+  user clicking Export gets zero feedback and no artifact. **Release-gate blocker** until confirmed.
+- **Caveat:** the double-mount (SLD-BUG-14) means there are 2 Export buttons; recommend a manual
+  confirmation clicking the *visible* button, but both attempts here produced no observable effect.
+
+### SLD-BUG-16 (MED-HIGH) — S1/S2 reproduce on a **small, web-created** SLD, not just migration data
+- **What:** gyu (6 nodes) itself exhibits the systemic bugs live: **4 of 6 nodes sit at exactly
+  (100,100)** — `test fuse`, `dosconnect switch test Fuse`, `dosconnect switch test`, `pole 3` — all
+  stacked at the same screen point and fully overlapping (S2); and **2 nodes are orphans with 0 links**
+  (`test fuse`, `pole 3 MCB (copy)`) (S1). Also visible: a duplicate-paste artifact node
+  **`pole 3 MCB (copy)`** and a persisted typo **`dosconnect switch test`**.
+- **Why it matters:** disproves "S1/S2 are only legacy offline/migration SLDs" — they occur in tiny,
+  everyday SLDs too, so the create/place/connect path on *current* web/app data is still producing
+  unplaced + unconnected nodes. Raises S1/S2 priority for the release gate.
+
+### SLD-BUG-17 (MED) — Delete dialog says **"cannot be undone"** while an **Undo** button is present
+- **What:** Unlock graph + select a node → contextual toolbar exposes **Undo / Redo / Refresh / Copy /
+  Add to… / + Asset / Box / Edit / Delete**. The Delete button opens a confirmation:
+  *"Delete Node — Are you sure you want to delete 'pole 3'? **This action cannot be undone.** [Cancel]
+  [Delete]"* — directly contradicting the toolbar's **Undo** control.
+- **Why it matters:** mixed signals → data-loss risk. It implies node deletion is a **hard backend
+  delete** that Undo does NOT cover; a user who trusts Undo can permanently lose a node (and, per
+  SLD-BUG-09, orphan its edges). (Test cancelled to protect shared QA data; cascade behaviour for
+  delete is already documented systemically as S1/S6.)
+
+### SLD-BUG-18 (MED) — No keyboard / right-click delete; Delete works only via the toolbar button
+- **What:** With graph unlocked + a node selected (`allowDelete:true`), pressing **Delete** does
+  nothing and **right-click shows no context menu**. GoJS itself *can* delete — a programmatic
+  `commandHandler.deleteSelection()` correctly cascaded **6→5 nodes / 3→1 link** (both edges of the
+  deleted node removed, no client-side orphan) — so the Delete key is intercepted/unbound, not absent.
+- **Why it matters:** non-standard editor affordances; users expect Delete/Backspace + right-click in a
+  diagram editor. Minor, but a discoverability/efficiency gap on the v3 editor.
+
+### SLD-BUG-19 (MED) — Dragging one node silently **moves a connected node** by the same offset
+- **What:** Dragging `pole 3 MCB` +260px down persisted correctly (real drag → **`PUT /api/node/update`
+  ×2 + `PUT /api/edge/update` ×2, all 200**) — BUT after reload its connected node `pole 3` had ALSO
+  moved by the identical **+260** (100,100 → 100,360), despite only `pole 3 MCB` being dragged.
+- **Why it matters:** either an unintended coupling or an undocumented "move whole branch" behavior;
+  either way a user can silently relocate nodes they didn't intend to move.
+- **Positive sub-finding (green):** a single node **move DOES persist three-layer** (UI drag → backend
+  PUT 200 → survives reload at the new coords). So S2's default-coord pile-up is **not** caused by moves
+  failing to save — it comes from node *creation/import* defaulting to (100,100) and never being placed.
+
+### SLD-BUG-20 (LOW, a11y/UX) — aria-hidden traps focus on dialog; bus group swallows child-node clicks
+- **What:** (a) Opening the delete dialog logs `Blocked aria-hidden on an element because its descendant
+  retained focus … Ancestor with aria-hidden: <div#root>` — a focused `<button>` is hidden from AT
+  (WCAG/ARIA violation; use `inert`). (b) Clicking on the `pole 3 MCB` child node selects the enclosing
+  **bus group** instead — the group captures the hit, so a child node can't be selected by clicking it.
+  (c) The red **Lock Graph** FAB still has **no accessible name** (ties into BUG-B icon-button-name).
+- **Why it matters:** keyboard/AT users can't operate the dialog cleanly; the group-hit issue makes
+  per-node editing (select → Edit/Delete) hard for nodes inside a bus.
+
+### Green / working (verified, not bugs — recorded for the sign-off)
+- **Node move three-layer persistence** works (SLD-BUG-19 sub-finding).
+- **Toolbar v3 view features** — MiniMap, Trace Lineage (upstream/downstream), Edge Labels, Status
+  Badges, Highlight Selection — all toggle on **without crashing** and render (minimap + green trace
+  path verified on gyu: `sld-toolbar-features.png`).
+- **Delete confirmation dialog** is well-formed (clear node name, Cancel/Delete) — only its
+  "cannot be undone" copy conflicts with Undo (SLD-BUG-17).
+- The web SLD editor **does** support edit operations via its own toolbar (+Asset/Box/Edit/Delete/Copy/
+  Undo/Redo) — GoJS-native insert/link are off (`allowInsert/allowLink=false`) but the app wraps its own
+  insert flow; so "web can only view SLDs" would be an **inaccurate** claim.
+
+### Evidence (session 2)
+`sld-fresh-reload-state.png` (gyu healthy render), `sld-switch-stale-canvas.png` (Wild Goose 490/0-edge
+render), `sld-toolbar-features.png` (minimap/trace/badges + overlap), `sld-node-dblclick.png` (edit
+toolbar: +Asset/Box/Edit/Delete + Undo/Redo).
+
+---
+
 ## Coverage of the release-gate matrix
 - **Web functional v3 (render/nodes/edges/icons/labels):** ✅ tested — render breaks on overlap
   (S2/S7/SLD-BUG-01), edges don't render when orphaned (S1/SLD-BUG-09), labels collide.
 - **CRUD + three-layer integrity (UI / browser-local / backend):** ✅ tested — backend↔UI compared
   via GoJS model vs `/api/lookup/nodes` + `/api/sld`; deleted-record leak + endpoint-filtering
-  inconsistency (S6/SLD-BUG-11) found; duplicate-fetch waste (SLD-BUG-03).
+  inconsistency (S6/SLD-BUG-11) found; duplicate-fetch waste (SLD-BUG-03). **Update/Move:** verified
+  end-to-end (drag → `PUT /node/update` 200 → survives reload, SLD-BUG-19). **Delete:** affordance +
+  confirmation flow verified; "cannot be undone" vs Undo conflict (SLD-BUG-17); not executed on shared
+  data. **Create:** GoJS-native insert off; app-level +Asset/Box exist (not exercised this session).
+- **Export diagrams:** ✅ tested — **non-functional / silent no-op (SLD-BUG-15)** — release-gate blocker.
+- **Render architecture:** ✅ double-mount defect (SLD-BUG-14); live S1/S2 on a small SLD (SLD-BUG-16);
+  Wild Goose 490 nodes / 0 rendered edges (SLD-BUG-09 confirmed visually live).
 - **Cross-browser (Chrome/Safari/Edge/Firefox):** Chrome covered here (Playwright Chromium). Safari/
   Edge/Firefox v3 GoJS-canvas rendering = **not yet run** (next session — same scenarios, esp. the
   490-node SLD + overlap cases; verify GoJS canvas + export render parity).
 
 ## Still to do (next session, divided)
 - Part A: cross-browser render parity (Safari/Edge/Firefox) of the gyu + Wild Goose SLDs + export.
-- Part B: Export output correctness (does Export honor the broken layout? PDF/PNG/JSON fidelity).
-- Part C: AI-assistant SLD feature (if present) + reload/deep-link persistence of a manual node move.
-- Part D: file the top systemic bugs (S1/S2/S4/S6) into Jira after sign-off (per never-modify-Jira-
-  without-permission rule — list prepared, await go-ahead).
+- Part B: **Confirm SLD-BUG-15 (Export no-op) manually** clicking the *visible* Export button; if it
+  ever does produce a file, check whether the export honors the broken layout / leaks deleted nodes.
+- Part C: AI-assistant SLD feature (if present); exercise the app-level **+ Asset / Box** create flow
+  (does a newly-created node get a real coordinate, or default to (100,100) → S2 at creation time?).
+- Part D: file the top systemic bugs (S1/S2/S4/S6) + SLD-BUG-14/15 into Jira after sign-off (per
+  never-modify-Jira-without-permission rule — list prepared, await go-ahead).
+
+## Session-2 verdict (deep interactive pass)
+Net-new HIGH-priority: **SLD-BUG-14** (double-mounted diagram → 2× render + the duplicate-fetch root
+cause) and **SLD-BUG-15** (Export silent no-op — release-gate blocker). Net-new MED: SLD-BUG-16
+(S1/S2 on small web SLDs), 17 (delete "cannot be undone" vs Undo), 18 (no key/right-click delete), 19
+(drag moves connected node), 20 (a11y/focus + group-hit). Move-persistence is the one clearly-green
+core path. SLD v3 is **not release-ready**: a non-functional Export + the S1/S2/S6 data-integrity
+cluster + a 2× render cost are all open.

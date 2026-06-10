@@ -116,6 +116,22 @@ left RED on purpose (never softened) and linked here.
   `is_deleted` server-side in `/api/sld/{id}`, and de-dupe the SLD-load fetches.
 - **Found by:** manual deep hunt 2026-06-10 (no automated SLD test class yet — SLD excluded from CI
   per the deprecated-UI note, now shown to be a high-defect area worth re-adding coverage for).
+- **Session-2 deep interactive pass (2026-06-10) — net-new findings (full detail in the report,
+  SLD-BUG-14..20):**
+  - **SLD-BUG-14 (HIGH, architecture/perf) — the SLD canvas is double-mounted.** Two GoJS `Diagram`
+    instances render the same SLD; one lives in a `display:none` 0×0 container, and **both fully load +
+    lay out every node** (verified: Wild Goose loaded 490 nodes into BOTH). This is the mechanism behind
+    the duplicate `/api/sld`+`node_classes`+`enum-*` fetches and the ×2 console flood — fixing it (unmount
+    / lazy-render the hidden diagram) removes most of the duplicate-fetch waste on the heaviest page.
+  - **SLD-BUG-15 (HIGH, release-gate blocker) — Export is a silent no-op.** Clicking Export produces no
+    download, no menu, no dialog, no network request, and no console log/error (2 attempts). The v3
+    "export diagrams" capability appears non-functional.
+  - **SLD-BUG-16 (MED-HIGH) — S1/S2 reproduce on a small web SLD (gyu), not just migration data:** 4/6
+    nodes at (100,100) overlapping + 2 orphan nodes → the create/place path still mis-handles current data.
+  - **SLD-BUG-17/18/19/20 (MED/LOW):** delete dialog says "cannot be undone" while an Undo button exists
+    (hard-delete data-loss risk); Delete key + right-click do nothing (toolbar-button-only delete);
+    dragging one node also moves a connected node by the same offset; aria-hidden focus-trap on the dialog
+    + bus group swallows child-node clicks. **Green:** node MOVE persists three-layer (drag→PUT 200→reload).
 
 ## Opportunities suite — findings (live run 2026-06-03)
 
