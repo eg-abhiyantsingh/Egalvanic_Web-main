@@ -132,6 +132,23 @@ left RED on purpose (never softened) and linked here.
     (hard-delete data-loss risk); Delete key + right-click do nothing (toolbar-button-only delete);
     dragging one node also moves a connected node by the same offset; aria-hidden focus-trap on the dialog
     + bus group swallows child-node clicks. **Green:** node MOVE persists three-layer (drag→PUT 200→reload).
+- **Session-3 deep critical pass (2026-06-10) — full repro+screenshots in
+  `docs/bug-hunts/2026-06-10-sld-CRITICAL-findings-with-repro.md`:**
+  - **CRIT-1 (HIGH, NEW) — web "+ Asset" creates structurally-orphan nodes.** The web editor can add
+    (+Asset → pick type → click-to-place, `POST eg-pz…/api/node/create` 201) and move nodes, but
+    **cannot draw edges** (`diagram.allowLink=false`; no link tool in the UI). So every web-created node
+    is born with 0 connections and there is **no in-web way to connect it** → the live, current-code root
+    cause of systemic **S1** (orphan nodes), and the "No issues" badge doesn't flag it. (Create lands at
+    the clicked coordinate, so it is NOT the cause of S2's (100,100) pile-up; logs an `iOS bridge not
+    available for handler: graphUpdate` dead-call.)
+  - **VERIFIED-SAFE (not bugs, tested):** the stored `<script>alert('XSS')</script>` node on Wild Goose
+    does **NOT execute** — React-escapes it on canvas + in the Edit Asset name input (downgrades
+    SLD-BUG-10 to write-time-sanitization only). And the SLD API enforces auth: real-id `/api/sld/{id}`,
+    `/lookup/nodes/{id}`, `/users/{id}/slds`, and all node/edge write endpoints return **401** on BOTH
+    hosts (`acme…` and `eg-pz…`) unauthenticated — **no BOLA / data-exposure** (contrast BUG-E).
+  - **Corroborated:** node delete = soft-delete (`POST /api/node/bulk-delete` 200) that feeds the S6
+    leak; double-mount (SLD-BUG-14) re-confirmed (Wild Goose loads 490 nodes into both diagrams);
+    Export still a no-op (SLD-BUG-15); AF-readiness false-negative (SLD-BUG-04) reproduced again.
 
 ## Opportunities suite — findings (live run 2026-06-03)
 
