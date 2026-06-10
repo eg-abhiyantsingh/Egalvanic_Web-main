@@ -15,6 +15,10 @@ import org.testng.annotations.Test;
 public class AssetSmokeTestNG extends BaseTest {
 
     private static final String TEST_ASSET_CLASS = "Circuit Breaker";
+    // NOTE (2026-06-09): the OCP section does NOT appear in the create form for Panelboard
+    // (gold ocp=No) NOR for ocp=Yes classes like Circuit Breaker (live-verified) — so the gold
+    // `ocp` field does not map to the create-form OCP-section visibility. testAddOCPChild needs a
+    // deeper OCP-UI/locator investigation (isOCPSectionPresent may be drift, or OCP moved); left as-is.
     private static final String TEST_ENCLOSURE_CLASS = "Panelboard";
     private static final String TEST_REPLACEMENT_COST = "30000";
 

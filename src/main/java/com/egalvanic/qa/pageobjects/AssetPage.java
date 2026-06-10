@@ -215,7 +215,13 @@ public class AssetPage {
             }
         } catch (Exception ignored) {}
 
-        // 2. Fill any empty text inputs (e.g., Breaker Settings, Catalog Number)
+        // 2. Fill any empty FREE-TEXT inputs (e.g., Breaker Settings, Catalog Number).
+        //    CRITICAL (gold-conformance fix 2026-06-09): MUI Autocomplete/Select fields are ALSO
+        //    <input type="text">, but typing free text ("SmokeTest") into them leaves an
+        //    UNCOMMITTED, invalid value (no option selected) — which silently breaks the create
+        //    (asset saved without the required class-specific attribute → not findable in the grid).
+        //    Those selects are handled in step 1 (first-option). Here we SKIP any input that is a
+        //    combobox / inside an Autocomplete-Select / has a popup — only genuine text fields get text.
         try {
             java.util.List<WebElement> textInputs = driver.findElements(
                     By.xpath("//*[contains(text(),'CORE ATTRIBUTES')]/following::input[@type='text']"));
@@ -223,13 +229,23 @@ public class AssetPage {
                 try {
                     String val = input.getAttribute("value");
                     String placeholder = input.getAttribute("placeholder");
-                    // Skip search inputs and already-filled inputs
-                    if ((val == null || val.isEmpty())
+                    String role = input.getAttribute("role");
+                    String ariaPopup = input.getAttribute("aria-haspopup");
+                    String ariaAuto = input.getAttribute("aria-autocomplete");
+                    Boolean inAutocomplete = (Boolean) js.executeScript(
+                            "return !!arguments[0].closest('.MuiAutocomplete-root, .MuiSelect-root, [class*=MuiSelect]');", input);
+                    boolean isSelectLike = "combobox".equals(role) || "listbox".equals(ariaPopup)
+                            || (ariaAuto != null && !ariaAuto.isEmpty()) || Boolean.TRUE.equals(inAutocomplete)
+                            || (placeholder != null && placeholder.startsWith("Select"));
+                    // Only fill genuine free-text fields (skip select-like, search, already-filled).
+                    if (!isSelectLike && (val == null || val.isEmpty())
                             && (placeholder == null || !placeholder.contains("Search"))) {
                         js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].focus(); arguments[0].click();", input);
                         input.sendKeys("SmokeTest");
                         pause(200);
-                        System.out.println("[AssetPage] Filled text input in core attributes: placeholder=" + placeholder);
+                        System.out.println("[AssetPage] Filled free-text core attribute: placeholder=" + placeholder);
+                    } else if (isSelectLike) {
+                        System.out.println("[AssetPage] Skipped select-like core input (placeholder=" + placeholder + ", role=" + role + ")");
                     }
                 } catch (Exception ignored) {}
             }
