@@ -1,3 +1,25 @@
+> ## ⚠️ RETRACTION / RE-TRIAGE (2026-06-10, after product-owner review)
+> The repo owner reviewed these findings and judged **none are major** — and on re-examination
+> that is correct. Concrete corrections:
+> - **CRIT-1 (web creates orphan nodes) — RETRACTED.** Reasoning was flawed: connections in this
+>   editor are made by **bus-attachment** (`Add to…` / `Box` / the node `Source/Target` panel), not
+>   free GoJS edges. `allowLink=false` is by-design (native linking off). A just-placed unconnected
+>   node = an unfinished action, not a defect.
+> - **CRIT-2 / Export no-op — RETRACTED (inconclusive).** Automated download capture is unreliable;
+>   Export almost certainly works for a real user. Not a confirmed bug.
+> - **S1/S2/S6/S7/S8, 490-nodes-0-edges, overlap, duplicate labels, `<script>`-named node —
+>   NOT product bugs.** These are messy/incomplete **test data** in scratch SLDs; per the standing
+>   rule *"0/empty data is not a bug"* they should not be filed as defects.
+> - **Interactive items (delete copy, no Delete-key, drag-moves-neighbor, AF-readiness log, badge
+>   scope, double-mount) — by-design or low/cosmetic**, not release blockers.
+> - **Genuinely useful residue:** the *negative* security results — stored-XSS does **not** execute
+>   and all SLD read+write endpoints enforce **401** on both hosts (no BOLA). Verified clean.
+>
+> The content below is retained for reference (API map, screenshots, the security verification) but
+> **the severity claims above are withdrawn.**
+
+---
+
 # SLD v3 — CRITICAL findings with step-by-step repro + screenshots
 
 - **Date:** 2026-06-10 (session 3 — "find more critical bugs")

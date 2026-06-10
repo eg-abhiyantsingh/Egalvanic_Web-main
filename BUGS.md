@@ -132,6 +132,15 @@ left RED on purpose (never softened) and linked here.
     (hard-delete data-loss risk); Delete key + right-click do nothing (toolbar-button-only delete);
     dragging one node also moves a connected node by the same offset; aria-hidden focus-trap on the dialog
     + bus group swallows child-node clicks. **Green:** node MOVE persists three-layer (drag→PUT 200→reload).
+- **⚠️ Session-3 RETRACTION (2026-06-10, after owner review):** the owner judged none of the SLD
+  findings major, and re-examination agrees. **CRIT-1 retracted** (connections are made by
+  bus-attachment `Add to…`/`Box`/`Source-Target`, not free GoJS edges; `allowLink=false` is by-design —
+  a just-placed unconnected node is an unfinished action, not a defect). **Export "no-op" retracted**
+  (inconclusive — automated download capture unreliable; likely works manually). **S1/S2/S6/S7/S8 +
+  490-nodes/0-edges + overlap + dup-labels + `<script>`-named node are TEST-DATA quality, not product
+  bugs** (per the standing rule "0/empty data is not a bug"). Interactive items are by-design/cosmetic.
+  Only the *negative* security results stand: stored-XSS does not execute and SLD read+write endpoints
+  enforce 401 on both hosts (no BOLA). The session-3 detail below is retained for reference only.
 - **Session-3 deep critical pass (2026-06-10) — full repro+screenshots in
   `docs/bug-hunts/2026-06-10-sld-CRITICAL-findings-with-repro.md`:**
   - **CRIT-1 (HIGH, NEW) — web "+ Asset" creates structurally-orphan nodes.** The web editor can add
