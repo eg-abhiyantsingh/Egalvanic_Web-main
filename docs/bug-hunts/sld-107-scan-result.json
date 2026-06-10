@@ -1,0 +1,1178 @@
+{
+  "summary": "Scan all 107 SLDs backend data for integrity bugs (overlapping coords, unclassified edges, orphans, null names, deleted-leaks) in parallel",
+  "agentCount": 11,
+  "logs": [
+    "Scanned 107 SLDs; 87 have ≥1 integrity issue"
+  ],
+  "result": {
+    "totalScanned": 107,
+    "perSldFindings": [
+      {
+        "sldId": "005c63cb-5141-4921-a2ca-77f2d876d73f",
+        "sldName": "K P electronics",
+        "nodeCount": 20,
+        "edgeCount": 5,
+        "issues": [
+          "DEFAULT-PILEUP: 2 nodes at (0,0) (unplaced defaults)",
+          "UNCLASSIFIED EDGES: 1 of 5 active edges have null/empty edge_class",
+          "ORPHAN NODES: 10 of 20 non-bus active nodes not referenced by any edge",
+          "NEGATIVE COORD: 14 nodes at (-304.69,-457.98), (-384.76,159.0), (-454.69,460.96), (-701.01,436.96), (-1075.01,426.96), (-271.01,296.96), (-1055.01,126.54), (-1075.01,268.96), (-727.02,-265.96), (487.65,-84.43), (333.81,-135.27), (0.0,-243.92) +2 more",
+          "DUP NODE NAME: 1 label duplicated: 'ATS TO UPS' x5"
+        ]
+      },
+      {
+        "sldId": "160f9258-6f8a-4285-9f4f-49e2d839c0e2",
+        "sldName": "Backword",
+        "nodeCount": 45,
+        "edgeCount": 24,
+        "issues": [
+          "DEFAULT-PILEUP: 10 nodes at (0,0) (unplaced defaults)",
+          "UNCLASSIFIED EDGES: 22 of 24 active edges have null/empty edge_class",
+          "ORPHAN NODES: 20 of 45 non-bus active nodes not referenced by any edge",
+          "NEGATIVE COORD: 29 nodes at (2172.94,-299.89), (-2343.7,1234.71), (-3451.36,-1718.0), (-3136.15,-1094.23), (-1114.43,423.31), (-659.61,2831.29), (-2063.2,938.97), (-3165.88,-1915.03), (-3317.19,-1336.77), (-900.19,3804.14), (-1153.08,1871.72), (-276.67,1609.39) +17 more"
+        ]
+      },
+      {
+        "sldId": "27d927a6-bb67-461e-bda1-9941c6ba83f6",
+        "sldName": "entire sync android",
+        "nodeCount": 101,
+        "edgeCount": 11,
+        "issues": [
+          "OVERLAP: 2 nodes overlap at (125.0,75.0)",
+          "DEFAULT-PILEUP: 8 nodes at (0,0) (unplaced defaults)",
+          "UNCLASSIFIED EDGES: 8 of 11 active edges have null/empty edge_class",
+          "ORPHAN NODES: 86 of 99 non-bus active nodes not referenced by any edge",
+          "NEGATIVE COORD: 59 nodes at (-159.25,361.38), (473.67,-534.12), (898.56,-648.16), (-183.06,1075.17), (-778.79,-182.93), (569.56,-226.88), (218.10,-56.60), (75.92,-438.48), (-40.74,-249.45), (-929.58,-545.47), (286.81,-961.99), (561.23,-623.73) +47 more",
+          "DELETED LEAK: lookup returned 0 is_deleted nodes and 2 is_deleted edges (raw edges 13 vs 11 active)",
+          "DUP NODE NAME: 12 labels duplicated: 'Switchboard 1' x3; 'Transformer 1' x3; 'ATS 1' x2; 'Busway 1' x2; 'Circuit Breaker 1' x2; 'Generator 1' x2 (+6 more dup labels)"
+        ]
+      },
+      {
+        "sldId": "4a2a7dbc-05cf-4314-99e5-40a7215eb7b2",
+        "sldName": "ir photo android",
+        "nodeCount": 2,
+        "edgeCount": 0,
+        "issues": [
+          "DEFAULT-PILEUP: 2 nodes at (0,0) (unplaced defaults) - both nodes unplaced, 0 edges (no connectivity)"
+        ]
+      },
+      {
+        "sldId": "5b90aac3-469a-4601-ad87-29129bf7313b",
+        "sldName": "Test_25may_ram",
+        "nodeCount": 2,
+        "edgeCount": 0,
+        "issues": [
+          "NEGATIVE COORD: 1 node at (-320.0,-110.0)",
+          "2 nodes present but 0 edges (no connectivity)"
+        ]
+      },
+      {
+        "sldId": "72c84465-0e32-45e8-9a8d-eb90fd4c4cb6",
+        "sldName": "test offline Android",
+        "nodeCount": 9,
+        "edgeCount": 4,
+        "issues": [
+          "DEFAULT-PILEUP: 2 nodes at (0,0) (unplaced defaults)",
+          "UNCLASSIFIED EDGES: 3 of 4 active edges have null/empty edge_class",
+          "ORPHAN NODES: 1 of 7 non-bus active nodes not referenced by any edge",
+          "NEGATIVE COORD: 2 nodes at (-9.86,874.70), (170.98,-82.04)",
+          "DUP NODE NAME: 1 label duplicated: 'Switchboard 1' x2"
+        ]
+      },
+      {
+        "sldId": "81e199c2-55ef-4d3d-8d84-13dc4ba53516",
+        "sldName": "testt zjdjsj",
+        "nodeCount": 16,
+        "edgeCount": 6,
+        "issues": [
+          "OVERLAP: 2 nodes overlap at (350.0,0.0)",
+          "OVERLAP: 2 nodes overlap at (700.0,0.0)",
+          "OVERLAP: 2 nodes overlap at (1050.0,0.0)",
+          "OVERLAP: 2 nodes overlap at (1400.0,0.0)",
+          "OVERLAP: 2 nodes overlap at (1750.0,0.0)",
+          "OVERLAP: 2 nodes overlap at (2100.0,0.0)",
+          "OVERLAP: 2 nodes overlap at (2450.0,0.0)",
+          "DEFAULT-PILEUP: 2 nodes at (0,0) (unplaced defaults)",
+          "UNCLASSIFIED EDGES: 4 of 6 active edges have null/empty edge_class",
+          "ORPHAN NODES: 11 of 16 non-bus active nodes not referenced by any edge",
+          "DUP NODE NAME: 7 labels duplicated: 'AST-2' x2; 'AST-3' x2; 'ATS 1' x2; 'ATS 2' x2; 'ATS 3' x2; 'ATS 4' x2 (+1 more dup label)"
+        ]
+      },
+      {
+        "sldId": "9138fd14-a3c9-495a-b086-6ef520f92168",
+        "sldName": "(s) Wild Goose Brewery",
+        "nodeCount": 490,
+        "edgeCount": 5,
+        "issues": [
+          "DEFAULT-PILEUP: 10 nodes at (100,100) (unplaced defaults)",
+          "DEFAULT-PILEUP: 61 nodes at (0,0) (unplaced defaults)",
+          "UNCLASSIFIED EDGES: 2 of 5 active edges have null/empty edge_class",
+          "ORPHAN NODES: 488 of 489 non-bus active nodes not referenced by any edge (only 5 active edges for 490 nodes)",
+          "NEGATIVE COORD: 12 nodes at (39342.58,-15942.41), (39182.96,-6604.35), (58711.29,-6634.96), (130.79,-6492.05), (62561.35,-548.55), (62618.29,-308.09), (62349.93,-179.27), (62296.75,-491.39), (48597.73,-29747.81), (-805.08,276.99), (65138.17,-1451.25), (63126.38,-463.26)",
+          "DELETED LEAK: lookup returned 0 is_deleted nodes and 253 is_deleted edges (raw edges 258 vs 5 active)",
+          "DUP NODE NAME: 57 labels duplicated: 'Line1' x9; <258-char 'LongNameTest_AAA...' label> x8; 'test' x3; 'Busway 1' x2; 'DupTest_1769053480315' x2; 'DupTest_1769138480522' x2 (+51 more dup labels)"
+        ]
+      },
+      {
+        "sldId": "c825905c-c04f-4455-b5c2-440ea5088585",
+        "sldName": "Fresh 24/2",
+        "nodeCount": 28,
+        "edgeCount": 21,
+        "issues": [
+          "DEFAULT-PILEUP: 2 nodes at (0,0) (unplaced defaults)",
+          "ORPHAN NODES: 6 of 28 non-bus active nodes not referenced by any edge",
+          "NEGATIVE COORD: 2 nodes at (686.05,-1489.91), (760.83,-848.13)"
+        ]
+      },
+      {
+        "sldId": "f3515650-4f62-4b63-b0ce-c131251a08cf",
+        "sldName": "Test site",
+        "nodeCount": 89,
+        "edgeCount": 95,
+        "issues": [
+          "UNCLASSIFIED EDGES: 88 of 95 active edges have null/empty edge_class",
+          "ORPHAN NODES: 1 of 89 non-bus active nodes not referenced by any edge",
+          "DELETED LEAK: lookup returned 0 is_deleted nodes and 1 is_deleted edge (raw edges 96 vs 95 active)"
+        ]
+      },
+      {
+        "sldId": "02b0a2a9-b85c-4da4-b1fb-c5e6ca9e7418",
+        "sldName": "Test fr",
+        "nodeCount": 18,
+        "edgeCount": 2,
+        "issues": [
+          "DEFAULT-PILEUP: 5 nodes at (0,0) (unplaced defaults)",
+          "ORPHAN NODES: 14 of 18 non-bus active nodes not referenced by any edge source/target",
+          "NEGATIVE COORD: 8 nodes at negative coords e.g. (272.11652,-1165.5765), (-208.34209,-577.39844), (-528.24396,150.963), (-24.978,-302.49698), (-131.09029,667.3113), (299.47565,-547.6192), (-175.79454,-925.941), (-594.2331,-63.501858)",
+          "DELETED LEAK: lookup/detail returned 3 is_deleted edges still present (0 deleted nodes)"
+        ]
+      },
+      {
+        "sldId": "17078823-11f9-489e-97be-1e7a377e2e9f",
+        "sldName": "Test_25_may_Web",
+        "nodeCount": 14,
+        "edgeCount": 3,
+        "issues": [
+          "UNCLASSIFIED EDGES: 3 of 3 active edges have null/empty edge_class",
+          "ORPHAN NODES: 8 of 14 non-bus active nodes not referenced by any edge",
+          "NEGATIVE COORD: 6 nodes at (614.5863,-238.36487), (-54.635967,523.97894), (-109.517395,-311.31067), (-471.5374,542.2363), (-334.5174,-102.16006), (303.59003,-105.06656)",
+          "DELETED LEAK: lookup returned 1 is_deleted edge still present"
+        ]
+      },
+      {
+        "sldId": "28821764-468c-46ba-be39-dbfbfdbcefc1",
+        "sldName": "Image ios",
+        "nodeCount": 15,
+        "edgeCount": 4,
+        "issues": [
+          "DEFAULT-PILEUP: 6 nodes at (0,0) (unplaced defaults)",
+          "UNCLASSIFIED EDGES: 3 of 4 active edges have null/empty edge_class",
+          "ORPHAN NODES: 9 of 15 non-bus active nodes not referenced by any edge",
+          "NEGATIVE COORD: 2 nodes at (-0.7188938,-52.39731), (726.43353,-494.31168)",
+          "DUP NODE NAME: 1 duplicated label: 'Switchboard 1' x2"
+        ]
+      },
+      {
+        "sldId": "4c590c19-0ea2-4046-9a29-1f39db32c612",
+        "sldName": "7-5-26",
+        "nodeCount": 23,
+        "edgeCount": 1,
+        "issues": [
+          "DEFAULT-PILEUP: 15 nodes at (0,0) (unplaced defaults)",
+          "UNCLASSIFIED EDGES: 1 of 1 active edges has null/empty edge_class",
+          "ORPHAN NODES: 21 of 23 non-bus active nodes not referenced by any edge",
+          "NEGATIVE COORD: 3 nodes at (-547.2519,-254.4385), (533.942,-109.114624), (-285.9398,-169.45729)",
+          "DUP NODE NAME: 1 duplicated label: 'DupTest_1780684738341' x2"
+        ]
+      },
+      {
+        "sldId": "825b59ac-c440-4f92-b395-e289b93e360a",
+        "sldName": "test-no-account",
+        "nodeCount": 4,
+        "edgeCount": 2,
+        "issues": [
+          "UNCLASSIFIED EDGES: 2 of 2 active edges have null/empty edge_class",
+          "ORPHAN NODES: 1 of 4 non-bus active nodes not referenced by any edge",
+          "DELETED LEAK: lookup returned 1 is_deleted edge still present"
+        ]
+      },
+      {
+        "sldId": "95aa5079-f72e-494f-a82e-0317d70ac39c",
+        "sldName": "Toronto, Canada",
+        "nodeCount": 125,
+        "edgeCount": 63,
+        "issues": [
+          "OVERLAP: 4 nodes overlap at (240.0,80.0)",
+          "OVERLAP: 4 nodes overlap at (610.0,80.0)",
+          "DEFAULT-PILEUP: 22 nodes at (0,0) (unplaced defaults)",
+          "UNCLASSIFIED EDGES: 62 of 63 active edges have null/empty edge_class",
+          "ORPHAN NODES: 66 of 125 non-bus active nodes not referenced by any edge",
+          "NEGATIVE COORD: 51 nodes at negative coords e.g. (-737.20105,-298.93723), (-1988.0751,-1843.1414), (-1333.9093,-2029.6498), (-1769.8921,496.09464), (-1477.3945,-2242.486) +46 more",
+          "DELETED LEAK: lookup returned 23 is_deleted edges still present (0 deleted nodes)",
+          "DUP NODE NAME: 13 duplicated labels incl. 'MCC Bucket 1' x7; 'MCC Bucket 2' x7; 'Disconnect Switch 1' x4; 'Disconnect Switch 2' x4; 'MCC Bucket 3' x4; 'Disconnect Switch 3' x3 (+7 more)"
+        ]
+      },
+      {
+        "sldId": "ba4241f4-80ac-49bf-89e3-708c7a0017d8",
+        "sldName": "test",
+        "nodeCount": 146,
+        "edgeCount": 13,
+        "issues": [
+          "OVERLAP: 2 nodes overlap at (20.0,0.0)",
+          "OVERLAP: 2 nodes overlap at (120.0,0.0)",
+          "DEFAULT-PILEUP: 2 nodes at (0,0) (unplaced defaults)",
+          "UNCLASSIFIED EDGES: 10 of 13 active edges have null/empty edge_class",
+          "ORPHAN NODES: 136 of 146 non-bus active nodes not referenced by any edge",
+          "NEGATIVE COORD: 7 nodes at (59.63021,-34.219337), (-958.8817,463.6422), (229.02359,-32.016693), (-638.10254,-840.5289), (261.7525,-67.4387), (405.53665,-304.87827), (-7.764225,-861.65314)",
+          "DUP NODE NAME: 12 duplicated labels incl. 'Other (OCP) 1' x3; 'test' x3; 'UPS 1' x3; 'Fuse 1' x2; 'MCC 1' x2; 'Motor 1' x2 (+6 more)"
+        ]
+      },
+      {
+        "sldId": "076533dd-4f00-44de-8e24-2ab16069791c",
+        "sldName": "Test kush",
+        "nodeCount": 11,
+        "edgeCount": 3,
+        "issues": [
+          "default-pileup: 1 node at (0,0)",
+          "2 active edges have edge_class null/empty (unclassified)",
+          "6 orphan nodes (non-bus, not referenced by any edge source/target)",
+          "5 nodes at negative coords: (-94.4,-725.1), (-637.5,831.2), (21.4,-916.1), (-401.4,-101.1), (213.8,-283.4)",
+          "dup node labels: \"Default 1\" x4, \"Assest\" x2, \"Test\" x2",
+          "detail.edges retains 1 soft-deleted edge (4 total vs 3 active)"
+        ]
+      },
+      {
+        "sldId": "1ac4aeb9-c7a0-41a4-a24f-b3fd59845524",
+        "sldName": "Migration testing 31 to 32",
+        "nodeCount": 19,
+        "edgeCount": 0,
+        "issues": [
+          "default-pileup: 1 node at (0,0)",
+          "11 nodes at negative coords incl (-923.4,-282.4), (-959.9,647.3), (-755.9,358.4), (-580.8,596.3), (780.9,-801.2)",
+          "0 edges for 19 nodes (all 19 non-bus nodes are unconnected/orphan)"
+        ]
+      },
+      {
+        "sldId": "2eb27cf0-fe2a-4e02-a04f-07b10e61b49b",
+        "sldName": "Test QA 16",
+        "nodeCount": 5,
+        "edgeCount": 2,
+        "issues": [
+          "default-pileup: 1 node at (0,0)",
+          "1 active edge has edge_class null/empty (unclassified)",
+          "1 orphan node (non-bus, unreferenced by edges)",
+          "detail.edges retains 5 soft-deleted edges (7 total vs 2 active)"
+        ]
+      },
+      {
+        "sldId": "4d7e2443-9304-40fc-bf34-cc1695672c69",
+        "sldName": "Bhhhh",
+        "nodeCount": 76,
+        "edgeCount": 0,
+        "issues": [
+          "7 nodes overlap at (130.0,80.0)",
+          "default-pileup: 1 node at (0,0)",
+          "47 nodes at negative coords incl (-955.0,728.0), (-807.8,-415.5), (-792.0,-895.9), (-589.9,690.9)",
+          "dup node labels: \"Chi\" x2",
+          "0 edges for 76 nodes (entire diagram disconnected; all non-bus nodes orphan)"
+        ]
+      },
+      {
+        "sldId": "5c47b38d-d3b7-442a-8f55-5a49dda7b962",
+        "sldName": "Test_25may_offlineram",
+        "nodeCount": 4,
+        "edgeCount": 0,
+        "issues": [
+          "default-pileup: 3 of 4 nodes stacked at default (100,100)",
+          "0 edges for 4 nodes (detail.edges retains 2 soft-deleted edges, 0 active)"
+        ]
+      },
+      {
+        "sldId": "75fc21d3-2e7c-4c9d-9b40-b1e50d66a905",
+        "sldName": "6-5-26",
+        "nodeCount": 51,
+        "edgeCount": 5,
+        "issues": [
+          "2 nodes overlap at (420.0,100.0)",
+          "default-pileup: 9 nodes at (100,100), 16 nodes at (0,0) — 25 of 51 nodes unplaced",
+          "3 active edges have edge_class null/empty (unclassified)",
+          "39 orphan nodes (non-bus, unreferenced by edges)",
+          "4 nodes at negative coords: (1412.8,-848.3), (1540.3,-799.6), (250.0,-730.4), (2492.4,-176.7)",
+          "dup node labels: \"ATS Automatic Transfer Switch (<= 1000V) 2\" x3, \"...3\" x3, \"Battery Lithium-Ion 1\" x3, \"...2\" x3, \"...3\" x3, \"ATS ...1\" x2",
+          "detail.edges retains 1 soft-deleted edge (6 total vs 5 active)"
+        ]
+      },
+      {
+        "sldId": "848f0a69-374b-49d3-a515-df74e06e213d",
+        "sldName": "test-8-5-26",
+        "nodeCount": 6,
+        "edgeCount": 3,
+        "issues": [
+          "default-pileup: 1 node at (0,0)",
+          "3 active edges have edge_class null/empty (unclassified) — all edges unclassified",
+          "1 orphan node (non-bus, unreferenced by edges)",
+          "3 nodes at negative coords: (536.7,-853.7), (-365.5,-341.2), (966.4,-425.7)"
+        ]
+      },
+      {
+        "sldId": "9ac603c5-0a3c-4eb3-a15a-e722c59437f3",
+        "sldName": "android migration",
+        "nodeCount": 13,
+        "edgeCount": 1,
+        "issues": [
+          "default-pileup: 3 nodes at (0,0)",
+          "11 orphan nodes (non-bus, unreferenced by edges) — only 1 edge for 13 nodes",
+          "9 nodes at negative coords incl (-524.1,-807.2), (-514.7,95.5), (-266.2,-108.5), (-151.3,-704.1)"
+        ]
+      },
+      {
+        "sldId": "c041dfd1-b66a-41e8-8b14-f65bc6d195a5",
+        "sldName": "Abhiyant 21 may ios",
+        "nodeCount": 244,
+        "edgeCount": 17,
+        "issues": [
+          "overlaps: 35 nodes at (434.45782,-250.45215); 6 at (66.44649,0.0); 3 at (60.0,0.0); 3 at (360.0,71.0); 2 at (275.0,55.0); 2 at (360.0,0.0); 2 at (534.4578,-150.45215)",
+          "default-pileup: 4 nodes at (100,100), 44 nodes at (0,0) — 48 unplaced defaults",
+          "10 active edges have edge_class null/empty (unclassified)",
+          "208 orphan nodes (non-bus, unreferenced by edges) out of 244",
+          "133 nodes at negative coords incl (-9.9,-1234.9), (541.5,-1589.3), (-666.7,-9.9), (-465.6,-1065.2)",
+          "dup node labels: \"Test\" x15, \"Circuit Breaker 1\" x6, \"1\" x5, \"Switchboard 1\" x5, \"ATS 52\" x4, \"Relay 1\" x4, \"Junction Box 1\" x3, \"Panelboard 1\" x3",
+          "detail.edges retains 1 soft-deleted edge (18 total vs 17 active)"
+        ]
+      },
+      {
+        "sldId": "d5f229cc-61d8-4ecb-95e3-d852cdd57d96",
+        "sldName": "gyu",
+        "nodeCount": 6,
+        "edgeCount": 3,
+        "issues": [
+          "default-pileup: 3 nodes at (100,100), 1 node at (0,0) — 4 of 6 nodes unplaced",
+          "2 active edges have edge_class null/empty (unclassified)",
+          "2 orphan nodes (non-bus, unreferenced by edges)",
+          "1 node at negative coord: (-270.0,140.0)"
+        ]
+      },
+      {
+        "sldId": "f5be0573-dd42-44de-906f-534e72c08eb0",
+        "sldName": "Z1",
+        "nodeCount": 17,
+        "edgeCount": 19,
+        "issues": [
+          "default-pileup: 3 nodes at (0,0)",
+          "2 active edges have edge_class null/empty (unclassified)",
+          "5 orphan nodes (non-bus, unreferenced by edges)",
+          "4 nodes at negative coords: (-49.8,-179.6), (424.2,-268.0), (1220.1,-516.3), (792.6,-208.0)",
+          "detail.edges retains 9 soft-deleted edges (28 total vs 19 active)"
+        ]
+      },
+      {
+        "sldId": "09fe7d5f-bdd5-4d5a-b8fb-382f2b7ad083",
+        "sldName": "test new 4",
+        "nodeCount": 92,
+        "edgeCount": 8,
+        "issues": [
+          "DELETED LEAK: /api/sld detail returns 14 edges of which 6 have is_deleted=true (not filtered server-side)",
+          "OVERLAP: 13 distinct coordinates each have 2 non-deleted nodes stacked, e.g. at (-152.31941,-328.23083), (-302.31943,-178.23083), (-452.31943,-778.23083), (147.68059,-178.23083)",
+          "DEFAULT-PILEUP: 6 unplaced nodes at (0,0)",
+          "UNCLASSIFIED EDGES: 7 of 8 non-deleted edges have null edge_class",
+          "ORPHAN NODES: 78 non-bus nodes not referenced by any edge source/target",
+          "NEGATIVE COORD: 57 nodes with x<0 or y<0, e.g. (-602.3194,-928.23083), (-991.43225,799.97614), (-277.2132,516.1349)",
+          "DUP NODE NAME: 19 labels repeated, incl. \"ATS 1\" x4, \"Disconnect Switch 1\" x3, \"Fuse 1\" x3, \"Junction Box 1\" x3, \"Other (OCP) 1\" x3, \"Test\" x3, \"VFD 1\" x3, \"Busway 1\" x2"
+        ]
+      },
+      {
+        "sldId": "1b97ad10-35bf-4921-847e-6eac6fc6d2c9",
+        "sldName": "Test sync in ios offline",
+        "nodeCount": 859,
+        "edgeCount": 1,
+        "issues": [
+          "DEFAULT-PILEUP: 8 unplaced nodes at (0,0)",
+          "ORPHAN NODES: 855 non-bus nodes not referenced by any edge (only 1 edge for 859 nodes)",
+          "NEGATIVE COORD: 648 nodes with x<0 or y<0, e.g. (-748.5478,-156.83742), (-970.6557,951.45233), (-966.55225,98.82181)",
+          "DUP NODE NAME: \"Test\" x2"
+        ]
+      },
+      {
+        "sldId": "3029a5b8-d570-4ad4-b7ea-5e6cd7ea5a60",
+        "sldName": "Android Fr new",
+        "nodeCount": 4,
+        "edgeCount": 0,
+        "issues": [
+          "DEFAULT-PILEUP: 3 unplaced nodes at (0,0)",
+          "ORPHAN NODES: 4 non-bus nodes not referenced by any edge (no edges exist)",
+          "NEGATIVE COORD: 1 node at (151.71982,-221.2395)"
+        ]
+      },
+      {
+        "sldId": "4e9f75ac-5d61-4c30-8cbc-7f83e08f9722",
+        "sldName": "test with nancy",
+        "nodeCount": 10,
+        "edgeCount": 0,
+        "issues": [
+          "DEFAULT-PILEUP: 7 unplaced nodes [6 at (100,100), 1 at (0,0)]",
+          "ORPHAN NODES: 6 non-bus nodes not referenced by any edge",
+          "NEGATIVE COORD: 1 node at (-883.5008,635.20807)",
+          "DUP NODE NAME: \"Fuse 1\" x2; \"photo edit or delete\" x2"
+        ]
+      },
+      {
+        "sldId": "7627115e-c1bd-4583-bda8-37be19da6fe2",
+        "sldName": "Test 12/5",
+        "nodeCount": 137,
+        "edgeCount": 47,
+        "issues": [
+          "OVERLAP: 8 nodes overlap at (125.0,75.0) (incl. two distinct nodes both labeled \"Fuse 2\"); 2 nodes overlap at (185.0,120.0)",
+          "DEFAULT-PILEUP: 19 unplaced nodes at (0,0)",
+          "UNCLASSIFIED EDGES: 42 of 47 edges have null edge_class",
+          "ORPHAN NODES: 68 non-bus nodes not referenced by any edge",
+          "NEGATIVE COORD: 10 nodes with x<0 or y<0, incl. extreme outliers (8735.0,-3186.9124), (8275.0,-3675.6223), (11336.6,-3480.6162), (7357.464,-132.80836)",
+          "DUP NODE NAME: 10 labels repeated, incl. \"test dublicate\" x7, \"ATS 1\" x4, \"Fuse 1\" x4, \"MCC Bucket 1\" x4"
+        ]
+      },
+      {
+        "sldId": "85c4c55a-e55b-4b21-8b3d-acb0fd68c1a5",
+        "sldName": "test",
+        "nodeCount": 10,
+        "edgeCount": 0,
+        "issues": [
+          "DEFAULT-PILEUP: 10 unplaced nodes at (100,100) (every node unplaced)",
+          "ORPHAN NODES: 10 non-bus nodes not referenced by any edge",
+          "DUP NODE NAME: 5 labels each repeated x2, incl. \"ATS Automatic Transfer Switch (<= 1000V) 1/2/3\", \"Battery Lithium-Ion 1/2\""
+        ]
+      },
+      {
+        "sldId": "9d171c47-787b-45a4-acff-c6ad177706c1",
+        "sldName": "3-06-2026",
+        "nodeCount": 49,
+        "edgeCount": 12,
+        "issues": [
+          "DELETED LEAK: /api/sld detail returns 16 edges of which 4 have is_deleted=true (not filtered server-side)",
+          "OVERLAP: 4 nodes overlap at (290.0,0.0)",
+          "DEFAULT-PILEUP: 34 unplaced nodes [1 at (100,100), 33 at (0,0)]",
+          "UNCLASSIFIED EDGES: 2 of 12 non-deleted edges have null edge_class",
+          "ORPHAN NODES: 16 non-bus nodes not referenced by any edge",
+          "NEGATIVE COORD: 5 nodes with x<0 or y<0, e.g. (-586.6292,-972.3832), (-342.63724,-879.7744)",
+          "DUP NODE NAME: \"DS 1\" x2; \"DS 1 Fuse\" x2; \"DS 321 Fuse\" x2; \"PB03\" x2"
+        ]
+      },
+      {
+        "sldId": "c063e099-e82b-4661-8171-47b1a6d09768",
+        "sldName": "Move Location Site",
+        "nodeCount": 2,
+        "edgeCount": 0,
+        "issues": [
+          "ORPHAN NODES: 2 non-bus nodes not referenced by any edge (no edges exist)",
+          "NEGATIVE COORD: 1 node at (241.4666,-16.474735)"
+        ]
+      },
+      {
+        "sldId": "dff7591d-6eb8-4469-9f89-f67cbb239824",
+        "sldName": "Quick count copy test",
+        "nodeCount": 25,
+        "edgeCount": 5,
+        "issues": [
+          "DEFAULT-PILEUP: 9 unplaced nodes at (0,0)",
+          "UNCLASSIFIED EDGES: 5 of 5 edges have null edge_class (100%)",
+          "ORPHAN NODES: 16 non-bus nodes not referenced by any edge",
+          "NEGATIVE COORD: 9 nodes with x<0 or y<0, e.g. (-978.155,-751.8987), (-500.86877,-15.415944)",
+          "DUP NODE NAME: \"ATS 1\" x8; \"Child (P) 1\" x4; \"Child (P) 2\" x4; \"Fuse\" x4; \"Panelboard 1\" x4"
+        ]
+      },
+      {
+        "sldId": "f676eb74-9997-4f0e-8097-5c06ab8d1ff1",
+        "sldName": "Android QA SIte 1",
+        "nodeCount": 225,
+        "edgeCount": 4,
+        "issues": [
+          "OVERLAP: 4 nodes overlap at (110.0,0.0)",
+          "DEFAULT-PILEUP: 4 unplaced nodes at (0,0)",
+          "ORPHAN NODES: 212 non-bus nodes not referenced by any edge (only 4 edges for 225 nodes)",
+          "NEGATIVE COORD: 157 nodes with x<0 or y<0, incl. extreme outlier (16105.357,-12226.1875)",
+          "DUP NODE NAME: \"Panel 12\" x2"
+        ]
+      },
+      {
+        "sldId": "3158e220-58e7-44f3-b28e-380edde207dd",
+        "sldName": "ATEST",
+        "nodeCount": 16,
+        "edgeCount": 35,
+        "issues": [
+          "OVERLAP: 2 nodes overlap at (-870.0,1721.5)",
+          "UNCLASSIFIED EDGES: 31 of 35 active edges have null/empty edge_class",
+          "NEGATIVE COORD: 11 nodes incl (-870.0,2006.0), (-870.0,859.0), (-870.0,2299.5), (-1330.0,507.55), (-1660.0,1350.0), (-80.0,0.0)",
+          "DELETED LEAK: lookup returned 6 is_deleted edges (should be filtered server-side)"
+        ]
+      },
+      {
+        "sldId": "517a73f6-2966-4c65-809a-17d3ac68be16",
+        "sldName": "Abhiyant test 12",
+        "nodeCount": 101,
+        "edgeCount": 6,
+        "issues": [
+          "OVERLAP: 3 nodes overlap at (220.0,0.0)",
+          "DEFAULT-PILEUP: 12 nodes at (0,0) (unplaced defaults)",
+          "UNCLASSIFIED EDGES: 4 of 6 active edges have null/empty edge_class",
+          "ORPHAN NODES: 59 of 68 non-bus active nodes not referenced by any edge",
+          "NEGATIVE COORD: 56 nodes incl (-837.58,-445.92), (-2173.23,1300.21), (-638.93,-1571.67), (-901.26,-733.21)",
+          "DUP NODE NAME: 13 duplicated labels: 'Dc bus test' x12; 'DC Bus 1' x5; 'abhiyant' x4; 'Fuse 1' x3; 'ATS 1' x2; 'Busway 1' x2 (+7 more)"
+        ]
+      },
+      {
+        "sldId": "768ff683-4244-4fa0-aced-36ed471f0c33",
+        "sldName": "Richmond, CA",
+        "nodeCount": 425,
+        "edgeCount": 90,
+        "issues": [
+          "OVERLAP: 17 overlap coords incl 8 nodes at (140.0,20.0), 7 at (110.0,0.0), 5 at (0.0,309.0), 5 at (110.0,100.0), 4 at (190.0,0.0)",
+          "DEFAULT-PILEUP: 2 nodes at (0,0) (unplaced defaults)",
+          "UNCLASSIFIED EDGES: 74 of 90 active edges have null/empty edge_class",
+          "ORPHAN NODES: 302 of 376 non-bus active nodes not referenced by any edge",
+          "NEGATIVE COORD: 22 nodes; also extreme out-of-range x incl (44880.57,-831.96), (49193.06,-3320.09), (42384.61,-743.94)",
+          "DELETED LEAK: lookup returned 34 is_deleted edges (should be filtered server-side)",
+          "DUP NODE NAME: 42 duplicated labels: 'ATS 1' x9; 'ATS 2' x7; 'Fuse' x6; 'ATS 10' x4; 'ATS 3' x4; 'ATS 4' x4 (+36 more)"
+        ]
+      },
+      {
+        "sldId": "85c96ce6-5185-47d1-912e-3968e2900004",
+        "sldName": "Bruno Burch",
+        "nodeCount": 85,
+        "edgeCount": 37,
+        "issues": [
+          "OVERLAP: 8 nodes overlap at (0.0,200.0)",
+          "UNCLASSIFIED EDGES: 34 of 37 active edges have null/empty edge_class",
+          "ORPHAN NODES: 35 of 75 non-bus active nodes not referenced by any edge",
+          "DELETED LEAK: lookup returned 1 is_deleted edge (should be filtered server-side)",
+          "DUP NODE NAME: 5 duplicated labels: 'MCC-1' x3; 'FDR-PDU-1' x2; 'Motor Controller-1' x2; 'Motor Starter-1' x2; 'Switch-1' x2"
+        ]
+      },
+      {
+        "sldId": "a0ea34fb-e52c-4091-8843-cc3760e8dd68",
+        "sldName": "android copy asset",
+        "nodeCount": 18,
+        "edgeCount": 12,
+        "issues": [
+          "DEFAULT-PILEUP: 5 nodes at (0,0) (unplaced defaults)",
+          "UNCLASSIFIED EDGES: 1 of 12 active edges has null/empty edge_class",
+          "ORPHAN NODES: 9 of 18 non-bus active nodes not referenced by any edge",
+          "NEGATIVE COORD: 6 nodes at (-808.58,-111.52), (576.01,-954.22), (-272.53,638.39), (-673.67,-677.01), (-1178.22,449.98), (-1113.29,-3.17)",
+          "DUP NODE NAME: 4 duplicated labels: 'child' x4; 'different location' x4; 'same location 1' x4; 'sam location 2' x4"
+        ]
+      },
+      {
+        "sldId": "6271fdc2-980f-4bab-b73f-30ed304bf597",
+        "sldName": "Performance sld",
+        "nodeCount": 1613,
+        "edgeCount": 876,
+        "issues": [
+          "OVERLAP: 39 overlap coords; severe stacking incl 216 nodes at (20.0,50.0), 78 at (340.0,50.0), 58 at (660.0,50.0), 47 at (980.0,50.0), 37 at (1300.0,50.0)",
+          "DEFAULT-PILEUP: 9 nodes at (0,0) (unplaced defaults)",
+          "UNCLASSIFIED EDGES: 52 of 876 active edges have null/empty edge_class",
+          "ORPHAN NODES: 369 of 1613 non-bus active nodes not referenced by any edge",
+          "NEGATIVE COORD: 3 nodes at (2879.86,-231.22), (-185.89,310.55), (103105.0,-1888.39) — last has extreme out-of-range x",
+          "DELETED LEAK: lookup returned 2 is_deleted edges (should be filtered server-side)",
+          "DUP NODE NAME: 162 duplicated labels: 'Spare' x13; 'HWP-1' x4; 'HWP-2' x4; 'Panel 8CHJ' x4; 'Transformer T-8CLJ' x4; '8CHJ Main Breaker' x3 (+156 more)"
+        ]
+      },
+      {
+        "sldId": "f6a759c7-d764-42e6-bcb0-99e6894f747f",
+        "sldName": "Test R",
+        "nodeCount": 27,
+        "edgeCount": 5,
+        "issues": [
+          "DEFAULT-PILEUP: 7 nodes at (0,0) (unplaced defaults)",
+          "UNCLASSIFIED EDGES: 2 of 5 active edges have null/empty edge_class",
+          "ORPHAN NODES: 21 of 27 non-bus active nodes not referenced by any edge",
+          "NEGATIVE COORD: 5 nodes at (-669.20,-1864.24), (622.76,-139.36), (273.22,-626.59), (-397.37,-1820.55), (30.61,-100.18)",
+          "DELETED LEAK: lookup returned 1 is_deleted edge (should be filtered server-side)"
+        ]
+      },
+      {
+        "sldId": "0cef9db5-1b1e-4ff7-8c63-623eec34ca23",
+        "sldName": "Abhiyant",
+        "nodeCount": 5,
+        "edgeCount": 2,
+        "issues": [
+          "(b) DEFAULT-PILEUP: 1 node at (0,0)",
+          "(c) UNCLASSIFIED EDGES: 2 of 2 live edges have null/empty edge_class",
+          "(d) ORPHAN NODES: 2 non-bus live nodes not referenced by any edge source/target",
+          "(f) NEGATIVE COORD: 4 nodes at (-25.2,-497.2), (306.1,-663.4), (282.6,-330.2), (-40.8,-969.8)"
+        ]
+      },
+      {
+        "sldId": "202c819d-c807-422c-b0a5-d96658e92f54",
+        "sldName": "test 4:55",
+        "nodeCount": 1,
+        "edgeCount": 0,
+        "issues": [
+          "(b) DEFAULT-PILEUP: 1 node at (0,0)",
+          "(d) NO EDGES: 1 live node but 0 live edges (node is unconnected)"
+        ]
+      },
+      {
+        "sldId": "3d37e08c-ec1d-4056-aa2e-500e60a6780a",
+        "sldName": "Zahir Carr",
+        "nodeCount": 3,
+        "edgeCount": 0,
+        "issues": [
+          "(a) OVERLAP: 3 nodes overlap at (0,0)",
+          "(b) DEFAULT-PILEUP: 3 nodes at (0,0)",
+          "(d) NO EDGES: 3 live nodes but 0 live edges (all unconnected)"
+        ]
+      },
+      {
+        "sldId": "537b73e5-0cdf-42a0-91cc-0f188cd48bcd",
+        "sldName": "Sync 100 offline",
+        "nodeCount": 22,
+        "edgeCount": 3,
+        "issues": [
+          "(a) OVERLAP: 4 nodes overlap at (0,0)",
+          "(b) DEFAULT-PILEUP: 1 node at (100,100); 4 nodes at (0,0)",
+          "(d) ORPHAN NODES: 19 of 22 non-bus live nodes not referenced by any edge (only 3 edges)"
+        ]
+      },
+      {
+        "sldId": "64b5a54d-3838-49ac-a62e-165c882e6aa4",
+        "sldName": "data loss offline",
+        "nodeCount": 8,
+        "edgeCount": 4,
+        "issues": [
+          "(a) OVERLAP: 2 nodes overlap at (0,0)",
+          "(b) DEFAULT-PILEUP: 2 nodes at (0,0)",
+          "(c) UNCLASSIFIED EDGES: 3 of 4 live edges have null/empty edge_class",
+          "(d) ORPHAN NODES: 1 non-bus live node not referenced by any edge"
+        ]
+      },
+      {
+        "sldId": "8733e85c-d84a-430e-b60f-f8b6ff14d13f",
+        "sldName": "Ios copy",
+        "nodeCount": 26,
+        "edgeCount": 3,
+        "issues": [
+          "(a) OVERLAP: 8 nodes overlap at (0,0)",
+          "(b) DEFAULT-PILEUP: 8 nodes at (0,0)",
+          "(c) UNCLASSIFIED EDGES: 1 of 3 live edges has null/empty edge_class",
+          "(d) ORPHAN NODES: 21 of 26 non-bus live nodes not referenced by any edge (only 3 edges)",
+          "(f) NEGATIVE COORD: 15 nodes incl. (292.8,-44.7), (387.1,-519.9), (957.9,-985.7), (-142.2,-662.6), (-75.0,-556.8), (276.7,-848.8), (-84.3,250.8), (-390.4,75.6) (+7 more)",
+          "(h) DUP NODE NAME: 4 duplicated labels: 'Same location 1' x8, 'Sam location 2' x8, ' Child ' x6, 'Different location ' x2"
+        ]
+      },
+      {
+        "sldId": "c20f247b-7e3e-4b6b-8d49-ed50ae6ea9c9",
+        "sldName": "iOS sld site",
+        "nodeCount": 73,
+        "edgeCount": 66,
+        "issues": [
+          "(a) OVERLAP: 4 nodes overlap at (0,0)",
+          "(b) DEFAULT-PILEUP: 4 nodes at (0,0)",
+          "(c) UNCLASSIFIED EDGES: 51 of 66 live edges have null/empty edge_class",
+          "(d) ORPHAN NODES: 27 non-bus live nodes not referenced by any edge",
+          "(f) NEGATIVE COORD: 31 nodes incl. (-118.3,2333.5), (-1242.5,3702.2), (-1013.1,3182.0), (-558.1,3021.8), (-1446.4,3702.2), (-2599.8,3191.2), (-1727.3,3389.7), (-2900.9,1233.0) (+23 more)",
+          "(g) DELETED LEAK: 12 is_deleted=true edges returned by /api/sld detail (should be filtered server-side; verified)",
+          "(h) DUP NODE NAME: 2 duplicated labels: 'ATS 34' x2, 'MCC Bucket 1' x2"
+        ]
+      },
+      {
+        "sldId": "e8743699-7629-4923-9d37-723ca6b6b69c",
+        "sldName": "Android Site",
+        "nodeCount": 1228,
+        "edgeCount": 122,
+        "issues": [
+          "(a) OVERLAP: 754 nodes overlap at (0,0); 4 at (0,58); 5 at (125,75); 2 at (130,80)",
+          "(b) DEFAULT-PILEUP: 754 nodes at (0,0) — massive unplaced-default pileup",
+          "(c) UNCLASSIFIED EDGES: 75 of 122 live edges have null/empty edge_class",
+          "(d) ORPHAN NODES: 1095 non-bus live nodes not referenced by any edge (only 122 edges for 1228 nodes)",
+          "(f) NEGATIVE COORD: 234 nodes incl. (468.9,-743.2), (718.1,-515.8), (-54.0,-596.0), (-861.9,102.2), (-719.0,18.5), (569.9,-207.5), (-37.1,38.6), (327.3,-429.9) (+226 more)",
+          "(g) DELETED LEAK: 7 is_deleted=true edges returned by /api/sld detail (should be filtered server-side; verified)",
+          "(h) DUP NODE NAME: 191 duplicated labels incl. 'Test ' x5, 'CB 699' x4, 'Panelboard 1' x4, 'CB 707' x3, 'CB 756' x3, 'Fuse 1' x3"
+        ]
+      },
+      {
+        "sldId": "f8a1d7e7-5465-4f05-ae0f-eddfeb4bdd6e",
+        "sldName": "Melbourne, AU",
+        "nodeCount": 57,
+        "edgeCount": 48,
+        "issues": [
+          "(a) OVERLAP: 6 nodes overlap at (0,0)",
+          "(b) DEFAULT-PILEUP: 6 nodes at (0,0)",
+          "(c) UNCLASSIFIED EDGES: 32 of 48 live edges have null/empty edge_class",
+          "(d) ORPHAN NODES: 20 non-bus live nodes not referenced by any edge",
+          "(f) NEGATIVE COORD: 23 nodes incl. (-1460.9,671.5), (-1768.4,2413.5), (-2997.2,627.0), (-2997.2,827.0), (-1763.1,1079.3), (-1650.4,513.9), (-1723.0,2142.1), (22.2,-343.6) (+15 more)",
+          "(g) DELETED LEAK: 8 is_deleted=true edges returned by /api/sld detail (should be filtered server-side; verified)",
+          "(h) DUP NODE NAME: 2 duplicated labels: 'ATS 26' x2, 'Node 48' x2"
+        ]
+      },
+      {
+        "sldId": "21bd10d4-cb0e-4e21-9722-9cd6219cedfc",
+        "sldName": "test site",
+        "nodeCount": 1987,
+        "edgeCount": 338,
+        "issues": [
+          "181 is_deleted edge(s) present in detail.edges (deleted leak)",
+          "3 nodes overlap at (150.0,0.0)",
+          "3 nodes overlap at (110.0,0.0)",
+          "default/unplaced coords: 187 at (100,100), 102 at (0,0)",
+          "7 of 157 active edges have null/empty edge_class",
+          "1530 orphan non-bus nodes not referenced by any edge (of 1540 non-bus)",
+          "264 nodes at negative coords, e.g. (476.43,-852.62),(-792.25,-505.87),(-326.97,-986.25),(-189.99,-374.50),(-985.89,393.25)",
+          "26 duplicated node labels: 'Fuse 1' x60, 'UpdatedModel' x46, 'Fuse 2' x14, 'Fuse 3' x6, 'Disconnect Switch 1' x4, 'test' x4, 'CB-FMC SUITE 140 MAIN' x3, 'CB-FREIGHT ELEVATOR' x3 (+18 more)"
+        ]
+      },
+      {
+        "sldId": "3de9d105-62b1-4610-9eb8-544aa4a0eefe",
+        "sldName": "Web Copy Asset (location)",
+        "nodeCount": 21,
+        "edgeCount": 1,
+        "issues": [
+          "default/unplaced coords: 2 at (100,100), 3 at (0,0)",
+          "19 orphan non-bus nodes not referenced by any edge (of 21 non-bus)",
+          "2 nodes at negative coords: (-190.0,368.0),(519.0,-17.0)",
+          "4 duplicated node labels: 'Ad eum quis dolore e' x6, 'Et esse id est eius' x6, 'Minima rerum debitis Chileddd' x6, 'Mollitia aspernatur' x3"
+        ]
+      },
+      {
+        "sldId": "5446bd9f-dfed-4921-87bb-2c76c58bdcb7",
+        "sldName": "QA-Site-1202",
+        "nodeCount": 15,
+        "edgeCount": 15,
+        "issues": [
+          "default/unplaced coords: 3 at (0,0)",
+          "15 of 15 active edges have null/empty edge_class (entire SLD unclassified)",
+          "3 orphan non-bus nodes not referenced by any edge (of 15 non-bus)"
+        ]
+      },
+      {
+        "sldId": "69e5c429-8d1c-4122-ae1f-bf71b0471aa3",
+        "sldName": "Android Qa Site1",
+        "nodeCount": 140,
+        "edgeCount": 35,
+        "issues": [
+          "3 nodes overlap at (125.0,75.0)",
+          "3 nodes overlap at (140.0,65.0)",
+          "2 nodes overlap at (725.0,55.0)",
+          "default/unplaced coords: 35 at (100,100), 45 at (0,0)",
+          "19 of 35 active edges have null/empty edge_class",
+          "111 orphan non-bus nodes not referenced by any edge (of 130 non-bus)",
+          "29 nodes at negative coords, e.g. (7.23,-2426.86),(-386.44,-299.17),(-303.26,1788.22),(-553.76,1188.93),(-202.76,-2776.94)",
+          "25 duplicated node labels: 'Panelboard 1' x4, 'Test' x4, 'QA_ATS1 1' x3, 'QA_ATS1 10' x3, 'QA_ATS1 11' x3 (+20 more, mostly 'QA_ATS1 N' triplicates)"
+        ]
+      },
+      {
+        "sldId": "7a875534-e8f4-4cde-a712-32ccabf71a35",
+        "sldName": "Test 12/4",
+        "nodeCount": 217,
+        "edgeCount": 3,
+        "issues": [
+          "default/unplaced coords: 1 at (0,0)",
+          "214 orphan non-bus nodes not referenced by any edge (of 217 non-bus) - near-total connectivity loss (only 3 edges)",
+          "149 nodes at negative coords, e.g. (960.86,-376.42),(-248.12,875.05),(76.77,-939.25),(-953.06,-571.98),(-284.34,-957.81)",
+          "1 duplicated node label: 'Disconnect Switch 1' x2"
+        ]
+      },
+      {
+        "sldId": "88e2d3a0-893d-401d-a0ef-103d53f01462",
+        "sldName": "Testoffline_25_04",
+        "nodeCount": 2,
+        "edgeCount": 0,
+        "issues": [
+          "default/unplaced coords: 1 at (0,0)",
+          "no edges exist but 2 non-bus nodes present (all unconnected)"
+        ]
+      },
+      {
+        "sldId": "a70fcdc1-5322-4095-a7cf-f17a68a7c564",
+        "sldName": "Test site 4/12",
+        "nodeCount": 32,
+        "edgeCount": 23,
+        "issues": [
+          "17 is_deleted edge(s) present in detail.edges (deleted leak; only 6 of 23 active)",
+          "default/unplaced coords: 1 at (100,100), 13 at (0,0)",
+          "3 of 6 active edges have null/empty edge_class",
+          "22 orphan non-bus nodes not referenced by any edge (of 31 non-bus)",
+          "8 nodes at negative coords: (-865.62,1964.48),(-1625.36,1217.38),(-1754.33,1108.22),(-1888.86,1494.43),(-465.24,144.98),(-889.98,1512.95),(-1584.41,1018.44),(-1610.32,2074.39)",
+          "4 duplicated node labels: 'Fuse 1' x2, 'Fuse 2' x2, 'Fuse 3' x2, 'Sub 1' x2"
+        ]
+      },
+      {
+        "sldId": "c2b9a0f8-83ea-45d0-8da1-13b4f1944526",
+        "sldName": "Android Test nauu",
+        "nodeCount": 145,
+        "edgeCount": 110,
+        "issues": [
+          "43 is_deleted edge(s) present in detail.edges (deleted leak; 67 of 110 active)",
+          "6 nodes overlap at (130.0,80.0)",
+          "4 nodes overlap at (220.0,120.0)",
+          "4 nodes overlap at (220.0,0.0)",
+          "2 nodes overlap at (150.0,0.0)",
+          "default/unplaced coords: 5 at (0,0)",
+          "63 of 67 active edges have null/empty edge_class",
+          "70 orphan non-bus nodes not referenced by any edge (of 136 non-bus)",
+          "4 nodes at extreme negative/large coords: (-16469.07,67771.54),(-16100.66,-8822.47),(-17347.63,-10264.26),(-14764.60,69443.24)",
+          "10 duplicated node labels: 'ATS 1' x2, 'ATS 8' x2, 'F 6' x2, 'Fuse 1' x2, 'Generator 1' x2, 'MCC Bucket 1' x2, 'Panel 5' x2, 'R 4' x2 (+2 more)"
+        ]
+      },
+      {
+        "sldId": "ea715e7a-bb3d-4530-8cf8-e6babd5f3302",
+        "sldName": "Bulk uplaod",
+        "nodeCount": 24,
+        "edgeCount": 23,
+        "issues": [
+          "3 is_deleted edge(s) present in detail.edges (deleted leak; 20 of 23 active)",
+          "default/unplaced coords: 2 at (100,100)",
+          "17 of 20 active edges have null/empty edge_class",
+          "7 orphan non-bus nodes not referenced by any edge (of 23 non-bus)"
+        ]
+      },
+      {
+        "sldId": "fdc8898b-38f4-4094-9534-5b91c5b14015",
+        "sldName": "London, UK",
+        "nodeCount": 80,
+        "edgeCount": 34,
+        "issues": [
+          "25 is_deleted edge(s) present in detail.edges (deleted leak; only 9 of 34 active)",
+          "2 nodes overlap at (0.0,120.0)",
+          "2 nodes overlap at (70.0,4.735733)",
+          "2 nodes overlap at (50.0,110.0)",
+          "default/unplaced coords: 1 at (100,100), 8 at (0,0)",
+          "2 of 9 active edges have null/empty edge_class",
+          "68 orphan non-bus nodes not referenced by any edge (of 80 non-bus)",
+          "1 node at negative coord: (7148.40,-135.26)",
+          "13 duplicated node labels: 'Switchboard 1' x5, 'Fuse 1' x4, 'Other (OCP)' x4, 'Loadcenter 1' x3, 'PDU 1' x3, 'Relay' x3, 'Circuit Breaker 1' x2, 'Default 1' x2 (+5 more)"
+        ]
+      },
+      {
+        "sldId": "10934c01-7329-43b6-b622-6acc6962fc06",
+        "sldName": "Test Site Android (Dev Only)",
+        "nodeCount": 44,
+        "edgeCount": 24,
+        "issues": [
+          "DELETED LEAK: 7 edges with is_deleted=true still returned by /api/sld detail (24 raw edges -> 17 live)",
+          "OVERLAP: 4 nodes overlap at (0,120)",
+          "DEFAULT-PILEUP: 20 unplaced nodes at default coords [4 at (100,100), 16 at (0,0)]",
+          "UNCLASSIFIED EDGES: 7 of 17 non-deleted edges have null/empty edge_class",
+          "ORPHAN NODES: 15 non-bus nodes not referenced by any edge source/target",
+          "NEGATIVE COORD: 13 nodes at negative coords incl (-476.79,-1215.30), (110,-624.78), (-778.96,-311.39), (-960.38,-2874.30), (-965.93,-2542.82)"
+        ]
+      },
+      {
+        "sldId": "240541df-c69d-4d43-b8ca-3569804e8f78",
+        "sldName": "B-315 franch",
+        "nodeCount": 1,
+        "edgeCount": 0,
+        "issues": [
+          "DEFAULT-PILEUP: 1 unplaced node at (0,0)",
+          "ORPHAN NODES: 1 non-bus node not referenced by any edge (SLD has 0 edges)"
+        ]
+      },
+      {
+        "sldId": "3f252c81-6e91-4718-96ff-0f54b250148a",
+        "sldName": "Sld terminal",
+        "nodeCount": 24,
+        "edgeCount": 11,
+        "issues": [
+          "DELETED LEAK: 1 edge with is_deleted=true still returned by /api/sld detail (11 raw edges -> 10 live)",
+          "DEFAULT-PILEUP: 5 unplaced nodes at default coords [1 at (100,100), 4 at (0,0)]",
+          "UNCLASSIFIED EDGES: 3 of 10 non-deleted edges have null/empty edge_class",
+          "ORPHAN NODES: 7 non-bus nodes not referenced by any edge",
+          "NEGATIVE COORD: 3 nodes at (201.44,-148.86), (-84.21,-148.996), (638.88,-603.17)",
+          "DUP NODE NAME: 2 labels duplicated: 'Panel 3' x2; 'Panel 4' x2"
+        ]
+      },
+      {
+        "sldId": "5675d694-d432-4c35-b524-a9900f41145c",
+        "sldName": "abhiyant Android",
+        "nodeCount": 1,
+        "edgeCount": 0,
+        "issues": [
+          "DEFAULT-PILEUP: 1 unplaced node at (0,0)"
+        ]
+      },
+      {
+        "sldId": "6e8e6fa5-148c-4e56-aaca-e0f0d3a95ec0",
+        "sldName": "Quick Count on Web 2",
+        "nodeCount": 46,
+        "edgeCount": 0,
+        "issues": [
+          "DEFAULT-PILEUP: all 46 nodes unplaced at default coords [38 at (100,100), 8 at (0,0)] -> 38-node overlap pile at (100,100), 8-node pile at (0,0)",
+          "ORPHAN NODES: 43 non-bus nodes not referenced by any edge (SLD has 0 edges)",
+          "DUP NODE NAME: 10 labels duplicated (each x2), e.g. 'ATS Automatic Transfer Switch (> 1000V) 1'..'10'"
+        ]
+      },
+      {
+        "sldId": "8aa13194-147e-4f5a-992d-3cb5214d26aa",
+        "sldName": "test by kd",
+        "nodeCount": 19,
+        "edgeCount": 1,
+        "issues": [
+          "DEFAULT-PILEUP: 7 unplaced nodes piled/overlapping at (100,100)",
+          "ORPHAN NODES: 16 non-bus nodes not referenced by any edge (only 1 edge in SLD)",
+          "DUP NODE NAME: 5 labels duplicated: 'ATS Automatic Transfer Switch (<= 1000V) 1' x3; '... 2' x3; 'Battery Lithium-Ion 1' x3; 'Battery Lithium-Ion 2' x3; 'test nency' x2"
+        ]
+      },
+      {
+        "sldId": "aadcee4c-7dd0-45b3-81b9-309c5c166084",
+        "sldName": "Android Site 2",
+        "nodeCount": 15,
+        "edgeCount": 0,
+        "issues": [
+          "DEFAULT-PILEUP: 12 unplaced nodes piled/overlapping at (0,0)",
+          "ORPHAN NODES: 12 non-bus nodes not referenced by any edge (SLD has 0 edges)",
+          "NEGATIVE COORD: 2 nodes at (-583.44,25.58), (-52.20,-326.08)",
+          "DUP NODE NAME: 4 labels duplicated: 'Relay 1' x3; 'Relay 2' x3; 'Panelboard 1' x2; 'Relay 3' x2"
+        ]
+      },
+      {
+        "sldId": "c4098151-c2ef-498c-9550-1e029903e8a1",
+        "sldName": "Android Fr",
+        "nodeCount": 13,
+        "edgeCount": 0,
+        "issues": [
+          "DEFAULT-PILEUP: 2 unplaced nodes at (0,0)",
+          "ORPHAN NODES: 13 non-bus nodes not referenced by any edge (SLD has 0 edges)",
+          "NEGATIVE COORD: 8 nodes at negative coords incl (-959.44,932.34), (979.67,-991.34), (-675.85,687.38), (-603.44,-147.87)"
+        ]
+      },
+      {
+        "sldId": "eb3ab92e-3ebf-4dda-a577-3b430e4835ee",
+        "sldName": "Migration ios",
+        "nodeCount": 292,
+        "edgeCount": 0,
+        "issues": [
+          "DEFAULT-PILEUP: 3 unplaced nodes at (0,0)",
+          "ORPHAN NODES: 282 non-bus nodes not referenced by any edge (SLD has 0 edges -> entire 292-node diagram has no connectivity)",
+          "NEGATIVE COORD: 222 of 292 nodes at negative coords incl (-821.95,286.97), (502.57,-967.45), (-884.65,591.84), (-729.25,-383.92)"
+        ]
+      },
+      {
+        "sldId": "24c97377-4ded-40ce-b815-00bdcf0e9f0c",
+        "sldName": "Quick Count on Web",
+        "nodeCount": 29,
+        "edgeCount": 0,
+        "issues": [
+          "OVERLAP: 29 non-deleted nodes overlap at identical coord (100,100)",
+          "DEFAULT-PILEUP: 29 nodes sit at default/unplaced coords (100,100)",
+          "ORPHAN NODES: SLD has 0 edges, so all 19 non-bus nodes are unreferenced (no connectivity)"
+        ]
+      },
+      {
+        "sldId": "42a01b1d-1678-4fae-81c9-3e89ddd51cea",
+        "sldName": "Test 123456",
+        "nodeCount": 17,
+        "edgeCount": 0,
+        "issues": [
+          "OVERLAP: 5 non-deleted nodes overlap at identical coord (0,0)",
+          "DEFAULT-PILEUP: 5 nodes at default coord (0,0)",
+          "NEGATIVE COORD: 9 nodes with x<0 or y<0, e.g. (808.05,-966.07),(-7.58,-195.29),(-343.86,425.74),(-128.01,-617.83),(273.57,-805.42),(-681.93,104.39),(-393.15,262.71),(606.39,-27.11),(-550.77,-144.73)",
+          "DUP NODE NAME: 1 duplicated label \"Test 1234\" x2",
+          "ORPHAN NODES: SLD has 0 edges, so all 17 non-bus nodes are unreferenced (no connectivity)"
+        ]
+      },
+      {
+        "sldId": "701bcd9e-c5e7-4cd6-89a8-7261aba639a1",
+        "sldName": "Android sld site",
+        "nodeCount": 183,
+        "edgeCount": 117,
+        "issues": [
+          "DELETED LEAK: 12 is_deleted=true edges still returned by /api/sld lookup (should be filtered server-side); 0 deleted nodes leaked",
+          "OVERLAP: 126 nodes overlap at (0,0); 4 nodes overlap at (210,80); 2 nodes overlap at (75,0)",
+          "DEFAULT-PILEUP: 127 nodes at default coords (100,100)/(0,0)",
+          "NEGATIVE COORD: 6 nodes with negative coords: (185.15,-30),(-45,160),(-120.76,-16.22),(-35,547),(-76.5,124.25),(565.56,-615.63)",
+          "DUP NODE NAME: 11 duplicated labels (\"Capacitor 1\"x2, \"F 2\"x2, \"GEN 2\"x2, \"MCB\"x2, \"Node 3\"x2, \"Panel 13\"x2, \"Panel 3\"x2, \"Panel 7\"x2, \"QA_ATS1 1\"x2, \"R 97\"x2, \"Transformer (3-Winding) 1\"x2)",
+          "UNCLASSIFIED EDGES: 82 active edges with null/empty edge_class",
+          "ORPHAN NODES: 84 non-bus active nodes not referenced by any active edge source/target (of 183 active nodes, 117 active edges)"
+        ]
+      },
+      {
+        "sldId": "8e2372ba-c72a-4c4a-8f55-6a6a475e4bf5",
+        "sldName": "test",
+        "nodeCount": 1,
+        "edgeCount": 0,
+        "issues": [
+          "DEFAULT-PILEUP: 1 node at default coords (100,100)/(0,0)",
+          "ORPHAN NODES: SLD has 0 edges, so the 1 non-bus node is unreferenced (no connectivity)"
+        ]
+      },
+      {
+        "sldId": "b06b9bd9-388a-46d6-a1f5-9ab5c0f1d4ac",
+        "sldName": "Yxbzjzxj",
+        "nodeCount": 107,
+        "edgeCount": 52,
+        "issues": [
+          "DELETED LEAK: 41 is_deleted=true edges still returned by /api/sld lookup (should be filtered server-side); 0 deleted nodes leaked",
+          "OVERLAP: 41 nodes overlap at (100,100); 14 nodes overlap at (0,0); 6 nodes overlap at (2278,-1542)",
+          "DEFAULT-PILEUP: 55 nodes at default coords (100,100)/(0,0)",
+          "NEGATIVE COORD: 31 nodes with negative coords, e.g. (1545.26,-442.33),(2346.16,-691.23),(-12.01,-696.47),(2682.22,-619.21),(2278,-1542)x6,(1711,-1533),(1927,-771.24),(1730.05,-1920.82),(2912,-822.48)",
+          "DUP NODE NAME: 4 duplicated labels (\"FDR-S 17\"x7, \"Fuse 1\"x5, \"Fuse 2\"x2, \"test\"x2)",
+          "UNCLASSIFIED EDGES: 35 active edges with null/empty edge_class",
+          "ORPHAN NODES: 67 non-bus active nodes not referenced by any active edge source/target (of 107 active nodes, 52 active edges)"
+        ]
+      },
+      {
+        "sldId": "c49a9b84-b627-4884-bd85-84d9508f9ff0",
+        "sldName": "All data sync",
+        "nodeCount": 54,
+        "edgeCount": 9,
+        "issues": [
+          "OVERLAP: 7 nodes overlap at (0,0)",
+          "DEFAULT-PILEUP: 7 nodes at default coord (0,0)",
+          "NEGATIVE COORD: 29 nodes with negative coords, e.g. (47.48,-231.78),(-249.36,893.57),(129.23,-132.24),(644.61,-485.17),(-109.94,-701.16),(-670.79,-273.79),(-847.27,-109.31),(-938.76,-572.57)",
+          "DUP NODE NAME: 3 duplicated labels (\"Generator 1\"x2, \"Node 45\"x2, \"Node 48\"x2)",
+          "UNCLASSIFIED EDGES: 5 active edges with null/empty edge_class",
+          "ORPHAN NODES: 32 non-bus active nodes not referenced by any active edge source/target (of 54 active nodes, 9 active edges)"
+        ]
+      },
+      {
+        "sldId": "1453e888-7412-4623-a38b-6baf23a0c00b",
+        "sldName": "test export by kd",
+        "nodeCount": 13,
+        "edgeCount": 0,
+        "issues": [
+          "5 nodes overlap at (100.0,100.0)",
+          "5 nodes at default (100,100)",
+          "8 nodes at negative coords: (1130.0,-1380.0), (1530.0,-1280.0), (1520.7231,-1551.2976), (494.9698,-1192.7788), (1243.6764,-1636.5251), (1010.0,-1230.0), (1020.0,-980.0), (1020.0,-1100.0)"
+        ]
+      },
+      {
+        "sldId": "24d82634-263c-4903-8e4e-30e0faeb6097",
+        "sldName": "Bjsj",
+        "nodeCount": 1,
+        "edgeCount": 0,
+        "issues": [
+          "1 node at default (100,100)"
+        ]
+      },
+      {
+        "sldId": "44db26b1-4d94-4527-b368-c1fb661c216b",
+        "sldName": "Android data loss offline",
+        "nodeCount": 125,
+        "edgeCount": 9,
+        "issues": [
+          "8 nodes overlap at (0.0,0.0)",
+          "8 nodes at default (0,0)",
+          "7 edges have null/empty edge_class (of 9 edges)",
+          "114 orphan nodes (non-bus, not referenced by any edge)",
+          "78 nodes at negative coords (e.g. (-703.2225,-214.13213), (-176.40492,-836.5254), (-795.70276,651.4768))",
+          "4 duplicate node labels: \"App update check\" x23, \"Battery 1\" x5, \"Battery 2\" x5, \"Battery 3\" x5"
+        ]
+      },
+      {
+        "sldId": "7098992b-ba1c-44d2-99f3-e0ad16bacfc1",
+        "sldName": "QA-Site-1201",
+        "nodeCount": 35,
+        "edgeCount": 33,
+        "issues": [
+          "6 nodes overlap at (0.0,0.0)",
+          "6 nodes at default (0,0)",
+          "25 edges have null/empty edge_class (of 26 live edges; only 1 classified)",
+          "14 orphan nodes (non-bus, not referenced by any edge)",
+          "24 nodes at negative coords (e.g. (-2917.894,-609.0255), (-2723.5405,-219.96324), (-860.4006,1338.5236))",
+          "7 is_deleted=true edges still returned in detail (DELETED LEAK)",
+          "2 duplicate node labels: \"MCC Bucket 1\" x2, \"MCC Bucket 2\" x2"
+        ]
+      },
+      {
+        "sldId": "7e353179-aaa5-4a0e-921a-7817a0831a36",
+        "sldName": "user A",
+        "nodeCount": 18,
+        "edgeCount": 5,
+        "issues": [
+          "12 nodes overlap at (100.0,100.0)",
+          "5 nodes overlap at (0.0,0.0)",
+          "12 nodes at default (100,100)",
+          "5 nodes at default (0,0)",
+          "5 edges have null/empty edge_class (all 5 edges)",
+          "7 orphan nodes (non-bus, not referenced by any edge)",
+          "2 duplicate node labels: \"d3\" x2, \"d3 Fuse\" x2"
+        ]
+      },
+      {
+        "sldId": "8eebf615-f616-4034-ac53-c54144520080",
+        "sldName": "ShowSite3",
+        "nodeCount": 176,
+        "edgeCount": 19,
+        "issues": [
+          "6 nodes overlap at (0.0,0.0)",
+          "5 nodes overlap at (100.0,100.0)",
+          "2 nodes overlap at (140.0,121.5397)",
+          "5 nodes at default (100,100)",
+          "6 nodes at default (0,0)",
+          "11 edges have null/empty edge_class",
+          "143 orphan nodes (non-bus, not referenced by any edge)",
+          "3 is_deleted=true edges still returned in detail (DELETED LEAK)",
+          "14 duplicate node labels incl. \"Disconnect Switch 1\" x7, \"Disconnect Switch 2\" x5, \"Disconnect Switch 3\" x3, \"Fuse 1\" x3, \"MCC Bucket 1\" x3"
+        ]
+      },
+      {
+        "sldId": "c6b9efd2-d7e4-438b-a80c-54005d97c5cd",
+        "sldName": "Offline Testing site",
+        "nodeCount": 3,
+        "edgeCount": 0,
+        "issues": [
+          "3 nodes overlap at (0.0,0.0)",
+          "3 nodes at default (0,0)"
+        ]
+      },
+      {
+        "sldId": "edf35f91-7198-4804-9dbc-2873ede4d90e",
+        "sldName": "Testoffline_25_05",
+        "nodeCount": 3,
+        "edgeCount": 3,
+        "issues": [
+          "1 edge has null/empty edge_class (the single live edge is unclassified)",
+          "1 orphan node (non-bus, not referenced by any edge)",
+          "2 is_deleted=true edges still returned in detail (DELETED LEAK)"
+        ]
+      }
+    ],
+    "systemicBugs": [
+      {
+        "bug": "Connectivity loss / orphan nodes — non-bus nodes are not referenced by any edge source/target, so the diagram topology is missing. Includes SLDs with many nodes but 0-5 edges, indicating edges are dropped on save/import/sync rather than a user authoring choice.",
+        "affectedSldCount": 82,
+        "severity": "HIGH",
+        "evidence": "Extreme cases: 1b97ad10 'Test sync in ios offline' = 855/859 orphan with only 1 edge; 9138fd14 '(s) Wild Goose Brewery' = 488/489 orphan, 5 edges for 490 nodes; e8743699 'Android Site' = 1095 orphan, 122 edges for 1228 nodes; f676eb74 'Android QA SIte 1' = 212/225 orphan, 4 edges; 7a875534 'Test 12/4' = 214/217 orphan, 3 edges; 21bd10d4 'test site' = 1530/1540 orphan. Also 8 SLDs (4a2a7dbc, 5b90aac3, 1ac4aeb9, 5c47b38d, 88e2d3a0, 3029a5b8, eb3ab92e (292 nodes/0 edges), 3d37e08c) have nodes but literally 0 edges — full connectivity loss."
+      },
+      {
+        "bug": "Default coordinate pile-up — nodes are persisted at the unplaced default positions (0,0) and (100,100) instead of real layout coordinates. Layout positions appear lost on create/import/sync; many SLDs have the majority of nodes stacked at one of two points.",
+        "affectedSldCount": 79,
+        "severity": "HIGH",
+        "evidence": "e8743699 'Android Site' = 754 nodes piled at (0,0); 701bcd9e 'Android sld site' = 127 nodes at default (100,100)/(0,0) (126 overlapping at (0,0)); 21bd10d4 'test site' = 187 at (100,100) + 102 at (0,0); 6e8e6fa5 'Quick Count on Web 2' = all 46 nodes unplaced (38 at (100,100), 8 at (0,0)); 24c97377 = all 29 at (100,100); 85c4c55a = all 10 at (100,100); c6b9efd2/3d37e08c = every node at (0,0)."
+      },
+      {
+        "bug": "Negative / out-of-range node coordinates — nodes persisted with x<0 or y<0, and in several cases wildly out-of-range values, indicating layout coordinate computation or import scaling is wrong (renders nodes off-canvas).",
+        "affectedSldCount": 61,
+        "severity": "MED",
+        "evidence": "e8743699 'Android Site' = 234 negative-coord nodes; 1b97ad10 = 648 negative; eb3ab92e 'Migration ios' = 222/292 negative; 21bd10d4 = 264 negative. Extreme out-of-range outliers: c2b9a0f8 'Android Test nauu' at (-16469.07,67771.54) and (-17347.63,-10264.26); f676eb74 at (16105.357,-12226.1875); 7627115e at (11336.6,-3480.6162); 768ff683 'Richmond, CA' at (49193.06,-3320.09); 6271fdc2 at (103105.0,-1888.39)."
+      },
+      {
+        "bug": "Unclassified edges — active edges returned with null/empty edge_class. Edge classification (which encodes electrical connection type) is not being populated/persisted; many SLDs are 100% unclassified.",
+        "affectedSldCount": 54,
+        "severity": "HIGH",
+        "evidence": "Whole-diagram unclassified: 5446bd9f 'QA-Site-1202' = 15/15 edges null; dff7591d 'Quick count copy test' = 5/5; 17078823 = 3/3; 825b59ac = 2/2; 0cef9db5 = 2/2; 848f0a69 = 3/3; 7e353179 'user A' = 5/5. High-volume: f3515650 'Test site' = 88/95 null; 160f9258 'Backword' = 22/24; 95aa5079 'Toronto, Canada' = 62/63; 701bcd9e = 82 active edges null; e8743699 = 75/122."
+      },
+      {
+        "bug": "Duplicate node labels — many nodes share identical labels within one SLD (e.g. the same component name repeated up to 60x), breaking node identity/uniqueness and likely caused by copy/duplicate or import not de-duping or re-labeling.",
+        "affectedSldCount": 49,
+        "severity": "MED",
+        "evidence": "21bd10d4 'test site' = 'Fuse 1' x60, 'UpdatedModel' x46, 'Fuse 2' x14 (26 dup labels); 6271fdc2 'Performance sld' = 162 duplicated labels incl. 'Spare' x13; e8743699 'Android Site' = 191 dup labels; 44db26b1 = 'App update check' x23; c041dfd1 = 'Test' x15; 768ff683 'Richmond, CA' = 'ATS 1' x9 (42 dup labels). Also 9138fd14 had a 258-char 'LongNameTest_AAA...' label x8 (label-length issue)."
+      },
+      {
+        "bug": "Soft-deleted edges leak through /api/sld detail/lookup — is_deleted=true edges are returned to the client instead of being filtered server-side, inflating edge counts and risking phantom connections in the UI.",
+        "affectedSldCount": 35,
+        "severity": "HIGH",
+        "evidence": "Confirmed not filtered server-side. 9138fd14 '(s) Wild Goose Brewery' = 253 deleted edges leaked (258 raw vs 5 active); 21bd10d4 'test site' = 181 leaked; b06b9bd9 'Yxbzjzxj' = 41; c2b9a0f8 'Android Test nauu' = 43; 768ff683 'Richmond, CA' = 34; fdc8898b 'London, UK' = 25 (only 9 of 34 active); 95aa5079 = 23; a70fcdc1 = 17 (only 6 of 23 active); 09fe7d5f, 9d171c47, c20f247b, e8743699, f8a1d7e7 all verified leaking deleted edges."
+      },
+      {
+        "bug": "Node coordinate overlap — multiple distinct (non-deleted) nodes sit at identical coordinates, so they render exactly on top of each other. Largely a visible symptom of the default pile-up plus duplicated layout coords, but also occurs at non-default coords.",
+        "affectedSldCount": 40,
+        "severity": "MED",
+        "evidence": "6271fdc2 'Performance sld' = 216 nodes at (20.0,50.0), 78 at (340.0,50.0), 58 at (660.0,50.0); e8743699 = 754 at (0,0); c041dfd1 'Abhiyant 21 may ios' = 35 nodes at (434.45782,-250.45215); 4d7e2443 'Bhhhh' = 7 at (130.0,80.0); 7627115e = 8 at (125.0,75.0) incl. two distinct nodes both labeled 'Fuse 2'; 768ff683 = 8 at (140.0,20.0). Non-default overlaps too: 3158e220 at (-870.0,1721.5), b06b9bd9 6 at (2278,-1542)."
+      },
+      {
+        "bug": "Isolated nodes with zero edges (total connectivity absence) — distinct from partial orphans: these SLDs persist nodes but no edges at all, including large diagrams, indicating edge data never saved or fully dropped on sync/import.",
+        "affectedSldCount": 8,
+        "severity": "MED",
+        "evidence": "eb3ab92e 'Migration ios' = 292 nodes / 0 edges (entire diagram disconnected); 1ac4aeb9 'Migration testing 31 to 32' = 19/0; 4d7e2443 'Bhhhh' = 76/0; 4e9f75ac 'test with nancy' = 10/0; 85c4c55a 'test' = 10/0; 6e8e6fa5 'Quick Count on Web 2' = 46/0; plus 4a2a7dbc, 88e2d3a0, 3029a5b8, 5c47b38d (latter retains 2 soft-deleted edges, 0 active). Strong migration/offline-sync correlation by SLD name."
+      }
+    ],
+    "summary": "Scanned 107 SLDs; 87 had recorded findings (the other ~20 were clean). The findings collapse into 8 systemic, server/data-layer bugs that should gate the SLD v3 release. The two most pervasive are (1) connectivity loss — 82/107 SLDs have nodes that no edge references (orphans), including extreme cases where 100-1228-node diagrams carry only 1-5 edges, meaning the topology that drives single-line-diagram semantics is simply not persisted/returned; and (2) default coordinate pile-up — 79/107 SLDs leave nodes stacked at the unplaced defaults (0,0) and (100,100), e.g. Android Site stacks 754 nodes at (0,0). Both look like save/sync regressions where layout and edge data are dropped on create/import. Three data-correctness bugs follow: negative/out-of-range coordinates (61), unclassified edges with null/empty edge_class (54 — entire diagrams 100% unclassified), and soft-deleted edges leaking through /api/sld detail/lookup because is_deleted is not filtered server-side (35 SLDs, up to 253 leaked edges). Duplicate node labels (49) and node coordinate overlap (40, largely the same pile-up rendered visually) round it out. HIGH severity: connectivity loss, deleted-edge leak, unclassified edges, default pile-up. NOTE: the hypothesized \"null/empty node name\" bug was NOT observed in any SLD — all label findings are duplicates, not nulls; reporting accordingly."
+  }
+}

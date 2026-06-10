@@ -90,6 +90,33 @@ left RED on purpose (never softened) and linked here.
 - **Fix hint:** make the notes API always return JSON (proper 200 JSON or a 4xx JSON error), never
   the SPA HTML fallback; and have the client guard `Content-Type`/parse failures instead of throwing.
 
+## BUG-G — SLD v3 data-integrity cluster (HIGH — release-gate blocker)
+- **What:** Deep SLD bug hunt (live Playwright + GoJS-model introspection + a parallel backend scan
+  of ALL 107 SLDs) found 8 systemic data-layer defects. **87 of 107 SLDs are affected.** Full report
+  + evidence: `docs/bug-hunts/2026-06-10-sld-v3-bug-hunt.md` (+ `sld-107-scan-result.json`, screenshots).
+- **The 8 systemic bugs (affected-SLD count):**
+  - **S1 Connectivity loss / orphan nodes (82/107, HIGH)** — nodes referenced by no edge; e.g. Wild
+    Goose 488/489 orphan with 5 edges for 490 nodes; Android Site 1095 orphan (1228 nodes/122 edges).
+  - **S2 Default-coordinate pile-up (79/107, HIGH)** — nodes persisted at unplaced (0,0)/(100,100);
+    Android Site piles 754 nodes at (0,0) → overlapping/unreadable render.
+  - **S3 Negative / out-of-range coords (61/107, MED)** — incl. wild outliers like (103105,-1888).
+  - **S4 Unclassified edges — null `edge_class` (54/107, HIGH)** — whole diagrams 100% unclassified.
+  - **S5 Duplicate node labels (49/107, MED)** — e.g. 'Fuse 1' ×60 in one SLD.
+  - **S6 Soft-deleted edges leak through `/api/sld/{id}` (35/107, HIGH)** — `is_deleted=true` not
+    filtered server-side (Wild Goose leaks 253 deleted edges); inconsistent vs `/api/lookup/nodes`.
+  - **S7 Node coordinate overlap (40/107, MED)** — distinct nodes share identical coords.
+  - **S8 Isolated SLDs — nodes but 0 edges (8/107, MED)** — Migration ios = 292 nodes / 0 edges.
+- **Also (single-SLD live):** duplicate/redundant API calls on one SLD load (`/api/sld/{id}` ×4,
+  `enum-node-voltages` ×6, `node_classes` ×6 — perf regression); on-canvas "No issues" badge while
+  labels visibly overlap (validates electrical data, not layout); AF-readiness flags a node with 0
+  missing fields as "not ready".
+- **Root-cause hypothesis (HIGH-value lead):** the worst SLDs are named "Migration ios", "*offline*",
+  "*sync*", "Android Site" → **edges + layout coordinates are dropped on offline-sync / migration /
+  bulk-import**. Fix the create/import/sync persistence path (edge endpoints + node x/y), filter
+  `is_deleted` server-side in `/api/sld/{id}`, and de-dupe the SLD-load fetches.
+- **Found by:** manual deep hunt 2026-06-10 (no automated SLD test class yet — SLD excluded from CI
+  per the deprecated-UI note, now shown to be a high-defect area worth re-adding coverage for).
+
 ## Opportunities suite — findings (live run 2026-06-03)
 
 `OpportunitiesTestNG` (new this session) reproduced BUG-A and BUG-B on the Opportunities
