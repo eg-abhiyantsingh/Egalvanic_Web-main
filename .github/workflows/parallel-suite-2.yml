@@ -41,6 +41,11 @@ on:
         required: false
         type: boolean
         default: true
+      pause_scale:
+        description: 'Global pause() scale (0.1-1.0). 1.0 = unchanged; 0.5 halves every Thread.sleep. Lower gradually and confirm the run stays green.'
+        required: false
+        type: string
+        default: '1.0'
 
 concurrency:
   group: parallel-suite-2
@@ -247,6 +252,8 @@ jobs:
           BASE_URL: ${{ matrix.base_url }}
           USER_EMAIL: ${{ matrix.user_email }}
           USER_PASSWORD: ${{ matrix.user_password }}
+          # Speed knob — inherited by the forked Surefire JVM, read by BaseTest.pause().
+          PAUSE_SCALE: ${{ github.event.inputs.pause_scale || '1.0' }}
         run: |
           bash .github/scripts/full-suite-dashboard.sh
 

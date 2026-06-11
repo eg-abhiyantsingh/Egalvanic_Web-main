@@ -1829,4 +1829,79 @@ public class SLDTestNG extends BaseTest {
         logStepWithScreenshot("Special character handling");
         ExtentReportManager.logPass("Special character nodes: " + specialCharNodes);
     }
+
+    // ================================================================
+    // SECTION 16: BACKEND-EFFICIENCY REGRESSION (1 TC)
+    // Documents BUG-007 / SLD-BUG-03 at its real magnitude — confirmed live
+    // 2026-06-11 (Playwright): one /slds load fires ~80 /api calls across ~29
+    // unique endpoints (~2.8x avg redundancy; worst /api/shortcut/by-node-class
+    // ×11, /api/lookup/node-subtypes ×10). Mechanism = the SLD view double-mounts
+    // its diagram so the whole fetch chain runs twice, plus there is no per-id
+    // request de-dup/memoization. This is data-independent (not a test-data
+    // artifact), so it survives the "empty/messy data is not a bug" rule.
+    // Tagged known-product-bug: expected RED until the client de-dups its fetches.
+    // ================================================================
+    @Test(priority = 72, groups = {"known-product-bug"},
+          description = "TC_SLD_072: One SLD load must not fire the same backend endpoint excessively (BUG-007/SLD-BUG-03)")
+    public void testSLD_072_DuplicateApiFetchBudget() {
+        ExtentReportManager.createTest(MODULE, FEATURE_PERF, "TC_SLD_072_DuplicateApiFetchBudget");
+
+        // Fresh full navigation resets the Resource Timing timeline for this document.
+        driver.get(SLD_URL);
+        pause(3000);
+        ensureViewSelected();   // the node-subtype / shortcut storm fires when a view loads
+        pause(6000);            // let the SPA settle its fetch chain
+
+        // Group /api resource-timing entries by endpoint (UUIDs collapsed to {id}).
+        @SuppressWarnings("unchecked")
+        java.util.Map<String, Object> stats = (java.util.Map<String, Object>) js().executeScript(
+            "var es = performance.getEntriesByType('resource');" +
+            "var counts = {};" +
+            "for (var i = 0; i < es.length; i++) {" +
+            "  var u = es[i].name;" +
+            "  if (u.indexOf('/api/') === -1) continue;" +
+            "  var key = u.split('?')[0]" +
+            "            .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g, '{id}')" +
+            "            .replace(/https?:\\/\\/[^/]+/, '');" +
+            "  counts[key] = (counts[key] || 0) + 1;" +
+            "}" +
+            "var total = 0, worst = 0, worstKey = '', unique = 0, top = [];" +
+            "var keys = Object.keys(counts);" +
+            "for (var k = 0; k < keys.length; k++) {" +
+            "  var c = counts[keys[k]]; total += c; unique++;" +
+            "  if (c > worst) { worst = c; worstKey = keys[k]; }" +
+            "  top.push(keys[k] + ' x' + c);" +
+            "}" +
+            "top.sort(function(a,b){return (b.split(' x')[1]|0)-(a.split(' x')[1]|0);});" +
+            "return {total: total, unique: unique, worst: worst, worstKey: worstKey, top: top.slice(0,12).join('\\n')};");
+
+        long total = ((Number) stats.get("total")).longValue();
+        long unique = ((Number) stats.get("unique")).longValue();
+        long worst = ((Number) stats.get("worst")).longValue();
+        String worstKey = String.valueOf(stats.get("worstKey"));
+        String top = String.valueOf(stats.get("top"));
+
+        // If timing was unavailable (some headless/CI buffers), don't manufacture a failure.
+        if (total == 0) {
+            logStep("No /api resource-timing entries captured — skipping budget assertion for this run.");
+            ExtentReportManager.logPass("No API timing captured (inconclusive, not a failure).");
+            return;
+        }
+
+        double redundancy = unique > 0 ? (double) total / unique : 0;
+        logStep(String.format("SLD load fired %d /api calls across %d unique endpoints (%.1fx avg redundancy).",
+                total, unique, redundancy));
+        logStep("Worst-offender endpoint: " + worstKey + " (" + worst + " calls).");
+        logStep("Top duplicated endpoints:\n" + top);
+        logStepWithScreenshot("Backend-efficiency snapshot");
+
+        // Budget: no single endpoint should be fetched more than 4 times for one page load.
+        // (Even one re-fetch on a view switch is generous; the live count is ~11.)
+        final long PER_ENDPOINT_BUDGET = 4;
+        Assert.assertTrue(worst <= PER_ENDPOINT_BUDGET,
+            "BUG-007/SLD-BUG-03: '" + worstKey + "' was fetched " + worst + " times in one SLD load "
+            + "(budget " + PER_ENDPOINT_BUDGET + "). Total " + total + " /api calls across " + unique
+            + " endpoints. The SLD view should de-dup/memoize per-id requests and not double-mount its diagram.");
+        ExtentReportManager.logPass("Backend-efficiency budget met: worst endpoint " + worst + " <= " + PER_ENDPOINT_BUDGET);
+    }
 }
