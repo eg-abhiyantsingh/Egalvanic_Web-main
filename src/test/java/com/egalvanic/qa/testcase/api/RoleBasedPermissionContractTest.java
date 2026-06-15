@@ -1,84 +1,59 @@
 package com.egalvanic.qa.testcase.api;
 
 import com.egalvanic.qa.constants.AppConstants;
+import com.egalvanic.qa.testcase.api.RbacFixtures.LiveAuth;
+import com.egalvanic.qa.testcase.api.RbacFixtures.Role;
 import com.egalvanic.qa.utils.ExtentReportManager;
 import com.egalvanic.qa.utils.RolePermissionMatrix;
 import com.egalvanic.qa.utils.RolePermissionMatrix.RoleSpec;
 
 import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
-import io.restassured.response.Response;
 
-import org.json.JSONObject;
 import org.testng.Assert;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-import static io.restassured.RestAssured.given;
-
 /**
- * RBAC permission-contract tests — covers the entire production permission
- * matrix in {@code testcase/prod_permissions-by-role_*.csv}.
+ * RBAC permission-contract tests — role-level summary view over the production
+ * permission matrix in {@code testcase/prod_permissions-by-role_*.csv}.
  *
- * <p>For every role in the matrix this test logs in via the API, calls
- * {@code GET /api/auth/me} (the same endpoint the React app uses to gate its
- * UI), and asserts the live permission set matches the documented matrix:</p>
+ * <p>For every role this logs in via the API, calls {@code GET /api/auth/me}
+ * (the endpoint the React app uses to gate its UI), and asserts the live
+ * permission set matches the documented matrix as a whole:</p>
  *
  * <ul>
  *   <li><b>Identity</b> — {@code roles[0].id}/{@code name} equal the CSV role.</li>
  *   <li><b>No privilege escalation (security)</b> — the live set contains NO
  *       permission beyond what the matrix grants. Hard fail on any extra.</li>
- *   <li><b>Completeness</b> — every granted permission is present, except a small,
- *       explicitly documented set of prod-vs-QA drift ({@link #KNOWN_QA_DRIFT}).
- *       Any NEW missing permission hard-fails.</li>
+ *   <li><b>Completeness</b> — every granted permission is present, except the
+ *       documented prod-vs-QA drift ({@link RbacFixtures#KNOWN_QA_DRIFT}).</li>
  *   <li><b>Derived-field consistency</b> — {@code has_web_access} agrees with the
  *       {@code platform.web} grant, and {@code is_admin} agrees with the Admin role.</li>
  * </ul>
  *
- * <p>A single exact-set assertion per role therefore covers all of that role's
- * grants <em>and</em> the entire negative space (everything it must NOT have).</p>
+ * <p>For the granular, per-cell view (one reported test case per
+ * role×permission), see {@link RolePermissionMatrixCellTest}.</p>
  *
  * <p>Roles whose QA test account is not yet provisioned (login ≠ 200) are
- * SKIPPED with a clear message rather than failed — see {@link #testRolePermissionContract}.</p>
+ * SKIPPED with a clear message rather than failed.</p>
  */
 public class RoleBasedPermissionContractTest extends BaseAPITest {
 
     private static RolePermissionMatrix MATRIX;
 
     /**
-     * Known prod-vs-QA drift: permissions present in the prod CSV export but not
-     * granted on the QA tenant (acme.qa). Verified live on 2026-06-15. These are
-     * environment-configuration lag, not code regressions, so the completeness
-     * check tolerates them — they are logged as ⚠️ warnings on every run, and any
-     * missing permission OUTSIDE this map hard-fails the build.
+     * Pinned snapshot of the baseline prod export (prod_permissions-by-role_202606151113.csv).
+     * These detect a truncated/corrupt CSV. If you INTENTIONALLY re-export the prod matrix and
+     * the counts legitimately change, update these two constants.
      */
-    private static final Map<String, Set<String>> KNOWN_QA_DRIFT = new HashMap<>();
-    static {
-        KNOWN_QA_DRIFT.put("Admin", setOf("features.equipment_insights.view"));
-        KNOWN_QA_DRIFT.put("Project Manager", setOf("accounts.view"));
-        KNOWN_QA_DRIFT.put("Facility Manager", setOf("features.locations.view"));
-    }
-
-    /** Stable role_id for each role name (from the prod export) — guards CSV integrity. */
-    private static final Map<String, String> EXPECTED_ROLE_IDS = new HashMap<>();
-    static {
-        EXPECTED_ROLE_IDS.put("Admin", "b60006dd-3cb6-455b-bf90-5d83198321b9");
-        EXPECTED_ROLE_IDS.put("Project Manager", "242dbe6a-063c-4057-ac4a-a0d32a773fc8");
-        EXPECTED_ROLE_IDS.put("Technician", "e84a0fbb-0b89-4433-807c-4b7886e1cd6d");
-        EXPECTED_ROLE_IDS.put("Facility Manager", "54021b71-a055-4c58-91e1-05c705f643f4");
-        EXPECTED_ROLE_IDS.put("Client Portal", "2a85145f-31ca-4e2c-8dd2-82c958cd6380");
-        EXPECTED_ROLE_IDS.put("Electrical Engineer", "fd6b624e-3847-408f-848d-55779a4a3328");
-        EXPECTED_ROLE_IDS.put("Account Manager", "92f38105-0c53-475b-ae57-52dcc4a96f11");
-    }
+    private static final int EXPECTED_SNAPSHOT_GRANTS = 555;
+    private static final int EXPECTED_SNAPSHOT_PERMS = 113;
 
     @BeforeClass(alwaysRun = true)
     public void loadMatrix() {
@@ -90,19 +65,16 @@ public class RoleBasedPermissionContractTest extends BaseAPITest {
 
     @DataProvider(name = "roles")
     public Object[][] roles() {
-        return new Object[][]{
-                {"Admin", AppConstants.ADMIN_EMAIL, AppConstants.ADMIN_PASSWORD},
-                {"Project Manager", AppConstants.PM_EMAIL, AppConstants.PM_PASSWORD},
-                {"Technician", AppConstants.TECH_EMAIL, AppConstants.TECH_PASSWORD},
-                {"Facility Manager", AppConstants.FM_EMAIL, AppConstants.FM_PASSWORD},
-                {"Client Portal", AppConstants.CP_EMAIL, AppConstants.CP_PASSWORD},
-                {"Electrical Engineer", AppConstants.EE_EMAIL, AppConstants.EE_PASSWORD},
-                {"Account Manager", AppConstants.AM_EMAIL, AppConstants.AM_PASSWORD},
-        };
+        Object[][] data = new Object[RbacFixtures.ROLES.size()][1];
+        for (int i = 0; i < RbacFixtures.ROLES.size(); i++) {
+            data[i][0] = RbacFixtures.ROLES.get(i);
+        }
+        return data;
     }
 
     @Test(dataProvider = "roles", description = "Live /auth/me permission set matches the prod matrix for each role")
-    public void testRolePermissionContract(String roleName, String email, String password) {
+    public void testRolePermissionContract(Role role) {
+        String roleName = role.name;
         ExtentReportManager.createTest(
                 AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_ROLE_ACCESS,
                 "RBAC Contract: " + roleName);
@@ -113,47 +85,30 @@ public class RoleBasedPermissionContractTest extends BaseAPITest {
         ExtentReportManager.logInfo("Role '" + roleName + "' — matrix grants "
                 + expected.permissions.size() + " permissions (role_id " + expected.roleId + ")");
 
-        // --- Login (skip, don't fail, if the QA account isn't provisioned) ---
-        String token = loginToken(email, password);
-        if (token == null) {
+        // --- Login + fetch the live set (skip, don't fail, if not provisioned) ---
+        LiveAuth la = RbacFixtures.cachedLiveAuth(role);
+        if (!la.provisioned) {
             String msg = "Test account not provisioned for role '" + roleName + "' ("
-                    + email + " → login ≠ 200). Create the account or set its *_EMAIL/*_PASSWORD "
-                    + "env vars to enable coverage of this role.";
+                    + role.email + " → login status " + la.loginStatus + "). Create the account or "
+                    + "set its *_EMAIL/*_PASSWORD env vars to enable coverage of this role.";
             ExtentReportManager.logSkip(msg);
             throw new SkipException(msg);
         }
 
-        // --- Fetch the live permission set the app actually uses for gating ---
-        Response me = getRequestSpec()
-                .header("Authorization", "Bearer " + token)
-                .when().get("/auth/me")
-                .then().extract().response();
-        Assert.assertEquals(me.getStatusCode(), 200,
-                "GET /auth/me should return 200 for an authenticated " + roleName
-                        + ". Got " + me.getStatusCode() + ": " + truncate(me.asString()));
-
-        List<String> livePermsList = me.jsonPath().getList("permissions");
-        Assert.assertNotNull(livePermsList,
-                "/auth/me response has no 'permissions' array for " + roleName);
-        Set<String> live = new TreeSet<>(livePermsList);
+        Set<String> live = new TreeSet<>(la.permissions);
         ExtentReportManager.logInfo("Live /auth/me returned " + live.size() + " permissions");
-
-        String liveRoleId = me.jsonPath().getString("roles[0].id");
-        String liveRoleName = me.jsonPath().getString("roles[0].name");
-        Boolean isAdmin = me.jsonPath().getBoolean("is_admin");
-        Boolean hasWebAccess = me.jsonPath().getBoolean("has_web_access");
 
         StringBuilder failures = new StringBuilder();
 
         // 1) Identity — the account must actually be the role we think it is.
-        if (!expected.roleId.equals(liveRoleId)) {
+        if (!expected.roleId.equals(la.roleId)) {
             failures.append("\n  • role_id mismatch: expected ").append(expected.roleId)
-                    .append(" but /auth/me says ").append(liveRoleId)
-                    .append(" (").append(liveRoleName).append(")");
+                    .append(" but /auth/me says ").append(la.roleId)
+                    .append(" (").append(la.roleName).append(")");
         }
-        if (liveRoleName != null && !roleName.equals(liveRoleName)) {
+        if (la.roleName != null && !roleName.equals(la.roleName)) {
             failures.append("\n  • role name mismatch: expected '").append(roleName)
-                    .append("' but /auth/me says '").append(liveRoleName).append("'");
+                    .append("' but /auth/me says '").append(la.roleName).append("'");
         }
 
         // 2) Privilege escalation guard (SECURITY) — no permission beyond the matrix.
@@ -167,7 +122,7 @@ public class RoleBasedPermissionContractTest extends BaseAPITest {
         // 3) Completeness — every granted permission present, minus documented drift.
         Set<String> missing = new TreeSet<>(expected.permissions);
         missing.removeAll(live);
-        Set<String> drift = KNOWN_QA_DRIFT.getOrDefault(roleName, setOf());
+        Set<String> drift = RbacFixtures.KNOWN_QA_DRIFT.getOrDefault(roleName, new TreeSet<>());
         Set<String> driftSeen = new TreeSet<>(missing);
         driftSeen.retainAll(drift);
         missing.removeAll(drift);
@@ -183,15 +138,15 @@ public class RoleBasedPermissionContractTest extends BaseAPITest {
 
         // 4) Derived-field consistency — has_web_access ⇔ platform.web grant.
         boolean expectWeb = expected.hasWebAccess();
-        if (hasWebAccess == null || hasWebAccess != expectWeb) {
-            failures.append("\n  • has_web_access=").append(hasWebAccess)
+        if (la.hasWebAccess == null || la.hasWebAccess != expectWeb) {
+            failures.append("\n  • has_web_access=").append(la.hasWebAccess)
                     .append(" but matrix ").append(expectWeb ? "grants" : "does NOT grant")
                     .append(" platform.web (expected ").append(expectWeb).append(")");
         }
         // 5) is_admin flag must match the Admin role only.
         boolean expectAdmin = "Admin".equals(roleName);
-        if (isAdmin == null || isAdmin != expectAdmin) {
-            failures.append("\n  • is_admin=").append(isAdmin)
+        if (la.isAdmin == null || la.isAdmin != expectAdmin) {
+            failures.append("\n  • is_admin=").append(la.isAdmin)
                     .append(" but role '").append(roleName).append("' expects ").append(expectAdmin);
         }
 
@@ -215,13 +170,14 @@ public class RoleBasedPermissionContractTest extends BaseAPITest {
                 AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_PERMISSION_MATRIX,
                 "RBAC Matrix CSV Integrity");
 
-        Assert.assertEquals(MATRIX.roleCount(), EXPECTED_ROLE_IDS.size(),
-                "Matrix should contain exactly " + EXPECTED_ROLE_IDS.size() + " roles, got "
+        Map<String, String> expectedRoleIds = RbacFixtures.expectedRoleIds();
+        Assert.assertEquals(MATRIX.roleCount(), expectedRoleIds.size(),
+                "Matrix should contain exactly " + expectedRoleIds.size() + " roles, got "
                         + MATRIX.roleCount() + ": " + MATRIX.roleNames());
 
         StringBuilder problems = new StringBuilder();
         int sum = 0;
-        for (Map.Entry<String, String> e : EXPECTED_ROLE_IDS.entrySet()) {
+        for (Map.Entry<String, String> e : expectedRoleIds.entrySet()) {
             RoleSpec spec = MATRIX.forRole(e.getKey());
             if (spec == null) {
                 problems.append("\n  • role '").append(e.getKey()).append("' absent from CSV");
@@ -239,53 +195,27 @@ public class RoleBasedPermissionContractTest extends BaseAPITest {
                     + " distinct permissions (role_id " + spec.roleId + ")");
         }
 
-        // Snapshot of the loaded export (prod_permissions-by-role_202606151113.csv):
-        // 7 roles, 555 grants total. Guards against a truncated/corrupt CSV.
-        Assert.assertEquals(MATRIX.totalGrants(), 555,
-                "Expected 555 total grants in the pinned prod export, got " + MATRIX.totalGrants());
-        Assert.assertEquals(sum, 555,
-                "Sum of distinct per-role permission counts should be 555, got " + sum);
+        // Derived invariant (no magic number): per-role distinct counts must sum to the raw
+        // grant-row count. A duplicate (role,permission) row would make these disagree.
+        Assert.assertEquals(sum, MATRIX.totalGrants(),
+                "Per-role distinct permission counts (" + sum + ") must equal total grant rows ("
+                        + MATRIX.totalGrants() + ") — a duplicate (role,permission) row would break this.");
+
+        // Pinned snapshot of the baseline export — guards against truncation/corruption.
+        Assert.assertEquals(MATRIX.totalGrants(), EXPECTED_SNAPSHOT_GRANTS,
+                "Baseline export had " + EXPECTED_SNAPSHOT_GRANTS + " grants; got " + MATRIX.totalGrants()
+                        + ". If you re-exported the prod CSV on purpose, update EXPECTED_SNAPSHOT_GRANTS.");
+        Assert.assertEquals(MATRIX.allPermissions().size(), EXPECTED_SNAPSHOT_PERMS,
+                "Baseline export had " + EXPECTED_SNAPSHOT_PERMS + " distinct permissions; got "
+                        + MATRIX.allPermissions().size()
+                        + ". If you re-exported the prod CSV on purpose, update EXPECTED_SNAPSHOT_PERMS.");
 
         if (problems.length() > 0) {
             ExtentReportManager.logFail("CSV integrity problems:" + problems);
             Assert.fail("RBAC matrix CSV integrity failed:" + problems);
         }
-        ExtentReportManager.logPass("RBAC matrix CSV intact: 7 roles, 555 grants, all role_ids correct");
-    }
-
-    // --- helpers ------------------------------------------------------------
-
-    /** Log in via {@code POST /auth/login}; return the bearer access_token, or null if login failed. */
-    private String loginToken(String email, String password) {
-        try {
-            JSONObject payload = new JSONObject();
-            payload.put("email", email);
-            payload.put("password", password);
-            payload.put("subdomain", AppConstants.VALID_COMPANY_CODE);
-
-            Response r = given()
-                    .contentType(ContentType.JSON)
-                    .body(payload.toString())
-                    .when().post("/auth/login")
-                    .then().extract().response();
-
-            if (r.getStatusCode() != 200) return null;
-            String body = r.asString();
-            if (body == null || body.trim().startsWith("<")) return null;
-            return r.jsonPath().getString("access_token");
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private static String truncate(String s) {
-        if (s == null) return "null";
-        return s.length() > 300 ? s.substring(0, 300) + "…" : s;
-    }
-
-    private static Set<String> setOf(String... items) {
-        Set<String> s = new LinkedHashSet<>();
-        for (String i : items) s.add(i);
-        return s;
+        ExtentReportManager.logPass("RBAC matrix CSV intact: " + MATRIX.roleCount() + " roles, "
+                + MATRIX.totalGrants() + " grants, " + MATRIX.allPermissions().size()
+                + " permissions, all role_ids correct");
     }
 }

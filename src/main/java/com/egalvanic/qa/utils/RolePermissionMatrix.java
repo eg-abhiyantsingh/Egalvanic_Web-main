@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -57,10 +58,16 @@ public final class RolePermissionMatrix {
 
     private final Map<String, RoleSpec> byRoleName;   // insertion-ordered
     private final int totalGrants;
+    private final Set<String> allPermissions;          // sorted union across all roles
 
     private RolePermissionMatrix(Map<String, RoleSpec> byRoleName, int totalGrants) {
         this.byRoleName = byRoleName;
         this.totalGrants = totalGrants;
+        Set<String> union = new TreeSet<>();
+        for (RoleSpec spec : byRoleName.values()) {
+            union.addAll(spec.permissions);
+        }
+        this.allPermissions = Collections.unmodifiableSet(union);
     }
 
     /** Load from the default prod CSV path (relative to project root). */
@@ -70,12 +77,7 @@ public final class RolePermissionMatrix {
 
     /** Load and parse the permission matrix from the given CSV file. */
     public static RolePermissionMatrix load(String csvPath) {
-        Path path = Paths.get(csvPath);
-        if (!Files.exists(path)) {
-            throw new IllegalStateException(
-                    "RBAC permission matrix CSV not found at: " + path.toAbsolutePath()
-                    + " (set RBAC_CSV_PATH or place the prod export there)");
-        }
+        Path path = resolveCsv(csvPath);
 
         // role_name -> roleId, and role_name -> sorted permission set
         Map<String, String> roleIds = new LinkedHashMap<>();
@@ -113,9 +115,55 @@ public final class RolePermissionMatrix {
         return new RolePermissionMatrix(specs, grants);
     }
 
+    /**
+     * Resolve which CSV to read. An explicit/existing path is honoured verbatim
+     * (reproducible, and respects the {@code RBAC_CSV_PATH} override). If the literal
+     * file is missing, falls back to the newest {@code prod_permissions-by-role_*.csv}
+     * in the same directory, so a re-export under a new timestamped name is picked up
+     * rather than silently ignored (matching the {@code _*.csv} contract in the docs).
+     */
+    static Path resolveCsv(String csvPath) {
+        Path path = Paths.get(csvPath);
+        if (Files.exists(path)) return path;
+
+        Path dir = path.getParent() != null ? path.getParent() : Paths.get(".");
+        Path newest = null;
+        if (Files.isDirectory(dir)) {
+            try (DirectoryStream<Path> ds =
+                         Files.newDirectoryStream(dir, "prod_permissions-by-role_*.csv")) {
+                for (Path p : ds) {
+                    if (newest == null || p.getFileName().toString()
+                            .compareTo(newest.getFileName().toString()) > 0) {
+                        newest = p; // timestamped names sort chronologically
+                    }
+                }
+            } catch (IOException e) {
+                throw new UncheckedIOException("Failed scanning for RBAC CSV in " + dir, e);
+            }
+        }
+        if (newest != null) {
+            System.out.println("[RBAC] CSV '" + csvPath + "' not found; using newest export: " + newest);
+            return newest;
+        }
+        throw new IllegalStateException(
+                "RBAC permission matrix CSV not found at: " + path.toAbsolutePath()
+                + " and no prod_permissions-by-role_*.csv in " + dir.toAbsolutePath()
+                + " (set RBAC_CSV_PATH or place the prod export there)");
+    }
+
     /** All role names, in the order first seen in the CSV. */
     public Set<String> roleNames() {
         return Collections.unmodifiableSet(byRoleName.keySet());
+    }
+
+    /**
+     * The full permission vocabulary: every distinct {@code permission_name}
+     * granted to at least one role (sorted). This is the universe against which
+     * each role is checked cell-by-cell (granted ⇒ must be present, otherwise
+     * ⇒ must be absent).
+     */
+    public Set<String> allPermissions() {
+        return allPermissions;
     }
 
     /** Spec for a role, or null if the CSV has no such role. */

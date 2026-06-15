@@ -11,9 +11,20 @@
 -->
 <suite name="eGalvanic RBAC Permission Contract" verbose="1">
 
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
     <test name="RBAC Permission Contract (API)">
         <classes>
             <class name="com.egalvanic.qa.testcase.api.RoleBasedPermissionContractTest"/>
+        </classes>
+    </test>
+
+    <!-- Per-cell coverage: one test case per role×permission (791 cells). -->
+    <test name="RBAC Permission Matrix Cells (API)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.RolePermissionMatrixCellTest"/>
         </classes>
     </test>
 
