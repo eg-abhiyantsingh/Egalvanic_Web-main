@@ -89,6 +89,26 @@ final class RbacFixtures {
         return KNOWN_QA_DRIFT.getOrDefault(roleName, Collections.emptySet()).contains(permission);
     }
 
+    /**
+     * Documented per-environment role_id differences: the QA tenant seeded some roles with a
+     * different UUID than the prod export, even though the role name + permission set are
+     * identical. Verified live 2026-06-15: QA "Account Manager" is 392a2233… vs prod 92f38105….
+     * The live identity check expects the QA id where one is listed here, else the CSV/prod id —
+     * so it still catches an account mapped to the WRONG role, without false-flagging this benign
+     * UUID difference.
+     */
+    static final Map<String, String> QA_ROLE_ID_OVERRIDE;
+    static {
+        Map<String, String> m = new HashMap<>();
+        m.put("Account Manager", "392a2233-e4a3-4322-a440-7fd62b4bed7e");
+        QA_ROLE_ID_OVERRIDE = Collections.unmodifiableMap(m);
+    }
+
+    /** The role_id we expect {@code /auth/me} to return on QA (override if listed, else the prod/CSV id). */
+    static String expectedLiveRoleId(String roleName, String csvRoleId) {
+        return QA_ROLE_ID_OVERRIDE.getOrDefault(roleName, csvRoleId);
+    }
+
     /** role name → expected role_id, derived from {@link #ROLES}. */
     static Map<String, String> expectedRoleIds() {
         Map<String, String> ids = new LinkedHashMap<>();

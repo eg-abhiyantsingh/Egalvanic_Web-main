@@ -100,9 +100,12 @@ public class RoleBasedPermissionContractTest extends BaseAPITest {
 
         StringBuilder failures = new StringBuilder();
 
-        // 1) Identity — the account must actually be the role we think it is.
-        if (!expected.roleId.equals(la.roleId)) {
-            failures.append("\n  • role_id mismatch: expected ").append(expected.roleId)
+        // 1) Identity — the account must actually be the role we think it is. Compare against
+        // the QA-expected role_id (a documented per-env UUID override where one exists, else
+        // the prod/CSV id), so a benign per-environment UUID difference is not a false failure.
+        String expectedLiveId = RbacFixtures.expectedLiveRoleId(roleName, expected.roleId);
+        if (!expectedLiveId.equals(la.roleId)) {
+            failures.append("\n  • role_id mismatch: expected ").append(expectedLiveId)
                     .append(" but /auth/me says ").append(la.roleId)
                     .append(" (").append(la.roleName).append(")");
         }
