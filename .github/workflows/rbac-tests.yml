@@ -1,0 +1,129 @@
+name: RBAC Permission Tests
+
+# ============================================================
+# RBAC PERMISSION-MATRIX SUITE  (testng-rbac-permissions.xml)
+# ------------------------------------------------------------
+# Covers the full role×permission matrix from
+# testcase/prod_permissions-by-role_*.csv:
+#   - 791 per-cell tests (555 granted must be present, 236 denied must be absent)
+#   - 7 role-level contract tests + 1 CSV-integrity test
+# API-only (POST /auth/login -> GET /auth/me). No browser/Chrome needed -> fast.
+# Roles without a provisioned QA account SKIP (do not fail).
+# ============================================================
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/main/java/com/egalvanic/qa/utils/RolePermissionMatrix.java'
+      - 'src/test/java/com/egalvanic/qa/testcase/api/RbacFixtures.java'
+      - 'src/test/java/com/egalvanic/qa/testcase/api/RoleBasedPermissionContractTest.java'
+      - 'src/test/java/com/egalvanic/qa/testcase/api/RolePermissionMatrixCellTest.java'
+      - 'testcase/prod_permissions-by-role_*.csv'
+      - 'testng-rbac-permissions.xml'
+      - '.github/workflows/rbac-tests.yml'
+
+jobs:
+  rbac:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.3.1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4.8.0
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4.3.0
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Compile
+        run: mvn -B -q compile test-compile
+
+      - name: Run RBAC permission suite
+        id: rbac_run
+        continue-on-error: true
+        env:
+          SEND_EMAIL_ENABLED: "false"
+          # Role credentials default from AppConstants (intentional for this QA project);
+          # override any of them here if rotated, e.g. ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: |
+          mvn -B test -DsuiteXmlFile=testng-rbac-permissions.xml -DSEND_EMAIL_ENABLED=false
+
+      - name: Summarize results + list failing test cases
+        if: always()
+        run: |
+          R=$(find target/surefire-reports -name 'testng-results.xml' | head -1)
+          echo "## RBAC Permission Suite" >> "$GITHUB_STEP_SUMMARY"
+          if [ -z "$R" ] || [ ! -f "$R" ]; then
+            echo "No testng-results.xml found — the run did not produce results." >> "$GITHUB_STEP_SUMMARY"
+            echo "NO_RESULTS=1" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          # Top-level counts from the <testng-results ...> attributes
+          PASS=$(grep -oE '<testng-results[^>]*passed="[0-9]+"' "$R" | grep -oE 'passed="[0-9]+"' | grep -oE '[0-9]+')
+          FAIL=$(grep -oE '<testng-results[^>]*failed="[0-9]+"' "$R" | grep -oE 'failed="[0-9]+"' | grep -oE '[0-9]+')
+          SKIP=$(grep -oE '<testng-results[^>]*skipped="[0-9]+"' "$R" | grep -oE 'skipped="[0-9]+"' | grep -oE '[0-9]+')
+          : "${PASS:=0}"; : "${FAIL:=0}"; : "${SKIP:=0}"
+          echo "FAIL_COUNT=$FAIL" >> "$GITHUB_ENV"
+
+          {
+            echo ""
+            echo "| Result | Count |"
+            echo "|--------|------:|"
+            echo "| ✅ Passed | $PASS |"
+            echo "| ❌ Failed | $FAIL |"
+            echo "| ⏭️ Skipped | $SKIP |"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$FAIL" != "0" ]; then
+            echo "### ❌ Failing test cases" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            # Prefer the per-cell ITest name; fall back to method name. Pull the failure message too.
+            grep -oE '<test-method status="FAIL"[^>]*(test-instance-name|name)="[^"]*"' "$R" \
+              | grep -oE '(test-instance-name|name)="[^"]*"' | sed -E 's/.*="(.*)"/- \1/' \
+              | sort -u >> "$GITHUB_STEP_SUMMARY" || true
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "<details><summary>Failure messages</summary>" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            grep -rhoE '(PRIVILEGE ESCALATION|MISSING permission|RBAC contract FAILED)[^<]*' target/surefire-reports/*.txt 2>/dev/null \
+              | sort -u | head -50 >> "$GITHUB_STEP_SUMMARY" || true
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            echo "</details>" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### ✅ No failing test cases" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: rbac-reports
+          path: |
+            target/surefire-reports/
+            reports/detail-report/
+          retention-days: 14
+
+      - name: Fail job if any RBAC test case failed
+        if: always()
+        run: |
+          if [ "${NO_RESULTS:-0}" = "1" ]; then
+            echo "::error::RBAC suite produced no results"; exit 1
+          fi
+          if [ "${FAIL_COUNT:-0}" != "0" ]; then
+            echo "::error::${FAIL_COUNT} RBAC test case(s) failed — see the run summary"; exit 1
+          fi
+          echo "All RBAC test cases passed (skips are expected for unprovisioned roles)."
