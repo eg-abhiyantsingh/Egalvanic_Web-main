@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  RBAC permission-contract suite.
+  Covers the full production permission matrix
+  (testcase/prod_permissions-by-role_*.csv) by asserting each role's live
+  /api/auth/me permission set against the matrix.
+
+  Run:  mvn -o test -DsuiteXmlFile=testng-rbac-permissions.xml
+-->
+<suite name="eGalvanic RBAC Permission Contract" verbose="1">
+
+    <test name="RBAC Permission Contract (API)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.RoleBasedPermissionContractTest"/>
+        </classes>
+    </test>
+
+</suite>

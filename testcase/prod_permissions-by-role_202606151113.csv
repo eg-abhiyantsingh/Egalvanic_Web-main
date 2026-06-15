@@ -1,0 +1,556 @@
+"role_id","role_name","permission_name","permission_resource","permission_action"
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,accounts.manage,accounts,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,accounts.view,accounts,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,attachments.manage,attachments,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,attachments.update,attachments,update
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,attachments.upload,attachments,upload
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,attachments.view,attachments,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,bulk_operations.manage,bulk_operations,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,bulk_operations.view,bulk_operations,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,company_data.view,company_data,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,contacts.manage,contacts,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,contacts.view,contacts,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,data.export,data,export
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,data.import,data,import
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,devices.manage,devices,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,devices.view,devices,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,edge_classes.manage,edge_classes,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,edge_classes.view,edge_classes,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,edges.manage,edges,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,edges.view,edges,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,features.assets.view,features.assets,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,features.condition_assessment.view,features.condition_assessment,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,features.jobs.view,features.jobs,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,features.opportunities.view,features.opportunities,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,features.salesdb.view,features.salesdb,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,features.settings.view,features.settings,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,features.settings.pm.view,features.settings.pm,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,features.site_visits.view,features.site_visits,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,features.slds.view,features.slds,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,form_instances.manage,form_instances,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,form_instances.view,form_instances,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,forms.manage,forms,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,forms.view,forms,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,features.goals.manage,goals,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,issue_classes.manage,issue_classes,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,issue_classes.view,issue_classes,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,issues.manage,issues,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,issues.view,issues,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,jobs.manage,jobs,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,jobs.view,jobs,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,locations.manage,locations,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,locations.view,locations,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,mappings.manage,mappings,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,mappings.view,mappings,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,node_classes.manage,node_classes,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,node_classes.view,node_classes,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,nodes.manage,nodes,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,nodes.view,nodes,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,opportunities.manage,opportunities,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,opportunities.view,opportunities,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,photos.manage,photos,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,photos.view,photos,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,platform.mobile,platform,mobile
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,platform.web,platform,web
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,procedures.manage,procedures,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,procedures.view,procedures,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,quotes.approve,quotes,approve
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,quotes.manage,quotes,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,quotes.view,quotes,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,reports.generate,reports,generate
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,reports.manage,reports,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,reports.view,reports,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,sessions.manage,sessions,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,sessions.view,sessions,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,shortcuts.manage,shortcuts,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,shortcuts.view,shortcuts,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,slds.manage,slds,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,slds.share,slds,share
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,slds.view,slds,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,tasks.assign,tasks,assign
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,tasks.manage,tasks,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,tasks.view,tasks,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,users.manage,users,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,users.view,users,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,workorders.manage,workorders,manage
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,workorders.view,workorders,view
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,features.accounts.view,,
+"92f38105-0c53-475b-ae57-52dcc4a96f11",Account Manager,features.goals.view,,
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,accounts.manage,accounts,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,accounts.view,accounts,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,attachments.manage,attachments,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,attachments.manage_internal,attachments,manage_internal
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,attachments.manage_public,attachments,manage_public
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,attachments.view,attachments,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,attachments.view_internal,attachments,view_internal
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,attachments.view_public,attachments,view_public
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,bulk_operations.manage,bulk_operations,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,bulk_operations.view,bulk_operations,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,company_data.manage,company_data,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,company_data.view,company_data,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,contacts.manage,contacts,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,contacts.view,contacts,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,data.export,data,export
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,data.import,data,import
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,devices.manage,devices,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,devices.view,devices,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,edge_classes.manage,edge_classes,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,edge_classes.view,edge_classes,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,edges.manage,edges,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,edges.view,edges,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.arc_flash.view,features.arc_flash,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.assets.view,features.assets,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.attachments.view,features.attachments,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.audit_log.view,features.audit_log,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.condition_assessment.view,features.condition_assessment,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.connections.view,features.connections,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.equipment_insights.view,features.equipment_insights,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.issues.view,features.issues,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.jobs.view,features.jobs,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.locations.view,features.locations,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.nfpa70e.view,features.nfpa70e,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.opportunities.view,features.opportunities,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.panel_schedules.view,features.panel_schedules.view,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.planning.view,features.planning,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.scheduling.view,features.scheduling,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.settings.view,features.settings,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.settings.classes.view,features.settings.classes,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.settings.forms.view,features.settings.forms,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.settings.pm.view,features.settings.pm,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.settings.sites.view,features.settings.sites,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.settings.users.view,features.settings.users,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.site_overview.view,features.site_overview,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.site_visits.view,features.site_visits,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.slds.view,features.slds,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.tasks.view,features.tasks,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,form_instances.manage,form_instances,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,form_instances.view,form_instances,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,forms.manage,forms,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,forms.view,forms,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,features.goals.manage,goals,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,issue_classes.manage,issue_classes,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,issue_classes.view,issue_classes,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,issues.manage,issues,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,issues.view,issues,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,jobs.manage,jobs,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,jobs.view,jobs,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,locations.manage,locations,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,locations.view,locations,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,mappings.manage,mappings,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,mappings.view,mappings,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,mutations.view,mutations,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,node_classes.manage,node_classes,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,node_classes.view,node_classes,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,nodes.manage,nodes,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,nodes.view,nodes,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,opportunities.manage,opportunities,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,opportunities.view,opportunities,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,photos.manage,photos,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,photos.view,photos,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,platform.mobile,platform,mobile
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,platform.web,platform,web
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,procedures.manage,procedures,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,procedures.view,procedures,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,quotes.approve,quotes,approve
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,quotes.manage,quotes,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,quotes.view,quotes,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,reports.generate,reports,generate
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,reports.manage,reports,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,reports.view,reports,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,sessions.manage,sessions,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,sessions.view,sessions,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,settings.manage,settings,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,settings.view,settings,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,shortcuts.manage,shortcuts,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,shortcuts.view,shortcuts,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,slds.manage,slds,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,slds.share,slds,share
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,slds.view,slds,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,tasks.assign,tasks,assign
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,tasks.manage,tasks,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,tasks.view,tasks,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,users.manage,users,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,users.view,users,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,workorders.manage,workorders,manage
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,workorders.view,workorders,view
+b60006dd-3cb6-455b-bf90-5d83198321b9,Admin,eqp_lib.approve,,
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,attachments.view,attachments,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,attachments.view_public,attachments,view_public
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,contacts.view,contacts,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,devices.view,devices,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,edge_classes.view,edge_classes,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,edges.view,edges,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,features.arc_flash.view,features.arc_flash,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,features.assets.view,features.assets,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,features.attachments.view,features.attachments,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,features.condition_assessment.view,features.condition_assessment,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,features.connections.view,features.connections,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,features.issues.view,features.issues,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,features.locations.view,features.locations,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,features.nfpa70e.view,features.nfpa70e,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,features.site_overview.view,features.site_overview,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,features.slds.view,features.slds,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,features.tasks.view,features.tasks,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,form_instances.view,form_instances,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,forms.view,forms,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,issue_classes.view,issue_classes,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,issues.view,issues,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,jobs.view,jobs,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,locations.view,locations,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,node_classes.view,node_classes,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,nodes.view,nodes,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,notes.manage,notes,manage
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,notes.view,notes,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,opportunities.view,opportunities,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,photos.view,photos,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,platform.web,platform,web
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,reports.view,reports,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,sessions.view,sessions,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,settings.view,settings,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,shortcuts.view,shortcuts,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,slds.view,slds,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,tasks.view,tasks,view
+"2a85145f-31ca-4e2c-8dd2-82c958cd6380",Client Portal,workorders.view,workorders,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,accounts.manage,accounts,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,attachments.manage,attachments,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,attachments.manage_internal,attachments,manage_internal
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,attachments.manage_public,attachments,manage_public
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,attachments.view,attachments,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,attachments.view_internal,attachments,view_internal
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,attachments.view_public,attachments,view_public
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,bulk_operations.manage,bulk_operations,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,bulk_operations.view,bulk_operations,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,company_data.view,company_data,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,contacts.manage,contacts,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,contacts.view,contacts,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,data.export,data,export
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,data.import,data,import
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,devices.manage,devices,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,devices.view,devices,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,edge_classes.manage,edge_classes,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,edge_classes.view,edge_classes,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,edges.manage,edges,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,edges.view,edges,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,features.arc_flash.view,features.arc_flash,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,features.assets.view,features.assets,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,features.attachments.view,features.attachments,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,features.audit_log.view,features.audit_log,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,features.connections.view,features.connections,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,features.equipment_designations.view,features.equipment_designations,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,features.equipment_library.view,features.equipment_library,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,features.issues.view,features.issues,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,features.locations.view,features.locations,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,features.nfpa70e.view,features.nfpa70e,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,features.panel_schedules.view,features.panel_schedules.view,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,features.settings.view,features.settings,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,features.settings.classes.view,features.settings.classes,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,features.site_overview.view,features.site_overview,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,features.slds.view,features.slds,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,features.tasks.view,features.tasks,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,form_instances.manage,form_instances,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,form_instances.view,form_instances,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,forms.manage,forms,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,forms.view,forms,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,features.goals.manage,goals,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,issue_classes.manage,issue_classes,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,issue_classes.view,issue_classes,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,issues.manage,issues,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,issues.view,issues,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,jobs.manage,jobs,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,jobs.view,jobs,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,locations.manage,locations,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,locations.view,locations,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,mappings.manage,mappings,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,mappings.view,mappings,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,node_classes.manage,node_classes,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,node_classes.view,node_classes,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,nodes.manage,nodes,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,nodes.view,nodes,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,opportunities.manage,opportunities,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,opportunities.view,opportunities,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,photos.manage,photos,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,photos.view,photos,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,platform.mobile,platform,mobile
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,platform.web,platform,web
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,procedures.manage,procedures,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,procedures.view,procedures,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,quotes.approve,quotes,approve
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,quotes.manage,quotes,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,quotes.view,quotes,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,reports.generate,reports,generate
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,reports.manage,reports,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,reports.view,reports,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,sessions.manage,sessions,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,sessions.view,sessions,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,shortcuts.manage,shortcuts,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,shortcuts.view,shortcuts,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,slds.manage,slds,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,slds.share,slds,share
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,slds.view,slds,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,tasks.assign,tasks,assign
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,tasks.manage,tasks,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,tasks.view,tasks,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,users.manage,users,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,users.view,users,view
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,workorders.manage,workorders,manage
+fd6b624e-3847-408f-848d-55779a4a3328,Electrical Engineer,workorders.view,workorders,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,attachments.manage,attachments,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,attachments.manage_public,attachments,manage_public
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,attachments.upload,attachments,upload
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,attachments.view,attachments,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,attachments.view_public,attachments,view_public
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,bulk_operations.manage,bulk_operations,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,bulk_operations.view,bulk_operations,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,company_data.view,company_data,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,contacts.manage,contacts,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,contacts.view,contacts,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,data.export,data,export
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,data.import,data,import
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,devices.manage,devices,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,devices.view,devices,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,edge_classes.manage,edge_classes,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,edge_classes.view,edge_classes,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,edges.manage,edges,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,edges.view,edges,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,features.arc_flash.view,features.arc_flash,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,features.assets.view,features.assets,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,features.attachments.view,features.attachments,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,features.condition_assessment.view,features.condition_assessment,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,features.connections.view,features.connections,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,features.equipment_designations.view,features.equipment_designations,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,features.issues.view,features.issues,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,features.jobs.view,features.jobs,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,features.locations.view,features.locations,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,features.nfpa70e.view,features.nfpa70e,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,features.planning.view,features.planning,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,features.scheduling.view,features.scheduling,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,features.site_overview.view,features.site_overview,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,features.site_visits.view,features.site_visits,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,features.slds.view,features.slds,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,features.tasks.view,features.tasks,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,folders.manage,folders,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,form_instances.manage,form_instances,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,form_instances.view,form_instances,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,forms.manage,forms,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,forms.view,forms,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,ir_photos.upload,ir_photos,upload
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,issue_classes.manage,issue_classes,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,issue_classes.view,issue_classes,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,issues.manage,issues,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,issues.view,issues,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,jobs.manage,jobs,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,jobs.view,jobs,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,locations.manage,locations,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,locations.view,locations,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,mappings.manage,mappings,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,mappings.view,mappings,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,node_classes.manage,node_classes,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,node_classes.view,node_classes,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,nodes.manage,nodes,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,nodes.view,nodes,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,photos.manage,photos,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,photos.view,photos,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,platform.mobile,platform,mobile
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,platform.web,platform,web
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,procedures.manage,procedures,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,procedures.view,procedures,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,quotes.approve,quotes,approve
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,quotes.manage,quotes,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,quotes.view,quotes,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,reports.view,reports,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,sessions.manage,sessions,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,sessions.view,sessions,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,shortcuts.manage,shortcuts,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,shortcuts.view,shortcuts,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,slds.manage,slds,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,slds.share,slds,share
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,slds.view,slds,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,tasks.assign,tasks,assign
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,tasks.manage,tasks,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,tasks.view,tasks,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,users.view,users,view
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,workorders.manage,workorders,manage
+"54021b71-a055-4c58-91e1-05c705f643f4",Facility Manager,workorders.view,workorders,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,accounts.manage,accounts,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,accounts.view,accounts,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,attachments.delete,attachments,delete
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,attachments.manage,attachments,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,attachments.manage_internal,attachments,manage_internal
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,attachments.manage_public,attachments,manage_public
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,attachments.move,attachments,move
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,attachments.update,attachments,update
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,attachments.upload,attachments,upload
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,attachments.view,attachments,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,attachments.view_internal,attachments,view_internal
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,attachments.view_public,attachments,view_public
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,bulk_operations.manage,bulk_operations,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,bulk_operations.view,bulk_operations,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,company_data.view,company_data,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,contacts.manage,contacts,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,contacts.view,contacts,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,data.export,data,export
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,data.import,data,import
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,devices.manage,devices,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,devices.view,devices,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,edge_classes.manage,edge_classes,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,edge_classes.view,edge_classes,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,edges.manage,edges,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,edges.view,edges,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,features.arc_flash.view,features.arc_flash,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,features.assets.view,features.assets,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,features.attachments.view,features.attachments,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,features.audit_log.view,features.audit_log,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,features.condition_assessment.view,features.condition_assessment,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,features.connections.view,features.connections,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,features.issues.view,features.issues,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,features.jobs.view,features.jobs,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,features.locations.view,features.locations,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,features.nfpa70e.view,features.nfpa70e,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,features.opsdb.view,features.opsdb,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,features.panel_schedules.view,features.panel_schedules.view,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,features.scheduling.view,features.scheduling,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,features.settings.view,features.settings,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,features.settings.pm.view,features.settings.pm,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,features.site_visits.view,features.site_visits,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,features.slds.view,features.slds,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,features.tasks.view,features.tasks,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,folders.manage,folders,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,form_instances.manage,form_instances,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,form_instances.view,form_instances,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,forms.manage,forms,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,forms.view,forms,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,features.goals.manage,goals,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,ir_photos.delete,ir_photos,delete
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,ir_photos.upload,ir_photos,upload
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,issue_classes.manage,issue_classes,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,issue_classes.view,issue_classes,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,issues.manage,issues,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,issues.view,issues,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,jobs.manage,jobs,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,jobs.view,jobs,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,locations.manage,locations,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,locations.view,locations,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,mappings.manage,mappings,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,mappings.view,mappings,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,node_classes.manage,node_classes,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,node_classes.view,node_classes,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,nodes.manage,nodes,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,nodes.view,nodes,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,opportunities.manage,opportunities,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,opportunities.view,opportunities,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,photos.manage,photos,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,photos.view,photos,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,platform.mobile,platform,mobile
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,platform.web,platform,web
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,procedures.manage,procedures,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,procedures.view,procedures,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,quotes.approve,quotes,approve
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,quotes.manage,quotes,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,quotes.view,quotes,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,reports.generate,reports,generate
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,reports.manage,reports,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,reports.view,reports,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,sessions.manage,sessions,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,sessions.view,sessions,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,shortcuts.manage,shortcuts,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,shortcuts.view,shortcuts,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,slds.manage,slds,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,slds.share,slds,share
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,slds.view,slds,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,tasks.assign,tasks,assign
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,tasks.manage,tasks,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,tasks.view,tasks,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,users.manage,users,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,users.view,users,view
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,workorders.manage,workorders,manage
+"242dbe6a-063c-4057-ac4a-a0d32a773fc8",Project Manager,workorders.view,workorders,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,accounts.manage,accounts,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,accounts.view,accounts,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,attachments.delete,attachments,delete
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,attachments.manage,attachments,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,attachments.manage_internal,attachments,manage_internal
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,attachments.manage_public,attachments,manage_public
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,attachments.move,attachments,move
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,attachments.update,attachments,update
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,attachments.upload,attachments,upload
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,attachments.view,attachments,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,attachments.view_internal,attachments,view_internal
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,attachments.view_public,attachments,view_public
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,bulk_operations.manage,bulk_operations,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,bulk_operations.view,bulk_operations,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,company_data.view,company_data,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,contacts.manage,contacts,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,contacts.view,contacts,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,data.export,data,export
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,data.import,data,import
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,devices.manage,devices,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,devices.view,devices,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,edge_classes.manage,edge_classes,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,edge_classes.view,edge_classes,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,edges.manage,edges,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,edges.view,edges,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,features.arc_flash.view,features.arc_flash,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,features.assets.view,features.assets,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,features.attachments.view,features.attachments,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,features.condition_assessment.view,features.condition_assessment,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,features.connections.view,features.connections,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,features.equipment_insights.view,features.equipment_insights,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,features.issues.view,features.issues,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,features.jobs.view,features.jobs,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,features.locations.view,features.locations,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,features.nfpa70e.view,features.nfpa70e,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,features.opportunities.view,features.opportunities,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,features.planning.view,features.planning,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,features.scheduling.view,features.scheduling,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,features.site_overview.view,features.site_overview,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,features.site_visits.view,features.site_visits,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,features.slds.view,features.slds,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,features.tasks.view,features.tasks,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,folders.manage,folders,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,form_instances.manage,form_instances,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,form_instances.view,form_instances,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,forms.manage,forms,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,forms.view,forms,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,ir_photos.delete,ir_photos,delete
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,ir_photos.upload,ir_photos,upload
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,issue_classes.manage,issue_classes,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,issue_classes.view,issue_classes,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,issues.manage,issues,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,issues.view,issues,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,jobs.manage,jobs,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,jobs.view,jobs,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,locations.manage,locations,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,locations.view,locations,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,mappings.manage,mappings,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,mappings.view,mappings,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,node_classes.manage,node_classes,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,node_classes.view,node_classes,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,nodes.manage,nodes,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,nodes.view,nodes,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,opportunities.manage,opportunities,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,opportunities.view,opportunities,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,photos.manage,photos,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,photos.view,photos,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,platform.mobile,platform,mobile
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,procedures.manage,procedures,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,procedures.view,procedures,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,quotes.approve,quotes,approve
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,quotes.manage,quotes,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,quotes.view,quotes,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,reports.generate,reports,generate
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,reports.manage,reports,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,reports.view,reports,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,sessions.manage,sessions,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,sessions.view,sessions,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,shortcuts.manage,shortcuts,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,shortcuts.view,shortcuts,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,slds.manage,slds,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,slds.share,slds,share
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,slds.view,slds,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,tasks.assign,tasks,assign
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,tasks.manage,tasks,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,tasks.view,tasks,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,users.view,users,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,workorders.manage,workorders,manage
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,workorders.view,workorders,view
+e84a0fbb-0b89-4433-807c-4b7886e1cd6d,Technician,features.accounts.view,,

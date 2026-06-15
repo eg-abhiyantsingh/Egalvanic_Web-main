@@ -152,4 +152,10 @@
         </classes>
     </test>
 
+    <test name="RBAC Permission Contract Tests">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.RoleBasedPermissionContractTest"/>
+        </classes>
+    </test>
+
 </suite>

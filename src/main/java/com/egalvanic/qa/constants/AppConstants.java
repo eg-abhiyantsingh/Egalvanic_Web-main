@@ -63,6 +63,20 @@ public class AppConstants {
     public static final String FM_PASSWORD = getEnv("FM_PASSWORD", "RP@egalvanic123");
     public static final String CP_EMAIL = getEnv("CP_EMAIL", "abhiyant.singh+clientportal@egalvanic.com");
     public static final String CP_PASSWORD = getEnv("CP_PASSWORD", "RP@egalvanic123");
+    // Electrical Engineer + Account Manager appear in the prod RBAC matrix but have
+    // no QA test account yet (login → 401 as of 2026-06-15). The RBAC contract test
+    // SKIPS these roles until the accounts exist. Best-guess emails below follow the
+    // established +role alias pattern; override via env once the accounts are created.
+    public static final String EE_EMAIL = getEnv("EE_EMAIL", "abhiyant.singh+electricalengineer@egalvanic.com");
+    public static final String EE_PASSWORD = getEnv("EE_PASSWORD", "RP@egalvanic123");
+    public static final String AM_EMAIL = getEnv("AM_EMAIL", "abhiyant.singh+accountmanager@egalvanic.com");
+    public static final String AM_PASSWORD = getEnv("AM_PASSWORD", "RP@egalvanic123");
+
+    // Path to the production RBAC permission matrix (source of truth for the
+    // RoleBasedPermissionContractTest). Override with RBAC_CSV_PATH.
+    public static final String RBAC_CSV_PATH =
+            getEnv("RBAC_CSV_PATH", "testcase/prod_permissions-by-role_202606151113.csv");
+    public static final String FEATURE_PERMISSION_MATRIX = "Permission Matrix";
 
     // ============================================
     // TEST DATA - SITE SELECTION
