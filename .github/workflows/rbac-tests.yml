@@ -19,6 +19,7 @@ on:
       - 'src/test/java/com/egalvanic/qa/testcase/api/RbacFixtures.java'
       - 'src/test/java/com/egalvanic/qa/testcase/api/RoleBasedPermissionContractTest.java'
       - 'src/test/java/com/egalvanic/qa/testcase/api/RolePermissionMatrixCellTest.java'
+      - 'src/test/java/com/egalvanic/qa/testcase/api/WorkOrderEditEnforcementApiTest.java'
       - 'testcase/prod_permissions-by-role_*.csv'
       - 'testng-rbac-permissions.xml'
       - '.github/workflows/rbac-tests.yml'
@@ -63,19 +64,21 @@ jobs:
       - name: Summarize results + list failing test cases
         if: always()
         run: |
-          R=$(find target/surefire-reports -name 'testng-results.xml' | head -1)
           echo "## RBAC Permission Suite" >> "$GITHUB_STEP_SUMMARY"
-          if [ -z "$R" ] || [ ! -f "$R" ]; then
+          FILES=$(find target/surefire-reports -name 'testng-results.xml')
+          if [ -z "$FILES" ]; then
             echo "No testng-results.xml found — the run did not produce results." >> "$GITHUB_STEP_SUMMARY"
             echo "NO_RESULTS=1" >> "$GITHUB_ENV"
             exit 0
           fi
-
-          # Top-level counts from the <testng-results ...> attributes
-          PASS=$(grep -oE '<testng-results[^>]*passed="[0-9]+"' "$R" | grep -oE 'passed="[0-9]+"' | grep -oE '[0-9]+')
-          FAIL=$(grep -oE '<testng-results[^>]*failed="[0-9]+"' "$R" | grep -oE 'failed="[0-9]+"' | grep -oE '[0-9]+')
-          SKIP=$(grep -oE '<testng-results[^>]*skipped="[0-9]+"' "$R" | grep -oE 'skipped="[0-9]+"' | grep -oE '[0-9]+')
-          : "${PASS:=0}"; : "${FAIL:=0}"; : "${SKIP:=0}"
+          # Sum across ALL result files (a head -1 single-file parse can miss failures in another file).
+          PASS=0; FAIL=0; SKIP=0
+          for R in $FILES; do
+            p=$(grep -oE '<testng-results[^>]*passed="[0-9]+"' "$R" | grep -oE '[0-9]+' | head -1)
+            q=$(grep -oE '<testng-results[^>]*failed="[0-9]+"' "$R" | grep -oE '[0-9]+' | head -1)
+            s=$(grep -oE '<testng-results[^>]*skipped="[0-9]+"' "$R" | grep -oE '[0-9]+' | head -1)
+            PASS=$((PASS + ${p:-0})); FAIL=$((FAIL + ${q:-0})); SKIP=$((SKIP + ${s:-0}))
+          done
           echo "FAIL_COUNT=$FAIL" >> "$GITHUB_ENV"
 
           {
@@ -92,7 +95,7 @@ jobs:
             echo "### ❌ Failing test cases" >> "$GITHUB_STEP_SUMMARY"
             echo "" >> "$GITHUB_STEP_SUMMARY"
             # Prefer the per-cell ITest name; fall back to method name. Pull the failure message too.
-            grep -oE '<test-method status="FAIL"[^>]*(test-instance-name|name)="[^"]*"' "$R" \
+            grep -rhoE '<test-method status="FAIL"[^>]*(test-instance-name|name)="[^"]*"' $FILES \
               | grep -oE '(test-instance-name|name)="[^"]*"' | sed -E 's/.*="(.*)"/- \1/' \
               | sort -u >> "$GITHUB_STEP_SUMMARY" || true
             echo "" >> "$GITHUB_STEP_SUMMARY"
@@ -120,6 +123,10 @@ jobs:
       - name: Fail job if any RBAC test case failed
         if: always()
         run: |
+          # Authoritative: Maven/surefire's own result (catches failures even if XML parsing misses them).
+          if [ "${{ steps.rbac_run.outcome }}" = "failure" ]; then
+            echo "::error::Maven reported test failures in the RBAC suite — see the run summary"; exit 1
+          fi
           if [ "${NO_RESULTS:-0}" = "1" ]; then
             echo "::error::RBAC suite produced no results"; exit 1
           fi

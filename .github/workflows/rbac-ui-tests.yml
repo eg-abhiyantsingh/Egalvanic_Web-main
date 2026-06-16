@@ -21,6 +21,7 @@ on:
     branches: [ main ]
     paths:
       - 'src/test/java/com/egalvanic/qa/testcase/RolePermissionUiGatingTest.java'
+      - 'src/test/java/com/egalvanic/qa/testcase/WorkOrderEditUiTest.java'
       - 'src/test/java/com/egalvanic/qa/testcase/api/RbacFixtures.java'
       - 'testng-rbac-ui.xml'
       - '.github/workflows/rbac-ui-tests.yml'
@@ -73,16 +74,19 @@ jobs:
       - name: Summarize results + list failing test cases
         if: always()
         run: |
-          R=$(find target/surefire-reports -name 'testng-results.xml' | head -1)
           echo "## RBAC UI Gating Suite" >> "$GITHUB_STEP_SUMMARY"
-          if [ -z "$R" ] || [ ! -f "$R" ]; then
+          FILES=$(find target/surefire-reports -name 'testng-results.xml')
+          if [ -z "$FILES" ]; then
             echo "No testng-results.xml found." >> "$GITHUB_STEP_SUMMARY"
             echo "NO_RESULTS=1" >> "$GITHUB_ENV"; exit 0
           fi
-          PASS=$(grep -oE '<testng-results[^>]*passed="[0-9]+"' "$R" | grep -oE '[0-9]+' | head -1)
-          FAIL=$(grep -oE '<testng-results[^>]*failed="[0-9]+"' "$R" | grep -oE '[0-9]+' | head -1)
-          SKIP=$(grep -oE '<testng-results[^>]*skipped="[0-9]+"' "$R" | grep -oE '[0-9]+' | head -1)
-          : "${PASS:=0}"; : "${FAIL:=0}"; : "${SKIP:=0}"
+          PASS=0; FAIL=0; SKIP=0
+          for R in $FILES; do
+            p=$(grep -oE '<testng-results[^>]*passed="[0-9]+"' "$R" | grep -oE '[0-9]+' | head -1)
+            q=$(grep -oE '<testng-results[^>]*failed="[0-9]+"' "$R" | grep -oE '[0-9]+' | head -1)
+            s=$(grep -oE '<testng-results[^>]*skipped="[0-9]+"' "$R" | grep -oE '[0-9]+' | head -1)
+            PASS=$((PASS + ${p:-0})); FAIL=$((FAIL + ${q:-0})); SKIP=$((SKIP + ${s:-0}))
+          done
           echo "FAIL_COUNT=$FAIL" >> "$GITHUB_ENV"
           {
             echo ""
@@ -114,6 +118,10 @@ jobs:
       - name: Fail job if any UI gating test failed
         if: always()
         run: |
+          # Authoritative: Maven/surefire's own result.
+          if [ "${{ steps.ui_run.outcome }}" = "failure" ]; then
+            echo "::error::Maven reported test failures in the RBAC UI suite — see the run summary"; exit 1
+          fi
           if [ "${NO_RESULTS:-0}" = "1" ]; then echo "::error::RBAC UI suite produced no results"; exit 1; fi
           if [ "${FAIL_COUNT:-0}" != "0" ]; then
             echo "::error::${FAIL_COUNT} RBAC UI gating test(s) failed — see the run summary"; exit 1
