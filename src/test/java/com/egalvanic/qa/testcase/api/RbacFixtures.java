@@ -125,9 +125,10 @@ public final class RbacFixtures {
         public final String roleName;
         public final Boolean isAdmin;
         public final Boolean hasWebAccess;
+        public final String token;          // bearer access_token (for authenticated API calls)
 
         private LiveAuth(boolean provisioned, int loginStatus, Set<String> permissions,
-                         String roleId, String roleName, Boolean isAdmin, Boolean hasWebAccess) {
+                         String roleId, String roleName, Boolean isAdmin, Boolean hasWebAccess, String token) {
             this.provisioned = provisioned;
             this.loginStatus = loginStatus;
             this.permissions = permissions == null
@@ -136,10 +137,11 @@ public final class RbacFixtures {
             this.roleName = roleName;
             this.isAdmin = isAdmin;
             this.hasWebAccess = hasWebAccess;
+            this.token = token;
         }
 
         static LiveAuth unprovisioned(int loginStatus) {
-            return new LiveAuth(false, loginStatus, null, null, null, null, null);
+            return new LiveAuth(false, loginStatus, null, null, null, null, null, null);
         }
 
         /**
@@ -253,7 +255,7 @@ public final class RbacFixtures {
             return new LiveAuth(true, code, permSet,
                     me.jsonPath().getString("roles[0].id"),
                     me.jsonPath().getString("roles[0].name"),
-                    isAdmin, hasWeb);
+                    isAdmin, hasWeb, bearer);
         } catch (Exception e) {
             // Body parsing failed unexpectedly — surface as a distinct, non-cacheable
             // sentinel (-2), never as plain 'not provisioned' which would silently SKIP

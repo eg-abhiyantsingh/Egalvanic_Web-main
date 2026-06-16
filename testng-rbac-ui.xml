@@ -20,4 +20,11 @@
         </classes>
     </test>
 
+    <!-- Action-level UI: PM can actually reach the Edit flow on a work order. -->
+    <test name="RBAC Work Order Edit (UI)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkOrderEditUiTest"/>
+        </classes>
+    </test>
+
 </suite>

@@ -28,4 +28,11 @@
         </classes>
     </test>
 
+    <!-- Action-level enforcement: backend actually denies a work-order edit per role. -->
+    <test name="RBAC Work Order Edit Enforcement (API)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.WorkOrderEditEnforcementApiTest"/>
+        </classes>
+    </test>
+
 </suite>
