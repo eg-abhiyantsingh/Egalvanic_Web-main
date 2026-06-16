@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  RBAC UI gating suite — real-browser, per-role verification that the live web app
+  shows each role only the nav modules its permissions allow. Needs Chrome.
+
+  Run all roles:   mvn -o test -DsuiteXmlFile=testng-rbac-ui.xml
+  Run a subset:    mvn -o test -DsuiteXmlFile=testng-rbac-ui.xml -Drbac.ui.roles="Admin,Client Portal"
+-->
+<suite name="eGalvanic RBAC UI Gating" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <test name="RBAC UI Gating (real browser, per role)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.RolePermissionUiGatingTest"/>
+        </classes>
+    </test>
+
+</suite>

@@ -31,16 +31,16 @@ import static io.restassured.RestAssured.given;
  * (per-cell coverage) in agreement — there is exactly one place to update a
  * credential, a role_id, or a known drift entry.</p>
  */
-final class RbacFixtures {
+public final class RbacFixtures {
 
     private RbacFixtures() {}
 
     /** A role under test: display name, login, and the role_id expected from the matrix. */
-    static final class Role {
-        final String name;
-        final String email;
-        final String password;
-        final String roleId;
+    public static final class Role {
+        public final String name;
+        public final String email;
+        public final String password;
+        public final String roleId;
 
         Role(String name, String email, String password, String roleId) {
             this.name = name;
@@ -53,7 +53,7 @@ final class RbacFixtures {
     }
 
     /** All roles in the prod matrix, most → least privileged. */
-    static final List<Role> ROLES = Collections.unmodifiableList(Arrays.asList(
+    public static final List<Role> ROLES = Collections.unmodifiableList(Arrays.asList(
             new Role("Admin", AppConstants.ADMIN_EMAIL, AppConstants.ADMIN_PASSWORD,
                     "b60006dd-3cb6-455b-bf90-5d83198321b9"),
             new Role("Project Manager", AppConstants.PM_EMAIL, AppConstants.PM_PASSWORD,
@@ -76,7 +76,7 @@ final class RbacFixtures {
      * config lag, not a code regression — tolerated (logged/SKIPPED), while any
      * deviation outside this map hard-fails.
      */
-    static final Map<String, Set<String>> KNOWN_QA_DRIFT;
+    public static final Map<String, Set<String>> KNOWN_QA_DRIFT;
     static {
         Map<String, Set<String>> m = new HashMap<>();
         m.put("Admin", new HashSet<>(Arrays.asList("features.equipment_insights.view")));
@@ -85,7 +85,7 @@ final class RbacFixtures {
         KNOWN_QA_DRIFT = Collections.unmodifiableMap(m);
     }
 
-    static boolean isKnownDrift(String roleName, String permission) {
+    public static boolean isKnownDrift(String roleName, String permission) {
         return KNOWN_QA_DRIFT.getOrDefault(roleName, Collections.emptySet()).contains(permission);
     }
 
@@ -97,7 +97,7 @@ final class RbacFixtures {
      * so it still catches an account mapped to the WRONG role, without false-flagging this benign
      * UUID difference.
      */
-    static final Map<String, String> QA_ROLE_ID_OVERRIDE;
+    public static final Map<String, String> QA_ROLE_ID_OVERRIDE;
     static {
         Map<String, String> m = new HashMap<>();
         m.put("Account Manager", "392a2233-e4a3-4322-a440-7fd62b4bed7e");
@@ -105,26 +105,26 @@ final class RbacFixtures {
     }
 
     /** The role_id we expect {@code /auth/me} to return on QA (override if listed, else the prod/CSV id). */
-    static String expectedLiveRoleId(String roleName, String csvRoleId) {
+    public static String expectedLiveRoleId(String roleName, String csvRoleId) {
         return QA_ROLE_ID_OVERRIDE.getOrDefault(roleName, csvRoleId);
     }
 
     /** role name → expected role_id, derived from {@link #ROLES}. */
-    static Map<String, String> expectedRoleIds() {
+    public static Map<String, String> expectedRoleIds() {
         Map<String, String> ids = new LinkedHashMap<>();
         for (Role r : ROLES) ids.put(r.name, r.roleId);
         return ids;
     }
 
     /** Snapshot of one role's live identity + permission set from {@code /auth/me}. */
-    static final class LiveAuth {
-        final boolean provisioned;   // login succeeded and /auth/me returned 200
-        final int loginStatus;
-        final Set<String> permissions;
-        final String roleId;
-        final String roleName;
-        final Boolean isAdmin;
-        final Boolean hasWebAccess;
+    public static final class LiveAuth {
+        public final boolean provisioned;   // login succeeded and /auth/me returned 200
+        public final int loginStatus;
+        public final Set<String> permissions;
+        public final String roleId;
+        public final String roleName;
+        public final Boolean isAdmin;
+        public final Boolean hasWebAccess;
 
         private LiveAuth(boolean provisioned, int loginStatus, Set<String> permissions,
                          String roleId, String roleName, Boolean isAdmin, Boolean hasWebAccess) {
@@ -149,7 +149,7 @@ final class RbacFixtures {
          * 0/-2/5xx) are NOT cacheable, so the next caller re-attempts instead of inheriting
          * a poisoned SKIP.
          */
-        boolean cacheable() {
+        public boolean cacheable() {
             return provisioned || loginStatus == 401 || loginStatus == 403;
         }
     }
@@ -169,7 +169,7 @@ final class RbacFixtures {
      * than inheriting a poisoned SKIP that would silently drop ~113 cells under a
      * still-green run.</p>
      */
-    static synchronized LiveAuth cachedLiveAuth(Role role) {
+    public static synchronized LiveAuth cachedLiveAuth(Role role) {
         LiveAuth cached = CACHE.get(role.name);
         if (cached != null && cached.cacheable()) return cached;
         LiveAuth fresh = fetchLiveAuth(role);
@@ -211,7 +211,7 @@ final class RbacFixtures {
      * so callers can SKIP rather than error. Both the login and {@code /auth/me}
      * legs retry once on a transient failure.
      */
-    static LiveAuth fetchLiveAuth(Role role) {
+    public static LiveAuth fetchLiveAuth(Role role) {
         JSONObject payload = new JSONObject();
         payload.put("email", role.email);
         payload.put("password", role.password);
