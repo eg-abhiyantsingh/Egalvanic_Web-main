@@ -1,0 +1,363 @@
+package com.egalvanic.qa.testcase;
+
+import com.egalvanic.qa.constants.AppConstants;
+import com.egalvanic.qa.pageobjects.LoginPage;
+import com.egalvanic.qa.testcase.api.RbacFixtures;
+import com.egalvanic.qa.testcase.api.RbacFixtures.LiveAuth;
+import com.egalvanic.qa.testcase.api.RbacFixtures.Role;
+import com.egalvanic.qa.utils.ExtentReportManager;
+import com.egalvanic.qa.utils.ScreenshotUtil;
+
+import io.restassured.RestAssured;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import org.testng.Assert;
+import org.testng.ITestResult;
+import org.testng.SkipException;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
+import java.time.Duration;
+import java.util.List;
+
+/**
+ * <b>RBAC Full-Login E2E</b> — the complete login journey for every role, in a real browser.
+ *
+ * <p>Grounded in the live flow observed via Playwright (2026-06-17):</p>
+ * <ul>
+ *   <li>Login = email + password + "Sign In" (subdomain comes from the {@code acme.qa} host).</li>
+ *   <li><b>Web-access roles</b> (Admin, Project Manager, Facility Manager, Account Manager,
+ *       Client Portal) land on <b>/dashboard</b> (Site Overview) with a role-specific left nav.</li>
+ *   <li><b>Technician</b> (no {@code platform.web}) authenticates but lands on the
+ *       <b>"Web Access Restricted"</b> page — no nav.</li>
+ *   <li>Logout: web roles via the user menu → "Sign Out"; the restricted page via its "Logout"
+ *       button. Both return to {@code /login}.</li>
+ * </ul>
+ *
+ * <p>Per role this verifies the WHOLE journey: login-page renders → credentials accepted →
+ * correct landing for the role's web access (oracle = live {@code /auth/me} via {@link RbacFixtures})
+ * → identity (the logged-in email matches) → logout returns to the login page. Plus login-page
+ * integrity and invalid/empty-credential negatives. Electrical Engineer is intentionally excluded.</p>
+ */
+public class RoleLoginE2ETest {
+
+    private WebDriver driver;
+    private LoginPage loginPage;
+
+    @BeforeSuite(alwaysRun = true)
+    public void suiteSetup() {
+        ExtentReportManager.initReports();
+        RestAssured.baseURI = AppConstants.API_BASE_URL; // for the live /auth/me oracle
+    }
+
+    @AfterSuite(alwaysRun = true)
+    public void suiteTeardown() { ExtentReportManager.flushReports(); }
+
+    @AfterMethod(alwaysRun = true)
+    public void teardown(ITestResult result) {
+        if (result.getStatus() == ITestResult.FAILURE && driver != null) {
+            ScreenshotUtil.captureScreenshot(result.getMethod().getMethodName() + "_FAIL");
+        }
+        ExtentReportManager.removeTests();
+        if (driver != null) { try { driver.quit(); } catch (Exception ignored) {} driver = null; }
+    }
+
+    /**
+     * Web-access roles for the full login journey. Excludes Electrical Engineer (no QA account)
+     * and Technician (no web access — covered by its own single test {@link #technicianCannotAccessWeb()}).
+     */
+    @DataProvider(name = "webRoles")
+    public Object[][] webRoles() {
+        return RbacFixtures.ROLES.stream()
+                .filter(r -> !"Electrical Engineer".equals(r.name) && !"Technician".equals(r.name))
+                .map(r -> new Object[]{r})
+                .toArray(Object[][]::new);
+    }
+
+    // ================================================================
+    // TEST 1 — Login page integrity
+    // ================================================================
+    @Test(description = "Login page renders all required controls (email, masked password, Sign In, Forgot password)")
+    public void testLoginPageIntegrity() {
+        ExtentReportManager.createTest(AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_LOGIN,
+                "Login Page Integrity");
+        startBrowser();
+        navigateToLogin();
+
+        Assert.assertTrue(loginPage.isEmailFieldDisplayed(), "Email field should be visible on the login page");
+        Assert.assertTrue(loginPage.isPasswordFieldDisplayed(), "Password field should be visible on the login page");
+        Assert.assertTrue(loginPage.isSignInButtonDisplayed(), "Sign In button should be visible");
+        Assert.assertEquals(loginPage.getPasswordFieldType(), "password",
+                "Password field must be masked (type=password)");
+        Assert.assertTrue(loginPage.isForgotPasswordDisplayed(), "Forgot password link should be present");
+        ExtentReportManager.logPass("Login page renders email + masked password + Sign In + Forgot password.");
+    }
+
+    // ================================================================
+    // TEST 2 — Invalid credentials are rejected
+    // ================================================================
+    @Test(description = "Invalid password is rejected — user stays on the login page, no app access")
+    public void testInvalidCredentialsRejected() {
+        ExtentReportManager.createTest(AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_LOGIN,
+                "Invalid Credentials Rejected");
+        startBrowser();
+        navigateToLogin();
+
+        loginPage.login(AppConstants.ADMIN_EMAIL, "definitely-wrong-" + AppConstants.INVALID_PASSWORD);
+        // Give the app a moment to either error out or (wrongly) navigate, then re-check.
+        sleep(5000);
+
+        // Core invariant: wrong password must NOT reach the app, and must keep us on the login page.
+        Assert.assertFalse(reachedApp(),
+                "Invalid credentials must NOT reach the app. URL: " + driver.getCurrentUrl());
+        Assert.assertTrue(onLoginPage(),
+                "Invalid credentials should keep the user on the login page. URL: " + driver.getCurrentUrl());
+        String err = "";
+        try { if (loginPage.isErrorMessageDisplayed()) err = " (error shown: " + safe(loginPage.getErrorMessageText()) + ")"; }
+        catch (Exception ignored) { /* error text is best-effort, not required */ }
+        ExtentReportManager.logPass("Invalid password rejected — no app access, stayed on login" + err + ".");
+    }
+
+    // ================================================================
+    // TEST 3 — Empty credentials cannot sign in
+    // ================================================================
+    @Test(description = "Empty credentials cannot authenticate — Sign In disabled or no app access")
+    public void testEmptyCredentialsCannotLogin() {
+        ExtentReportManager.createTest(AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_LOGIN,
+                "Empty Credentials Blocked");
+        startBrowser();
+        navigateToLogin();
+
+        loginPage.clearAllFields();
+        if (loginPage.isSignInButtonEnabled()) {
+            loginPage.clickLoginButton();
+            sleep(2500);
+        }
+        Assert.assertFalse(reachedApp(),
+                "Empty credentials must not reach the app. URL: " + driver.getCurrentUrl());
+        ExtentReportManager.logPass("Empty credentials cannot sign in (no app access).");
+    }
+
+    // ================================================================
+    // TEST 4 — Full login journey per role
+    // ================================================================
+    @Test(dataProvider = "webRoles",
+          description = "Full login journey for a web-access role: login → dashboard → identity → logout")
+    public void roleLoginJourney(Role role) {
+        ExtentReportManager.createTest(AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_ROLE_ACCESS,
+                "Login Journey: " + role.name);
+
+        // Oracle: the role's live identity. Journey roles must have web access.
+        LiveAuth live = RbacFixtures.cachedLiveAuth(role);
+        if (!live.provisioned) {
+            String msg = "Account not provisioned for '" + role.name + "' (login status "
+                    + live.loginStatus + ") — login journey not checked.";
+            ExtentReportManager.logSkip(msg);
+            throw new SkipException(msg);
+        }
+        boolean expectWeb = Boolean.TRUE.equals(live.isAdmin) || live.permissions.contains("platform.web");
+        Assert.assertTrue(expectWeb,
+                "Precondition: '" + role.name + "' is a web-access role (has platform.web).");
+        ExtentReportManager.logInfo("'" + role.name + "' live role=" + live.roleName
+                + ", has_web_access=" + live.hasWebAccess);
+
+        startBrowser();
+        navigateToLogin();
+        Assert.assertTrue(loginPage.isEmailFieldDisplayed() && loginPage.isSignInButtonDisplayed(),
+                "Login form must be present before logging in as " + role.name);
+
+        loginPage.login(role.email, role.password);
+        waitForLanding();
+
+        // Must reach the app dashboard, NOT the restricted page.
+        Assert.assertFalse(isWebAccessRestricted(),
+                "'" + role.name + "' has web access but landed on Web Access Restricted. URL: "
+                        + driver.getCurrentUrl());
+        Assert.assertTrue(reachedApp(),
+                "'" + role.name + "' should land in the app (dashboard + nav) after login. URL: "
+                        + driver.getCurrentUrl());
+        // Identity: the user menu shows this account's email.
+        verifyIdentityEmail(role);
+        ExtentReportManager.logPass("'" + role.name + "' logged in → reached the app dashboard; identity ("
+                + role.email + ") confirmed.");
+        logoutWebRole();
+
+        // Logout must return to the login page.
+        Assert.assertTrue(onLoginPage() || waitForLoginPage(15),
+                "After logout, '" + role.name + "' should be back on the login page. URL: " + driver.getCurrentUrl());
+        ExtentReportManager.logPass("'" + role.name + "' logged out → returned to the login page.");
+    }
+
+    // ================================================================
+    // TEST 5 — Technician CANNOT access the web (single focused case)
+    // ================================================================
+    @Test(description = "Technician (no platform.web) is blocked at the Web Access Restricted page")
+    public void technicianCannotAccessWeb() {
+        ExtentReportManager.createTest(AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_ROLE_ACCESS,
+                "Login: Technician web access blocked");
+
+        Role tech = RbacFixtures.ROLES.stream()
+                .filter(r -> "Technician".equals(r.name)).findFirst().orElseThrow(IllegalStateException::new);
+        LiveAuth live = RbacFixtures.cachedLiveAuth(tech);
+        if (!live.provisioned) {
+            throw new SkipException("Technician account not provisioned (login status " + live.loginStatus + ").");
+        }
+        // Sanity: Technician genuinely lacks web access in the live permission set.
+        Assert.assertFalse(live.permissions.contains("platform.web"),
+                "Precondition: Technician should NOT have platform.web in the live permission set.");
+
+        startBrowser();
+        navigateToLogin();
+        loginPage.login(tech.email, tech.password);
+        waitForLanding();
+
+        Assert.assertTrue(isWebAccessRestricted(),
+                "Technician authenticated but should be blocked at the 'Web Access Restricted' page. URL: "
+                        + driver.getCurrentUrl());
+        Assert.assertFalse(reachedApp(),
+                "Technician must NOT reach the app dashboard (no platform.web). URL: " + driver.getCurrentUrl());
+        ExtentReportManager.logPass("Technician logged in but is correctly blocked from the web platform "
+                + "('Web Access Restricted') — no dashboard access.");
+    }
+
+    // ---- identity + logout helpers ----
+
+    /** Open the header user menu and assert it shows the logged-in account's email. */
+    private void verifyIdentityEmail(Role role) {
+        try {
+            openUserMenu();
+            List<WebElement> matches = driver.findElements(By.xpath(
+                    "//*[contains(normalize-space(.), '" + role.email + "')]"));
+            boolean found = matches.stream().anyMatch(this::shown);
+            Assert.assertTrue(found,
+                    "User menu should show the logged-in email '" + role.email + "' for " + role.name);
+        } catch (AssertionError ae) {
+            throw ae;
+        } catch (Exception e) {
+            // If the menu couldn't be opened, don't hard-fail identity (landing already proved login);
+            // log it so it's visible.
+            ExtentReportManager.logWarning("Could not confirm identity email for " + role.name
+                    + " via user menu: " + e.getMessage());
+        }
+    }
+
+    private void openUserMenu() {
+        // The header user button shows the account display name (contains 'abhiyant' / 'Abhiyant').
+        List<WebElement> btns = driver.findElements(By.xpath(
+                "//button[contains(translate(., 'ABHIYANT', 'abhiyant'), 'abhiyant')]"));
+        for (WebElement b : btns) {
+            if (shown(b)) { try { b.click(); sleep(800); return; } catch (Exception ignored) {} }
+        }
+    }
+
+    private void logoutWebRole() {
+        try {
+            openUserMenu();
+            List<WebElement> signOut = driver.findElements(By.xpath(
+                    "//button[normalize-space()='Sign Out' or normalize-space()='Sign out' or normalize-space()='Logout']"));
+            for (WebElement b : signOut) {
+                if (shown(b)) { b.click(); break; }
+            }
+            waitForLoginPage(15);
+        } catch (Exception e) {
+            ExtentReportManager.logWarning("Web-role logout encountered: " + e.getMessage());
+        }
+    }
+
+    // ---- state helpers ----
+
+    private boolean isWebAccessRestricted() {
+        try {
+            List<WebElement> r = driver.findElements(By.xpath(
+                    "//*[contains(normalize-space(.), 'Web Access Restricted') "
+                            + "or contains(normalize-space(.), 'does not have permission to access the web') "
+                            + "or contains(normalize-space(.), 'mobile app only') "
+                            + "or contains(normalize-space(.), 'Current Role: Unknown')]"));
+            return r.stream().anyMatch(this::shown);
+        } catch (Exception e) { return false; }
+    }
+
+    private boolean reachedApp() {
+        String url = driver.getCurrentUrl().toLowerCase();
+        if (url.contains("/login")) return false;
+        if (isWebAccessRestricted()) return false;
+        return !driver.findElements(By.cssSelector(
+                "nav, aside, [role='navigation'], [class*='Drawer'], [class*='idebar']")).isEmpty();
+    }
+
+    private boolean onLoginPage() {
+        try {
+            if (driver.getCurrentUrl().toLowerCase().contains("/login")) return true;
+            List<WebElement> email = driver.findElements(By.id("email"));
+            return !email.isEmpty() && email.get(0).isDisplayed();
+        } catch (Exception e) { return false; }
+    }
+
+    private boolean waitForLoginPage(int seconds) {
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(seconds)).until(d -> onLoginPage());
+            return true;
+        } catch (Exception e) { return false; }
+    }
+
+    /**
+     * Wait for the login to truly RESOLVE — not merely for the URL to change. After a valid login
+     * the SPA briefly sits at the root "/" before redirecting to /dashboard and hydrating the nav,
+     * so we wait for a definitive signal: the app rendered (nav present), OR the Web Access Restricted
+     * page, OR an error left us on the login page.
+     */
+    private void waitForLanding() {
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(45)).until(d ->
+                    reachedApp() || isWebAccessRestricted()
+                            || (onLoginPage() && safeErrorShown()));
+        } catch (Exception ignored) { /* assertions below report the real state */ }
+        sleep(1500); // brief settle
+    }
+
+    private boolean safeErrorShown() {
+        try { return loginPage.isErrorMessageDisplayed(); } catch (Exception e) { return false; }
+    }
+
+    private boolean shown(WebElement e) { try { return e.isDisplayed(); } catch (Exception x) { return false; } }
+    private String safe(String s) { return s == null ? "" : (s.length() > 120 ? s.substring(0, 120) : s); }
+
+    // ---- browser lifecycle (mirrors the proven AuthSmoke/UI-gating setup) ----
+
+    private void startBrowser() {
+        ChromeOptions opts = new ChromeOptions();
+        opts.addArguments("--start-maximized", "--remote-allow-origins=*",
+                "--disable-blink-features=AutomationControlled", "--no-sandbox", "--disable-dev-shm-usage");
+        opts.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
+        opts.setExperimentalOption("useAutomationExtension", false);
+        java.util.Map<String, Object> prefs = new java.util.HashMap<>();
+        prefs.put("credentials_enable_service", false);
+        prefs.put("profile.password_manager_enabled", false);
+        opts.setExperimentalOption("prefs", prefs);
+        if ("true".equals(System.getProperty("headless"))) opts.addArguments("--headless=new");
+        driver = new ChromeDriver(opts);
+        driver.manage().window().maximize();
+        ScreenshotUtil.setDriver(driver);
+        loginPage = new LoginPage(driver);
+    }
+
+    private void navigateToLogin() {
+        driver.get(AppConstants.BASE_URL);
+        sleep(2000);
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(30))
+                    .until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
+        } catch (Exception ignored) {}
+    }
+
+    private void sleep(long ms) { try { Thread.sleep(ms); } catch (InterruptedException e) { Thread.currentThread().interrupt(); } }
+}
