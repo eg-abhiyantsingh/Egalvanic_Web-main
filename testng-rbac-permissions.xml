@@ -35,4 +35,11 @@
         </classes>
     </test>
 
+    <!-- Action-level enforcement: create/edit Asset(node), Task, Issue per role. -->
+    <test name="RBAC Action Enforcement — create/edit (API)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.RoleActionEnforcementApiTest"/>
+        </classes>
+    </test>
+
 </suite>
