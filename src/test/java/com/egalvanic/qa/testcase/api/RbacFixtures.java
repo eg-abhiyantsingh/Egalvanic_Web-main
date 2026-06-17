@@ -71,16 +71,27 @@ public final class RbacFixtures {
     ));
 
     /**
-     * Roles selected for this run. Honors {@code -Drbac.roles="Admin,Project Manager"} (comma-separated
-     * role names, or "all"/blank for every role). Lets the CI "role" dropdown target a single role across
-     * every RBAC test. An unrecognised name yields an empty selection (that test simply runs 0 rows).
+     * Roles excluded from RBAC by default (still runnable via an explicit {@code -Drbac.roles=Admin}).
+     * Admin's QA account is currently mis-provisioned as Project Manager (2026-06-17), so RBAC is
+     * skipped for it per request — remove from here once the +admin account is re-granted the Admin role.
+     */
+    private static final Set<String> DEFAULT_EXCLUDED = new HashSet<>(Arrays.asList("Admin"));
+
+    /**
+     * Roles selected for this run. Honors {@code -Drbac.roles="Project Manager,Client Portal"}
+     * (comma-separated names) to target specific roles; blank/"all" selects every role EXCEPT the
+     * default-excluded ones ({@link #DEFAULT_EXCLUDED}, currently Admin). An explicit name list is
+     * taken verbatim, so {@code -Drbac.roles=Admin} can still force a default-excluded role.
      */
     public static List<Role> selectedRoles() {
         String filter = System.getProperty("rbac.roles", "").trim();
-        if (filter.isEmpty() || "all".equalsIgnoreCase(filter)) return ROLES;
+        List<Role> out = new ArrayList<>();
+        if (filter.isEmpty() || "all".equalsIgnoreCase(filter)) {
+            for (Role r : ROLES) if (!DEFAULT_EXCLUDED.contains(r.name)) out.add(r);
+            return out;
+        }
         Set<String> only = new HashSet<>();
         for (String s : filter.split(",")) { String t = s.trim(); if (!t.isEmpty()) only.add(t); }
-        List<Role> out = new ArrayList<>();
         for (Role r : ROLES) if (only.contains(r.name)) out.add(r);
         return out;
     }

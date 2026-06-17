@@ -23,14 +23,20 @@ env-overridable (`ADMIN_EMAIL`, `PM_PASSWORD`, …) in `AppConstants`.
 
 | Suite | File | Cases | Browser? |
 |-------|------|------:|:--------:|
-| API permission contract + matrix + edit enforcement | `testng-rbac-permissions.xml` | **806** | no (REST) |
+| API permission contract + matrix + edit + action enforcement | `testng-rbac-permissions.xml` | **834** | no (REST) |
 | UI nav gating + work-order edit | `testng-rbac-ui.xml` | **8** | Chrome |
 | Full-login E2E | `testng-rbac-login.xml` | **9** | Chrome |
-| **Total** | | **823** | |
+| **Total (defined, 7 roles)** | | **851** | |
+
+> **Admin is excluded by default** (`RbacFixtures.DEFAULT_EXCLUDED`) — the QA `+admin` account is
+> currently mis-provisioned as Project Manager (2026-06-17). A default run covers the other roles;
+> force Admin with `-Drbac.roles=Admin` once the account is fixed. Electrical Engineer has no QA
+> account and SKIPs. So a default run actively executes **5 roles** (PM, Technician, FM, Account
+> Manager, Client Portal).
 
 ---
 
-## 1. API — Permission contract + matrix (`testng-rbac-permissions.xml`, 806)
+## 1. API — Permission contract + matrix + enforcement (`testng-rbac-permissions.xml`, 834)
 
 ### `RoleBasedPermissionContractTest` — 8
 - `testRolePermissionContract(role)` × **7 roles** — log in, `GET /auth/me`, assert the live
@@ -49,6 +55,15 @@ env-overridable (`ADMIN_EMAIL`, `PM_PASSWORD`, …) in `AppConstants`.
 - `workOrderEditEnforcement(role)` × **7 roles** — no-op `PUT /api/job/{id}`; allowed ⟺ role has
   `jobs.manage` (else backend returns explicit `permission_denied`). PM/Admin/Tech/FM/AM allowed,
   Client Portal denied.
+
+### `RoleActionEnforcementApiTest` — 28 (7 roles × 4 actions)
+- `actionEnforcement(role, action)` for **Edit Asset (node)** `PUT /node/update/{id}` (`nodes.manage`),
+  **Edit Task** `PUT /task/update/{id}` + **Create Task** `POST /task/create` (`tasks.manage`),
+  **Edit Issue** `PUT /issue/update/{id}` (`issues.manage`). Allowed ⟺ the role has the entity's
+  `*.manage` permission (or is admin), else explicit `permission_denied`. PM/Technician/FM/Account
+  Manager allowed; **Client Portal (read-only) denied** on all four. Non-destructive: the permission
+  gate fires before entity lookup, so edits use a zero-UUID (allowed → async mutation no-ops); create
+  uses a labelled minimal payload that doesn't persist.
 
 ---
 
