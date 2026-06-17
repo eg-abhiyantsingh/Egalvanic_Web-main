@@ -726,7 +726,11 @@ jobs:
 
   rbac-full:
     name: "RBAC — All (login + edit + gating + API)"
-    if: ${{ github.event.inputs.rbac_full == 'run' }}
+    # Run AFTER the matrix (not concurrently): the 6 RBAC browser logins were flaky while the full
+    # matrix hammered the same QA app. Running alone (like the green standalone rbac.yml) removes the
+    # contention. always() so it still runs if a matrix group failed.
+    needs: test-group
+    if: ${{ always() && github.event.inputs.rbac_full == 'run' }}
     runs-on: ubuntu-latest
     timeout-minutes: 50
     steps:
@@ -751,8 +755,6 @@ jobs:
             ${{ runner.os }}-maven-
       - name: Compile
         run: mvn -B -q compile test-compile
-      - name: Stagger start (offset the 6 browser logins from the matrix login storm)
-        run: sleep 75
       - name: Run full RBAC suite (headless)
         id: run
         continue-on-error: true
