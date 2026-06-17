@@ -236,14 +236,19 @@ public class RolePermissionUiGatingTest {
     }
 
     private void navigateToLogin() {
-        driver.get(AppConstants.BASE_URL);
-        sleep(2000);
-        try {
-            new WebDriverWait(driver, Duration.ofSeconds(30))
-                    .until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
-        } catch (Exception e) {
-            // maybe already authenticated/redirected — caller handles via onLoginPage()
+        // Retry under heavy concurrent CI load (app may load slowly / be transiently unavailable).
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            try { driver.get(AppConstants.BASE_URL); } catch (Exception ignored) {}
+            sleep(2000);
+            try {
+                new WebDriverWait(driver, Duration.ofSeconds(30))
+                        .until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
+                return;
+            } catch (Exception e) {
+                if (attempt < 3) { try { driver.navigate().refresh(); } catch (Exception ignored) {} sleep(3000); }
+            }
         }
+        // maybe already authenticated/redirected — caller handles via onLoginPage()
     }
 
     private void waitForPostLogin() {

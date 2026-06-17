@@ -393,12 +393,19 @@ public class RoleLoginE2ETest {
     }
 
     private void navigateToLogin() {
-        driver.get(AppConstants.BASE_URL);
-        sleep(2000);
-        try {
-            new WebDriverWait(driver, Duration.ofSeconds(30))
-                    .until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
-        } catch (Exception ignored) {}
+        // Retry the load — under heavy concurrent CI load the QA app can be slow/transiently
+        // unavailable, leaving the login form not yet rendered. Reload up to 3x before giving up.
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            try { driver.get(AppConstants.BASE_URL); } catch (Exception ignored) {}
+            sleep(2000);
+            try {
+                new WebDriverWait(driver, Duration.ofSeconds(30))
+                        .until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
+                return;
+            } catch (Exception e) {
+                if (attempt < 3) { try { driver.navigate().refresh(); } catch (Exception ignored) {} sleep(3000); }
+            }
+        }
     }
 
     private void sleep(long ms) { try { Thread.sleep(ms); } catch (InterruptedException e) { Thread.currentThread().interrupt(); } }

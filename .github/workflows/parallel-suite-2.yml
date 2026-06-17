@@ -698,6 +698,8 @@ jobs:
             ${{ runner.os }}-maven-
       - name: Compile
         run: mvn -B -q compile test-compile
+      - name: Stagger start (offset from the matrix login storm)
+        run: sleep 25
       - name: Run RBAC API suite
         id: run
         continue-on-error: true
@@ -749,6 +751,8 @@ jobs:
             ${{ runner.os }}-maven-
       - name: Compile
         run: mvn -B -q compile test-compile
+      - name: Stagger start (offset the 6 browser logins from the matrix login storm)
+        run: sleep 75
       - name: Run full RBAC suite (headless)
         id: run
         continue-on-error: true
