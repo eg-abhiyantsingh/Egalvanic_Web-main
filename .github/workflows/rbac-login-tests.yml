@@ -1,0 +1,112 @@
+name: RBAC Full-Login E2E Tests
+
+# ============================================================
+# RBAC FULL-LOGIN E2E SUITE  (testng-rbac-login.xml)
+# ------------------------------------------------------------
+# Real-browser login journey for every web-access role (login -> dashboard ->
+# identity -> logout), plus login-page integrity, invalid/empty creds, and the
+# single Technician "web access blocked" case. Needs Chrome; CI runs headless.
+# ============================================================
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/test/java/com/egalvanic/qa/testcase/RoleLoginE2ETest.java'
+      - 'src/test/java/com/egalvanic/qa/testcase/api/RbacFixtures.java'
+      - 'src/main/java/com/egalvanic/qa/pageobjects/LoginPage.java'
+      - 'testng-rbac-login.xml'
+      - '.github/workflows/rbac-login-tests.yml'
+
+jobs:
+  rbac-login:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.3.1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4.8.0
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1.7.3
+        with:
+          chrome-version: 'stable'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4.3.0
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Compile
+        run: mvn -B -q compile test-compile
+
+      - name: Run RBAC full-login suite (headless)
+        id: login_run
+        continue-on-error: true
+        run: |
+          mvn -B test -DsuiteXmlFile=testng-rbac-login.xml -Dheadless=true -DSEND_EMAIL_ENABLED=false
+
+      - name: Summarize results + list failures
+        if: always()
+        run: |
+          echo "## RBAC Full-Login E2E Suite" >> "$GITHUB_STEP_SUMMARY"
+          FILES=$(find target/surefire-reports -name 'testng-results.xml')
+          if [ -z "$FILES" ]; then
+            echo "No testng-results.xml found." >> "$GITHUB_STEP_SUMMARY"
+            echo "NO_RESULTS=1" >> "$GITHUB_ENV"; exit 0
+          fi
+          PASS=0; FAIL=0; SKIP=0
+          for R in $FILES; do
+            p=$(grep -oE '<testng-results[^>]*passed="[0-9]+"' "$R" | grep -oE '[0-9]+' | head -1)
+            q=$(grep -oE '<testng-results[^>]*failed="[0-9]+"' "$R" | grep -oE '[0-9]+' | head -1)
+            s=$(grep -oE '<testng-results[^>]*skipped="[0-9]+"' "$R" | grep -oE '[0-9]+' | head -1)
+            PASS=$((PASS + ${p:-0})); FAIL=$((FAIL + ${q:-0})); SKIP=$((SKIP + ${s:-0}))
+          done
+          echo "FAIL_COUNT=$FAIL" >> "$GITHUB_ENV"
+          {
+            echo ""
+            echo "| Result | Count |"; echo "|--------|------:|"
+            echo "| ✅ Passed | $PASS |"; echo "| ❌ Failed | $FAIL |"; echo "| ⏭️ Skipped | $SKIP |"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$FAIL" != "0" ]; then
+            echo "### ❌ Failures" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            grep -rhoE '<test-method status="FAIL"[^>]*name="[^"]*"' $FILES \
+              | grep -oE 'name="[^"]*"' | sed -E 's/name="(.*)"/- \1/' | sort -u >> "$GITHUB_STEP_SUMMARY" || true
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### ✅ All login journeys passed" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload reports + screenshots
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: rbac-login-reports
+          path: |
+            target/surefire-reports/
+            reports/detail-report/
+            test-output/screenshots/
+          retention-days: 14
+
+      - name: Fail job if any login test failed
+        if: always()
+        run: |
+          if [ "${{ steps.login_run.outcome }}" = "failure" ]; then
+            echo "::error::Maven reported test failures in the RBAC login suite — see the run summary"; exit 1
+          fi
+          if [ "${NO_RESULTS:-0}" = "1" ]; then echo "::error::RBAC login suite produced no results"; exit 1; fi
+          if [ "${FAIL_COUNT:-0}" != "0" ]; then
+            echo "::error::${FAIL_COUNT} RBAC login test(s) failed — see the run summary"; exit 1
+          fi
+          echo "All RBAC full-login tests passed."
