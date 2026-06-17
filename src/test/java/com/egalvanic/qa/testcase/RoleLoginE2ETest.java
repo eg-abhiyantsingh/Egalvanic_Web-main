@@ -205,6 +205,11 @@ public class RoleLoginE2ETest {
         // app requires login again.
         boolean signedOutViaButton = trySignOut();
         if (!signedOutViaButton) {
+            // This SPA persists auth in localStorage (not just cookies), so clear ALL client auth state.
+            try {
+                ((org.openqa.selenium.JavascriptExecutor) driver)
+                        .executeScript("window.localStorage.clear(); window.sessionStorage.clear();");
+            } catch (Exception ignored) { /* best effort */ }
             driver.manage().deleteAllCookies();
             driver.get(AppConstants.BASE_URL);
         }
