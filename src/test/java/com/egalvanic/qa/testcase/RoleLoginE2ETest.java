@@ -185,14 +185,23 @@ public class RoleLoginE2ETest {
         Assert.assertTrue(reachedApp(),
                 "'" + role.name + "' should land in the app (dashboard + nav) after login. URL: "
                         + driver.getCurrentUrl());
-        // Identity: the user menu shows this account's email.
-        verifyIdentityEmail(role);
-        ExtentReportManager.logPass("'" + role.name + "' logged in → reached the app dashboard; identity ("
-                + role.email + ") confirmed.");
-        logoutWebRole();
+        // Open the user menu ONCE — then verify identity AND log out from it (re-clicking the
+        // user button would toggle the menu closed, which broke logout in headless).
+        boolean menuOpened = openUserMenu();
+        Assert.assertTrue(menuOpened,
+                "'" + role.name + "' — could not open the header user menu after login.");
 
-        // Logout must return to the login page.
-        Assert.assertTrue(onLoginPage() || waitForLoginPage(15),
+        // Identity: the open menu shows this account's email.
+        boolean emailShown = driver.findElements(By.xpath(
+                "//*[contains(normalize-space(.), '" + role.email + "')]")).stream().anyMatch(this::shown);
+        Assert.assertTrue(emailShown,
+                "User menu should show the logged-in email '" + role.email + "' for " + role.name);
+        ExtentReportManager.logPass("'" + role.name + "' logged in → reached the dashboard; identity ("
+                + role.email + ") confirmed.");
+
+        // Log out from the already-open menu.
+        clickSignOut();
+        Assert.assertTrue(waitForLoginPage(20),
                 "After logout, '" + role.name + "' should be back on the login page. URL: " + driver.getCurrentUrl());
         ExtentReportManager.logPass("'" + role.name + "' logged out → returned to the login page.");
     }
@@ -229,48 +238,48 @@ public class RoleLoginE2ETest {
                 + "('Web Access Restricted') — no dashboard access.");
     }
 
-    // ---- identity + logout helpers ----
+    // ---- user-menu helpers ----
 
-    /** Open the header user menu and assert it shows the logged-in account's email. */
-    private void verifyIdentityEmail(Role role) {
-        try {
-            openUserMenu();
-            List<WebElement> matches = driver.findElements(By.xpath(
-                    "//*[contains(normalize-space(.), '" + role.email + "')]"));
-            boolean found = matches.stream().anyMatch(this::shown);
-            Assert.assertTrue(found,
-                    "User menu should show the logged-in email '" + role.email + "' for " + role.name);
-        } catch (AssertionError ae) {
-            throw ae;
-        } catch (Exception e) {
-            // If the menu couldn't be opened, don't hard-fail identity (landing already proved login);
-            // log it so it's visible.
-            ExtentReportManager.logWarning("Could not confirm identity email for " + role.name
-                    + " via user menu: " + e.getMessage());
-        }
-    }
+    private static final By SIGN_OUT = By.xpath(
+            "//button[normalize-space()='Sign Out' or normalize-space()='Sign out' or normalize-space()='Logout']");
 
-    private void openUserMenu() {
-        // The header user button shows the account display name (contains 'abhiyant' / 'Abhiyant').
+    /**
+     * Open the header user menu and confirm it is open (Sign Out visible). The header user button
+     * shows the account display name (contains 'abhiyant'/'Abhiyant'); click it (JS-click fallback)
+     * and wait for the menu to render. Returns true if the menu opened.
+     */
+    private boolean openUserMenu() {
+        if (menuOpen()) return true; // already open
         List<WebElement> btns = driver.findElements(By.xpath(
                 "//button[contains(translate(., 'ABHIYANT', 'abhiyant'), 'abhiyant')]"));
         for (WebElement b : btns) {
-            if (shown(b)) { try { b.click(); sleep(800); return; } catch (Exception ignored) {} }
+            if (!shown(b)) continue;
+            try {
+                ((org.openqa.selenium.JavascriptExecutor) driver)
+                        .executeScript("arguments[0].scrollIntoView({block:'center'});", b);
+                try { b.click(); } catch (Exception e) { jsClick(b); }
+                new WebDriverWait(driver, Duration.ofSeconds(8)).until(d -> menuOpen());
+                return true;
+            } catch (Exception ignored) { /* try next candidate */ }
+        }
+        return menuOpen();
+    }
+
+    private boolean menuOpen() {
+        return driver.findElements(SIGN_OUT).stream().anyMatch(this::shown);
+    }
+
+    private void clickSignOut() {
+        for (WebElement b : driver.findElements(SIGN_OUT)) {
+            if (shown(b)) {
+                try { b.click(); } catch (Exception e) { jsClick(b); }
+                return;
+            }
         }
     }
 
-    private void logoutWebRole() {
-        try {
-            openUserMenu();
-            List<WebElement> signOut = driver.findElements(By.xpath(
-                    "//button[normalize-space()='Sign Out' or normalize-space()='Sign out' or normalize-space()='Logout']"));
-            for (WebElement b : signOut) {
-                if (shown(b)) { b.click(); break; }
-            }
-            waitForLoginPage(15);
-        } catch (Exception e) {
-            ExtentReportManager.logWarning("Web-role logout encountered: " + e.getMessage());
-        }
+    private void jsClick(WebElement e) {
+        ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", e);
     }
 
     // ---- state helpers ----
@@ -335,7 +344,9 @@ public class RoleLoginE2ETest {
 
     private void startBrowser() {
         ChromeOptions opts = new ChromeOptions();
-        opts.addArguments("--start-maximized", "--remote-allow-origins=*",
+        // --window-size is essential for headless: without it Chrome headless defaults to 800x600,
+        // which puts the app's header into a collapsed/responsive layout and hides the user menu.
+        opts.addArguments("--start-maximized", "--window-size=1920,1080", "--remote-allow-origins=*",
                 "--disable-blink-features=AutomationControlled", "--no-sandbox", "--disable-dev-shm-usage");
         opts.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
         opts.setExperimentalOption("useAutomationExtension", false);
