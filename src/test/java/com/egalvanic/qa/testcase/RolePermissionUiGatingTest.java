@@ -57,27 +57,35 @@ import java.util.stream.Collectors;
  */
 public class RolePermissionUiGatingTest {
 
-    /** A nav module: visible label, the permission that gates it, and its route. */
+    /** A nav module: visible label, the permission that gates it, its route, and whether the
+     *  frontend ALSO gates it behind a company feature flag (Layout.jsx `disabled: !flag`). */
     private static final class NavModule {
         final String label, permission, route;
-        NavModule(String label, String permission, String route) {
-            this.label = label; this.permission = permission; this.route = route;
+        final boolean flagCoupled;
+        NavModule(String label, String permission, String route, boolean flagCoupled) {
+            this.label = label; this.permission = permission; this.route = route; this.flagCoupled = flagCoupled;
         }
     }
 
-    /** High-signal, unambiguously-gated nav modules (from Layout.jsx / navigation.js). */
+    /**
+     * High-signal gated nav modules (from Layout.jsx / navigation.js). For most, visibility ==
+     * hasPermission(perm). The Sales trio (Goals/Opportunities/Accounts) is ALSO gated by the
+     * company `sales-core` feature flag (Layout.jsx: `disabled: !hasSalesCore`), so for them we can
+     * only hard-assert the SECURITY direction (a role lacking the permission must NOT see it); the
+     * positive is flag-dependent. Marked flagCoupled=true.
+     */
     private static final List<NavModule> NAV_MODULES = Arrays.asList(
-            new NavModule("Assets",        "features.assets.view",        "/assets"),
-            new NavModule("SLDs",          "features.slds.view",          "/slds"),
-            new NavModule("Locations",     "features.locations.view",     "/locations"),
-            new NavModule("Tasks",         "features.tasks.view",         "/tasks"),
-            new NavModule("Issues",        "features.issues.view",        "/issues"),
-            new NavModule("Opportunities", "features.opportunities.view", "/opportunities"),
-            new NavModule("Accounts",      "features.accounts.view",      "/accounts"),
-            new NavModule("Goals",         "features.goals.view",         "/goals"),
-            new NavModule("Arc Flash",     "features.arc_flash.view",     "/arc-flash"),
-            new NavModule("Settings",      "features.settings.view",      "/admin"),
-            new NavModule("Audit Log",     "features.audit_log.view",     "/admin/audit-log")
+            new NavModule("Assets",        "features.assets.view",        "/assets",          false),
+            new NavModule("SLDs",          "features.slds.view",          "/slds",            false),
+            new NavModule("Locations",     "features.locations.view",     "/locations",       false),
+            new NavModule("Tasks",         "features.tasks.view",         "/tasks",           false),
+            new NavModule("Issues",        "features.issues.view",        "/issues",          false),
+            new NavModule("Arc Flash",     "features.arc_flash.view",     "/arc-flash",       false),
+            new NavModule("Settings",      "features.settings.view",      "/admin",           false),
+            new NavModule("Audit Log",     "features.audit_log.view",     "/admin/audit-log", false),
+            new NavModule("Opportunities", "features.opportunities.view", "/opportunities",   true),
+            new NavModule("Accounts",      "features.accounts.view",      "/accounts",        true),
+            new NavModule("Goals",         "features.goals.view",         "/goals",           true)
     );
 
     private WebDriver driver;
@@ -129,6 +137,8 @@ public class RolePermissionUiGatingTest {
             ExtentReportManager.logSkip(msg);
             throw new SkipException(msg);
         }
+        String mismatch = RbacFixtures.roleMismatchSkipMessage(role, live);
+        if (mismatch != null) { ExtentReportManager.logSkip(mismatch); throw new SkipException(mismatch); }
         boolean isAdmin = Boolean.TRUE.equals(live.isAdmin);
         boolean expectWeb = isAdmin || live.permissions.contains("platform.web");
 
@@ -143,7 +153,12 @@ public class RolePermissionUiGatingTest {
             Assert.assertTrue(isWebAccessRestricted(),
                     "'" + role.name + "' lacks platform.web → expected the Web Access Restricted page, "
                             + "but the app rendered instead. URL: " + driver.getCurrentUrl());
-            ExtentReportManager.logPass("'" + role.name + "' correctly blocked from web (no platform.web).");
+            // And the app nav must NOT render — proves the gate actually blocks, not just shows a banner.
+            Set<String> leaked = readSidebarHrefs();
+            Assert.assertTrue(leaked.isEmpty(),
+                    "'" + role.name + "' is web-restricted but the app sidebar rendered (leak): " + leaked);
+            ExtentReportManager.logPass("'" + role.name + "' correctly blocked from web (no platform.web); "
+                    + "no app nav rendered.");
             return;
         }
         Assert.assertFalse(isWebAccessRestricted(),
@@ -166,9 +181,21 @@ public class RolePermissionUiGatingTest {
         int checked = 0;
         for (NavModule m : NAV_MODULES) {
             boolean expected = isAdmin || live.permissions.contains(m.permission);
-            boolean actual = navHrefs.stream().anyMatch(h -> h.contains(m.route));
+            boolean actual = navHasRoute(navHrefs, m.route);   // exact path match (so /admin ≠ /admin/audit-log)
             checked++;
-            if (expected != actual) {
+            if (m.flagCoupled) {
+                // Visibility also depends on a company feature flag (e.g. sales-core), so only the
+                // SECURITY direction is a hard invariant: a role WITHOUT the permission must NOT see it.
+                // When the role HAS the permission, presence is flag-dependent (visible or locked) → log.
+                if (!expected && actual) {
+                    mismatches.append("\n  • ").append(m.label).append(" (").append(m.permission)
+                            .append("): should be HIDDEN (role lacks perm) but is VISIBLE — gating bug");
+                } else if (expected && !actual) {
+                    ExtentReportManager.logInfo(m.label + " not shown for '" + role.name
+                            + "' — role has " + m.permission + " but the module is feature-flag-gated "
+                            + "(rendered only when the company flag is on); not a gating failure.");
+                }
+            } else if (expected != actual) {
                 mismatches.append("\n  • ").append(m.label).append(" (").append(m.permission).append("): ")
                         .append(expected ? "should be VISIBLE (role has perm) but is ABSENT"
                                          : "should be HIDDEN (role lacks perm) but is VISIBLE — gating bug");
@@ -262,6 +289,23 @@ public class RolePermissionUiGatingTest {
             } catch (Exception ignored) {}
         }
         return hrefs;
+    }
+
+    /**
+     * True if any sidebar href's PATH exactly equals the route. Exact-path (not substring) matching
+     * is required so "/admin" (Settings) does not also match "/admin/audit-log" (Audit Log).
+     */
+    private static boolean navHasRoute(Set<String> hrefs, String route) {
+        for (String h : hrefs) {
+            try {
+                String path = java.net.URI.create(h).getPath();
+                if (path != null) {
+                    if (path.length() > 1 && path.endsWith("/")) path = path.substring(0, path.length() - 1);
+                    if (path.equals(route)) return true;
+                }
+            } catch (Exception ignored) { /* malformed href — skip */ }
+        }
+        return false;
     }
 
     private void sleep(long ms) { try { Thread.sleep(ms); } catch (InterruptedException e) { Thread.currentThread().interrupt(); } }

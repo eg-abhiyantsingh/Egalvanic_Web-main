@@ -164,6 +164,8 @@ public class RoleLoginE2ETest {
             ExtentReportManager.logSkip(msg);
             throw new SkipException(msg);
         }
+        String mismatch = RbacFixtures.roleMismatchSkipMessage(role, live);
+        if (mismatch != null) { ExtentReportManager.logSkip(mismatch); throw new SkipException(mismatch); }
         boolean expectWeb = Boolean.TRUE.equals(live.isAdmin) || live.permissions.contains("platform.web");
         Assert.assertTrue(expectWeb,
                 "Precondition: '" + role.name + "' is a web-access role (has platform.web).");
@@ -185,6 +187,9 @@ public class RoleLoginE2ETest {
         Assert.assertTrue(reachedApp(),
                 "'" + role.name + "' should land in the app (dashboard + nav) after login. URL: "
                         + driver.getCurrentUrl());
+        // Role-meaningful landing: every web-access role lands on the Site Overview dashboard (/dashboard).
+        Assert.assertTrue(driver.getCurrentUrl().toLowerCase().contains("/dashboard"),
+                "'" + role.name + "' should land on /dashboard after login. URL: " + driver.getCurrentUrl());
         // Identity — verified via the live /auth/me oracle (reliable; the UI accepted exactly these
         // credentials and reached the dashboard, and the API confirms the account's role). This avoids
         // depending on the flaky MUI avatar dropdown for a hard assertion.

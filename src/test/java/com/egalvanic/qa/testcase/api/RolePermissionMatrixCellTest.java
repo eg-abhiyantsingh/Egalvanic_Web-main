@@ -108,6 +108,13 @@ public class RolePermissionMatrixCellTest extends BaseAPITest implements ITest {
             ExtentReportManager.logSkip(msg);
             throw new SkipException(msg);
         }
+        // Mis-provisioned fixture (account logs in as a different role) → can't verify this role's cell.
+        if (la.roleName != null && !roleName.equals(la.roleName)) {
+            String msg = "Role '" + roleName + "' account is mis-provisioned (logs in as '" + la.roleName
+                    + "') — cell '" + permission + "' not covered; fix the QA account.";
+            ExtentReportManager.logSkip(msg);
+            throw new SkipException(msg);
+        }
 
         boolean actuallyPresent = la.permissions.contains(permission);
 

@@ -94,6 +94,8 @@ public class RoleBasedPermissionContractTest extends BaseAPITest {
             ExtentReportManager.logSkip(msg);
             throw new SkipException(msg);
         }
+        String mismatch = RbacFixtures.roleMismatchSkipMessage(role, la);
+        if (mismatch != null) { ExtentReportManager.logSkip(mismatch); throw new SkipException(mismatch); }
 
         Set<String> live = new TreeSet<>(la.permissions);
         ExtentReportManager.logInfo("Live /auth/me returned " + live.size() + " permissions");

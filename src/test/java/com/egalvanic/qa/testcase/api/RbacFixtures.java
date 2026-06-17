@@ -90,6 +90,22 @@ public final class RbacFixtures {
     }
 
     /**
+     * If the given account authenticates as a DIFFERENT role than expected, return a message
+     * explaining it (else null). A test account that logs in as another role is a broken fixture —
+     * you cannot verify role X using role Y's session — so callers should SKIP (loudly), not fail,
+     * exactly as for an unprovisioned account. Example seen 2026-06-17: the +admin account currently
+     * logs in as "Project Manager".
+     */
+    public static String roleMismatchSkipMessage(Role role, LiveAuth live) {
+        if (live != null && live.provisioned && live.roleName != null && !role.name.equals(live.roleName)) {
+            return "Test account for '" + role.name + "' is mis-provisioned: it currently logs in as '"
+                    + live.roleName + "'. Fix the QA account's role (or point " + role.name
+                    + "'s *_EMAIL at a correct account) to restore coverage for this role.";
+        }
+        return null;
+    }
+
+    /**
      * Documented per-environment role_id differences: the QA tenant seeded some roles with a
      * different UUID than the prod export, even though the role name + permission set are
      * identical. Verified live 2026-06-15: QA "Account Manager" is 392a2233… vs prod 92f38105….
