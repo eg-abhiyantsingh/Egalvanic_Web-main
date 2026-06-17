@@ -250,17 +250,25 @@ public class RoleLoginE2ETest {
      */
     private boolean openUserMenu() {
         if (menuOpen()) return true; // already open
-        List<WebElement> btns = driver.findElements(By.xpath(
-                "//button[contains(translate(., 'ABHIYANT', 'abhiyant'), 'abhiyant')]"));
-        for (WebElement b : btns) {
-            if (!shown(b)) continue;
-            try {
-                ((org.openqa.selenium.JavascriptExecutor) driver)
-                        .executeScript("arguments[0].scrollIntoView({block:'center'});", b);
-                try { b.click(); } catch (Exception e) { jsClick(b); }
-                new WebDriverWait(driver, Duration.ofSeconds(8)).until(d -> menuOpen());
-                return true;
-            } catch (Exception ignored) { /* try next candidate */ }
+        // Heavy dashboards (Admin) render the header user button late — wait for it to exist.
+        By userBtn = By.xpath("//button[contains(translate(., 'ABHIYANT', 'abhiyant'), 'abhiyant')]");
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(20))
+                    .until(ExpectedConditions.presenceOfElementLocated(userBtn));
+        } catch (Exception ignored) { /* fall through */ }
+
+        for (int attempt = 1; attempt <= 3 && !menuOpen(); attempt++) {
+            for (WebElement b : driver.findElements(userBtn)) {
+                if (!shown(b)) continue;
+                try {
+                    ((org.openqa.selenium.JavascriptExecutor) driver)
+                            .executeScript("arguments[0].scrollIntoView({block:'center'});", b);
+                    jsClick(b); // JS click bypasses overlay/toast interception that can swallow a real click
+                    new WebDriverWait(driver, Duration.ofSeconds(6)).until(d -> menuOpen());
+                    return true;
+                } catch (Exception ignored) { /* try next candidate / next attempt */ }
+            }
+            sleep(1500);
         }
         return menuOpen();
     }
