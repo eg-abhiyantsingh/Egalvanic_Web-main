@@ -71,6 +71,21 @@ public final class RbacFixtures {
     ));
 
     /**
+     * Roles selected for this run. Honors {@code -Drbac.roles="Admin,Project Manager"} (comma-separated
+     * role names, or "all"/blank for every role). Lets the CI "role" dropdown target a single role across
+     * every RBAC test. An unrecognised name yields an empty selection (that test simply runs 0 rows).
+     */
+    public static List<Role> selectedRoles() {
+        String filter = System.getProperty("rbac.roles", "").trim();
+        if (filter.isEmpty() || "all".equalsIgnoreCase(filter)) return ROLES;
+        Set<String> only = new HashSet<>();
+        for (String s : filter.split(",")) { String t = s.trim(); if (!t.isEmpty()) only.add(t); }
+        List<Role> out = new ArrayList<>();
+        for (Role r : ROLES) if (only.contains(r.name)) out.add(r);
+        return out;
+    }
+
+    /**
      * Known prod-vs-QA drift: permissions present in the prod CSV export but not
      * granted on the QA tenant (acme.qa). Verified live 2026-06-15. Environment
      * config lag, not a code regression — tolerated (logged/SKIPPED), while any

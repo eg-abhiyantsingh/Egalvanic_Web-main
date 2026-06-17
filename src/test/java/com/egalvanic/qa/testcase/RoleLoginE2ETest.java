@@ -77,7 +77,8 @@ public class RoleLoginE2ETest {
      */
     @DataProvider(name = "webRoles")
     public Object[][] webRoles() {
-        return RbacFixtures.ROLES.stream()
+        // honors -Drbac.roles; Electrical Engineer (no account) + Technician (its own test) excluded.
+        return RbacFixtures.selectedRoles().stream()
                 .filter(r -> !"Electrical Engineer".equals(r.name) && !"Technician".equals(r.name))
                 .map(r -> new Object[]{r})
                 .toArray(Object[][]::new);

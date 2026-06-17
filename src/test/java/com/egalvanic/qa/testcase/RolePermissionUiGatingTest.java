@@ -105,13 +105,17 @@ public class RolePermissionUiGatingTest {
 
     @DataProvider(name = "roles")
     public Object[][] roles() {
-        String filter = System.getProperty("rbac.ui.roles", "").trim();
-        Set<String> only = filter.isEmpty() ? null
-                : Arrays.stream(filter.split(",")).map(String::trim).collect(Collectors.toCollection(LinkedHashSet::new));
-        return RbacFixtures.ROLES.stream()
-                .filter(r -> only == null || only.contains(r.name))
-                .map(r -> new Object[]{r})
-                .toArray(Object[][]::new);
+        // Honors -Drbac.roles (shared across all RBAC suites); also accepts legacy -Drbac.ui.roles.
+        String legacy = System.getProperty("rbac.ui.roles", "").trim();
+        java.util.List<Role> rs;
+        if (!legacy.isEmpty()) {
+            Set<String> only = Arrays.stream(legacy.split(",")).map(String::trim)
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+            rs = RbacFixtures.ROLES.stream().filter(r -> only.contains(r.name)).collect(Collectors.toList());
+        } else {
+            rs = RbacFixtures.selectedRoles();
+        }
+        return rs.stream().map(r -> new Object[]{r}).toArray(Object[][]::new);
     }
 
     @AfterMethod(alwaysRun = true)

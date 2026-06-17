@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  MASTER RBAC suite — runs EVERY RBAC test class (API + UI + login) for all roles.
+  Single entry point. Needs Chrome (for the UI + login classes).
+
+  Run everything:        mvn test -DsuiteXmlFile=testng-rbac-all.xml
+  Run for one role only: mvn test -DsuiteXmlFile=testng-rbac-all.xml -Drbac.roles="Project Manager"
+  Headless (CI):         add -Dheadless=true
+-->
+<suite name="eGalvanic RBAC — All" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <test name="RBAC API — contract + permission matrix + work-order edit enforcement">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.RoleBasedPermissionContractTest"/>
+            <class name="com.egalvanic.qa.testcase.api.RolePermissionMatrixCellTest"/>
+            <class name="com.egalvanic.qa.testcase.api.WorkOrderEditEnforcementApiTest"/>
+        </classes>
+    </test>
+
+    <test name="RBAC UI — nav gating + work-order edit">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.RolePermissionUiGatingTest"/>
+            <class name="com.egalvanic.qa.testcase.WorkOrderEditUiTest"/>
+        </classes>
+    </test>
+
+    <test name="RBAC Full-Login E2E">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.RoleLoginE2ETest"/>
+        </classes>
+    </test>
+
+</suite>

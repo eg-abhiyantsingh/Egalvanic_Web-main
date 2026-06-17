@@ -66,7 +66,7 @@ public class RolePermissionMatrixCellTest extends BaseAPITest implements ITest {
         System.out.println("[RBAC-CELL] Matrix: " + MATRIX.roleCount() + " roles, "
                 + MATRIX.allPermissions().size() + " distinct permissions, "
                 + MATRIX.totalGrants() + " grants.");
-        for (Role role : RbacFixtures.ROLES) {
+        for (Role role : RbacFixtures.selectedRoles()) {   // honors -Drbac.roles
             LiveAuth la = RbacFixtures.cachedLiveAuth(role);
             LIVE.put(role.name, la);
             System.out.println("[RBAC-CELL] " + role.name + ": "
@@ -83,7 +83,7 @@ public class RolePermissionMatrixCellTest extends BaseAPITest implements ITest {
     public Object[][] cells() {
         RolePermissionMatrix matrix = RolePermissionMatrix.load(AppConstants.RBAC_CSV_PATH);
         List<Object[]> rows = new ArrayList<>();
-        for (Role role : RbacFixtures.ROLES) {
+        for (Role role : RbacFixtures.selectedRoles()) {   // honors -Drbac.roles
             RoleSpec spec = matrix.forRole(role.name);
             for (String permission : matrix.allPermissions()) {
                 boolean granted = spec != null && spec.permissions.contains(permission);

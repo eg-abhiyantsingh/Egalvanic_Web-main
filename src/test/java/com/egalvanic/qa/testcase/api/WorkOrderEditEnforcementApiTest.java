@@ -99,8 +99,9 @@ public class WorkOrderEditEnforcementApiTest extends BaseAPITest {
 
     @DataProvider(name = "roles")
     public Object[][] roles() {
-        Object[][] data = new Object[RbacFixtures.ROLES.size()][1];
-        for (int i = 0; i < RbacFixtures.ROLES.size(); i++) data[i][0] = RbacFixtures.ROLES.get(i);
+        java.util.List<Role> rs = RbacFixtures.selectedRoles();   // honors -Drbac.roles
+        Object[][] data = new Object[rs.size()][1];
+        for (int i = 0; i < rs.size(); i++) data[i][0] = rs.get(i);
         return data;
     }
 
