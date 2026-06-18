@@ -114,8 +114,18 @@ public class RoleLoginE2ETest {
         navigateToLogin();
 
         loginPage.login(AppConstants.ADMIN_EMAIL, "definitely-wrong-" + AppConstants.INVALID_PASSWORD);
-        // Give the app a moment to either error out or (wrongly) navigate, then re-check.
-        sleep(5000);
+
+        // The QA app renders the login form at the ROOT path (navigateToLogin loads BASE_URL, not
+        // "/login"), and on a slow/cold CI runner the post-submit re-render (spinner → "Invalid
+        // credentials") can take well over 5s, briefly detaching the email field. A fixed sleep +
+        // single check therefore raced and flaked. Instead, WAIT (poll) for the page to settle into
+        // a definitive state — the login form re-rendered (success: rejected) OR the app dashboard
+        // (failure: it let us in) — up to a generous timeout, then assert. This is both more robust
+        // and usually faster (returns as soon as the error renders, ~2s).
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(30)).until(d -> onLoginPage() || reachedApp());
+        } catch (Exception ignored) { /* assertions below report the real state */ }
+        sleep(1000); // brief settle so the error text/form is fully painted
 
         // Core invariant: wrong password must NOT reach the app, and must keep us on the login page.
         Assert.assertFalse(reachedApp(),
@@ -337,8 +347,17 @@ public class RoleLoginE2ETest {
     private boolean onLoginPage() {
         try {
             if (driver.getCurrentUrl().toLowerCase().contains("/login")) return true;
+            // This app renders the login form at the ROOT path, so the URL stays "/" — detect the
+            // form itself via several signals (the email field can briefly detach while the
+            // "Invalid credentials" error re-renders, so don't rely on #email alone).
             List<WebElement> email = driver.findElements(By.id("email"));
-            return !email.isEmpty() && email.get(0).isDisplayed();
+            if (!email.isEmpty() && shown(email.get(0))) return true;
+            List<WebElement> pwd = driver.findElements(By.cssSelector("input[type='password']"));
+            if (!pwd.isEmpty() && shown(pwd.get(0))) return true;
+            List<WebElement> heading = driver.findElements(By.xpath(
+                    "//*[contains(normalize-space(.), 'Sign into your account') "
+                            + "or contains(normalize-space(.), 'Invalid credentials')]"));
+            return heading.stream().anyMatch(this::shown);
         } catch (Exception e) { return false; }
     }
 

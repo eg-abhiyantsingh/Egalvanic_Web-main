@@ -367,7 +367,9 @@ jobs:
   summary:
     runs-on: ubuntu-latest
     needs: test-group
-    if: always()
+    # Run on test-group success OR failure, but NOT when test-group was skipped (no modules ticked):
+    # with no result artifacts the aggregate reports "No test results collected" → error → spurious fail.
+    if: ${{ always() && needs.test-group.result != 'skipped' }}
     timeout-minutes: 10
 
     steps:
