@@ -865,66 +865,11 @@ public class BugHuntTestNG {
 
     // ================================================================
     // SECTION 4: LOGIN UX BUG VERIFICATION
-    // Bug found: Terms checkbox resets after failed login
+    // (BUG-14 "Terms checkbox resets after failed login" removed — the T&C
+    //  checkbox itself was removed from the product per ZP-1828, so the test
+    //  exercised UI that no longer exists. Absence is now guarded by
+    //  LoginConsentTestNG.testTC_LC_02_TermsCheckboxAbsent.)
     // ================================================================
-
-    @Test(priority = 30, description = "BUG-14: Terms checkbox resets after failed login")
-    public void testBUG14_TermsCheckboxResetsAfterFailedLogin() {
-        ExtentReportManager.createTest(MODULE, AppConstants.FEATURE_LOGIN_UX,
-                "BUG14_TermsCheckboxResets");
-        logStep("Testing if terms checkbox resets after a failed login attempt");
-
-        navigateToLogin();
-
-        // Fill form and check terms
-        WebElement emailField = driver.findElement(EMAIL_INPUT);
-        setReactValue(emailField, "test@example.com");
-        WebElement passwordField = driver.findElement(PASSWORD_INPUT);
-        setReactValue(passwordField, "wrongpassword");
-        clickTermsCheckbox();
-        pause(300);
-
-        // Verify terms is checked
-        List<WebElement> checkboxes = driver.findElements(By.cssSelector("input[type='checkbox']"));
-        boolean checkedBeforeSubmit = false;
-        if (!checkboxes.isEmpty()) {
-            checkedBeforeSubmit = checkboxes.get(0).isSelected();
-        }
-        logStep("Terms checked before submit: " + checkedBeforeSubmit);
-
-        // Submit (will fail with wrong credentials)
-        if (isSignInEnabled()) {
-            driver.findElement(SIGN_IN_BUTTON).click();
-            pause(3000);
-
-            // Check if terms is still checked
-            checkboxes = driver.findElements(By.cssSelector("input[type='checkbox']"));
-            boolean checkedAfterFailure = false;
-            if (!checkboxes.isEmpty()) {
-                checkedAfterFailure = checkboxes.get(0).isSelected();
-            }
-            logStep("Terms checked after failed login: " + checkedAfterFailure);
-
-            logStepWithScreenshot("Terms checkbox state after failed login");
-
-            // Bug report: log the finding without failing the suite
-            // UX BUG: Terms should remain checked after failed login
-            // Users shouldn't have to re-check it every time they fix their password
-            if (!checkedAfterFailure && checkedBeforeSubmit) {
-                logStep("BUG REPORT: Terms checkbox reset documented above");
-                ExtentReportManager.logWarning("BUG-14 REPORTED: Terms checkbox resets to unchecked after "
-                        + "failed login. Before: " + checkedBeforeSubmit
-                        + ", After: " + checkedAfterFailure
-                        + ". Users must re-check it on every failed attempt.");
-            } else {
-                ExtentReportManager.logPass("BUG-14: Terms checkbox state preserved after failed login "
-                        + "(bug may be fixed). After: " + checkedAfterFailure);
-            }
-        } else {
-            logStep("Could not submit — Sign In disabled");
-            ExtentReportManager.logPass("Cannot verify (Sign In disabled)");
-        }
-    }
 
     @Test(priority = 31, description = "BUG-15: Password visibility toggle works correctly")
     public void testBUG15_PasswordVisibilityToggle() {
