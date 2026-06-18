@@ -21,7 +21,8 @@ on:
           - permission-contract                       # /auth/me set == matrix, per role
           - permission-matrix-cells                   # 791 role×permission cells
           - workorder-edit-enforcement                # PUT /job/{id} allowed iff jobs.manage
-          - action-enforcement-create-edit            # create/edit Asset/Task/Issue per role
+          - action-enforcement-create-edit            # create/edit Asset/Task/Issue per role (gate probe)
+          - crud-contract                             # REAL create→edit→delete lifecycle + 200-async contract
           - nav-gating-ui                             # per-role nav visibility (browser)
           - workorder-edit-ui                         # PM reaches work-order edit (browser)
           - role-project-manager                      # ALL RBAC, Project Manager only
@@ -82,6 +83,7 @@ jobs:
             permission-matrix-cells)        ARGS+=( -DsuiteXmlFile=testng-rbac-cells.xml ) ;;
             workorder-edit-enforcement)     ARGS+=( -DsuiteXmlFile=testng-rbac-workorder-api.xml ) ;;
             action-enforcement-create-edit) ARGS+=( -DsuiteXmlFile=testng-rbac-actions.xml ) ;;
+            crud-contract)                  ARGS+=( -DsuiteXmlFile=testng-rbac-crud.xml ) ;;
             nav-gating-ui)                  ARGS+=( -DsuiteXmlFile=testng-rbac-nav-ui.xml ) ;;
             workorder-edit-ui)              ARGS+=( -DsuiteXmlFile=testng-rbac-workorder-ui.xml ) ;;
             role-project-manager)           ARGS+=( -DsuiteXmlFile=testng-rbac-all.xml "-Drbac.roles=Project Manager" ) ;;

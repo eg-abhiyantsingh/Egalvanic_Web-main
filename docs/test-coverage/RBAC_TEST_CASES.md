@@ -68,6 +68,18 @@ env-overridable (`ADMIN_EMAIL`, `PM_PASSWORD`, …) in `AppConstants`.
   gate fires before entity lookup, so edits use a zero-UUID (allowed → async mutation no-ops); create
   uses a labelled minimal payload that doesn't persist.
 
+### `RoleCrudContractApiTest` — 2 entities × roles (real CRUD lifecycle)
+- `crudContract(role, entity)` for **Task** (`tasks.manage`) and **Asset/node** (`nodes.manage`).
+  Goes beyond the gate: a role that HAS the permission performs a **real** `POST …/create` →
+  `PUT …/update/{id}` → `DELETE …/delete/{id}` and we assert the API's **actual response contract**
+  at each step; a role that lacks it is asserted **denied** (so nothing persists).
+- **Verified live contract (acme.qa, 2026-06-18):** the platform is event-sourced/async (CQRS) —
+  every mutation is acked with **HTTP 200** + `{"_mutation":{"status":"received"},"id":…,"name":…}`.
+  It does **NOT** use `201 Created` / `202 Accepted`. The test asserts the real 200-async envelope
+  (+ a real UUID id on create, + the new name echoed on edit), logs the 200-vs-201/202 deviation as a
+  NOTE on every create, and **deletes the record it created** (cleanup, so runs don't accumulate data).
+  Flip `EXPECT_REST_CREATED=true` to make it demand 201/202 instead (it then fails until the API changes).
+
 ---
 
 ## 2. UI — nav gating + work-order edit (`testng-rbac-ui.xml`, 8)
@@ -125,7 +137,8 @@ every option is a suite — a `-Dtest=` class filter would be ignored):
 | `permission-contract` | `testng-rbac-contract.xml` | `RoleBasedPermissionContractTest` |
 | `permission-matrix-cells` | `testng-rbac-cells.xml` | `RolePermissionMatrixCellTest` (791 cells) |
 | `workorder-edit-enforcement` | `testng-rbac-workorder-api.xml` | `WorkOrderEditEnforcementApiTest` |
-| `action-enforcement-create-edit` | `testng-rbac-actions.xml` | `RoleActionEnforcementApiTest` |
+| `action-enforcement-create-edit` | `testng-rbac-actions.xml` | `RoleActionEnforcementApiTest` (gate probe) |
+| `crud-contract` | `testng-rbac-crud.xml` | `RoleCrudContractApiTest` (real create→edit→delete + 200-async contract) |
 | `nav-gating-ui` | `testng-rbac-nav-ui.xml` | `RolePermissionUiGatingTest` (browser) |
 | `workorder-edit-ui` | `testng-rbac-workorder-ui.xml` | `WorkOrderEditUiTest` (browser) |
 | `role-project-manager` … `role-admin` | `testng-rbac-all.xml` + `-Drbac.roles=<Role>` | everything, one role only |

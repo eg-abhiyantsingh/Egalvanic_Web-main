@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!-- Single-slice: real CRUD API-contract validation (create/edit/delete lifecycle per role). API, no browser.
+     mvn test -DsuiteXmlFile=testng-rbac-crud.xml [-Drbac.roles="Project Manager"] -->
+<suite name="eGalvanic RBAC — CRUD API Contract" verbose="1">
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+    <test name="RBAC CRUD API Contract (real create/edit/delete)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.RoleCrudContractApiTest"/>
+        </classes>
+    </test>
+</suite>

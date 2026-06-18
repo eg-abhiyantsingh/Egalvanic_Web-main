@@ -42,4 +42,12 @@
         </classes>
     </test>
 
+    <!-- Real CRUD contract: privileged role create→edit→delete; asserts the actual 200 async-mutation
+         envelope (not just the gate); denied role rejected. -->
+    <test name="RBAC CRUD API Contract (real create/edit/delete)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.RoleCrudContractApiTest"/>
+        </classes>
+    </test>
+
 </suite>

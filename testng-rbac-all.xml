@@ -21,6 +21,7 @@
             <class name="com.egalvanic.qa.testcase.api.RolePermissionMatrixCellTest"/>
             <class name="com.egalvanic.qa.testcase.api.WorkOrderEditEnforcementApiTest"/>
             <class name="com.egalvanic.qa.testcase.api.RoleActionEnforcementApiTest"/>
+            <class name="com.egalvanic.qa.testcase.api.RoleCrudContractApiTest"/>
         </classes>
     </test>
 
