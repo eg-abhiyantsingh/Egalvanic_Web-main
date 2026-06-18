@@ -28,11 +28,14 @@ env-overridable (`ADMIN_EMAIL`, `PM_PASSWORD`, …) in `AppConstants`.
 | Full-login E2E | `testng-rbac-login.xml` | **9** | Chrome |
 | **Total (defined, 7 roles)** | | **851** | |
 
-> **Admin is excluded by default** (`RbacFixtures.DEFAULT_EXCLUDED`) — the QA `+admin` account is
-> currently mis-provisioned as Project Manager (2026-06-17). A default run covers the other roles;
-> force Admin with `-Drbac.roles=Admin` once the account is fixed. Electrical Engineer has no QA
-> account and SKIPs. So a default run actively executes **5 roles** (PM, Technician, FM, Account
-> Manager, Client Portal).
+> **Admin and Electrical Engineer are excluded by default** (`RbacFixtures.DEFAULT_EXCLUDED`) because
+> neither QA account can be asserted: the `+admin` account is mis-provisioned as Project Manager
+> (2026-06-17), and Electrical Engineer has **no QA account** (login → 401). Both were previously left
+> in the matrix and only ever SKIPped (~120 noise-skips/run for EE alone); excluding them keeps the
+> report clean. Force either with `-Drbac.roles="Electrical Engineer"` / `-Drbac.roles=Admin` once its
+> account exists. So a default run actively executes **5 roles** (PM, Technician, FM, Account Manager,
+> Client Portal) — and the only expected skips are the **2 documented prod-vs-QA drift cells** (PM
+> `accounts.view`, FM `features.locations.view`).
 
 ---
 

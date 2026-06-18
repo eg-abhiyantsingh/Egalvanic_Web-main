@@ -71,17 +71,23 @@ public final class RbacFixtures {
     ));
 
     /**
-     * Roles excluded from RBAC by default (still runnable via an explicit {@code -Drbac.roles=Admin}).
-     * Admin's QA account is currently mis-provisioned as Project Manager (2026-06-17), so RBAC is
-     * skipped for it per request — remove from here once the +admin account is re-granted the Admin role.
+     * Roles excluded from RBAC by default (each still runnable via an explicit
+     * {@code -Drbac.roles="<name>"}). Excluded because their QA account can't be asserted:
+     *  - <b>Admin</b>: the +admin QA account is mis-provisioned as Project Manager (2026-06-17) —
+     *    remove once it's re-granted the Admin role.
+     *  - <b>Electrical Engineer</b>: no QA account exists (login returns 401), so every
+     *    EE-parameterized case could only SKIP — ~120 noise-skips per run. Excluding it keeps the
+     *    report clean (per the standing "ignore Electrical Engineer" request); add the account and
+     *    drop it from here (or pass {@code -Drbac.roles="Electrical Engineer"}) to test it.
      */
-    private static final Set<String> DEFAULT_EXCLUDED = new HashSet<>(Arrays.asList("Admin"));
+    private static final Set<String> DEFAULT_EXCLUDED =
+            new HashSet<>(Arrays.asList("Admin", "Electrical Engineer"));
 
     /**
      * Roles selected for this run. Honors {@code -Drbac.roles="Project Manager,Client Portal"}
      * (comma-separated names) to target specific roles; blank/"all" selects every role EXCEPT the
-     * default-excluded ones ({@link #DEFAULT_EXCLUDED}, currently Admin). An explicit name list is
-     * taken verbatim, so {@code -Drbac.roles=Admin} can still force a default-excluded role.
+     * default-excluded ones ({@link #DEFAULT_EXCLUDED}, currently Admin + Electrical Engineer). An
+     * explicit name list is taken verbatim, so {@code -Drbac.roles=Admin} can still force one.
      */
     public static List<Role> selectedRoles() {
         String filter = System.getProperty("rbac.roles", "").trim();
