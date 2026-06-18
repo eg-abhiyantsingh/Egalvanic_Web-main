@@ -40,9 +40,36 @@ name: Parallel Full Suite — Core Regression (848 TCs)
 on:
   workflow_dispatch:
     inputs:
+      # ── Module groups: checkboxes — tick the ones you want, untick to skip.
+      #    All default ON, so a plain "Run workflow" runs everything (as before).
+      #    Only the ticked modules spin up runners (built into a dynamic matrix). ──
+      auth_site:
+        description: 'Auth + Site (login, site selection)'
+        type: boolean
+        default: true
+      location_task:
+        description: 'Location + Task'
+        type: boolean
+        default: true
+      work_orders:
+        description: 'Work Orders — Work Order + Issue + Planning'
+        type: boolean
+        default: true
+      assets:
+        description: 'Assets — Parts 1-2, 3, 4, 5'
+        type: boolean
+        default: true
+      dashboard_bughunt:
+        description: 'Dashboard + BugHunt'
+        type: boolean
+        default: true
+      sales:
+        description: 'Sales — Opportunities + Accounts + Goals'
+        type: boolean
+        default: true
+      # ── Delivery. ──
       send_email:
         description: 'Send email report after completion'
-        required: false
         type: boolean
         default: true
 
@@ -61,7 +88,62 @@ jobs:
   # ============================================================
   # Phase 1: Run each group in parallel
   # ============================================================
+  # ============================================================
+  # Phase 0: Build the run-matrix from the selected module checkboxes.
+  # Each checkbox maps to one or more matrix groups; only ticked ones run.
+  # ============================================================
+  prep:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.build.outputs.matrix }}
+      any: ${{ steps.build.outputs.any }}
+    steps:
+      - name: Build dynamic matrix from selected modules
+        id: build
+        env:
+          AUTH_SITE: ${{ inputs.auth_site }}
+          LOCATION_TASK: ${{ inputs.location_task }}
+          WORK_ORDERS: ${{ inputs.work_orders }}
+          ASSETS: ${{ inputs.assets }}
+          DASHBOARD_BUGHUNT: ${{ inputs.dashboard_bughunt }}
+          SALES: ${{ inputs.sales }}
+        run: |
+          # Catalog of all groups; each tagged with the checkbox (toggle) that enables it.
+          # Merged checkboxes (work_orders, assets, sales) map to >1 group.
+          CATALOG='[
+            {"toggle":"AUTH_SITE","group":"auth-site","name":"Auth + Site","xml":"suite-auth-site.xml","tests":56,"stagger":0},
+            {"toggle":"LOCATION_TASK","group":"location-task","name":"Location + Task","xml":"suite-location-task.xml","tests":135,"stagger":10},
+            {"toggle":"WORK_ORDERS","group":"workorder-issue","name":"Work Order + Issue","xml":"suite-workorder-issue.xml","tests":234,"stagger":20},
+            {"toggle":"WORK_ORDERS","group":"workorder-planning","name":"Work Order Planning","xml":"suite-workorder-planning.xml","tests":32,"stagger":80},
+            {"toggle":"ASSETS","group":"asset-1-2","name":"Asset Parts 1-2","xml":"suite-asset-1-2.xml","tests":69,"stagger":30},
+            {"toggle":"ASSETS","group":"asset-3","name":"Asset Part 3","xml":"suite-asset-3.xml","tests":76,"stagger":40},
+            {"toggle":"ASSETS","group":"asset-4","name":"Asset Part 4","xml":"suite-asset-4.xml","tests":65,"stagger":50},
+            {"toggle":"ASSETS","group":"asset-5","name":"Asset Part 5","xml":"suite-asset-5.xml","tests":76,"stagger":55},
+            {"toggle":"DASHBOARD_BUGHUNT","group":"dashboard-bughunt","name":"Dashboard + BugHunt","xml":"suite-dashboard-bughunt.xml","tests":105,"stagger":70},
+            {"toggle":"SALES","group":"opportunities","name":"Opportunities [SALES]","xml":"suite-opportunities.xml","tests":41,"stagger":90},
+            {"toggle":"SALES","group":"accounts","name":"Accounts [SALES]","xml":"suite-accounts.xml","tests":12,"stagger":100},
+            {"toggle":"SALES","group":"goals","name":"Goals [SALES]","xml":"suite-goals.xml","tests":8,"stagger":110}
+          ]'
+          ENABLED=$(for t in AUTH_SITE LOCATION_TASK WORK_ORDERS ASSETS DASHBOARD_BUGHUNT SALES; do
+                      [ "${!t}" = "true" ] && echo "$t"; done | jq -R . | jq -cs .)
+          SEL=$(echo "$CATALOG" | jq -c --argjson en "$ENABLED" \
+                  '[ .[] | select(.toggle as $t | $en | index($t)) | del(.toggle) ]')
+          echo "Enabled toggles: $ENABLED"
+          echo "Selected groups: $(echo "$SEL" | jq -c '[.[].group]')"
+          echo "matrix=$SEL" >> "$GITHUB_OUTPUT"
+          if [ "$(echo "$SEL" | jq 'length')" -gt 0 ]; then
+            echo "any=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "any=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No module checkboxes selected — nothing to run."
+          fi
+
+  # ============================================================
+  # Phase 1: Run each SELECTED group in parallel
+  # ============================================================
   test-group:
+    needs: prep
+    if: ${{ needs.prep.outputs.any == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 480
 
@@ -70,104 +152,7 @@ jobs:
       max-parallel: 12
 
       matrix:
-        include:
-          # stagger: seconds to wait before starting tests.
-          # Prevents simultaneous login requests from overwhelming
-          # the server and triggering session conflicts.
-          # Connection module is hidden in May 2026 web — excluded from CI.
-          - group: auth-site
-            name: "Auth + Site"
-            xml: suite-auth-site.xml
-            tests: 56
-            stagger: 0
-
-          - group: location-task
-            name: "Location + Task"
-            xml: suite-location-task.xml
-            tests: 135
-            stagger: 10
-
-          - group: workorder-issue
-            name: "Work Order + Issue"
-            xml: suite-workorder-issue.xml
-            tests: 234
-            stagger: 20
-
-          - group: asset-1-2
-            name: "Asset Parts 1-2"
-            xml: suite-asset-1-2.xml
-            tests: 69
-            stagger: 30
-
-          - group: asset-3
-            name: "Asset Part 3"
-            xml: suite-asset-3.xml
-            tests: 76
-            stagger: 40
-
-          - group: asset-4
-            name: "Asset Part 4"
-            xml: suite-asset-4.xml
-            tests: 65
-            stagger: 50
-
-          - group: asset-5
-            name: "Asset Part 5"
-            xml: suite-asset-5.xml
-            tests: 76
-            stagger: 55
-
-          # SLD module excluded from CI in May 2026 release (deprecated UI).
-
-          - group: dashboard-bughunt
-            name: "Dashboard + BugHunt"
-            xml: suite-dashboard-bughunt.xml
-            tests: 105
-            stagger: 70
-
-          - group: workorder-planning
-            name: "Work Order Planning"
-            xml: suite-workorder-planning.xml
-            tests: 32
-            stagger: 80
-
-          # ──────────────────────────────────────────────
-          # Opportunities [SALES] — core functional CRUD + quote/EMP lifecycle.
-          # Moved here (2026-06-08) from parallel-suite-2 so this core SALES module
-          # runs with the rest of the core regression (Assets/Issues/Work Orders/…).
-          # suite-opportunities.xml is the FUNCTIONAL GATE (excludes known-product-bug,
-          # so the build stays green on real behaviour; BUG-A/BUG-B tripwires remain
-          # tracked by the Quality Gates group in parallel-suite-2).
-          # ──────────────────────────────────────────────
-          - group: opportunities
-            name: "Opportunities [SALES]"
-            xml: suite-opportunities.xml
-            tests: 41
-            stagger: 90
-
-          # ──────────────────────────────────────────────
-          # Accounts [SALES] — customer accounts. First dedicated coverage (2026-06-08):
-          # read/columns/search + create-dialog validation (no submit) + detail/Contacts
-          # + confirmation-gated delete. Functional gate excludes known-product-bug
-          # (BUG-A/BUG-B/BUG-E tripwires tracked separately).
-          # ──────────────────────────────────────────────
-          - group: accounts
-            name: "Accounts [SALES]"
-            xml: suite-accounts.xml
-            tests: 12
-            stagger: 100
-
-          # ──────────────────────────────────────────────
-          # Goals [SALES] — was wired into NO suite before 2026-06-08. Functional gate
-          # (columns/create-dialog/status+operator enums/target shape/search) added
-          # alongside the pre-existing ZP bug tripwires. Excludes known-product-bug.
-          # ──────────────────────────────────────────────
-          - group: goals
-            name: "Goals [SALES]"
-            xml: suite-goals.xml
-            tests: 8
-            stagger: 110
-
+        include: ${{ fromJSON(needs.prep.outputs.matrix) }}
     name: "${{ matrix.name }} (${{ matrix.tests }} TCs)"
 
     steps:

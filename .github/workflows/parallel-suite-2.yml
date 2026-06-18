@@ -36,27 +36,51 @@ name: Parallel Suite 2 — Curated Bug Verification + AI + Smoke + Load + BCES-I
 on:
   workflow_dispatch:
     inputs:
-      send_email:
-        description: 'Send email report after completion'
-        required: false
+      # ── Module groups: checkboxes — tick the ones you want, untick to skip.
+      #    All default ON, so a plain "Run workflow" runs everything (as before).
+      #    Only the ticked modules spin up runners (built into a dynamic matrix). ──
+      curated_bug:
+        description: 'Curated Bug Verification (8 client-facing regression TCs)'
         type: boolean
         default: true
+      smoke:
+        description: 'Smoke — acme.qa Smoke Suites + BCES-IQ tenant smoke'
+        type: boolean
+        default: true
+      load_api:
+        description: 'Load + API + Critical Path'
+        type: boolean
+        default: true
+      ai:
+        description: 'AI — Form Creation + Page Analyzer'
+        type: boolean
+        default: true
+      exploratory:
+        description: 'Exploratory — Monkey + Visual Regression'
+        type: boolean
+        default: true
+      quality_gates:
+        description: 'Quality Gates (All Pages — a11y/perf/responsive, 225 TCs)'
+        type: boolean
+        default: true
+      doc_inspired:
+        description: 'Documentation-Inspired Tests'
+        type: boolean
+        default: true
+      # ── RBAC (opt-in — off by default). ──
       rbac_api:
-        description: 'RBAC — API tests (contract + 791-cell matrix + work-order edit enforcement)'
-        required: false
-        type: choice
-        default: 'skip'
-        options:
-          - skip
-          - run
-      rbac_full:
+        description: 'RBAC — API tests (contract + 791-cell matrix + edit + CRUD enforcement)'
+        type: boolean
+        default: false
+      rbac_all:
         description: 'RBAC — ALL tests (login + work-order edit + nav gating + API)'
-        required: false
-        type: choice
-        default: 'skip'
-        options:
-          - skip
-          - run
+        type: boolean
+        default: false
+      # ── Delivery. ──
+      send_email:
+        description: 'Send email report after completion'
+        type: boolean
+        default: true
 
 concurrency:
   group: parallel-suite-2
@@ -69,9 +93,60 @@ permissions:
 
 jobs:
   # ============================================================
-  # Phase 1: Run each group in parallel
+  # Phase 0: Build the run-matrix from the selected module checkboxes.
+  # Each checkbox maps to one or more matrix groups; only ticked ones run.
+  # ============================================================
+  prep:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.build.outputs.matrix }}
+      any: ${{ steps.build.outputs.any }}
+    steps:
+      - name: Build dynamic matrix from selected modules
+        id: build
+        env:
+          CURATED: ${{ inputs.curated_bug }}
+          SMOKE: ${{ inputs.smoke }}
+          LOAD_API: ${{ inputs.load_api }}
+          AI: ${{ inputs.ai }}
+          EXPLORATORY: ${{ inputs.exploratory }}
+          QUALITY: ${{ inputs.quality_gates }}
+          DOC: ${{ inputs.doc_inspired }}
+        run: |
+          # Catalog of all groups; each tagged with the checkbox (toggle) that enables it.
+          # Merged checkboxes (smoke, ai, exploratory) map to >1 group.
+          CATALOG='[
+            {"toggle":"CURATED","group":"curated-bug-verification","name":"Curated Bug Verification","xml":"deep-bug-verification-testng.xml","tests":8,"stagger":0},
+            {"toggle":"SMOKE","group":"smoke","name":"Smoke Suites","xml":"smoke-testng.xml","tests":37,"stagger":10},
+            {"toggle":"SMOKE","group":"bces-iq-smoke","name":"BCES-IQ Tenant Smoke","xml":"smoke-bces-iq-testng.xml","tests":3,"stagger":70,"base_url":"https://acme.bces-iq.com","user_email":"shubham.goswami+acme@egalvanic.com","user_password":"Shubham@123"},
+            {"toggle":"LOAD_API","group":"load-api","name":"Load + API + Critical Path","xml":"suite-load-api.xml","tests":62,"stagger":20},
+            {"toggle":"AI","group":"ai-form","name":"AI Form Creation","xml":"suite-ai-form.xml","tests":56,"stagger":30},
+            {"toggle":"AI","group":"ai-analyzer","name":"AI Page Analyzer","xml":"suite-ai-analyzer.xml","tests":3,"stagger":60},
+            {"toggle":"EXPLORATORY","group":"monkey","name":"Monkey Exploratory","xml":"suite-monkey.xml","tests":4,"stagger":40},
+            {"toggle":"EXPLORATORY","group":"visual-regression","name":"Visual Regression","xml":"suite-visual.xml","tests":7,"stagger":50},
+            {"toggle":"DOC","group":"doc-inspired","name":"Documentation-Inspired Tests","xml":"suite-doc-inspired.xml","tests":17,"stagger":65},
+            {"toggle":"QUALITY","group":"quality-gates","name":"Quality Gates (All Pages)","xml":"suite-quality-gates.xml","tests":225,"stagger":68}
+          ]'
+          ENABLED=$(for t in CURATED SMOKE LOAD_API AI EXPLORATORY QUALITY DOC; do
+                      [ "${!t}" = "true" ] && echo "$t"; done | jq -R . | jq -cs .)
+          SEL=$(echo "$CATALOG" | jq -c --argjson en "$ENABLED" \
+                  '[ .[] | select(.toggle as $t | $en | index($t)) | del(.toggle) ]')
+          echo "Enabled toggles: $ENABLED"
+          echo "Selected groups: $(echo "$SEL" | jq -c '[.[].group]')"
+          echo "matrix=$SEL" >> "$GITHUB_OUTPUT"
+          if [ "$(echo "$SEL" | jq 'length')" -gt 0 ]; then
+            echo "any=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "any=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No functional module checkboxes selected — test-group skipped (RBAC jobs, if ticked, still run)."
+          fi
+
+  # ============================================================
+  # Phase 1: Run each SELECTED group in parallel
   # ============================================================
   test-group:
+    needs: prep
+    if: ${{ needs.prep.outputs.any == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 480
 
@@ -79,110 +154,11 @@ jobs:
       fail-fast: false
       max-parallel: 11
 
+      # Dynamic: only the modules ticked in the dispatch form (built by `prep`).
+      # The full group catalog (incl. the BCES-IQ cross-tenant overrides) lives in
+      # the `prep` job above; edit it there to add/rename groups.
       matrix:
-        include:
-          # ──────────────────────────────────────────────
-          # CLIENT-FACING: Curated 8-bug regression gate
-          # (DeepBugVerificationTestNG + SecurityAuditTestNG)
-          # ──────────────────────────────────────────────
-          - group: curated-bug-verification
-            name: "Curated Bug Verification"
-            xml: deep-bug-verification-testng.xml
-            tests: 8
-            stagger: 0
-
-          - group: smoke
-            name: "Smoke Suites"
-            xml: smoke-testng.xml
-            tests: 37
-            stagger: 10
-
-          # NOTE: `group` key must match ALL_GROUPS[] in full-suite-dashboard.sh
-          # (the case label in get_group_index is `load-api`, not `load-api-critical`).
-          - group: load-api
-            name: "Load + API + Critical Path"
-            xml: suite-load-api.xml
-            tests: 62
-            stagger: 20
-
-          - group: ai-form
-            name: "AI Form Creation"
-            xml: suite-ai-form.xml
-            tests: 56
-            stagger: 30
-
-          - group: monkey
-            name: "Monkey Exploratory"
-            xml: suite-monkey.xml
-            tests: 4
-            stagger: 40
-
-          - group: visual-regression
-            name: "Visual Regression"
-            xml: suite-visual.xml
-            tests: 7
-            stagger: 50
-
-          - group: ai-analyzer
-            name: "AI Page Analyzer"
-            xml: suite-ai-analyzer.xml
-            tests: 3
-            stagger: 60
-
-          # ──────────────────────────────────────────────
-          # NEW (2026-04-27): Documentation-Inspired Tests
-          # Derived from docs/ppt-document/ — 3 classes covering:
-          #   - HTTP status code contract (HTTP_StatusCode.png)
-          #   - POST/PUT/PATCH semantics (Difference...pptx)
-          #   - Console log quality (QA Must Review...pdf)
-          # ──────────────────────────────────────────────
-          - group: doc-inspired
-            name: "Documentation-Inspired Tests"
-            xml: suite-doc-inspired.xml
-            tests: 17
-            stagger: 65
-
-          # ──────────────────────────────────────────────
-          # NEW (2026-06-03): Cross-cutting Quality Gates — EVERY page, DEEP
-          # Phase4QualityGatesTestNG: axe-core WCAG a11y + perf budgets + boundary
-          # input + offline + broken-asset/blank-state + mobile-responsive + detail-
-          # page tab walking, across 59 routes (nav + standalone + Settings AND
-          # Reporting hub ?view= deep-views). Phase5ModuleInteractionTestNG: non-
-          # destructive search/create-cancel/tab interaction on thin modules.
-          # Surfaces a11y, perf, and uncaught-JS-crash bugs functional scripts miss.
-          # ──────────────────────────────────────────────
-          - group: quality-gates
-            name: "Quality Gates (All Pages)"
-            xml: suite-quality-gates.xml
-            tests: 225
-            stagger: 68
-
-          # ──────────────────────────────────────────────
-          # Opportunities [SALES] MOVED (2026-06-08) to parallel-suite.yml (Core
-          # Regression) so this core functional SALES module runs alongside the
-          # other CRUD modules (Assets/Issues/Work Orders/…). Kept in a single
-          # suite to avoid double-running the same functional gate.
-          # ──────────────────────────────────────────────
-
-          # ──────────────────────────────────────────────
-          # Cross-tenant: BCES-IQ tenant smoke
-          # Runs the same test framework against a DIFFERENT tenant by
-          # overriding BASE_URL / USER_EMAIL / USER_PASSWORD via env vars
-          # in the "Run tests" step below. AppConstants#getEnv() picks
-          # these up so tests hit the BCES-IQ tenant instead of acme.qa.
-          # ──────────────────────────────────────────────
-          - group: bces-iq-smoke
-            name: "BCES-IQ Tenant Smoke"
-            xml: smoke-bces-iq-testng.xml
-            tests: 3
-            stagger: 70
-            base_url: "https://acme.bces-iq.com"
-            user_email: "shubham.goswami+acme@egalvanic.com"
-            # Tenant QA credential, matches the pattern of existing test
-            # passwords in AppConstants.java (plaintext defaults). To rotate:
-            # (a) update here, or (b) set BCES_IQ_PASSWORD as a repo secret and
-            #     change the USER_PASSWORD env line below to read it.
-            user_password: "Shubham@123"
+        include: ${{ fromJSON(needs.prep.outputs.matrix) }}
 
     name: "${{ matrix.name }} (${{ matrix.tests }} TCs)"
 
@@ -677,7 +653,7 @@ jobs:
   # ============================================================
   rbac-api:
     name: "RBAC — API (contract + matrix + edit enforcement)"
-    if: ${{ github.event.inputs.rbac_api == 'run' }}
+    if: ${{ inputs.rbac_api }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -730,7 +706,7 @@ jobs:
     # matrix hammered the same QA app. Running alone (like the green standalone rbac.yml) removes the
     # contention. always() so it still runs if a matrix group failed.
     needs: test-group
-    if: ${{ always() && github.event.inputs.rbac_full == 'run' }}
+    if: ${{ always() && inputs.rbac_all }}
     runs-on: ubuntu-latest
     timeout-minutes: 50
     steps:
