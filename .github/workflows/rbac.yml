@@ -1,38 +1,35 @@
-name: RBAC (manual run — pick scope + role)
+name: RBAC (manual run — pick what to run)
 
 # ============================================================
-# One-click RBAC runner. Pick WHAT to run (scope) and WHICH role from the dropdowns:
-#   scope: all | api | ui | login
-#   role:  all | Admin | Project Manager | Technician | Facility Manager | Account Manager | Client Portal
-# Maps to the right suite XML and passes -Drbac.roles for the chosen role.
-# (The push-triggered rbac-tests.yml / rbac-ui-tests.yml / rbac-login-tests.yml still run on commits.)
+# One-click RBAC runner. Pick a single option from the "Which RBAC to run" dropdown.
+# Each option maps to a suite / test class / per-role filter. (The push-triggered
+# rbac-tests.yml / rbac-ui-tests.yml / rbac-login-tests.yml still run on commits.)
 # ============================================================
 on:
   workflow_dispatch:
     inputs:
-      scope:
-        description: 'What to run'
+      which:
+        description: 'Which RBAC to run'
         required: true
         default: 'all'
         type: choice
         options:
-          - all
-          - api
-          - ui
-          - login
-      role:
-        description: 'Which role'
-        required: true
-        default: 'all'
-        type: choice
-        options:
-          - all
-          - Admin
-          - Project Manager
-          - Technician
-          - Facility Manager
-          - Account Manager
-          - Client Portal
+          - all                                       # everything (master suite)
+          - api-all                                   # all API (no browser)
+          - ui-all                                    # all UI (nav gating + work-order edit)
+          - login-e2e                                 # full login journey (all roles)
+          - permission-contract                       # /auth/me set == matrix, per role
+          - permission-matrix-cells                   # 791 role×permission cells
+          - workorder-edit-enforcement                # PUT /job/{id} allowed iff jobs.manage
+          - action-enforcement-create-edit            # create/edit Asset/Task/Issue per role
+          - nav-gating-ui                             # per-role nav visibility (browser)
+          - workorder-edit-ui                         # PM reaches work-order edit (browser)
+          - role-project-manager                      # ALL RBAC, Project Manager only
+          - role-technician                           # ALL RBAC, Technician only
+          - role-facility-manager                     # ALL RBAC, Facility Manager only
+          - role-account-manager                      # ALL RBAC, Account Manager only
+          - role-client-portal                        # ALL RBAC, Client Portal only
+          - role-admin                                # ALL RBAC, Admin only (force mis-provisioned acct)
 
 jobs:
   rbac:
@@ -65,31 +62,43 @@ jobs:
       - name: Compile
         run: mvn -B -q compile test-compile
 
-      - name: Run RBAC (scope=${{ github.event.inputs.scope }}, role=${{ github.event.inputs.role }})
+      - name: Run RBAC (${{ github.event.inputs.which }})
         id: run
         continue-on-error: true
         env:
-          SCOPE: ${{ github.event.inputs.scope }}
-          ROLE: ${{ github.event.inputs.role }}
+          WHICH: ${{ github.event.inputs.which }}
         run: |
-          # Map the scope dropdown to a suite file.
-          case "$SCOPE" in
-            api)   SUITE=testng-rbac-permissions.xml ;;
-            ui)    SUITE=testng-rbac-ui.xml ;;
-            login) SUITE=testng-rbac-login.xml ;;
-            *)     SUITE=testng-rbac-all.xml ;;
+          # Map the single dropdown choice to Maven args. WHICH is an env var (a constrained choice
+          # value, not interpolated into the command) — injection-safe. Array keeps "Project Manager"
+          # as one arg. Defaults to headless + no email; suite/class/role added per choice.
+          # The pom always feeds a suiteXmlFile to surefire, so EVERY option maps to a suite
+          # (a -Dtest= class filter would be ignored). Single-slice suites are tiny one-class files.
+          ARGS=( -B test -Dheadless=true -DSEND_EMAIL_ENABLED=false )
+          case "$WHICH" in
+            api-all)                        ARGS+=( -DsuiteXmlFile=testng-rbac-permissions.xml ) ;;
+            ui-all)                         ARGS+=( -DsuiteXmlFile=testng-rbac-ui.xml ) ;;
+            login-e2e)                      ARGS+=( -DsuiteXmlFile=testng-rbac-login.xml ) ;;
+            permission-contract)            ARGS+=( -DsuiteXmlFile=testng-rbac-contract.xml ) ;;
+            permission-matrix-cells)        ARGS+=( -DsuiteXmlFile=testng-rbac-cells.xml ) ;;
+            workorder-edit-enforcement)     ARGS+=( -DsuiteXmlFile=testng-rbac-workorder-api.xml ) ;;
+            action-enforcement-create-edit) ARGS+=( -DsuiteXmlFile=testng-rbac-actions.xml ) ;;
+            nav-gating-ui)                  ARGS+=( -DsuiteXmlFile=testng-rbac-nav-ui.xml ) ;;
+            workorder-edit-ui)              ARGS+=( -DsuiteXmlFile=testng-rbac-workorder-ui.xml ) ;;
+            role-project-manager)           ARGS+=( -DsuiteXmlFile=testng-rbac-all.xml "-Drbac.roles=Project Manager" ) ;;
+            role-technician)                ARGS+=( -DsuiteXmlFile=testng-rbac-all.xml "-Drbac.roles=Technician" ) ;;
+            role-facility-manager)          ARGS+=( -DsuiteXmlFile=testng-rbac-all.xml "-Drbac.roles=Facility Manager" ) ;;
+            role-account-manager)           ARGS+=( -DsuiteXmlFile=testng-rbac-all.xml "-Drbac.roles=Account Manager" ) ;;
+            role-client-portal)             ARGS+=( -DsuiteXmlFile=testng-rbac-all.xml "-Drbac.roles=Client Portal" ) ;;
+            role-admin)                     ARGS+=( -DsuiteXmlFile=testng-rbac-all.xml "-Drbac.roles=Admin" ) ;;
+            *)                              ARGS+=( -DsuiteXmlFile=testng-rbac-all.xml ) ;;  # all
           esac
-          echo "Suite: $SUITE | Role: $ROLE"
-          # Build args as an array so a role name with a space ("Project Manager") stays one arg.
-          # SCOPE/ROLE are env vars (not interpolated into the command) — injection-safe.
-          ARGS=( -B test -DsuiteXmlFile="$SUITE" -Dheadless=true -DSEND_EMAIL_ENABLED=false )
-          if [ -n "$ROLE" ] && [ "$ROLE" != "all" ]; then ARGS+=( "-Drbac.roles=$ROLE" ); fi
+          echo "Running: mvn ${ARGS[*]}"
           mvn "${ARGS[@]}"
 
       - name: Summarize results
         if: always()
         run: |
-          echo "## RBAC run — scope=${SCOPE:-all}, role=${ROLE:-all}" >> "$GITHUB_STEP_SUMMARY"
+          echo "## RBAC run — ${WHICH:-all}" >> "$GITHUB_STEP_SUMMARY"
           FILES=$(find target/surefire-reports -name 'testng-results.xml')
           if [ -z "$FILES" ]; then echo "No results produced." >> "$GITHUB_STEP_SUMMARY"; echo "NO_RESULTS=1" >> "$GITHUB_ENV"; exit 0; fi
           PASS=0; FAIL=0; SKIP=0
@@ -108,14 +117,13 @@ jobs:
             echo '```' >> "$GITHUB_STEP_SUMMARY"
           fi
         env:
-          SCOPE: ${{ github.event.inputs.scope }}
-          ROLE: ${{ github.event.inputs.role }}
+          WHICH: ${{ github.event.inputs.which }}
 
       - name: Upload reports
         if: always()
         uses: actions/upload-artifact@v4.6.2
         with:
-          name: rbac-${{ github.event.inputs.scope }}-${{ github.event.inputs.role }}-reports
+          name: rbac-${{ github.event.inputs.which }}-reports
           path: |
             target/surefire-reports/
             reports/detail-report/

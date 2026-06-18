@@ -107,6 +107,26 @@ mvn -o test -DsuiteXmlFile=testng-rbac-ui.xml
 mvn -o test -DsuiteXmlFile=testng-rbac-login.xml
 ```
 
+### One-click manual runner (single dropdown)
+
+`.github/workflows/rbac.yml` (`workflow_dispatch`) exposes a **single "Which RBAC to run"
+dropdown**. Each option maps to a suite (the pom always feeds surefire a `suiteXmlFile`, so
+every option is a suite — a `-Dtest=` class filter would be ignored):
+
+| Dropdown option | Suite | What runs |
+|-----------------|-------|-----------|
+| `all` | `testng-rbac-all.xml` | everything (API + UI + login) |
+| `api-all` | `testng-rbac-permissions.xml` | all 4 API classes |
+| `ui-all` | `testng-rbac-ui.xml` | nav gating + work-order edit (browser) |
+| `login-e2e` | `testng-rbac-login.xml` | full login journey (browser) |
+| `permission-contract` | `testng-rbac-contract.xml` | `RoleBasedPermissionContractTest` |
+| `permission-matrix-cells` | `testng-rbac-cells.xml` | `RolePermissionMatrixCellTest` (791 cells) |
+| `workorder-edit-enforcement` | `testng-rbac-workorder-api.xml` | `WorkOrderEditEnforcementApiTest` |
+| `action-enforcement-create-edit` | `testng-rbac-actions.xml` | `RoleActionEnforcementApiTest` |
+| `nav-gating-ui` | `testng-rbac-nav-ui.xml` | `RolePermissionUiGatingTest` (browser) |
+| `workorder-edit-ui` | `testng-rbac-workorder-ui.xml` | `WorkOrderEditUiTest` (browser) |
+| `role-project-manager` … `role-admin` | `testng-rbac-all.xml` + `-Drbac.roles=<Role>` | everything, one role only |
+
 CI workflows: `.github/workflows/rbac-tests.yml` (API), `rbac-ui-tests.yml` (UI),
 `rbac-login-tests.yml` (login). Gates are authoritative on Maven's own outcome.
 

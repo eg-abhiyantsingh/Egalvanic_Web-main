@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!-- Single-slice: per-role sidebar nav visibility (positive + negative). Real browser (Chrome).
+     mvn test -DsuiteXmlFile=testng-rbac-nav-ui.xml [-Dheadless=true] [-Drbac.roles="Client Portal"] -->
+<suite name="eGalvanic RBAC — Nav Gating (UI)" verbose="1">
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+    <test name="RBAC Nav Gating (UI)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.RolePermissionUiGatingTest"/>
+        </classes>
+    </test>
+</suite>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!-- Single-slice: RBAC permission contract only (per-role /auth/me set == matrix). API, no browser.
+     mvn test -DsuiteXmlFile=testng-rbac-contract.xml [-Drbac.roles="Project Manager"] -->
+<suite name="eGalvanic RBAC — Permission Contract" verbose="1">
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+    <test name="RBAC Permission Contract (API)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.RoleBasedPermissionContractTest"/>
+        </classes>
+    </test>
+</suite>

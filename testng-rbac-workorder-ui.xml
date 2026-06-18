@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!-- Single-slice: PM reaches the work-order edit screen in the live UI. Real browser (Chrome).
+     mvn test -DsuiteXmlFile=testng-rbac-workorder-ui.xml [-Dheadless=true] -->
+<suite name="eGalvanic RBAC — Work Order Edit (UI)" verbose="1">
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+    <test name="RBAC Work Order Edit (UI)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkOrderEditUiTest"/>
+        </classes>
+    </test>
+</suite>

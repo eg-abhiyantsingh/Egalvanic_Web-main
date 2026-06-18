@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!-- Single-slice: create/edit enforcement for Asset(node), Task, Issue per role. API, no browser.
+     mvn test -DsuiteXmlFile=testng-rbac-actions.xml [-Drbac.roles="Project Manager"] -->
+<suite name="eGalvanic RBAC — Action Enforcement (create/edit)" verbose="1">
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+    <test name="RBAC Action Enforcement — create/edit (API)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.RoleActionEnforcementApiTest"/>
+        </classes>
+    </test>
+</suite>
