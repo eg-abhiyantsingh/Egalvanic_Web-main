@@ -18,4 +18,10 @@
         </classes>
     </test>
 
+    <test name="Asset Engineering — Trip Configuration (12 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetEngineeringTestNG"/>
+        </classes>
+    </test>
+
 </suite>
