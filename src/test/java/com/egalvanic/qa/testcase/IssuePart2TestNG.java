@@ -565,6 +565,9 @@ public class IssuePart2TestNG extends BaseTest {
                 "return false;");
         pause(1000);
 
+        // NOTE: deterministic issue-class taxonomy conformance (does the dropdown expose every
+        // class from issue_classes_template.xlsx?) lives in
+        // api/IssueClassContractApiTest — the MUI dropdown is unreliable to open in Selenium.
         List<WebElement> options = driver.findElements(By.cssSelector("li[role='option']"));
         logStep("Issue Class dropdown opened: " + opened + ", options: " + options.size());
 

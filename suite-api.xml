@@ -30,4 +30,10 @@
         </classes>
     </test>
 
+    <test name="Issue Class Contract (2 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.IssueClassContractApiTest"/>
+        </classes>
+    </test>
+
 </suite>
