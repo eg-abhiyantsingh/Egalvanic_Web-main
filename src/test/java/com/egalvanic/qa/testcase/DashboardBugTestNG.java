@@ -258,8 +258,9 @@ public class DashboardBugTestNG extends BaseTest {
 
             // Fallback: look for text patterns that repeat with "Issue" or type names
             String pageText = getPageText();
+            // 7 issue classes per testcase/issue_classes_template.xlsx (latest).
             String[] issueTypes = {"NEC Violation", "NFPA 70B Violation", "OSHA Violation",
-                    "Repair Needed", "Thermal Anomaly", "Ultrasonic Anomaly"};
+                    "Repair Needed", "Replacement Needed", "Thermal Anomaly", "Ultrasonic Anomaly"};
 
             Map<String, Integer> typeCounts = new HashMap<>();
             for (String type : issueTypes) {
@@ -382,8 +383,9 @@ public class DashboardBugTestNG extends BaseTest {
         navigateTo(DASHBOARD_URL);
         pause(6000); // Charts render asynchronously — extra wait for CI
 
+        // 7 issue classes per testcase/issue_classes_template.xlsx (latest).
         String[] expectedTypes = {"NEC Violation", "NFPA 70B Violation", "OSHA Violation",
-                "Repair Needed", "Thermal Anomaly", "Ultrasonic Anomaly"};
+                "Repair Needed", "Replacement Needed", "Thermal Anomaly", "Ultrasonic Anomaly"};
 
         // Strategy 1: Check DOM text for chart legends (if rendered as text)
         int found = 0;
