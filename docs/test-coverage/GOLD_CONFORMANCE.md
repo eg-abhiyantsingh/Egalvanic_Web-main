@@ -1,9 +1,19 @@
 # Gold-vs-Tests Conformance — why the class-attribute tests fail (2026-06-04)
 
 Source of truth: [`testcase/node_classes_gold.json`](../../testcase/node_classes_gold.json)
-(generated from `node_classes_template (12) - updated.xlsx` — 38 classes, 163 core
-attributes, 65 subtypes). Produced by a 9-file diff workflow (Asset/Connection/Issue
-class-attribute tests vs the gold). **89 mismatches** found.
+**Regenerated 2026-06-22 from `node_classes_template (13).xlsx`** (the latest template) —
+**39 classes, 163 core attributes, 65 subtypes**. Previously generated from
+`node_classes_template (12) - updated.xlsx` (38 classes); the prior gold is kept as
+`testcase/node_classes_gold.PREV-from-template12.json.bak`.
+
+> **2026-06-22 cleanup applied before regeneration** (template 13 → gold): removed 3
+> junk classes (`QA_ATS1`, `Test`, `QANode`); added the legit `Default` class (38→39);
+> fixed `Generator/Ampere Rating` (`textfield`→`select` + amp options); `PDU/Size`
+> (`numberfield`→`number`); cleared mismatched/garbage option lists off 26 free-text
+> fields; corrected 3 copy-pasted class descriptions (Battery, Lighting Controls,
+> Transformer 3-Winding). The **89-mismatch** analysis below predates this cleanup —
+> it was produced against the template-12 gold and should be re-run against the new
+> gold (the option-clearing changes can only reduce option-mismatch noise).
 
 ## Root cause — four kinds of drift
 
