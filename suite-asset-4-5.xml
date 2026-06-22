@@ -30,4 +30,10 @@
         </classes>
     </test>
 
+    <test name="Asset Engineering — per-class matrix (39 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetEngineeringMatrixTestNG"/>
+        </classes>
+    </test>
+
 </suite>
