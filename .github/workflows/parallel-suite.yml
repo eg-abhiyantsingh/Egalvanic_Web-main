@@ -132,6 +132,7 @@ jobs:
             {"toggle":"ASSET_4","group":"asset-4","name":"Asset Part 4","xml":"suite-asset-4.xml","tests":65,"stagger":50},
             {"toggle":"ASSET_5","group":"asset-5","name":"Asset Part 5","xml":"suite-asset-5.xml","tests":76,"stagger":55},
             {"toggle":"ASSET_5","group":"asset-engineering","name":"Asset Engineering / Trip Config","xml":"suite-asset-engineering.xml","tests":12,"stagger":58},
+            {"toggle":"ASSET_5","group":"asset-transformer","name":"Asset Engineering / Transformer","xml":"suite-asset-transformer.xml","tests":10,"stagger":60},
             {"toggle":"DASHBOARD_BUGHUNT","group":"dashboard-bughunt","name":"Dashboard + BugHunt","xml":"suite-dashboard-bughunt.xml","tests":105,"stagger":70},
             {"toggle":"SALES","group":"opportunities","name":"Opportunities [SALES]","xml":"suite-opportunities.xml","tests":41,"stagger":90},
             {"toggle":"SALES","group":"accounts","name":"Accounts [SALES]","xml":"suite-accounts.xml","tests":12,"stagger":100},

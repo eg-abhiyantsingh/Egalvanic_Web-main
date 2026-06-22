@@ -24,4 +24,10 @@
         </classes>
     </test>
 
+    <test name="Asset Engineering — Transformer Configuration (10 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.TransformerEngineeringTestNG"/>
+        </classes>
+    </test>
+
 </suite>
