@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Full Suite — Work Order Add-Issue (4 TCs)" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <test name="Work Order — Issues tab / Add Issue (4 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkOrderIssueTestNG"/>
+        </classes>
+    </test>
+
+</suite>

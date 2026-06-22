@@ -30,4 +30,10 @@
         </classes>
     </test>
 
+    <test name="Work Order — Add Issue (4 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkOrderIssueTestNG"/>
+        </classes>
+    </test>
+
 </suite>

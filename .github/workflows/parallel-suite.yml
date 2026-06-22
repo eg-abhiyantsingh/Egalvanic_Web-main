@@ -125,7 +125,8 @@ jobs:
           CATALOG='[
             {"toggle":"AUTH_SITE","group":"auth-site","name":"Auth + Site","xml":"suite-auth-site.xml","tests":56,"stagger":0},
             {"toggle":"LOCATION_TASK","group":"location-task","name":"Location + Task","xml":"suite-location-task.xml","tests":135,"stagger":10},
-            {"toggle":"WORK_ORDERS","group":"workorder-issue","name":"Work Order + Issue","xml":"suite-workorder-issue.xml","tests":234,"stagger":20},
+            {"toggle":"WORK_ORDERS","group":"workorder-issue","name":"Work Order + Issue","xml":"suite-workorder-issue.xml","tests":238,"stagger":20},
+            {"toggle":"WORK_ORDERS","group":"workorder-issue-add","name":"Work Order — Add Issue","xml":"suite-workorder-issue-add.xml","tests":4,"stagger":22},
             {"toggle":"WORK_ORDERS","group":"workorder-planning","name":"Work Order Planning","xml":"suite-workorder-planning.xml","tests":32,"stagger":80},
             {"toggle":"ASSET_1_2","group":"asset-1-2","name":"Asset Parts 1-2","xml":"suite-asset-1-2.xml","tests":69,"stagger":30},
             {"toggle":"ASSET_3","group":"asset-3","name":"Asset Part 3","xml":"suite-asset-3.xml","tests":76,"stagger":40},
