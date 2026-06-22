@@ -36,4 +36,16 @@
         </classes>
     </test>
 
+    <test name="Node/Asset Class Contract (1 TC)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.NodeClassContractApiTest"/>
+        </classes>
+    </test>
+
+    <test name="Edge/Connection Class Contract (1 TC)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.EdgeClassContractApiTest"/>
+        </classes>
+    </test>
+
 </suite>
