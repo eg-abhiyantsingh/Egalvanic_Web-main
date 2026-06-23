@@ -35,9 +35,9 @@ import java.util.List;
  * application shell renders post-login &mdash; without running the full smoke
  * battery (which is tuned for the acme.qa.egalvanic.ai tenant's data).
  *
- * Configuration (set via workflow env vars, NOT hardcoded):
+ * Configuration (set via workflow env vars from repo secrets, NOT hardcoded):
  *   BASE_URL       &mdash; https://acme.bces-iq.com
- *   USER_EMAIL     &mdash; shubham.goswami+acme@egalvanic.com
+ *   USER_EMAIL     &mdash; from BCES_IQ_USER secret
  *   USER_PASSWORD  &mdash; from BCES_IQ_PASSWORD secret
  *
  * The tests read these from AppConstants (which reads env via getEnv()),
@@ -185,7 +185,7 @@ public class BcesIqSmokeTestNG {
             new WebDriverWait(driver, Duration.ofSeconds(LOGIN_TIMEOUT))
                     .until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
 
-            logStep("Submitting credentials for user: " + AppConstants.VALID_EMAIL);
+            logStep("Submitting configured credentials"); // username/password intentionally NOT logged
             loginPage.login(AppConstants.VALID_EMAIL, AppConstants.VALID_PASSWORD);
 
             // Wait for URL change OR for an error message

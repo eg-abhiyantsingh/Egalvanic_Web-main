@@ -23,11 +23,11 @@ name: Parallel Suite 2 — Curated Bug Verification + AI + Smoke + Load + BCES-I
 # Total: ~422 TCs across 10 groups.
 #
 # The BCES-IQ group runs the SAME test framework against
-# https://acme.bces-iq.com using a different user (shubham.goswami+acme@...)
-# via env-var overrides on BASE_URL / USER_EMAIL / USER_PASSWORD. The
-# password comes from the BCES_IQ_PASSWORD repo secret (set manually in
-# GitHub settings). If the secret is missing, the job falls back to a
-# safe no-op (won't accidentally pummel the tenant with bad logins).
+# https://acme.bces-iq.com using a dedicated BCES-IQ user, via env-var
+# overrides on BASE_URL / USER_EMAIL / USER_PASSWORD. The username and
+# password come from the BCES_IQ_USER / BCES_IQ_PASSWORD repo secrets
+# (set manually in GitHub settings) — never committed. If the secrets are
+# missing, the bces-iq login simply fails (no plaintext creds in the repo).
 #
 # The client-facing bug report PDF is uploaded as an artifact of the
 # summary job so it can be attached to client communications.
@@ -118,7 +118,7 @@ jobs:
           CATALOG='[
             {"toggle":"CURATED","group":"curated-bug-verification","name":"Curated Bug Verification","xml":"deep-bug-verification-testng.xml","tests":8,"stagger":0},
             {"toggle":"SMOKE","group":"smoke","name":"Smoke Suites","xml":"smoke-testng.xml","tests":37,"stagger":10},
-            {"toggle":"SMOKE","group":"bces-iq-smoke","name":"BCES-IQ Tenant Smoke","xml":"smoke-bces-iq-testng.xml","tests":3,"stagger":70,"base_url":"https://acme.bces-iq.com","user_email":"shubham.goswami+acme@egalvanic.com","user_password":"Shubham@123"},
+            {"toggle":"SMOKE","group":"bces-iq-smoke","name":"BCES-IQ Tenant Smoke","xml":"smoke-bces-iq-testng.xml","tests":3,"stagger":70,"base_url":"https://acme.bces-iq.com"},
             {"toggle":"LOAD_API","group":"load-api","name":"Load + API + Critical Path","xml":"suite-load-api.xml","tests":62,"stagger":20},
             {"toggle":"AI","group":"ai-form","name":"AI Form Creation","xml":"suite-ai-form.xml","tests":56,"stagger":30},
             {"toggle":"AI","group":"ai-analyzer","name":"AI Page Analyzer","xml":"suite-ai-analyzer.xml","tests":3,"stagger":60},
@@ -231,14 +231,14 @@ jobs:
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           SEND_EMAIL_ENABLED: "false"
           FULL_SUITE_GROUP: ${{ matrix.group }}
-          # Per-matrix tenant overrides. When a matrix entry sets these
-          # fields, AppConstants#getEnv() substitutes them for the defaults
-          # (acme.qa.egalvanic.ai / abhiyant.singh+admin@... / RP@egalvanic123).
-          # Empty string is treated as "use default", so non-bces-iq jobs
+          # Per-matrix tenant overrides. The BASE_URL comes from the matrix entry;
+          # the BCES-IQ tenant credentials come from repo SECRETS (never committed) and
+          # are injected ONLY for the bces-iq-smoke group. Empty string is treated as
+          # "use default" by AppConstants#getEnv(), so all other (acme.qa) jobs
           # transparently fall through to the standard acme.qa credentials.
           BASE_URL: ${{ matrix.base_url }}
-          USER_EMAIL: ${{ matrix.user_email }}
-          USER_PASSWORD: ${{ matrix.user_password }}
+          USER_EMAIL: ${{ matrix.group == 'bces-iq-smoke' && secrets.BCES_IQ_USER || '' }}
+          USER_PASSWORD: ${{ matrix.group == 'bces-iq-smoke' && secrets.BCES_IQ_PASSWORD || '' }}
         run: |
           bash .github/scripts/full-suite-dashboard.sh
 

@@ -7,16 +7,17 @@
   following environment variables to be set BEFORE the test runner starts:
 
     BASE_URL       = https://acme.bces-iq.com
-    USER_EMAIL     = shubham.goswami+acme@egalvanic.com
+    USER_EMAIL     = <from BCES_IQ_USER secret>
     USER_PASSWORD  = <from BCES_IQ_PASSWORD secret>
 
-  In Parallel Suite 2 (GitHub Actions), these are set by the matrix entry
-  env: block so AppConstants.getEnv() picks them up.
+  In Parallel Suite 2 (GitHub Actions), the credentials are injected for the
+  bces-iq-smoke group from the BCES_IQ_USER / BCES_IQ_PASSWORD repo secrets so
+  AppConstants.getEnv() picks them up. They are never committed.
 
-  Run locally:
+  Run locally (supply your own BCES-IQ credentials via env — do not commit them):
     BASE_URL=https://acme.bces-iq.com \
-    USER_EMAIL=shubham.goswami+acme@egalvanic.com \
-    USER_PASSWORD=Shubham@123 \
+    USER_EMAIL="$BCES_IQ_USER" \
+    USER_PASSWORD="$BCES_IQ_PASSWORD" \
     mvn clean test -DsuiteXmlFile=smoke-bces-iq-testng.xml
 -->
 <suite name="BCES-IQ Tenant Smoke Suite (3 TCs)" verbose="1">

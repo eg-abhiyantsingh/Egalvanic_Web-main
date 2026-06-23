@@ -2,8 +2,8 @@
 
 ## Prompt
 > https://acme.bces-iq.com/
-> email: shubham.goswami+acme@egalvanic.com
-> password: Shubham@123
+> email: «BCES_IQ_USER secret»
+> password: «BCES_IQ_PASSWORD secret»
 > add for this site also test case, add in parallel phase 2
 
 ## Model in use
@@ -33,14 +33,15 @@ Class deliberately does NOT extend BaseTest — like `AuthSmokeTestNG`, each tes
 Binds the test class. Usage (local):
 ```bash
 BASE_URL=https://acme.bces-iq.com \
-USER_EMAIL=shubham.goswami+acme@egalvanic.com \
-USER_PASSWORD=Shubham@123 \
+USER_EMAIL=«BCES_IQ_USER secret» \
+USER_PASSWORD=«BCES_IQ_PASSWORD secret» \
 mvn clean test -DsuiteXmlFile=smoke-bces-iq-testng.xml
 ```
 
 ### Parallel Suite 2 workflow — [.github/workflows/parallel-suite-2.yml](.github/workflows/parallel-suite-2.yml)
 
-Added matrix entry #8 (`bces-iq-smoke`) with per-tenant env overrides:
+Added matrix entry #8 (`bces-iq-smoke`). Only the (public) base URL lives in the matrix; the
+credentials come from repo **secrets** (never committed):
 ```yaml
 - group: bces-iq-smoke
   name: "BCES-IQ Tenant Smoke"
@@ -48,15 +49,13 @@ Added matrix entry #8 (`bces-iq-smoke`) with per-tenant env overrides:
   tests: 3
   stagger: 70
   base_url: "https://acme.bces-iq.com"
-  user_email: "shubham.goswami+acme@egalvanic.com"
-  user_password: "Shubham@123"
 ```
 
-Run step's env block now reads these matrix fields:
+Run step's env block injects the BCES-IQ credentials from secrets, only for that group:
 ```yaml
 BASE_URL: ${{ matrix.base_url }}
-USER_EMAIL: ${{ matrix.user_email }}
-USER_PASSWORD: ${{ matrix.user_password }}
+USER_EMAIL: ${{ matrix.group == 'bces-iq-smoke' && secrets.BCES_IQ_USER || '' }}
+USER_PASSWORD: ${{ matrix.group == 'bces-iq-smoke' && secrets.BCES_IQ_PASSWORD || '' }}
 ```
 
 Also updated: `max-parallel: 7 → 8`, `Groups: / 7 → / 8` (2 places), header comment updated.
@@ -89,7 +88,10 @@ Option C won because the infrastructure was already in place — `getEnv()` trea
 
 ★ Insight ─────────────────────────────────────
 - **The env-var fallthrough is what makes this clean**: GitHub Actions doesn't let you conditionally SET an env var per matrix entry, but it DOES let matrix entries declare arbitrary fields (`base_url`, `user_email`, etc.). Non-bces-iq matrix entries just don't declare them — `${{ matrix.base_url }}` evaluates to empty string — and `AppConstants.getEnv()` falls back to `acme.qa.egalvanic.ai`. Adding a third tenant later means adding one matrix entry, no framework changes.
-- **Why I didn't use a `secrets.BCES_IQ_PASSWORD`**: GitHub repo secrets require manual setup. For immediate CI runs, and matching the existing pattern (AppConstants.java hardcodes `RP@egalvanic123`), the password lives in the matrix entry as plaintext with a comment pointing to the upgrade path (secret override) if it ever needs to rotate.
+- **Credentials live in repo secrets, never in the repo**: the BCES-IQ username + password come from
+  the `BCES_IQ_USER` / `BCES_IQ_PASSWORD` GitHub secrets, injected into env only for the `bces-iq-smoke`
+  group. (An earlier revision committed them as plaintext in the matrix — that was scrubbed; the leaked
+  password must be **rotated** since it remains in git history.)
 - **Read-only test design**: the 3 tests only GET the site + try login. No asset creates, no edits, no logouts, no form submits. The bces-iq tenant's real data is safe — the worst a flaky test can do is fail loudly.
 ─────────────────────────────────────────────────
 
@@ -122,8 +124,8 @@ mvn clean test-compile                                                          
 ### Locally
 ```bash
 BASE_URL=https://acme.bces-iq.com \
-USER_EMAIL=shubham.goswami+acme@egalvanic.com \
-USER_PASSWORD=Shubham@123 \
+USER_EMAIL=«BCES_IQ_USER secret» \
+USER_PASSWORD=«BCES_IQ_PASSWORD secret» \
 mvn clean test -DsuiteXmlFile=smoke-bces-iq-testng.xml
 ```
 
