@@ -42,4 +42,10 @@
         </classes>
     </test>
 
+    <test name="Asset Engineering — exhaustive option coverage (308 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetEngineeringExhaustiveTestNG"/>
+        </classes>
+    </test>
+
 </suite>
