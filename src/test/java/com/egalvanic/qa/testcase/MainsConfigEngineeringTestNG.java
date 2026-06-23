@@ -191,8 +191,154 @@ public class MainsConfigEngineeringTestNG extends BaseTest {
     }
 
     // ================================================================
+    // DISCONNECT-SWITCH MAINS (NFDS / FDS) — the non-breaker mains types
+    // ================================================================
+
+    @Test(priority = 9, description = "MAINS_09: Mains Type=NFDS opens the 'Create a Main Switch?' dialog (Name + Subtype + Create Main, no Pole Count)")
+    public void testMAINS_09_NfdsOpensMainSwitchDialog() {
+        ExtentReportManager.createTest(MODULE, FEATURE, "MAINS_09_NfdsOpensMainSwitchDialog");
+        Assert.assertTrue(openCreateFormForClass("VFD"), "Create form should open for VFD");
+        waitForControl("Select mains type", 8);
+        selectAutocomplete("Select phase configuration", "3P4W", "3p4w");
+        pause(600);
+        Assert.assertNotNull(selectAutocomplete("Select mains type", "NFDS", "nfds"), "NFDS should be selectable as Mains Type.");
+        Assert.assertTrue(waitForDialog("Main Switch", 10),
+                "Selecting NFDS should open the 'Create a Main Switch?' dialog.");
+        Assert.assertTrue(dialogHas("Subtype"), "The Main Switch dialog should have a Subtype field.");
+        Assert.assertTrue(dialogHasButton("Create Main"), "The Main Switch dialog should have a 'Create Main' button.");
+        Assert.assertEquals(dialogPoleButtons(), 0,
+                "A disconnect-switch main has NO Pole Count (unlike a circuit-breaker main).");
+        ExtentReportManager.logPass("Mains Type=NFDS opens the 'Create a Main Switch?' dialog (Name + Subtype + Create Main; no Pole Count).");
+    }
+
+    @Test(priority = 10, description = "MAINS_10: Mains Type=FDS adds an Ampere Rating field and opens NO main-device dialog")
+    public void testMAINS_10_FdsAmpereRatingNoDialog() {
+        ExtentReportManager.createTest(MODULE, FEATURE, "MAINS_10_FdsAmpereRatingNoDialog");
+        Assert.assertTrue(openCreateFormForClass("VFD"), "Create form should open for VFD");
+        waitForControl("Select mains type", 8);
+        selectAutocomplete("Select phase configuration", "3P4W", "3p4w");
+        pause(600);
+        Assert.assertNotNull(selectAutocomplete("Select mains type", "FDS", "fds"), "FDS should be selectable as Mains Type.");
+        pause(2500);
+        Assert.assertFalse(dialogOpen("Main"),
+                "FDS (Fused Disconnect Switch) should NOT open a main-device dialog.");
+        Assert.assertTrue(engHasAmpereRating(),
+                "FDS should add an 'Ampere Rating' field to the Engineering section.");
+        ExtentReportManager.logPass("Mains Type=FDS adds an Ampere Rating field (no main-device dialog).");
+    }
+
+    @Test(priority = 11, description = "MAINS_11: Create a VFD (3P4W) with an NFDS main switch and save it (write-persistence)")
+    public void testMAINS_11_CreateVfdWithMainSwitch() {
+        ExtentReportManager.createTest(MODULE, FEATURE, "MAINS_11_CreateVfdWithMainSwitch");
+        String name = "VFD-MAINS-" + System.currentTimeMillis();
+        Assert.assertTrue(openCreateFormForClass("VFD"), "Create form should open for VFD");
+        waitForControl("Select mains type", 8);
+        Assert.assertTrue(setAssetName(name), "Should set the asset name on the create form.");
+        selectAutocomplete("Select phase configuration", "3P4W", "3p4w");
+        pause(600);
+        Assert.assertNotNull(selectAutocomplete("Select mains type", "NFDS", "nfds"), "NFDS should be selectable.");
+        Assert.assertTrue(waitForDialog("Main Switch", 10), "NFDS should open the 'Create a Main Switch?' dialog.");
+        // fill the main switch Name (required) and create it
+        Assert.assertTrue(fillDialogName("Main-" + name), "Should set the main switch Name in the dialog.");
+        pause(400);
+        Assert.assertTrue(clickDialogButton("Create Main"), "Should click 'Create Main'.");
+        for (int i = 0; i < 24 && dialogOpen("Main Switch"); i++) pause(500); // wait for dialog to close
+        pause(1500);
+        // now save the VFD asset
+        boolean saved = saveDrawer();
+        formOpen = !saved;
+        String url = driver.getCurrentUrl();
+        Assert.assertTrue(saved && (url.endsWith("/assets") || url.endsWith("/assets/")),
+                "Saving the VFD (with NFDS main switch) should persist it — create drawer closes, returns to /assets. url=" + url);
+        ExtentReportManager.logPass("Created + saved a VFD with a 3P4W / NFDS main switch ('" + name + "').");
+    }
+
+    // ================================================================
     // HELPERS
     // ================================================================
+
+    /** Drawer Engineering section contains an Ampere Rating field (top-level, FDS path). */
+    private boolean engHasAmpereRating() {
+        Object r = js("var d=document.querySelector('.MuiDrawer-anchorRight .MuiDrawer-paper'); return d? /ampere rating/i.test(d.innerText||'') : false;");
+        return Boolean.TRUE.equals(r);
+    }
+
+    /** Set the create-form's "Enter Asset Name" field via the React value setter (with sendKeys fallback). */
+    private boolean setAssetName(String name) {
+        js("var i=[].slice.call(document.querySelectorAll('input')).find(function(x){return /enter asset name/i.test(x.placeholder||'');});"
+                + "if(!i) return; i.scrollIntoView({block:'center'}); i.focus();"
+                + "var set=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
+                + "set.call(i, arguments[0]); i.dispatchEvent(new Event('input',{bubbles:true})); i.dispatchEvent(new Event('change',{bubbles:true}));", name);
+        pause(400);
+        Object v = js("var i=[].slice.call(document.querySelectorAll('input')).find(function(x){return /enter asset name/i.test(x.placeholder||'');}); return i?i.value:null;");
+        return v != null && String.valueOf(v).contains(name);
+    }
+
+    /** Set the Name field inside the open Create-Main dialog (placeholder "e.g. MAIN-1"). */
+    private boolean fillDialogName(String name) {
+        Object r = js("var d=[].slice.call(document.querySelectorAll(\"[role='dialog'], .MuiDialog-paper\")).find(function(e){return e.getBoundingClientRect().width>150;});"
+                + "if(!d) return false;"
+                + "var i=[].slice.call(d.querySelectorAll('input')).find(function(x){return /MAIN-1|name/i.test((x.placeholder||'')) ;}) || d.querySelector('input');"
+                + "if(!i) return false; i.focus();"
+                + "var set=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
+                + "set.call(i, arguments[0]); i.dispatchEvent(new Event('input',{bubbles:true})); i.dispatchEvent(new Event('change',{bubbles:true})); return true;", name);
+        return Boolean.TRUE.equals(r);
+    }
+
+    /** Click a button (by exact text) inside the open dialog. */
+    private boolean clickDialogButton(String text) {
+        Object r = js("var t=arguments[0].toLowerCase();"
+                + "var d=[].slice.call(document.querySelectorAll(\"[role='dialog'], .MuiDialog-paper\")).find(function(e){return e.getBoundingClientRect().width>150;});"
+                + "if(!d) return false;"
+                + "var b=[].slice.call(d.querySelectorAll('button')).find(function(x){return (x.innerText||'').trim().toLowerCase()===t && !x.disabled;});"
+                + "if(!b) return false; b.scrollIntoView({block:'center'}); b.click(); return true;", text);
+        return Boolean.TRUE.equals(r);
+    }
+
+    /** Click the drawer's submit button (Create Asset / Save) and wait for the drawer to close. */
+    private boolean saveDrawer() {
+        Boolean clicked = (Boolean) js(
+                "var d=document.querySelector('.MuiDrawer-anchorRight .MuiDrawer-paper'); if(!d) return false;"
+                + "var b=[].slice.call(d.querySelectorAll('button')).find(function(x){return /^(Create Asset|Save Changes|Save)$/i.test((x.innerText||'').trim()) && !x.disabled;});"
+                + "if(!b) return false; b.scrollIntoView({block:'center'}); b.click(); return true;");
+        if (!Boolean.TRUE.equals(clicked)) { logStep("save button not found/clickable"); return false; }
+        for (int i = 0; i < 40; i++) {
+            pause(500);
+            boolean open = Boolean.TRUE.equals(js("var d=document.querySelector('.MuiDrawer-anchorRight .MuiDrawer-paper'); return !!(d && d.getBoundingClientRect().width>0);"));
+            if (!open) return true;
+        }
+        logStep("drawer did not close after save (validation error?)");
+        return false;
+    }
+
+    @Test(priority = 0, enabled = false, description = "DIAG: VFD → 3P4W → NFDS — dump the resulting dialog/section")
+    public void testDIAG_NfdsFlow() {
+        ExtentReportManager.createTest(MODULE, FEATURE, "DIAG_NfdsFlow");
+        StringBuilder sb = new StringBuilder();
+        for (String mt : new String[]{"NFDS", "FDS"}) {
+            sb.append("===== VFD + 3P4W + ").append(mt).append(" =====\n");
+            try {
+                if (!openCreateFormForClass("VFD")) { sb.append("open failed\n\n"); continue; }
+                waitForControl("Select mains type", 8);
+                selectAutocomplete("Select phase configuration", "3P4W", "3p4w");
+                pause(600);
+                selectAutocomplete("Select mains type", mt, mt.toLowerCase());
+                pause(2500);
+                Object dlg = js("var d=[].slice.call(document.querySelectorAll(\"[role='dialog'], .MuiDialog-paper\")).find(function(e){return e.getBoundingClientRect().width>150;});"
+                        + "if(!d) return 'NO DIALOG';"
+                        + "var inputs=[].slice.call(d.querySelectorAll('input,textarea')).map(function(i){return (i.placeholder||i.name||'?');});"
+                        + "var btns=[].slice.call(d.querySelectorAll('button')).map(function(b){return (b.innerText||'').trim();}).filter(Boolean);"
+                        + "var poles=[].slice.call(d.querySelectorAll('button')).filter(function(b){return /^[123]P$/.test((b.innerText||'').trim());}).map(function(b){return b.innerText.trim();});"
+                        + "return 'TITLE: '+(d.innerText||'').replace(/\\s+/g,' ').slice(0,160)+'\\nINPUTS: '+inputs.join(' | ')+'\\nBUTTONS: '+btns.join(' | ')+'\\nPOLES: '+poles.join(',');");
+                sb.append(dlg).append("\n");
+                Object eng = js("var d=document.querySelector('.MuiDrawer-anchorRight .MuiDrawer-paper'); return d? ('engHasAmpereRating='+/ampere rating/i.test(d.innerText||'')) : 'no drawer';");
+                sb.append(eng).append("\n\n");
+            } catch (Exception e) { sb.append("error: ").append(e.getMessage()).append("\n\n"); }
+            dismissDialog(); closeAnyOpenDrawer(); formOpen = false; pause(500);
+        }
+        try { java.nio.file.Files.write(java.nio.file.Paths.get("/tmp/nfds-diag.txt"), sb.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8)); } catch (Exception ignored) {}
+        ExtentReportManager.logPass("NFDS/FDS flow diagnostic dumped.");
+    }
 
     private Object js(String script, Object... args) {
         try { return ((JavascriptExecutor) driver).executeScript(script, args); }

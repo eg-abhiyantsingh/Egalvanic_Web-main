@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="Full Suite — Asset Engineering Mains Configuration (14 TCs)" verbose="1">
+<suite name="Full Suite — Asset Engineering Mains Configuration (17 TCs)" verbose="1">
 
     <listeners>
         <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
     </listeners>
 
-    <test name="Asset Engineering — Mains Configuration cascade (14 TCs)">
+    <test name="Asset Engineering — Mains Configuration cascade (17 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.MainsConfigEngineeringTestNG"/>
         </classes>
