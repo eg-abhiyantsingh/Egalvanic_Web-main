@@ -36,4 +36,10 @@
         </classes>
     </test>
 
+    <test name="Asset Engineering — Mains Configuration cascade (14 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.MainsConfigEngineeringTestNG"/>
+        </classes>
+    </test>
+
 </suite>
