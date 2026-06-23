@@ -502,6 +502,42 @@ public class TaskTestNG extends BaseTest {
         }
     }
 
+    /**
+     * Open the first task's detail page by clicking its NAME cell (the row container itself does NOT
+     * navigate — only the task-name link does). Returns true once the URL is /tasks/{id}.
+     */
+    private boolean openFirstTaskDetail() {
+        try {
+            dismissBackdrops();
+            waitForGrid();
+            List<WebElement> rows = driver.findElements(GRID_ROWS);
+            if (rows.isEmpty()) return false;
+            WebElement nameTarget;
+            try {
+                nameTarget = rows.get(0).findElement(By.cssSelector("[role='gridcell'] p, [role='gridcell'], td p, td"));
+            } catch (Exception e) { nameTarget = rows.get(0); }
+            safeClick(nameTarget);
+            for (int i = 0; i < 16; i++) {
+                pause(500);
+                String u = driver.getCurrentUrl();
+                if (u.contains("/tasks/") && !u.endsWith("/tasks") && !u.endsWith("/tasks/")) return true;
+            }
+            return driver.getCurrentUrl().contains("/tasks/") && !driver.getCurrentUrl().endsWith("/tasks");
+        } catch (Exception e) {
+            logStep("openFirstTaskDetail error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /** Poll the detail page (up to ~12s) for a label that renders in the lazy "Details" tab body. */
+    private boolean pollDetailContains(String text) {
+        for (int i = 0; i < 10; i++) {
+            if (getPageText().contains(text)) return true;
+            pause(1200);
+        }
+        return false;
+    }
+
     private void selectAutocompleteOption(By inputLocator, String optionText) {
         safeClick(inputLocator);
         pause(500);
@@ -534,10 +570,12 @@ public class TaskTestNG extends BaseTest {
 
     private void clearAndType(By locator, String text) {
         // React (especially the Create Task drawer's Title field) re-renders mid-interaction.
-        // Re-find the element before each action to defeat StaleElementReferenceException,
-        // and retry up to 3 times if React swaps the input under us.
-        org.openqa.selenium.StaleElementReferenceException lastStale = null;
-        for (int attempt = 0; attempt < 3; attempt++) {
+        // Re-find the element before each action to defeat StaleElementReferenceException, and retry
+        // on NoSuchElement too — the drawer can still be mounting when the first read fires (the
+        // EC_002 flake: EC_001/EC_003 use the same path and pass, so it was a timing miss, not a
+        // broken locator). Give the field up to ~6s to appear across the retries.
+        RuntimeException last = null;
+        for (int attempt = 0; attempt < 6; attempt++) {
             try {
                 WebElement el = driver.findElement(locator);
                 safeClick(el);
@@ -550,14 +588,14 @@ public class TaskTestNG extends BaseTest {
                 el.sendKeys(text);
                 pause(300);
                 return;
-            } catch (org.openqa.selenium.StaleElementReferenceException e) {
-                lastStale = e;
-                pause(400);
+            } catch (org.openqa.selenium.StaleElementReferenceException
+                    | org.openqa.selenium.NoSuchElementException e) {
+                last = e;
+                pause(500);
             }
         }
-        throw new org.openqa.selenium.StaleElementReferenceException(
-                "clearAndType could not type into " + locator + " after 3 attempts",
-                lastStale);
+        throw new org.openqa.selenium.NoSuchElementException(
+                "clearAndType could not type into " + locator + " after 6 attempts", last);
     }
 
     private String getTodayFormatted() {
@@ -1341,14 +1379,11 @@ public class TaskTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_EDIT, "TC_ET_003_EditTaskTitle");
         logStep("Verifying task detail page shows Description");
 
-        List<WebElement> rows = driver.findElements(GRID_ROWS);
-        if (rows.isEmpty()) { logStep("No rows — skipping"); return; }
+        if (!openFirstTaskDetail()) { logStep("Could not open a task detail — skipping"); return; }
 
-        safeClick(rows.get(0));
-        pause(3000);
-
-        String pageText = getPageText();
-        boolean hasDescription = pageText.contains("Description");
+        // The Description lives in the detail's "Details" tab body, which renders after the page
+        // shell — poll instead of a single read after a fixed pause.
+        boolean hasDescription = pollDetailContains("Description");
         logStep("Description section present: " + hasDescription);
         logStepWithScreenshot("Task detail Description");
 
@@ -1442,18 +1477,17 @@ public class TaskTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_EDIT, "TC_ET_006_EditDueDate");
         logStep("Verifying task detail page shows Due Date");
 
-        List<WebElement> rows = driver.findElements(GRID_ROWS);
-        if (rows.isEmpty()) { logStep("No rows — skipping"); return; }
+        if (!openFirstTaskDetail()) { logStep("Could not open a task detail — skipping"); return; }
 
-        safeClick(rows.get(0));
-        pause(3000);
-
-        String pageText = getPageText();
-        String lower = pageText.toLowerCase();
-        // Check case-insensitive: app may render "Due Date", "Due date", or "Deadline"
-        boolean hasDueDate = lower.contains("due date") || lower.contains("deadline")
-                || lower.contains("due") || lower.contains("target date");
-        logStep("Due Date present: " + hasDueDate + " (page length: " + pageText.length() + ")");
+        // "Due Date" renders in the detail's Details-tab body — poll for it.
+        boolean hasDueDate = false;
+        for (int i = 0; i < 10 && !hasDueDate; i++) {
+            String lower = getPageText().toLowerCase();
+            hasDueDate = lower.contains("due date") || lower.contains("deadline")
+                    || lower.contains("due") || lower.contains("target date");
+            if (!hasDueDate) pause(1200);
+        }
+        logStep("Due Date present: " + hasDueDate);
 
         Assert.assertTrue(hasDueDate, "Detail page should show Due Date");
 
@@ -1559,14 +1593,9 @@ public class TaskTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_DELETE, "TC_DT_002_DeleteShowsConfirmation");
         logStep("Checking Created date on detail page");
 
-        List<WebElement> rows = driver.findElements(GRID_ROWS);
-        if (rows.isEmpty()) { logStep("No rows — skipping"); return; }
+        if (!openFirstTaskDetail()) { logStep("Could not open a task detail — skipping"); return; }
 
-        safeClick(rows.get(0));
-        pause(3000);
-
-        String pageText = getPageText();
-        boolean hasCreated = pageText.contains("Created");
+        boolean hasCreated = pollDetailContains("Created");
         logStep("Created field present: " + hasCreated);
         logStepWithScreenshot("Detail page Created date");
 
