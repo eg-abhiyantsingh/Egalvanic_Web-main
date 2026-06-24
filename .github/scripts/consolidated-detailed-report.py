@@ -23,7 +23,18 @@ Usage:
                 (CI: all-reports ; local: reports/detail-report)
     output-dir: where to write the two HTML files (+ modules/ for the nav index)
 
-For each module only the NEWEST timestamped report is kept (drops re-run dupes).
+Dedup model — IMPORTANT for the parallel suites:
+  The same module name (e.g. "Asset Management") is produced by MANY parallel CI
+  jobs — every asset group AND all 5 engineering suites call createTest("Asset
+  Management", ...), each in its own JVM, each emitting its own
+  Detailed_Report_Asset_Management_<ts>.html into its own artifact
+  (all-reports/reports-s2-<group>/...). Those reports hold DIFFERENT tests, so they
+  must NOT collapse into one. We therefore key by (group, module) — group taken from
+  the artifact subdir — keeping the newest report per (group, module) (still drops
+  genuine same-job re-run dupes). When a module name comes from >1 group, its display
+  name is suffixed with the group so every group's tests are kept AND distinguishable.
+  Run directly against a flat dir (local single run) → group is "" and behavior is the
+  old "newest per module" exactly.
 """
 
 import argparse
@@ -106,7 +117,14 @@ FLATTEN_SHIM = """
     return Math.ceil(h);
   }
   function postHeight() {
-    try { parent.postMessage({ __consHeight: true, h: contentHeight() }, '*'); } catch (e) {}
+    var h = contentHeight();
+    // (1) set our own iframe height directly — works whenever the parent is
+    //     same-origin (HTTP serve, or opening the file directly), so the page is
+    //     correctly sized even before the parent's JS runs / if postMessage is
+    //     missed. Guarded: cross-origin access throws and we fall back to (2).
+    try { if (window.frameElement && h > 40) window.frameElement.style.height = (h + 28) + 'px'; } catch (e) {}
+    // (2) post the height so the parent can size us when (1) is blocked (cross-origin).
+    try { parent.postMessage({ __consHeight: true, h: h }, '*'); } catch (e) {}
   }
   function init() {
     expand();
@@ -122,9 +140,28 @@ FLATTEN_SHIM = """
 """
 
 
+def group_from_relpath(rel):
+    """CI lays each parallel job's artifact in its own subdir:
+       all-reports/reports-s2-<group>/reports/detail-report/Detailed_Report_*.html
+    Use that first path component to tell apart same-module reports from DIFFERENT
+    groups (different tests). Strip the artifact-name prefix to a clean group label.
+    Returns "" when the report sits directly in input-dir (local single-run use)."""
+    parts = rel.replace("\\", "/").split("/")
+    if len(parts) < 2:
+        return ""  # file is directly in input-dir → no group context
+    top = parts[0]
+    for pref in ("reports-s2-", "reports-s1-", "reports-"):
+        if top.startswith(pref):
+            return top[len(pref):]
+    return top
+
+
 def discover(input_dir):
-    """Return {module_display_name: (path, timestamp)} keeping the newest per module."""
-    chosen = {}
+    """Return a list of entry dicts {module, group, display, path, ts}, keeping the
+    newest report per (group, module). Distinct parallel groups that share a module
+    name are ALL kept (and their display name disambiguated by group) instead of
+    collapsing to a single newest report."""
+    chosen = {}  # (group, module) -> (path, ts)
     for path in glob.glob(os.path.join(input_dir, "**", "Detailed_Report_*.html"), recursive=True):
         base = os.path.basename(path)
         m = NAME_RE.search(base)
@@ -138,10 +175,27 @@ def discover(input_dir):
         except OSError:
             continue
         module = module_raw.replace("_", " ").strip()
-        prev = chosen.get(module)
+        group = group_from_relpath(os.path.relpath(path, input_dir))
+        key = (group, module)
+        prev = chosen.get(key)
         if prev is None or ts > prev[1]:
-            chosen[module] = (path, ts)
-    return chosen
+            chosen[key] = (path, ts)
+
+    # A module name is "ambiguous" when produced by more than one group — only then
+    # do we suffix the display name (keeps single-group modules clean).
+    groups_per_module = {}
+    for (group, module) in chosen:
+        groups_per_module.setdefault(module, set()).add(group)
+
+    entries = []
+    for (group, module), (path, ts) in chosen.items():
+        ambiguous = len(groups_per_module.get(module, ())) > 1
+        display = f"{module} · {group}" if (ambiguous and group) else module
+        entries.append({"module": module, "group": group, "display": display,
+                        "path": path, "ts": ts})
+    # readable, stable order: by module, then group
+    entries.sort(key=lambda e: (e["module"].lower(), e["group"].lower()))
+    return entries
 
 
 def safe_filename(module):
@@ -337,8 +391,8 @@ def main():
     ap.add_argument("--timestamp", default="")
     args = ap.parse_args()
 
-    chosen = discover(args.input_dir)
-    if not chosen:
+    entries = discover(args.input_dir)
+    if not entries:
         print(f"[consolidated-detailed] no Detailed_Report_*.html found under {args.input_dir} — nothing to do")
         return 0
 
@@ -348,16 +402,24 @@ def main():
 
     nav_entries = []        # (name, rel, size) for the navigable index
     single_entries = []     # (name, html_string, size) for the single file
-    for module in sorted(chosen):
-        src, _ts = chosen[module]
+    used_fnames = set()
+    for e in entries:
+        src, name = e["path"], e["display"]
         with open(src, "r", encoding="utf-8", errors="replace") as fh:
             mod_html = fh.read()
         size = len(mod_html.encode("utf-8"))
-        # nav index: copy the raw module file into modules/
-        fname = safe_filename(module)
+        # nav index: copy the raw module file into modules/ under a unique name
+        fname = safe_filename(name)
+        if fname in used_fnames:
+            stem, ext = os.path.splitext(fname)
+            i = 2
+            while f"{stem}-{i}{ext}" in used_fnames:
+                i += 1
+            fname = f"{stem}-{i}{ext}"
+        used_fnames.add(fname)
         shutil.copyfile(src, os.path.join(modules_dir, fname))
-        nav_entries.append((module, f"modules/{fname}", size))
-        single_entries.append((module, mod_html, size))
+        nav_entries.append((name, f"modules/{fname}", size))
+        single_entries.append((name, mod_html, size))
 
     ts = args.timestamp or "this run"
 

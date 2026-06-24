@@ -72,6 +72,8 @@ CLASS_TO_MODULE = {
     'WorkOrderTestNG': 'Work Orders',
     'WorkOrderPart2TestNG': 'Work Orders',
     'WorkOrderSmokeTestNG': 'Work Orders',
+    'WorkOrderPlanningTestNG': 'Work Orders',
+    'WorkOrderIssueTestNG': 'Work Orders',
     # Asset Management
     'AssetPart1TestNG': 'Asset Management',
     'AssetPart2TestNG': 'Asset Management',
@@ -79,6 +81,12 @@ CLASS_TO_MODULE = {
     'AssetPart4TestNG': 'Asset Management',
     'AssetPart5TestNG': 'Asset Management',
     'AssetSmokeTestNG': 'Asset Management',
+    # Asset Management — Engineering section (separate parallel groups, same module)
+    'AssetEngineeringTestNG': 'Asset Management',
+    'TransformerEngineeringTestNG': 'Asset Management',
+    'AssetEngineeringMatrixTestNG': 'Asset Management',
+    'MainsConfigEngineeringTestNG': 'Asset Management',
+    'AssetEngineeringExhaustiveTestNG': 'Asset Management',
     # SLD
     'SLDTestNG': 'SLD Module',
     # Dashboard
