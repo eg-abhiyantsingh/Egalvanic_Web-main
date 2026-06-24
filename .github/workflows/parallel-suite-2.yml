@@ -67,6 +67,10 @@ on:
         description: 'Documentation-Inspired Tests'
         type: boolean
         default: true
+      engineering:
+        description: 'Asset Engineering (Trip Config + Transformer + per-class matrix + Mains Config + exhaustive options, 386 TCs)'
+        type: boolean
+        default: false
       # ── RBAC (opt-in — off by default). ──
       rbac_api:
         description: 'RBAC — API tests (contract + 791-cell matrix + edit + CRUD enforcement)'
@@ -112,6 +116,7 @@ jobs:
           EXPLORATORY: ${{ inputs.exploratory }}
           QUALITY: ${{ inputs.quality_gates }}
           DOC: ${{ inputs.doc_inspired }}
+          ENGINEERING: ${{ inputs.engineering }}
         run: |
           # Catalog of all groups; each tagged with the checkbox (toggle) that enables it.
           # Merged checkboxes (smoke, ai, exploratory) map to >1 group.
@@ -125,9 +130,14 @@ jobs:
             {"toggle":"EXPLORATORY","group":"monkey","name":"Monkey Exploratory","xml":"suite-monkey.xml","tests":4,"stagger":40},
             {"toggle":"EXPLORATORY","group":"visual-regression","name":"Visual Regression","xml":"suite-visual.xml","tests":7,"stagger":50},
             {"toggle":"DOC","group":"doc-inspired","name":"Documentation-Inspired Tests","xml":"suite-doc-inspired.xml","tests":17,"stagger":65},
-            {"toggle":"QUALITY","group":"quality-gates","name":"Quality Gates (All Pages)","xml":"suite-quality-gates.xml","tests":225,"stagger":68}
+            {"toggle":"QUALITY","group":"quality-gates","name":"Quality Gates (All Pages)","xml":"suite-quality-gates.xml","tests":225,"stagger":68},
+            {"toggle":"ENGINEERING","group":"asset-engineering","name":"Asset Engineering / Trip Config","xml":"suite-asset-engineering.xml","tests":12,"stagger":72},
+            {"toggle":"ENGINEERING","group":"asset-transformer","name":"Asset Engineering / Transformer","xml":"suite-asset-transformer.xml","tests":10,"stagger":74},
+            {"toggle":"ENGINEERING","group":"asset-engineering-matrix","name":"Asset Engineering / per-class matrix","xml":"suite-asset-engineering-matrix.xml","tests":39,"stagger":76},
+            {"toggle":"ENGINEERING","group":"asset-mains-config","name":"Asset Engineering / Mains Config","xml":"suite-asset-mains-config.xml","tests":17,"stagger":78},
+            {"toggle":"ENGINEERING","group":"asset-engineering-exhaustive","name":"Asset Engineering / exhaustive options","xml":"suite-asset-engineering-exhaustive.xml","tests":308,"stagger":80}
           ]'
-          ENABLED=$(for t in CURATED SMOKE LOAD_API AI EXPLORATORY QUALITY DOC; do
+          ENABLED=$(for t in CURATED SMOKE LOAD_API AI EXPLORATORY QUALITY DOC ENGINEERING; do
                       [ "${!t}" = "true" ] && echo "$t"; done | jq -R . | jq -cs .)
           SEL=$(echo "$CATALOG" | jq -c --argjson en "$ENABLED" \
                   '[ .[] | select(.toggle as $t | $en | index($t)) | del(.toggle) ]')

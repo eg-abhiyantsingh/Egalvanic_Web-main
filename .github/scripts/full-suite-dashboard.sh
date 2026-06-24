@@ -55,6 +55,11 @@ ALL_GROUPS=(
   "workorder-planning"
   "quality-gates"
   "opportunities"
+  "asset-engineering"
+  "asset-transformer"
+  "asset-engineering-matrix"
+  "asset-mains-config"
+  "asset-engineering-exhaustive"
 )
 ALL_GROUP_NAMES=(
   "Auth + Site"
@@ -76,8 +81,13 @@ ALL_GROUP_NAMES=(
   "Work Order Planning"
   "Quality Gates (All Pages)"
   "Opportunities [SALES]"
+  "Asset Engineering / Trip Config"
+  "Asset Engineering / Transformer"
+  "Asset Engineering / per-class matrix"
+  "Asset Engineering / Mains Config"
+  "Asset Engineering / exhaustive options"
 )
-ALL_GROUP_TESTS=(56 135 234 69 76 65 76 105 62 37 56 4 7 3 8 3 32 225 8)
+ALL_GROUP_TESTS=(56 135 234 69 76 65 76 105 62 37 56 4 7 3 8 3 32 225 8 12 10 39 17 308)
 ALL_GROUP_XMLS=(
   "suite-auth-site.xml"
   "suite-location-task.xml"
@@ -98,6 +108,11 @@ ALL_GROUP_XMLS=(
   "suite-workorder-planning.xml"
   "suite-quality-gates.xml"
   "suite-opportunities.xml"
+  "suite-asset-engineering.xml"
+  "suite-asset-transformer.xml"
+  "suite-asset-engineering-matrix.xml"
+  "suite-asset-mains-config.xml"
+  "suite-asset-engineering-exhaustive.xml"
 )
 
 # ─────────────────────────────────────────────────────
@@ -124,6 +139,11 @@ get_group_index() {
     workorder-planning)   echo 16 ;;
     quality-gates)        echo 17 ;;
     opportunities)        echo 18 ;;
+    asset-engineering)            echo 19 ;;
+    asset-transformer)            echo 20 ;;
+    asset-engineering-matrix)     echo 21 ;;
+    asset-mains-config)           echo 22 ;;
+    asset-engineering-exhaustive) echo 23 ;;
     # Backwards-compat aliases for old workflow dispatch values.
     # Connection and SLD modules are excluded from CI in May 2026 release.
     auth-site-connection) echo 0 ;;
@@ -143,7 +163,7 @@ else
   IDX=$(get_group_index "$SELECTED")
   if [ "$IDX" -eq -1 ]; then
     echo "Unknown group: $SELECTED"
-    echo "   Valid: all, auth-site, location-task, workorder-issue, asset-1-2, asset-3, asset-4, asset-5, dashboard-bughunt, load-api, smoke, ai-form, monkey, visual-regression, ai-analyzer, curated-bug-verification, bces-iq-smoke, workorder-planning, quality-gates, opportunities"
+    echo "   Valid: all, auth-site, location-task, workorder-issue, asset-1-2, asset-3, asset-4, asset-5, dashboard-bughunt, load-api, smoke, ai-form, monkey, visual-regression, ai-analyzer, curated-bug-verification, bces-iq-smoke, workorder-planning, quality-gates, opportunities, asset-engineering, asset-transformer, asset-engineering-matrix, asset-mains-config, asset-engineering-exhaustive"
     exit 1
   fi
   RUN_GROUPS=("${ALL_GROUPS[$IDX]}")
