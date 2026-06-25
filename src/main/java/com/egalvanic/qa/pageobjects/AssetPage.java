@@ -265,6 +265,221 @@ public class AssetPage {
         }
     }
 
+    // ================================================================
+    // LOCATION MODAL — "Select or Create Location" (Building › Floor › Room cascade)
+    // ----------------------------------------------------------------
+    // The Add Asset drawer's Location section is a BUTTON ("Select Location"; it
+    // becomes "Change" once a location is set) that opens a MUI Dialog titled
+    // "Select or Create Location". Inside are three MUI <Select> dropdowns in a
+    // strict cascade — Building enables Floor enables Room — plus New Building/
+    // Floor/Room buttons, a "Selected Location: B›F›R" preview, and a confirm
+    // button (also labelled "Select Location") that stays DISABLED until all three
+    // are chosen. MUI Select opens its listbox only on a TRUSTED click, so we drive
+    // it with Selenium Actions — a JS .click() silently fails to open the menu.
+    // Verified live 2026-06-25 on site "Android Qa Site1" (B1 › F1 › R1).
+    // ================================================================
+
+    /** XPath of the open location dialog — scopes all modal queries away from the drawer. */
+    private static final String LOC_MODAL_XP =
+            "//div[@role='dialog'][.//*[normalize-space()='Select or Create Location']]";
+
+    /** The drawer's Location trigger — "Select Location" first time, "Change" after a pick. */
+    private static final By LOCATION_TRIGGER = By.xpath(
+            "//p[normalize-space()='Location' and not(ancestor::div[@role='dialog'])]"
+            + "/parent::*//button[normalize-space()='Select Location' or normalize-space()='Change']");
+
+    public boolean isLocationModalOpen() {
+        return !driver.findElements(By.xpath(LOC_MODAL_XP)).isEmpty();
+    }
+
+    /** Open the "Select or Create Location" modal from the Add Asset drawer. */
+    public void openLocationModal() {
+        WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(LOCATION_TRIGGER));
+        js.executeScript("arguments[0].scrollIntoView({block:'center'});", btn);
+        pause(200);
+        try { btn.click(); } catch (Exception e) { js.executeScript("arguments[0].click();", btn); }
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(LOC_MODAL_XP)));
+        pause(400);
+    }
+
+    /** The Nth location MUI Select trigger inside the modal — 0=Building, 1=Floor, 2=Room. */
+    private By modalCombo(int index) {
+        return By.xpath("(" + LOC_MODAL_XP + "//div[@role='combobox'])[" + (index + 1) + "]");
+    }
+
+    /** True when the cascade has enabled this dropdown (Building always; Floor after Building; Room after Floor). */
+    public boolean isLocationFieldEnabled(int index) {
+        java.util.List<WebElement> els = driver.findElements(modalCombo(index));
+        return !els.isEmpty() && !"true".equals(els.get(0).getAttribute("aria-disabled"));
+    }
+
+    /** The modal's confirm "Select Location" button is enabled only once Building+Floor+Room are all set. */
+    public boolean isLocationConfirmEnabled() {
+        java.util.List<WebElement> els = driver.findElements(
+                By.xpath(LOC_MODAL_XP + "//button[normalize-space()='Select Location']"));
+        return !els.isEmpty() && els.get(0).isEnabled();
+    }
+
+    /** Open dropdown {index}, waiting out the cascade (aria-disabled) and for the listbox to render. */
+    private void openLocationDropdown(int index) {
+        WebElement combo = wait.until(ExpectedConditions.presenceOfElementLocated(modalCombo(index)));
+        for (int i = 0; i < 20 && "true".equals(combo.getAttribute("aria-disabled")); i++) {
+            pause(300);
+            combo = driver.findElement(modalCombo(index));
+        }
+        js.executeScript("arguments[0].scrollIntoView({block:'center'});", combo);
+        pause(150);
+        // MUI Select needs a trusted click to open its listbox
+        try { new Actions(driver).moveToElement(combo).click().perform(); }
+        catch (Exception e) { combo.click(); }
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(8))
+                    .until(ExpectedConditions.visibilityOfElementLocated(
+                            By.xpath("//ul[@role='listbox']//li[@role='option']")));
+        } catch (Exception ignored) {}
+        pause(300);
+    }
+
+    /**
+     * Open dropdown {index} (0=Building,1=Floor,2=Room) and read its option texts, minus the
+     * leading "Select a …" placeholder. Closes the menu afterwards by clicking the placeholder
+     * (a no-op selection) — avoids ESCAPE, which can collapse the surrounding overlay.
+     */
+    public java.util.List<String> getLocationDropdownOptions(int index) {
+        openLocationDropdown(index);
+        java.util.List<String> out = new java.util.ArrayList<>();
+        WebElement placeholder = null;
+        for (WebElement li : driver.findElements(By.xpath("//ul[@role='listbox']//li[@role='option']"))) {
+            String t = li.getText().trim();
+            if (t.isEmpty()) continue;
+            if (t.toLowerCase().startsWith("select a")) { placeholder = li; continue; }
+            out.add(t);
+        }
+        if (placeholder != null) {
+            try { new Actions(driver).moveToElement(placeholder).click().perform(); }
+            catch (Exception e) { try { placeholder.click(); } catch (Exception ignored) {} }
+            pause(300);
+        }
+        return out;
+    }
+
+    /** Open dropdown {index} (0=Building,1=Floor,2=Room) and pick the option whose text equals
+     *  (or contains) {optionText}; trusted click. Public so tests can drive a specific, known-complete
+     *  chain (e.g. B1 › F1 › R1) one level at a time. */
+    public void chooseLocationOption(int index, String optionText) {
+        openLocationDropdown(index);
+        By exact = By.xpath("//ul[@role='listbox']//li[@role='option'][normalize-space()='" + optionText + "']");
+        By partial = By.xpath("//ul[@role='listbox']//li[@role='option'][contains(normalize-space(),'" + optionText + "')]");
+        for (int attempt = 0; attempt < 3; attempt++) {
+            for (By by : new By[]{exact, partial}) {
+                java.util.List<WebElement> opts = driver.findElements(by);
+                if (!opts.isEmpty()) {
+                    WebElement opt = opts.get(0);
+                    js.executeScript("arguments[0].scrollIntoView({block:'center'});", opt);
+                    pause(150);
+                    try { new Actions(driver).moveToElement(opt).click().perform(); }
+                    catch (Exception e) { opt.click(); }
+                    pause(500);
+                    return;
+                }
+            }
+            pause(400);
+        }
+        throw new RuntimeException("Location option '" + optionText + "' not found in dropdown " + index);
+    }
+
+    /** Pick the FIRST real (non-placeholder) option in dropdown {index} (0=Building,1=Floor,2=Room);
+     *  return its text, or null if only the placeholder exists. Public so tests can drive the cascade
+     *  one level at a time and assert enablement between steps. */
+    public String pickFirstLocationOption(int index) {
+        openLocationDropdown(index);
+        for (WebElement li : driver.findElements(By.xpath("//ul[@role='listbox']//li[@role='option']"))) {
+            String t = li.getText().trim();
+            if (t.isEmpty() || t.toLowerCase().startsWith("select a")) continue; // skip placeholder
+            js.executeScript("arguments[0].scrollIntoView({block:'center'});", li);
+            pause(150);
+            try { new Actions(driver).moveToElement(li).click().perform(); }
+            catch (Exception e) { li.click(); }
+            pause(500);
+            return t;
+        }
+        return null; // nothing but the placeholder
+    }
+
+    /** Click the modal's confirm "Select Location" button and wait for the dialog to close. */
+    public void confirmLocationSelection() {
+        By confirm = By.xpath(LOC_MODAL_XP + "//button[normalize-space()='Select Location']");
+        WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(confirm));
+        js.executeScript("arguments[0].scrollIntoView({block:'center'});", btn);
+        pause(150);
+        try { btn.click(); } catch (Exception e) { js.executeScript("arguments[0].click();", btn); }
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(10))
+                    .until(ExpectedConditions.invisibilityOfElementLocated(By.xpath(LOC_MODAL_XP)));
+        } catch (Exception ignored) {}
+        pause(300);
+    }
+
+    public void cancelLocationModal() {
+        try {
+            java.util.List<WebElement> els = driver.findElements(
+                    By.xpath(LOC_MODAL_XP + "//button[normalize-space()='Cancel']"));
+            if (!els.isEmpty()) {
+                try { els.get(0).click(); } catch (Exception e) { js.executeScript("arguments[0].click();", els.get(0)); }
+                pause(300);
+            }
+        } catch (Exception ignored) {}
+    }
+
+    /** High-level: open the modal, choose explicit Building → Floor → Room, confirm. */
+    public void selectLocation(String building, String floor, String room) {
+        openLocationModal();
+        chooseLocationOption(0, building);
+        chooseLocationOption(1, floor);
+        chooseLocationOption(2, room);
+        confirmLocationSelection();
+    }
+
+    /** True when the Add Asset create drawer is actually open (its Asset Name field is showing). */
+    public boolean isCreateDrawerOpen() {
+        try {
+            java.util.List<WebElement> els = driver.findElements(ASSET_NAME_INPUT);
+            return !els.isEmpty() && els.get(0).isDisplayed();
+        } catch (Exception e) { return false; }
+    }
+
+    /**
+     * Robust variant: open the modal, pick the first real Building, Floor and Room the active
+     * site offers, then confirm. Returns "Building › Floor › Room", or null (cancelling the
+     * modal) if the site has no complete location chain.
+     */
+    public String selectFirstAvailableLocation() {
+        openLocationModal();
+        String b = pickFirstLocationOption(0);
+        if (b == null) { cancelLocationModal(); return null; }
+        String f = pickFirstLocationOption(1);
+        if (f == null) { cancelLocationModal(); return null; }
+        String r = pickFirstLocationOption(2);
+        if (r == null) { cancelLocationModal(); return null; }
+        confirmLocationSelection();
+        return b + " › " + f + " › " + r;
+    }
+
+    /** The drawer's Location-area text after a selection, e.g. "Location B1›F1›R1 Change". */
+    public String getSelectedLocationText() {
+        try {
+            By area = By.xpath("//p[normalize-space()='Location' and not(ancestor::div[@role='dialog'])]/parent::*");
+            return driver.findElement(area).getText().replaceAll("\\s+", " ").trim();
+        } catch (Exception e) { return ""; }
+    }
+
+    /** True once the drawer's Location no longer reads only "Select Location" (a location is set). */
+    public boolean isLocationSet() {
+        String t = getSelectedLocationText();
+        if (t.isEmpty()) return false;
+        return t.contains("›") || t.contains("Change");
+    }
+
     public void submitCreateAsset() {
         // There are TWO "Create Asset" buttons — one in the toolbar (opens form) and
         // one at the bottom of the Add Asset panel (submits form).

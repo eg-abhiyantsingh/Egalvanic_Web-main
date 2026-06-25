@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Full Suite — Asset Location (Select or Create Location: Building > Floor > Room) (6 TCs)" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <test name="Asset — Select or Create Location modal (Building/Floor/Room cascade) (6 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetLocationTestNG"/>
+        </classes>
+    </test>
+
+</suite>
