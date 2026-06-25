@@ -48,8 +48,24 @@ and another debug cycle.
 **Validation philosophy:** proven, not compiled — headed run, 6/6 green, and WOC_06 closes the loop the
 spec describes (create → search → open the new work order's detail page).
 
+## Coverage audit (follow-up)
+
+A review against the 16-step spec found the first cut relied on defaults for 4 steps rather than
+performing them: explicit **Facility** select (6), **Photo Type** select (7), the **calendar-icon** date
+picker for **Start** (8) / **Due** (9), and a guaranteed **Auto-Schedule** click (13). All were added —
+`selectWoFacility`, `selectWoPhotoType`, and `pickDate(calendarIndex, monthsForward, day)` (drives the
+MUI DateCalendar via the calendar icon, with month navigation; past days are disabled so Start picks
+today and Due picks the 15th of next month). A new **WOC_07** asserts the calendar picker updates the
+inputs. So all 16 steps are now genuinely exercised, not assumed.
+
 ## Validation
 
-_Headed (no headless), site "Android Qa Site1"._ **6/6 PASS — BUILD SUCCESS** (`Tests run: 6,
-Failures: 0`). WOC_01 24s · WOC_02 26s · WOC_03 26s · WOC_04 26s · WOC_05 26s · WOC_06 104s (created a WO
-with Priority High + Megger + a technician-assigned schedule block, then found and opened it).
+_Headed (no headless), site "Android Qa Site1"._ **7/7 PASS — BUILD SUCCESS** (`Tests run: 7,
+Failures: 0`). WOC_06 (90s) creates a WO with Priority High, an explicit Facility + FLIR-SEP Photo Type,
+Start/Due set via the calendar icon (day 25 / next-month 15), a technician-assigned schedule block and
+Megger, then finds and opens it; WOC_07 (27s) asserts the calendar-icon picker.
+
+One timing flake surfaced when the explicit steps were added: Create enables a beat after the WO Name
+registers (React validation), so WOC_02's one-shot check became a ~8s poll. Worth noting because it's the
+classic "passed once, failed next run" shape — the fix is to poll the condition, never assert on a fixed
+sleep.

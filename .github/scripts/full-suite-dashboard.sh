@@ -87,7 +87,7 @@ ALL_GROUP_NAMES=(
   "Asset Engineering / Mains Config"
   "Asset Engineering / exhaustive options"
 )
-ALL_GROUP_TESTS=(56 135 240 75 76 65 76 105 62 37 56 4 7 3 8 3 32 225 8 12 10 39 17 308)
+ALL_GROUP_TESTS=(56 135 241 75 76 65 76 105 62 37 56 4 7 3 8 3 32 225 8 12 10 39 17 308)
 ALL_GROUP_XMLS=(
   "suite-auth-site.xml"
   "suite-location-task.xml"

@@ -441,6 +441,58 @@ public class WorkOrderPage {
         System.out.println("[WorkOrderPage] Priority: " + priority);
     }
 
+    /** Open the Facility dropdown and select a facility by name (Autocomplete). */
+    public void selectWoFacility(String facility) {
+        typeAndSelectDropdown(woComboByLabel("Facility"), facility, facility);
+        System.out.println("[WorkOrderPage] Facility: " + facility);
+    }
+
+    /** Open the Photo Type dropdown and select a photo type by name, e.g. "FLIR-SEP" (Autocomplete). */
+    public void selectWoPhotoType(String photoType) {
+        typeAndSelectDropdown(woComboByLabel("Photo Type"), photoType, photoType);
+        System.out.println("[WorkOrderPage] Photo Type: " + photoType);
+    }
+
+    /**
+     * Pick a date via the calendar ICON (the spec's flow), not by typing. The form has two calendar
+     * buttons in order — {@code calendarIndex} 1 = Start Date, 2 = Due Date. {@code monthsForward}
+     * advances the MUI DateCalendar that many months (past days are disabled, so use 0 for an enabled
+     * day in the current month or ≥1 to land on a fully-enabled future month). Clicks day {@code day}.
+     * Returns true if a day was picked.
+     */
+    public boolean pickDate(int calendarIndex, int monthsForward, int day) {
+        try {
+            By calBtn = By.xpath("(" + WO_DIALOG + "//button[contains(@aria-label,'Choose date')])[" + calendarIndex + "]");
+            WebElement b = wait.until(ExpectedConditions.elementToBeClickable(calBtn));
+            js.executeScript("arguments[0].scrollIntoView({block:'center'});", b);
+            try { b.click(); } catch (Exception e) { js.executeScript("arguments[0].click();", b); }
+            By anyDay = By.xpath("//button[contains(@class,'MuiPickersDay-root')]");
+            new WebDriverWait(driver, Duration.ofSeconds(8)).until(ExpectedConditions.presenceOfElementLocated(anyDay));
+            for (int i = 0; i < monthsForward; i++) {
+                List<WebElement> next = driver.findElements(By.xpath(
+                        "//button[@aria-label='Next month' or @title='Next month']"));
+                if (!next.isEmpty()) { try { next.get(0).click(); } catch (Exception e) { js.executeScript("arguments[0].click();", next.get(0)); } pause(500); }
+            }
+            By dayBtn = By.xpath("//button[contains(@class,'MuiPickersDay-root')][normalize-space()='" + day + "']");
+            for (int i = 0; i < 8 && driver.findElements(dayBtn).isEmpty(); i++) pause(250);
+            for (WebElement d : driver.findElements(dayBtn)) {
+                if (d.isEnabled()) {
+                    js.executeScript("arguments[0].scrollIntoView({block:'center'});", d);
+                    try { d.click(); } catch (Exception e) { js.executeScript("arguments[0].click();", d); }
+                    pause(500);
+                    System.out.println("[WorkOrderPage] picked day " + day + " via calendar " + calendarIndex);
+                    return true;
+                }
+            }
+            System.out.println("[WorkOrderPage] no enabled day '" + day + "' in calendar " + calendarIndex);
+            try { new Actions(driver).sendKeys(Keys.ESCAPE).perform(); } catch (Exception ignored) {}
+            return false;
+        } catch (Exception e) {
+            System.out.println("[WorkOrderPage] pickDate failed: " + e.getMessage());
+            return false;
+        }
+    }
+
     /** Select equipment by name (e.g. "Megger"); equipment is a MUI Autocomplete. */
     public void selectEquipment(String equipment) {
         typeAndSelectDropdown(WO_EQUIPMENT_INPUT, equipment, equipment);

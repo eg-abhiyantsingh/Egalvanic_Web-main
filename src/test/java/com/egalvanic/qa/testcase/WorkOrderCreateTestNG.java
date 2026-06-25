@@ -91,9 +91,10 @@ public class WorkOrderCreateTestNG extends BaseTest {
         Assert.assertFalse(workOrderPage.isCreateButtonEnabled(),
                 "Create should be DISABLED with WO Name empty (Priority/Facility/Photo Type are defaulted).");
         workOrderPage.fillWoName("WOName_" + LocalDateTime.now().format(TS));
-        pause(600);
-        Assert.assertTrue(workOrderPage.isCreateButtonEnabled(),
-                "Create should ENABLE once WO Name is filled.");
+        // Create enables a moment after the name registers (React validation) — poll ~8s, don't one-shot.
+        boolean enabled = false;
+        for (int i = 0; i < 16 && !enabled; i++) { pause(500); enabled = workOrderPage.isCreateButtonEnabled(); }
+        Assert.assertTrue(enabled, "Create should ENABLE once WO Name is filled (polled ~8s).");
         logStepWithScreenshot("Create enabled after WO Name");
         ExtentReportManager.logPass("Create button gating verified: disabled with empty WO Name, enabled once filled.");
     }
@@ -145,13 +146,19 @@ public class WorkOrderCreateTestNG extends BaseTest {
         logStep("Creating work order '" + name + "'");
 
         openFreshCreateForm();
-        workOrderPage.fillWoName(name);
-        workOrderPage.selectWoPriority("High");
-        workOrderPage.fillEstHours("8");
-        workOrderPage.fillWoDescription("Automated WO-creation coverage — scope: verify the full Create flow.");
-        workOrderPage.typeDueDate("12/31/2026");
+        workOrderPage.fillWoName(name);                                   // step 2
+        workOrderPage.selectWoPriority("High");                          // step 3
+        workOrderPage.fillEstHours("8");                                 // step 4
+        workOrderPage.fillWoDescription("Automated WO-creation coverage — scope: verify the full Create flow."); // step 5
+        workOrderPage.selectWoFacility(SITE);                            // step 6 — open Facility dropdown + select
+        workOrderPage.selectWoPhotoType("FLIR-SEP");                     // step 7 — Photo Type dropdown + select
+        // steps 8 & 9 — set Start + Due via the CALENDAR ICON (not by typing). Start = today (current
+        // month, enabled); Due = the 15th of next month (a fully-enabled future month, guaranteed > Start).
+        workOrderPage.pickDate(1, 0, LocalDateTime.now().getDayOfMonth());
+        workOrderPage.pickDate(2, 1, 15);
+        logStep("Start=" + workOrderPage.getStartDateValue() + " Due=" + workOrderPage.getDueDateValue());
         // Optional enrichments (best-effort — they must not break the create if data is absent).
-        boolean team = workOrderPage.addFirstTeamMember();
+        boolean team = workOrderPage.addFirstTeamMember();               // step 10
         logStep("Team member added: " + team);
         boolean block = workOrderPage.addScheduleBlock(true);
         logStep("Schedule block added: " + block);
@@ -177,6 +184,27 @@ public class WorkOrderCreateTestNG extends BaseTest {
         logStepWithScreenshot("Opened the new work order detail");
         ExtentReportManager.logPass("Created work order '" + name + "' (Priority High, Megger, team=" + team
                 + ", schedule=" + block + ") — persisted, found, and opened.");
+    }
+
+    @Test(priority = 7, description = "WOC_07: Start/Due dates can be set via the calendar ICON (not just typing)")
+    public void testWOC_07_DatePickerViaCalendarIcon() {
+        ExtentReportManager.createTest(MODULE, FEATURE, "WOC_07_DatePickerViaCalendarIcon");
+        openFreshCreateForm();
+
+        // Start Date via the calendar icon → today's day (current month, enabled).
+        boolean start = workOrderPage.pickDate(1, 0, LocalDateTime.now().getDayOfMonth());
+        Assert.assertTrue(start, "Should be able to pick a Start Date day from the calendar icon.");
+        Assert.assertFalse(workOrderPage.getStartDateValue().isEmpty(), "Start Date should be set after picking.");
+
+        // Due Date via the calendar icon → the 15th of NEXT month (exercises month navigation; always enabled).
+        boolean due = workOrderPage.pickDate(2, 1, 15);
+        Assert.assertTrue(due, "Should be able to pick a Due Date day from the calendar icon (next month).");
+        String dueVal = workOrderPage.getDueDateValue();
+        logStep("After calendar pick — Start=" + workOrderPage.getStartDateValue() + " Due=" + dueVal);
+        Assert.assertTrue(dueVal.matches("\\d{2}/15/\\d{4}"),
+                "Due Date should reflect the 15th picked from the calendar. Got: '" + dueVal + "'");
+        logStepWithScreenshot("Dates set via calendar icon");
+        ExtentReportManager.logPass("Start + Due dates set via the calendar icon (Due=" + dueVal + ", picked from next month).");
     }
 
     // ================================================================

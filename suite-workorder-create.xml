@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="Full Suite — Work Order Create (Create New Work Order dialog) (6 TCs)" verbose="1">
+<suite name="Full Suite — Work Order Create (Create New Work Order dialog) (7 TCs)" verbose="1">
 
     <listeners>
         <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
     </listeners>
 
-    <test name="Work Order — Create New Work Order (form, gating, schedule/team/equipment, e2e) (6 TCs)">
+    <test name="Work Order — Create New Work Order (form, gating, schedule/team/equipment, e2e) (7 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.WorkOrderCreateTestNG"/>
         </classes>
