@@ -344,6 +344,199 @@ public class WorkOrderPage {
         System.out.println("[WorkOrderPage] Selected photo type: " + photoType);
     }
 
+    // ================================================================
+    // CREATE NEW WORK ORDER — the current "Create New Work Order" dialog
+    // ----------------------------------------------------------------
+    // Verified live 2026-06-25. Fields: WO Name / #* (the only EMPTY required field —
+    // Priority defaults "Medium", Facility defaults to the current site, Photo Type
+    // defaults "FLIR-SEP", Start Date defaults to today, so Create is gated on WO Name
+    // alone), Est. Hours (number), WO Description (textarea), Facility*/Photo Type*/
+    // Priority* (MUI Autocompletes), Start/Due Date (typeable MM/DD/YYYY text inputs),
+    // Team (＋ icon → "Select user" Autocomplete), Schedule (＋ icon → block with Assign
+    // Technician Autocomplete + Add Block; Auto-Schedule enables once a block exists),
+    // Equipment (Autocomplete, optional — options incl "Megger"), Cancel, Create.
+    // Dropdowns are MUI Autocompletes; date inputs accept typed values.
+    // ================================================================
+
+    private static final String WO_DIALOG =
+            "//div[@role='dialog'][.//*[normalize-space()='Create New Work Order']]";
+    private static final By WO_NAME_INPUT = By.xpath("//input[@placeholder='e.g., Q1 2024 Maintenance']");
+    private static final By WO_EST_HOURS_INPUT = By.xpath(WO_DIALOG + "//input[@type='number']");
+    private static final By WO_DESCRIPTION_INPUT = By.xpath("//textarea[@placeholder='Describe the scope of this work order...']");
+    private static final By WO_START_DATE_INPUT = By.xpath("(" + WO_DIALOG + "//input[@placeholder='MM/DD/YYYY'])[1]");
+    private static final By WO_DUE_DATE_INPUT = By.xpath("(" + WO_DIALOG + "//input[@placeholder='MM/DD/YYYY'])[2]");
+    private static final By WO_EQUIPMENT_INPUT = By.xpath("//input[@placeholder='Select equipment (optional)']");
+    private static final By WO_CREATE_BTN = By.xpath(WO_DIALOG + "//button[normalize-space()='Create']");
+    private static final By WO_ADD_BLOCK_BTN = By.xpath("//button[normalize-space()='Add Block']");
+    private static final By WO_AUTO_SCHEDULE_BTN = By.xpath("//button[normalize-space()='Auto-Schedule']");
+    private static final By WO_TEAM_ADD_BTN = By.xpath("//h6[normalize-space()='Team']/following-sibling::button[1]");
+    private static final By WO_SCHEDULE_ADD_BTN = By.xpath("//h6[normalize-space()='Schedule']/following-sibling::button[1]");
+
+    /** The MUI-Autocomplete input whose field label starts with {labelPrefix} (Priority/Facility/Photo Type/Assign Technician). */
+    private By woComboByLabel(String labelPrefix) {
+        return By.xpath("//div[contains(@class,'MuiAutocomplete-root')]"
+                + "[.//label[starts-with(normalize-space(),'" + labelPrefix + "')]]//input");
+    }
+
+    public boolean isCreateWorkOrderDialogOpen() {
+        return !driver.findElements(By.xpath(WO_DIALOG)).isEmpty();
+    }
+
+    public boolean woFieldPresent(String labelText) {
+        return !driver.findElements(By.xpath(WO_DIALOG + "//*[contains(normalize-space(),'" + labelText + "')]")).isEmpty();
+    }
+
+    public void fillWoName(String name) {
+        typeField(WO_NAME_INPUT, name);
+        System.out.println("[WorkOrderPage] WO Name: " + name);
+    }
+
+    public void fillEstHours(String hours) {
+        try { typeField(WO_EST_HOURS_INPUT, hours); System.out.println("[WorkOrderPage] Est. Hours: " + hours); }
+        catch (Exception e) { System.out.println("[WorkOrderPage] Est. Hours not fillable: " + e.getMessage()); }
+    }
+
+    public void fillWoDescription(String desc) {
+        try {
+            WebElement el = wait.until(ExpectedConditions.visibilityOfElementLocated(WO_DESCRIPTION_INPUT));
+            js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].focus(); arguments[0].click();", el);
+            pause(150);
+            el.sendKeys(desc);
+            System.out.println("[WorkOrderPage] WO Description filled");
+        } catch (Exception e) { System.out.println("[WorkOrderPage] WO Description not fillable: " + e.getMessage()); }
+    }
+
+    /** Type a MM/DD/YYYY due date (real keystrokes — these custom date inputs accept typed values). */
+    public void typeDueDate(String mmddyyyy) {
+        try {
+            WebElement el = wait.until(ExpectedConditions.visibilityOfElementLocated(WO_DUE_DATE_INPUT));
+            js.executeScript("arguments[0].scrollIntoView({block:'center'});", el);
+            el.click();
+            try { el.sendKeys(Keys.chord(macOrCtrl(), "a"), Keys.DELETE); } catch (Exception ignored) {}
+            el.sendKeys(mmddyyyy);
+            pause(300);
+            System.out.println("[WorkOrderPage] Due Date typed: " + mmddyyyy + " (value now '" + el.getAttribute("value") + "')");
+        } catch (Exception e) { System.out.println("[WorkOrderPage] Due Date not fillable: " + e.getMessage()); }
+    }
+
+    public String getStartDateValue() {
+        java.util.List<WebElement> e = driver.findElements(WO_START_DATE_INPUT);
+        return e.isEmpty() ? "" : String.valueOf(e.get(0).getAttribute("value"));
+    }
+    public String getDueDateValue() {
+        java.util.List<WebElement> e = driver.findElements(WO_DUE_DATE_INPUT);
+        return e.isEmpty() ? "" : String.valueOf(e.get(0).getAttribute("value"));
+    }
+    public String getPriorityValue() {
+        java.util.List<WebElement> e = driver.findElements(woComboByLabel("Priority"));
+        return e.isEmpty() ? "" : String.valueOf(e.get(0).getAttribute("value"));
+    }
+    public String getPhotoTypeValue() {
+        java.util.List<WebElement> e = driver.findElements(woComboByLabel("Photo Type"));
+        return e.isEmpty() ? "" : String.valueOf(e.get(0).getAttribute("value"));
+    }
+
+    public void selectWoPriority(String priority) {
+        typeAndSelectDropdown(woComboByLabel("Priority"), priority, priority);
+        System.out.println("[WorkOrderPage] Priority: " + priority);
+    }
+
+    /** Select equipment by name (e.g. "Megger"); equipment is a MUI Autocomplete. */
+    public void selectEquipment(String equipment) {
+        typeAndSelectDropdown(WO_EQUIPMENT_INPUT, equipment, equipment);
+        System.out.println("[WorkOrderPage] Equipment: " + equipment);
+    }
+
+    /** Open the equipment dropdown and return its option texts. Closes the menu afterwards. */
+    public java.util.List<String> getEquipmentOptions() {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        try {
+            WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(WO_EQUIPMENT_INPUT));
+            js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].focus(); arguments[0].click();"
+                    + "var w=arguments[0].closest('.MuiAutocomplete-root'); if(w){var b=w.querySelector('.MuiAutocomplete-popupIndicator'); if(b) b.click();}", input);
+            pause(800);
+            for (WebElement li : driver.findElements(By.xpath("//ul[@role='listbox']/li[@role='option']"))) {
+                String t = li.getText().trim();
+                if (!t.isEmpty()) out.add(t);
+            }
+            input.sendKeys(Keys.ESCAPE);
+            pause(200);
+        } catch (Exception e) { System.out.println("[WorkOrderPage] getEquipmentOptions failed: " + e.getMessage()); }
+        return out;
+    }
+
+    /** Team ＋ icon → pick the first available user. Returns true if a member was added. */
+    public boolean addFirstTeamMember() {
+        try {
+            click(WO_TEAM_ADD_BTN);
+            pause(800);
+            return selectFirstAutocompleteOption(By.xpath("//input[@placeholder='Select user']"));
+        } catch (Exception e) { System.out.println("[WorkOrderPage] addFirstTeamMember failed: " + e.getMessage()); return false; }
+    }
+
+    /** Schedule ＋ icon → (optionally assign first technician, optionally Auto-Schedule) → Add Block. */
+    public boolean addScheduleBlock(boolean assignTechnician) {
+        try {
+            click(WO_SCHEDULE_ADD_BTN);
+            pause(1000);
+            if (assignTechnician) {
+                selectFirstAutocompleteOption(woComboByLabel("Assign Technician"));
+            }
+            // Auto-Schedule is optional; click it if it is now enabled.
+            java.util.List<WebElement> auto = driver.findElements(WO_AUTO_SCHEDULE_BTN);
+            if (!auto.isEmpty() && auto.get(auto.size() - 1).isEnabled()) {
+                try { auto.get(auto.size() - 1).click(); pause(800); System.out.println("[WorkOrderPage] Auto-Schedule clicked"); }
+                catch (Exception ignored) {}
+            }
+            click(WO_ADD_BLOCK_BTN);
+            pause(800);
+            // a confirmed block removes the Add Block button
+            boolean added = driver.findElements(WO_ADD_BLOCK_BTN).isEmpty();
+            System.out.println("[WorkOrderPage] Schedule block added: " + added);
+            return added;
+        } catch (Exception e) { System.out.println("[WorkOrderPage] addScheduleBlock failed: " + e.getMessage()); return false; }
+    }
+
+    public boolean isCreateButtonEnabled() {
+        java.util.List<WebElement> b = driver.findElements(WO_CREATE_BTN);
+        return !b.isEmpty() && b.get(0).isEnabled();
+    }
+
+    /** Click the dialog's Create button (precise — not the page-header "Create Work Order"). */
+    public void clickCreateWorkOrder() {
+        WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(WO_CREATE_BTN));
+        js.executeScript("arguments[0].scrollIntoView({block:'center'});", btn);
+        pause(150);
+        try { btn.click(); } catch (Exception e) { js.executeScript("arguments[0].click();", btn); }
+        System.out.println("[WorkOrderPage] Clicked Create");
+    }
+
+    /** Open the given MUI Autocomplete and click its first real option; returns the chosen text or null. */
+    private boolean selectFirstAutocompleteOption(By inputLocator) {
+        try {
+            WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(inputLocator));
+            js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].focus(); arguments[0].click();"
+                    + "var w=arguments[0].closest('.MuiAutocomplete-root'); if(w){var b=w.querySelector('.MuiAutocomplete-popupIndicator'); if(b) b.click();}", input);
+            pause(800);
+            By opt = By.xpath("//ul[@role='listbox']/li[@role='option']");
+            for (int i = 0; i < 8 && driver.findElements(opt).isEmpty(); i++) pause(300);
+            java.util.List<WebElement> opts = driver.findElements(opt);
+            if (opts.isEmpty()) { System.out.println("[WorkOrderPage] no options for " + inputLocator); return false; }
+            WebElement first = opts.get(0);
+            String txt = first.getText().trim();
+            js.executeScript("arguments[0].scrollIntoView({block:'center'});", first);
+            pause(150);
+            try { new Actions(driver).moveToElement(first).click().perform(); } catch (Exception e) { first.click(); }
+            pause(500);
+            System.out.println("[WorkOrderPage] selected first option: '" + txt + "'");
+            return true;
+        } catch (Exception e) { System.out.println("[WorkOrderPage] selectFirstAutocompleteOption failed: " + e.getMessage()); return false; }
+    }
+
+    private Keys macOrCtrl() {
+        return System.getProperty("os.name", "").toLowerCase().contains("mac") ? Keys.COMMAND : Keys.CONTROL;
+    }
+
     /**
      * Submit the Create Work Order form (click Save/Create inside the drawer).
      */

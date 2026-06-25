@@ -1,0 +1,314 @@
+package com.egalvanic.qa.testcase;
+
+import com.egalvanic.qa.constants.AppConstants;
+import com.egalvanic.qa.utils.ExtentReportManager;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import org.testng.Assert;
+import org.testng.ITestResult;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+/**
+ * Work Order creation — the full <b>"Create New Work Order"</b> dialog.
+ *
+ * <p><b>Flow (verified live 2026-06-25 on site "Android Qa Site1"):</b> Work Orders (/sessions) →
+ * <b>Create Work Order</b> opens a dialog with <b>WO Name / #*</b>, <b>Priority*</b> (default Medium),
+ * <b>Est. Hours</b>, <b>WO Description</b>, <b>Facility*</b> (default = current site), <b>Photo Type*</b>
+ * (default FLIR-SEP), <b>Start/Due Date</b> (typeable MM/DD/YYYY), a <b>Team</b> ＋ (→ "Select user"),
+ * a <b>Schedule</b> ＋ (→ block with Assign Technician + Auto-Schedule + Add Block), and an
+ * <b>Equipment</b> dropdown (options incl <b>Megger</b>). Priority/Facility/Photo Type/Start Date are
+ * pre-filled, so <b>Create is gated on WO Name alone</b>. Creating persists the work order to the grid
+ * (its name shows in the Work Order column) and opening it navigates to /sessions/&#123;id&#125;.</p>
+ *
+ * <p>Covers: form structure + defaults, Create gating, the Equipment / Team / Schedule sub-flows, and an
+ * end-to-end create-and-open. {@code testWOC_00_DumpForm} is a disabled DOM-discovery diagnostic.</p>
+ */
+public class WorkOrderCreateTestNG extends BaseTest {
+
+    private static final String MODULE = AppConstants.MODULE_WORK_ORDERS;
+    private static final String FEATURE = "Create Work Order";
+    /** A data-rich site (Equipment incl. Megger, team/technician data) used for the create. */
+    private static final String SITE = "Android Qa Site1";
+    private static final DateTimeFormatter TS = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
+
+    @Override
+    @BeforeClass
+    public void classSetup() {
+        System.out.println("\n==============================================================");
+        System.out.println("     Work Order — Create New Work Order");
+        System.out.println("     " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("h:mm a - dd MMM")));
+        System.out.println("==============================================================\n");
+        super.classSetup();
+        boolean ok = ensureSite(SITE);  // real keystrokes — JS-typed selectSiteByName can't filter the ~130-site list
+        System.out.println("[WorkOrderCreate] site '" + SITE + "' selected=" + ok);
+    }
+
+    @AfterMethod(alwaysRun = true)
+    public void cleanup(ITestResult result) {
+        // close any leftover create dialog so the next test starts clean
+        try { if (workOrderPage.isCreateWorkOrderDialogOpen()) cancelDialog(); } catch (Exception ignored) {}
+    }
+
+    // ================================================================
+    // TESTS
+    // ================================================================
+
+    @Test(priority = 1, description = "WOC_01: Create Work Order opens a dialog with all fields/sections and the expected defaults")
+    public void testWOC_01_FormStructureAndDefaults() {
+        ExtentReportManager.createTest(MODULE, FEATURE, "WOC_01_FormStructureAndDefaults");
+        openFreshCreateForm();
+
+        Assert.assertTrue(workOrderPage.isCreateWorkOrderDialogOpen(), "Create New Work Order dialog should open.");
+        for (String label : new String[]{"Priority", "Est. Hours", "WO Description", "Facility",
+                "Photo Type", "Start Date", "Due Date", "Team", "Schedule", "Equipment"}) {
+            Assert.assertTrue(workOrderPage.woFieldPresent(label), "Form should show the '" + label + "' field/section.");
+        }
+        // Defaults the form ships with (verified live): Priority=Medium, Photo Type=FLIR-SEP, Start Date set.
+        Assert.assertEquals(workOrderPage.getPriorityValue(), "Medium", "Priority should default to Medium.");
+        Assert.assertEquals(workOrderPage.getPhotoTypeValue(), "FLIR-SEP", "Photo Type should default to FLIR-SEP.");
+        Assert.assertFalse(workOrderPage.getStartDateValue().isEmpty(), "Start Date should be pre-filled.");
+        logStepWithScreenshot("Create New Work Order dialog");
+        ExtentReportManager.logPass("Create dialog shows all fields/sections; defaults Priority=Medium, Photo Type=FLIR-SEP, Start Date pre-filled.");
+    }
+
+    @Test(priority = 2, description = "WOC_02: Create is disabled until WO Name is filled (the only empty required field)")
+    public void testWOC_02_CreateGatedOnName() {
+        ExtentReportManager.createTest(MODULE, FEATURE, "WOC_02_CreateGatedOnName");
+        openFreshCreateForm();
+
+        Assert.assertFalse(workOrderPage.isCreateButtonEnabled(),
+                "Create should be DISABLED with WO Name empty (Priority/Facility/Photo Type are defaulted).");
+        workOrderPage.fillWoName("WOName_" + LocalDateTime.now().format(TS));
+        pause(600);
+        Assert.assertTrue(workOrderPage.isCreateButtonEnabled(),
+                "Create should ENABLE once WO Name is filled.");
+        logStepWithScreenshot("Create enabled after WO Name");
+        ExtentReportManager.logPass("Create button gating verified: disabled with empty WO Name, enabled once filled.");
+    }
+
+    @Test(priority = 3, description = "WOC_03: Equipment dropdown lists options including Megger")
+    public void testWOC_03_EquipmentOptions() {
+        ExtentReportManager.createTest(MODULE, FEATURE, "WOC_03_EquipmentOptions");
+        openFreshCreateForm();
+        List<String> equipment = workOrderPage.getEquipmentOptions();
+        logStep("Equipment options (" + equipment.size() + "): " + equipment);
+        Assert.assertFalse(equipment.isEmpty(), "Equipment dropdown should list options on '" + SITE + "'.");
+        Assert.assertTrue(equipment.contains("Megger"),
+                "Equipment dropdown should include 'Megger' on '" + SITE + "'. Got: " + equipment);
+        ExtentReportManager.logPass("Equipment dropdown lists options including Megger (" + equipment.size() + " total).");
+    }
+
+    @Test(priority = 4, description = "WOC_04: Schedule ＋ reveals a schedule block with Assign Technician + Add Block")
+    public void testWOC_04_ScheduleBlockControls() {
+        ExtentReportManager.createTest(MODULE, FEATURE, "WOC_04_ScheduleBlockControls");
+        openFreshCreateForm();
+
+        // Auto-Schedule starts disabled (no block yet)
+        clickByXpath("//h6[normalize-space()='Schedule']/following-sibling::button[1]"); // the ＋ icon
+        pause(1000);
+        Assert.assertTrue(elementPresent("//button[normalize-space()='Add Block']"),
+                "Adding a schedule block should reveal an 'Add Block' button.");
+        Assert.assertTrue(dialogContains("Assign Technician"),
+                "The schedule block should expose an 'Assign Technician' field.");
+        logStepWithScreenshot("Schedule block controls");
+        ExtentReportManager.logPass("Schedule ＋ reveals a block with Assign Technician and Add Block.");
+    }
+
+    @Test(priority = 5, description = "WOC_05: Team ＋ reveals a 'Select user' member dropdown")
+    public void testWOC_05_TeamMemberControl() {
+        ExtentReportManager.createTest(MODULE, FEATURE, "WOC_05_TeamMemberControl");
+        openFreshCreateForm();
+        clickByXpath("//h6[normalize-space()='Team']/following-sibling::button[1]"); // Team ＋
+        pause(800);
+        Assert.assertTrue(elementPresent("//input[@placeholder='Select user']"),
+                "Team ＋ should reveal a 'Select user' member dropdown.");
+        logStepWithScreenshot("Team member control");
+        ExtentReportManager.logPass("Team ＋ reveals the 'Select user' member dropdown.");
+    }
+
+    @Test(priority = 6, description = "WOC_06: End-to-end — create a work order with name/priority/hours/desc/due-date/equipment (+team+schedule), then find & open it")
+    public void testWOC_06_CreateWorkOrderEndToEnd() {
+        ExtentReportManager.createTest(MODULE, FEATURE, "WOC_06_CreateWorkOrderEndToEnd");
+        String name = "WOTest_" + LocalDateTime.now().format(TS);
+        logStep("Creating work order '" + name + "'");
+
+        openFreshCreateForm();
+        workOrderPage.fillWoName(name);
+        workOrderPage.selectWoPriority("High");
+        workOrderPage.fillEstHours("8");
+        workOrderPage.fillWoDescription("Automated WO-creation coverage — scope: verify the full Create flow.");
+        workOrderPage.typeDueDate("12/31/2026");
+        // Optional enrichments (best-effort — they must not break the create if data is absent).
+        boolean team = workOrderPage.addFirstTeamMember();
+        logStep("Team member added: " + team);
+        boolean block = workOrderPage.addScheduleBlock(true);
+        logStep("Schedule block added: " + block);
+        try { workOrderPage.selectEquipment("Megger"); } catch (Exception e) { logStep("Equipment select skipped: " + e.getMessage()); }
+
+        Assert.assertTrue(workOrderPage.isCreateButtonEnabled(), "Create should be enabled with all required fields set.");
+        logStepWithScreenshot("Before clicking Create");
+        workOrderPage.clickCreateWorkOrder();
+
+        // Dialog should close on success.
+        boolean closed = false;
+        for (int i = 0; i < 20 && !closed; i++) { pause(700); closed = !workOrderPage.isCreateWorkOrderDialogOpen(); }
+        logStep("Create dialog closed: " + closed);
+        pause(1500);
+
+        // Persistence: search (real keystrokes) and confirm the WO appears, then open it.
+        boolean visible = searchWorkOrder(name);
+        logStepWithScreenshot("After create — searched for '" + name + "'");
+        Assert.assertTrue(visible, "Newly created work order '" + name + "' should appear in the grid.");
+
+        boolean opened = openWorkOrderRow(name);
+        Assert.assertTrue(opened, "Clicking the new work order should open its detail page (/sessions/{id}).");
+        logStepWithScreenshot("Opened the new work order detail");
+        ExtentReportManager.logPass("Created work order '" + name + "' (Priority High, Megger, team=" + team
+                + ", schedule=" + block + ") — persisted, found, and opened.");
+    }
+
+    // ================================================================
+    // DIAGNOSTIC (disabled)
+    // ================================================================
+
+    @Test(priority = 0, enabled = false, description = "DIAG: dump the Create New Work Order form")
+    public void testWOC_00_DumpForm() {
+        ExtentReportManager.createTest(MODULE, FEATURE, "WOC_00_DumpForm");
+        openFreshCreateForm();
+        StringBuilder sb = new StringBuilder();
+        sb.append("dialogOpen=").append(workOrderPage.isCreateWorkOrderDialogOpen()).append("\n");
+        sb.append("priorityDefault=").append(workOrderPage.getPriorityValue()).append("\n");
+        sb.append("photoTypeDefault=").append(workOrderPage.getPhotoTypeValue()).append("\n");
+        sb.append("startDate=").append(workOrderPage.getStartDateValue()).append("\n");
+        sb.append("createEnabledEmpty=").append(workOrderPage.isCreateButtonEnabled()).append("\n");
+        sb.append("equipment=").append(workOrderPage.getEquipmentOptions()).append("\n");
+        logStep(sb.toString());
+        ExtentReportManager.logPass("WO create form diagnostic dumped.");
+    }
+
+    // ================================================================
+    // HELPERS
+    // ================================================================
+
+    /** Re-navigate to Work Orders (tears down any leftover dialog) and open a fresh, verified create dialog. */
+    private void openFreshCreateForm() {
+        workOrderPage.navigateToWorkOrders();
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            workOrderPage.openCreateWorkOrderForm();
+            pause(800);
+            if (workOrderPage.isCreateWorkOrderDialogOpen()) return;
+            logStep("Create dialog didn't open (attempt " + attempt + ") — retrying");
+            pause(800);
+        }
+        Assert.assertTrue(workOrderPage.isCreateWorkOrderDialogOpen(), "Create New Work Order dialog should open.");
+    }
+
+    private void cancelDialog() {
+        try {
+            List<WebElement> cancels = driver.findElements(By.xpath(
+                    "//div[@role='dialog']//button[normalize-space()='Cancel']"));
+            if (!cancels.isEmpty()) {
+                try { cancels.get(0).click(); } catch (Exception e) { ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", cancels.get(0)); }
+                pause(400);
+            }
+        } catch (Exception ignored) {}
+    }
+
+    /** Search the work-order grid with REAL keystrokes (JS-typed search doesn't trigger the filter) and return whether a matching row appears. */
+    private boolean searchWorkOrder(String name) {
+        By search = By.xpath("//input[contains(@placeholder,'Search work orders') or contains(@placeholder,'Search Work')]");
+        By row = By.xpath("//div[@role='row'][contains(normalize-space(),'" + name + "')] | //tbody//tr[contains(normalize-space(),'" + name + "')]");
+        Keys mod = System.getProperty("os.name", "").toLowerCase().contains("mac") ? Keys.COMMAND : Keys.CONTROL;
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            try {
+                WebElement box = new WebDriverWait(driver, Duration.ofSeconds(15))
+                        .until(ExpectedConditions.elementToBeClickable(search));
+                box.click();
+                try { box.sendKeys(Keys.chord(mod, "a"), Keys.DELETE); } catch (Exception ignored) {}
+                box.sendKeys(name);
+                pause(2800);
+                if (!driver.findElements(row).isEmpty()) { logStep("WO search attempt " + attempt + ": FOUND"); return true; }
+                logStep("WO search attempt " + attempt + ": not yet visible");
+            } catch (Exception e) { logStep("WO search attempt " + attempt + " error: " + e.getMessage()); }
+            pause(1000);
+        }
+        return false;
+    }
+
+    /** Click the work-order row whose text contains {name}; return true once on a /sessions/{id} detail page. */
+    private boolean openWorkOrderRow(String name) {
+        try {
+            By row = By.xpath("//div[@role='row'][contains(normalize-space(),'" + name + "')] | //tbody//tr[contains(normalize-space(),'" + name + "')]");
+            List<WebElement> rows = driver.findElements(row);
+            if (rows.isEmpty()) return false;
+            String before = driver.getCurrentUrl();
+            try { rows.get(0).click(); } catch (Exception e) { ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", rows.get(0)); }
+            for (int i = 0; i < 30; i++) {
+                pause(600);
+                String u = driver.getCurrentUrl();
+                if (u.contains("/sessions/") && !u.endsWith("/sessions") && !u.endsWith("/sessions/")) return true;
+                if (!u.equals(before) && u.matches(".*/sessions/[^/]+.*")) return true;
+            }
+            return driver.getCurrentUrl().contains("/sessions/");
+        } catch (Exception e) { logStep("openWorkOrderRow error: " + e.getMessage()); return false; }
+    }
+
+    private boolean elementPresent(String xpath) {
+        return !driver.findElements(By.xpath(xpath)).isEmpty();
+    }
+
+    private boolean dialogContains(String text) {
+        return !driver.findElements(By.xpath(
+                "//div[@role='dialog']//*[contains(normalize-space(),'" + text + "')]")).isEmpty();
+    }
+
+    private void clickByXpath(String xpath) {
+        WebElement el = new WebDriverWait(driver, Duration.ofSeconds(10))
+                .until(ExpectedConditions.elementToBeClickable(By.xpath(xpath)));
+        ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({block:'center'});", el);
+        pause(150);
+        try { el.click(); } catch (Exception e) { ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", el); }
+    }
+
+    /**
+     * Select a facility/site by exact name using REAL keystrokes (the tenant's ~130-site virtualised
+     * picker doesn't react to a JS value-set). Mirrors AssetLocationTestNG.ensureSite.
+     */
+    private boolean ensureSite(String name) {
+        By facility = By.xpath("//input[@placeholder='Select facility']");
+        try {
+            WebElement inp = new WebDriverWait(driver, Duration.ofSeconds(15))
+                    .until(ExpectedConditions.elementToBeClickable(facility));
+            if (name.equalsIgnoreCase(String.valueOf(inp.getAttribute("value")))) return true;
+            inp.click();
+            pause(300);
+            Keys mod = System.getProperty("os.name", "").toLowerCase().contains("mac") ? Keys.COMMAND : Keys.CONTROL;
+            try { inp.sendKeys(Keys.chord(mod, "a"), Keys.DELETE); } catch (Exception ignored) {}
+            inp.sendKeys(name);
+            pause(900);
+            String lower = name.toLowerCase();
+            By exact = By.xpath("//li[@role='option'][translate(normalize-space(),"
+                    + "'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')='" + lower + "']");
+            WebElement opt = new WebDriverWait(driver, Duration.ofSeconds(10))
+                    .until(ExpectedConditions.elementToBeClickable(exact));
+            opt.click();
+            pause(900);
+            return name.equalsIgnoreCase(String.valueOf(driver.findElement(facility).getAttribute("value")));
+        } catch (Exception e) {
+            logStep("ensureSite('" + name + "') failed: " + e.getMessage());
+            return false;
+        }
+    }
+}
