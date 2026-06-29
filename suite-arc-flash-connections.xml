@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Full Suite — Arc Flash Connections (Edit Asset + Edit Connection) (4 TCs)" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <test name="Arc Flash — Source/Target (Edit Asset) + Connection Details (Edit Connection) (4 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ArcFlashConnectionsTestNG"/>
+        </classes>
+    </test>
+
+</suite>

@@ -301,6 +301,228 @@ public class ArcFlashPage {
                 "//*[normalize-space()='" + label + "']")).isEmpty();
     }
 
+    // ════════════════════════════════════════════════════════════
+    // SOURCE/TARGET CONNECTIONS + CONNECTION DETAILS tabs and their modals
+    // ----------------------------------------------------------------
+    // Source/Target Connections: a table (Asset, Asset Class, Needs Source, …) — clicking an asset row
+    //   opens an "Edit Asset" modal (Asset Name*, Asset Class*, Location, Asset Photos tabs); close via
+    //   the top-right X icon button.
+    // Connection Details: a "Busway Arc Flash Readiness" section + a Busway connection table (Type,
+    //   Source, Target, Conductor Material, Length (ft), Neutral Wire Size, Amperage of Busway, Phase
+    //   A/B/C Wire Size). Clicking a connection row opens an "Edit Connection" modal with BASIC INFO
+    //   (Source/Target Node, Connection Type) + CORE ATTRIBUTES (Conductor Material* Autocomplete:
+    //   Aluminum/Copper, Length (ft)* number, …). Setting Conductor Material + Length + Save Changes
+    //   persists (Save accepts partial required fields). Verified live 2026-06-29.
+    // ════════════════════════════════════════════════════════════
+
+    private static final By GRID_DATA_ROWS = By.xpath(
+            "//*[@role='row'][.//*[@role='gridcell']] | //tbody//tr[td]");
+    private static final By EDIT_ASSET_DIALOG = By.xpath("//div[@role='dialog'][.//*[normalize-space()='Edit Asset']]");
+    private static final By EDIT_CONNECTION_DIALOG = By.xpath("//div[@role='dialog'][.//*[normalize-space()='Edit Connection']]");
+    private static final By SAVE_CHANGES_BTN = By.xpath("//div[@role='dialog']//button[normalize-space()='Save Changes']");
+
+    /** Visible, non-header data rows of whatever table is showing. */
+    private List<WebElement> visibleDataRows() {
+        List<WebElement> out = new ArrayList<>();
+        for (WebElement r : driver.findElements(GRID_DATA_ROWS)) {
+            try {
+                if (!r.findElements(By.xpath(".//*[@role='columnheader']")).isEmpty()) continue;
+                if (r.isDisplayed() && r.getRect().getWidth() > 0) out.add(r);
+            } catch (Exception ignored) {}
+        }
+        return out;
+    }
+
+    /** Wait (up to ~45s) for the current table to render at least one data row. */
+    public boolean waitForTableRows() {
+        for (int i = 0; i < 60; i++) {
+            if (!visibleDataRows().isEmpty()) return true;
+            pause(750);
+        }
+        System.out.println("[ArcFlashPage] no data rows rendered after ~45s");
+        return false;
+    }
+
+    /** True once the open modal has rendered its form content (>=2 inputs) — guards against checking
+     *  fields before the modal body has loaded. */
+    private boolean modalContentReady(By dialogLocator) {
+        List<WebElement> d = driver.findElements(dialogLocator);
+        if (d.isEmpty()) return false;
+        try { return d.get(0).findElements(By.xpath(".//input")).size() >= 2; } catch (Exception e) { return false; }
+    }
+
+    /**
+     * Click the first table rows (trying the first few) until {dialogLocator} appears with content.
+     * Waits for the table to load (the tab content loads async after a tab switch); if no rows load,
+     * re-clicks {tabName} once to re-trigger the data fetch.
+     */
+    private boolean openRowEditModal(By dialogLocator, String tabName) {
+        for (int pass = 0; pass < 2; pass++) {
+            if (waitForTableRows()) {
+                int tries = Math.min(3, visibleDataRows().size());
+                for (int idx = 0; idx < tries; idx++) {
+                    try {
+                        List<WebElement> rows = visibleDataRows();
+                        if (idx >= rows.size()) break;
+                        WebElement cell = rows.get(idx).findElements(By.xpath(".//*[@role='gridcell'] | .//td")).stream().findFirst().orElse(rows.get(idx));
+                        js.executeScript("arguments[0].scrollIntoView({block:'center'});", cell);
+                        pause(200);
+                        WebElement target = cell.findElements(By.xpath(".//a | .//button | .//p | .//span")).stream().findFirst().orElse(cell);
+                        try { target.click(); } catch (Exception e) { js.executeScript("arguments[0].click();", target); }
+                        for (int w = 0; w < 20; w++) { // up to 10s for the modal + its content
+                            if (modalContentReady(dialogLocator)) { pause(400); return true; }
+                            pause(500);
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+            if (tabName != null) { try { clickTab(tabName); } catch (Exception ignored) {} } // re-trigger fetch
+        }
+        return !driver.findElements(dialogLocator).isEmpty();
+    }
+
+    // ── Source/Target Connections → Edit Asset modal ────────────
+
+    /** Click the first asset row on the Source/Target Connections tab to open its Edit Asset modal. */
+    public boolean openFirstAssetEdit() {
+        return openRowEditModal(EDIT_ASSET_DIALOG, "Source/Target Connections");
+    }
+
+    public boolean isEditAssetModalOpen() {
+        return !driver.findElements(EDIT_ASSET_DIALOG).isEmpty();
+    }
+
+    /** True if the open Edit Asset modal shows the given field/label text (Asset Name, Asset Class, Location, Profile, …). */
+    public boolean editAssetHas(String text) {
+        return !driver.findElements(By.xpath(
+                "//div[@role='dialog'][.//*[normalize-space()='Edit Asset']]//*[contains(normalize-space(),'" + text + "')]")).isEmpty();
+    }
+
+    // ── Connection Details → Edit Connection modal ──────────────
+
+    public boolean hasBuswayReadiness() {
+        return !driver.findElements(By.xpath("//*[contains(normalize-space(),'Busway Arc Flash Readiness')]")).isEmpty();
+    }
+
+    /** Wait (up to ~30s) for the Connection Details "Busway Arc Flash Readiness" section to render. */
+    public boolean waitForBuswayReadiness() {
+        for (int i = 0; i < 40; i++) {
+            if (hasBuswayReadiness()) return true;
+            pause(750);
+        }
+        System.out.println("[ArcFlashPage] Busway Arc Flash Readiness not present after ~30s");
+        return false;
+    }
+
+    /** Click the first busway connection row on the Connection Details tab to open its Edit Connection modal. */
+    public boolean openFirstConnectionEdit() {
+        return openRowEditModal(EDIT_CONNECTION_DIALOG, "Connection Details");
+    }
+
+    public boolean isEditConnectionModalOpen() {
+        return !driver.findElements(EDIT_CONNECTION_DIALOG).isEmpty();
+    }
+
+    public boolean editConnectionHas(String text) {
+        return !driver.findElements(By.xpath(
+                "//div[@role='dialog'][.//*[normalize-space()='Edit Connection']]//*[contains(normalize-space(),'" + text + "')]")).isEmpty();
+    }
+
+    /** Select a Conductor Material (e.g. "Copper"/"Aluminum") in the Edit Connection modal — a MUI Autocomplete. */
+    public void selectConductorMaterial(String material) {
+        By input = By.xpath("(//div[@role='dialog']//p[starts-with(normalize-space(),'Conductor Material')]"
+                + "/following::input[@role='combobox'])[1]");
+        WebElement el = wait.until(ExpectedConditions.presenceOfElementLocated(input));
+        js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].focus(); arguments[0].click();"
+                + "var w=arguments[0].closest('.MuiAutocomplete-root'); if(w){var b=w.querySelector('.MuiAutocomplete-popupIndicator'); if(b) b.click();}", el);
+        pause(700);
+        By opt = By.xpath("//ul[@role='listbox']//li[@role='option'][normalize-space()='" + material + "']");
+        for (int i = 0; i < 8 && driver.findElements(opt).isEmpty(); i++) pause(300);
+        List<WebElement> opts = driver.findElements(opt);
+        if (opts.isEmpty()) throw new RuntimeException("Conductor Material option not found: " + material);
+        WebElement o = opts.get(0);
+        js.executeScript("arguments[0].scrollIntoView({block:'center'});", o);
+        try { new Actions(driver).moveToElement(o).click().perform(); } catch (Exception e) { o.click(); }
+        pause(500);
+        System.out.println("[ArcFlashPage] Conductor Material: " + material);
+    }
+
+    public String getConductorMaterialValue() {
+        By input = By.xpath("(//div[@role='dialog']//p[starts-with(normalize-space(),'Conductor Material')]"
+                + "/following::input[@role='combobox'])[1]");
+        List<WebElement> els = driver.findElements(input);
+        return els.isEmpty() ? "" : String.valueOf(els.get(0).getAttribute("value"));
+    }
+
+    /** Enter the Length (ft) in the Edit Connection modal (the modal's number input). */
+    public void enterLength(String lengthFt) {
+        By input = By.xpath("//div[@role='dialog']//input[@type='number']");
+        WebElement el = wait.until(ExpectedConditions.presenceOfElementLocated(input));
+        js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].focus(); arguments[0].click();"
+                + "var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
+                + "s.call(arguments[0],'');"
+                + "arguments[0].dispatchEvent(new Event('input',{bubbles:true}));", el);
+        pause(100);
+        try { el.sendKeys(lengthFt); } catch (Exception e) {
+            js.executeScript("var s=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
+                    + "s.call(arguments[0],arguments[1]);"
+                    + "arguments[0].dispatchEvent(new Event('input',{bubbles:true}));"
+                    + "arguments[0].dispatchEvent(new Event('change',{bubbles:true}));", el, lengthFt);
+        }
+        pause(300);
+        System.out.println("[ArcFlashPage] Length (ft): " + lengthFt);
+    }
+
+    public String getLengthValue() {
+        List<WebElement> els = driver.findElements(By.xpath("//div[@role='dialog']//input[@type='number']"));
+        return els.isEmpty() ? "" : String.valueOf(els.get(0).getAttribute("value"));
+    }
+
+    public boolean isSaveChangesEnabled() {
+        List<WebElement> b = driver.findElements(SAVE_CHANGES_BTN);
+        return !b.isEmpty() && b.get(0).isEnabled();
+    }
+
+    /** Click "Save Changes" in the open modal and wait for it to close. Returns true if it closed. */
+    public boolean saveChanges() {
+        WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(SAVE_CHANGES_BTN));
+        js.executeScript("arguments[0].scrollIntoView({block:'center'});", btn);
+        pause(150);
+        try { btn.click(); } catch (Exception e) { js.executeScript("arguments[0].click();", btn); }
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(25))
+                    .until(ExpectedConditions.invisibilityOfElementLocated(EDIT_CONNECTION_DIALOG));
+        } catch (Exception ignored) {}
+        pause(500);
+        return driver.findElements(EDIT_CONNECTION_DIALOG).isEmpty();
+    }
+
+    // ── Generic modal close (the top-right X icon button) ───────
+
+    public boolean isAnyModalOpen() {
+        for (WebElement d : driver.findElements(By.xpath("//div[@role='dialog'] | //div[contains(@class,'MuiDialog-paper')]")))
+            try { if (d.isDisplayed() && d.getRect().getWidth() > 200) return true; } catch (Exception ignored) {}
+        return false;
+    }
+
+    /** Close the open modal via its top-right X icon button (no aria-label; sits in the header). */
+    public boolean closeModal() {
+        Object r = js.executeScript(
+            "var dlgs=[].slice.call(document.querySelectorAll('[role=\"dialog\"],.MuiDialog-paper'))"
+          + ".filter(function(d){return d.getBoundingClientRect().width>200;});"
+          + "if(!dlgs.length) return 'no-dialog';"
+          + "var d=dlgs[dlgs.length-1], dr=d.getBoundingClientRect();"
+          + "var btns=[].slice.call(d.querySelectorAll('button')).filter(function(b){"
+          + "  return (b.textContent||'').trim()==='' && b.querySelector('svg');});"
+          + "var hdr=btns.filter(function(b){return (b.getBoundingClientRect().top-dr.top)<80;});"
+          + "var pool=hdr.length?hdr:btns;"
+          + "pool.sort(function(a,b){return b.getBoundingClientRect().right-a.getBoundingClientRect().right;});"
+          + "if(pool[0]){pool[0].click(); return 'clicked';} return 'no-btn';");
+        System.out.println("[ArcFlashPage] closeModal: " + r);
+        pause(700);
+        return !isAnyModalOpen();
+    }
+
     private void pause(long ms) {
         try { Thread.sleep(ms); } catch (InterruptedException ignored) {}
     }
