@@ -164,35 +164,87 @@ public class ArcFlashPage {
 
     // ── Asset Class filter ──────────────────────────────────────
 
+    /**
+     * The Asset Class filter Select element that is actually VISIBLE. The page has several elements
+     * whose text is "Asset Class" (the filter label + table headers + responsive duplicates), and some
+     * matched Selects are hidden/non-interactable — clicking those throws ElementNotInteractable. We
+     * use findElements (not a heal-prone findElement) and return the first displayed match.
+     */
+    private WebElement visibleAssetClassSelect() {
+        List<WebElement> els = driver.findElements(ASSET_CLASS_SELECT);
+        for (WebElement e : els) {
+            try { if (e.isDisplayed() && e.getRect().getWidth() > 0) return e; } catch (Exception ignored) {}
+        }
+        return els.isEmpty() ? null : els.get(0);
+    }
+
     public boolean hasAssetClassFilter() {
-        return !driver.findElements(ASSET_CLASS_SELECT).isEmpty();
+        WebElement e = visibleAssetClassSelect();
+        try { return e != null && e.isDisplayed(); } catch (Exception ex) { return false; }
+    }
+
+    /**
+     * Wait for a VISIBLE Asset Class filter to render after switching to the Asset Details tab. On a
+     * slow (headless CI) host the tab's table + filter load async, so a point-in-time check can miss it.
+     */
+    public boolean waitForAssetClassFilter() {
+        for (int i = 0; i < 45; i++) {
+            if (hasAssetClassFilter()) return true;
+            pause(1000);
+        }
+        System.out.println("[ArcFlashPage] visible Asset Class filter not present after 45s");
+        return false;
     }
 
     public String getAssetClassValue() {
-        List<WebElement> els = driver.findElements(ASSET_CLASS_SELECT);
-        return els.isEmpty() ? "" : els.get(0).getText().trim();
+        WebElement e = visibleAssetClassSelect();
+        return e == null ? "" : e.getText().trim();
     }
 
+    /** Open the Asset Class MUI Select and wait for its listbox; retries with different click strategies
+     *  (native → JS mousedown/up → Actions) against the VISIBLE select, since a stray hidden duplicate
+     *  is not interactable. */
     private void openAssetClassDropdown() {
-        WebElement sel = wait.until(ExpectedConditions.presenceOfElementLocated(ASSET_CLASS_SELECT));
-        js.executeScript("arguments[0].scrollIntoView({block:'center'});", sel);
-        pause(150);
-        // MUI Select opens only on a trusted click.
-        try { new Actions(driver).moveToElement(sel).click().perform(); } catch (Exception e) { sel.click(); }
-        try {
-            new WebDriverWait(driver, Duration.ofSeconds(8))
-                    .until(ExpectedConditions.visibilityOfElementLocated(LISTBOX_OPTION));
-        } catch (Exception ignored) {}
-        pause(300);
+        if (!driver.findElements(LISTBOX_OPTION).isEmpty()) return; // already open
+        for (int attempt = 0; attempt < 4; attempt++) {
+            WebElement sel = visibleAssetClassSelect();
+            if (sel == null) { pause(500); continue; }
+            try { js.executeScript("arguments[0].scrollIntoView({block:'center'});", sel); } catch (Exception ignored) {}
+            pause(150);
+            try {
+                if (attempt == 0) {
+                    sel.click();                                   // native: fires mousedown → opens MUI Select
+                } else if (attempt == 1) {
+                    new Actions(driver).moveToElement(sel).click().perform();
+                } else {
+                    js.executeScript(
+                        "var el=arguments[0];"
+                        + "['pointerdown','mousedown','mouseup','click'].forEach(function(t){"
+                        + "  el.dispatchEvent(new MouseEvent(t,{bubbles:true,cancelable:true,view:window}));});", sel);
+                }
+            } catch (Exception e) {
+                System.out.println("[ArcFlashPage] open attempt " + attempt + " click failed: " + e.getMessage());
+            }
+            try {
+                new WebDriverWait(driver, Duration.ofSeconds(6))
+                        .until(ExpectedConditions.visibilityOfElementLocated(LISTBOX_OPTION));
+            } catch (Exception ignored) {}
+            if (!driver.findElements(LISTBOX_OPTION).isEmpty()) { pause(250); return; }
+            pause(400);
+        }
+        System.out.println("[ArcFlashPage] WARNING: Asset Class listbox did not open after retries");
     }
 
     /** Open the Asset Class dropdown and return its option texts (menu closed afterwards). */
     public List<String> getAssetClassOptions() {
-        openAssetClassDropdown();
         List<String> out = new ArrayList<>();
-        for (WebElement li : driver.findElements(LISTBOX_OPTION)) {
-            String t = li.getText().trim();
-            if (!t.isEmpty()) out.add(t);
+        for (int attempt = 0; attempt < 2 && out.isEmpty(); attempt++) {
+            openAssetClassDropdown();
+            for (WebElement li : driver.findElements(LISTBOX_OPTION)) {
+                String t = li.getText().trim();
+                if (!t.isEmpty()) out.add(t);
+            }
+            if (out.isEmpty()) pause(600);
         }
         try { new Actions(driver).sendKeys(Keys.ESCAPE).perform(); } catch (Exception ignored) {}
         pause(300);

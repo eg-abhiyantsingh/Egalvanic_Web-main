@@ -103,7 +103,8 @@ public class ArcFlashTestNG extends BaseTest {
         arcFlashPage.navigateToArcFlash();
         arcFlashPage.setEngineeringMode(true);
         arcFlashPage.clickTab("Asset Details");
-        Assert.assertTrue(arcFlashPage.hasAssetClassFilter(), "Asset Details should show an Asset Class filter.");
+        Assert.assertTrue(arcFlashPage.waitForAssetClassFilter(),
+                "Asset Details should show an Asset Class filter (waited for it to render).");
 
         List<String> classes = arcFlashPage.getAssetClassOptions();
         logStep("Asset Class options (" + classes.size() + "): " + classes);
@@ -120,6 +121,7 @@ public class ArcFlashTestNG extends BaseTest {
         arcFlashPage.navigateToArcFlash();
         arcFlashPage.setEngineeringMode(true);
         arcFlashPage.clickTab("Asset Details");
+        arcFlashPage.waitForAssetClassFilter(); // let the Asset Details table + filter finish rendering
         for (String col : new String[]{"Label", "Interrupting Rating", "Ampere Rating", "Mains Type", "Voltage"}) {
             Assert.assertTrue(arcFlashPage.hasColumn(col), "Asset Details table should have a '" + col + "' column.");
         }
@@ -141,6 +143,7 @@ public class ArcFlashTestNG extends BaseTest {
         Assert.assertTrue(arcFlashPage.isEngineeringModeOn(),              // step 4
                 "Engineering Mode should remain enabled on Asset Details.");
 
+        Assert.assertTrue(arcFlashPage.waitForAssetClassFilter(), "Asset Class filter should render on Asset Details.");
         arcFlashPage.selectAssetClass(targetClass);                        // step 5
         Assert.assertEquals(arcFlashPage.getAssetClassValue(), targetClass,
                 "Asset Class filter should now read '" + targetClass + "'.");
