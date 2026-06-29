@@ -94,6 +94,16 @@ CLASS_TO_MODULE = {
     # Arc Flash Readiness (Engineering Mode / Asset Details / Asset Class filter; Connections / Edit Connection)
     'ArcFlashTestNG': 'Arc Flash Readiness',
     'ArcFlashConnectionsTestNG': 'Arc Flash Readiness',
+    # RBAC — API (contract + permission matrix + edit + CRUD enforcement)
+    'RoleBasedPermissionContractTest': 'RBAC — API',
+    'RolePermissionMatrixCellTest': 'RBAC — API',
+    'WorkOrderEditEnforcementApiTest': 'RBAC — API',
+    'RoleActionEnforcementApiTest': 'RBAC — API',
+    'RoleCrudContractApiTest': 'RBAC — API',
+    # RBAC — Front-End (UI): per-role login, nav gating, work-order edit gating
+    'RoleLoginE2ETest': 'RBAC — UI',
+    'RolePermissionUiGatingTest': 'RBAC — UI',
+    'WorkOrderEditUiTest': 'RBAC — UI',
     # Bug Hunt & Security
     'BugHuntTestNG': 'Bug Hunt & Security',
     'BugHuntConnectionsTestNG': 'Bug Hunt & Security',
@@ -133,6 +143,7 @@ MODULE_ORDER = [
     'Dashboard & Bug Verification', 'Bug Hunt & Security',
     'Load & Performance', 'Critical Path', 'Admin Forms', 'API Tests',
     'AI Exploratory', 'AI Visual Regression', 'AI Page Analysis',
+    'RBAC — API', 'RBAC — UI',
 ]
 
 

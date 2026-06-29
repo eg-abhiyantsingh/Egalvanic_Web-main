@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="eGalvanic RBAC — FRONT-END (UI) only" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <test name="RBAC Full-Login E2E (UI login per role)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.RoleLoginE2ETest"/>
+        </classes>
+    </test>
+
+    <test name="RBAC UI Gating (nav gating + work-order edit)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.RolePermissionUiGatingTest"/>
+            <class name="com.egalvanic.qa.testcase.WorkOrderEditUiTest"/>
+        </classes>
+    </test>
+
+</suite>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="eGalvanic RBAC — API (contract + permission matrix + edit + CRUD enforcement)" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <test name="RBAC API — contract + permission matrix + work-order edit + CRUD enforcement">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.RoleBasedPermissionContractTest"/>
+            <class name="com.egalvanic.qa.testcase.api.RolePermissionMatrixCellTest"/>
+            <class name="com.egalvanic.qa.testcase.api.WorkOrderEditEnforcementApiTest"/>
+            <class name="com.egalvanic.qa.testcase.api.RoleActionEnforcementApiTest"/>
+            <class name="com.egalvanic.qa.testcase.api.RoleCrudContractApiTest"/>
+        </classes>
+    </test>
+
+</suite>

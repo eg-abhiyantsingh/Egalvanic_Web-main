@@ -60,6 +60,8 @@ ALL_GROUPS=(
   "asset-engineering-matrix"
   "asset-mains-config"
   "asset-engineering-exhaustive"
+  "rbac-api"
+  "rbac-frontend"
 )
 ALL_GROUP_NAMES=(
   "Auth + Site"
@@ -86,8 +88,10 @@ ALL_GROUP_NAMES=(
   "Asset Engineering / per-class matrix"
   "Asset Engineering / Mains Config"
   "Asset Engineering / exhaustive options"
+  "RBAC — API"
+  "RBAC — Front-End (UI)"
 )
-ALL_GROUP_TESTS=(56 135 241 75 76 65 76 115 62 37 56 4 7 3 8 3 32 225 8 12 10 39 17 308)
+ALL_GROUP_TESTS=(56 135 241 75 76 65 76 115 62 37 56 4 7 3 8 3 32 225 8 12 10 39 17 308 606 14)
 ALL_GROUP_XMLS=(
   "suite-auth-site.xml"
   "suite-location-task.xml"
@@ -113,6 +117,8 @@ ALL_GROUP_XMLS=(
   "suite-asset-engineering-matrix.xml"
   "suite-asset-mains-config.xml"
   "suite-asset-engineering-exhaustive.xml"
+  "suite-rbac-api.xml"
+  "suite-rbac-frontend.xml"
 )
 
 # ─────────────────────────────────────────────────────
@@ -144,6 +150,8 @@ get_group_index() {
     asset-engineering-matrix)     echo 21 ;;
     asset-mains-config)           echo 22 ;;
     asset-engineering-exhaustive) echo 23 ;;
+    rbac-api)             echo 24 ;;
+    rbac-frontend)        echo 25 ;;
     # Backwards-compat aliases for old workflow dispatch values.
     # Connection and SLD modules are excluded from CI in May 2026 release.
     auth-site-connection) echo 0 ;;
@@ -163,7 +171,7 @@ else
   IDX=$(get_group_index "$SELECTED")
   if [ "$IDX" -eq -1 ]; then
     echo "Unknown group: $SELECTED"
-    echo "   Valid: all, auth-site, location-task, workorder-issue, asset-1-2, asset-3, asset-4, asset-5, dashboard-bughunt, load-api, smoke, ai-form, monkey, visual-regression, ai-analyzer, curated-bug-verification, bces-iq-smoke, workorder-planning, quality-gates, opportunities, asset-engineering, asset-transformer, asset-engineering-matrix, asset-mains-config, asset-engineering-exhaustive"
+    echo "   Valid: all, auth-site, location-task, workorder-issue, asset-1-2, asset-3, asset-4, asset-5, dashboard-bughunt, load-api, smoke, ai-form, monkey, visual-regression, ai-analyzer, curated-bug-verification, bces-iq-smoke, workorder-planning, quality-gates, opportunities, asset-engineering, asset-transformer, asset-engineering-matrix, asset-mains-config, asset-engineering-exhaustive, rbac-api, rbac-frontend"
     exit 1
   fi
   RUN_GROUPS=("${ALL_GROUPS[$IDX]}")
