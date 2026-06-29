@@ -19,4 +19,10 @@
         </classes>
     </test>
 
+    <test name="RBAC UI Permission Matrix (role × module × action)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.RbacUiPermissionMatrixTest"/>
+        </classes>
+    </test>
+
 </suite>

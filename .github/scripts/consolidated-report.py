@@ -104,6 +104,7 @@ CLASS_TO_MODULE = {
     'RoleLoginE2ETest': 'RBAC — UI',
     'RolePermissionUiGatingTest': 'RBAC — UI',
     'WorkOrderEditUiTest': 'RBAC — UI',
+    'RbacUiPermissionMatrixTest': 'RBAC — UI',
     # Bug Hunt & Security
     'BugHuntTestNG': 'Bug Hunt & Security',
     'BugHuntConnectionsTestNG': 'Bug Hunt & Security',
