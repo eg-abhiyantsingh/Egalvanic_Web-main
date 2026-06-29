@@ -91,6 +91,8 @@ CLASS_TO_MODULE = {
     'SLDTestNG': 'SLD Module',
     # Dashboard
     'DashboardBugTestNG': 'Dashboard & Bug Verification',
+    # Arc Flash Readiness (Engineering Mode / Asset Details / Asset Class filter)
+    'ArcFlashTestNG': 'Arc Flash Readiness',
     # Bug Hunt & Security
     'BugHuntTestNG': 'Bug Hunt & Security',
     'BugHuntConnectionsTestNG': 'Bug Hunt & Security',

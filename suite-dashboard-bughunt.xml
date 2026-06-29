@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="Full Suite — Dashboard + BugHunt + New Modules Smoke (122 TCs)" verbose="1">
+<suite name="Full Suite — Dashboard + BugHunt + New Modules Smoke + Arc Flash (128 TCs)" verbose="1">
 
     <listeners>
         <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
@@ -63,6 +63,12 @@
     <test name="New Modules Smoke (17 TCs — May 2026 web update)">
         <classes>
             <class name="com.egalvanic.qa.testcase.NewModulesSmokeTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Arc Flash Readiness — Engineering Mode + Asset Details + Asset Class filter (6 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ArcFlashTestNG"/>
         </classes>
     </test>
 
