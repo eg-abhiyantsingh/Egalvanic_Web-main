@@ -106,6 +106,11 @@ public class RbacUiPermissionMatrixTest {
     }
     private static final String[] ACTIONS = {"View", "Create", "Edit", "Delete"};
 
+    /** Sentinel "module" used for the SINGLE login/logout web-access check given to web-restricted roles
+     *  (no platform.web — e.g. Technician). They get this one cell instead of 48 module×action cells that
+     *  would all trivially confirm "everything hidden". */
+    private static final Module WEB_ACCESS = new Module("Web Access", "/", "platform.web", "platform.web", false, "");
+
     /** Known, LIVE-VERIFIED front-end RBAC gating findings (upstream product gaps). A detected leak whose
      *  (role|module|action) key matches an entry is reported as a tracked KNOWN FINDING (TestNG SKIP with a
      *  loud reason) instead of failing the build — so this suite stays a usable green regression gate while
@@ -168,10 +173,26 @@ public class RbacUiPermissionMatrixTest {
             for (Role r : RbacFixtures.ROLES) if (only.contains(r.name)) roles.add(r);
         }
         List<Object[]> rows = new ArrayList<>();
-        for (Role r : roles)
-            for (Module m : MODULES)
-                for (String a : ACTIONS)
-                    rows.add(new Object[]{r, m, a});
+        for (Role r : roles) {
+            // Web-restricted roles (provisioned but NO platform.web — e.g. Technician) get a SINGLE
+            // login/logout web-access check instead of 48 module cells that would all trivially confirm
+            // "everything hidden". Probe the role's live /auth/me (cached); on any error fall back to the
+            // full matrix so we never silently drop coverage.
+            boolean webRestricted = false;
+            try {
+                LiveAuth a = RbacFixtures.cachedLiveAuth(r);
+                boolean isAdmin = Boolean.TRUE.equals(a.isAdmin);
+                webRestricted = a.provisioned && !isAdmin && !a.permissions.contains("platform.web");
+            } catch (Exception ignored) { /* fall back to full matrix */ }
+
+            if (webRestricted) {
+                rows.add(new Object[]{r, WEB_ACCESS, "Login/Logout"});
+            } else {
+                for (Module m : MODULES)
+                    for (String a : ACTIONS)
+                        rows.add(new Object[]{r, m, a});
+            }
+        }
         return rows.toArray(new Object[0][]);
     }
 
@@ -182,6 +203,20 @@ public class RbacUiPermissionMatrixTest {
                 role.name + " · " + module.label + " · " + action);
 
         ensureRoleSession(role);  // login once per role; SKIPs unprovisioned
+
+        if (module == WEB_ACCESS) {
+            // Web-restricted role: ONE check — login succeeded and the web app correctly withholds access
+            // (no platform.web ⇒ no navigation). Logout is exercised by the session teardown on role change.
+            boolean restricted = !sessionWeb;
+            shot(role.name + " · Web Access — " + (restricted ? "restricted (no web nav)" : "HAS web access"));
+            if (sessionWeb) {
+                fail(role, module, action, "login succeeded but the role HAS web access — expected web-restricted "
+                        + "(no platform.web grant)");
+            }
+            pass(role, module, action, "login OK; web access correctly restricted — role lacks platform.web, the "
+                    + "web app exposes no navigation (mobile-only role). Logout via session teardown.");
+            return;
+        }
 
         boolean isAdmin = Boolean.TRUE.equals(sessionAuth.isAdmin);
         // A role without platform.web is web-restricted: the web app renders NO nav at all, regardless
@@ -204,6 +239,8 @@ public class RbacUiPermissionMatrixTest {
             if (!canView && visible) {
                 fail(role, module, action, "nav route VISIBLE but role lacks [" + module.viewPerm + "] (gating leak)");
             }
+            // Evidence screenshot of the nav state this assertion observed (attaches to the detailed report).
+            shot(role.name + " · " + module.label + " · View — nav " + (visible ? "SHOWS" : "hides") + " " + module.route);
             // POSITIVE direction (permitted-but-hidden) is NOT a failure: this app's web nav is role-curated
             // and can also be company-feature-flag-gated, so a permitted module may legitimately be absent
             // from the sidebar (and `features.*` grants can be mobile-only). Log it; don't fail.
@@ -222,6 +259,8 @@ public class RbacUiPermissionMatrixTest {
         navigateToModule(module);
         lastMatchedControl = null;
         boolean control = affordancePresent(action, module);
+        // Evidence screenshot of the module page this assertion observed (attaches to the detailed report).
+        shot(role.name + " · " + module.label + " · " + action + " — control " + (control ? "PRESENT" : "absent"));
 
         if (canManage) {
             // Positive direction is data/flag-dependent (a control may be hidden when there are no rows,
@@ -401,6 +440,14 @@ public class RbacUiPermissionMatrixTest {
             sb.append("contains(normalize-space(),'").append(parts[i].trim()).append("')");
         }
         return sb.toString();
+    }
+
+    /** Attach a compressed evidence screenshot of the current page to the detailed report (on by default;
+     *  disable with -Drbac.screenshots=false for quick local runs). Best-effort — never fails the test. */
+    private static final boolean CAPTURE_SHOTS = !"false".equalsIgnoreCase(System.getProperty("rbac.screenshots", "true"));
+    private void shot(String caption) {
+        if (!CAPTURE_SHOTS || driver == null) return;
+        try { ExtentReportManager.captureScreenshot(caption); } catch (Exception ignored) {}
     }
 
     private void pass(Role r, Module m, String a, String detail) {

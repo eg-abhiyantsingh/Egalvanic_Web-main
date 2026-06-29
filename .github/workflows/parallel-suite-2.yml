@@ -140,7 +140,7 @@ jobs:
             {"toggle":"ENGINEERING","group":"asset-mains-config","name":"Asset Engineering / Mains Config","xml":"suite-asset-mains-config.xml","tests":17,"stagger":78},
             {"toggle":"ENGINEERING","group":"asset-engineering-exhaustive","name":"Asset Engineering / exhaustive options","xml":"suite-asset-engineering-exhaustive.xml","tests":308,"stagger":80},
             {"toggle":"RBAC_API","group":"rbac-api","name":"RBAC — API","xml":"suite-rbac-api.xml","tests":606,"stagger":82},
-            {"toggle":"RBAC_FRONTEND","group":"rbac-frontend","name":"RBAC — Front-End (UI)","xml":"suite-rbac-frontend.xml","tests":350,"stagger":90}
+            {"toggle":"RBAC_FRONTEND","group":"rbac-frontend","name":"RBAC — Front-End (UI)","xml":"suite-rbac-frontend.xml","tests":303,"stagger":90}
           ]'
           ENABLED=$(for t in CURATED SMOKE LOAD_API AI EXPLORATORY QUALITY DOC ENGINEERING RBAC_API RBAC_FRONTEND; do
                       [ "${!t}" = "true" ] && echo "$t"; done | jq -R . | jq -cs .)
