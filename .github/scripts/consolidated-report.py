@@ -28,6 +28,7 @@ CI variables (auto-set by GitHub Actions):
 
 import xml.etree.ElementTree as ET
 import os
+import re
 import sys
 import glob
 import smtplib
@@ -184,10 +185,31 @@ def parse_testng_xml(filepath):
                     status = method.get('status', 'UNKNOWN')
                     duration_ms = int(method.get('duration-ms', '0'))
 
+                    # Data-driven invocations (e.g. the RBAC permission matrix: one @Test method run 336×
+                    # over role×module×action) all share name+description and differ ONLY by parameters. Capture
+                    # the param values so each invocation counts and displays DISTINCTLY instead of collapsing
+                    # to a single row. key_params (all values, incl. Object@hash) guarantees uniqueness for the
+                    # dedup; disp_params drops unreadable Object@hash toString values for the display label.
+                    raw_params = [(v.text or '').strip() for v in method.findall('./params/param/value')]
+                    raw_params = [p for p in raw_params if p]
+                    key_params = tuple(raw_params)
+                    disp_params = [p for p in raw_params if not re.match(r'^[\w.$]+@[0-9a-fA-F]+$', p)]
+                    base = description if description else name
+                    if len(disp_params) >= 2:
+                        # Multi-param data-driven cell (e.g. RBAC matrix role×module×action) → show the
+                        # parameters AS the test-case name: "Project Manager · Assets · Create".
+                        display_name = ' · '.join(disp_params)
+                    elif disp_params:
+                        display_name = base + '  [' + disp_params[0] + ']'
+                    else:
+                        display_name = base
+
                     tests.append({
                         'module': module,
                         'name': name,
                         'description': description,
+                        'display_name': display_name,
+                        'key_params': key_params,
                         'status': status,
                         'duration_ms': duration_ms,
                         'class_name': simple_name,
@@ -218,7 +240,10 @@ def find_and_parse_all(results_dir):
     seen = {}
     status_priority = {'FAIL': 0, 'SKIP': 1, 'PASS': 2}
     for t in all_tests:
-        key = (t['class_name'], t['name'])
+        # Include params in the key so DATA-DRIVEN invocations (same method, different role/module/action)
+        # each count as their own test case instead of collapsing to one row. True artifact duplicates
+        # (identical class+method+params downloaded twice) still collapse.
+        key = (t['class_name'], t['name'], t.get('key_params', ()))
         if key not in seen:
             seen[key] = t
         else:
@@ -542,7 +567,7 @@ def generate_html(modules, timestamp):
         sorted_tests = sorted(tests, key=lambda t: (sort_order.get(t['status'], 3), t['name']))
 
         for t in sorted_tests:
-            display_name = t['description'] if t['description'] else t['name']
+            display_name = t.get('display_name') or (t['description'] if t['description'] else t['name'])
             status_lower = t['status'].lower()
             badge_class = f'badge-{status_lower}' if status_lower in ('pass', 'fail', 'skip') else 'badge-pass'
 
@@ -620,7 +645,9 @@ def send_email(report_path, stats):
         return
 
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    subject = f"eGalvanic Web Automation - Test Report - {timestamp}"
+    # Optional suffix (e.g. " (After Re-run)") so the post-rerun report's email is distinguishable.
+    subject_suffix = os.environ.get('EMAIL_SUBJECT_SUFFIX', '')
+    subject = f"eGalvanic Web Automation - Test Report{subject_suffix} - {timestamp}"
 
     # Build email
     msg = MIMEMultipart()
@@ -749,20 +776,37 @@ def build_email_body(stats, timestamp):
 # ============================================================
 
 def main():
-    if len(sys.argv) < 3:
-        print("Usage: consolidated-report.py <results-dir> <output-path>")
+    # Positional: <results-dir> <output-path>.  Optional: --rerun-dir <dir>
+    # --rerun-dir lets us build the AFTER-RERUN report: results from <dir> (a re-run of just the failed
+    # tests) OVERRIDE the same test in <results-dir>, so the report shows the full suite with the re-run's
+    # fresh outcome for each previously-failing test (recovered → PASS, still-broken → FAIL).
+    args = sys.argv[1:]
+    rerun_dir = None
+    positionals = []
+    i = 0
+    while i < len(args):
+        if args[i] == '--rerun-dir' and i + 1 < len(args):
+            rerun_dir = args[i + 1]; i += 2
+        else:
+            positionals.append(args[i]); i += 1
+
+    if len(positionals) < 2:
+        print("Usage: consolidated-report.py <results-dir> <output-path> [--rerun-dir <dir>]")
         print("  results-dir: Directory to search for testng-results.xml files")
         print("  output-path: Path for the consolidated HTML report")
+        print("  --rerun-dir: (optional) re-run results that OVERRIDE matching tests in results-dir")
         sys.exit(1)
 
-    results_dir = sys.argv[1]
-    output_path = sys.argv[2]
+    results_dir = positionals[0]
+    output_path = positionals[1]
 
     print("=" * 60)
     print("  Consolidated Client Report Generator")
     print("=" * 60)
     print(f"  Results dir: {results_dir}")
     print(f"  Output path: {output_path}")
+    if rerun_dir:
+        print(f"  Re-run override dir: {rerun_dir}")
     print()
 
     # 1. Find and parse all testng-results.xml
@@ -771,6 +815,20 @@ def main():
     if not all_tests:
         print("\nERROR: No test results found. Cannot generate report.")
         sys.exit(1)
+
+    # 1b. Apply re-run overrides (after-rerun report): a re-run result for the same
+    # (class, method, params) replaces the original status/duration so recovered tests flip to PASS.
+    if rerun_dir and os.path.isdir(rerun_dir):
+        rerun_tests = find_and_parse_all(rerun_dir)
+        rmap = {(rt['class_name'], rt['name'], rt.get('key_params', ())): rt for rt in rerun_tests}
+        overridden = 0
+        for t in all_tests:
+            k = (t['class_name'], t['name'], t.get('key_params', ()))
+            if k in rmap:
+                t['status'] = rmap[k]['status']
+                t['duration_ms'] = rmap[k]['duration_ms']
+                overridden += 1
+        print(f"  Applied {overridden} re-run override(s) from {rerun_dir} ({len(rmap)} re-run result(s) available)")
 
     # 2. Group by module
     modules = group_by_module(all_tests)
