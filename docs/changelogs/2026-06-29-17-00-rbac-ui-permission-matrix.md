@@ -77,6 +77,17 @@ been flaking 0→7→0 — ran **3× consecutively at 48/48, 0 failures, 0 flake
 validated in CI (Parallel Suite 2 → "RBAC — Front-End (UI)"), where it merges into the consolidated client
 + detailed reports.
 
+**Finding surfaced (live-verified, LOW severity): Client Portal · Forms · Create.** The matrix flagged that
+Client Portal (`forms.view` only — no `forms.manage`/`form_instances.manage`) is shown an enabled "Create
+Form" control. Verified directly in a real Client Portal browser session: the `/eg-forms` "Create Form"
+entry button renders **fully enabled** (`MuiButton-contained` primary, `pointer-events:auto`, not disabled,
+no `aria-disabled`/`Mui-disabled`) and its dialog **opens** — but the dialog's actual **"Create" submit
+button is disabled**, so a view-only role **cannot actually create a form**. So this is a front-end gating
+*inconsistency* (entry button + dialog not gated, though the create action is), **not** a privilege
+escalation. It's recorded in a `KNOWN_FINDINGS` registry and reported as a tracked **SKIP** (not a build
+failure) so the suite stays a usable green regression gate; any *new/unlisted* leak still hard-fails.
+Backend enforcement of forms-create is covered separately by the RBAC **API** suite.
+
 **Independent oracle audit → 2 permission-key bugs caught and fixed.** A separate review validated the
 matrix's *expected* view/manage outcomes for each role against that role's live `/auth/me`. It confirmed 10
 of the 12 module keys are correct, and caught two that were wrong for this tenant's vocabulary — bugs the
