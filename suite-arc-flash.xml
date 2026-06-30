@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="Full Suite — Arc Flash Readiness (Engineering Mode / Asset Details / Class filter) (6 TCs)" verbose="1">
+<suite name="Full Suite — Arc Flash Readiness (Overview / Eng-Mode recalc / Asset Details) (16 TCs)" verbose="1">
 
     <listeners>
         <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
     </listeners>
 
-    <test name="Arc Flash Readiness — Engineering Mode + Asset Details + Asset Class filter (6 TCs)">
+    <test name="Arc Flash Readiness — Overview gauges/breakdown/tooltips + Eng-Mode recalc/revert + Asset Details + refresh + tab-state (16 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.ArcFlashTestNG"/>
         </classes>

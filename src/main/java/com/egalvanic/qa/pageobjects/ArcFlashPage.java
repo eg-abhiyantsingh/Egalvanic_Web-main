@@ -523,6 +523,332 @@ public class ArcFlashPage {
         return !isAnyModalOpen();
     }
 
+    // ════════════════════════════════════════════════════════════
+    // OVERVIEW ANALYTICS — gauges, per-class breakdown, info tooltips
+    // (DOM verified live 2026-06-30, site "Android Qa Site1", admin role)
+    // ════════════════════════════════════════════════════════════
+
+    /** The three Overview readiness gauges as "Label=NN%" strings (Asset Details / Source-Target / Connection Details). */
+    @SuppressWarnings("unchecked")
+    public List<String> getOverviewGauges() {
+        Object out = js.executeScript(
+            "var labels=['Asset Details','Source/Target Connections','Connection Details'];var L=[];"
+          + "function leaves(txt){var a=[];document.querySelectorAll('body *').forEach(function(e){"
+          + "  if(e.children.length===0 && (e.textContent||'').trim()===txt){var r=e.getBoundingClientRect();if(r.width>0)a.push(e);}});return a;}"
+          + "labels.forEach(function(lb){var nodes=leaves(lb);"
+          + "  outer: for(var i=0;i<nodes.length;i++){var cur=nodes[i];"
+          + "    for(var up=0; up<5 && cur.parentElement; up++){cur=cur.parentElement;"
+          + "      var pcts=[].slice.call(cur.querySelectorAll('*')).filter(function(x){return x.children.length===0 && /^\\d{1,3}%$/.test((x.textContent||'').trim());});"
+          + "      if(pcts.length){L.push(lb+'='+pcts[0].textContent.trim()); break outer;}}}});"
+          + "return L;");
+        return (List<String>) out;
+    }
+
+    /** Poll until the three Overview gauges have rendered — a tab switch / Eng-Mode toggle / role switch /
+     *  refresh all recompute the readiness asynchronously, so the gauges briefly disappear then re-render. */
+    public List<String> waitForOverviewGauges() {
+        List<String> g = new ArrayList<>();
+        for (int i = 0; i < 15; i++) {
+            g = getOverviewGauges();
+            if (g.size() >= 3) return g;
+            pause(1000);
+        }
+        System.out.println("[ArcFlashPage] only " + g.size() + " Overview gauges after ~15s");
+        return g;
+    }
+
+    /** Every distinct "NN%" badge currently rendered on the page (the recalculation oracle for Engineering Mode). */
+    @SuppressWarnings("unchecked")
+    public List<String> getAllPercents() {
+        Object out = js.executeScript(
+            "var L=[];document.querySelectorAll('body *').forEach(function(e){if(e.children.length)return;"
+          + "var t=(e.textContent||'').trim();if(/^\\d{1,3}%$/.test(t)){var r=e.getBoundingClientRect();if(r.width>0)L.push(t);}});return L;");
+        return (List<String>) out;
+    }
+
+    /** Per-asset-class completion cards as "Class|NN%|X/Y complete" strings (ATS, Battery, Circuit Breaker, …). */
+    @SuppressWarnings("unchecked")
+    public List<String> getClassBreakdown() {
+        Object out = js.executeScript(
+            "var L=[];document.querySelectorAll('span,p,div').forEach(function(s){if(s.children.length)return;"
+          + "var t=(s.textContent||'').trim();var m=t.match(/^(\\d+)\\/(\\d+) complete$/);if(!m)return;"
+          + "var cur=s,name='',pct='';"
+          + "for(var up=0; up<6 && cur.parentElement; up++){cur=cur.parentElement;"
+          + "  var sub=cur.querySelector('.MuiTypography-subtitle1');"
+          + "  var pc=[].slice.call(cur.querySelectorAll('*')).filter(function(x){return x.children.length===0 && /^\\d{1,3}%$/.test((x.textContent||'').trim());});"
+          + "  if(sub && pc.length){name=sub.textContent.trim();pct=pc[0].textContent.trim();break;}}"
+          + "if(name)L.push(name+'|'+pct+'|'+t);});return L;");
+        return (List<String>) out;
+    }
+
+    /** The info-icon tooltip descriptions (exposed as the icon buttons' aria-labels — start with "Percentage"). */
+    @SuppressWarnings("unchecked")
+    public List<String> getInfoTooltipTexts() {
+        Object out = js.executeScript(
+            "var L=[];document.querySelectorAll('button[aria-label]').forEach(function(b){"
+          + "var a=b.getAttribute('aria-label')||'';if(a.indexOf('Percentage')===0)L.push(a);});return L;");
+        return (List<String>) out;
+    }
+
+    // ── Refresh control (icon-only button, top-right of the tab bar) ──
+
+    /** Click the unlabeled refresh icon button at the top-right of the tab strip. Returns false if none found. */
+    public boolean clickRefresh() {
+        WebElement btn = (WebElement) js.executeScript(
+            "var bs=[].slice.call(document.querySelectorAll('button')).filter(function(b){"
+          + " var r=b.getBoundingClientRect();"
+          + " return r.width>0 && r.top>=40 && r.top<=120 && (b.textContent||'').trim()==='' "
+          + " && !(b.getAttribute('aria-label')||'') && b.querySelector('svg');});"
+          + "bs.sort(function(a,b){return b.getBoundingClientRect().left-a.getBoundingClientRect().left;});"
+          + "return bs.length?bs[0]:null;");
+        if (btn == null) { System.out.println("[ArcFlashPage] no refresh icon button found in the tab-bar region"); return false; }
+        try { js.executeScript("arguments[0].scrollIntoView({block:'center'});", btn); } catch (Exception ignored) {}
+        pause(150);
+        try { new Actions(driver).moveToElement(btn).click().perform(); }
+        catch (Exception e) { try { btn.click(); } catch (Exception e2) { js.executeScript("arguments[0].click();", btn); } }
+        pause(1500);
+        System.out.println("[ArcFlashPage] clicked refresh icon");
+        return true;
+    }
+
+    // ── Role selector (header "Select role" combobox / Autocomplete) ──
+
+    public String getRoleValue() {
+        List<WebElement> els = driver.findElements(By.xpath("//input[@placeholder='Select role']"));
+        return els.isEmpty() ? "" : String.valueOf(els.get(0).getAttribute("value"));
+    }
+
+    public boolean hasRoleSelector() {
+        return !driver.findElements(By.xpath("//input[@placeholder='Select role']")).isEmpty();
+    }
+
+    public List<String> getRoleOptions() {
+        List<WebElement> inps = driver.findElements(By.xpath("//input[@placeholder='Select role']"));
+        if (inps.isEmpty()) return new ArrayList<>();
+        WebElement inp = inps.get(0);
+        try { js.executeScript("arguments[0].scrollIntoView({block:'center'});", inp); } catch (Exception ignored) {}
+        try { new Actions(driver).moveToElement(inp).click().perform(); } catch (Exception e) { try { inp.click(); } catch (Exception ignored) {} }
+        pause(700);
+        List<String> out = new ArrayList<>();
+        for (WebElement li : driver.findElements(LISTBOX_OPTION)) {
+            String t = li.getText().trim(); if (!t.isEmpty()) out.add(t);
+        }
+        try { new Actions(driver).sendKeys(Keys.ESCAPE).perform(); } catch (Exception ignored) {}
+        pause(300);
+        return out;
+    }
+
+    /** Select a role by exact option text; returns true if the selector now reflects it. */
+    public boolean selectRole(String name) {
+        List<WebElement> inps = driver.findElements(By.xpath("//input[@placeholder='Select role']"));
+        if (inps.isEmpty()) return false;
+        try { new Actions(driver).moveToElement(inps.get(0)).click().perform(); } catch (Exception e) { try { inps.get(0).click(); } catch (Exception ignored) {} }
+        pause(500);
+        By opt = By.xpath("//ul[@role='listbox']//li[@role='option'][normalize-space()='" + name + "']");
+        for (int i = 0; i < 12 && driver.findElements(opt).isEmpty(); i++) pause(300);
+        List<WebElement> opts = driver.findElements(opt);
+        if (opts.isEmpty()) { try { new Actions(driver).sendKeys(Keys.ESCAPE).perform(); } catch (Exception ignored) {} return false; }
+        try { js.executeScript("arguments[0].scrollIntoView({block:'center'});", opts.get(0)); } catch (Exception ignored) {}
+        try { new Actions(driver).moveToElement(opts.get(0)).click().perform(); } catch (Exception e) { opts.get(0).click(); }
+        pause(1800);
+        String v = getRoleValue();
+        System.out.println("[ArcFlashPage] selectRole('" + name + "') -> value now '" + v + "'");
+        return name.equalsIgnoreCase(v) || v.toLowerCase().contains(name.toLowerCase());
+    }
+
+    // ════════════════════════════════════════════════════════════
+    // SOURCE/TARGET CONNECTIONS analytics — summary banner, status, search, sort
+    // ════════════════════════════════════════════════════════════
+
+    /** The "N assets require source • N connected (N direct, N indirect) • N missing" summary banner text. */
+    public String getSourceConnectionSummary() {
+        for (WebElement e : driver.findElements(By.xpath(
+                "//*[contains(normalize-space(),'require source')][contains(normalize-space(),'connected')]"))) {
+            try { String t = e.getText().trim(); if (!t.isEmpty() && t.length() < 200) return t; } catch (Exception ignored) {}
+        }
+        return "";
+    }
+
+    /** The "NN%" Complete figure shown beside the Source Connection Status banner. */
+    public String getSourceCompletePercent() {
+        Object out = js.executeScript(
+            "var res='';document.querySelectorAll('body *').forEach(function(e){if(e.children.length)return;"
+          + "if((e.textContent||'').trim()!=='Complete')return;var cur=e;"
+          + "for(var up=0; up<4 && cur.parentElement; up++){cur=cur.parentElement;"
+          + "  var pc=[].slice.call(cur.querySelectorAll('*')).filter(function(x){return x.children.length===0 && /^\\d{1,3}%$/.test((x.textContent||'').trim());});"
+          + "  if(pc.length){res=pc[0].textContent.trim();return;}}});return res;");
+        return out == null ? "" : out.toString();
+    }
+
+    /** Values in a named DataGrid column (matched by header text, read via aria-colindex). */
+    @SuppressWarnings("unchecked")
+    public List<String> getColumnValues(String header) {
+        Object out = js.executeScript(
+            "var h=arguments[0];var hs=[].slice.call(document.querySelectorAll('[role=columnheader]'));var col=null;"
+          + "for(var i=0;i<hs.length;i++){if((hs[i].textContent||'').trim().indexOf(h)>=0){col=hs[i].getAttribute('aria-colindex');break;}}"
+          + "if(col===null)return [];var vals=[];"
+          + "document.querySelectorAll('[role=row]').forEach(function(r){"
+          + "  var c=r.querySelector('[role=gridcell][aria-colindex=\"'+col+'\"]');"
+          + "  if(c){vals.push((c.textContent||'').trim());}});return vals;", header);
+        return (List<String>) out;
+    }
+
+    private static final By SEARCH_INPUT = By.xpath("//input[@placeholder='Search items...']");
+
+    public boolean hasSearchBox() { return !driver.findElements(SEARCH_INPUT).isEmpty(); }
+
+    /** Type into the "Search items…" box (clears first). The DataGrid filters live. */
+    public void searchItems(String text) {
+        WebElement inp = wait.until(ExpectedConditions.elementToBeClickable(SEARCH_INPUT));
+        Keys mod = System.getProperty("os.name", "").toLowerCase().contains("mac") ? Keys.COMMAND : Keys.CONTROL;
+        try { inp.click(); inp.sendKeys(Keys.chord(mod, "a"), Keys.DELETE); } catch (Exception ignored) {}
+        inp.sendKeys(text);
+        pause(1400);
+        System.out.println("[ArcFlashPage] searchItems('" + text + "')");
+    }
+
+    public void clearSearch() {
+        List<WebElement> els = driver.findElements(SEARCH_INPUT);
+        if (els.isEmpty()) return;
+        Keys mod = System.getProperty("os.name", "").toLowerCase().contains("mac") ? Keys.COMMAND : Keys.CONTROL;
+        try { els.get(0).click(); els.get(0).sendKeys(Keys.chord(mod, "a"), Keys.DELETE); } catch (Exception ignored) {}
+        pause(1200);
+    }
+
+    /** aria-sort state ("ascending"/"descending"/"none"/"") of a named DataGrid column header. */
+    public String getColumnSortState(String header) {
+        Object out = js.executeScript(
+            "var h=arguments[0];var hs=[].slice.call(document.querySelectorAll('[role=columnheader]'));"
+          + "for(var i=0;i<hs.length;i++){if((hs[i].textContent||'').trim().indexOf(h)>=0)return hs[i].getAttribute('aria-sort')||'';}return '';", header);
+        return out == null ? "" : out.toString();
+    }
+
+    /** Click a DataGrid column header to (re)sort by it; returns the resulting aria-sort state. */
+    public String sortByColumn(String header) {
+        By hdr = By.xpath("//*[@role='columnheader'][contains(normalize-space(),'" + header + "')]");
+        List<WebElement> els = driver.findElements(hdr);
+        if (els.isEmpty()) { System.out.println("[ArcFlashPage] sort header not found: " + header); return ""; }
+        WebElement h = els.get(0);
+        try { js.executeScript("arguments[0].scrollIntoView({block:'center'});", h); } catch (Exception ignored) {}
+        pause(150);
+        // Click the title cell of the header (the DataGrid sort target).
+        WebElement target = h.findElements(By.xpath(".//*[contains(@class,'MuiDataGrid-columnHeaderTitleContainer')] | .//*[contains(@class,'columnHeaderTitle')]"))
+                .stream().findFirst().orElse(h);
+        try { new Actions(driver).moveToElement(target).click().perform(); } catch (Exception e) { try { target.click(); } catch (Exception e2) { js.executeScript("arguments[0].click();", target); } }
+        pause(1200);
+        String state = getColumnSortState(header);
+        System.out.println("[ArcFlashPage] sortByColumn('" + header + "') -> aria-sort=" + state);
+        return state;
+    }
+
+    // ── Pagination (MUI TablePagination) ────────────────────────
+
+    public boolean hasRowsPerPage() {
+        return !driver.findElements(By.xpath("//*[contains(normalize-space(),'Rows per page')]")).isEmpty();
+    }
+
+    /** The "1–N of M" displayed-rows text from the table footer. */
+    public String getPaginationText() {
+        for (WebElement e : driver.findElements(By.xpath(
+                "//*[contains(@class,'MuiTablePagination-displayedRows')]"))) {
+            try { String t = e.getText().trim(); if (!t.isEmpty()) return t; } catch (Exception ignored) {}
+        }
+        // fallback: any short element with the "X of Y" shape
+        for (WebElement e : driver.findElements(By.xpath("//*[contains(normalize-space(),' of ')]"))) {
+            String t;
+            try { t = e.getText().trim(); } catch (Exception ex) { continue; }
+            if (t.matches(".*\\d+[\\u2009\\u2013\\u2014\\-]\\d+ of \\d+.*")) return t;
+        }
+        return "";
+    }
+
+    // ════════════════════════════════════════════════════════════
+    // CONNECTION DETAILS — Connection Type filter (a MUI Select)
+    // ════════════════════════════════════════════════════════════
+
+    /** The visible Connection-Type MUI Select (the one whose value is a type name, not the numeric rows-per-page). */
+    private WebElement connectionTypeSelect() {
+        for (WebElement e : driver.findElements(By.xpath("//div[contains(@class,'MuiSelect-select')]"))) {
+            try {
+                if (!e.isDisplayed() || e.getRect().getWidth() <= 0) continue;
+                String t = e.getText().trim();
+                if (t.isEmpty() || t.matches("\\d+")) continue; // skip empty + rows-per-page
+                return e;
+            } catch (Exception ignored) {}
+        }
+        return null;
+    }
+
+    public String getConnectionTypeValue() {
+        WebElement e = connectionTypeSelect();
+        return e == null ? "" : e.getText().trim();
+    }
+
+    public boolean hasConnectionTypeFilter() { return connectionTypeSelect() != null; }
+
+    private boolean openSelect(WebElement sel) {
+        if (sel == null) return false;
+        if (!driver.findElements(LISTBOX_OPTION).isEmpty()) return true;
+        for (int a = 0; a < 4; a++) {
+            try { js.executeScript("arguments[0].scrollIntoView({block:'center'});", sel); } catch (Exception ignored) {}
+            pause(150);
+            try {
+                if (a == 0) sel.click();
+                else if (a == 1) new Actions(driver).moveToElement(sel).click().perform();
+                else js.executeScript("['pointerdown','mousedown','mouseup','click'].forEach(function(t){"
+                        + "arguments[0].dispatchEvent(new MouseEvent(t,{bubbles:true,cancelable:true,view:window}));});", sel);
+            } catch (Exception ignored) {}
+            try { new WebDriverWait(driver, Duration.ofSeconds(6)).until(ExpectedConditions.visibilityOfElementLocated(LISTBOX_OPTION)); } catch (Exception ignored) {}
+            if (!driver.findElements(LISTBOX_OPTION).isEmpty()) { pause(250); return true; }
+            pause(400);
+        }
+        return false;
+    }
+
+    public List<String> getConnectionTypeOptions() {
+        List<String> out = new ArrayList<>();
+        if (!openSelect(connectionTypeSelect())) return out;
+        for (WebElement li : driver.findElements(LISTBOX_OPTION)) {
+            String t = li.getText().trim(); if (!t.isEmpty()) out.add(t);
+        }
+        try { new Actions(driver).sendKeys(Keys.ESCAPE).perform(); } catch (Exception ignored) {}
+        pause(300);
+        return out;
+    }
+
+    public void selectConnectionType(String type) {
+        if (!openSelect(connectionTypeSelect())) throw new RuntimeException("Connection Type select did not open");
+        By exact = By.xpath("//ul[@role='listbox']//li[@role='option'][normalize-space()='" + type + "']");
+        for (int i = 0; i < 8 && driver.findElements(exact).isEmpty(); i++) pause(300);
+        List<WebElement> opts = driver.findElements(exact);
+        if (opts.isEmpty()) throw new RuntimeException("Connection Type option not found: " + type);
+        try { js.executeScript("arguments[0].scrollIntoView({block:'center'});", opts.get(0)); } catch (Exception ignored) {}
+        try { new Actions(driver).moveToElement(opts.get(0)).click().perform(); } catch (Exception e) { opts.get(0).click(); }
+        pause(1200);
+        System.out.println("[ArcFlashPage] selected Connection Type: " + type);
+    }
+
+    // ── SLD viewer presence (TC-AF-004) ─────────────────────────
+
+    /** True if /arc-flash embeds an SLD/react-flow diagram canvas (scrolls the page to check below the fold). */
+    public boolean hasSldViewer() {
+        try { js.executeScript("window.scrollTo(0, document.body.scrollHeight);"); } catch (Exception ignored) {}
+        pause(800);
+        Boolean has = (Boolean) js.executeScript(
+            "return !!(document.querySelector('canvas, .react-flow, [class*=\"react-flow\"], svg[class*=\"diagram\"], [class*=\"diagram\"], [data-testid*=\"sld\" i]'));");
+        try { js.executeScript("window.scrollTo(0,0);"); } catch (Exception ignored) {}
+        pause(300);
+        return Boolean.TRUE.equals(has);
+    }
+
+    /** True if a "Generate Report" / "Export"/"Download Report" control exists on the page (verifies the spec). */
+    public boolean hasGenerateReport() {
+        return !driver.findElements(By.xpath(
+                "//button[contains(normalize-space(),'Generate Report') or contains(normalize-space(),'Generate EG') "
+              + "or contains(normalize-space(),'Download Report')] "
+              + "| //*[@role='button'][contains(normalize-space(),'Generate Report')]")).isEmpty();
+    }
+
     private void pause(long ms) {
         try { Thread.sleep(ms); } catch (InterruptedException ignored) {}
     }

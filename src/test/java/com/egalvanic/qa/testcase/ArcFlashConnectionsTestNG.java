@@ -18,6 +18,9 @@ import org.testng.annotations.Test;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Arc Flash Readiness — <b>Source/Target Connections</b> (Edit Asset modal) and <b>Connection Details</b>
@@ -149,6 +152,164 @@ public class ArcFlashConnectionsTestNG extends BaseTest {
         Assert.assertTrue(saved, "Save Changes should persist and close the Edit Connection modal.");
         logStepWithScreenshot("After Save Changes");
         ExtentReportManager.logPass("Edit Connection: set Conductor Material=Copper + Length=50, Save Changes persisted (modal closed).");
+    }
+
+    // ================================================================
+    // SOURCE/TARGET analytics — summary banner, columns, status, search, sort
+    // ================================================================
+
+    @Test(priority = 5, description = "AFC_05: Source/Target summary banner is internally consistent (TC-AF-021/023)")
+    public void testAFC_05_SourceSummaryReconciles() {
+        ExtentReportManager.createTest(MODULE, FEATURE, "AFC_05_SourceSummaryReconciles");
+        arcFlashPage.navigateToArcFlash();
+        arcFlashPage.setEngineeringMode(true);
+        arcFlashPage.clickTab("Source/Target Connections");
+        arcFlashPage.waitForTableRows();
+
+        String summary = arcFlashPage.getSourceConnectionSummary();
+        logStep("Source Connection Status banner: '" + summary + "'");
+        Assert.assertFalse(summary.isEmpty(), "Source/Target tab should show a 'require source … connected … missing' banner.");
+
+        // "113 assets require source • 21 connected (21 direct, 0 indirect) • 92 missing"
+        Matcher m = Pattern.compile(
+                "(\\d+)\\s+assets?\\s+require source.*?(\\d+)\\s+connected\\s*\\((\\d+)\\s+direct,\\s*(\\d+)\\s+indirect\\).*?(\\d+)\\s+missing",
+                Pattern.CASE_INSENSITIVE).matcher(summary);
+        Assert.assertTrue(m.find(), "Banner should match the require/connected(direct,indirect)/missing shape: '" + summary + "'");
+        int require = Integer.parseInt(m.group(1)), connected = Integer.parseInt(m.group(2));
+        int direct = Integer.parseInt(m.group(3)), indirect = Integer.parseInt(m.group(4)), missing = Integer.parseInt(m.group(5));
+        logStep(String.format("require=%d connected=%d (direct=%d indirect=%d) missing=%d", require, connected, direct, indirect, missing));
+        Assert.assertEquals(direct + indirect, connected,
+                "direct + indirect should equal the connected total.");
+        Assert.assertEquals(connected + missing, require,
+                "connected + missing should equal the assets-requiring-source total.");
+
+        String pct = arcFlashPage.getSourceCompletePercent();
+        logStep("Source completion = " + pct);
+        Assert.assertTrue(pct.matches("\\d{1,3}%"), "A completion percentage should accompany the banner. Got: '" + pct + "'");
+        logStepWithScreenshot("Source/Target summary reconciled");
+        ExtentReportManager.logPass("Source/Target summary reconciles: " + connected + " connected (" + direct + "+" + indirect
+                + ") + " + missing + " missing = " + require + " require; " + pct + " complete.");
+    }
+
+    @Test(priority = 6, description = "AFC_06: Source/Target table columns + Status values are valid (TC-AF-022/023)")
+    public void testAFC_06_SourceColumnsAndStatus() {
+        ExtentReportManager.createTest(MODULE, FEATURE, "AFC_06_SourceColumnsAndStatus");
+        arcFlashPage.navigateToArcFlash();
+        arcFlashPage.setEngineeringMode(true);
+        arcFlashPage.clickTab("Source/Target Connections");
+        arcFlashPage.waitForTableRows();
+
+        for (String col : new String[]{"Asset", "Asset Class", "Needs Source", "Direct Source", "Indirect Source", "Status"}) {
+            Assert.assertTrue(arcFlashPage.hasColumn(col), "Source/Target table should have a '" + col + "' column.");
+        }
+        List<String> statuses = arcFlashPage.getColumnValues("Status");
+        logStep("Status values (" + statuses.size() + "): first 10 = " + statuses.subList(0, Math.min(10, statuses.size())));
+        Assert.assertFalse(statuses.isEmpty(), "Status column should have values.");
+        int connected = 0, missing = 0;
+        for (String s : statuses) {
+            Assert.assertTrue(s.isEmpty() || s.equalsIgnoreCase("Connected") || s.equalsIgnoreCase("Missing"),
+                    "Status should be Connected/Missing (or empty): '" + s + "'");
+            if (s.equalsIgnoreCase("Connected")) connected++;
+            else if (s.equalsIgnoreCase("Missing")) missing++;
+        }
+        Assert.assertTrue(connected + missing > 0, "There should be at least one Connected/Missing status.");
+        logStepWithScreenshot("Source/Target columns + status");
+        ExtentReportManager.logPass("Source/Target columns present; Status values valid (" + connected + " connected, " + missing + " missing in view).");
+    }
+
+    @Test(priority = 7, description = "AFC_07: 'Search items…' filters the Source/Target table live (TC-AF-024)")
+    public void testAFC_07_SearchFilters() {
+        ExtentReportManager.createTest(MODULE, FEATURE, "AFC_07_SearchFilters");
+        arcFlashPage.navigateToArcFlash();
+        arcFlashPage.setEngineeringMode(true);
+        arcFlashPage.clickTab("Source/Target Connections");
+        arcFlashPage.waitForTableRows();
+        Assert.assertTrue(arcFlashPage.hasSearchBox(), "Source/Target tab should have a 'Search items…' box.");
+
+        List<String> assetsBefore = arcFlashPage.getColumnValues("Asset");
+        Assert.assertFalse(assetsBefore.isEmpty(), "There should be assets to search.");
+        String term = assetsBefore.get(0);
+        logStep("Searching for first asset name: '" + term + "' (rows before = " + assetsBefore.size() + ")");
+
+        arcFlashPage.searchItems(term);
+        List<String> assetsAfter = arcFlashPage.getColumnValues("Asset");
+        logStep("Rows after search = " + assetsAfter.size() + " : " + assetsAfter.subList(0, Math.min(8, assetsAfter.size())));
+        Assert.assertFalse(assetsAfter.isEmpty(), "The searched asset should still be visible.");
+        Assert.assertTrue(assetsAfter.size() <= assetsBefore.size(), "Search should not increase the row count.");
+        boolean termVisible = false;
+        for (String a : assetsAfter) if (a.toLowerCase().contains(term.toLowerCase())) { termVisible = true; break; }
+        Assert.assertTrue(termVisible, "At least one visible row should contain the search term '" + term + "'. Got: " + assetsAfter);
+        logStepWithScreenshot("Filtered by search '" + term + "'");
+
+        arcFlashPage.clearSearch();
+        List<String> assetsCleared = arcFlashPage.getColumnValues("Asset");
+        logStep("Rows after clearing search = " + assetsCleared.size());
+        Assert.assertTrue(assetsCleared.size() >= assetsAfter.size(), "Clearing the search should restore rows.");
+        ExtentReportManager.logPass("Search '" + term + "' filtered " + assetsBefore.size() + " → " + assetsAfter.size()
+                + " rows; cleared back to " + assetsCleared.size() + ".");
+    }
+
+    @Test(priority = 8, description = "AFC_08: Sorting by Status reorders the Source/Target table (TC-AF-025)")
+    public void testAFC_08_SortByStatus() {
+        ExtentReportManager.createTest(MODULE, FEATURE, "AFC_08_SortByStatus");
+        arcFlashPage.navigateToArcFlash();
+        arcFlashPage.setEngineeringMode(true);
+        arcFlashPage.clickTab("Source/Target Connections");
+        arcFlashPage.waitForTableRows();
+
+        String state0 = arcFlashPage.getColumnSortState("Status");
+        List<String> order0 = arcFlashPage.getColumnValues("Status");
+        logStep("Status sort before = '" + state0 + "', first values = " + order0.subList(0, Math.min(6, order0.size())));
+
+        String state1 = arcFlashPage.sortByColumn("Status");
+        List<String> order1 = arcFlashPage.getColumnValues("Status");
+        logStep("Status sort after click = '" + state1 + "', first values = " + order1.subList(0, Math.min(6, order1.size())));
+
+        Assert.assertFalse(state1.isEmpty(), "After clicking the Status header it should carry an aria-sort state.");
+        boolean stateToggled = !state1.equals(state0);
+        boolean orderChanged = !order1.equals(order0);
+        Assert.assertTrue(stateToggled || orderChanged,
+                "Clicking the Status header should change the sort direction or row order (state " + state0 + "→" + state1 + ").");
+        logStepWithScreenshot("Sorted by Status");
+        ExtentReportManager.logPass("Status sort responded to the header click: state " + state0 + " → " + state1
+                + (orderChanged ? " (row order changed)" : ""));
+    }
+
+    // ================================================================
+    // CONNECTION DETAILS — Connection Type filter
+    // ================================================================
+
+    @Test(priority = 9, description = "AFC_09: Connection Type filter lists types and applies (TC-AF-027)")
+    public void testAFC_09_ConnectionTypeFilter() {
+        ExtentReportManager.createTest(MODULE, FEATURE, "AFC_09_ConnectionTypeFilter");
+        arcFlashPage.navigateToArcFlash();
+        arcFlashPage.setEngineeringMode(true);
+        arcFlashPage.clickTab("Connection Details");
+        Assert.assertTrue(arcFlashPage.waitForBuswayReadiness(), "Connection Details should render.");
+        arcFlashPage.waitForTableRows();
+
+        Assert.assertTrue(arcFlashPage.hasConnectionTypeFilter(), "Connection Details should have a Connection Type filter.");
+        String current = arcFlashPage.getConnectionTypeValue();
+        List<String> options = arcFlashPage.getConnectionTypeOptions();
+        logStep("Connection Type = '" + current + "', options = " + options);
+        Assert.assertFalse(options.isEmpty(), "Connection Type filter should list options.");
+        Assert.assertTrue(options.contains(current) || current.isEmpty(),
+                "The current Connection Type '" + current + "' should be among the options " + options);
+
+        // If there is more than one type, switch to a different one and confirm the filter applied.
+        String other = null;
+        for (String o : options) if (!o.equals(current)) { other = o; break; }
+        if (other != null) {
+            arcFlashPage.selectConnectionType(other);
+            Assert.assertEquals(arcFlashPage.getConnectionTypeValue(), other,
+                    "Connection Type filter should now read '" + other + "'.");
+            logStep("Switched Connection Type to '" + other + "'");
+            arcFlashPage.selectConnectionType(current.isEmpty() ? other : current); // restore
+        } else {
+            logStep("Only one connection type ('" + current + "') exists for this site — presence + options verified.");
+        }
+        logStepWithScreenshot("Connection Type filter");
+        ExtentReportManager.logPass("Connection Type filter present with options " + options + " (current '" + current + "').");
     }
 
     // ================================================================

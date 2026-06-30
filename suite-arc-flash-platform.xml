@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Full Suite — Arc Flash Platform (Role / SLD / Responsive / Report) (5 TCs)" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <test name="Arc Flash — Role view selector + switch, SLD viewer, responsive layout, Generate Report (5 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ArcFlashPlatformTestNG"/>
+        </classes>
+    </test>
+
+</suite>
