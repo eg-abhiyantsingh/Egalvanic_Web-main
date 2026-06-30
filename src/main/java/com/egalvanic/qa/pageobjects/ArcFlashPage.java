@@ -622,38 +622,72 @@ public class ArcFlashPage {
         return !driver.findElements(By.xpath("//input[@placeholder='Select role']")).isEmpty();
     }
 
+    /** Open the role Autocomplete and read all options (polls + retries — a plain click can race the listbox). */
     public List<String> getRoleOptions() {
-        List<WebElement> inps = driver.findElements(By.xpath("//input[@placeholder='Select role']"));
-        if (inps.isEmpty()) return new ArrayList<>();
-        WebElement inp = inps.get(0);
-        try { js.executeScript("arguments[0].scrollIntoView({block:'center'});", inp); } catch (Exception ignored) {}
-        try { new Actions(driver).moveToElement(inp).click().perform(); } catch (Exception e) { try { inp.click(); } catch (Exception ignored) {} }
-        pause(700);
-        List<String> out = new ArrayList<>();
-        for (WebElement li : driver.findElements(LISTBOX_OPTION)) {
-            String t = li.getText().trim(); if (!t.isEmpty()) out.add(t);
+        for (int attempt = 0; attempt < 3; attempt++) {
+            List<WebElement> inps = driver.findElements(By.xpath("//input[@placeholder='Select role']"));
+            if (inps.isEmpty()) return new ArrayList<>();
+            WebElement inp = inps.get(0);
+            try { js.executeScript("arguments[0].scrollIntoView({block:'center'});", inp); } catch (Exception ignored) {}
+            try { new Actions(driver).moveToElement(inp).click().perform(); } catch (Exception e) { try { inp.click(); } catch (Exception ignored) {} }
+            for (int i = 0; i < 12 && driver.findElements(LISTBOX_OPTION).isEmpty(); i++) pause(300);
+            List<String> out = new ArrayList<>();
+            for (WebElement li : driver.findElements(LISTBOX_OPTION)) {
+                String t = li.getText().trim(); if (!t.isEmpty()) out.add(t);
+            }
+            try { new Actions(driver).sendKeys(Keys.ESCAPE).perform(); } catch (Exception ignored) {}
+            pause(300);
+            if (!out.isEmpty()) return out;
+            pause(400);
         }
-        try { new Actions(driver).sendKeys(Keys.ESCAPE).perform(); } catch (Exception ignored) {}
-        pause(300);
-        return out;
+        return new ArrayList<>();
     }
 
-    /** Select a role by exact option text; returns true if the selector now reflects it. */
+    /**
+     * Select a role in the header view selector — a MUI <b>Autocomplete</b>. Robust pattern: focus, clear,
+     * <b>type the name to filter</b> the option list (avoids virtualisation/scroll misses), then click the
+     * filtered exact match. Retries up to 3×. Returns true once the selector reflects {name}.
+     */
     public boolean selectRole(String name) {
-        List<WebElement> inps = driver.findElements(By.xpath("//input[@placeholder='Select role']"));
-        if (inps.isEmpty()) return false;
-        try { new Actions(driver).moveToElement(inps.get(0)).click().perform(); } catch (Exception e) { try { inps.get(0).click(); } catch (Exception ignored) {} }
-        pause(500);
-        By opt = By.xpath("//ul[@role='listbox']//li[@role='option'][normalize-space()='" + name + "']");
-        for (int i = 0; i < 12 && driver.findElements(opt).isEmpty(); i++) pause(300);
-        List<WebElement> opts = driver.findElements(opt);
-        if (opts.isEmpty()) { try { new Actions(driver).sendKeys(Keys.ESCAPE).perform(); } catch (Exception ignored) {} return false; }
-        try { js.executeScript("arguments[0].scrollIntoView({block:'center'});", opts.get(0)); } catch (Exception ignored) {}
-        try { new Actions(driver).moveToElement(opts.get(0)).click().perform(); } catch (Exception e) { opts.get(0).click(); }
-        pause(1800);
+        if (matchesRole(name)) return true; // already selected
+        Keys mod = System.getProperty("os.name", "").toLowerCase().contains("mac") ? Keys.COMMAND : Keys.CONTROL;
+        By inputBy = By.xpath("//input[@placeholder='Select role']");
+        for (int attempt = 0; attempt < 4; attempt++) {
+            try {
+                // Re-find + wait clickable each attempt (a role-switch recompute can briefly overlay/re-mount it).
+                WebElement inp = new WebDriverWait(driver, Duration.ofSeconds(10))
+                        .until(ExpectedConditions.elementToBeClickable(inputBy));
+                js.executeScript("arguments[0].scrollIntoView({block:'center'});", inp);
+                try { new Actions(driver).moveToElement(inp).click().perform(); } catch (Exception e) { inp.click(); }
+                pause(300);
+                try { inp.sendKeys(Keys.chord(mod, "a"), Keys.DELETE); } catch (Exception ignored) {}
+                pause(250);
+                inp.sendKeys(name);                       // type → filters the Autocomplete to matching options
+                pause(800);
+                // Keyboard-commit the highlighted filtered option (robust vs click-target / virtualisation).
+                inp.sendKeys(Keys.ARROW_DOWN);
+                pause(250);
+                inp.sendKeys(Keys.ENTER);
+                // The readiness recomputes under the new role (some roles, e.g. Electrical Engineer, are slow) —
+                // poll for the selector to settle rather than checking once.
+                for (int w = 0; w < 12; w++) {
+                    pause(1000);
+                    if (matchesRole(name)) {
+                        System.out.println("[ArcFlashPage] selectRole('" + name + "') -> value now '" + getRoleValue() + "'");
+                        return true;
+                    }
+                }
+            } catch (Exception ignored) {}
+            try { new Actions(driver).sendKeys(Keys.ESCAPE).perform(); } catch (Exception ignored) {}
+            pause(500);
+        }
+        System.out.println("[ArcFlashPage] selectRole('" + name + "') FAILED — value '" + getRoleValue() + "'");
+        return matchesRole(name);
+    }
+
+    private boolean matchesRole(String name) {
         String v = getRoleValue();
-        System.out.println("[ArcFlashPage] selectRole('" + name + "') -> value now '" + v + "'");
-        return name.equalsIgnoreCase(v) || v.toLowerCase().contains(name.toLowerCase());
+        return name.equalsIgnoreCase(v) || (!v.isEmpty() && v.toLowerCase().contains(name.toLowerCase()));
     }
 
     // ════════════════════════════════════════════════════════════
@@ -847,6 +881,86 @@ public class ArcFlashPage {
                 "//button[contains(normalize-space(),'Generate Report') or contains(normalize-space(),'Generate EG') "
               + "or contains(normalize-space(),'Download Report')] "
               + "| //*[@role='button'][contains(normalize-space(),'Generate Report')]")).isEmpty();
+    }
+
+    // ════════════════════════════════════════════════════════════
+    // PAGINATION (MUI TablePagination) — rows-per-page + next/prev + footer
+    // ════════════════════════════════════════════════════════════
+
+    /** The visible rows-per-page MUI Select (the numeric one inside the table footer). */
+    private WebElement rowsPerPageSelect() {
+        for (WebElement e : driver.findElements(By.xpath(
+                "//*[contains(@class,'MuiTablePagination-root')]//div[contains(@class,'MuiSelect-select')] "
+              + "| //div[contains(@class,'MuiTablePagination-select')]"))) {
+            try { if (e.isDisplayed() && e.getRect().getWidth() > 0) return e; } catch (Exception ignored) {}
+        }
+        // fallback: a visible MuiSelect-select whose text is purely numeric (the rows-per-page value)
+        for (WebElement e : driver.findElements(By.xpath("//div[contains(@class,'MuiSelect-select')]"))) {
+            try { if (e.isDisplayed() && e.getText().trim().matches("\\d+")) return e; } catch (Exception ignored) {}
+        }
+        return null;
+    }
+
+    public String getRowsPerPageValue() {
+        WebElement e = rowsPerPageSelect();
+        return e == null ? "" : e.getText().trim();
+    }
+
+    public List<String> getRowsPerPageOptions() {
+        List<String> out = new ArrayList<>();
+        if (!openSelect(rowsPerPageSelect())) return out;
+        for (WebElement li : driver.findElements(LISTBOX_OPTION)) {
+            String t = li.getText().trim(); if (!t.isEmpty()) out.add(t);
+        }
+        try { new Actions(driver).sendKeys(Keys.ESCAPE).perform(); } catch (Exception ignored) {}
+        pause(300);
+        return out;
+    }
+
+    /** Set rows-per-page to {n} (e.g. "50"); returns true if it now reads {n}. */
+    public boolean setRowsPerPage(String n) {
+        if (!openSelect(rowsPerPageSelect())) return false;
+        By exact = By.xpath("//ul[@role='listbox']//li[@role='option'][normalize-space()='" + n + "']");
+        for (int i = 0; i < 8 && driver.findElements(exact).isEmpty(); i++) pause(300);
+        List<WebElement> opts = driver.findElements(exact);
+        if (opts.isEmpty()) { try { new Actions(driver).sendKeys(Keys.ESCAPE).perform(); } catch (Exception ignored) {} return false; }
+        try { new Actions(driver).moveToElement(opts.get(0)).click().perform(); } catch (Exception e) { opts.get(0).click(); }
+        pause(1200);
+        return n.equals(getRowsPerPageValue());
+    }
+
+    public boolean isNextPageEnabled() {
+        List<WebElement> b = driver.findElements(By.xpath("//button[@aria-label='Go to next page']"));
+        try { return !b.isEmpty() && b.get(0).isEnabled(); } catch (Exception e) { return false; }
+    }
+
+    /** Click "Go to next page" if it is enabled; returns false if there is no next page. */
+    public boolean goToNextPage() {
+        List<WebElement> b = driver.findElements(By.xpath("//button[@aria-label='Go to next page']"));
+        if (b.isEmpty() || !b.get(0).isEnabled()) return false;
+        try { new Actions(driver).moveToElement(b.get(0)).click().perform(); }
+        catch (Exception e) { try { b.get(0).click(); } catch (Exception e2) { js.executeScript("arguments[0].click();", b.get(0)); } }
+        pause(1200);
+        return true;
+    }
+
+    public boolean goToPrevPage() {
+        List<WebElement> b = driver.findElements(By.xpath("//button[@aria-label='Go to previous page']"));
+        if (b.isEmpty() || !b.get(0).isEnabled()) return false;
+        try { new Actions(driver).moveToElement(b.get(0)).click().perform(); }
+        catch (Exception e) { try { b.get(0).click(); } catch (Exception e2) { js.executeScript("arguments[0].click();", b.get(0)); } }
+        pause(1200);
+        return true;
+    }
+
+    /** The "Showing X of Y …" footer text (Asset Details / Source-Target / Connection Details). */
+    public String getShowingFooter() {
+        for (WebElement e : driver.findElements(By.xpath(
+                "//*[contains(normalize-space(),'Showing') and (contains(normalize-space(),'asset') "
+              + "or contains(normalize-space(),'connection') or contains(normalize-space(),'of '))]"))) {
+            try { String t = e.getText().trim(); if (!t.isEmpty() && t.length() < 200) return t; } catch (Exception ignored) {}
+        }
+        return "";
     }
 
     private void pause(long ms) {

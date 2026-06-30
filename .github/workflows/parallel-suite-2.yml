@@ -23,7 +23,7 @@ name: Parallel Suite 2 — Curated Bug Verification + AI + Smoke + Load + BCES-I
 # Total: ~422 TCs across 10 default groups.
 #
 # Opt-in toggles (OFF by default — tick to add their groups):
-#   Asset Engineering (386 TCs), Arc Flash Readiness (30 TCs — 16+9+5, NEW 2026-06-30), RBAC (API 606 / FE 303).
+#   Asset Engineering (386 TCs), Arc Flash Readiness (123 TCs — 7 groups, NEW 2026-06-30), RBAC (API 606 / FE 303).
 #   Arc Flash also runs in parallel-suite.yml's dashboard-bughunt group; here it is opt-in to avoid double-running.
 #
 # The BCES-IQ group runs the SAME test framework against
@@ -76,7 +76,7 @@ on:
         type: boolean
         default: false
       arc_flash:
-        description: 'Arc Flash Readiness (Overview/Eng-Mode/Asset Details + Source-Target/Connection + Platform, 30 TCs)'
+        description: 'Arc Flash Readiness — 7 groups, 123 TCs (Overview/Eng-Mode/Asset Details + Source-Target/Connection + Platform + Grid/Asset-Class/Role/Pagination matrices)'
         type: boolean
         default: false
       # ── RBAC (opt-in — off by default). Run as normal groups so their results merge
@@ -151,6 +151,10 @@ jobs:
             {"toggle":"ARC_FLASH","group":"arc-flash","name":"Arc Flash — Overview / Eng-Mode / Asset Details","xml":"suite-arc-flash.xml","tests":16,"stagger":84},
             {"toggle":"ARC_FLASH","group":"arc-flash-connections","name":"Arc Flash — Source/Target + Connection Details","xml":"suite-arc-flash-connections.xml","tests":9,"stagger":86},
             {"toggle":"ARC_FLASH","group":"arc-flash-platform","name":"Arc Flash — Platform (Role / SLD / Responsive / Report)","xml":"suite-arc-flash-platform.xml","tests":5,"stagger":88},
+            {"toggle":"ARC_FLASH","group":"arc-flash-grid-matrix","name":"Arc Flash — Grid Column Matrix (presence + sort)","xml":"suite-arc-flash-grid-matrix.xml","tests":46,"stagger":92},
+            {"toggle":"ARC_FLASH","group":"arc-flash-asset-class","name":"Arc Flash — Asset-Class Matrix","xml":"suite-arc-flash-asset-class.xml","tests":30,"stagger":94},
+            {"toggle":"ARC_FLASH","group":"arc-flash-role","name":"Arc Flash — Role View Matrix","xml":"suite-arc-flash-role.xml","tests":8,"stagger":96},
+            {"toggle":"ARC_FLASH","group":"arc-flash-filters-pagination","name":"Arc Flash — Filters + Pagination Matrix","xml":"suite-arc-flash-filters-pagination.xml","tests":9,"stagger":98},
             {"toggle":"RBAC_API","group":"rbac-api","name":"RBAC — API","xml":"suite-rbac-api.xml","tests":606,"stagger":82},
             {"toggle":"RBAC_FRONTEND","group":"rbac-frontend","name":"RBAC — Front-End (UI)","xml":"suite-rbac-frontend.xml","tests":303,"stagger":90}
           ]'

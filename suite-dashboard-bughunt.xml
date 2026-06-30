@@ -84,4 +84,28 @@
         </classes>
     </test>
 
+    <test name="Arc Flash — Grid Column Matrix (presence + sort, 46 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ArcFlashGridMatrixTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Arc Flash — Asset-Class Matrix (filter + breakdown, 30 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ArcFlashAssetClassMatrixTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Arc Flash — Role View Matrix (8 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ArcFlashRoleMatrixTestNG"/>
+        </classes>
+    </test>
+
+    <test name="Arc Flash — Filters + Pagination Matrix (9 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ArcFlashFiltersPaginationTestNG"/>
+        </classes>
+    </test>
+
 </suite>

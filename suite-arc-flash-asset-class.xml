@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Full Suite — Arc Flash Asset-Class Matrix (filter + breakdown, 30 TCs)" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <test name="Full Suite — Arc Flash Asset-Class Matrix (filter + breakdown, 30 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ArcFlashAssetClassMatrixTestNG"/>
+        </classes>
+    </test>
+
+</suite>
