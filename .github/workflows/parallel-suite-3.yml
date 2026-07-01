@@ -76,6 +76,13 @@ jobs:
           fi
           mvn -B test -DsuiteXmlFile=suite-api-health.xml
 
+      - name: Render styled HTML report (Z-Platform format)
+        if: always()
+        run: |
+          if [ -f reports/api-health-report.md ]; then
+            python3 .github/scripts/gen_api_health_report.py reports/api-health-report.md reports/api-health-report.html || echo "HTML render skipped"
+          fi
+
       - name: Publish health report to run summary
         if: always()
         run: |
@@ -85,12 +92,13 @@ jobs:
             echo "No health report produced (login or startup failure)." >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Upload health report + detailed reports
+      - name: Upload health report (HTML + markdown + detailed)
         if: always()
         uses: actions/upload-artifact@v4.6.2
         with:
           name: api-health-report
           path: |
+            reports/api-health-report.html
             reports/api-health-report.md
             reports/detail-report/
           if-no-files-found: warn
