@@ -12,6 +12,7 @@ Usage:
 Read-only: issues GETs only. Never point --base at production. Exit code 1 if any FAIL, else 0.
 """
 import argparse, json, os, ssl, sys, time, urllib.request, urllib.error
+from urllib.parse import urlparse
 
 MAX_ALLOWED = 100      # max page size the contract allows (50–100)
 DEFAULT_IDEAL = 20     # preferred default page size (10–20)
@@ -21,6 +22,27 @@ HARD_MS = 8000         # genuinely broken
 # TLS is VERIFIED by default. dev/QA hosts that use a self-signed / internal-CA cert can opt out with
 # --insecure (prefer adding the internal CA to your trust store instead). Never use --insecure vs prod.
 CTX = ssl.create_default_context()
+
+def base_rejection(base):
+    """Return a reason string if this base URL must NOT be probed, else None (fail closed on parse errors).
+    Guards against production egalvanic hosts using hostname-suffix matching (not substring), rejects
+    userinfo, and requires https for egalvanic hosts. Non-egalvanic hosts (localhost, other dev) are allowed."""
+    try:
+        u = urlparse(base)
+    except Exception as e:
+        return f"unparseable base URL ({e})"
+    if not u.hostname:
+        return "no hostname in base URL"
+    if u.username or u.password or "@" in (u.netloc or ""):
+        return "base URL must not contain userinfo (user:pass@host)"
+    host = u.hostname.lower()
+    if host == "egalvanic.ai" or host.endswith(".egalvanic.ai"):
+        allowed = (".dev.egalvanic.ai", ".qa.egalvanic.ai", ".stage.egalvanic.ai")
+        if not any(host.endswith(s) for s in allowed):
+            return f"'{host}' looks like PRODUCTION (or an unknown egalvanic host) — use a dev/qa/stage host"
+        if u.scheme != "https":
+            return f"'{host}' must be probed over https"
+    return None
 
 def _join(path, params):
     if not params: return path
@@ -76,8 +98,9 @@ def main():
     if a.insecure:
         CTX.check_hostname = False; CTX.verify_mode = ssl.CERT_NONE
         print("WARNING: TLS verification disabled (--insecure). Use only against a trusted dev/QA host.\n", file=sys.stderr)
-    if "egalvanic.ai" in a.base and ".qa." not in a.base and ".dev." not in a.base and ".stage." not in a.base:
-        print("Refusing to probe what looks like PRODUCTION. Use a dev/qa base.", file=sys.stderr); sys.exit(2)
+    reason = base_rejection(a.base)
+    if reason:
+        print(f"Refusing to probe: {reason}.", file=sys.stderr); sys.exit(2)
     if not a.token:
         print("WARNING: no --token/EG_TOKEN; authed checks will be limited.\n")
 

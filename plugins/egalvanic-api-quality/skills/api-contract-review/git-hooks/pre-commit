@@ -11,8 +11,21 @@
 set -u
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 
-# optional dotenv-style config (KEY=VALUE lines), never committed (add to .gitignore)
-[ -f "$REPO_ROOT/.api-contract.env" ] && set -a && . "$REPO_ROOT/.api-contract.env" && set +a
+# optional config (KEY=VALUE lines), never committed. We do NOT `source` it (that would execute arbitrary
+# shell). Instead parse a fixed whitelist of keys, and refuse a git-tracked file (it must be gitignored).
+CFG="$REPO_ROOT/.api-contract.env"
+if [ -f "$CFG" ]; then
+  if git -C "$REPO_ROOT" ls-files --error-unmatch "$CFG" >/dev/null 2>&1; then
+    echo "⚠️  api-contract hook: .api-contract.env is tracked by git — refusing to load it (it holds a token; add it to .gitignore)." >&2
+  else
+    while IFS='=' read -r k v; do
+      case "$k" in
+        \#*|"") continue ;;
+        EG_API_BASE|EG_TOKEN|EG_API_PATHS|EG_API_INSECURE|EG_PROBE) export "$k=$v" ;;
+      esac
+    done < "$CFG"
+  fi
+fi
 
 # resolve endpoint paths: env EG_API_PATHS, else a .api-contract-paths file (one path per line, # comments)
 PATHS="${EG_API_PATHS:-}"
