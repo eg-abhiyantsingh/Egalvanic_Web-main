@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="List-API Contract Audit (pagination / filters / max-limit / default / response-time)" verbose="2">
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+    <test name="List-API Contract Audit">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.ListApiContractApiTest"/>
+        </classes>
+    </test>
+</suite>

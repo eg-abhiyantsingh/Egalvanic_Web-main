@@ -48,4 +48,10 @@
         </classes>
     </test>
 
+    <test name="List-API Contract Audit — pagination / filters / max-limit / default / response-time (7 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.ListApiContractApiTest"/>
+        </classes>
+    </test>
+
 </suite>
