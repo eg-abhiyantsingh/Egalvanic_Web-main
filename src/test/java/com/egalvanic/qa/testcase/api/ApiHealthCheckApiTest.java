@@ -166,7 +166,7 @@ public class ApiHealthCheckApiTest extends BaseAPITest {
 
         List<String> recs = evaluate(name, path, m);
         for (String r : recs) { String[] p = r.split("\\|", 2); RECS.add(new String[]{p[0], name, p[1]}); }
-        RESULTS.add(new String[]{ category, name, m.status, String.valueOf(m.http), m.latencyMs + "ms",
+        RESULTS.add(new String[]{ category, name, path, m.status, String.valueOf(m.http), m.latencyMs + "ms",
                 m.itemCount < 0 ? "-" : String.valueOf(m.itemCount), m.shape == null ? "-" : m.shape,
                 m.payloadKb < 0 ? "-" : (m.payloadKb + "KB"), String.valueOf(recs.size()) });
 
@@ -249,8 +249,8 @@ public class ApiHealthCheckApiTest extends BaseAPITest {
         rows.sort((a, b) -> a[0].equals(b[0]) ? a[1].compareTo(b[1]) : a[0].compareTo(b[0]));
         int pass = 0, warn = 0, fail = 0; long latSum = 0, latN = 0;
         for (String[] r : rows) {
-            if ("pass".equals(r[2])) pass++; else if ("warn".equals(r[2])) warn++; else fail++;
-            try { latSum += Long.parseLong(r[4].replace("ms", "")); latN++; } catch (Exception ignored) {}
+            if ("pass".equals(r[3])) pass++; else if ("warn".equals(r[3])) warn++; else fail++;
+            try { latSum += Long.parseLong(r[5].replace("ms", "")); latN++; } catch (Exception ignored) {}
         }
         int crit = 0, wrn = 0, info = 0;
         for (String[] r : RECS) { if ("critical".equals(r[0])) crit++; else if ("warning".equals(r[0])) wrn++; else info++; }
@@ -261,8 +261,8 @@ public class ApiHealthCheckApiTest extends BaseAPITest {
           .append(pass).append(" pass · ").append(warn).append(" warn · ").append(fail).append(" fail · ")
           .append("avg ").append(latN > 0 ? (latSum / latN) : 0).append("ms · ")
           .append("recommendations: ").append(crit).append(" critical / ").append(wrn).append(" warning / ").append(info).append(" info\n\n");
-        md.append("| Category | Endpoint | Status | HTTP | Latency | Items | Shape | Payload | Recs |\n");
-        md.append("|---|---|---|---|---|---|---|---|---|\n");
+        md.append("| Category | Endpoint | Path | Status | HTTP | Latency | Items | Shape | Payload | Recs |\n");
+        md.append("|---|---|---|---|---|---|---|---|---|---|\n");
         for (String[] r : rows) md.append("| ").append(String.join(" | ", r)).append(" |\n");
         if (!RECS.isEmpty()) {
             md.append("\n## Recommendations\n\n");

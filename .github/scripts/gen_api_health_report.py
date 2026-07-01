@@ -13,12 +13,13 @@ ENV = "Prod" if ".egalvanic.ai" in BASE_URL and ".qa." not in BASE_URL and ".dev
 
 rows = []
 for line in md.splitlines():
-    m = re.match(r"\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(pass|warn|fail)\s*\|\s*(.+?)\s*\|\s*(\d+)ms\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(\d+)\s*\|", line)
+    # Category | Endpoint | Path | Status | HTTP | Latency | Items | Shape | Payload | Recs
+    m = re.match(r"\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(pass|warn|fail)\s*\|\s*(.+?)\s*\|\s*(\d+)ms\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(\d+)\s*\|", line)
     if not m: continue
-    cat, name, status, http, lat, items, shape, payload, recn = m.groups()
+    cat, name, path, status, http, lat, items, shape, payload, recn = m.groups()
     items_i = int(items) if items.strip().isdigit() else None
     kb = int(re.sub(r"KB","",payload)) if re.match(r"\d+KB", payload.strip()) else None
-    rows.append(dict(cat=cat, name=name, status=status, http=http, lat=int(lat),
+    rows.append(dict(cat=cat, name=name, path=path.strip(), status=status, http=http, lat=int(lat),
                      items=items_i, shape=shape.strip(), kb=kb))
 
 recs = []
@@ -95,7 +96,7 @@ def card(sev, ep_name, path, headline, fix):
 # path lookup by endpoint name (best-effort from registry-style names)
 def path_for(name):
     for r in rows:
-        if r["name"]==name: return "/"+re.sub(r"[^a-z0-9]+","_",name.lower()).strip("_")
+        if r["name"]==name: return r.get("path","")
     return ""
 
 pill = lambda s: f'<span class="pill {s}">{s.upper()}</span>'
