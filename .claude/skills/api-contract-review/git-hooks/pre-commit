@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# eGalvanic API-contract git hook — runs the live probe on the endpoints a change touches, before you
+# push / open a PR. Install as pre-push (recommended) or pre-commit via install.sh.
+#
+# OPT-IN: does nothing (exits 0) unless configured, so it never blocks devs who haven't set it up.
+# Configure via env or a repo-root file:
+#   EG_API_BASE   base URL, e.g. https://acme.dev.egalvanic.ai/api   (or first line of .api-contract.env)
+#   EG_TOKEN      your dev bearer token  (never commit it)
+#   EG_API_PATHS  space/comma-separated endpoint paths to probe      (or a .api-contract-paths file)
+#   EG_API_INSECURE=1   skip TLS verify (self-signed dev/QA only)
+set -u
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+
+# optional dotenv-style config (KEY=VALUE lines), never committed (add to .gitignore)
+[ -f "$REPO_ROOT/.api-contract.env" ] && set -a && . "$REPO_ROOT/.api-contract.env" && set +a
+
+# resolve endpoint paths: env EG_API_PATHS, else a .api-contract-paths file (one path per line, # comments)
+PATHS="${EG_API_PATHS:-}"
+if [ -z "$PATHS" ] && [ -f "$REPO_ROOT/.api-contract-paths" ]; then
+  PATHS="$(grep -vE '^\s*#|^\s*$' "$REPO_ROOT/.api-contract-paths" | tr '\n' ' ')"
+fi
+PATHS="${PATHS//,/ }"
+
+if [ -z "${EG_API_BASE:-}" ] || [ -z "${EG_TOKEN:-}" ] || [ -z "$PATHS" ]; then
+  echo "ℹ️  api-contract hook: not configured (need EG_API_BASE + EG_TOKEN + EG_API_PATHS/.api-contract-paths) — skipping." >&2
+  echo "   See .claude/skills/api-contract-review/README.md to enable the pre-PR API check." >&2
+  exit 0
+fi
+
+# locate the probe script (skill folder or installed plugin)
+PROBE="${EG_PROBE:-}"
+for c in \
+  "$REPO_ROOT/.claude/skills/api-contract-review/probe_endpoint.py" \
+  "$HOME/.claude/skills/api-contract-review/probe_endpoint.py" \
+  "$REPO_ROOT/plugins/egalvanic-api-quality/skills/api-contract-review/probe_endpoint.py"; do
+  [ -z "$PROBE" ] && [ -f "$c" ] && PROBE="$c"
+done
+if [ -z "$PROBE" ] || [ ! -f "$PROBE" ]; then
+  echo "⚠️  api-contract hook: probe_endpoint.py not found — set EG_PROBE=/path/to/probe_endpoint.py" >&2
+  exit 0   # don't hard-block on a missing tool
+fi
+
+INSECURE=""; [ "${EG_API_INSECURE:-}" = "1" ] && INSECURE="--insecure"
+echo "🔎 api-contract check → $EG_API_BASE"
+fails=0
+for p in $PATHS; do
+  echo "── $p"
+  EG_TOKEN="$EG_TOKEN" python3 "$PROBE" --base "$EG_API_BASE" --path "$p" $INSECURE || fails=$((fails+1))
+done
+
+if [ "$fails" -gt 0 ]; then
+  echo "" >&2
+  echo "❌ api-contract: $fails endpoint(s) failed the contract. Fix them or override with: git <cmd> --no-verify" >&2
+  exit 1
+fi
+echo "✅ api-contract: all probed endpoints pass."
+exit 0

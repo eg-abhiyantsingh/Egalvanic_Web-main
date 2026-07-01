@@ -1,0 +1,15 @@
+{
+  "name": "egalvanic-qa",
+  "owner": { "name": "eGalvanic QA Team" },
+  "metadata": {
+    "description": "eGalvanic QA Claude Code plugins — API quality, contract & health tooling for developers.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "egalvanic-api-quality",
+      "source": "./plugins/egalvanic-api-quality",
+      "description": "Pre-PR API contract, security & performance checks (pagination / filters / max-limit / default page size / response time / auth / IDOR). Skill + live probe + git hook."
+    }
+  ]
+}

@@ -56,3 +56,6 @@ perf/k6-summary.json
 
 # Scratch/extracted data for the hidden SLD module (large binaries; not repo content)
 docs/sld-intelligence/
+
+# eGalvanic api-contract-review — dev token config (never commit)
+.api-contract.env

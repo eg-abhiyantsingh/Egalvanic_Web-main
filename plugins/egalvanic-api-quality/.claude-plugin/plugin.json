@@ -1,0 +1,7 @@
+{
+  "name": "egalvanic-api-quality",
+  "version": "1.0.0",
+  "description": "Pre-PR API contract, security & performance checks for eGalvanic developers. Bundles the api-contract-review skill (pagination, filters/search, max limit ≤50/100, default page size 10–20, expected records, response time, auth/IDOR/input-validation/injection) plus a zero-dependency live probe and a git hook. Same contract QA's Parallel Suite 3 enforces — run it before you open a PR.",
+  "author": { "name": "eGalvanic QA Team" },
+  "keywords": ["api", "contract", "pagination", "security", "performance", "health-check", "pre-pr", "code-review"]
+}
