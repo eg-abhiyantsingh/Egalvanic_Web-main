@@ -23,7 +23,9 @@ name: Parallel Suite 2 — Curated Bug Verification + AI + Smoke + Load + BCES-I
 # Total: ~422 TCs across 10 default groups.
 #
 # Opt-in toggles (OFF by default — tick to add their groups):
-#   Asset Engineering (386 TCs), Arc Flash Readiness (123 TCs — 7 groups, NEW 2026-06-30), RBAC (API 606 / FE 303).
+#   Asset Engineering (386 TCs), Arc Flash Readiness (123 TCs — 7 groups, NEW 2026-06-30),
+#   API testing (REST contract + List-API pagination audit + network-captured response validation, NEW 2026-07-01),
+#   RBAC (API 606 / FE 303).
 #   Arc Flash also runs in parallel-suite.yml's dashboard-bughunt group; here it is opt-in to avoid double-running.
 #
 # The BCES-IQ group runs the SAME test framework against
@@ -79,6 +81,10 @@ on:
         description: 'Arc Flash Readiness — 7 groups, 123 TCs (Overview/Eng-Mode/Asset Details + Source-Target/Connection + Platform + Grid/Asset-Class/Role/Pagination matrices)'
         type: boolean
         default: false
+      api:
+        description: 'API testing — REST contract suite (incl. list-API pagination/limit/filter audit) + network-captured API response validation'
+        type: boolean
+        default: false
       # ── RBAC (opt-in — off by default). Run as normal groups so their results merge
       #    into the consolidated CLIENT + DETAILED reports like every other module. ──
       rbac_api:
@@ -127,6 +133,7 @@ jobs:
           DOC: ${{ inputs.doc_inspired }}
           ENGINEERING: ${{ inputs.engineering }}
           ARC_FLASH: ${{ inputs.arc_flash }}
+          API: ${{ inputs.api }}
           RBAC_API: ${{ inputs.rbac_api }}
           RBAC_FRONTEND: ${{ inputs.rbac_frontend }}
         run: |
@@ -137,7 +144,8 @@ jobs:
             {"toggle":"SMOKE","group":"smoke","name":"Smoke Suites","xml":"smoke-testng.xml","tests":37,"stagger":10},
             {"toggle":"SMOKE","group":"bces-iq-smoke","name":"BCES-IQ Tenant Smoke","xml":"smoke-bces-iq-testng.xml","tests":3,"stagger":70,"base_url":"https://acme.bces-iq.com"},
             {"toggle":"LOAD_API","group":"load-api","name":"Load + API + Critical Path","xml":"suite-load-api.xml","tests":62,"stagger":20},
-            {"toggle":"LOAD_API","group":"list-api-contract","name":"List-API Contract Audit (pagination/filters/max-limit/default)","xml":"suite-list-api-contract.xml","tests":7,"stagger":22},
+            {"toggle":"API","group":"api-rest-contract","name":"API — REST contract + List-API pagination audit","xml":"suite-api.xml","tests":35,"stagger":22},
+            {"toggle":"API","group":"api-network","name":"API — network-captured response validation","xml":"suite-network-api.xml","tests":1,"stagger":24},
             {"toggle":"AI","group":"ai-form","name":"AI Form Creation","xml":"suite-ai-form.xml","tests":56,"stagger":30},
             {"toggle":"AI","group":"ai-analyzer","name":"AI Page Analyzer","xml":"suite-ai-analyzer.xml","tests":3,"stagger":60},
             {"toggle":"EXPLORATORY","group":"monkey","name":"Monkey Exploratory","xml":"suite-monkey.xml","tests":4,"stagger":40},
@@ -159,7 +167,7 @@ jobs:
             {"toggle":"RBAC_API","group":"rbac-api","name":"RBAC — API","xml":"suite-rbac-api.xml","tests":606,"stagger":82},
             {"toggle":"RBAC_FRONTEND","group":"rbac-frontend","name":"RBAC — Front-End (UI)","xml":"suite-rbac-frontend.xml","tests":303,"stagger":90}
           ]'
-          ENABLED=$(for t in CURATED SMOKE LOAD_API AI EXPLORATORY QUALITY DOC ENGINEERING ARC_FLASH RBAC_API RBAC_FRONTEND; do
+          ENABLED=$(for t in CURATED SMOKE LOAD_API AI EXPLORATORY QUALITY DOC ENGINEERING ARC_FLASH API RBAC_API RBAC_FRONTEND; do
                       [ "${!t}" = "true" ] && echo "$t"; done | jq -R . | jq -cs .)
           SEL=$(echo "$CATALOG" | jq -c --argjson en "$ENABLED" \
                   '[ .[] | select(.toggle as $t | $en | index($t)) | del(.toggle) ]')

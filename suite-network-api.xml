@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Network-Captured API Audit (browser network → response validation)" verbose="2">
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+    <test name="Network API contract">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.NetworkApiContractTestNG"/>
+        </classes>
+    </test>
+</suite>
