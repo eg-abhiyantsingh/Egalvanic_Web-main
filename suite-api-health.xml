@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="API Health Check (Z-Platform endpoint registry — pass/warn/fail + recommendations)" verbose="2">
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+    <test name="API Health Check">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.ApiHealthCheckApiTest"/>
+        </classes>
+    </test>
+</suite>

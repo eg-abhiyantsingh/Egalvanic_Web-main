@@ -1,0 +1,97 @@
+name: Parallel Suite 3 — API Health Check
+
+# ============================================================
+# PARALLEL SUITE 3 — API HEALTH CHECK
+# ============================================================
+#
+# Read-only health monitor for the Z-Platform API, ported from the Egalvanic
+# Utility Toolkit v3.0 health check. Probes the ~50-endpoint registry across 15
+# categories and classifies each pass / warn / fail, with the same recommendation
+# buckets (slow, large payload, no-pagination, scaling, plain-array, empty).
+#
+#   - GET-only (+ read-only /auth/verify-token & /health). No writes on any env.
+#   - Fails the build ONLY on a genuine outage (5xx / timeout / connection error);
+#     a 4xx is a healthy server responding and is reported, not failed.
+#   - Latency / payload / pagination findings are advisory (reports/api-health-report.md).
+#
+# Runs on a daily schedule and on demand. Environment is selectable; QA uses the
+# repo's QA login, Prod requires EG_PROD_EMAIL / EG_PROD_PASSWORD secrets (never
+# committed). Prod is read-only here — no writes are ever issued.
+# ============================================================
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment to health-check'
+        type: choice
+        options: [qa, prod]
+        default: qa
+  schedule:
+    - cron: '0 6 * * *'   # daily 06:00 UTC
+
+concurrency:
+  group: parallel-suite-3-${{ github.event.inputs.environment || 'qa' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  api-health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.3.1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4.8.0
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Resolve target environment
+        env:
+          TARGET_ENV: ${{ github.event.inputs.environment || 'qa' }}
+        run: |
+          if [ "$TARGET_ENV" = "prod" ]; then
+            echo "BASE_URL=https://acme.egalvanic.ai" >> "$GITHUB_ENV"
+          else
+            echo "BASE_URL=https://acme.qa.egalvanic.ai" >> "$GITHUB_ENV"
+          fi
+          echo "Health-checking $TARGET_ENV" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run API health check
+        env:
+          TARGET_ENV: ${{ github.event.inputs.environment || 'qa' }}
+          # QA uses the repo's default QA login; Prod requires its own secrets (read-only probe).
+          PROD_EMAIL: ${{ secrets.EG_PROD_EMAIL }}
+          PROD_PASSWORD: ${{ secrets.EG_PROD_PASSWORD }}
+        run: |
+          if [ "$TARGET_ENV" = "prod" ]; then
+            export USER_EMAIL="$PROD_EMAIL"
+            export USER_PASSWORD="$PROD_PASSWORD"
+          fi
+          mvn -B test -DsuiteXmlFile=suite-api-health.xml
+
+      - name: Publish health report to run summary
+        if: always()
+        run: |
+          if [ -f reports/api-health-report.md ]; then
+            cat reports/api-health-report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No health report produced (login or startup failure)." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload health report + detailed reports
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: api-health-report
+          path: |
+            reports/api-health-report.md
+            reports/detail-report/
+          if-no-files-found: warn
+          retention-days: 30
