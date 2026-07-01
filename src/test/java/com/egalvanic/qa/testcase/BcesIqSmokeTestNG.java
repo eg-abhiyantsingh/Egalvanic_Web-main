@@ -15,6 +15,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterSuite;
@@ -136,6 +137,24 @@ public class BcesIqSmokeTestNG {
                 (duration < 1000 ? duration + "ms" : (duration / 1000) + "s"));
     }
 
+    /**
+     * Skip login/shell tests when the BCES-IQ tenant credentials are not configured. The bces-iq CI group
+     * injects USER_EMAIL/USER_PASSWORD from the BCES_IQ_USER/BCES_IQ_PASSWORD repo secrets; when those
+     * secrets are absent they resolve to the acme.qa defaults, which cannot log into the bces-iq tenant.
+     * That is an environment-not-configured state, not a product/login failure — so skip rather than fail.
+     * (TC_01 still runs: it only verifies the site + login form load, which needs no credentials.)
+     */
+    private void skipIfBcesIqNotConfigured() {
+        boolean bcesTenant = AppConstants.BASE_URL.toLowerCase().contains("bces-iq");
+        // acme.qa default login literal — if VALID_EMAIL still equals this on the bces-iq tenant, the
+        // BCES_IQ_USER secret was not injected (getEnv fell back to the default).
+        boolean usingAcmeDefault = "abhiyant.singh+admin@egalvanic.com".equalsIgnoreCase(AppConstants.VALID_EMAIL);
+        if (bcesTenant && usingAcmeDefault) {
+            throw new SkipException("BCES-IQ credentials not configured (BCES_IQ_USER / BCES_IQ_PASSWORD "
+                    + "secrets absent — fell back to acme defaults) — skipping login smoke on " + AppConstants.BASE_URL);
+        }
+    }
+
     // ================================================================
     // TC_BcesIq_01 — Site loads and login form is reachable
     // ================================================================
@@ -179,6 +198,7 @@ public class BcesIqSmokeTestNG {
         ExtentReportManager.createTest(
                 AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_LOGIN,
                 "TC_BcesIq_02_LoginSucceeds");
+        skipIfBcesIqNotConfigured();
         try {
             logStep("Navigating to " + AppConstants.BASE_URL);
             driver.get(AppConstants.BASE_URL);
@@ -234,6 +254,7 @@ public class BcesIqSmokeTestNG {
         ExtentReportManager.createTest(
                 AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_DASHBOARD,
                 "TC_BcesIq_03_PostLoginShell");
+        skipIfBcesIqNotConfigured();
         try {
             driver.get(AppConstants.BASE_URL);
             new WebDriverWait(driver, Duration.ofSeconds(LOGIN_TIMEOUT))
