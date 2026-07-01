@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="API Health Check (Z-Platform endpoint registry — pass/warn/fail + recommendations)" verbose="2">
+<suite name="API Health &amp; Contract (health check + list-API pagination/limit/filter contract)" verbose="2">
     <listeners>
         <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
     </listeners>
+    <!-- Health monitor: ~50-endpoint pass/warn/fail + recommendations (incl. pagination advisories). -->
     <test name="API Health Check">
         <classes>
             <class name="com.egalvanic.qa.testcase.api.ApiHealthCheckApiTest"/>
+        </classes>
+    </test>
+    <!-- Enforcing pagination/limit/default/filter contract (report mode; -DSTRICT_LIST_API_CONTRACT=true gates). -->
+    <test name="List-API Pagination Contract">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.ListApiContractApiTest"/>
         </classes>
     </test>
 </suite>

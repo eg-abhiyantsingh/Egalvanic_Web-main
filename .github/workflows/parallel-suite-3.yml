@@ -92,7 +92,7 @@ jobs:
             echo "No health report produced (login or startup failure)." >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      - name: Upload health report (HTML + markdown + detailed)
+      - name: Upload health + contract reports
         if: always()
         uses: actions/upload-artifact@v4.6.2
         with:
@@ -100,6 +100,7 @@ jobs:
           path: |
             reports/api-health-report.html
             reports/api-health-report.md
+            reports/list-api-contract-report.md
             reports/detail-report/
           if-no-files-found: warn
           retention-days: 30
