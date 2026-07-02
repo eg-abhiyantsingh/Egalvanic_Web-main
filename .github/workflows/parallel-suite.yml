@@ -738,6 +738,29 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
 
+      # AFTER-RERUN consolidated DETAILED report: the original modules (steps + inline
+      # screenshots) + an authoritative merged-totals banner (recovered re-run passes
+      # counted as PASS), recovered tests re-badged green, and the re-run's own detailed
+      # reports appended as "[re-run]" modules.
+      - name: Generate AFTER-RERUN consolidated detailed report
+        if: always()
+        run: |
+          python3 .github/scripts/consolidated-detailed-report.py \
+            all-reports reports/consolidated-detailed-rerun \
+            --title "Consolidated Detailed Report — Parallel Suite AFTER RE-RUN (run ${{ github.run_number }})" \
+            --timestamp "$(date -u '+%Y-%m-%d %H:%M UTC')" \
+            --rerun-detail reports/detail-report \
+            --rerun-results rerun-results || true
+
+      - name: Upload AFTER-RERUN consolidated detailed report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: consolidated-detailed-report-after-rerun
+          path: reports/consolidated-detailed-rerun/
+          retention-days: 30
+          if-no-files-found: warn
+
       - name: Re-run summary
         if: always()
         run: |
@@ -747,7 +770,9 @@ jobs:
             echo "- Failed in first pass: **${BEFORE_FAILING:-?}**"
             echo "- Still failing after re-run: **${STILL_FAILING:-?}** (the rest recovered — env-flaky or fixed)"
             echo ""
-            echo "Two client reports are attached to this run:"
-            echo "- \`consolidated-client-report\` — **before** re-run"
-            echo "- \`consolidated-client-report-after-rerun\` — **after** re-run"
+            echo "Reports attached to this run:"
+            echo "- \`consolidated-client-report\` — client report **before** re-run"
+            echo "- \`consolidated-client-report-after-rerun\` — client report **after** re-run (merged totals)"
+            echo "- \`consolidated-detailed-report\` — detailed report **before** re-run"
+            echo "- \`consolidated-detailed-report-after-rerun\` — detailed report **after** re-run (merged banner + recovered re-badged + [re-run] modules)"
           } >> "$GITHUB_STEP_SUMMARY"

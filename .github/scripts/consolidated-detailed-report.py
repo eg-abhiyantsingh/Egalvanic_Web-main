@@ -40,12 +40,159 @@ Dedup model — IMPORTANT for the parallel suites:
 import argparse
 import glob
 import html
+import json
 import os
 import re
-import shutil
 import sys
+import xml.etree.ElementTree as ET
 
 NAME_RE = re.compile(r"Detailed_Report_(.+?)_(\d{8}_\d{6})\.html$")
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# RE-RUN MERGE (testng-results.xml based — exact, invocation-level)
+#
+# The rerun-failed CI job re-executes ONLY the failed test methods. To make the
+# after-rerun DETAILED report reflect the merged truth ("full suite totals with
+# recovered tests counted as PASS"), we compute the merge from the TestNG XMLs:
+#   originals = every testng-results.xml under <input-dir>     (the full first pass)
+#   rerun     = every testng-results.xml under --rerun-results (the re-run subset)
+# Keyed (class, method, params) — the same invocation-level key consolidated-report.py
+# uses — so data-driven methods (one @Test run N× with different params) merge exactly.
+# ─────────────────────────────────────────────────────────────────────────
+
+def _safe_parse_root(path):
+    """Parse XML with stdlib ET but REFUSE any document carrying a DTD — both XXE and
+    billion-laughs entity expansion require a <!DOCTYPE ...> declaration, and TestNG
+    never emits one. Keeps us dependency-free (defusedxml is not on the CI runner)."""
+    with open(path, "rb") as fh:
+        data = fh.read(50 * 1024 * 1024)  # testng-results.xml is KB-scale; cap reads
+    if b"<!DOCTYPE" in data[:4096] or b"<!ENTITY" in data:
+        print(f"  WARNING: skipping {path} — DTD/ENTITY declaration not allowed")
+        return None
+    return ET.fromstring(data)
+
+
+def _parse_invocations(results_dir):
+    """{(class, method, params): status} for every non-config invocation; later files
+    override earlier ones for the same key (retry semantics)."""
+    inv = {}
+    if not results_dir:
+        return inv
+    for path in sorted(glob.glob(os.path.join(results_dir, "**", "testng-results.xml"), recursive=True)):
+        try:
+            root = _safe_parse_root(path)
+        except (ET.ParseError, OSError):
+            continue
+        if root is None:
+            continue
+        for cls in root.findall(".//class"):
+            fqcn = cls.get("name", "")
+            for m in cls.findall("test-method"):
+                if m.get("is-config") == "true":
+                    continue
+                params = tuple((v.text or "").strip() for v in m.findall("./params/param/value"))
+                inv[(fqcn, m.get("name", ""), params)] = m.get("status", "UNKNOWN")
+    return inv
+
+
+def compute_rerun_merge(input_dir, rerun_results_dir):
+    """Return the merge summary dict, or None when there is nothing to merge."""
+    orig = _parse_invocations(input_dir)
+    rerun = _parse_invocations(rerun_results_dir)
+    if not orig or not rerun:
+        return None
+    merged = dict(orig)
+    merged.update({k: v for k, v in rerun.items() if k in orig})  # re-run overrides original
+    for k, v in rerun.items():                                     # re-run-only keys still count
+        merged.setdefault(k, v)
+
+    def count(d, status):
+        return sum(1 for s in d.values() if s == status)
+
+    orig_failed = {k for k, s in orig.items() if s == "FAIL"}
+    recovered = sorted(k for k in orig_failed if rerun.get(k) == "PASS")
+    still_failing = sorted(k for k, s in merged.items() if s == "FAIL")
+    return {
+        "orig_total": len(orig), "orig_failed": len(orig_failed),
+        "merged_total": len(merged),
+        "merged_pass": count(merged, "PASS"),
+        "merged_fail": count(merged, "FAIL"),
+        "merged_skip": count(merged, "SKIP"),
+        "recovered": recovered,
+        "still_failing": still_failing,
+    }
+
+
+def _short(key):
+    fqcn, method, params = key
+    label = f"{fqcn.rsplit('.', 1)[-1]}.{method}"
+    shown = [p for p in params if p and not re.match(r"^[\w.$]+@[0-9a-fA-F]+$", p)]
+    if shown:
+        label += "(" + ", ".join(shown[:3]) + ("…" if len(shown) > 3 else "") + ")"
+    return label
+
+
+def build_merge_banner(merge):
+    """HTML block with the merged after-rerun truth (rendered in index AND single file)."""
+    rec_list = ", ".join(html.escape(_short(k)) for k in merge["recovered"]) or "—"
+    still_list = ", ".join(html.escape(_short(k)) for k in merge["still_failing"]) or "—"
+    return f"""
+<div class="rerun-banner" style="background:#12324a;color:#d9ecff;padding:12px 22px;font-size:13px;
+     border-top:1px solid #2a5378;border-bottom:1px solid #2a5378;line-height:1.55;">
+  <strong>After re-run merge — authoritative totals:</strong>
+  {merge['merged_total']} tests &middot;
+  <span style="color:#7fe3a1;font-weight:600;">{merge['merged_pass']} passed</span> &middot;
+  <span style="color:#ff9d9d;font-weight:600;">{merge['merged_fail']} failed</span> &middot;
+  {merge['merged_skip']} skipped
+  &nbsp;|&nbsp; first pass had {merge['orig_failed']} failure(s); the re-run recovered
+  <strong>{len(merge['recovered'])}</strong>, still failing <strong>{len(merge['still_failing'])}</strong>.<br/>
+  <span style="opacity:.85;">Recovered on re-run (flaky in the parallel pass — re-badged green in the module pages
+  where matched; their re-run steps are in the [re-run] module(s)):</span> {rec_list}<br/>
+  <span style="opacity:.85;">Still failing after re-run (real failures):</span> {still_list}
+</div>"""
+
+
+def build_rebadge_shim(merge):
+    """Injected into ORIGINAL module HTML when a re-run merge is active: re-badges test
+    items whose name matches a recovered method as PASS-on-re-run. Matching is a
+    best-effort token heuristic (Extent display names differ from TestNG method names);
+    the banner carries the exact truth regardless."""
+    tokens = []
+    for _fqcn, method, _params in merge["recovered"]:
+        name = method[4:] if method.startswith("test") else method
+        if name:
+            tokens.append(name.lower())
+    return """
+<style id="__rr_style">
+  li.test-item.__rr_recovered .badge, li.test-item.__rr_recovered .status,
+  li.test-item.__rr_recovered [class*="badge"] {
+    background:#1e7a45 !important; color:#fff !important; border-color:#1e7a45 !important; }
+  li.test-item.__rr_recovered::after {
+    content:"PASS ON RE-RUN (flaky in parallel pass)"; display:block; margin:4px 14px;
+    padding:3px 10px; font-size:11px; font-weight:600; color:#0f5132;
+    background:#d1e7dd; border:1px solid #a3cfbb; border-radius:4px; width:fit-content; }
+</style>
+<script id="__rr_script">
+(function(){
+  var toks = %s;
+  function apply(){
+    var items = document.querySelectorAll('li.test-item');
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      var st = (it.getAttribute('status') || it.className || '').toLowerCase();
+      if (st.indexOf('fail') === -1) continue;
+      var txt = (it.textContent || '').toLowerCase();
+      for (var j = 0; j < toks.length; j++) {
+        if (toks[j] && txt.indexOf(toks[j]) > -1) { it.classList.add('__rr_recovered'); break; }
+      }
+    }
+  }
+  if (document.readyState === 'complete') apply();
+  else window.addEventListener('load', function(){ setTimeout(apply, 300); });
+  setTimeout(apply, 1500);
+})();
+</script>""" % json.dumps(tokens)
 
 # Injected into each module's HTML (inside its srcdoc iframe) to FLATTEN the Spark
 # SPA into a plain scrollable document.
@@ -219,7 +366,7 @@ def srcdoc_escape(s):
     return s.replace("&", "&amp;").replace('"', "&quot;")
 
 
-def build_index(modules, title, timestamp):
+def build_index(modules, title, timestamp, banner_html=""):
     """Navigable index (one module at a time via iframe). modules: (name, rel, size)."""
     nav_items = []
     for i, (name, rel, size) in enumerate(modules):
@@ -265,6 +412,7 @@ def build_index(modules, title, timestamp):
   <div class="meta">{len(modules)} module report(s) &middot; {total_mb:.1f} MB total &middot; generated {html.escape(timestamp)} &middot;
     want everything on one screenshot? open <a href="Consolidated_Detailed_Report_SingleFile.html">the single-file version</a></div>
 </header>
+{banner_html}
 <div class="wrap">
   <nav>
     <ul>
@@ -286,7 +434,7 @@ def build_index(modules, title, timestamp):
 """
 
 
-def build_single_file(modules, title, timestamp):
+def build_single_file(modules, title, timestamp, banner_html=""):
     """ONE self-contained file: every module flattened + stacked vertically.
     modules: list of (display_name, module_html_string, size_bytes)."""
     total_mb = sum(s for _, _, s in modules) / (1024 * 1024)
@@ -344,6 +492,7 @@ def build_single_file(modules, title, timestamp):
   <div class="meta">{len(modules)} module(s) &middot; {total_mb:.1f} MB total &middot; generated {html.escape(timestamp)} &middot;
     one scrollable page — use your browser's full-page screenshot or &ldquo;Save as PDF&rdquo; to capture everything.</div>
 </header></div>
+{banner_html}
 <div class="toc"><span class="lbl">Jump to module</span>
 {jump_links}
 </div>
@@ -389,12 +538,35 @@ def main():
     ap.add_argument("output_dir")
     ap.add_argument("--title", default="Consolidated Detailed Report")
     ap.add_argument("--timestamp", default="")
+    # AFTER-RERUN merge: the rerun job's fresh Detailed_Report HTMLs + its testng results.
+    # With these set, the output shows the MERGED truth: an authoritative totals banner
+    # (recovered re-run passes counted as PASS), recovered tests re-badged green inside
+    # the original module pages, and the re-run's own step/screenshot reports appended
+    # as "[re-run]" modules.
+    ap.add_argument("--rerun-detail", default=None,
+                    help="dir with the re-run's Detailed_Report_*.html (appended as [re-run] modules)")
+    ap.add_argument("--rerun-results", default=None,
+                    help="dir with the re-run's testng-results.xml (drives the merged totals)")
     args = ap.parse_args()
 
     entries = discover(args.input_dir)
     if not entries:
         print(f"[consolidated-detailed] no Detailed_Report_*.html found under {args.input_dir} — nothing to do")
         return 0
+
+    # rerun merge (optional)
+    merge = compute_rerun_merge(args.input_dir, args.rerun_results) if args.rerun_results else None
+    banner_html = build_merge_banner(merge) if merge else ""
+    rebadge_shim = build_rebadge_shim(merge) if merge and merge["recovered"] else ""
+    if args.rerun_results and not merge:
+        print("[consolidated-detailed] --rerun-results given but no mergeable testng results found — plain report")
+
+    rerun_entries = []
+    if args.rerun_detail and os.path.isdir(args.rerun_detail):
+        for e in discover(args.rerun_detail):
+            e["display"] = e["display"] + " [re-run]"
+            e["rerun"] = True
+            rerun_entries.append(e)
 
     os.makedirs(args.output_dir, exist_ok=True)
     modules_dir = os.path.join(args.output_dir, "modules")
@@ -403,12 +575,17 @@ def main():
     nav_entries = []        # (name, rel, size) for the navigable index
     single_entries = []     # (name, html_string, size) for the single file
     used_fnames = set()
-    for e in entries:
+    for e in entries + rerun_entries:
         src, name = e["path"], e["display"]
         with open(src, "r", encoding="utf-8", errors="replace") as fh:
             mod_html = fh.read()
+        # recovered-test re-badging goes into ORIGINAL modules only (the [re-run]
+        # modules already show the fresh PASS natively)
+        if rebadge_shim and not e.get("rerun"):
+            idx = mod_html.lower().rfind("</body>")
+            mod_html = (mod_html[:idx] + rebadge_shim + mod_html[idx:]) if idx != -1 else mod_html + rebadge_shim
         size = len(mod_html.encode("utf-8"))
-        # nav index: copy the raw module file into modules/ under a unique name
+        # nav index: write the (possibly shimmed) module file into modules/ under a unique name
         fname = safe_filename(name)
         if fname in used_fnames:
             stem, ext = os.path.splitext(fname)
@@ -417,21 +594,28 @@ def main():
                 i += 1
             fname = f"{stem}-{i}{ext}"
         used_fnames.add(fname)
-        shutil.copyfile(src, os.path.join(modules_dir, fname))
+        with open(os.path.join(modules_dir, fname), "w", encoding="utf-8") as fh:
+            fh.write(mod_html)
         nav_entries.append((name, f"modules/{fname}", size))
         single_entries.append((name, mod_html, size))
 
     ts = args.timestamp or "this run"
 
-    index = build_index(nav_entries, args.title, ts)
+    index = build_index(nav_entries, args.title, ts, banner_html)
     index_path = os.path.join(args.output_dir, "Consolidated_Detailed_Report.html")
     with open(index_path, "w", encoding="utf-8") as fh:
         fh.write(index)
 
-    single = build_single_file(single_entries, args.title, ts)
+    single = build_single_file(single_entries, args.title, ts, banner_html)
     single_path = os.path.join(args.output_dir, "Consolidated_Detailed_Report_SingleFile.html")
     with open(single_path, "w", encoding="utf-8") as fh:
         fh.write(single)
+
+    if merge:
+        print(f"[consolidated-detailed] AFTER-RERUN MERGE: {merge['merged_total']} tests → "
+              f"{merge['merged_pass']} pass / {merge['merged_fail']} fail / {merge['merged_skip']} skip "
+              f"(recovered {len(merge['recovered'])}, still failing {len(merge['still_failing'])}; "
+              f"{len(rerun_entries)} [re-run] module(s) appended)")
 
     total_mb = sum(s for _, _, s in nav_entries) / (1024 * 1024)
     print(f"[consolidated-detailed] {len(nav_entries)} module(s), {total_mb:.1f} MB")
