@@ -62,6 +62,17 @@ ALL_GROUPS=(
   "asset-engineering-exhaustive"
   "rbac-api"
   "rbac-frontend"
+  "arc-flash"
+  "arc-flash-connections"
+  "arc-flash-platform"
+  "arc-flash-grid-matrix"
+  "arc-flash-asset-class"
+  "arc-flash-role"
+  "arc-flash-filters-pagination"
+  "arc-flash-engineering"
+  "api-rest-contract"
+  "api-network"
+  "doc-inspired"
 )
 ALL_GROUP_NAMES=(
   "Auth + Site"
@@ -90,8 +101,19 @@ ALL_GROUP_NAMES=(
   "Asset Engineering / exhaustive options"
   "RBAC — API"
   "RBAC — Front-End (UI)"
+  "Arc Flash — Overview / Eng-Mode / Asset Details"
+  "Arc Flash — Source/Target + Connection Details"
+  "Arc Flash — Platform (Role / SLD / Responsive / Report)"
+  "Arc Flash — Grid Column Matrix"
+  "Arc Flash — Asset-Class Matrix"
+  "Arc Flash — Role View Matrix"
+  "Arc Flash — Filters + Pagination Matrix"
+  "Arc Flash — Engineering E2E (CB library match)"
+  "API — REST contract + List-API pagination audit"
+  "API — network-captured response validation"
+  "Documentation-Inspired Tests"
 )
-ALL_GROUP_TESTS=(56 135 241 75 76 65 76 115 62 37 56 4 7 3 8 3 32 225 8 12 10 39 17 308 606 303)
+ALL_GROUP_TESTS=(56 135 241 75 76 65 76 115 62 37 56 4 7 3 8 3 32 225 8 12 10 39 17 308 606 303 16 9 5 46 30 8 9 8 35 1 17)
 ALL_GROUP_XMLS=(
   "suite-auth-site.xml"
   "suite-location-task.xml"
@@ -119,6 +141,17 @@ ALL_GROUP_XMLS=(
   "suite-asset-engineering-exhaustive.xml"
   "suite-rbac-api.xml"
   "suite-rbac-frontend.xml"
+  "suite-arc-flash.xml"
+  "suite-arc-flash-connections.xml"
+  "suite-arc-flash-platform.xml"
+  "suite-arc-flash-grid-matrix.xml"
+  "suite-arc-flash-asset-class.xml"
+  "suite-arc-flash-role.xml"
+  "suite-arc-flash-filters-pagination.xml"
+  "suite-arc-flash-engineering.xml"
+  "suite-api.xml"
+  "suite-network-api.xml"
+  "suite-doc-inspired.xml"
 )
 
 # ─────────────────────────────────────────────────────
@@ -152,6 +185,17 @@ get_group_index() {
     asset-engineering-exhaustive) echo 23 ;;
     rbac-api)             echo 24 ;;
     rbac-frontend)        echo 25 ;;
+    arc-flash)                    echo 26 ;;
+    arc-flash-connections)        echo 27 ;;
+    arc-flash-platform)           echo 28 ;;
+    arc-flash-grid-matrix)        echo 29 ;;
+    arc-flash-asset-class)        echo 30 ;;
+    arc-flash-role)               echo 31 ;;
+    arc-flash-filters-pagination) echo 32 ;;
+    arc-flash-engineering)        echo 33 ;;
+    api-rest-contract)            echo 34 ;;
+    api-network)                  echo 35 ;;
+    doc-inspired)                 echo 36 ;;
     # Backwards-compat aliases for old workflow dispatch values.
     # Connection and SLD modules are excluded from CI in May 2026 release.
     auth-site-connection) echo 0 ;;
@@ -171,7 +215,7 @@ else
   IDX=$(get_group_index "$SELECTED")
   if [ "$IDX" -eq -1 ]; then
     echo "Unknown group: $SELECTED"
-    echo "   Valid: all, auth-site, location-task, workorder-issue, asset-1-2, asset-3, asset-4, asset-5, dashboard-bughunt, load-api, smoke, ai-form, monkey, visual-regression, ai-analyzer, curated-bug-verification, bces-iq-smoke, workorder-planning, quality-gates, opportunities, asset-engineering, asset-transformer, asset-engineering-matrix, asset-mains-config, asset-engineering-exhaustive, rbac-api, rbac-frontend"
+    echo "   Valid: all, auth-site, location-task, workorder-issue, asset-1-2, asset-3, asset-4, asset-5, dashboard-bughunt, load-api, smoke, ai-form, monkey, visual-regression, ai-analyzer, curated-bug-verification, bces-iq-smoke, workorder-planning, quality-gates, opportunities, asset-engineering, asset-transformer, asset-engineering-matrix, asset-mains-config, asset-engineering-exhaustive, rbac-api, rbac-frontend, arc-flash, arc-flash-connections, arc-flash-platform, arc-flash-grid-matrix, arc-flash-asset-class, arc-flash-role, arc-flash-filters-pagination, arc-flash-engineering, api-rest-contract, api-network, doc-inspired"
     exit 1
   fi
   RUN_GROUPS=("${ALL_GROUPS[$IDX]}")
