@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Full Suite — Admin PM template config (Settings → PM → Offices) (12 TCs)" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <!-- ZP-323. Ordered CRUD flow: PM_07 creates the office that PM_08-11 edit/delete. -->
+    <test name="Admin — PM template config: table / search / pagination / create-validate / language options / CRUD / section roundtrip (12 TCs)"
+          preserve-order="true">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AdminPmSettingsTestNG"/>
+        </classes>
+    </test>
+
+</suite>

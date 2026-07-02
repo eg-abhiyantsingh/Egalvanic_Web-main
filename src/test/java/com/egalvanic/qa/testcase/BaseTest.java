@@ -182,7 +182,12 @@ public class BaseTest {
         opts.setPageLoadStrategy(org.openqa.selenium.PageLoadStrategy.EAGER);
 
         if ("true".equals(System.getProperty("headless"))) {
-            opts.addArguments("--headless=new");
+            // In --headless=new, --start-maximized/maximize() leaves a ~800x600 window.
+            // MUI DataGrids VIRTUALIZE columns horizontally, so right-side columns
+            // (Sensor/Plug Amps, Phase A/B/C Wire Size, Status…) never enter the DOM and
+            // column-presence tests fail CI-only (root cause of the 2026-07-02 arc-flash
+            // parallel-suite failures). Force a desktop-sized viewport.
+            opts.addArguments("--headless=new", "--window-size=1920,1080");
         }
 
         // Wrap ChromeDriver with self-healing capabilities — ALL findElement/findElements
@@ -190,6 +195,10 @@ public class BaseTest {
         // Existing test code requires ZERO changes.
         driver = SelfHealingDriver.wrap(new ChromeDriver(opts));
         driver.manage().window().maximize();
+        if ("true".equals(System.getProperty("headless"))) {
+            // maximize() is a no-op in headless; pin the size explicitly as well.
+            driver.manage().window().setSize(new org.openqa.selenium.Dimension(1920, 1080));
+        }
         // Reduce pageLoad timeout from default 300s to 60s to prevent browser death
         driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(60));
 
