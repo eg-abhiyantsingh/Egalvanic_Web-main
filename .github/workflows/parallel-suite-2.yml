@@ -78,7 +78,7 @@ on:
         type: boolean
         default: false
       arc_flash:
-        description: 'Arc Flash Readiness — 7 groups, 123 TCs (Overview/Eng-Mode/Asset Details + Source-Target/Connection + Platform + Grid/Asset-Class/Role/Pagination matrices)'
+        description: 'Arc Flash Readiness — 8 groups, 131 TCs (Overview/Eng-Mode/Asset Details + Source-Target/Connection + Platform + Grid/Asset-Class/Role/Pagination matrices + CB library-match Engineering E2E)'
         type: boolean
         default: false
       api:
