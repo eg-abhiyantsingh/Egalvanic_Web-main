@@ -884,6 +884,286 @@ public class ArcFlashPage {
     }
 
     // ════════════════════════════════════════════════════════════
+    // CIRCUIT BREAKER ENGINEERING — Asset Details → CB class → Edit Asset modal → library match
+    // (DOM verified live 2026-07-02, site "abhiiyant 17 june site": Eng-Mode CB columns are Label /
+    //  Poles / Frame Amps / Type / Manufacturer / Library row / Sensor Amps / Plug Amps / Amperage /
+    //  Percentage Completion; clicking a dash engineering cell opens the "Edit Asset" MUI dialog with
+    //  BASIC INFO + ENGINEERING (Pole Count buttons, "Select manufacturer" Autocomplete, search term)
+    //  + CUSTOM ATTRIBUTES (Ampere Rating / Breaker Settings / Catalog Number / Interrupting Rating /
+    //  Model / Voltage) + COMMERCIAL + Cancel / Save Changes.)
+    // ════════════════════════════════════════════════════════════
+
+    private static final By EDIT_ASSET_DLG = By.xpath("//div[@role='dialog'][.//*[normalize-space()='Edit Asset']]");
+
+    /** The per-class readiness banner line, e.g. "2 assets • 7 of 12 required fields completed". */
+    public String getClassBannerText() {
+        Object out = js.executeScript(
+            "var e=[].slice.call(document.querySelectorAll('p,div,span')).find(function(x){"
+          + "return x.children.length<2 && /required fields completed/i.test(x.textContent||'');});"
+          + "return e? e.textContent.trim() : '';");
+        return out == null ? "" : out.toString();
+    }
+
+    /** The "NN%" completion figure shown beside the class banner (first percent near 'Complete'). */
+    public String getClassBannerPercent() {
+        Object out = js.executeScript(
+            "var res='';[].slice.call(document.querySelectorAll('body *')).some(function(e){"
+          + "if(e.children.length) return false; if((e.textContent||'').trim()!=='Complete') return false;"
+          + "var cur=e; for(var up=0; up<4 && cur.parentElement; up++){cur=cur.parentElement;"
+          + "  var pc=[].slice.call(cur.querySelectorAll('*')).filter(function(x){return x.children.length===0 && /^\\d{1,3}%$/.test((x.textContent||'').trim());});"
+          + "  if(pc.length){res=pc[0].textContent.trim(); return true;}} return false;});return res;");
+        return out == null ? "" : out.toString();
+    }
+
+    /** Cell texts of the row whose Label cell equals {label} (empty list if absent). */
+    @SuppressWarnings("unchecked")
+    public List<String> getRowCellsByLabel(String label) {
+        Object out = js.executeScript(
+            "var lbl=arguments[0];var rows=[].slice.call(document.querySelectorAll(\"[role='row']\"))"
+          + ".filter(function(r){return r.querySelector(\"[role='gridcell']\");});"
+          + "for(var i=0;i<rows.length;i++){var cells=[].slice.call(rows[i].querySelectorAll(\"[role='gridcell']\"));"
+          + "  if(cells.length && cells[0].textContent.trim()===lbl) return cells.map(function(c){return c.textContent.trim();});}"
+          + "return [];", label);
+        return (List<String>) out;
+    }
+
+    /**
+     * Open the Edit Asset modal from an engineering cell in the CB grid. Prefers a row whose
+     * "Frame Amps" cell is a dash (an incomplete breaker); falls back to the LAST data row (never the
+     * first — that may be manually-curated demo data). Returns the clicked row's Label, or null.
+     */
+    public String openCbEditFromEngineeringCell() {
+        Object label = js.executeScript(
+            "var hs=[].slice.call(document.querySelectorAll(\"[role='columnheader']\"));"
+          + "var idx=null; hs.forEach(function(h){ if(/frame amps/i.test(h.textContent)) idx=h.getAttribute('aria-colindex'); });"
+          + "if(idx===null) return null;"
+          + "var rows=[].slice.call(document.querySelectorAll(\"[role='row']\")).filter(function(r){return r.querySelector(\"[role='gridcell']\");});"
+          + "if(!rows.length) return null;"
+          + "var target=null;"
+          + "for(var i=0;i<rows.length;i++){var c=rows[i].querySelector(\"[role='gridcell'][aria-colindex='\"+idx+\"']\");"
+          + "  if(c && /^[—\\-–]?$/.test(c.textContent.trim())){ target=rows[i]; break; }}"
+          + "if(!target) target=rows[rows.length-1];"
+          + "var cell=target.querySelector(\"[role='gridcell'][aria-colindex='\"+idx+\"']\") || target.querySelector(\"[role='gridcell']\");"
+          + "var t=cell.querySelector('button, svg, a, span')||cell;"
+          + "t.scrollIntoView({block:'center'}); t.click();"
+          + "return target.querySelector(\"[role='gridcell']\").textContent.trim();");
+        if (label == null) { System.out.println("[ArcFlashPage] no CB engineering cell to click"); return null; }
+        for (int i = 0; i < 24; i++) {                       // modal + its form content load async
+            if (!driver.findElements(EDIT_ASSET_DLG).isEmpty()
+                    && editAssetDialogText().contains("ENGINEERING")) {
+                System.out.println("[ArcFlashPage] Edit Asset modal open for '" + label + "'");
+                pause(600);
+                return label.toString();
+            }
+            pause(500);
+        }
+        System.out.println("[ArcFlashPage] Edit Asset modal did not open/render for '" + label + "'");
+        return null;
+    }
+
+    private String editAssetDialogText() {
+        List<WebElement> d = driver.findElements(EDIT_ASSET_DLG);
+        if (d.isEmpty()) return "";
+        try { return d.get(0).getText(); } catch (Exception e) { return ""; }
+    }
+
+    public boolean editAssetHasManufacturerSearch() {
+        // Poll ~10s: the manufacturer sub-component lazy-renders a beat after the modal opens.
+        // DOM check (not getText, which is visible-only — the ENGINEERING section may be scrolled off).
+        for (int i = 0; i < 20; i++) {
+            Object r = js.executeScript(
+                "var d=document.querySelector(\"[role='dialog']\"); if(!d) return false;"
+              + "var hasMfg=[].slice.call(d.querySelectorAll('input')).some(function(i){return /manufacturer/i.test(i.placeholder||'');});"
+              + "var t=d.textContent||'';"
+              + "return hasMfg || /search term|pick a manufacturer/i.test(t);");
+            if (Boolean.TRUE.equals(r)) return true;
+            pause(500);
+        }
+        return false;
+    }
+
+    /** Click a Pole Count button (1P / 2P / 3P) inside the Edit Asset modal. */
+    public boolean setPoleCountInModal(String pole) {
+        Object r = js.executeScript(
+            "var p=arguments[0];var d=document.querySelector(\"[role='dialog']\"); if(!d) return false;"
+          + "var b=[].slice.call(d.querySelectorAll('button')).find(function(x){return x.textContent.trim()===p;});"
+          + "if(!b) return false; b.scrollIntoView({block:'center'}); b.click(); return true;", pole);
+        System.out.println("[ArcFlashPage] pole count " + pole + " -> " + r);
+        pause(800);
+        return Boolean.TRUE.equals(r);
+    }
+
+    /**
+     * Select an option in a MUI Autocomplete inside the open dialog, located by input placeholder regex.
+     * Types to filter, then clicks the first option containing {optionContains} (case-insensitive);
+     * keyboard-commits (ArrowDown+Enter) as fallback. Returns the input's value afterwards.
+     */
+    public String selectDialogAutocomplete(String placeholderRegex, String typeText, String optionContains) {
+        // Locator JS for a dialog-scoped input by placeholder regex — reused across retries.
+        String findByPlaceholder =
+            "var re=new RegExp(arguments[0],'i');var d=document.querySelector(\"[role='dialog']\")||document;"
+          + "var inp=[].slice.call(d.querySelectorAll('input')).find(function(i){return re.test(i.placeholder||'');});"
+          + "if(!inp) return false;";
+        return typePickAutocomplete(findByPlaceholder, placeholderRegex, typeText, optionContains, "placeholder=" + placeholderRegex);
+    }
+
+    /**
+     * Shared type→pick engine for MUI Autocomplete inside the open dialog. Uses the native React value
+     * setter (sendKeys does not reliably drive controlled inputs on this app) and returns the CLICKED
+     * option's text (the committed value lives in the option, not input.value). Retries 3× — the slow QA
+     * option list can lag the first keystroke. {@code findJs} must locate the input into var {@code inp}
+     * and {@code return false} if not found. Listbox options are portalled to <body>, so query document.
+     */
+    private String typePickAutocomplete(String findJs, String arg0, String typeText, String optionContains, String tag) {
+        for (int attempt = 0; attempt < 3; attempt++) {
+            try {
+                Object filled = js.executeScript(
+                    findJs
+                  + "inp.scrollIntoView({block:'center'}); inp.focus(); inp.click();"
+                  + "var set=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
+                  + "set.call(inp,''); inp.dispatchEvent(new Event('input',{bubbles:true}));"
+                  + "set.call(inp,arguments[1]); inp.dispatchEvent(new Event('input',{bubbles:true}));"
+                  + "return true;", arg0, typeText);
+                if (!Boolean.TRUE.equals(filled)) { pause(700); continue; }
+                pause(1300);
+                Object txt = js.executeScript(
+                    "var want=arguments[0].toLowerCase();"
+                  + "var opts=[].slice.call(document.querySelectorAll(\"li[role='option']\"));"
+                  + "var m=opts.find(function(o){return o.textContent.trim().toLowerCase()===want;})"
+                  + "      || opts.find(function(o){return o.textContent.toLowerCase().indexOf(want)>-1;});"
+                  + "if(!m && opts.length===1) m=opts[0];"
+                  + "if(!m) return null; m.scrollIntoView({block:'center'}); m.click(); return m.textContent.trim();",
+                    optionContains);
+                if (txt != null) {
+                    System.out.println("[ArcFlashPage] dialog autocomplete " + tag + " <- '" + typeText + "' => '" + txt + "'");
+                    pause(600);
+                    return txt.toString();
+                }
+                pause(800);
+            } catch (Exception e) { pause(700); }
+        }
+        System.out.println("[ArcFlashPage] dialog autocomplete " + tag + " <- '" + typeText + "' => (no option for '" + optionContains + "')");
+        return null;
+    }
+
+    /**
+     * Like {@link #selectDialogAutocomplete} but locates the input by the text of its nearest preceding
+     * label/paragraph (e.g. "Phase A Wire Size", "Conductor Material") instead of a placeholder.
+     */
+    public String selectDialogAutocompleteByLabel(String labelRegex, String typeText, String optionContains) {
+        // Locate the input by nearest label/paragraph text, then hand off to the shared type→pick engine.
+        String findByLabel =
+            "var re=new RegExp(arguments[0],'i');var d=document.querySelector(\"[role='dialog']\")||document;"
+          + "var labs=[].slice.call(d.querySelectorAll('p,label,span')).filter(function(l){"
+          + "  return l.children.length<2 && re.test((l.textContent||'').trim()) && (l.textContent||'').trim().length<60;});"
+          + "var inp=null;"
+          + "for(var i=0;i<labs.length && !inp;i++){var cur=labs[i];"
+          + "  for(var up=0; up<4 && cur; up++){"
+          + "    var c=(cur.parentElement||cur).querySelector('input');"
+          + "    if(c && c.getBoundingClientRect().width>0){inp=c;break;}"
+          + "    cur=cur.parentElement;}}"
+          + "if(!inp) return false;";
+        return typePickAutocomplete(findByLabel, labelRegex, typeText, optionContains, "label=" + labelRegex);
+    }
+
+    /** Wait until the library "possible matches" cards render in the dialog (after picking a manufacturer). */
+    public boolean waitForMatchCards(int seconds, String cardToken) {
+        for (int i = 0; i < seconds; i++) {
+            String t = editAssetDialogText();
+            if (t.matches("(?s).*\\d+ possible match.*") || t.contains(cardToken)) return true;
+            pause(1000);
+        }
+        System.out.println("[ArcFlashPage] library match cards did not render in " + seconds + "s");
+        return false;
+    }
+
+    /** The "N possible matches" text currently shown in the dialog ("" if absent). */
+    public String getPossibleMatchesText() {
+        String t = editAssetDialogText();
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\d+ possible match(es)?").matcher(t);
+        return m.find() ? m.group() : "";
+    }
+
+    /**
+     * Click the library model card matching ALL {tokens} (and excluding LSI/Touch variants) inside the
+     * dialog — ported from AssetEngineeringTestNG.matchLibraryModel, scoped to the dialog.
+     */
+    public boolean clickModelCard(String[] tokens) {
+        Object r = js.executeScript(
+            "var toks=arguments[0];var d=document.querySelector(\"[role='dialog']\")||document;"
+          + "function ok(t){ if(!t) return false; for(var i=0;i<toks.length;i++){ if(t.indexOf(toks[i])<0) return false; }"
+          + " return t.indexOf('LSI')<0 && t.indexOf('Touch')<0; }"
+          + "var cands=[].slice.call(d.querySelectorAll(\"li,[role='option'],[role='button'],.MuiListItemButton-root,.MuiListItem-root,.MuiCard-root,div\"))"
+          + ".filter(function(e){return ok(e.textContent||'') && (e.textContent||'').length<250;});"
+          + "if(!cands.length) return false;"
+          + "cands.sort(function(a,b){return a.textContent.length-b.textContent.length;});"
+          + "cands[0].scrollIntoView({block:'center'}); cands[0].click(); return true;", (Object) tokens);
+        System.out.println("[ArcFlashPage] clickModelCard -> " + r);
+        pause(1500);
+        return Boolean.TRUE.equals(r);
+    }
+
+    /** True once the dialog reflects an applied library match (matched card / populated trip fields). */
+    public boolean isLibraryMatchApplied(String frameToken) {
+        String t = editAssetDialogText();
+        return t.contains("LIBRARY MATCHED") || t.contains("Library Matched")
+                || (frameToken != null && t.contains(frameToken));
+    }
+
+    /**
+     * Click "Save Changes" in the Edit Asset modal; if the modal stays open with the button still present
+     * (the app asks for a second confirming click after a library match), click it again. Waits for the
+     * dialog to close. Returns true once closed.
+     */
+    public boolean saveChangesTwice() {
+        for (int click = 0; click < 2; click++) {
+            List<WebElement> btns = driver.findElements(By.xpath(
+                    "//div[@role='dialog']//button[normalize-space()='Save Changes']"));
+            if (btns.isEmpty()) break;
+            WebElement b = btns.get(btns.size() - 1);
+            try { js.executeScript("arguments[0].scrollIntoView({block:'center'});", b); } catch (Exception ignored) {}
+            // All three click paths are guarded: the button detaches the instant the save re-renders the
+            // modal, so a StaleElementReferenceException here just means the click already landed.
+            try { new Actions(driver).moveToElement(b).click().perform(); }
+            catch (Exception e) {
+                try { b.click(); }
+                catch (Exception e2) { try { js.executeScript("arguments[0].click();", b); } catch (Exception ignored) {} }
+            }
+            System.out.println("[ArcFlashPage] Save Changes click #" + (click + 1));
+            for (int i = 0; i < 6; i++) {                    // give it ~3s to either close or re-arm
+                pause(500);
+                if (driver.findElements(EDIT_ASSET_DLG).isEmpty()) return true;
+            }
+        }
+        // final wait — saving a matched breaker persists engineering data and can take a while
+        for (int i = 0; i < 40; i++) {
+            if (driver.findElements(EDIT_ASSET_DLG).isEmpty()) return true;
+            pause(500);
+        }
+        System.out.println("[ArcFlashPage] Edit Asset modal still open after Save Changes x2");
+        return false;
+    }
+
+    /** Click the Generate Report control and report what rendered (dialog / new tab / inline preview). */
+    public String clickGenerateReportAndProbe() {
+        int windowsBefore = driver.getWindowHandles().size();
+        Object clicked = js.executeScript(
+            "var b=[].slice.call(document.querySelectorAll(\"button,[role='button']\"))"
+          + ".find(function(x){return /generate report/i.test(x.textContent||'');});"
+          + "if(!b) return false; b.scrollIntoView({block:'center'}); b.click(); return true;");
+        if (!Boolean.TRUE.equals(clicked)) return "";
+        for (int i = 0; i < 20; i++) {
+            pause(1000);
+            if (driver.getWindowHandles().size() > windowsBefore) return "new-tab";
+            if (!driver.findElements(By.xpath("//div[@role='dialog']")).isEmpty()) return "dialog";
+            Boolean preview = (Boolean) js.executeScript(
+                "return !!(document.querySelector('iframe, embed, canvas.pdf, [class*=\"report-preview\" i]'));");
+            if (Boolean.TRUE.equals(preview)) return "inline-preview";
+        }
+        return "clicked-no-visible-output";
+    }
+
+    // ════════════════════════════════════════════════════════════
     // PAGINATION (MUI TablePagination) — rows-per-page + next/prev + footer
     // ════════════════════════════════════════════════════════════
 

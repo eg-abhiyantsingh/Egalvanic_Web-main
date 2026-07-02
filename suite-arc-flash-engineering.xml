@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Full Suite — Arc Flash Engineering E2E (CB library-match → readiness recalc) (8 TCs)" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <!-- Ordered flow: the Edit Asset modal stays open across AFE_02→03→04, so this class must
+         run as a single ordered unit (preserve-order + no method parallelism). -->
+    <test name="Arc Flash Engineering — dash cell → Edit Asset → ABB → Emax 2 model match → Save ×2 → recalc + Source/Target + cable fill + Generate Report + site switch (8 TCs)"
+          preserve-order="true">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ArcFlashEngineeringE2ETestNG"/>
+        </classes>
+    </test>
+
+</suite>

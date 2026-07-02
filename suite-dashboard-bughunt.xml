@@ -108,4 +108,10 @@
         </classes>
     </test>
 
+    <test name="Arc Flash — Engineering E2E: CB library match → readiness recalc (8 TCs)" preserve-order="true">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ArcFlashEngineeringE2ETestNG"/>
+        </classes>
+    </test>
+
 </suite>

@@ -164,6 +164,7 @@ jobs:
             {"toggle":"ARC_FLASH","group":"arc-flash-asset-class","name":"Arc Flash — Asset-Class Matrix","xml":"suite-arc-flash-asset-class.xml","tests":30,"stagger":94},
             {"toggle":"ARC_FLASH","group":"arc-flash-role","name":"Arc Flash — Role View Matrix","xml":"suite-arc-flash-role.xml","tests":8,"stagger":96},
             {"toggle":"ARC_FLASH","group":"arc-flash-filters-pagination","name":"Arc Flash — Filters + Pagination Matrix","xml":"suite-arc-flash-filters-pagination.xml","tests":9,"stagger":98},
+            {"toggle":"ARC_FLASH","group":"arc-flash-engineering","name":"Arc Flash — Engineering E2E (CB library match → recalc)","xml":"suite-arc-flash-engineering.xml","tests":8,"stagger":100},
             {"toggle":"RBAC_API","group":"rbac-api","name":"RBAC — API","xml":"suite-rbac-api.xml","tests":606,"stagger":82},
             {"toggle":"RBAC_FRONTEND","group":"rbac-frontend","name":"RBAC — Front-End (UI)","xml":"suite-rbac-frontend.xml","tests":303,"stagger":90}
           ]'
