@@ -1,6 +1,7 @@
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/ai/DailyFailureAnalyzer.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/ai/SelfHealingLocator.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/verify/AssetLoadVerifier.java
+/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/pageobjects/AccountsPage.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/ai/AITestGenerator.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/pageobjects/LocationPage.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/pageobjects/AssetPage.java
@@ -10,6 +11,8 @@
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/verify/UIStateValidator.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/ai/SmartBugDetector.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/ai/SelfHealingDriver.java
+/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/RolePermissionMatrix.java
+/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/pageobjects/ArcFlashPage.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/pageobjects/LoginPage.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/pageobjects/IssuePage.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/ai/AIPageAnalyzer.java
@@ -30,6 +33,7 @@
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/verify/UiApiConsistencyVerifier.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/ScreenshotUtil.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/ai/SmartTestDataGenerator.java
+/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/pageobjects/OpportunitiesPage.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/ai/ReadyBugGenerator.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/verify/A11yVerifier.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/verify/BrowserErrorCapture.java

@@ -287,10 +287,9 @@ public class AppConstants {
     public static final String EMAIL_PASSWORD = getEnv("EMAIL_PASSWORD", "onmzhjxnacinjfun");
     public static final String EMAIL_TO = "abhiyant.singh@egalvanic.com";
     public static final String EMAIL_SUBJECT = "eGalvanic Web Automation - Test Report";
-    // Default to ON — user requested email delivery for every run.
-    // Set SEND_EMAIL_ENABLED=false in env to disable for ad-hoc debug runs.
+    // Default to OFF — set SEND_EMAIL_ENABLED=true in env (CI does) to email reports.
     public static final boolean SEND_EMAIL_ENABLED =
-            Boolean.parseBoolean(getEnv("SEND_EMAIL_ENABLED", "true"));
+            Boolean.parseBoolean(getEnv("SEND_EMAIL_ENABLED", "false"));
 
     // DETAILED REPORT DELIVERY
     // We do NOT email Detailed Reports — they're too large with all the screenshots.
