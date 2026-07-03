@@ -253,6 +253,16 @@ public class WorkOrderTestNG extends BaseTest {
             }
             logStep("findWOInGrid: '" + name + "' not yet visible (attempt " + attempt + "/10)");
             pause(3000);
+            // If the grid filters a client-side dataset fetched BEFORE the WO was
+            // created, retyping the search can never surface it — force a refetch.
+            // (Proven 2026-06-30: AutoTest_WO_44022 existed in the backend at
+            // 23:50:01Z yet all 10 search attempts missed it.)
+            if (attempt == 4 || attempt == 7) {
+                logStep("findWOInGrid: refreshing page to force grid refetch (attempt " + attempt + ")");
+                driver.navigate().refresh();
+                pause(3000);
+                ensureOnWorkOrdersPage();
+            }
         }
         return false;
     }
@@ -486,6 +496,9 @@ public class WorkOrderTestNG extends BaseTest {
         } catch (Exception e) {
             logStep("Create WO failed: " + e.getMessage());
             logStepWithScreenshot("Create WO error state");
+            // A mid-flow crash must FAIL the test — swallowing it here reported
+            // green runs where the create flow never completed.
+            throw new AssertionError("TC_CWO_003 create flow crashed: " + e.getMessage(), e);
         }
     }
 

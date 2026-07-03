@@ -159,6 +159,19 @@ public class VerifierSelfValidation {
         load(d, "<html><body><h1>settled content</h1><p>done</p></body></html>");
         HangDetector.HangReport ok = HangDetector.check(d, "settled-fixture", 5);
         expect("HangDetector clean on settled page", !ok.hung, "reason=" + ok.reason);
+
+        // DETERMINATE progress (readiness gauges, completion bars) shares MUI classes
+        // and role=progressbar with real spinners but is a permanent data visualization
+        // — it must NOT read as a hang. Regression fixture for the 2026-06-30 Arc Flash
+        // false "Page HUNG" (three determinate gauges flagged as spinners for 30s).
+        load(d, "<html><body><h1>Arc Flash readiness</h1>" +
+            "<span class='MuiCircularProgress-root MuiCircularProgress-determinate' " +
+            "role='progressbar' aria-valuenow='37' style='width:40px;height:40px'>37%</span>" +
+            "<span class='MuiLinearProgress-root MuiLinearProgress-determinate' " +
+            "role='progressbar' aria-valuenow='50' style='width:200px;height:4px'></span>" +
+            "</body></html>");
+        HangDetector.HangReport gauge = HangDetector.check(d, "determinate-gauge-fixture", 5);
+        expect("HangDetector ignores determinate gauges", !gauge.hung, "reason=" + gauge.reason);
     }
 
     // ---- 7. AssetLoadVerifier.isPdfRendered ----

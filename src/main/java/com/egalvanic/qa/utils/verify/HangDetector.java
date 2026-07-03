@@ -67,9 +67,19 @@ public final class HangDetector {
                     "var r={};" +
                     "r.ready = document.readyState;" +
                     "r.pending = window.__pendingRequests || 0;" +
-                    // visible spinner?
-                    "var sp = document.querySelector('.MuiCircularProgress-root,[role=\"progressbar\"],.MuiLinearProgress-root,.loading-spinner');" +
-                    "r.spinner = !!(sp && sp.offsetParent !== null);" +
+                    // visible INDETERMINATE spinner? Determinate MUI progress (readiness
+                    // gauges, completion bars) shares the same classes/role but always
+                    // carries aria-valuenow and a '-determinate' class — those are data
+                    // visualizations, not loading states, and must not count as a hang.
+                    "var sps = document.querySelectorAll('.MuiCircularProgress-root,[role=\"progressbar\"],.MuiLinearProgress-root,.loading-spinner');" +
+                    "r.spinner = false;" +
+                    "for (var i = 0; i < sps.length; i++) {" +
+                    "  var e = sps[i];" +
+                    "  if (e.offsetParent === null) continue;" +
+                    "  var cls = (e.className && e.className.baseVal !== undefined ? e.className.baseVal : e.className) || '';" +
+                    "  if (e.hasAttribute('aria-valuenow') || /-determinate/.test(String(cls))) continue;" +
+                    "  r.spinner = true; break;" +
+                    "}" +
                     "r.mut = window.__hangMut||0; window.__hangMut=0;" +
                     "return JSON.stringify(r);");
                 String s = String.valueOf(state);

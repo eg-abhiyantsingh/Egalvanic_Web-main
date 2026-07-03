@@ -319,7 +319,21 @@ public class PlanningPage {
      * the first row. NOTE: "Edit Plan" navigates to the full plan editor page
      * (/quotes/{id}) — it is NOT a dialog. Returns true once the editor page is reached.
      */
+    /**
+     * Poll until the row with the EXACT name is rendered. The grid refilter after
+     * search() is async — a single immediate lookup races the DataGrid re-render.
+     */
+    public boolean waitForExactRow(String name, int seconds) {
+        try {
+            return new WebDriverWait(driver, Duration.ofSeconds(seconds))
+                    .until(d -> findRowByExactName(name) != null);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     public boolean openEditForPlan(String planName) {
+        if (planName != null) waitForExactRow(planName, 15);
         WebElement row = planName == null ? null : findRowByExactName(planName);
         WebElement editBtn = null;
         if (row != null) {
@@ -354,6 +368,7 @@ public class PlanningPage {
     // ================================================================
 
     public boolean openDeleteForPlan(String planName) {
+        if (planName != null) waitForExactRow(planName, 15);
         WebElement row = planName == null ? null : findRowByExactName(planName);
         WebElement delBtn = null;
         if (row != null) {
