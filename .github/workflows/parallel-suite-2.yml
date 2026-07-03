@@ -150,7 +150,7 @@ jobs:
             {"toggle":"SMOKE","group":"bces-iq-smoke","name":"BCES-IQ Tenant Smoke","xml":"smoke-bces-iq-testng.xml","tests":3,"stagger":70,"base_url":"https://acme.bces-iq.com"},
             {"toggle":"LOAD_API","group":"load-api","name":"Load + API + Critical Path","xml":"suite-load-api.xml","tests":62,"stagger":20},
             {"toggle":"API","group":"api-rest-contract","name":"API — REST contract + List-API pagination audit","xml":"suite-api.xml","tests":35,"stagger":22},
-            {"toggle":"API","group":"api-network","name":"API — network-captured response validation","xml":"suite-network-api.xml","tests":1,"stagger":24},
+            {"toggle":"API","group":"api-network","name":"API — network capture + duplicate-call + UI/API consistency","xml":"suite-network-api.xml","tests":3,"stagger":24},
             {"toggle":"AI","group":"ai-form","name":"AI Form Creation","xml":"suite-ai-form.xml","tests":56,"stagger":30},
             {"toggle":"AI","group":"ai-analyzer","name":"AI Page Analyzer","xml":"suite-ai-analyzer.xml","tests":3,"stagger":60},
             {"toggle":"EXPLORATORY","group":"monkey","name":"Monkey Exploratory","xml":"suite-monkey.xml","tests":4,"stagger":40},
@@ -393,6 +393,7 @@ jobs:
           path: |
             reports/detail-report/
             reports/groups/
+            reports/*.md
             test-output/screenshots/
             test-output/visual-diffs/
           retention-days: 30

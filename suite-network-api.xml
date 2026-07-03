@@ -9,4 +9,17 @@
             <class name="com.egalvanic.qa.testcase.NetworkApiContractTestNG"/>
         </classes>
     </test>
+    <!-- Duplicate / redundant API-call detection across modules (report mode; -DSTRICT_DUPLICATE_API=true gates). -->
+    <test name="Duplicate API Calls">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ApiDuplicateCallTestNG"/>
+        </classes>
+    </test>
+    <!-- UI vs API data-consistency: grid-total refresh determinism + API-vs-UI count (report mode;
+         -DSTRICT_DATA_CONSISTENCY=true gates on a reproducible refresh mismatch). -->
+    <test name="Data Consistency (UI vs API)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.UiApiDataConsistencyTestNG"/>
+        </classes>
+    </test>
 </suite>
