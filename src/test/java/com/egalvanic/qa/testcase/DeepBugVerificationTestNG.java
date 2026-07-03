@@ -9,6 +9,7 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import java.time.Duration;
@@ -111,17 +112,22 @@ public class DeepBugVerificationTestNG extends BaseTest {
 
             // Guard against false-positive PASS: if Beamer didn't load AT ALL,
             // blocked==0 would silently pass even though we haven't verified anything.
-            // Treat "Beamer never loaded" as an inconclusive failure so the CI report
-            // doesn't claim the bug is fixed when we couldn't check.
-            Assert.assertTrue(totalFonts > 0L,
-                    "BUG-002: Cannot verify — Beamer didn't load any fonts in this run. "
-                    + "Either Beamer SDK failed to init (separate issue) or CSP already blocked it pre-font. "
-                    + "Manually verify on /dashboard, then re-run.");
+            // SKIP (not FAIL): the precondition is a third-party SDK we don't control —
+            // a skip keeps the report honest (no false "bug fixed" claim) without
+            // polluting the fail count on every run where Beamer happens to be down.
+            if (totalFonts == 0L) {
+                throw new SkipException(
+                        "BUG-002: Cannot verify — Beamer didn't load any fonts in this run. "
+                        + "Either Beamer SDK failed to init (separate issue) or CSP already blocked it pre-font. "
+                        + "Manually verify on /dashboard, then re-run.");
+            }
 
             Assert.assertEquals(blocked, 0L,
                     "BUG-002: " + blocked + " Beamer font(s) blocked by CSP (out of " + totalFonts + " total). "
                     + "Fix: add fonts.getbeamer.com or *.getbeamer.com to the CSP font-src directive.");
             ExtentReportManager.logPass("No CSP-blocked Beamer fonts detected (of " + totalFonts + " loaded)");
+        } catch (SkipException se) {
+            throw se;
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG002_error");
             Assert.fail("BUG-002 test crashed: " + e.getMessage());

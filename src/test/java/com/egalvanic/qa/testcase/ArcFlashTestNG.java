@@ -226,7 +226,9 @@ public class ArcFlashTestNG extends BaseTest {
         arcFlashPage.setEngineeringMode(false);
         List<String> tips = arcFlashPage.getInfoTooltipTexts();
         logStep("Info tooltips: " + tips);
-        Assert.assertEquals(tips.size(), 3, "There should be three metric info tooltips. Got: " + tips);
+        // App ships 3 core metrics; a 4th (PM-required fields) was added with the PM module.
+        Assert.assertTrue(tips.size() >= 3 && tips.size() <= 4,
+                "There should be 3 core metric info tooltips (plus optional PM metric). Got: " + tips);
         String joined = String.join(" | ", tips).toLowerCase();
         Assert.assertTrue(joined.contains("required asset fields"),
                 "An info tooltip should describe the asset-fields metric. Got: " + tips);
@@ -234,7 +236,11 @@ public class ArcFlashTestNG extends BaseTest {
                 "An info tooltip should describe the source-connection metric. Got: " + tips);
         Assert.assertTrue(joined.contains("required connection fields"),
                 "An info tooltip should describe the connection-fields metric. Got: " + tips);
-        ExtentReportManager.logPass("All three metric info tooltips describe their metric correctly.");
+        if (tips.size() == 4) {
+            Assert.assertTrue(joined.contains("pm-required"),
+                    "The 4th tooltip should describe the PM-required-fields metric. Got: " + tips);
+        }
+        ExtentReportManager.logPass("All " + tips.size() + " metric info tooltips describe their metric correctly.");
     }
 
     // ================================================================
