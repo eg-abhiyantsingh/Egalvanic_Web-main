@@ -104,3 +104,25 @@ Impact confirmed live: login form unrenderable during degradation (12+ Selenium
 login failures across 5 classes, timestamps correlating with slow samples);
 `/api/health` itself unreliable, so upstream monitoring may be blind or alarming
 already. Recommend backend/DevOps escalation for the QA config service.
+
+## Post-recovery fix-verification rerun (22:42–22:57 IST)
+
+20 tests ran. **5 previously-failing tests now PASS at UI level**, proving the fixes:
+Arc Flash hang ✅, Maintenance hang ✅ (HangDetector determinate-gauge fix),
+WOP_003 ✅, WOP_018 ✅ (window size), WOP_020 ✅ (waitForExactRow).
+
+7 still failed — reconciled against the backend timeline (CSV):
+
+- Backend RE-DEGRADED mid-run: alliance-config 0.7s (22:43) → 3.4s (22:50) →
+  **60s timeouts (22:55–22:56)**. Incident is recurring, not a one-off.
+- Phase4 ×2: REAL 502s again (`lookup/node-subtypes`, `shortcut/by-node-class`).
+- Ops/Sales "Company information not available": REAL app bug, now precisely
+  characterized — **one slow/failed config fetch permanently bricks the dashboard
+  (no retry until page reload)**. Reproduced 06-30 (CI) and tonight (local).
+- Task ET_003 / WOP_025 / CWO_003: ran 22:52–22:57 inside the timeout window —
+  CONTAMINATED, queued for re-verification. Note: tonight's `AutoTest_WO_62934`
+  is absent from the backend (create POST failed under outage) — the opposite
+  failure mode from 06-30, consistent with env causation both times.
+
+Next: stricter stability watcher (5×2.5min healthy samples), then the full
+crash sweep + contaminated-test re-verification in one run.
