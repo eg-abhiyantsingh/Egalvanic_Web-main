@@ -1387,7 +1387,15 @@ public class TaskTestNG extends BaseTest {
         logStep("Description section present: " + hasDescription);
         logStepWithScreenshot("Task detail Description");
 
-        Assert.assertTrue(hasDescription, "Detail page should show Description section");
+        // Distinguish "section missing on the detail page" from "detail route bounced
+        // back to the list" — the 2026-07-04 sweep showed the latter: URL reached
+        // /tasks/{id}, then the app returned to /tasks before the poll finished.
+        String whereNow = driver.getCurrentUrl();
+        boolean bouncedToList = whereNow.endsWith("/tasks") || whereNow.endsWith("/tasks/");
+        Assert.assertTrue(hasDescription, bouncedToList
+                ? "Task detail BOUNCED BACK TO LIST (route opened /tasks/{id} then returned to " + whereNow
+                  + ") — detail page unviewable; suspect PM-type task detail or failed detail fetch"
+                : "Detail page should show Description section. Current URL: " + whereNow);
 
         driver.navigate().back();
         pause(2000);
