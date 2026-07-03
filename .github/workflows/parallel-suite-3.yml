@@ -82,6 +82,10 @@ jobs:
           if [ -f reports/api-health-report.md ]; then
             python3 .github/scripts/gen_api_health_report.py reports/api-health-report.md reports/api-health-report.html || echo "HTML render skipped"
           fi
+          # Full-catalog report (spec-driven, ~973 ops) → its own styled HTML.
+          if [ -f reports/api-catalog-report.md ]; then
+            python3 .github/scripts/gen_api_health_report.py reports/api-catalog-report.md reports/api-catalog-report.html || echo "Catalog HTML render skipped"
+          fi
 
       - name: Publish health report to run summary
         if: always()
@@ -90,6 +94,21 @@ jobs:
             cat reports/api-health-report.md >> "$GITHUB_STEP_SUMMARY"
           else
             echo "No health report produced (login or startup failure)." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          # Full-catalog summary: header + recommendations only (the full table is in the artifact).
+          if [ -f reports/api-catalog-report.md ]; then
+            {
+              echo ""
+              echo "---"
+              echo ""
+              sed -n '1,6p' reports/api-catalog-report.md
+              echo ""
+              echo "<details><summary>Full-catalog recommendations</summary>"
+              echo ""
+              sed -n '/## Recommendations/,$p' reports/api-catalog-report.md | head -120
+              echo ""
+              echo "</details>"
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Upload health + contract reports
@@ -100,6 +119,8 @@ jobs:
           path: |
             reports/api-health-report.html
             reports/api-health-report.md
+            reports/api-catalog-report.html
+            reports/api-catalog-report.md
             reports/list-api-contract-report.md
             reports/detail-report/
           if-no-files-found: warn

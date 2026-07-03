@@ -6,7 +6,7 @@ SRC = sys.argv[1] if len(sys.argv) > 1 else "reports/api-health-report.md"
 OUT = sys.argv[2] if len(sys.argv) > 2 else "/tmp/api-health-report.html"
 md = open(SRC).read()
 
-base = re.search(r"# API Health Check — (\S+)", md)
+base = re.search(r"# API .*?Health.*? — (\S+)", md)
 BASE_URL = base.group(1) if base else "https://acme.qa.egalvanic.ai"
 ENV = "Prod" if ".egalvanic.ai" in BASE_URL and ".qa." not in BASE_URL and ".dev." not in BASE_URL and ".stage." not in BASE_URL else \
       ("QA" if ".qa." in BASE_URL else ("Dev" if ".dev." in BASE_URL else "Stage"))

@@ -16,4 +16,12 @@
             <class name="com.egalvanic.qa.testcase.api.ListApiContractApiTest"/>
         </classes>
     </test>
+    <!-- FULL catalog: every operation in /api/swagger.json (spec-driven, ~973 ops). GET authed
+         (random-UUID path params); POST/PUT/PATCH/DELETE probed UNAUTHENTICATED with an empty body
+         (auth-gate check only — zero mutation risk). Report mode: only a genuine outage fails. -->
+    <test name="API Full Catalog (spec-driven)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.ApiFullCatalogHealthApiTest"/>
+        </classes>
+    </test>
 </suite>
