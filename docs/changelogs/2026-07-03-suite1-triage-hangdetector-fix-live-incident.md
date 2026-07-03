@@ -85,3 +85,22 @@ sales-dashboard slowness (2.7–6.1s) — one degraded service surfacing three w
 2. Full-website crash sweep (`crash-sweep.xml`): AuthSmoke + Phase5 (all 15
    modules) + Phase4 + BugHuntPages/Global/Dashboard + DeepBugVerification +
    Monkey — ~61 executions, every one behind the health gates.
+
+## Incident annex — measured statistics (20:44–22:23 IST, 99 minutes)
+
+| Endpoint | Samples | >3s | 502/timeout | Median | Max |
+|---|---|---|---|---|---|
+| `company/alliance-config/acme` | 33 | 31 (94%) | 14 (42%) | 55.7s | 100s (timeout) |
+| `/api/health` | 26 | 17 | 10 | 13.9s | 100s (timeout) |
+| `branding/company/acme` | 8 | 6 | 0 | 34.6s | 75.1s |
+| `company/config/acme` | 8 | 4 | 0 | 7.0s | 49.9s |
+| `auth/login` POST (control) | 1 | 1 | 0 | 4.3s | 4.3s |
+
+Brief healthy windows (e.g. 22:07: alliance-config 0.73s, health 0.85s) followed
+by re-degradation — consistent with an overloaded/flapping upstream, not a hard
+outage. Full raw data: latency-evidence.csv (session scratchpad; timestamps IST).
+
+Impact confirmed live: login form unrenderable during degradation (12+ Selenium
+login failures across 5 classes, timestamps correlating with slow samples);
+`/api/health` itself unreliable, so upstream monitoring may be blind or alarming
+already. Recommend backend/DevOps escalation for the QA config service.
