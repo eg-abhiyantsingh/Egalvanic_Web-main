@@ -16,6 +16,34 @@
             <class name="com.egalvanic.qa.testcase.api.ListApiContractApiTest"/>
         </classes>
     </test>
+    <!-- Pagination SEMANTICS: disjoint pages, stable ordering, beyond-end page, abusive params,
+         total consistency — 7 contract endpoints + sessions/workorders (~800-row collections).
+         5xx / semantic violations on paginating endpoints hard-fail; unpaginated endpoints WARN+skip
+         (same -DSTRICT_LIST_API_CONTRACT=true escalation as the contract audit). -->
+    <test name="List-API Pagination Behavior">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.PaginationBehaviorApiTest"/>
+        </classes>
+    </test>
+    <!-- Error-status contracts: unknown-resource 404s, malformed-input never-5xx, unauth 401 gate,
+         + a repeated-sample "502 detector" over the critical-path panel (catches the intermittent
+         backend degradation signature of the 2026-07-03 incident). GET-only, zero mutation risk.
+         Soft gaps (200-instead-of-404/401) report to reports/error-contract-report.md;
+         -DSTRICT_ERROR_CONTRACT=true escalates them. -->
+    <test name="API Error Contract + 502 Detector">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.ErrorContractApiTest"/>
+        </classes>
+    </test>
+    <!-- Transport contract: Content-Type (JSON vs SPA-shell 200s), nosniff/HSTS/no-store headers,
+         evil-Origin CORS reflection (credentialed reflection = only hard fail), version leakage.
+         GET-only, zero mutation risk. Soft gaps → reports/security-headers-report.md;
+         -DSTRICT_SECURITY_CONTRACT=true escalates them. -->
+    <test name="API Transport Contract (headers/CORS/content-type)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.SecurityHeadersApiTest"/>
+        </classes>
+    </test>
     <!-- FULL catalog: every operation in /api/swagger.json (spec-driven, ~973 ops). GET authed
          (random-UUID path params); POST/PUT/PATCH/DELETE probed UNAUTHENTICATED with an empty body
          (auth-gate check only — zero mutation risk). Report mode: only a genuine outage fails. -->
