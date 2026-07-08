@@ -22,8 +22,8 @@ import static io.restassured.RestAssured.given;
  *
  * <p>Proves that the API actually <em>enforces</em> edit permission on a work order
  * (a "job"), not merely that {@code /auth/me} reports it. For every role it sends a
- * <b>no-op</b> {@code PUT /api/job/{id}} (the job's own current body, so nothing changes)
- * and asserts:</p>
+ * <b>value-preserving</b> {@code PUT /api/job/{id}} — the job's own current field values
+ * (unwrapped from the {@code {job:{…}}} GET envelope, server-managed fields dropped) — and asserts:</p>
  * <ul>
  *   <li>role has {@code jobs.manage} (or is admin) ⇒ the edit is <b>allowed</b> (HTTP 200,
  *       no {@code permission_denied});</li>
@@ -33,8 +33,9 @@ import static io.restassured.RestAssured.given;
  *
  * <p>Oracle = the role's <em>live</em> {@code /auth/me} permission set (via {@link RbacFixtures}).
  * This was verified reliable by live probe (Client Portal → permission_denied, PM → 200), unlike
- * list endpoints whose enforcement signal is ambiguous. Unprovisioned roles SKIP. The edit is a
- * no-op, so the test never mutates real data.</p>
+ * list endpoints whose enforcement signal is ambiguous. Unprovisioned roles SKIP. The PUT preserves the
+ * job's field values; a successful write does bump the server-managed {@code modified_at} timestamp (an
+ * unavoidable side effect of exercising a real edit endpoint), but no business field changes.</p>
  */
 public class WorkOrderEditEnforcementApiTest extends BaseAPITest {
 
@@ -42,7 +43,8 @@ public class WorkOrderEditEnforcementApiTest extends BaseAPITest {
     private static final String EDIT_PERMISSION = "jobs.manage";
 
     private static String jobId;
-    private static String jobBody;   // the job's current full JSON — used as a no-op PUT payload
+    private static String jobBody;   // the job's own current fields (unwrapped from {job:{…}}), server-managed
+                                     // fields removed — sent back as a no-op edit to exercise the RBAC gate
 
     @BeforeClass(alwaysRun = true)
     public void pickAJob() {
@@ -90,7 +92,19 @@ public class WorkOrderEditEnforcementApiTest extends BaseAPITest {
             Response detail = given().header("Authorization", "Bearer " + token)
                     .when().get("/job/" + jobId).then().extract().response();
             if (detail.getStatusCode() == 200) {
-                jobBody = detail.asString();   // bare job object — used verbatim as a no-op PUT body
+                // GET /job/{id} returns a WRAPPED envelope {job:{…}, success} — unwrap to the real job
+                // object, else the PUT sends unrecognized top-level keys the backend silently ignores
+                // (so the job's own fields wouldn't round-trip). Drop server-managed fields so the payload
+                // carries only the job's current values (a genuine no-op edit).
+                try {
+                    org.json.JSONObject dj = new org.json.JSONObject(detail.asString());
+                    org.json.JSONObject job = dj.has("job") ? dj.getJSONObject("job") : dj;
+                    job.remove("modified_at");
+                    job.remove("created_at");
+                    jobBody = job.toString();
+                } catch (Exception e) {
+                    jobBody = detail.asString();   // fall back to the raw body
+                }
             }
         }
         System.out.println("[WO-EDIT] target job id: " + jobId

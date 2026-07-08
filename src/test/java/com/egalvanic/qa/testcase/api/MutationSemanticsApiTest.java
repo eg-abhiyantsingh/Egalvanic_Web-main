@@ -98,13 +98,16 @@ public class MutationSemanticsApiTest extends BaseAPITest {
                 .put("completed", false).put("title", title).put("task_description", "mutation-semantics probe");
     }
 
-    /** Null-safe read of a task's title via GET /task/{id}; "" if not readable / no data yet. */
+    /** Null-safe read of a task's title via GET /task/{id}; "" if not readable / no data yet.
+     *  Envelope-tolerant: GET /task/{id} returns a FLAT object (title at top level, no "data" wrapper),
+     *  unlike POST /task/create which wraps in {data:{…}} — so read data.title if present, else the root. */
     private String readTaskTitle(String id) {
         try {
             Response r = getAuthenticatedRequestSpec().when().get("/task/" + id).then().extract().response();
             if (r.statusCode() != 200 || r.asString().trim().startsWith("<")) return "";
-            JSONObject data = new JSONObject(r.asString()).optJSONObject("data");
-            return data == null ? "" : data.optString("title", "");
+            JSONObject o = new JSONObject(r.asString());
+            JSONObject task = o.optJSONObject("data") != null ? o.getJSONObject("data") : o;
+            return task.optString("title", "");
         } catch (Exception e) { return ""; }
     }
 
@@ -178,9 +181,9 @@ public class MutationSemanticsApiTest extends BaseAPITest {
         createdTaskIds.add(id);
 
         // Race-free synchronous signal: the create RESPONSE itself carries the full object and no queue
-        // envelope (contrast with the async path in testAsyncWriteEventuallyConverges). Single-resource
-        // GET /task/{id} has its own read lag on this platform (can briefly return data=null), so the
-        // persisted-and-visible check uses the list — the same signal the async test relies on.
+        // envelope (contrast with the async path in testAsyncWriteEventuallyConverges). Then confirm the
+        // write is readable near-instantly via GET /task/{id} (a few hundred ms) — vs the async path's
+        // multi-second queue convergence. Falls back to the list only if the single-GET is briefly behind.
         boolean noEnvelope = !env.has("_mutation");
         boolean gotFullObject = data != null && title.equals(data.optString("title"));
         boolean quicklyReadable = false;
@@ -200,8 +203,8 @@ public class MutationSemanticsApiTest extends BaseAPITest {
                 "direct-write create carried a {_mutation} queue envelope — it was NOT synchronous");
         Assert.assertTrue(visibleInList, "direct-write create never became visible — write not persisted");
         if (!quicklyReadable) ExtentReportManager.logWarning(
-                "read-after-write lag: GET /task/{id} did not reflect a direct-write create within ~3s "
-                + "(it is visible in the list) — single-resource read path lags the write ack.");
+                "GET /task/{id} did not reflect a direct-write create within ~3s though it is in the list "
+                + "— genuine read-after-write lag on the single-resource read path.");
         ExtentReportManager.logPass("Direct-write is synchronous (full object in response, no queue envelope, persisted).");
     }
 

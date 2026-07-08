@@ -132,19 +132,15 @@ public class ApiHealthCheckApiTest extends BaseAPITest {
                 }
             } catch (Exception ignored) {}
         }
-        try {
-            Response q = getAuthenticatedRequestSpec().when().get("/quotes/").then().extract().response();
-            if (q.statusCode() == 200) {
-                String b = q.asString().trim();
-                if (b.startsWith("[")) { JSONArray a = new JSONArray(b); if (a.length() > 0) quoteId = a.getJSONObject(0).optString("id", null); }
-                else if (b.startsWith("{")) {
-                    JSONObject o = new JSONObject(b);
-                    JSONArray d = o.optJSONArray("data");
-                    if (d != null && d.length() > 0) quoteId = d.getJSONObject(0).optString("id", null);
-                    else if (o.has("id")) quoteId = o.optString("id", null);
+        if (companyId != null) {                            // GET /quotes/ returns the SPA HTML shell;
+            try {                                           // the real collection is /company/{id}/quotes → {quotes:[…],count,success}
+                Response q = getAuthenticatedRequestSpec().when().get("/company/" + companyId + "/quotes").then().extract().response();
+                if (q.statusCode() == 200 && q.asString().trim().startsWith("{")) {
+                    JSONArray quotes = new JSONObject(q.asString()).optJSONArray("quotes");
+                    if (quotes != null && quotes.length() > 0) quoteId = quotes.getJSONObject(0).optString("id", null);
                 }
-            }
-        } catch (Exception ignored) {}
+            } catch (Exception ignored) {}
+        }
         System.out.println("[Health] context company=" + companyId + " sld=" + sldId + " quote=" + quoteId + " subdomain=" + subdomain);
     }
 
