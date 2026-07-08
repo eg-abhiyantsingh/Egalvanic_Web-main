@@ -195,7 +195,10 @@ public class ExtentReportManager {
      * The Detailed Report is per-module — each module gets its own HTML file,
      * lazy-created the first time a test names that module.
      */
-    public static void createTest(String moduleName, String featureName, String testName) {
+    public static synchronized void createTest(String moduleName, String featureName, String testName) {
+        // synchronized: parallel TestNG (the catalog's parallel @DataProvider) calls this concurrently,
+        // and getOrCreateModuleReport does check-then-act on plain HashMaps — serialize the fast
+        // in-memory node creation so probe threads never race here (lost nodes / NPE).
         // DETAILED REPORT: per-module — create or reuse this module's ExtentReports,
         // then create the test inside it with Feature as category for grouping.
         String safeModule = (moduleName == null || moduleName.isEmpty()) ? "_Unknown" : moduleName;
@@ -418,9 +421,11 @@ public class ExtentReportManager {
     private static int totalFailed = 0;
     private static int totalSkipped = 0;
 
-    public static void incrementPassed() { totalPassed++; }
-    public static void incrementFailed() { totalFailed++; }
-    public static void incrementSkipped() { totalSkipped++; }
+    // synchronized: called concurrently from logPass/logFail under the catalog's parallel @DataProvider;
+    // a plain int++ is a read-modify-write race that silently undercounts the summary.
+    public static synchronized void incrementPassed() { totalPassed++; }
+    public static synchronized void incrementFailed() { totalFailed++; }
+    public static synchronized void incrementSkipped() { totalSkipped++; }
 
     /** @deprecated Detailed Reports are now per-module — use {@link #getDetailedReportPaths()}. */
     @Deprecated

@@ -25,7 +25,9 @@ import static io.restassured.RestAssured.given;
 public class BaseAPITest {
 
     protected static final String API_BASE_URL = AppConstants.BASE_URL + "/api";
-    protected static String authToken;
+    // volatile: written once in @BeforeClass, read from many probe threads under the catalog's
+    // parallel @DataProvider — make the write's visibility unconditional across threads.
+    protected static volatile String authToken;
 
     @BeforeSuite
     public void suiteSetup() {

@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="API Health &amp; Contract (health check + list-API pagination/limit/filter contract)" verbose="2">
+<!-- data-provider-thread-count=6: fans out ApiFullCatalogHealthApiTest's ~973-op parallel @DataProvider
+     across 6 threads (the dominant runtime cost → ~2x+ faster). Kept at 6 (not TestNG's default 10) because
+     the QA host is 502/latency-prone and a larger burst can raise ambient 502s. Suite stays SEQUENTIAL
+     (no parallel="tests") so the 3 sandbox-mutating classes never overlap and authToken is written serially. -->
+<suite name="API Health &amp; Contract (health check + list-API pagination/limit/filter contract)" verbose="2" data-provider-thread-count="6">
     <listeners>
         <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
     </listeners>

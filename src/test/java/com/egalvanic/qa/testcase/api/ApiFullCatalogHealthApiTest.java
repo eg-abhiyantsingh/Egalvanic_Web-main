@@ -79,7 +79,9 @@ public class ApiFullCatalogHealthApiTest extends BaseAPITest {
     // CATALOG (fetched live from the swagger spec)
     // ================================================================
 
-    @DataProvider(name = "catalog")
+    // parallel=true: the ~973 probes are independent, read-only/auth-gate-only, and record into
+    // Collections.synchronizedList (RESULTS/RECS) — safe to fan out. Suite sets data-provider-thread-count.
+    @DataProvider(name = "catalog", parallel = true)
     public Object[][] catalog() {
         if (catalogRows != null) return catalogRows;
         Response spec = RestAssured.given().config(PROBE_CONFIG).relaxedHTTPSValidation()
