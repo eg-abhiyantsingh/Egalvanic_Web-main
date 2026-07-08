@@ -52,4 +52,42 @@
             <class name="com.egalvanic.qa.testcase.api.ApiFullCatalogHealthApiTest"/>
         </classes>
     </test>
+    <!-- Filter / search / list-vs-detail CONSISTENCY on POST /v2/issues/list (the one paginated+
+         filterable list API). READ-ONLY. Correctness invariants (filter purity, search finds-what-
+         exists, pagination disjoint, list==detail) hard-fail (they hold live → regression guard);
+         array-valued-filter 500+SQL-leak reports as DEFECT, -DSTRICT_CONSISTENCY_CONTRACT=true gates. -->
+    <test name="API Filter/Search Consistency">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.FilterSearchConsistencyApiTest"/>
+        </classes>
+    </test>
+    <!-- ── Authenticated CRUD / write-path contracts ──────────────────────────────────────────
+         The classes below MUTATE, but ONLY on the dedicated sandbox SLD named "test site for api
+         check" (each resolves it by name and SKIPS if absent — never a real site), every record
+         carries a class marker (ApiCrud_/ApiInval_/ApiMut_), and each self-cleans in @AfterClass +
+         sweeps strays from any prior crashed run. Run sequentially (default) so they never race on
+         the sandbox. All are GREEN by default; the STRICT_* gates escalate the backend findings. -->
+
+    <!-- CRUD lifecycle: authenticated create→read→update→(soft)delete round-trips for task / issue /
+         building, asserting each step persists and delists. Hard-fails on a broken round-trip. -->
+    <test name="API CRUD Lifecycle">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.CrudLifecycleApiTest"/>
+        </classes>
+    </test>
+    <!-- Input validation: malformed/negative authenticated bodies must yield 4xx (never 5xx) and must
+         not leak DB/stack internals. Report mode; -DSTRICT_INPUT_VALIDATION=true escalates the real
+         backend defects (task/create + /v2/issues/list 500 + psycopg2 leakage, curl-verified). -->
+    <test name="API Input Validation">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.InputValidationApiTest"/>
+        </classes>
+    </test>
+    <!-- Mutation semantics: async queue eventual-convergence vs synchronous x-direct-write, delete
+         idempotency, DELETE media-type contract. Behaviours hold live → hard-fail as regression guard. -->
+    <test name="API Mutation Semantics">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.MutationSemanticsApiTest"/>
+        </classes>
+    </test>
 </suite>

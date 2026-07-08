@@ -110,6 +110,13 @@ jobs:
               echo "</details>"
             } >> "$GITHUB_STEP_SUMMARY"
           fi
+          # Authenticated CRUD / contract reports (consistency, lifecycle, input-validation, mutation).
+          for f in reports/filter-search-consistency-report.md reports/crud-lifecycle-report.md \
+                   reports/input-validation-report.md reports/mutation-semantics-report.md; do
+            if [ -f "$f" ]; then
+              { echo ""; echo "---"; echo ""; cat "$f"; } >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
 
       - name: Upload health + contract reports
         if: always()
@@ -125,6 +132,10 @@ jobs:
             reports/pagination-behavior-report.md
             reports/error-contract-report.md
             reports/security-headers-report.md
+            reports/filter-search-consistency-report.md
+            reports/crud-lifecycle-report.md
+            reports/input-validation-report.md
+            reports/mutation-semantics-report.md
             reports/detail-report/
           if-no-files-found: warn
           retention-days: 30
