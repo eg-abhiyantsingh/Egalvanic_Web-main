@@ -86,10 +86,23 @@ jobs:
           if [ -f reports/api-catalog-report.md ]; then
             python3 .github/scripts/gen_api_health_report.py reports/api-catalog-report.md reports/api-catalog-report.html || echo "Catalog HTML render skipped"
           fi
+          # CONSOLIDATED report — one styled page covering EVERY Suite-3 area (pagination curated +
+          # catalog-wide, agent-token contract, error/transport, security, CRUD, input-validation,
+          # mutation, health, full-catalog). This is the landing page: open api-suite-report.html.
+          python3 .github/scripts/gen_api_suite_report.py \
+            target/surefire-reports/testng-results.xml reports reports/api-suite-report.html \
+            || echo "Suite report render skipped"
 
       - name: Publish health report to run summary
         if: always()
         run: |
+          echo "## eGalvanic API Test Suite — all areas" >> "$GITHUB_STEP_SUMMARY"
+          echo "Open **api-suite-report.html** in the \`api-health-report\` artifact for the consolidated, styled report covering every area below (pagination, agent-token contract, error/transport, security, CRUD, input-validation, mutation semantics, health, full catalog)." >> "$GITHUB_STEP_SUMMARY"
+          # Catalog-wide pagination findings (the spec-driven audit) — inline the summary here too.
+          if [ -f reports/list-api-catalog-report.md ]; then
+            { echo ""; echo "---"; echo ""; echo "<details><summary>List-API pagination catalog audit</summary>"; echo ""; cat reports/list-api-catalog-report.md; echo ""; echo "</details>"; } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "" >> "$GITHUB_STEP_SUMMARY"; echo "---" >> "$GITHUB_STEP_SUMMARY"; echo "" >> "$GITHUB_STEP_SUMMARY"
           if [ -f reports/api-health-report.md ]; then
             cat reports/api-health-report.md >> "$GITHUB_STEP_SUMMARY"
           else
@@ -124,11 +137,13 @@ jobs:
         with:
           name: api-health-report
           path: |
+            reports/api-suite-report.html
             reports/api-health-report.html
             reports/api-health-report.md
             reports/api-catalog-report.html
             reports/api-catalog-report.md
             reports/list-api-contract-report.md
+            reports/list-api-catalog-report.md
             reports/pagination-behavior-report.md
             reports/error-contract-report.md
             reports/security-headers-report.md
