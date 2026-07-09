@@ -77,6 +77,25 @@
             <class name="com.egalvanic.qa.testcase.api.AgentsContractApiTest"/>
         </classes>
     </test>
+    <!-- Spec-level duplicate-endpoint audit: dash/underscore twins (planned-workorder-line vs
+         planned_workorder_line confirmed live), trailing-slash twins, singular/plural roots,
+         v1/v2 overlaps. Pure spec analysis (only fetches swagger.json). Report mode;
+         -DSTRICT_SPEC_HYGIENE=true gates exact twins. Runtime duplicate CALLS stay in Suite 2's
+         browser-driven ApiDuplicateCallTestNG (needs Chrome). -->
+    <test name="API Duplicate-Endpoint Audit (spec-driven)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.DuplicateApiAuditTest"/>
+        </classes>
+    </test>
+    <!-- IR/FLIR photo pipeline: auth-gates on every ir_photo/ir_session mutation + ir_session read
+         models, PLUS a contract-WATCH for the upcoming FLIR-IND visual-generation endpoint (SKIPs
+         with a clear message until it appears in swagger, then auto-activates its validation
+         contract: unauth 401, photo_type!=FLIR-IND -> 400, missing params -> 4xx). -->
+    <test name="API IR/FLIR Photo Pipeline Contract">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.IrFlirContractApiTest"/>
+        </classes>
+    </test>
     <!-- Filter / search / list-vs-detail CONSISTENCY on POST /v2/issues/list (the one paginated+
          filterable list API). READ-ONLY. Correctness invariants (filter purity, search finds-what-
          exists, pagination disjoint, list==detail) hard-fail (they hold live → regression guard);

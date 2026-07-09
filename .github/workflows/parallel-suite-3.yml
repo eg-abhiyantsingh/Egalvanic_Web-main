@@ -144,6 +144,7 @@ jobs:
             reports/api-catalog-report.md
             reports/list-api-contract-report.md
             reports/list-api-catalog-report.md
+            reports/api-duplicate-endpoints-report.md
             reports/pagination-behavior-report.md
             reports/error-contract-report.md
             reports/security-headers-report.md
