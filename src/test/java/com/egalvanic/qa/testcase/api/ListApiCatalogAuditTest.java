@@ -109,6 +109,26 @@ public class ListApiCatalogAuditTest extends BaseAPITest {
         if (!hasAuthToken()) throw new SkipException("No API auth token — cannot audit " + path + ".");
 
         Probe base = probe(path);
+        if (base.timedOut) base = probe(path);   // one retry — the QA host has transient latency spikes
+
+        // Unresponsive (read timed out on BOTH attempts) → do NOT silently skip. An endpoint too slow to
+        // even answer a default GET can't be classified, and a genuinely slow one is likely streaming an
+        // unbounded collection (this is the /planned_workorder_line/ case: ~30s, previously dropped by the
+        // "not 200" skip). Reported as a DISTINCT "UNRESPONSIVE" outcome — NOT a confirmed pagination
+        // violation and NOT STRICT-gated, because under the suite's parallel load a slow-but-fine endpoint
+        // can also time out; this is a "couldn't audit, verify pagination manually" advisory, not a bug.
+        if (base.timedOut) {
+            String v = "UNRESPONSIVE — GET timed out after ~" + base.ms + "ms (> " + RESP_HARD_MS
+                    + "ms ceiling) on both attempts; too slow to classify. Verify manually: an endpoint "
+                    + "this slow likely returns an unbounded collection and needs ?page/per_page pagination.";
+            REPORT.add(new String[]{ category, path, "timeout", "?", "unknown", "unknown", "unknown",
+                    "TIMEOUT " + base.ms + "ms", "UNRESPONSIVE" });
+            AUDITED.add(path);
+            System.out.println("[ListCatalog][WARN] [" + path + "] " + v);
+            ExtentReportManager.logWarning("[" + path + "] " + v);
+            return;
+        }
+
         // Discovery filter: only real JSON collections are auditable. Everything else SKIPS (not a fail).
         if (base.status == 404) throw new SkipException(path + " → 404 (not deployed).");
         if (base.html)         throw new SkipException(path + " serves the SPA shell (not a JSON API collection).");
@@ -208,15 +228,17 @@ public class ListApiCatalogAuditTest extends BaseAPITest {
           .append(" | Filter | RespTime | Verdict |\n|---|---|---|---|---|---|---|---|---|\n");
         List<String[]> rows = new ArrayList<>(REPORT);
         rows.sort((a, b) -> a[1].compareTo(b[1]));
-        int violations = 0;
+        int violations = 0, unresponsive = 0;
         for (String[] r : rows) {
             md.append("| ").append(String.join(" | ", r)).append(" |\n");
             if ("VIOLATION".equals(r[8])) violations++;
+            else if ("UNRESPONSIVE".equals(r[8])) unresponsive++;
         }
         md.append("\n**").append(rows.size()).append(" collection APIs audited")
           .append(candidateCount >= 0 ? " (of " + candidateCount + " param-free GET roots enumerated)" : "")
-          .append(" — ").append(violations).append(" violation(s)")
-          .append(STRICT ? " (STRICT: enforced)" : " (reported; not enforced)").append(".**\n");
+          .append(" — ").append(violations).append(" pagination violation(s)")
+          .append(STRICT ? " (STRICT: enforced)" : " (reported; not enforced)")
+          .append(", ").append(unresponsive).append(" unresponsive/too-slow-to-audit (advisory).**\n");
         try {
             new File("reports").mkdirs();
             try (FileWriter w = new FileWriter("reports/list-api-catalog-report.md")) { w.write(md.toString()); }
@@ -228,10 +250,12 @@ public class ListApiCatalogAuditTest extends BaseAPITest {
     // ── probe helper (envelope-tolerant: bare array or {…: [ ]} wrapper) ──────
     private static class Probe {
         int status; long ms; int count = -1; int total = -1; boolean jsonList; boolean html;
+        boolean timedOut;   // socket/read timeout — the endpoint was too slow to answer within PROBE_CONFIG
     }
 
     private Probe probe(String pathWithQuery) {
         Probe p = new Probe();
+        long t0 = System.currentTimeMillis();
         try {
             Response r = getAuthenticatedRequestSpec().config(PROBE_CONFIG).relaxedHTTPSValidation()
                     .when().get(pathWithQuery).then().extract().response();
@@ -251,7 +275,11 @@ public class ListApiCatalogAuditTest extends BaseAPITest {
                 else if (o.has("total_count")) p.total = o.optInt("total_count", -1);
             }
         } catch (Exception e) {
-            System.out.println("[ListCatalog] probe(" + pathWithQuery + ") error: " + e.getMessage());
+            p.ms = System.currentTimeMillis() - t0;
+            String cls = e.getClass().getSimpleName();
+            p.timedOut = cls.contains("Timeout") || String.valueOf(e.getMessage()).toLowerCase().contains("timed out");
+            System.out.println("[ListCatalog] probe(" + pathWithQuery + ") "
+                    + (p.timedOut ? "TIMED OUT after ~" + p.ms + "ms" : "error: " + e.getMessage()));
         }
         return p;
     }
