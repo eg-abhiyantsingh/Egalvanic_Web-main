@@ -56,6 +56,16 @@
             <class name="com.egalvanic.qa.testcase.api.ApiFullCatalogHealthApiTest"/>
         </classes>
     </test>
+    <!-- AGENTS family DEEP contract (largest catalog slice, 105 ops). Hard-asserts the agent-token
+         privilege boundary on every /agents/* data endpoint (GET rejects a user token; mutations
+         reject unauthenticated calls — a 2xx-with-data would be a boundary breach) + the /agent/health
+         SDK/service contract. GET (user token) + unauth-empty mutations = zero mutation risk; the ~14
+         /agent/* runtime proxies (LLM/sandbox) are intentionally excluded (proven in the coverage test). -->
+    <test name="API Agents Contract (agent-token boundary + health)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.AgentsContractApiTest"/>
+        </classes>
+    </test>
     <!-- Filter / search / list-vs-detail CONSISTENCY on POST /v2/issues/list (the one paginated+
          filterable list API). READ-ONLY. Correctness invariants (filter purity, search finds-what-
          exists, pagination disjoint, list==detail) hard-fail (they hold live → regression guard);

@@ -95,6 +95,14 @@ public class RoleBasedPermissionContractTest extends BaseAPITest {
         }
         String mismatch = RbacFixtures.roleMismatchSkipMessage(role, la);
         if (mismatch != null) { ExtentReportManager.logSkip(mismatch); throw new SkipException(mismatch); }
+        // Contaminated fixture: account also carries the "EG Admin" super-admin overlay → the
+        // role-specific contract is unassertable (full access). Skip loudly (see fixture Javadoc).
+        String overlay = RbacFixtures.superAdminOverlaySkipMessage(role, la);
+        if (overlay != null) {
+            System.out.println("[RBAC] " + overlay);
+            ExtentReportManager.logSkip(overlay);
+            throw new SkipException(overlay);
+        }
 
         Set<String> live = new TreeSet<>(la.permissions);
         ExtentReportManager.logInfo("Live /auth/me returned " + live.size() + " permissions");

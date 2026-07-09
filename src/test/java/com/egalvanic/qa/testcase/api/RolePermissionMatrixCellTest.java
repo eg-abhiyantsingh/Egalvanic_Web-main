@@ -115,6 +115,14 @@ public class RolePermissionMatrixCellTest extends BaseAPITest implements ITest {
             ExtentReportManager.logSkip(msg);
             throw new SkipException(msg);
         }
+        // Contaminated fixture: account also carries the "EG Admin" super-admin overlay → its
+        // full-access permission set makes every "denied" cell falsely trip. Skip, don't fail
+        // (a real escalation lacks the assigned overlay and still fails — see fixture Javadoc).
+        String overlay = RbacFixtures.superAdminOverlaySkipMessage(roleName, null, la);
+        if (overlay != null) {
+            ExtentReportManager.logSkip(overlay);
+            throw new SkipException(overlay);
+        }
 
         boolean actuallyPresent = la.permissions.contains(permission);
 

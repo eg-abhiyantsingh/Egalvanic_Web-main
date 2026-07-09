@@ -138,6 +138,58 @@ public final class RbacFixtures {
     }
 
     /**
+     * The internal Egalvanic super-admin role. Its {@code roles[]} entry grants full access
+     * (is_admin=true, the whole permission vocabulary), so a NON-admin QA account that also
+     * carries it cannot have its role-specific RBAC contract asserted.
+     */
+    static final String EG_ADMIN_ROLE_NAME = "EG Admin";
+    static final String EG_ADMIN_ROLE_ID   = "e9ad3158-0af5-4b7e-9c2d-000000003158";
+
+    /** Roles for which elevated (admin-level) permissions ARE the expected contract. */
+    private static final Set<String> SUPER_ADMIN_ROLES =
+            new HashSet<>(Arrays.asList("Admin", EG_ADMIN_ROLE_NAME));
+
+    /**
+     * Detect the 2026-07-09 QA-account contamination: the role's test account was granted the
+     * internal <b>EG Admin</b> super-admin role <em>in addition</em> to its intended role, so
+     * {@code /auth/me} returns is_admin=true and the full 115-permission set. That makes the
+     * role-specific contract (privilege-escalation guard, is_admin flag, completeness) impossible
+     * to assert — every "denied" cell falsely trips.
+     *
+     * <p><b>Why SKIP, not FAIL — and why this does NOT weaken the security guarantee:</b> the
+     * extra grants here are explained by an <em>explicitly-assigned role</em> visible in
+     * {@code roles[]}. The backend is faithfully reporting a role someone attached to the account —
+     * a fixture/provisioning problem, not the app escalating on its own. A genuine backend
+     * escalation would inflate the permission set <em>without</em> an assigned EG Admin role, and
+     * that still hard-fails (this guard fires only when the EG Admin role is actually present).</p>
+     *
+     * <p>Returns a loud, actionable skip message (fix = remove EG Admin from the account), or
+     * {@code null} when there is no overlay. Never fires for a role that is itself super-admin.</p>
+     */
+    public static String superAdminOverlaySkipMessage(Role role, LiveAuth live) {
+        return superAdminOverlaySkipMessage(role == null ? null : role.name,
+                role == null ? null : role.email, live);
+    }
+
+    /** Name/email-keyed variant, for callers (per-cell test) that only have the role name. */
+    public static String superAdminOverlaySkipMessage(String roleName, String roleEmail, LiveAuth live) {
+        if (live == null || !live.provisioned || roleName == null) return null;
+        if (SUPER_ADMIN_ROLES.contains(roleName)) return null;   // elevation is legitimate here
+        boolean overlayByName = live.roleNames.stream().anyMatch(EG_ADMIN_ROLE_NAME::equalsIgnoreCase);
+        boolean overlayById   = live.roleIds.contains(EG_ADMIN_ROLE_ID);
+        if (overlayByName || overlayById) {
+            return "Test account for '" + roleName + "' is CONTAMINATED: it also carries the '"
+                    + EG_ADMIN_ROLE_NAME + "' super-admin role (roles=" + live.roleNames
+                    + ", is_admin=" + live.isAdmin + ", " + live.permissions.size()
+                    + " permissions). The role-specific RBAC contract cannot be asserted while a "
+                    + "full-access overlay is present. Fix = remove '" + EG_ADMIN_ROLE_NAME
+                    + "' from " + (roleEmail == null ? "the account" : roleEmail)
+                    + " to restore coverage for this role.";
+        }
+        return null;
+    }
+
+    /**
      * Documented per-environment role_id differences: the QA tenant seeded some roles with a
      * different UUID than the prod export, even though the role name + permission set are
      * identical. Verified live 2026-06-15: QA "Account Manager" is 392a2233… vs prod 92f38105….
@@ -169,27 +221,36 @@ public final class RbacFixtures {
         public final boolean provisioned;   // login succeeded and /auth/me returned 200
         public final int loginStatus;
         public final Set<String> permissions;
-        public final String roleId;
-        public final String roleName;
+        public final String roleId;         // roles[0].id — the account's PRIMARY role
+        public final String roleName;       // roles[0].name
+        /** EVERY role name in {@code roles[]} (primary + any overlays like an errant "EG Admin"). */
+        public final List<String> roleNames;
+        /** EVERY role id in {@code roles[]}, index-aligned with {@link #roleNames}. */
+        public final List<String> roleIds;
         public final Boolean isAdmin;
         public final Boolean hasWebAccess;
         public final String token;          // bearer access_token (for authenticated API calls)
 
         private LiveAuth(boolean provisioned, int loginStatus, Set<String> permissions,
-                         String roleId, String roleName, Boolean isAdmin, Boolean hasWebAccess, String token) {
+                         String roleId, String roleName, List<String> roleNames, List<String> roleIds,
+                         Boolean isAdmin, Boolean hasWebAccess, String token) {
             this.provisioned = provisioned;
             this.loginStatus = loginStatus;
             this.permissions = permissions == null
                     ? Collections.emptySet() : Collections.unmodifiableSet(permissions);
             this.roleId = roleId;
             this.roleName = roleName;
+            this.roleNames = roleNames == null
+                    ? Collections.emptyList() : Collections.unmodifiableList(roleNames);
+            this.roleIds = roleIds == null
+                    ? Collections.emptyList() : Collections.unmodifiableList(roleIds);
             this.isAdmin = isAdmin;
             this.hasWebAccess = hasWebAccess;
             this.token = token;
         }
 
         static LiveAuth unprovisioned(int loginStatus) {
-            return new LiveAuth(false, loginStatus, null, null, null, null, null, null);
+            return new LiveAuth(false, loginStatus, null, null, null, null, null, null, null, null);
         }
 
         /**
@@ -300,9 +361,16 @@ public final class RbacFixtures {
             // returns the boxed value or null, which the consumers already treat as a failure.
             Boolean isAdmin = me.jsonPath().get("is_admin");
             Boolean hasWeb = me.jsonPath().get("has_web_access");
+            // Capture the ENTIRE roles[] array, not just roles[0]. A contaminated QA account
+            // carries its intended role at [0] and an errant super-admin overlay ("EG Admin")
+            // at [1]; the overlay is invisible unless we read every entry.
+            List<String> allRoleNames = me.jsonPath().getList("roles.name");
+            List<String> allRoleIds = me.jsonPath().getList("roles.id");
             return new LiveAuth(true, code, permSet,
                     me.jsonPath().getString("roles[0].id"),
                     me.jsonPath().getString("roles[0].name"),
+                    allRoleNames == null ? new ArrayList<>() : allRoleNames,
+                    allRoleIds == null ? new ArrayList<>() : allRoleIds,
                     isAdmin, hasWeb, bearer);
         } catch (Exception e) {
             // Body parsing failed unexpectedly — surface as a distinct, non-cacheable
