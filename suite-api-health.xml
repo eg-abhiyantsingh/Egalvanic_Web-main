@@ -20,6 +20,17 @@
             <class name="com.egalvanic.qa.testcase.api.ListApiContractApiTest"/>
         </classes>
     </test>
+    <!-- CATALOG-WIDE pagination: the curated contract above covers 7 known-good endpoints; this
+         applies the SAME contract to EVERY collection the live swagger spec exposes (spec-driven,
+         so new list endpoints are audited automatically). ~60 collections incl. large ones the
+         curated set never reached (eqp-lib/manufacturers, opportunity/, attachment/, contact/,
+         account/, reporting/*, mutations…). GET-only; report mode (green by default);
+         -DSTRICT_LIST_API_CONTRACT=true escalates violations (same gate as the curated test). -->
+    <test name="List-API Pagination Catalog (spec-driven)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.ListApiCatalogAuditTest"/>
+        </classes>
+    </test>
     <!-- Pagination SEMANTICS: disjoint pages, stable ordering, beyond-end page, abusive params,
          total consistency — 7 contract endpoints + sessions/workorders (~800-row collections).
          5xx / semantic violations on paginating endpoints hard-fail; unpaginated endpoints WARN+skip
