@@ -170,7 +170,17 @@ public class ApiFullCatalogHealthApiTest extends BaseAPITest {
         List<String> recs = new ArrayList<>();
         if ("GET".equals(method)) {
             if (http >= 500) { status = "warn"; recs.add("critical|5xx on authenticated GET (" + http + ")"); }
-            else if (http == 200 && html) { status = "warn"; recs.add("critical|Returns 200 with HTML body for an API path (SPA fallback instead of JSON)"); }
+            else if (http == 200 && html && parameterized) {
+                // The path param was substituted with a random/nonexistent id, so no record matches and the
+                // backend serves the SPA shell instead of a JSON 404. This is the expected catch-all — a REAL
+                // id returns JSON (verified live: /account/{id} etc. → JSON for a real id, HTML only for a
+                // synthetic one). NOT a per-endpoint defect; it is the systemic "unmatched /api/{id} → SPA,
+                // not JSON-404" hygiene item, reported once (info), not N× critical.
+                recs.add("info|Parameterized GET returns the SPA shell for a nonexistent id (expected catch-all; a real id returns JSON — backend could return a JSON 404 instead)");
+            }
+            else if (http == 200 && html) {   // FIXED (unparameterized) API path serving HTML = SPA shadows a real route
+                status = "warn"; recs.add("critical|Returns 200 with HTML body for a FIXED API path (SPA fallback shadows a registered JSON route)");
+            }
             else if (!parameterized && http >= 400 && http != 404) { status = "warn"; recs.add("info|Authenticated GET returns HTTP " + http); }
             if (latency >= VERY_SLOW_MS) recs.add("critical|Very slow response: " + latency + "ms");
             else if (latency >= SLOW_MS) recs.add("warning|Slow response: " + latency + "ms");
@@ -179,8 +189,11 @@ public class ApiFullCatalogHealthApiTest extends BaseAPITest {
         } else {
             // For a mutation probed WITHOUT auth:
             if (http == 401 || http == 403) { status = "pass"; }                       // correctly auth-gated
-            else if (http == 200 && html) {                                            // fell through to the SPA — NOT an auth bypass
-                status = "warn"; recs.add("critical|Returns 200 with HTML body for an API path (SPA fallback instead of JSON)");
+            else if (http == 200 && html && parameterized) {                           // synthetic id → SPA catch-all, not a bypass
+                recs.add("info|Parameterized mutation returns the SPA shell for a nonexistent id (expected catch-all, not an auth bypass)");
+            }
+            else if (http == 200 && html) {                                            // fixed path fell through to the SPA
+                status = "warn"; recs.add("critical|Returns 200 with HTML body for a FIXED API path (SPA fallback shadows a registered route)");
             }
             else if (http >= 500) { status = "warn"; recs.add("warning|5xx on UNAUTH empty-body probe — validates before auth (" + http + ")"); }
             else if (http >= 200 && http < 300) {                                      // real 2xx JSON with no token = genuine gap
