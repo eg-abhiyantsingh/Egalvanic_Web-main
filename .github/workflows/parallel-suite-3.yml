@@ -145,6 +145,7 @@ jobs:
             reports/list-api-contract-report.md
             reports/list-api-catalog-report.md
             reports/api-duplicate-endpoints-report.md
+            reports/sld-v3-payload-benchmark.md
             reports/api-evidence.json
             reports/pagination-behavior-report.md
             reports/error-contract-report.md

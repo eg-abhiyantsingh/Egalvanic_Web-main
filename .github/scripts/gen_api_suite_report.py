@@ -59,6 +59,8 @@ AREAS = [
      "Malformed/negative bodies must yield 4xx (never 5xx) and not leak DB/stack internals."),
     ("MutationSemanticsApiTest",     "Mutation Semantics",            "mutation-semantics-report.md",
      "Async queue convergence vs x-direct-write, delete idempotency, DELETE media-type."),
+    ("SldV3PayloadBenchmarkApiTest",  "SLD V3 Payload Benchmark",     "sld-v3-payload-benchmark.md",
+     "Per-SLD v3 load latency, total payload, node_terminals total, dominant keys, and v2 before/after delta."),
     ("ApiDuplicateCallTestNG",       "Runtime Duplicate Calls (Suite 2)", "api-duplicate-calls-report.md",
      "Browser-driven: same endpoint refetched 3–4× on one page load (runs in Suite 2's api toggle)."),
 ]
@@ -396,6 +398,16 @@ def collect_findings():
             sm = re.search(r"(\d{4,})ms", resp)
             if sm:
                 add("critical" if int(sm.group(1)) >= 8000 else "high", GROUPS[2], "GET " + path, f"Slow list response: {sm.group(1)}ms", ms=int(sm.group(1)))
+
+    # 3b) SLD V3 payload benchmark — rows whose Findings column is not "OK" (slow load / heavy node_terminals)
+    for line in _read("sld-v3-payload-benchmark.md").splitlines():
+        if not line.startswith("| ") or "| OK |" in line or "Findings" in line or "---" in line:
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) >= 9 and cells[8] and cells[8] != "OK":
+            low = cells[8].lower()
+            sev = "critical" if ("hard ceiling" in low or "bottleneck" in low) else "high"
+            add(sev, GROUPS[2], "GET /sld/v3/" + cells[1], "SLD load (" + cells[0] + ", " + cells[2] + " nodes): " + cells[8])
 
     # 4) duplicate-endpoint criticals
     for line in _read("api-duplicate-endpoints-report.md").splitlines():

@@ -96,6 +96,15 @@
             <class name="com.egalvanic.qa.testcase.api.IrFlirContractApiTest"/>
         </classes>
     </test>
+    <!-- SLD V3 load performance + payload benchmark (QA coverage for the SLD-payload-optimization ticket):
+         per-SLD v3 load latency, total payload, per-node node_terminals total (~8.6MB bottleneck on 8k+ nodes),
+         dominant payload keys, and a v2 before/after delta. GET-only, report mode; -DSTRICT_SLD_PERF=true gates
+         latency/size-target misses; a 5xx / structure regression fails regardless. Sample via -Dsld.benchmark.sample. -->
+    <test name="API SLD V3 Payload Benchmark">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.SldV3PayloadBenchmarkApiTest"/>
+        </classes>
+    </test>
     <!-- EVIDENCE capture: makes the live call for every issue class (invalid-request 500+SQL leak,
          502/availability, performance, pagination, SPA-fallback, auth-gate, agent-token) and records
          the full HTTP transaction to reports/api-evidence.json. Rendered as visual "capture cards"
