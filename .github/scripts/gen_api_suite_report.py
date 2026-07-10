@@ -158,7 +158,10 @@ def evidence_card(ev):
     body_line = '<div class="ev-req">' + method_line + '</div>' \
                 + '<div class="ev-h">Authorization: ' + auth_line + '</div>' \
                 + (('<div class="ev-h">Body: <code>' + html.escape(req_body) + '</code></div>') if req_body else "")
-    leak_badge = ' <span class="badge b-fail mini">INTERNALS LEAK</span>' if ev.get("leak") else ""
+    # Only flag a leak on an ERROR response (>=400): a 200 whose legit body merely contains a keyword
+    # (e.g. the /mutations ledger) is not an information-disclosure leak.
+    leak_badge = ' <span class="badge b-fail mini">INTERNALS LEAK</span>' \
+        if (ev.get("leak") and isinstance(status, int) and status >= 400) else ""
     meta = html.escape(str(ev.get("shape", ""))) + " · " + str(ev.get("latencyMs", "?")) + "ms · " \
            + html.escape(str(ev.get("contentType", "")))
     snippet = html.escape(str(ev.get("respSnippet", "")))
@@ -176,7 +179,7 @@ for ev in EVIDENCE:
     ev_by_cat.setdefault(ev.get("category", "other"), []).append(ev)
 for lst in ev_by_cat.values():
     lst.sort(key=lambda e: SEV_ORDER.get(e.get("severity", "info"), 9))
-n_leaks = sum(1 for e in EVIDENCE if e.get("leak"))
+n_leaks = sum(1 for e in EVIDENCE if e.get("leak") and isinstance(e.get("status"), int) and e.get("status") >= 400)
 n_5xx = sum(1 for e in EVIDENCE if isinstance(e.get("status"), int) and e.get("status", 0) >= 500)
 
 # ── embedded PNG screenshots: fresh run captures (reports/evidence/) + committed assets
@@ -322,6 +325,132 @@ This is the raw capture behind the health verdicts — the API-testing equivalen
 <div class="tblwrap"><table><thead><tr><th>Family</th><th>Operation</th><th>Verdict</th><th>HTTP</th><th>Latency</th><th>Shape</th><th>Payload</th></tr></thead>
 <tbody>{inv_rows}</tbody></table></div></section>"""
 
+# ══════════════════════════════════════════════════════════════════════════════
+# CRITICAL FINDINGS DASHBOARD — aggregate every real issue across all sources so
+# the FIRST pages show the problems (the suite is report-mode/green-by-default, so
+# the area verdicts alone would hide the findings a client actually cares about).
+# ══════════════════════════════════════════════════════════════════════════════
+def _ep_from_url(u):
+    return u.split("/api", 1)[1] if "/api" in u else u
+
+def _read(name):
+    p = os.path.join(REPORTS, name)
+    return open(p, encoding="utf-8", errors="replace").read() if os.path.exists(p) else ""
+
+SEV_RANK = {"critical": 0, "high": 1, "medium": 2}
+GROUPS = ["Security & Data Exposure", "Availability & Errors (5xx / 502 / timeout)",
+          "Performance — Slow Endpoints", "Pagination — Unbounded Collections", "API Hygiene"]
+
+def collect_findings():
+    F = []
+    def add(sev, group, endpoint, issue, ms=None, ev=False):
+        F.append(dict(severity=sev, group=group, endpoint=endpoint.strip(), issue=issue.strip(), ms=ms, ev=ev))
+
+    # 1) live evidence captures
+    for e in EVIDENCE:
+        status = e.get("status"); ep = e.get("method", "") + " " + _ep_from_url(e.get("url", ""))
+        note = e.get("note", "")
+        if e.get("leak") and isinstance(status, int) and status >= 400:
+            add("critical", GROUPS[0], ep, f"HTTP {status}: response leaks server internals (SQL/stack trace) — {note}", ev=True)
+        elif isinstance(status, int) and status >= 500:
+            add("critical", GROUPS[1], ep, f"HTTP {status}: {note}", ev=True)
+        elif status == 0:
+            add("critical", GROUPS[1], ep, f"Unresponsive / transport failure — {note}", ev=True)
+        elif e.get("category") == "pagination" and e.get("severity") in ("critical", "high"):
+            add("high", GROUPS[3], ep, note, ev=True)
+
+    # 2) full-catalog Recommendations  ("- **critical** · GET /x — message")
+    for m in re.finditer(r"- \*\*(critical|warning)\*\* · (.+?) — (.+)", _read("api-catalog-report.md")):
+        raw, ep, msg = m.group(1), m.group(2).strip(), m.group(3).strip()
+        low = msg.lower()
+        mm = re.search(r"(\d+)\s*ms", msg); ms = int(mm.group(1)) if mm else None
+        if "timed out" in low or "unresponsive" in low:
+            add("critical", GROUPS[2], ep, "Unresponsive (read timed out)", ms=30000)
+        elif "very slow" in low or "slow response" in low:
+            add("critical" if (ms or 0) >= 8000 else "high", GROUPS[2], ep, f"Slow response: {ms}ms", ms=ms)
+        elif "5xx" in low:
+            add("critical", GROUPS[1], ep, msg)
+        elif "unauthenticated" in low or "auth gate" in low:
+            add("critical", GROUPS[0], ep, msg)
+        elif "html" in low or "spa fallback" in low:
+            add("high", GROUPS[4], ep, "Fixed API path serves the SPA shell instead of JSON")
+
+    # 3) list-API pagination VIOLATIONs (catalog-wide + curated)
+    for fn in ("list-api-catalog-report.md", "list-api-contract-report.md"):
+        for line in _read(fn).splitlines():
+            if not line.strip().endswith("| VIOLATION |"):
+                continue
+            cells = [c.strip() for c in line.strip().strip("|").split("|")]
+            if len(cells) < 9:
+                continue
+            path, total, default, paginated, maxlimit, filt, resp = cells[1], cells[2], cells[3], cells[4], cells[5], cells[6], cells[7]
+            issues = []
+            try: tot = int(re.sub(r"[^0-9]", "", total) or 0)
+            except Exception: tot = 0
+            if "UNBOUNDED" in default or (paginated == "NO" and tot > 100):
+                issues.append(f"not paginated — returns all {total} uncapped")
+            if maxlimit.startswith("NO"):
+                issues.append("no max-limit")
+            if issues:
+                add("high" if tot <= 500 else "critical", GROUPS[3], "GET " + path, "; ".join(issues))
+            sm = re.search(r"(\d{4,})ms", resp)
+            if sm:
+                add("critical" if int(sm.group(1)) >= 8000 else "high", GROUPS[2], "GET " + path, f"Slow list response: {sm.group(1)}ms", ms=int(sm.group(1)))
+
+    # 4) duplicate-endpoint criticals
+    for line in _read("api-duplicate-endpoints-report.md").splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) >= 4 and cells[1] == "critical":
+            add("high", GROUPS[4], cells[2], f"Duplicate endpoint definition ({cells[0]}) — also {cells[3]}")
+
+    # dedupe by (endpoint, group), keep the most severe / highest-latency
+    best = {}
+    for f in F:
+        k = (f["endpoint"], f["group"])
+        cur = best.get(k)
+        if cur is None or SEV_RANK[f["severity"]] < SEV_RANK[cur["severity"]] or (f["ms"] or 0) > (cur["ms"] or 0):
+            best[k] = f
+    out = list(best.values())
+    out.sort(key=lambda f: (SEV_RANK[f["severity"]], -(f["ms"] or 0), f["group"]))
+    return out
+
+FINDINGS = collect_findings()
+nf_crit = sum(1 for f in FINDINGS if f["severity"] == "critical")
+nf_high = sum(1 for f in FINDINGS if f["severity"] == "high")
+
+def _finding_row(f):
+    sev = f["severity"]; vcls = "fail" if sev in ("critical", "high") else "skip"
+    ev = ' <span class="badge b-info mini">evidence</span>' if f["ev"] else ""
+    return ('<tr><td><span class="badge b-' + vcls + ' mini">' + sev.upper() + '</span></td>'
+            '<td class="mono">' + html.escape(f["endpoint"]) + '</td>'
+            '<td>' + html.escape(f["issue"]) + ev + '</td></tr>')
+
+findings_section = ""
+if FINDINGS:
+    by_group = {}
+    for f in FINDINGS:
+        by_group.setdefault(f["group"], []).append(f)
+    blocks = []
+    for g in GROUPS:
+        items = by_group.get(g, [])
+        if not items:
+            continue
+        shown = items[:25]
+        more = ('<p class="muted">+ ' + str(len(items) - 25) + ' more in this category (see the area sections &amp; Appendix A).</p>') if len(items) > 25 else ""
+        rows = "".join(_finding_row(f) for f in shown)
+        gc = sum(1 for f in items if f["severity"] == "critical"); gh = len(items) - gc
+        blocks.append('<h3>' + html.escape(g) + ' <span class="muted">(' + str(gc) + ' critical, ' + str(gh) + ' high)</span></h3>'
+                      '<div class="tblwrap"><table><thead><tr><th>Severity</th><th>Endpoint</th><th>Issue</th></tr></thead>'
+                      '<tbody>' + rows + '</tbody></table></div>' + more)
+    findings_section = (
+        '<section id="findings" class="pagebreak"><h2>Critical &amp; High-Priority Findings</h2>'
+        '<p class="areadesc">Every real issue surfaced across all test areas, aggregated and ranked — '
+        'the suite runs report-mode (green-by-default monitor), so this is where the actionable problems live.</p>'
+        '<div class="findbanner"><span class="badge b-fail">' + str(nf_crit) + ' CRITICAL</span> '
+        '<span class="badge b-skip">' + str(nf_high) + ' HIGH</span> '
+        '<span class="muted">across ' + str(len(by_group)) + ' categories · full request/response evidence in the Issue Evidence section</span></div>'
+        + "".join(blocks) + '</section>')
+
 CSS = """
 :root{--bg:#f6f8fb;--card:#fff;--ink:#1a2233;--muted:#5b6b82;--line:#e3e9f2;--accent:#2557d6;
 --pass:#137a4b;--passbg:#e6f5ee;--fail:#b3261e;--failbg:#fdecea;--skip:#8a6d00;--skipbg:#fdf6e3;
@@ -352,6 +481,11 @@ section h2{font-size:19px;margin:0 0 4px}.areadesc{color:var(--muted);font-size:
 .counts{font-size:12.5px;color:var(--muted);margin:0 0 10px}
 section code{background:rgba(127,127,127,.14);padding:1px 5px;border-radius:5px;font-size:12.5px}
 .muted{color:var(--muted)}hr{border:0;border-top:1px solid var(--line);margin:14px 0}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+.findbanner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 14px}
+.findbanner .badge{font-size:14px;padding:4px 12px}
+#findings h3{font-size:15px;margin:16px 0 4px}
+.kpi .n.f{color:var(--fail)}
 .toc ol{columns:2;font-size:14px}.toc li{margin:4px 0}
 .latrow{display:flex;align-items:center;gap:10px;margin:6px 0}
 .latlab{width:170px;font-size:12.5px;color:var(--muted)}
@@ -391,9 +525,11 @@ htmlout = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <div class="cover">
   <h1>eGalvanic Platform — API Test Suite Report</h1>
   <div class="areadesc">Parallel Suite 3 · Comprehensive API Quality Assessment</div>
-  <div class="stamp"><span class="badge b-{overall.lower()}" style="font-size:18px;padding:6px 22px">{overall}</span></div>
+  <div class="stamp">{('<a href="#findings" style="text-decoration:none"><span class="badge b-fail" style="font-size:18px;padding:6px 22px">' + str(nf_crit) + ' CRITICAL · ' + str(nf_high) + ' HIGH FINDINGS</span></a>') if nf_crit or nf_high else ('<span class="badge b-' + overall.lower() + '" style="font-size:18px;padding:6px 22px">' + overall + '</span>')}
+  <div class="muted" style="font-size:12px;margin-top:8px">Test suite: {overall} (report-mode monitor) · findings below are advisory unless a STRICT_* gate is enabled</div></div>
   <div class="kpis">{kpi(areas_present,'Test areas')}{kpi(ttot,'Test cases executed')}
   {kpi(tp,'Passed','p')}{kpi(tf,'Failed','f')}{kpi(ts,'Skipped','s')}{kpi(len(CAT_ROWS) or '—','Endpoints probed')}
+  {kpi('<a href="#findings" style="color:inherit">'+str(nf_crit)+'</a>','Critical findings','f')}{kpi(nf_high,'High findings','f')}
   {kpi(len(EVIDENCE) or '—','Evidence captures')}{kpi(n_leaks,'Internals leaks','f')}</div>
   <div class="meta">Environment: QA (acme.qa.egalvanic.ai) &nbsp;·&nbsp; Generated: {now}<br>
   Coverage: health · full catalog · pagination (curated + catalog-wide + behavior) · agent-token security ·
@@ -401,7 +537,11 @@ htmlout = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
   filter/search consistency · CRUD lifecycle · input validation · mutation semantics</div>
 </div>
 
-<section class="toc"><h2>Contents</h2><ol>{''.join(toc)}
+{findings_section}
+
+<section class="toc"><h2>Contents</h2><ol>
+{'<li><a href="#findings">Critical &amp; High-Priority Findings</a></li>' if FINDINGS else ''}
+{''.join(toc)}
 {'<li><a href="#evidence">Issue Evidence — Live HTTP Captures</a></li>' if EVIDENCE else ''}
 {'<li><a href="#screenshots">Visual Evidence — Screenshots</a></li>' if SHOTS else ''}
 <li><a href="#latency-analysis">API Performance — Latency Analysis</a></li>
