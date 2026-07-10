@@ -82,7 +82,7 @@ public class RoleCrudContractApiTest extends BaseAPITest {
     }
 
     @Test(dataProvider = "roleEntities",
-          description = "Real create→edit→delete contract per role: allowed role gets the 200 async-mutation envelope; denied role is rejected")
+          description = "Each role can create, edit and delete records only when allowed (others are refused)")
     public void crudContract(Role role, Entity entity) {
         ExtentReportManager.createTest(AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_ROLE_ACCESS,
                 role.name + " — CRUD " + entity.label + " [" + entity.gate + "]");

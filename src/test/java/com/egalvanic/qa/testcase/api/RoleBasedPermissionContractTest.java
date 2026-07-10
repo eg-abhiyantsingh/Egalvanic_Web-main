@@ -71,7 +71,7 @@ public class RoleBasedPermissionContractTest extends BaseAPITest {
         return data;
     }
 
-    @Test(dataProvider = "roles", description = "Live /auth/me permission set matches the prod matrix for each role")
+    @Test(dataProvider = "roles", description = "Each role's live access matches its approved permission list")
     public void testRolePermissionContract(Role role) {
         String roleName = role.name;
         ExtentReportManager.createTest(
@@ -185,7 +185,7 @@ public class RoleBasedPermissionContractTest extends BaseAPITest {
                 + (driftSeen.isEmpty() ? "" : " [" + driftSeen.size() + " documented QA drift]"));
     }
 
-    @Test(description = "Permission matrix CSV parses completely and matches the known role roster")
+    @Test(description = "The approved permission list is complete and covers every expected role")
     public void testMatrixCsvIntegrity() {
         ExtentReportManager.createTest(
                 AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_PERMISSION_MATRIX,

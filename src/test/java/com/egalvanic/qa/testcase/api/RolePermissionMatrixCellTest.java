@@ -94,10 +94,10 @@ public class RolePermissionMatrixCellTest extends BaseAPITest implements ITest {
     }
 
     @Test(dataProvider = "cells",
-          description = "Each role×permission cell of the matrix is enforced live via /auth/me")
+          description = "Each role has exactly the access it should — and nothing it shouldn't")
     public void permissionCell(String roleName, String permission, boolean expectedGranted) {
-        String label = permission + (expectedGranted ? " [granted]" : " [denied]");
-        currentCellName.set(roleName + " / " + label);
+        String label = (expectedGranted ? "should have '" : "should NOT have '") + permission + "'";
+        currentCellName.set(roleName + " — " + label);
         ExtentReportManager.createTest(
                 AppConstants.MODULE_AUTHENTICATION, "RBAC: " + roleName, label);
 

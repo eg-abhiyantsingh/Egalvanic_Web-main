@@ -120,7 +120,7 @@ public class WorkOrderEditEnforcementApiTest extends BaseAPITest {
     }
 
     @Test(dataProvider = "roles",
-          description = "Backend enforces jobs.manage on PUT /job/{id} — allowed iff the role has the permission")
+          description = "Only roles allowed to edit Work Orders can edit them (others are blocked)")
     public void workOrderEditEnforcement(Role role) {
         ExtentReportManager.createTest(
                 AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_ROLE_ACCESS,

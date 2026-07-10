@@ -76,7 +76,7 @@ public class RoleActionEnforcementApiTest extends BaseAPITest {
     }
 
     @Test(dataProvider = "roleActions",
-          description = "Backend enforces *.manage on create/edit per role (allowed iff permitted, else permission_denied)")
+          description = "Each role can create/edit records only when its permissions allow it (unauthorised roles are blocked)")
     public void actionEnforcement(Role role, Action action) {
         ExtentReportManager.createTest(AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_ROLE_ACCESS,
                 role.name + " — " + action.label + " [" + action.gate + "]");

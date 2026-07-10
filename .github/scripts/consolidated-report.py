@@ -42,6 +42,43 @@ from datetime import datetime
 from collections import OrderedDict
 
 # ============================================================
+# Plain-English naming for RBAC permission cells
+# ============================================================
+# The RBAC matrix test is data-driven with params (role, permission-key, granted?),
+# e.g. ("Project Manager", "company_data.manage", "false"). Rendered verbatim that
+# reads as "Project Manager · company_data.manage · false" — opaque to a client. This
+# turns it into "Project Manager — should NOT be able to Manage company data".
+_PERM_VERB = {
+    'manage': 'Manage', 'view': 'View', 'approve': 'Approve', 'share': 'Share',
+    'assign': 'Assign', 'generate': 'Generate', 'export': 'Export', 'import': 'Import',
+    'delete': 'Delete', 'move': 'Move', 'update': 'Update', 'upload': 'Upload',
+    'view_internal': 'View internal', 'view_public': 'View public',
+    'manage_internal': 'Manage internal', 'manage_public': 'Manage public',
+}
+
+def _humanize_perm(key):
+    """company_data.manage -> 'Manage company data'; features.assets.view -> 'View assets'."""
+    k = key
+    if k.startswith('features.'):
+        k = k[len('features.'):]
+    if k.startswith('platform.'):
+        return 'Access the web app' if k.endswith('web') else 'Access the mobile app'
+    parts = k.split('.')
+    verb = _PERM_VERB.get(parts[-1], parts[-1].replace('_', ' ').capitalize())
+    resource = ' '.join(parts[:-1]).replace('_', ' ')
+    return (verb + ' ' + resource).strip()
+
+def _rbac_cell_name(disp_params):
+    """If params look like an RBAC cell (role, permission-key, true/false), return a plain-English
+    sentence; else None so the caller falls back to its default formatting."""
+    if len(disp_params) == 3 and disp_params[2] in ('true', 'false') and '.' in disp_params[1]:
+        role, perm, granted = disp_params
+        verb = 'should be able to' if granted == 'true' else 'should NOT be able to'
+        return '%s — %s %s' % (role, verb, _humanize_perm(perm))
+    return None
+
+
+# ============================================================
 # Class Name → Module Name Mapping
 # ============================================================
 # Maps TestNG class names (without package) to the module names
@@ -195,7 +232,12 @@ def parse_testng_xml(filepath):
                     key_params = tuple(raw_params)
                     disp_params = [p for p in raw_params if not re.match(r'^[\w.$]+@[0-9a-fA-F]+$', p)]
                     base = description if description else name
-                    if len(disp_params) >= 2:
+                    rbac_cell = _rbac_cell_name(disp_params)
+                    if rbac_cell:
+                        # RBAC permission cell (role, permission-key, true/false) → plain English:
+                        # "Project Manager — should be able to Manage accounts".
+                        display_name = rbac_cell
+                    elif len(disp_params) >= 2:
                         # Multi-param data-driven cell (e.g. RBAC matrix role×module×action) → show the
                         # parameters AS the test-case name: "Project Manager · Assets · Create".
                         display_name = ' · '.join(disp_params)
