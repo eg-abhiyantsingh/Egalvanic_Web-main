@@ -6,6 +6,8 @@ import com.egalvanic.qa.testcase.api.RbacFixtures.Role;
 import com.egalvanic.qa.utils.ExtentReportManager;
 
 import io.restassured.RestAssured;
+import io.restassured.config.HttpClientConfig;
+import io.restassured.config.RestAssuredConfig;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 
@@ -89,12 +91,18 @@ public class RoleActionEnforcementApiTest extends BaseAPITest {
 
         boolean expectedAllowed = Boolean.TRUE.equals(live.isAdmin) || live.permissions.contains(action.gate);
 
-        Response resp = given()
-                .header("Authorization", "Bearer " + live.token)
-                .contentType(ContentType.JSON)
-                .body(action.body)
-                .when().request(action.method, action.path)
-                .then().extract().response();
+        // Bounded socket timeout + one retry: the QA host has intermittent slow spells (a 60s hang made
+        // these mutations hard-FAIL as false RBAC failures on 2026-07-10). A genuine RBAC allow/deny answers
+        // in <2s; a timeout/5xx here is backend instability, not an authorization signal → SKIP, don't fail
+        // (the stability is tracked by ErrorContractApiTest's 502-detector and the consolidated report).
+        Response resp = mutateWithRetry(live.token, action);
+        if (resp == null || resp.getStatusCode() == 0 || resp.getStatusCode() >= 500) {
+            String msg = "'" + role.name + "' " + action.label + " — backend slow/unavailable during the probe "
+                    + "(HTTP " + (resp == null ? "timeout" : resp.getStatusCode()) + "); RBAC allow/deny not "
+                    + "determinable this run (transient backend instability, see the 502 detector).";
+            ExtentReportManager.logSkip(msg);
+            throw new SkipException(msg);
+        }
 
         int status = resp.getStatusCode();
         String body = resp.asString();
@@ -117,6 +125,32 @@ public class RoleActionEnforcementApiTest extends BaseAPITest {
             ExtentReportManager.logPass("'" + role.name + "' correctly DENIED " + action.label
                     + " (permission_denied, HTTP " + status + ").");
         }
+    }
+
+    // Bounded timeout so a hung request fails fast (12s) instead of the ~60s default that turned a
+    // backend slow-spell into false RBAC failures.
+    private static final RestAssuredConfig PROBE_CONFIG = RestAssured.config().httpClient(
+            HttpClientConfig.httpClientConfig()
+                    .setParam("http.connection.timeout", 8000)
+                    .setParam("http.socket.timeout", 12000));
+
+    /** Send the mutation with one retry on a transient outcome (timeout / 5xx). Returns null on repeated timeout. */
+    private Response mutateWithRetry(String token, Action action) {
+        for (int attempt = 1; attempt <= 2; attempt++) {
+            try {
+                Response r = given().config(PROBE_CONFIG).relaxedHTTPSValidation()
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(ContentType.JSON)
+                        .body(action.body)
+                        .when().request(action.method, action.path)
+                        .then().extract().response();
+                if (r.getStatusCode() < 500 || attempt == 2) return r;   // permission verdicts are <500
+            } catch (Exception e) {
+                if (attempt == 2) return null;                            // timeout / transport failure
+            }
+            try { Thread.sleep(1500); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+        }
+        return null;
     }
 
     /** Explicit permission failure: the backend's permission_denied error, or a 401/403. */

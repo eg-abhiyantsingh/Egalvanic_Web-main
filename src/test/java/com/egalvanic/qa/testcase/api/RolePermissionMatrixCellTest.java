@@ -115,14 +115,12 @@ public class RolePermissionMatrixCellTest extends BaseAPITest implements ITest {
             ExtentReportManager.logSkip(msg);
             throw new SkipException(msg);
         }
-        // Contaminated fixture: account also carries the "EG Admin" super-admin overlay → its
-        // full-access permission set makes every "denied" cell falsely trip. Skip, don't fail
-        // (a real escalation lacks the assigned overlay and still fails — see fixture Javadoc).
-        String overlay = RbacFixtures.superAdminOverlaySkipMessage(roleName, null, la);
-        if (overlay != null) {
-            ExtentReportManager.logSkip(overlay);
-            throw new SkipException(overlay);
-        }
+        // EG Admin is a legitimate super-admin role (Internal Egalvanic full-access + Reporting). But an
+        // account that ALSO holds it has the whole permission set, so a base role's DENIED cells cannot be
+        // verified on it. Per owner direction (2026-07-10) we IGNORE the EG-Admin overlay for the other
+        // roles rather than skip them wholesale: still ASSERT the GRANTED cells (the role must HAVE its
+        // permissions — verifiable and meaningful), and skip only the DENIED cells the overlay masks.
+        boolean egAdminOverlay = RbacFixtures.superAdminOverlaySkipMessage(roleName, null, la) != null;
 
         boolean actuallyPresent = la.permissions.contains(permission);
 
@@ -142,6 +140,13 @@ public class RolePermissionMatrixCellTest extends BaseAPITest implements ITest {
             ExtentReportManager.logFail(fail);
             Assert.fail(fail);
         } else {
+            if (egAdminOverlay) {
+                String msg = "'" + roleName + "' also holds the EG Admin super-admin role — a base-role DENIAL "
+                        + "of '" + permission + "' cannot be verified on a full-access account "
+                        + "(EG-Admin overlay ignored for other roles; denied-cell not covered).";
+                ExtentReportManager.logSkip(msg);
+                throw new SkipException(msg);
+            }
             if (!actuallyPresent) {
                 ExtentReportManager.logPass("DENIED & absent: '" + roleName + "' correctly lacks '" + permission + "'");
                 return;

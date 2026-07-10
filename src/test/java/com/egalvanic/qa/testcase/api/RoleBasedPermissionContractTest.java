@@ -95,13 +95,15 @@ public class RoleBasedPermissionContractTest extends BaseAPITest {
         }
         String mismatch = RbacFixtures.roleMismatchSkipMessage(role, la);
         if (mismatch != null) { ExtentReportManager.logSkip(mismatch); throw new SkipException(mismatch); }
-        // Contaminated fixture: account also carries the "EG Admin" super-admin overlay → the
-        // role-specific contract is unassertable (full access). Skip loudly (see fixture Javadoc).
-        String overlay = RbacFixtures.superAdminOverlaySkipMessage(role, la);
-        if (overlay != null) {
-            System.out.println("[RBAC] " + overlay);
-            ExtentReportManager.logSkip(overlay);
-            throw new SkipException(overlay);
+        // EG Admin is a legitimate super-admin role. When a base-role account ALSO holds it, the
+        // full-access set makes the escalation / is_admin / has_web_access checks unverifiable — but the
+        // COMPLETENESS check (the role has all its granted permissions) is still valid. Per owner
+        // direction (2026-07-10) we IGNORE the EG-Admin overlay for those checks rather than skip the
+        // whole role, so positive coverage (the role's grants ARE present) is retained.
+        boolean egAdminOverlay = RbacFixtures.superAdminOverlaySkipMessage(role, la) != null;
+        if (egAdminOverlay) {
+            System.out.println("[RBAC] '" + roleName + "' holds EG Admin super-admin overlay — verifying "
+                    + "granted-permission completeness only; escalation/is_admin/has_web_access checks ignored.");
         }
 
         Set<String> live = new TreeSet<>(la.permissions);
@@ -124,11 +126,14 @@ public class RoleBasedPermissionContractTest extends BaseAPITest {
         }
 
         // 2) Privilege escalation guard (SECURITY) — no permission beyond the matrix.
-        Set<String> extra = new TreeSet<>(live);
-        extra.removeAll(expected.permissions);
-        if (!extra.isEmpty()) {
-            failures.append("\n  • PRIVILEGE ESCALATION: ").append(extra.size())
-                    .append(" permission(s) granted that the matrix does NOT allow: ").append(extra);
+        //    Ignored when the account also holds the EG Admin overlay (its extras are expected, not escalation).
+        if (!egAdminOverlay) {
+            Set<String> extra = new TreeSet<>(live);
+            extra.removeAll(expected.permissions);
+            if (!extra.isEmpty()) {
+                failures.append("\n  • PRIVILEGE ESCALATION: ").append(extra.size())
+                        .append(" permission(s) granted that the matrix does NOT allow: ").append(extra);
+            }
         }
 
         // 3) Completeness — every granted permission present, minus documented drift.
@@ -149,17 +154,20 @@ public class RoleBasedPermissionContractTest extends BaseAPITest {
         }
 
         // 4) Derived-field consistency — has_web_access ⇔ platform.web grant.
+        //    5) is_admin flag must match the Admin role only.
+        //    Both are set true by the EG Admin overlay, so they are only asserted on a clean account.
         boolean expectWeb = expected.hasWebAccess();
-        if (la.hasWebAccess == null || la.hasWebAccess != expectWeb) {
-            failures.append("\n  • has_web_access=").append(la.hasWebAccess)
-                    .append(" but matrix ").append(expectWeb ? "grants" : "does NOT grant")
-                    .append(" platform.web (expected ").append(expectWeb).append(")");
-        }
-        // 5) is_admin flag must match the Admin role only.
         boolean expectAdmin = "Admin".equals(roleName);
-        if (la.isAdmin == null || la.isAdmin != expectAdmin) {
-            failures.append("\n  • is_admin=").append(la.isAdmin)
-                    .append(" but role '").append(roleName).append("' expects ").append(expectAdmin);
+        if (!egAdminOverlay) {
+            if (la.hasWebAccess == null || la.hasWebAccess != expectWeb) {
+                failures.append("\n  • has_web_access=").append(la.hasWebAccess)
+                        .append(" but matrix ").append(expectWeb ? "grants" : "does NOT grant")
+                        .append(" platform.web (expected ").append(expectWeb).append(")");
+            }
+            if (la.isAdmin == null || la.isAdmin != expectAdmin) {
+                failures.append("\n  • is_admin=").append(la.isAdmin)
+                        .append(" but role '").append(roleName).append("' expects ").append(expectAdmin);
+            }
         }
 
         if (failures.length() > 0) {
@@ -170,9 +178,10 @@ public class RoleBasedPermissionContractTest extends BaseAPITest {
 
         int verified = expected.permissions.size() - driftSeen.size();
         ExtentReportManager.logPass("RBAC contract verified for '" + roleName + "': "
-                + verified + "/" + expected.permissions.size() + " granted permissions confirmed live, "
-                + "0 unauthorized extras, identity + has_web_access(" + expectWeb + ") + is_admin("
-                + expectAdmin + ") consistent"
+                + verified + "/" + expected.permissions.size() + " granted permissions confirmed live"
+                + (egAdminOverlay
+                    ? " (EG Admin super-admin overlay present — escalation/is_admin/has_web_access checks ignored per owner direction)"
+                    : ", 0 unauthorized extras, identity + has_web_access(" + expectWeb + ") + is_admin(" + expectAdmin + ") consistent")
                 + (driftSeen.isEmpty() ? "" : " [" + driftSeen.size() + " documented QA drift]"));
     }
 
