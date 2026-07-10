@@ -149,6 +149,13 @@ public final class RbacFixtures {
     private static final Set<String> SUPER_ADMIN_ROLES =
             new HashSet<>(Arrays.asList("Admin", EG_ADMIN_ROLE_NAME));
 
+    /** True when this live session carries the EG Admin super-admin role (by name or id). */
+    public static boolean holdsEgAdmin(LiveAuth live) {
+        if (live == null || !live.provisioned) return false;
+        return live.roleNames.stream().anyMatch(EG_ADMIN_ROLE_NAME::equalsIgnoreCase)
+                || live.roleIds.contains(EG_ADMIN_ROLE_ID);
+    }
+
     /**
      * Detect the 2026-07-09 QA-account contamination: the role's test account was granted the
      * internal <b>EG Admin</b> super-admin role <em>in addition</em> to its intended role, so

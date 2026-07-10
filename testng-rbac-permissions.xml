@@ -21,6 +21,14 @@
         </classes>
     </test>
 
+    <!-- Positive super-admin proof: EG Admin genuinely grants complete access (is_admin + web +
+         every matrix permission + the exclusive Reporting/Forms module). -->
+    <test name="EG Admin Super-Admin Contract (API)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.EgAdminSuperAdminContractTest"/>
+        </classes>
+    </test>
+
     <!-- Per-cell coverage: one test case per role×permission (791 cells). -->
     <test name="RBAC Permission Matrix Cells (API)">
         <classes>
