@@ -96,6 +96,15 @@
             <class name="com.egalvanic.qa.testcase.api.IrFlirContractApiTest"/>
         </classes>
     </test>
+    <!-- EVIDENCE capture: makes the live call for every issue class (invalid-request 500+SQL leak,
+         502/availability, performance, pagination, SPA-fallback, auth-gate, agent-token) and records
+         the full HTTP transaction to reports/api-evidence.json. Rendered as visual "capture cards"
+         (the REST equivalent of a screenshot) in the consolidated report. Report-only, never fails. -->
+    <test name="API Evidence Capture">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.ApiEvidenceCaptureApiTest"/>
+        </classes>
+    </test>
     <!-- Filter / search / list-vs-detail CONSISTENCY on POST /v2/issues/list (the one paginated+
          filterable list API). READ-ONLY. Correctness invariants (filter purity, search finds-what-
          exists, pagination disjoint, list==detail) hard-fail (they hold live → regression guard);

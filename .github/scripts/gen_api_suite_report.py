@@ -16,7 +16,7 @@ area's markdown findings. Missing inputs degrade gracefully (section omitted / n
 Print with the browser's "Save as PDF" — @page CSS paginates with a cover page and per-section
 page breaks (the inventory appendix alone spans 200+ pages).
 """
-import sys, os, re, html
+import sys, os, re, html, json, base64, glob
 import datetime
 # Prefer defusedxml (immune to XXE / billion-laughs); fall back to stdlib for the
 # trusted, build-generated testng-results.xml when defusedxml isn't on the runner.
@@ -135,6 +135,66 @@ if os.path.exists(cat_md):
             CAT_ROWS.append(dict(cat=cat, op=name, status=status, http=http.strip(),
                                  lat=int(lat), shape=shape.strip(), payload=payload.strip()))
 
+# ── evidence captures (reports/api-evidence.json) → visual HTTP capture cards ──
+EVIDENCE = []
+ev_path = os.path.join(REPORTS, "api-evidence.json")
+if os.path.exists(ev_path):
+    try:
+        EVIDENCE = json.load(open(ev_path, encoding="utf-8"))
+    except Exception as e:
+        sys.stderr.write("suite-report: could not parse api-evidence.json: %s\n" % e)
+
+SEV_ORDER = {"critical": 0, "high": 1, "warning": 2, "info": 3}
+def sev_cls(s): return {"critical": "fail", "high": "fail", "warning": "skip", "info": "info"}.get(s, "info")
+
+def evidence_card(ev):
+    sev = ev.get("severity", "info"); vcls = sev_cls(sev)
+    status = ev.get("status", 0)
+    scls = "fail" if (isinstance(status, int) and (status >= 500 or status == 0)) else \
+           ("skip" if isinstance(status, int) and 400 <= status < 500 else "pass")
+    req_body = ev.get("requestBody") or ""
+    method_line = html.escape(ev.get("method", "")) + " " + html.escape(ev.get("url", ""))
+    auth_line = html.escape(ev.get("auth", "(none)"))
+    body_line = '<div class="ev-req">' + method_line + '</div>' \
+                + '<div class="ev-h">Authorization: ' + auth_line + '</div>' \
+                + (('<div class="ev-h">Body: <code>' + html.escape(req_body) + '</code></div>') if req_body else "")
+    leak_badge = ' <span class="badge b-fail mini">INTERNALS LEAK</span>' if ev.get("leak") else ""
+    meta = html.escape(str(ev.get("shape", ""))) + " · " + str(ev.get("latencyMs", "?")) + "ms · " \
+           + html.escape(str(ev.get("contentType", "")))
+    snippet = html.escape(str(ev.get("respSnippet", "")))
+    return ('<div class="evcard">'
+            '<div class="ev-top"><span class="badge b-' + vcls + '">' + html.escape(sev.upper()) + '</span>'
+            '<span class="ev-note">' + html.escape(ev.get("note", "")) + '</span></div>'
+            + body_line
+            + '<div class="ev-resp"><span class="badge b-' + scls + ' mini">HTTP ' + str(status) + '</span> '
+            '<span class="muted">' + meta + '</span>' + leak_badge + '</div>'
+            '<pre class="ev-body">' + snippet + '</pre></div>')
+
+# group evidence by category, most-severe first
+ev_by_cat = {}
+for ev in EVIDENCE:
+    ev_by_cat.setdefault(ev.get("category", "other"), []).append(ev)
+for lst in ev_by_cat.values():
+    lst.sort(key=lambda e: SEV_ORDER.get(e.get("severity", "info"), 9))
+n_leaks = sum(1 for e in EVIDENCE if e.get("leak"))
+n_5xx = sum(1 for e in EVIDENCE if isinstance(e.get("status"), int) and e.get("status", 0) >= 500)
+
+# ── embedded PNG screenshots: fresh run captures (reports/evidence/) + committed assets
+#    (.github/report-assets/, since reports/ is gitignored so committed samples live there) ──
+SHOTS, _seen = [], set()
+for pat in (os.path.join(REPORTS, "evidence", "*.png"), ".github/report-assets/*.png"):
+    for png in sorted(glob.glob(pat)):
+        base = os.path.basename(png)
+        if base in _seen:
+            continue
+        _seen.add(base)
+        try:
+            b64 = base64.b64encode(open(png, "rb").read()).decode("ascii")
+            name = base.rsplit(".", 1)[0].replace("evidence-", "").replace("-", " ")
+            SHOTS.append((name, b64))
+        except Exception:
+            pass
+
 # ── totals ──
 tp = sum(c["pass"] for c in counts.values())
 tf = sum(c["fail"] for c in counts.values())
@@ -188,6 +248,41 @@ for simple, c in counts.items():
         f'<td>{c["pass"]+c["fail"]+c["skip"]}</td><td class="p">{c["pass"]}</td>'
         f'<td class="f">{c["fail"]}</td><td class="s">{c["skip"]}</td>'
         f'<td><span class="badge b-{verdict.lower()}">{verdict}</span></td><td class="desc">—</td></tr>')
+
+# ── evidence section (grouped capture cards) + screenshots section ──
+CAT_LABELS = {
+    "invalid-request": "Invalid-Request Handling &amp; Security (malformed input)",
+    "availability": "Availability &amp; 502 / 5xx Watch",
+    "performance": "Performance — Heaviest Endpoints",
+    "pagination": "Pagination — Uncapped Collections",
+    "spa-fallback": "SPA Fallback (API path → app shell)",
+    "auth-gate": "Authentication Gates",
+    "agent-token": "Agent-Token Boundary",
+}
+evidence_section = ""
+if EVIDENCE:
+    blocks = []
+    banner = ""
+    if n_leaks or n_5xx:
+        banner = (f'<p class="banner-fail"><strong>{n_leaks} response(s) leaked server internals (SQL/stack)</strong> '
+                  f'and {n_5xx} returned 5xx during capture — see the Invalid-Request &amp; Security cards below. '
+                  f'These are the highest-severity, client-reportable findings with full request/response evidence.</p>')
+    order = ["invalid-request", "availability", "performance", "pagination", "spa-fallback", "auth-gate", "agent-token"]
+    for cat in order + [c for c in ev_by_cat if c not in order]:
+        if cat not in ev_by_cat: continue
+        cards = "".join(evidence_card(e) for e in ev_by_cat[cat])
+        blocks.append(f'<h3>{CAT_LABELS.get(cat, html.escape(cat))} <span class="muted">({len(ev_by_cat[cat])})</span></h3>{cards}')
+    evidence_section = (f'<section id="evidence" class="pagebreak"><h2>Issue Evidence — Live HTTP Captures</h2>'
+                        f'<p class="areadesc">Each card is a real request/response captured live this run — the REST-API '
+                        f'equivalent of a screenshot: method, URL, redacted auth, status, latency and the actual response body. '
+                        f'{len(EVIDENCE)} captures across {len(ev_by_cat)} issue classes.</p>{banner}{"".join(blocks)}</section>')
+
+screenshots_section = ""
+if SHOTS:
+    imgs = "".join(f'<figure class="shot"><img src="data:image/png;base64,{b64}" alt="{html.escape(name)}"/>'
+                   f'<figcaption>{html.escape(name.title())}</figcaption></figure>' for name, b64 in SHOTS)
+    screenshots_section = (f'<section id="screenshots" class="pagebreak"><h2>Visual Evidence — Screenshots</h2>'
+                           f'<p class="areadesc">Rendered captures of representative issues and the API surface under test.</p>{imgs}</section>')
 
 # ── latency analysis + inventory appendix from catalog rows ──
 lat_section = inventory_section = ""
@@ -263,6 +358,18 @@ section code{background:rgba(127,127,127,.14);padding:1px 5px;border-radius:5px;
 .latbar{flex:1;background:rgba(127,127,127,.12);border-radius:6px;height:16px;overflow:hidden}
 .latfill{height:100%;background:var(--accent);border-radius:6px}
 .latn{width:120px;font-size:12px;color:var(--muted);text-align:right}
+.banner-fail{background:var(--failbg);color:var(--fail);border:1px solid var(--fail);border-radius:10px;padding:10px 14px;font-size:13.5px}
+.evcard{border:1px solid var(--line);border-radius:10px;margin:10px 0;overflow:hidden}
+.ev-top{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(127,127,127,.06);border-bottom:1px solid var(--line)}
+.ev-note{font-size:13px}
+.ev-req{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;padding:8px 12px 2px;font-weight:700}
+.ev-h{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:var(--muted);padding:0 12px}
+.ev-resp{padding:8px 12px 4px;font-size:12.5px}
+.ev-body{margin:0;padding:10px 12px;background:#0d1117;color:#e6edf3;font-family:ui-monospace,Menlo,Consolas,monospace;
+font-size:11.5px;white-space:pre-wrap;word-break:break-word;overflow-x:auto;max-height:340px}
+.shot{margin:0 0 18px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+.shot img{display:block;max-width:100%;height:auto}
+.shot figcaption{padding:8px 12px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line)}
 @media print{
   @page{size:A4;margin:14mm}
   body{background:#fff;color:#111}
@@ -286,7 +393,8 @@ htmlout = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
   <div class="areadesc">Parallel Suite 3 · Comprehensive API Quality Assessment</div>
   <div class="stamp"><span class="badge b-{overall.lower()}" style="font-size:18px;padding:6px 22px">{overall}</span></div>
   <div class="kpis">{kpi(areas_present,'Test areas')}{kpi(ttot,'Test cases executed')}
-  {kpi(tp,'Passed','p')}{kpi(tf,'Failed','f')}{kpi(ts,'Skipped','s')}{kpi(len(CAT_ROWS) or '—','Endpoints probed')}</div>
+  {kpi(tp,'Passed','p')}{kpi(tf,'Failed','f')}{kpi(ts,'Skipped','s')}{kpi(len(CAT_ROWS) or '—','Endpoints probed')}
+  {kpi(len(EVIDENCE) or '—','Evidence captures')}{kpi(n_leaks,'Internals leaks','f')}</div>
   <div class="meta">Environment: QA (acme.qa.egalvanic.ai) &nbsp;·&nbsp; Generated: {now}<br>
   Coverage: health · full catalog · pagination (curated + catalog-wide + behavior) · agent-token security ·
   duplicate endpoints · IR/FLIR pipeline · error &amp; transport contracts · security headers/CORS ·
@@ -294,6 +402,8 @@ htmlout = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 </div>
 
 <section class="toc"><h2>Contents</h2><ol>{''.join(toc)}
+{'<li><a href="#evidence">Issue Evidence — Live HTTP Captures</a></li>' if EVIDENCE else ''}
+{'<li><a href="#screenshots">Visual Evidence — Screenshots</a></li>' if SHOTS else ''}
 <li><a href="#latency-analysis">API Performance — Latency Analysis</a></li>
 <li><a href="#appendix-inventory">Appendix A — Full Endpoint Inventory</a></li></ol></section>
 
@@ -311,6 +421,8 @@ gates each on violations. Per-test request/response logs: <code>detail-report/</
 </section>
 
 {''.join(sections)}
+{evidence_section}
+{screenshots_section}
 {lat_section}
 {inventory_section}
 
