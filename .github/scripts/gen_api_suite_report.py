@@ -403,6 +403,31 @@ def collect_findings():
         if len(cells) >= 4 and cells[1] == "critical":
             add("high", GROUPS[4], cells[2], f"Duplicate endpoint definition ({cells[0]}) — also {cells[3]}")
 
+    # 5) error/transport contract probes (stability, malformed-input 5xx, unauth-exposed, unknown-resource)
+    for line in _read("error-contract-report.md").splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) < 3 or cells[0] in ("Probe", ""):
+            continue
+        probe, result, detail = cells[0], cells[1], cells[2]
+        if probe == "stability-probe" and result in ("FAIL", "WARN"):
+            add("critical" if result == "FAIL" else "high", GROUPS[1], "critical-path panel",
+                "Backend instability across the critical-path panel — " + detail)
+        elif probe == "malformed-path":
+            m = re.search(r"5xx=(\d+)", detail)
+            if m and int(m.group(1)) > 0:
+                add("critical", GROUPS[0], "malformed path params",
+                    m.group(1) + " malformed-input requests returned 5xx (server error / SQL leak on bad input) — " + detail)
+        elif probe == "unauthenticated-get":
+            m = re.search(r"exposed-200=(\d+)", detail)
+            if m and int(m.group(1)) > 0:
+                add("critical", GROUPS[0], "unauthenticated GET",
+                    m.group(1) + " endpoint(s) return data to an UNAUTHENTICATED request — " + detail)
+        elif probe == "unknown-resource":
+            m = re.search(r"5xx=(\d+)", detail)
+            if m and int(m.group(1)) > 0:
+                add("high", GROUPS[1], "unknown-resource GET",
+                    m.group(1) + " unknown-resource request(s) returned 5xx instead of 404 — " + detail)
+
     # dedupe by (endpoint, group), keep the most severe / highest-latency
     best = {}
     for f in F:

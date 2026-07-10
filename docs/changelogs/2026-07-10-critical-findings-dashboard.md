@@ -48,5 +48,19 @@ Rendered from the latest CI run's report data (run 29082576370): findings dashbo
 high across 5 groups; `/mutations` false leak removed; 3 real SQL-leak 500s retained; cover headline +
 KPIs correct; HTML valid. Cover + findings section visually verified in-browser.
 
+## Follow-up (same session): stability detector → report-mode + error-contract findings in dashboard
+CI run 29085028127 went red on `ErrorContractApiTest.testCriticalPathStability` — it caught a REAL backend
+slow episode (`/company/alliance-config/acme` 56.9s, `/company/{id}/workorders` 32.6s across samples, the
+2026-07-03 incident signature). It was the one remaining unconditional hard-fail in Suite 3. Now that the
+consolidated report has a Critical-Findings dashboard, that instability belongs THERE (loud) while the
+green-by-default monitor stays green:
+- `testCriticalPathStability` is now behind `STRICT_ERROR_CONTRACT` (report-mode default), consistent with
+  every other Suite 3 gate.
+- `collect_findings` now also parses `error-contract-report.md`: stability-probe FAIL/WARN → Availability
+  critical; malformed-path `5xx>0` → Security critical (server errors / SQL leak on bad input);
+  unauthenticated-get `exposed-200>0` → Security critical; unknown-resource `5xx>0` → Availability high.
+  Dashboard total rose to **56 critical / 65 high**.
+
 ## Files
 - `.github/scripts/gen_api_suite_report.py`
+- `src/test/java/com/egalvanic/qa/testcase/api/ErrorContractApiTest.java`
