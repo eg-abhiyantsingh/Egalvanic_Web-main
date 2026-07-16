@@ -61,6 +61,8 @@ AREAS = [
      "Async queue convergence vs x-direct-write, delete idempotency, DELETE media-type."),
     ("SldV3PayloadBenchmarkApiTest",  "SLD V3 Payload Benchmark",     "sld-v3-payload-benchmark.md",
      "Per-SLD v3 load latency, total payload, node_terminals total, dominant keys, and v2 before/after delta."),
+    ("AllPagesStabilityApiTest",     "All-Pages 502 Sweep",           "all-pages-502-report.md",
+     "Every app page's live-captured backing endpoints swept repeatedly for 502/5xx/timeout, per page."),
     ("ApiDuplicateCallTestNG",       "Runtime Duplicate Calls (Suite 2)", "api-duplicate-calls-report.md",
      "Browser-driven: same endpoint refetched 3–4× on one page load (runs in Suite 2's api toggle)."),
 ]
@@ -408,6 +410,21 @@ def collect_findings():
             low = cells[8].lower()
             sev = "critical" if ("hard ceiling" in low or "bottleneck" in low) else "high"
             add(sev, GROUPS[2], "GET /sld/v3/" + cells[1], "SLD load (" + cells[0] + ", " + cells[2] + " nodes): " + cells[8])
+
+    # 3c) all-pages 502 sweep — rows are "| Page | Incidents | Detail |"; any 502/5xx is critical
+    for line in _read("all-pages-502-report.md").splitlines():
+        if not line.startswith("| ") or "Incidents" in line or "---" in line:
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) >= 3 and cells[0] and cells[0] != "Page":
+            detail = cells[2]
+            low = detail.lower()
+            if "502" in low or "5xx" in low or "exception" in low:
+                add("critical", GROUPS[1], "page:" + cells[0],
+                    "Page-load 502/5xx (" + cells[1] + " incident(s)): " + detail)
+            elif "timeout" in low:
+                add("high", GROUPS[2], "page:" + cells[0],
+                    "Page-load timeout (" + cells[1] + " incident(s)): " + detail)
 
     # 4) duplicate-endpoint criticals
     for line in _read("api-duplicate-endpoints-report.md").splitlines():

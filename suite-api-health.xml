@@ -50,6 +50,14 @@
             <class name="com.egalvanic.qa.testcase.api.ErrorContractApiTest"/>
         </classes>
     </test>
+    <!-- All-pages 502 sweep: every app page's live-captured backing endpoints swept repeatedly for
+         502/5xx/timeout, attributed to the page a user would see fail. Report-mode → reports/
+         all-pages-502-report.md; -DSTRICT_ALL_PAGES=true escalates. GET + the list POSTs pages use. -->
+    <test name="API All-Pages 502 Sweep">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.AllPagesStabilityApiTest"/>
+        </classes>
+    </test>
     <!-- Transport contract: Content-Type (JSON vs SPA-shell 200s), nosniff/HSTS/no-store headers,
          evil-Origin CORS reflection (credentialed reflection = only hard fail), version leakage.
          GET-only, zero mutation risk. Soft gaps → reports/security-headers-report.md;
