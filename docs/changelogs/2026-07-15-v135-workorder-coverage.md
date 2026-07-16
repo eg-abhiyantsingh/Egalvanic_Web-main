@@ -131,6 +131,27 @@ Two waves committed to main, each validated green on a real simulator/browser:
 - ZP-3000: WOC_09 (Scope section), WOC_10 (Advanced Settings anatomy). Green.
 - ZP-3027: two regression sentinels (Services nav distinct from /sessions; WO-list health). Green.
 
+## Wave 3-4 (2026-07-16) — SLD 502 detector + ZP-3120 + ZP-3041 502 coverage
+
+- **SLD 502 investigation** (`d3e9d4e`): live-probed every SLD API endpoint repeatedly — all 200,
+  no live 502s. Root gap found + fixed: the Suite-3 "502 detector" (ErrorContractApiTest stability
+  probe) panel had NO SLD endpoints despite /sld/v3 being the heaviest, most 502-prone endpoint.
+  Added /company/{id}/slds + /sld/v3/{id} + /sld/v2/{id} to the panel. Today's Suite-3 failure was
+  /planned_workorder_line/ + /shortcut/all timeouts, NOT SLD.
+- **ZP-3041 502 coverage + ZP-3120 guard** (`60211ff`): added the BOUNDED v1.35
+  /planned-workorder-lines/?page=1&per_page=5 to the 502 detector (fast, 0.3-1.4s; the legacy
+  underscore twin times out ~35s and is excluded). SldV3PayloadBenchmark now hard-guards v3-vs-v2
+  regression (>25% & >300ms slower). Live proof of ZP-3120: 107-node SLD loaded v3=2206ms vs
+  v2=19589ms (~9x faster).
+
+## ZP-3129 (Form ID vs EG Form Name in Edit Form) — investigated, NOT yet automated
+EG forms API (`/eg-forms`) returns `title` as the human name (e.g. "70B-DA"; default "Untitled Form")
+and `id` as the UUID — no `name` field. The bug is a FRONTEND rendering issue: the "Edit Form" surface
+shows the UUID instead of `title`. That surface is a form-builder/template-edit screen (forms carry
+form_template_id/key), NOT a task/WO detail tab (task tabs are Details/Photos/Linked Issues). Did not
+write a test: an API "title exists" check would be false coverage (backend returns title fine; the bug
+is purely frontend rendering). Needs the form-edit UI surface located to assert `title` renders, not id.
+
 ## Still open
 - **ZP-3129** (EG Form name-vs-ID in Edit Form) — needs a WO with a linked EG Form (fixture).
 - **ZP-3056** (SLD in-session grey-out / Bring into Session) + **ZP-3000 Services module + native
