@@ -276,6 +276,35 @@ public class WorkOrderPage {
                 WO_DIALOG + "//*[contains(normalize-space(),'All assets in scope')]")).isEmpty();
     }
 
+    /** True when the Advanced Settings Priority input is present AND visible (accordion expanded). */
+    public boolean isPriorityFieldInteractable() {
+        java.util.List<WebElement> p = driver.findElements(PRIORITY_INPUT);
+        return !p.isEmpty() && p.get(0).isDisplayed();
+    }
+
+    /** Click the "Advanced Settings" accordion header once (toggles collapse/expand). */
+    public void clickAdvancedSettingsHeader() {
+        java.util.List<WebElement> headers = driver.findElements(By.xpath(
+                WO_DIALOG + "//*[self::h6 or self::h5][normalize-space()='Advanced Settings']"));
+        if (headers.isEmpty()) {
+            headers = driver.findElements(ADVANCED_SETTINGS_TOGGLE);
+        }
+        if (headers.isEmpty()) {
+            System.out.println("[WorkOrderPage] Advanced Settings header not found");
+            return;
+        }
+        WebElement h = headers.get(0);
+        js.executeScript("arguments[0].scrollIntoView({block:'center'});", h);
+        pause(150);
+        try {
+            new Actions(driver).moveToElement(h).click().perform();
+        } catch (Exception e) {
+            js.executeScript("arguments[0].click();", h);
+        }
+        pause(500);
+        System.out.println("[WorkOrderPage] Clicked Advanced Settings header");
+    }
+
     /** Click the Scope section's "Start Empty Instead" action. */
     public void clickStartEmptyInstead() {
         WebElement link = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(

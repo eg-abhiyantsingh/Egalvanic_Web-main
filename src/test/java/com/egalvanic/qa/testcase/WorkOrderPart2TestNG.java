@@ -10,6 +10,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -1315,104 +1316,134 @@ public class WorkOrderPart2TestNG extends BaseTest {
         logStep("PASS: Status change capability check completed");
     }
 
-    @Test(priority = 704, description = "TC_SLC2_004: Verify filtering grid by 'Open' status")
-    public void testTC_SLC2_004_FilterByOpenStatus() {
-        ExtentReportManager.createTest(MODULE, FEATURE_STATUS, "TC_SLC2_004_FilterByOpenStatus");
-        logStep("Filtering grid by Open status");
+    // v1.35 (ZP-3130): the /sessions WO list has NO status-filter UI — verified live 2026-07-16.
+    // The old SLC2_004-006 clicked a non-existent "Show filters" button, caught everything, and
+    // logged unconditional PASS (vacuous). The REAL filters are the search box and the "Show planned"
+    // toggle; these rewrites assert against those (method names kept for report continuity).
+
+    @Test(priority = 704, description = "TC_SLC2_004: Search box filters the WO grid to matching rows and clearing restores it (ZP-3130)")
+    public void testTC_SLC2_004_SearchFiltersRows() {
+        ExtentReportManager.createTest(MODULE, FEATURE_FILTER, "TC_SLC2_004_SearchFiltersRows");
+        ensureOnWorkOrdersPage();
+        pause(1000);
 
         int initialRows = countGridRows();
+        if (initialRows == 0) throw new SkipException("No work orders in this list — nothing to search (0 data is not a bug).");
 
-        try {
-            // Click filter/status column header menu
-            List<WebElement> filterBtns = driver.findElements(By.xpath(
-                    "//button[contains(@aria-label,'Show filters') or contains(@aria-label,'filter')]"));
-            if (!filterBtns.isEmpty()) {
-                filterBtns.get(0).click();
-                pause(1000);
-
-                // Look for 'Open' filter option
-                workOrderPage.clickFilterOption("Open");
-                pause(1500);
-
-                int filteredRows = countGridRows();
-                logStep("Initial rows: " + initialRows + ", After Open filter: " + filteredRows);
-
-                // Close filter menu
-                // Click outside to close filter (avoid Keys.ESCAPE)
-                try { driver.findElement(By.xpath("//header | //h5 | //h6")).click(); } catch (Exception ignored2) {
-                    new org.openqa.selenium.interactions.Actions(driver).moveByOffset(0, 0).click().perform();
-                }
-                pause(500);
-            } else {
-                logStep("Filter button not found");
-            }
-        } catch (Exception e) {
-            logStep("Open status filter: " + e.getMessage());
+        String firstName = workOrderPage.getFirstRowTitle();
+        if (firstName == null || firstName.trim().length() < 2) {
+            throw new SkipException("Could not read a first-row WO name to search for.");
         }
+        // Use a distinctive substring of the real row so the filter has a guaranteed match.
+        String needle = firstName.trim();
+        if (needle.length() > 12) needle = needle.substring(0, 12);
+        logStep("Searching for substring '" + needle + "' (from first row '" + firstName + "'), initial rows=" + initialRows);
 
-        logStep("PASS: Open status filter check completed");
+        WebElement search = new WebDriverWait(driver, Duration.ofSeconds(15))
+                .until(org.openqa.selenium.support.ui.ExpectedConditions.elementToBeClickable(SEARCH_INPUT));
+        Keys mod = System.getProperty("os.name", "").toLowerCase().contains("mac") ? Keys.COMMAND : Keys.CONTROL;
+        search.click();
+        try { search.sendKeys(Keys.chord(mod, "a"), Keys.DELETE); } catch (Exception ignored) {}
+        search.sendKeys(needle);
+        pause(2500);
+
+        int filteredRows = countGridRows();
+        logStep("After search: rows=" + filteredRows);
+        Assert.assertTrue(filteredRows >= 1, "Search for a known row's substring should return at least that row.");
+        Assert.assertTrue(filteredRows <= initialRows, "Search should narrow (or hold) the row set, never grow it.");
+        // Every visible row must contain the needle (proves the filter actually applied).
+        List<WebElement> rows = driver.findElements(GRID_ROWS);
+        for (WebElement r : rows) {
+            String txt = r.getText();
+            Assert.assertTrue(txt != null && txt.toLowerCase().contains(needle.toLowerCase()),
+                    "Every filtered row should contain the search term '" + needle + "'. Offending row: " + txt);
+        }
+        logStepWithScreenshot("Grid filtered by search");
+
+        // Clear → the list restores.
+        search.click();
+        try { search.sendKeys(Keys.chord(mod, "a"), Keys.DELETE); } catch (Exception ignored) {}
+        pause(2500);
+        int restored = countGridRows();
+        logStep("After clearing search: rows=" + restored);
+        Assert.assertEquals(restored, initialRows, "Clearing the search should restore the original row count.");
+        ExtentReportManager.logPass("Search filter verified: narrows to matching rows and restores on clear.");
     }
 
-    @Test(priority = 705, description = "TC_SLC2_005: Verify filtering grid by 'In Progress' status")
-    public void testTC_SLC2_005_FilterByInProgressStatus() {
-        ExtentReportManager.createTest(MODULE, FEATURE_STATUS, "TC_SLC2_005_FilterByInProgressStatus");
-        logStep("Filtering grid by In Progress status");
+    @Test(priority = 705, description = "TC_SLC2_005: 'Show planned' toggle changes the WO list result set and restores (ZP-3130/3041)")
+    public void testTC_SLC2_005_ShowPlannedToggleChangesRows() {
+        ExtentReportManager.createTest(MODULE, FEATURE_FILTER, "TC_SLC2_005_ShowPlannedToggleChangesRows");
+        ensureOnWorkOrdersPage();
+        pause(1000);
 
-        try {
-            List<WebElement> filterBtns = driver.findElements(By.xpath(
-                    "//button[contains(@aria-label,'Show filters') or contains(@aria-label,'filter')]"));
-            if (!filterBtns.isEmpty()) {
-                filterBtns.get(0).click();
-                pause(1000);
-
-                workOrderPage.clickFilterOption("In Progress");
-                pause(1500);
-
-                int filteredRows = countGridRows();
-                logStep("In Progress filter rows: " + filteredRows);
-
-                // Click outside to close filter (avoid Keys.ESCAPE)
-                try { driver.findElement(By.xpath("//header | //h5 | //h6")).click(); } catch (Exception ignored2) {
-                    new org.openqa.selenium.interactions.Actions(driver).moveByOffset(0, 0).click().perform();
-                }
-                pause(500);
-            }
-        } catch (Exception e) {
-            logStep("In Progress filter: " + e.getMessage());
+        if (!workOrderPage.hasShowPlannedToggle()) {
+            throw new SkipException("'Show planned' toggle not present on this list.");
         }
+        boolean stateBefore = workOrderPage.isPlannedShown();
+        int rowsBefore = countGridRows();
+        String pageBefore = workOrderPage.getPaginationSummary();
+        logStep("Before toggle: shown=" + stateBefore + " rows=" + rowsBefore + " summary='" + pageBefore + "'");
 
-        logStep("PASS: In Progress status filter check completed");
+        workOrderPage.toggleShowPlanned();
+        Assert.assertNotEquals(workOrderPage.isPlannedShown(), stateBefore,
+                "'Show planned' switch state should flip when toggled.");
+        // No error banner should appear after the refetch.
+        Assert.assertTrue(driver.findElements(By.xpath(
+                "//*[contains(text(),'Something went wrong') or contains(text(),'Error loading')]")).isEmpty(),
+                "Toggling 'Show planned' should not surface an error banner.");
+        logStepWithScreenshot("After toggling Show planned");
+
+        // Toggle back → state and row count restore (guards a stuck/one-way toggle).
+        workOrderPage.toggleShowPlanned();
+        Assert.assertEquals(workOrderPage.isPlannedShown(), stateBefore, "Toggling back should restore the original state.");
+        int rowsAfter = countGridRows();
+        Assert.assertEquals(rowsAfter, rowsBefore, "Row count should return to baseline after toggling back.");
+        ExtentReportManager.logPass("'Show planned' toggle verified: flips state, refetches without error, and restores.");
     }
 
-    @Test(priority = 706, description = "TC_SLC2_006: Verify filtering grid by 'Complete' status")
-    public void testTC_SLC2_006_FilterByCompleteStatus() {
-        ExtentReportManager.createTest(MODULE, FEATURE_STATUS, "TC_SLC2_006_FilterByCompleteStatus");
-        logStep("Filtering grid by Complete status");
+    @Test(priority = 706, description = "TC_SLC2_006: Search + 'Show planned' combine — search persists across a toggle (ZP-3130)")
+    public void testTC_SLC2_006_SearchPlusShowPlannedCombine() {
+        ExtentReportManager.createTest(MODULE, FEATURE_FILTER, "TC_SLC2_006_SearchPlusShowPlannedCombine");
+        ensureOnWorkOrdersPage();
+        pause(1000);
 
-        try {
-            List<WebElement> filterBtns = driver.findElements(By.xpath(
-                    "//button[contains(@aria-label,'Show filters') or contains(@aria-label,'filter')]"));
-            if (!filterBtns.isEmpty()) {
-                filterBtns.get(0).click();
-                pause(1000);
+        if (countGridRows() == 0) throw new SkipException("No work orders to combine-filter (0 data is not a bug).");
+        if (!workOrderPage.hasShowPlannedToggle()) throw new SkipException("'Show planned' toggle not present.");
 
-                workOrderPage.clickFilterOption("Complete");
-                pause(1500);
+        String firstName = workOrderPage.getFirstRowTitle();
+        if (firstName == null || firstName.trim().length() < 2) throw new SkipException("Could not read a first-row WO name.");
+        String needle = firstName.trim();
+        if (needle.length() > 12) needle = needle.substring(0, 12);
 
-                int filteredRows = countGridRows();
-                logStep("Complete filter rows: " + filteredRows);
+        WebElement search = new WebDriverWait(driver, Duration.ofSeconds(15))
+                .until(org.openqa.selenium.support.ui.ExpectedConditions.elementToBeClickable(SEARCH_INPUT));
+        Keys mod = System.getProperty("os.name", "").toLowerCase().contains("mac") ? Keys.COMMAND : Keys.CONTROL;
+        search.click();
+        try { search.sendKeys(Keys.chord(mod, "a"), Keys.DELETE); } catch (Exception ignored) {}
+        search.sendKeys(needle);
+        pause(2500);
+        int filtered = countGridRows();
+        logStep("Search '" + needle + "' → rows=" + filtered);
+        Assert.assertTrue(filtered >= 1, "Search should match the known row.");
 
-                // Click outside to close filter (avoid Keys.ESCAPE)
-                try { driver.findElement(By.xpath("//header | //h5 | //h6")).click(); } catch (Exception ignored2) {
-                    new org.openqa.selenium.interactions.Actions(driver).moveByOffset(0, 0).click().perform();
-                }
-                pause(500);
-            }
-        } catch (Exception e) {
-            logStep("Complete filter: " + e.getMessage());
+        // Toggle Show planned while a search is active — the search must persist and rows still match.
+        workOrderPage.toggleShowPlanned();
+        String stillTyped = search.getAttribute("value");
+        Assert.assertTrue(stillTyped != null && stillTyped.contains(needle),
+                "Search text should persist across a 'Show planned' toggle. Got: '" + stillTyped + "'");
+        for (WebElement r : driver.findElements(GRID_ROWS)) {
+            String txt = r.getText();
+            Assert.assertTrue(txt != null && txt.toLowerCase().contains(needle.toLowerCase()),
+                    "With a search active, every visible row should still match '" + needle + "'. Offending: " + txt);
         }
+        logStepWithScreenshot("Search persists across Show-planned toggle");
 
-        logStep("PASS: Complete status filter check completed");
+        // Cleanup: clear search, toggle back.
+        search.click();
+        try { search.sendKeys(Keys.chord(mod, "a"), Keys.DELETE); } catch (Exception ignored) {}
+        pause(1500);
+        workOrderPage.toggleShowPlanned();
+        ExtentReportManager.logPass("Search + Show-planned combine verified: search persists across the toggle and rows stay consistent.");
     }
 
     @Test(priority = 707, description = "TC_SLC2_007: Verify status transition Open to In Progress on detail")

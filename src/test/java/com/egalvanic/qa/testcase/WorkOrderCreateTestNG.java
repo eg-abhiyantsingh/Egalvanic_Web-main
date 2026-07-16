@@ -71,7 +71,8 @@ public class WorkOrderCreateTestNG extends BaseTest {
         openFreshCreateForm();
 
         Assert.assertTrue(workOrderPage.isCreateWorkOrderDialogOpen(), "Create New Work Order dialog should open.");
-        for (String label : new String[]{"Priority", "Est. Hours", "WO Description", "Facility",
+        // v1.35 (ZP-3000): "Work Type" (new required field) and "Scope" (new section) added to the form.
+        for (String label : new String[]{"Work Type", "Scope", "Priority", "Est. Hours", "WO Description", "Facility",
                 "Photo Type", "Start Date", "Due Date", "Team", "Schedule", "Equipment"}) {
             Assert.assertTrue(workOrderPage.woFieldPresent(label), "Form should show the '" + label + "' field/section.");
         }
@@ -87,7 +88,7 @@ public class WorkOrderCreateTestNG extends BaseTest {
         ExtentReportManager.logPass("Create dialog shows all fields/sections; defaults Priority=Medium, Photo Type=FLIR-SEP, Start Date pre-filled.");
     }
 
-    @Test(priority = 2, description = "WOC_02: Create is disabled until WO Name is filled (the only empty required field)")
+    @Test(priority = 2, description = "WOC_02: Create is gated on both required fields — WO Name AND Work Type (v1.35 ZP-3000)")
     public void testWOC_02_CreateGatedOnName() {
         ExtentReportManager.createTest(MODULE, FEATURE, "WOC_02_CreateGatedOnName");
         openFreshCreateForm();
@@ -225,6 +226,59 @@ public class WorkOrderCreateTestNG extends BaseTest {
                 "Due Date should reflect the 15th picked from the calendar. Got: '" + dueVal + "'");
         logStepWithScreenshot("Dates set via calendar icon");
         ExtentReportManager.logPass("Start + Due dates set via the calendar icon (Due=" + dueVal + ", picked from next month).");
+    }
+
+    @Test(priority = 8, description = "WOC_09: v1.35 Scope section defaults to all-assets and 'Start Empty Instead' switches it (ZP-3000)")
+    public void testWOC_09_ScopeSectionDefaultsAndStartEmpty() {
+        ExtentReportManager.createTest(MODULE, FEATURE, "WOC_09_ScopeSectionDefaultsAndStartEmpty");
+        openFreshCreateForm();
+        try {
+            Assert.assertTrue(workOrderPage.isScopeSectionPresent(),
+                    "v1.35 create dialog should show the new 'Scope' section (ZP-3000).");
+            Assert.assertTrue(workOrderPage.scopeDefaultsToAllAssets(),
+                    "Scope should default to an all-assets scope ('All assets in scope' copy present).");
+            logStepWithScreenshot("Scope defaults to all-assets");
+
+            workOrderPage.clickStartEmptyInstead();
+            // 'Start Empty Instead' switches the scope away from all-assets; poll for the default copy to clear.
+            boolean switched = false;
+            for (int i = 0; i < 10 && !switched; i++) { pause(500); switched = !workOrderPage.scopeDefaultsToAllAssets(); }
+            Assert.assertTrue(switched,
+                    "'Start Empty Instead' should switch the scope away from the all-assets default.");
+            logStepWithScreenshot("Scope switched to empty");
+            ExtentReportManager.logPass("Scope section verified: defaults to all-assets, 'Start Empty Instead' switches to an empty scope.");
+        } finally {
+            cancelDialog();
+        }
+    }
+
+    @Test(priority = 9, description = "WOC_10: v1.35 Advanced Settings section hosts Priority/Photo Type/Start Date/Est. Hours/WO Description with defaults (ZP-3000)")
+    public void testWOC_10_AdvancedSettingsAnatomy() {
+        ExtentReportManager.createTest(MODULE, FEATURE, "WOC_10_AdvancedSettingsAnatomy");
+        openFreshCreateForm();
+        try {
+            // v1.35 (verified live 2026-07-16): "Advanced Settings" is an always-expanded SECTION
+            // (its h6 has cursor:pointer but clicking does NOT collapse it — it is not an accordion).
+            // The Priority field renders a beat AFTER the dialog opens. Use getPriorityValue() as the
+            // readiness signal (reads the value attribute — the same proven read WOC_01 uses); do NOT
+            // gate on Selenium isDisplayed(), which reports false for MUI Autocomplete's hidden inner input.
+            String prio = "";
+            for (int i = 0; i < 12 && prio.isEmpty(); i++) { pause(500); prio = workOrderPage.getPriorityValue(); }
+            Assert.assertEquals(prio, "Medium",
+                    "Priority (Advanced Settings, expanded by default) should read its 'Medium' default (polled ~6s).");
+            Assert.assertEquals(workOrderPage.getPhotoTypeValue(), "FLIR-SEP",
+                    "Photo Type (Advanced Settings) should read its 'FLIR-SEP' default.");
+            Assert.assertFalse(workOrderPage.getStartDateValue().isEmpty(),
+                    "Start Date (Advanced Settings) should be pre-filled.");
+            for (String label : new String[]{"Est. Hours", "WO Description"}) {
+                Assert.assertTrue(workOrderPage.woFieldPresent(label),
+                        "Advanced Settings should host the '" + label + "' field.");
+            }
+            logStepWithScreenshot("Advanced Settings anatomy + defaults");
+            ExtentReportManager.logPass("Advanced Settings anatomy verified: Priority=Medium, Photo Type=FLIR-SEP, Start Date pre-filled, Est. Hours + WO Description present.");
+        } finally {
+            cancelDialog();
+        }
     }
 
     // ================================================================

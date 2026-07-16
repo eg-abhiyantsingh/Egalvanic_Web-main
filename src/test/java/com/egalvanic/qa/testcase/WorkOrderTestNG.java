@@ -1485,4 +1485,53 @@ public class WorkOrderTestNG extends BaseTest {
 
         logStep("PASS: Cleanup check completed");
     }
+
+    // ================================================================
+    // SECTION: v1.35 ZP-3027 — Services must not impact existing WO flows (regression sentinels)
+    // ================================================================
+
+    @Test(priority = 90, description = "TC_REG_ZP3027_01: Services nav is distinct from Work Orders and WO nav still lands on /sessions (ZP-3027)")
+    public void testTC_REG_ZP3027_ServicesNavDistinctFromWorkOrders() {
+        ExtentReportManager.createTest(MODULE, FEATURE_LIST, "TC_REG_ZP3027_ServicesNavDistinctFromWorkOrders");
+        ensureOnWorkOrdersPage();
+
+        // v1.35 added a "Services" nav item (/services). It must be a SEPARATE link from Work Orders
+        // (/sessions) — guards the mis-navigation risk of the sidebar's text-based link matching.
+        List<WebElement> servicesLinks = driver.findElements(By.xpath("//a[@href='/services']"));
+        List<WebElement> woLinks = driver.findElements(By.xpath("//a[@href='/sessions']"));
+        Assert.assertFalse(servicesLinks.isEmpty(), "Sidebar should expose a 'Services' link (/services) in v1.35.");
+        Assert.assertFalse(woLinks.isEmpty(), "Sidebar should expose the Work Orders link (/sessions).");
+        logStep("Sidebar has distinct Services (/services) and Work Orders (/sessions) links.");
+
+        // navigateToWorkOrders() must resolve to /sessions, NOT /services.
+        workOrderPage.navigateToWorkOrders();
+        pause(1500);
+        String url = driver.getCurrentUrl();
+        Assert.assertTrue(url.contains("/sessions"), "Work Orders nav should land on /sessions. Got: " + url);
+        Assert.assertFalse(url.contains("/services"), "Work Orders nav must NOT land on the Services page. Got: " + url);
+        logStepWithScreenshot("Work Orders nav lands on /sessions");
+        ExtentReportManager.logPass("ZP-3027: Services nav is distinct and Work Orders nav correctly resolves to /sessions.");
+    }
+
+    @Test(priority = 91, description = "TC_REG_ZP3027_02: WO list stays healthy with Services deployed — grid + search + Show-planned + pagination (ZP-3027)")
+    public void testTC_REG_ZP3027_WoListHealthyWithServicesDeployed() {
+        ExtentReportManager.createTest(MODULE, FEATURE_LIST, "TC_REG_ZP3027_WoListHealthyWithServicesDeployed");
+        ensureOnWorkOrdersPage();
+        pause(1000);
+
+        Assert.assertFalse(driver.findElements(GRID).isEmpty(), "WO list grid should render.");
+        Assert.assertTrue(workOrderPage.hasShowPlannedToggle(), "WO list should show the 'Show planned' toggle.");
+        boolean hasSearch = driver.findElements(By.xpath(
+                "//input[contains(@placeholder,'Search work orders')]")).size() > 0;
+        Assert.assertTrue(hasSearch, "WO list should show the 'Search work orders...' box.");
+
+        // Pagination summary, when present, must match the "X–Y of N" shape (not a broken/empty footer).
+        String summary = workOrderPage.getPaginationSummary();
+        if (summary != null && !summary.isEmpty()) {
+            Assert.assertTrue(summary.matches(".*\\d+\\s*[–-]\\s*\\d+\\s+of\\s+\\d+.*"),
+                    "Pagination summary should match 'X–Y of N'. Got: '" + summary + "'");
+        }
+        logStepWithScreenshot("WO list healthy with Services deployed");
+        ExtentReportManager.logPass("ZP-3027: existing WO list surface (grid/search/toggle/pagination) intact alongside the Services module.");
+    }
 }
