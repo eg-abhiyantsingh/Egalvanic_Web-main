@@ -261,6 +261,11 @@ public class ErrorContractApiTest extends BaseAPITest {
             panel.add("/company/" + companyId + "/sales-dashboard");
             panel.add("/company/" + companyId + "/slds");   // SLD list (unbounded — heavy)
         }
+        // ZP-3041 planned-workorder-lines: use the BOUNDED v1.35 dash endpoint (0.3-1.4s live). The
+        // legacy underscore twin /planned_workorder_line/ is deliberately EXCLUDED — it ignores
+        // pagination and reliably times out (~35s), so it would flag every sweep instead of catching
+        // an intermittent regression. Its chronic unresponsiveness is tracked by the catalog audit.
+        panel.add("/planned-workorder-lines/?page=1&per_page=5");
         // SLD load paths — the 3-4 MB, multi-second endpoints most prone to intermittent gateway
         // 502s under load. Previously absent from the 502 detector; add them so SLD 502s are caught
         // everywhere the panel is swept, not just measured once by the perf benchmark.

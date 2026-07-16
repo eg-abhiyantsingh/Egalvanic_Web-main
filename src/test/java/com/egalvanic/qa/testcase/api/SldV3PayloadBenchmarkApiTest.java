@@ -156,10 +156,13 @@ public class SldV3PayloadBenchmarkApiTest extends BaseAPITest {
 
         // before/after delta: time v2 (the pre-optimization path) for the same SLD.
         String v2delta;
+        long v2ms = -1; int v2bytes = -1; int v2status = -1;
         try {
             Response v2 = getAuthenticatedRequestSpec().config(PROBE_CONFIG).relaxedHTTPSValidation()
                     .when().get("/sld/v2/" + sldId).then().extract().response();
-            v2delta = v2.statusCode() == 200 ? (v2.time() + "ms / " + kb(bytes(v2.asString()))) : ("v2 HTTP " + v2.statusCode());
+            v2status = v2.statusCode();
+            if (v2status == 200) { v2ms = v2.time(); v2bytes = bytes(v2.asString()); }
+            v2delta = v2status == 200 ? (v2ms + "ms / " + kb(v2bytes)) : ("v2 HTTP " + v2status);
         } catch (Exception e) { v2delta = "v2 error"; }
 
         String line = String.format("%s | nodes=%d edges=%d | %dms | total=%s | node_terminals=%s | top: %s | v2: %s",
@@ -171,6 +174,12 @@ public class SldV3PayloadBenchmarkApiTest extends BaseAPITest {
         else if ("small".equals(bucket) && v3ms > TARGET_SMALL_MS) findings.add("small SLD load " + v3ms + "ms > " + TARGET_SMALL_MS + "ms target");
         else if (v3ms > RESP_WARN_MS) findings.add("slow load " + v3ms + "ms");
         if (ntBytes > NODE_TERMINALS_WARN_BYTES) findings.add("node_terminals " + kb((int) Math.min(ntBytes, Integer.MAX_VALUE)) + " (serialization bottleneck)");
+        // ZP-3120: v3 is the performance OPTIMIZATION over v2 — guard against a regression where v3
+        // is materially slower than v2. Only flag when v3 is meaningfully worse (>25% AND >300ms
+        // absolute, to absorb network jitter on already-fast loads); both must be real 200 responses.
+        if (v2status == 200 && v2ms > 0 && v3ms > v2ms * 1.25 && (v3ms - v2ms) > 300) {
+            findings.add("v3 SLOWER than v2 (" + v3ms + "ms vs " + v2ms + "ms) — optimization regression");
+        }
 
         REPORT.add(new String[]{ bucket, sldId, String.valueOf(nodeCount), v3ms + "ms",
                 kb(totalBytes), kb((int) Math.min(ntBytes, Integer.MAX_VALUE)), topKeys, v2delta,
