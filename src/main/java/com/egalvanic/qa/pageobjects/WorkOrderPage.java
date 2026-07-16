@@ -65,10 +65,28 @@ public class WorkOrderPage {
             + " | //label[contains(text(),'Description')]/following::textarea[1]"
             + " | //label[contains(text(),'Description')]/following::input[1]");
 
+    // v1.35 (ZP-3000): the Create Work Order dialog moved Priority (and Est. Hours,
+    // WO Description, Photo Type, Start Date) into a COLLAPSED "Advanced Settings"
+    // accordion, so a page-wide Priority locator times out until it is expanded.
+    // Scope to the dialog and prefer the placeholder the redesigned form actually uses.
+    // Priority is a label-anchored MuiAutocomplete. Use EXACTLY the codebase's proven
+    // woComboByLabel()/getPriorityValue() pattern (single expression, no alternatives) — a
+    // multi-branch `A | B | C` returns nodes in DOCUMENT order, so get(0) can land on a hidden
+    // match (isDisplayed()=false) and wrongly conclude the accordion is collapsed. Verified live
+    // 2026-07-15 that this single pattern returns the visible Priority input (value "Medium").
+    // Scope to the create dialog: after a Work Type is selected the page can contain another
+    // "Priority"-labeled element earlier in document order, and visibilityOfElementLocated returns
+    // the FIRST match — waiting forever on a hidden one. Dialog-scoping pins the visible field.
     private static final By PRIORITY_INPUT = By.xpath(
-            "//label[contains(text(),'Priority')]/following::input[1]"
-            + " | //input[@placeholder='Priority' or @placeholder='Select priority'"
-            + " or @placeholder='Select a priority']");
+            "//div[@role='dialog']//div[contains(@class,'MuiAutocomplete-root')][.//label[starts-with(normalize-space(),'Priority')]]//input");
+
+    // v1.35 (ZP-3000): new REQUIRED "Work Type" label-anchored Autocomplete on the create form.
+    private static final By WORK_TYPE_INPUT = By.xpath(
+            "//div[@role='dialog']//div[contains(@class,'MuiAutocomplete-root')][.//label[starts-with(normalize-space(),'Work Type')]]//input");
+
+    // v1.35 (ZP-3000): collapsible "Advanced Settings" section that hosts Priority etc.
+    private static final By ADVANCED_SETTINGS_TOGGLE = By.xpath(
+            "//*[self::h6 or self::button or self::div][contains(normalize-space(),'Advanced Settings')]");
 
     private static final By STATUS_INPUT = By.xpath(
             "//label[contains(text(),'Status')]/following::input[1]"
@@ -198,6 +216,81 @@ public class WorkOrderPage {
             || url.contains("/sessions");
     }
 
+    // ── v1.35 /sessions list: "Show planned" toggle (ZP-3000/3130/3041/3043) ──
+    // Live DOM (2026-07-15): a MuiSwitch (input[role=switch], CHECKED by default) beside a
+    // <p>Show planned</p>, in the list header next to the Create Work Order button.
+
+    private static final By SHOW_PLANNED_SWITCH = By.xpath(
+            "//p[normalize-space()='Show planned']/preceding::input[@type='checkbox'][1]"
+            + " | //*[normalize-space()='Show planned']/..//input[@type='checkbox']");
+
+    /** True when the "Show planned" switch is present on the WO list. */
+    public boolean hasShowPlannedToggle() {
+        return !driver.findElements(SHOW_PLANNED_SWITCH).isEmpty();
+    }
+
+    /** Current state of the "Show planned" switch (defaults ON in v1.35). */
+    public boolean isPlannedShown() {
+        java.util.List<WebElement> sw = driver.findElements(SHOW_PLANNED_SWITCH);
+        return !sw.isEmpty() && sw.get(0).isSelected();
+    }
+
+    /** Flip the "Show planned" switch and wait for the grid to refetch. */
+    public void toggleShowPlanned() {
+        WebElement sw = wait.until(ExpectedConditions.presenceOfElementLocated(SHOW_PLANNED_SWITCH));
+        boolean before = sw.isSelected();
+        // MUI Switch input is visually hidden — click its wrapper via Actions for real pointer events.
+        WebElement wrapper = sw.findElement(By.xpath("./ancestor::*[contains(@class,'MuiSwitch-root')][1]"));
+        try {
+            new Actions(driver).moveToElement(wrapper).click().perform();
+        } catch (Exception e) {
+            js.executeScript("arguments[0].click();", sw);
+        }
+        pause(400);
+        // Wait for the state to actually flip, then for the grid refetch to settle.
+        for (int i = 0; i < 10 && sw.isSelected() == before; i++) { pause(300); }
+        waitForSpinner();
+        pause(800);
+        System.out.println("[WorkOrderPage] Show planned toggled: " + before + " -> " + sw.isSelected());
+    }
+
+    /** The list footer's "X–Y of N" pagination summary text ("" when footer absent). */
+    public String getPaginationSummary() {
+        java.util.List<WebElement> el = driver.findElements(By.cssSelector(".MuiTablePagination-displayedRows"));
+        return el.isEmpty() ? "" : el.get(0).getText().trim();
+    }
+
+    // ── v1.35 create-dialog "Scope" section (ZP-3000) ──
+    // Live DOM (2026-07-15): heading "Scope" + copy "All assets in scope. Add a filter to limit
+    // this work order to ... Start Empty Instead".
+
+    /** True when the create dialog shows the v1.35 Scope section. */
+    public boolean isScopeSectionPresent() {
+        return !driver.findElements(By.xpath(
+                WO_DIALOG + "//*[self::h6 or self::h5][normalize-space()='Scope']")).isEmpty();
+    }
+
+    /** The Scope section's default state describes an all-assets scope with a filter builder. */
+    public boolean scopeDefaultsToAllAssets() {
+        return !driver.findElements(By.xpath(
+                WO_DIALOG + "//*[contains(normalize-space(),'All assets in scope')]")).isEmpty();
+    }
+
+    /** Click the Scope section's "Start Empty Instead" action. */
+    public void clickStartEmptyInstead() {
+        WebElement link = wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(
+                WO_DIALOG + "//*[normalize-space()='Start Empty Instead']")));
+        js.executeScript("arguments[0].scrollIntoView({block:'center'});", link);
+        pause(150);
+        try {
+            new Actions(driver).moveToElement(link).click().perform();
+        } catch (Exception e) {
+            js.executeScript("arguments[0].click();", link);
+        }
+        pause(500);
+        System.out.println("[WorkOrderPage] Clicked 'Start Empty Instead'");
+    }
+
     // ================================================================
     // CREATE
     // ================================================================
@@ -297,9 +390,90 @@ public class WorkOrderPage {
     }
 
     /**
-     * Select priority from dropdown.
+     * Select the REQUIRED Work Type on the v1.35 create form (ZP-3000).
+     * Without a Work Type the Create button stays disabled.
+     */
+    public void selectWorkType(String workType) {
+        typeAndSelectDropdown(WORK_TYPE_INPUT, workType, workType);
+        System.out.println("[WorkOrderPage] Selected work type: " + workType);
+    }
+
+    /**
+     * Tenant-agnostic fallback: open the Work Type combobox and pick the first
+     * real option. Work-type catalogs differ per tenant, so an exact-label pick
+     * can miss; this keeps the required field satisfied for create-flow tests.
+     */
+    public void selectFirstWorkType() {
+        // CRITICAL (proven live 2026-07-16): clicking a RAW, unfiltered option sets the input's
+        // display text but does NOT commit MUI/React's value (Create stays disabled, submit no-ops).
+        // The reliable path — the same one typeAndSelectDropdown uses for Facility/Priority — is to
+        // TYPE the option text (which filters the list) and then click the EXACT-text <li>. So read
+        // the first option's label, then route through that proven method.
+        WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(WORK_TYPE_INPUT));
+        js.executeScript("arguments[0].scrollIntoView({block:'center'});arguments[0].focus();arguments[0].click();", input);
+        pause(300);
+        js.executeScript(
+            "var w = arguments[0].closest('.MuiAutocomplete-root');" +
+            "if (w) { var b = w.querySelector('.MuiAutocomplete-popupIndicator'); if (b) b.click(); }",
+            input);
+        pause(800);
+        WebElement firstOption = wait.until(ExpectedConditions.visibilityOfElementLocated(
+            By.xpath("//li[@role='option'] | //ul[contains(@class,'MuiAutocomplete-listbox')]/li")));
+        String label = firstOption.getText().trim();
+        System.out.println("[WorkOrderPage] First work type option: " + label + " — selecting via typed path");
+        selectWorkType(label);
+    }
+
+    /**
+     * Expand the v1.35 "Advanced Settings" accordion (ZP-3000) so Priority,
+     * Est. Hours, WO Description, Photo Type and Start Date become interactable.
+     * Idempotent: no-op if the section is already expanded or absent.
+     */
+    public void expandAdvancedSettings() {
+        try {
+            // v1.35 (verified live 2026-07-15): the accordion is EXPANDED BY DEFAULT — Priority is
+            // visible on open. Poll for it FIRST (it renders a beat after the dialog opens); only
+            // click the toggle if it is genuinely absent. A blind click here would COLLAPSE an
+            // already-open accordion and hide Priority — the earlier TC_CWO_003 failure mode.
+            for (int i = 0; i < 10; i++) {
+                java.util.List<WebElement> p = driver.findElements(PRIORITY_INPUT);
+                if (!p.isEmpty() && p.get(0).isDisplayed()) {
+                    return;   // already expanded — do NOT click
+                }
+                pause(300);
+            }
+            java.util.List<WebElement> toggles = driver.findElements(ADVANCED_SETTINGS_TOGGLE);
+            if (toggles.isEmpty()) {
+                System.out.println("[WorkOrderPage] Advanced Settings toggle not present — skipping expand");
+                return;
+            }
+            WebElement toggle = toggles.get(0);
+            js.executeScript("arguments[0].scrollIntoView({block:'center'});", toggle);
+            pause(200);
+            js.executeScript("arguments[0].click();", toggle);
+            boolean opened = false;
+            for (int i = 0; i < 10 && !opened; i++) {
+                pause(500);
+                java.util.List<WebElement> p = driver.findElements(PRIORITY_INPUT);
+                opened = !p.isEmpty() && p.get(0).isDisplayed();
+            }
+            System.out.println("[WorkOrderPage] Expanded Advanced Settings (content mounted=" + opened + ")");
+        } catch (Exception e) {
+            System.out.println("[WorkOrderPage] expandAdvancedSettings failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Select priority from dropdown. On the v1.35 form (ZP-3000) Priority lives
+     * inside the collapsed Advanced Settings accordion, so expand it first.
      */
     public void selectPriority(String priority) {
+        // Advanced Settings is expanded by default (Priority visible on open). Only expand if the
+        // Priority input is genuinely missing — never click the toggle when it's already there
+        // (that would COLLAPSE it and hide Priority).
+        if (driver.findElements(PRIORITY_INPUT).isEmpty()) {
+            expandAdvancedSettings();
+        }
         typeAndSelectDropdown(PRIORITY_INPUT, priority, priority);
         System.out.println("[WorkOrderPage] Selected priority: " + priority);
     }
@@ -363,8 +537,11 @@ public class WorkOrderPage {
     private static final By WO_NAME_INPUT = By.xpath("//input[@placeholder='e.g., Q1 2024 Maintenance']");
     private static final By WO_EST_HOURS_INPUT = By.xpath(WO_DIALOG + "//input[@type='number']");
     private static final By WO_DESCRIPTION_INPUT = By.xpath("//textarea[@placeholder='Describe the scope of this work order...']");
-    private static final By WO_START_DATE_INPUT = By.xpath("(" + WO_DIALOG + "//input[@placeholder='MM/DD/YYYY'])[1]");
-    private static final By WO_DUE_DATE_INPUT = By.xpath("(" + WO_DIALOG + "//input[@placeholder='MM/DD/YYYY'])[2]");
+    // v1.35 (ZP-3000) layout order (verified live 2026-07-15): the FIRST MM/DD/YYYY input in the
+    // dialog is Due Date (main form, empty by default); the SECOND is Start Date (Advanced Settings,
+    // pre-filled with today). Pre-v1.35 these indices were reversed — corrected here.
+    private static final By WO_DUE_DATE_INPUT = By.xpath("(" + WO_DIALOG + "//input[@placeholder='MM/DD/YYYY'])[1]");
+    private static final By WO_START_DATE_INPUT = By.xpath("(" + WO_DIALOG + "//input[@placeholder='MM/DD/YYYY'])[2]");
     private static final By WO_EQUIPMENT_INPUT = By.xpath("//input[@placeholder='Select equipment (optional)']");
     private static final By WO_CREATE_BTN = By.xpath(WO_DIALOG + "//button[normalize-space()='Create']");
     private static final By WO_ADD_BLOCK_BTN = By.xpath("//button[normalize-space()='Add Block']");

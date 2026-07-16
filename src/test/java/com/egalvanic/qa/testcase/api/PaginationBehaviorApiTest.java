@@ -124,6 +124,16 @@ public class PaginationBehaviorApiTest extends BaseAPITest {
             {"lookup.nodes",          "/lookup/nodes/{siteId}"},
             {"company.sessions",      "/company/{companyId}/sessions"},
             {"company.workorders",    "/company/{companyId}/workorders"},
+            // ZP-3041 (Web v1.35): Planned Workorder Lines got paginated loading — previously the
+            // catalog audit's worst offender (~30s unbounded read). Running it through the standard
+            // pagination contract (disjoint pages / per_page / beyond-end / abusive params) verifies
+            // the fix and guards regression. NOTE: dash/underscore twin endpoints exist (ZP dup audit);
+            // this is the canonical dash form from the Z-Platform registry.
+            {"planned.workorder.lines", "/planned-workorder-lines/"},
+            // ZP-3043 (Web v1.35): IR Sessions got paginated loading (8656 items on prod-like data).
+            // Registry name "IR Sessions" → /ir-photos/. The standard contract proves paginated
+            // loading works regardless of tenant size (disjoint pages, bounded default, beyond-end).
+            {"ir.sessions",           "/ir-photos/"},
         };
     }
 

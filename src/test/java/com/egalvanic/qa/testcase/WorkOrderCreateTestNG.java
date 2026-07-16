@@ -75,6 +75,10 @@ public class WorkOrderCreateTestNG extends BaseTest {
                 "Photo Type", "Start Date", "Due Date", "Team", "Schedule", "Equipment"}) {
             Assert.assertTrue(workOrderPage.woFieldPresent(label), "Form should show the '" + label + "' field/section.");
         }
+        // v1.35 (ZP-3000): Priority / Photo Type / Start Date live inside the COLLAPSED
+        // "Advanced Settings" accordion and their inputs are unmounted until it is expanded,
+        // so read the defaults only after expanding (the label text above is present either way).
+        workOrderPage.expandAdvancedSettings();
         // Defaults the form ships with (verified live): Priority=Medium, Photo Type=FLIR-SEP, Start Date set.
         Assert.assertEquals(workOrderPage.getPriorityValue(), "Medium", "Priority should default to Medium.");
         Assert.assertEquals(workOrderPage.getPhotoTypeValue(), "FLIR-SEP", "Photo Type should default to FLIR-SEP.");
@@ -90,13 +94,29 @@ public class WorkOrderCreateTestNG extends BaseTest {
 
         Assert.assertFalse(workOrderPage.isCreateButtonEnabled(),
                 "Create should be DISABLED with WO Name empty (Priority/Facility/Photo Type are defaulted).");
+
+        // v1.35 (ZP-3000): Work Type is a SECOND required field. Filling only WO Name
+        // is no longer sufficient — Create must stay disabled until Work Type is set too.
         workOrderPage.fillWoName("WOName_" + LocalDateTime.now().format(TS));
-        // Create enables a moment after the name registers (React validation) — poll ~8s, don't one-shot.
+        boolean enabledNameOnly = false;
+        for (int i = 0; i < 6 && !enabledNameOnly; i++) { pause(500); enabledNameOnly = workOrderPage.isCreateButtonEnabled(); }
+        Assert.assertFalse(enabledNameOnly,
+                "Create should STAY DISABLED with WO Name set but Work Type empty (v1.35 ZP-3000 required Work Type).");
+
+        workOrderPage.selectFirstWorkType();
+        // Create enables a moment after all required fields register (React validation) — poll ~8s.
         boolean enabled = false;
         for (int i = 0; i < 16 && !enabled; i++) { pause(500); enabled = workOrderPage.isCreateButtonEnabled(); }
-        Assert.assertTrue(enabled, "Create should ENABLE once WO Name is filled (polled ~8s).");
-        logStepWithScreenshot("Create enabled after WO Name");
-        ExtentReportManager.logPass("Create button gating verified: disabled with empty WO Name, enabled once filled.");
+        // Facility is the third required field (v1.35). It normally defaults to the active site, but
+        // if this session left it empty, Create stays disabled — set it explicitly and re-poll so the
+        // test proves the gating rather than flaking on an unset default.
+        if (!enabled) {
+            try { workOrderPage.selectWoFacility("test site"); } catch (Exception ignored) {}
+            for (int i = 0; i < 16 && !enabled; i++) { pause(500); enabled = workOrderPage.isCreateButtonEnabled(); }
+        }
+        Assert.assertTrue(enabled, "Create should ENABLE once WO Name, Work Type and Facility are set (polled ~16s).");
+        logStepWithScreenshot("Create enabled after WO Name + Work Type");
+        ExtentReportManager.logPass("Create gating verified (v1.35): disabled with empty WO Name, still disabled with Work Type empty, enabled once both set.");
     }
 
     @Test(priority = 3, description = "WOC_03: Equipment dropdown lists options including Megger")

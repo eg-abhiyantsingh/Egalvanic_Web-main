@@ -1711,7 +1711,11 @@ public class IssuePage {
                 pause(1500);
             }
         } catch (Exception e) {
+            // Do NOT swallow: a search that silently no-ops let IL_003/IL_005 pass
+            // vacuously against an unfiltered list and made IL_004 fail on a
+            // misleading row-count assertion instead of the real cause.
             System.out.println("[IssuePage] Search failed: " + e.getMessage());
+            throw new RuntimeException("searchIssues('" + query + "') could not locate/operate the search input: " + e.getMessage(), e);
         }
     }
 
