@@ -108,9 +108,38 @@ cycle) — the documented login-form blocker. This intermittently breaks login a
 and is the dominant cause of both the full-run failures and the stalled validation. Worth raising
 with the backend team as an environment-stability issue independent of these tests.
 
-## Next
-1. On sustained env recovery: one focused live DOM inspection to resolve the WOC_02 gating cause +
-   confirm Start/Due date field order, fix those, then re-validate TC_CWO_003 + WOC_01 + WOC_02 and commit.
+## RESOLVED + SHIPPED (2026-07-16)
+
+Two waves committed to main, each validated green on a real simulator/browser:
+
+**Wave 1 (f964d5a) — create-flow + pagination:**
+- Root cause of TC_CWO_003 pinned via live repro: MUI Autocomplete commits its value ONLY on a
+  real pointer click of the exact FILTERED option — JS `.click()` and keyboard Enter set the input's
+  display text without firing React onChange, so Work Type never registered → Create disabled →
+  submit no-op → WO never created. `selectFirstWorkType` now routes through the proven
+  `typeAndSelectDropdown` path (type text → Actions-click exact `<li>`).
+- Other live-confirmed facts: Work Type is a fixed 14-option catalog ("Inspection" is NOT one);
+  Advanced Settings is an ALWAYS-EXPANDED section (not a collapsible accordion — clicking its h6
+  does nothing); date inputs are [1]=Due, [2]=Start (were reversed). Gating = Name + Work Type +
+  Facility (Facility defaults to the active site).
+- TC_CWO_003 / WOC_01 / WOC_02 green. IssuePage.searchIssues stops swallowing. ZP-3041
+  (/planned-workorder-lines/) + ZP-3043 (/ir-photos/) added to the pagination contract.
+
+**Wave 2 (9b7550d) — filters + new dialog coverage + regression sentinels:**
+- ZP-3130: SLC2_004/005/006 rewritten from vacuous status-filter stubs into real search +
+  Show-planned tests (the filters that actually exist on /sessions). All green.
+- ZP-3000: WOC_09 (Scope section), WOC_10 (Advanced Settings anatomy). Green.
+- ZP-3027: two regression sentinels (Services nav distinct from /sessions; WO-list health). Green.
+
+## Still open
+- **ZP-3129** (EG Form name-vs-ID in Edit Form) — needs a WO with a linked EG Form (fixture).
+- **ZP-3056** (SLD in-session grey-out / Bring into Session) + **ZP-3000 Services module + native
+  Panel Editor** — appear undeployed on the V1.34 QA env → guarded skip-tests that auto-activate.
+- **ZP-3158** (EG Admin reporting restriction) — needs the WO report-generate endpoint confirmed.
+- **ZP-3120** (SLD v3 perf) — turn the existing v2/v3 delta into a STRICT improvement guard.
+- **SEPARATE real failure cluster:** `TaskTestNG` (14 fails on /tasks, 0 login errors, fast-fail) —
+  the Tasks page structure appears changed; needs its own triage (not one of the 9 WO tickets).
+- iOS counterpart WO coverage.
 2. Implement testable-now batches (ZP-3130 filters/toggle, ZP-3041 API one-liner, ZP-3027 sentinels).
 3. Guarded/skip stubs for undeployed slices (ZP-3056, ZP-3000 Services/Panel Editor, ZP-3158 report endpoint) that auto-activate on the v1.35 deploy.
 4. iOS counterpart WO coverage (separate follow-on).
