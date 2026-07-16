@@ -63,6 +63,7 @@ public class ErrorContractApiTest extends BaseAPITest {
 
     private final List<String> catalogGetPaths = new ArrayList<>();
     private String companyId;
+    private String sldId;   // a real SLD id so the 502 detector covers the heavy /sld/v3 path
 
     // ── catalog + id resolution ──────────────────────────────────────────────
 
@@ -89,6 +90,18 @@ public class ErrorContractApiTest extends BaseAPITest {
                 companyId = new JSONObject(me.asString()).optString("company_id", null);
             }
         } catch (Exception ignored) {}
+        // Resolve a real SLD id so the 502 detector can sample the heavy /sld/v3 load path
+        // (the 3-4 MB, multi-second endpoint most prone to intermittent gateway 502s under load).
+        if (companyId != null) {
+            try {
+                Response slds = getAuthenticatedRequestSpec().when().get("/company/" + companyId + "/slds")
+                        .then().extract().response();
+                if (slds.statusCode() == 200 && !slds.asString().trim().startsWith("<")) {
+                    JSONArray arr = new JSONObject(slds.asString()).optJSONArray("slds");
+                    if (arr != null && arr.length() > 0) sldId = arr.getJSONObject(0).optString("id", null);
+                }
+            } catch (Exception ignored) {}
+        }
     }
 
     /** Every k-th GET op that has at least one path param — bounded, deterministic sample. */
@@ -246,6 +259,14 @@ public class ErrorContractApiTest extends BaseAPITest {
             panel.add("/company/" + companyId + "/workorders?page=1&per_page=5");
             panel.add("/company/" + companyId + "/ops-dashboard");
             panel.add("/company/" + companyId + "/sales-dashboard");
+            panel.add("/company/" + companyId + "/slds");   // SLD list (unbounded — heavy)
+        }
+        // SLD load paths — the 3-4 MB, multi-second endpoints most prone to intermittent gateway
+        // 502s under load. Previously absent from the 502 detector; add them so SLD 502s are caught
+        // everywhere the panel is swept, not just measured once by the perf benchmark.
+        if (sldId != null) {
+            panel.add("/sld/v3/" + sldId);
+            panel.add("/sld/v2/" + sldId);
         }
 
         List<String> incidents = new ArrayList<>(); long worst = 0; String worstEp = "-";
