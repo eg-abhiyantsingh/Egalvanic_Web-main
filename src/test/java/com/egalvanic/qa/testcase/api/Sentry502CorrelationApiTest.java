@@ -72,7 +72,10 @@ public class Sentry502CorrelationApiTest extends BaseAPITest {
         url.append("query=").append(java.net.URLEncoder.encode("is:unresolved 502", java.nio.charset.StandardCharsets.UTF_8))
            .append("&statsPeriod=24h&sort=date&limit=50");
 
-        Response r = RestAssured.given().relaxedHTTPSValidation()
+        // NOTE: no relaxedHTTPSValidation() here. The rest of the suite relaxes TLS for the QA host's
+        // self-signed cert, but sentry.io is a public host with a valid CA cert — disabling validation
+        // while sending a bearer token would expose the credential to MITM. Validate the cert.
+        Response r = RestAssured.given()
                 .header("Authorization", "Bearer " + tok)
                 .when().get(url.toString())
                 .then().extract().response();
