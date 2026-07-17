@@ -109,7 +109,7 @@ jobs:
         if: always()
         run: |
           echo "## eGalvanic API Test Suite — all areas" >> "$GITHUB_STEP_SUMMARY"
-          echo "Open **api-suite-report.html** in the \`api-health-report\` artifact for the consolidated, styled report covering every area below (pagination, agent-token contract, error/transport, security, CRUD, input-validation, mutation semantics, health, full catalog)." >> "$GITHUB_STEP_SUMMARY"
+          echo "Open the **\`api-suite-report\`** artifact — a SINGLE self-contained \`api-suite-report.html\` that combines EVERY area below (findings dashboard, pagination, agent-token, error/transport + 502 detector, all-pages 502 sweep, per-page Network & Console + screenshots, Sentry correlation, security, CRUD, input-validation, mutation, health, full-catalog inventory). Raw per-area sources are in the separate \`api-suite-raw\` artifact." >> "$GITHUB_STEP_SUMMARY"
           # Catalog-wide pagination findings (the spec-driven audit) — inline the summary here too.
           if [ -f reports/list-api-catalog-report.md ]; then
             { echo ""; echo "---"; echo ""; echo "<details><summary>List-API pagination catalog audit</summary>"; echo ""; cat reports/list-api-catalog-report.md; echo ""; echo "</details>"; } >> "$GITHUB_STEP_SUMMARY"
@@ -143,34 +143,31 @@ jobs:
             fi
           done
 
-      - name: Upload health + contract reports
+      # ONE combined report. api-suite-report.html is fully self-contained — it inlines EVERY area's
+      # findings, the full endpoint inventory, latency analysis, live HTTP evidence, per-page Network
+      # & Console data, and all screenshots (embedded as base64). Open that single file and you have
+      # the whole of Parallel Suite 3; no other file is needed. (Raw per-area .md sources and the
+      # ExtentReports detail-report/ are still generated on the runner and are in the separate
+      # 'api-suite-raw' artifact below for anyone who wants the drill-down.)
+      - name: Upload combined Suite-3 report (single file)
         if: always()
         uses: actions/upload-artifact@v4.6.2
         with:
-          name: api-health-report
+          name: api-suite-report
+          path: reports/api-suite-report.html
+          if-no-files-found: warn
+          retention-days: 30
+
+      # Optional raw inputs + per-test detail — not needed to read the suite; kept for deep drill-down.
+      - name: Upload raw reports (optional drill-down)
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: api-suite-raw
           path: |
-            reports/api-suite-report.html
-            reports/api-health-report.html
-            reports/api-health-report.md
-            reports/api-catalog-report.html
-            reports/api-catalog-report.md
-            reports/list-api-contract-report.md
-            reports/list-api-catalog-report.md
-            reports/api-duplicate-endpoints-report.md
-            reports/sld-v3-payload-benchmark.md
-            reports/all-pages-502-report.md
-            reports/page-502-screenshot-report.md
-            reports/page-network-console-report.md
-            reports/sentry-502-report.md
-            reports/evidence/
+            reports/*.md
             reports/api-evidence.json
-            reports/pagination-behavior-report.md
-            reports/error-contract-report.md
-            reports/security-headers-report.md
-            reports/filter-search-consistency-report.md
-            reports/crud-lifecycle-report.md
-            reports/input-validation-report.md
-            reports/mutation-semantics-report.md
+            reports/evidence/
             reports/detail-report/
           if-no-files-found: warn
           retention-days: 30

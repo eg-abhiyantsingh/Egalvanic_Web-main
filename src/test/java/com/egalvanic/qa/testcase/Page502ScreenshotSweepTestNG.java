@@ -168,6 +168,24 @@ public class Page502ScreenshotSweepTestNG extends BaseTest {
         else ExtentReportManager.logWarning(msg + "  (reported; -DSTRICT_PAGE_502=true enforces)");
     }
 
+    // Scrub secrets before anything is written to the (shared, 30-day) report artifact: JWTs, bearer
+    // tokens, emails, and the values of sensitive query params. Keeps the evidence useful (paths,
+    // status, timing, param NAMES) without leaking credentials/PII.
+    private static final java.util.regex.Pattern JWT = java.util.regex.Pattern.compile("eyJ[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+");
+    private static final java.util.regex.Pattern EMAIL = java.util.regex.Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}");
+    private static final java.util.regex.Pattern BEARER = java.util.regex.Pattern.compile("(?i)bearer\\s+[A-Za-z0-9._-]+");
+    private static final java.util.regex.Pattern SENSITIVE_QP = java.util.regex.Pattern.compile(
+            "(?i)([?&](?:access_token|refresh_token|id_token|token|api_?key|secret|password|pwd|auth|jwt|code|state|signature|sig|session|email|phone)=)[^&#\\s]*");
+
+    private static String redact(String s) {
+        if (s == null || s.isEmpty()) return s;
+        s = JWT.matcher(s).replaceAll("[JWT]");
+        s = BEARER.matcher(s).replaceAll("Bearer [REDACTED]");
+        s = SENSITIVE_QP.matcher(s).replaceAll("$1[REDACTED]");
+        s = EMAIL.matcher(s).replaceAll("[EMAIL]");
+        return s;
+    }
+
     /** Read the injected recorder for the current page: app /api Network rows + Console errors/warnings. */
     @SuppressWarnings("unchecked")
     private void captureNetworkAndConsole(String label) {
@@ -184,7 +202,7 @@ public class Page502ScreenshotSweepTestNG extends BaseTest {
                     String method = String.valueOf(m.get("m"));
                     String status = m.get("s") == null ? "?" : String.valueOf(((Number) m.get("s")).intValue());
                     String ms = m.get("ms") == null ? "?" : String.valueOf(((Number) m.get("ms")).intValue());
-                    String path = url.replaceFirst("^https?://[^/]+", "");   // strip host — show /api/... path
+                    String path = redact(url.replaceFirst("^https?://[^/]+", ""));   // strip host, scrub secrets
                     String key = method + " " + path;
                     // annotate exact-URL duplicates (same call fired 2x+ on this load)
                     rows.add(new String[]{ method, path, status, ms + "ms", seen.add(key) ? "" : "DUPLICATE" });
@@ -196,7 +214,7 @@ public class Page502ScreenshotSweepTestNG extends BaseTest {
             Object con = ((JavascriptExecutor) driver).executeScript("return window.__consoleLog || [];");
             List<String> logs = new ArrayList<>();
             if (con instanceof List) for (Object o : (List<Object>) con) {
-                String s = String.valueOf(o);
+                String s = redact(String.valueOf(o));
                 if (!logs.contains(s)) logs.add(s);   // de-dupe repeated console spam
             }
             if (logs.size() > 25) logs = new ArrayList<>(logs.subList(0, 25));
