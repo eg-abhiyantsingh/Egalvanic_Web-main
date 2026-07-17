@@ -48,8 +48,25 @@ public class Sentry502CorrelationApiTest extends BaseAPITest {
     private final List<String[]> rows = new ArrayList<>();
     private String skippedReason;
 
+    /**
+     * Token source, in order: {@code -Dsentry.auth.token} → {@code SENTRY_AUTH_TOKEN} env →
+     * a GIT-IGNORED local file {@code .sentry-auth-token} at the repo root (paste the token there;
+     * .gitignore keeps it out of git so it is never committed/pushed). Never hardcode it in a
+     * committed source file — that publishes the credential to the repo.
+     */
     private static String token() {
         String t = System.getProperty("sentry.auth.token", System.getenv("SENTRY_AUTH_TOKEN"));
+        if (t == null || t.trim().isEmpty()) {
+            try {
+                File f = new File(".sentry-auth-token");
+                if (f.isFile()) {
+                    for (String line : java.nio.file.Files.readAllLines(f.toPath())) {
+                        String s = line.trim();
+                        if (!s.isEmpty() && !s.startsWith("#")) { t = s; break; }
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
         return (t == null || t.trim().isEmpty()) ? null : t.trim();
     }
 

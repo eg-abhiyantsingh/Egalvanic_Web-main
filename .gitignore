@@ -59,3 +59,6 @@ docs/sld-intelligence/
 
 # eGalvanic api-contract-review — dev token config (never commit)
 .api-contract.env
+
+# Sentry auth token for the 502-correlation test — LOCAL ONLY, never commit
+.sentry-auth-token
