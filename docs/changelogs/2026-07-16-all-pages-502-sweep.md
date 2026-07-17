@@ -57,3 +57,23 @@ error/transport contracts + 502 detector (now incl. SLD v3/v2 + planned-workorde
 security headers, filter/search, CRUD, input validation, mutation semantics, SLD v3
 payload benchmark (+ ZP-3120 v3-vs-v2 regression guard), agents contract, IR/FLIR,
 duplicate audit, evidence capture, **and the new all-pages 502 sweep**.
+
+## Addendum (2026-07-17, commit ef138ed): screenshot evidence added
+
+**`Page502ScreenshotSweepTestNG`** — the browser half of 502 detection. A real logged-in
+Chrome walks all 13 sidebar pages ×2 rounds via client-side routing (keeps the injected
+fetch/XHR recorder alive across navigations, so every backing API call is captured). Any
+5xx/502 → recorded per page + **the page screenshotted as user-visible evidence**
+(`reports/evidence/evidence-502-{page}.png`, auto-embedded in the consolidated report's
+Visual Evidence section, CRITICAL + evidence badge on the findings dashboard).
+
+Suite-3 changes: new last test block in `suite-api-health.xml`; **Install Chrome step
+added to parallel-suite-3.yml** (the suite was API-only before — why screenshots weren't
+possible); report-generator AREAS + findings collector; artifacts include
+`reports/evidence/`. `-DSTRICT_PAGE_502=true` gates the build.
+
+Live validation: 26 page visits in 117s, 0×502/0×5xx (clean env at run time).
+
+**Suite 3's 502 detection is now three-layered:** intermittent-5xx stability probe
+(critical panel incl. SLD v3/v2 + planned-workorder-lines) → all-pages API sweep
+(per-page attribution) → browser screenshot sweep (user-visible evidence).
