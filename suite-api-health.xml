@@ -160,4 +160,14 @@
             <class name="com.egalvanic.qa.testcase.api.MutationSemanticsApiTest"/>
         </classes>
     </test>
+    <!-- Browser 502 sweep with SCREENSHOT evidence (needs Chrome — CI installs it): logs in once,
+         walks every sidebar page via client-side routing, records any 5xx/502 the page's API calls
+         return, and screenshots the page as user-visible evidence (reports/evidence/*.png, embedded
+         in the consolidated report). Report-mode; -DSTRICT_PAGE_502=true escalates. LAST so the
+         API-only areas never wait on a browser session. -->
+    <test name="Page 502 Screenshot Sweep (browser)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.Page502ScreenshotSweepTestNG"/>
+        </classes>
+    </test>
 </suite>

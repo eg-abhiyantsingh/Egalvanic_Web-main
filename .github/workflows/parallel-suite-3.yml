@@ -52,6 +52,12 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
+      # For the browser-based Page 502 Screenshot Sweep (last test block in suite-api-health.xml).
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1.7.3
+        with:
+          chrome-version: 'stable'
+
       - name: Resolve target environment
         env:
           TARGET_ENV: ${{ github.event.inputs.environment || 'qa' }}
@@ -147,6 +153,8 @@ jobs:
             reports/api-duplicate-endpoints-report.md
             reports/sld-v3-payload-benchmark.md
             reports/all-pages-502-report.md
+            reports/page-502-screenshot-report.md
+            reports/evidence/
             reports/api-evidence.json
             reports/pagination-behavior-report.md
             reports/error-contract-report.md

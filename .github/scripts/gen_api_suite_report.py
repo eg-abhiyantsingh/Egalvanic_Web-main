@@ -63,6 +63,8 @@ AREAS = [
      "Per-SLD v3 load latency, total payload, node_terminals total, dominant keys, and v2 before/after delta."),
     ("AllPagesStabilityApiTest",     "All-Pages 502 Sweep",           "all-pages-502-report.md",
      "Every app page's live-captured backing endpoints swept repeatedly for 502/5xx/timeout, per page."),
+    ("Page502ScreenshotSweepTestNG", "Page 502 Screenshot Sweep",     "page-502-screenshot-report.md",
+     "Real logged-in browser walks every sidebar page; any 5xx/502 its API calls return is screenshotted as evidence."),
     ("ApiDuplicateCallTestNG",       "Runtime Duplicate Calls (Suite 2)", "api-duplicate-calls-report.md",
      "Browser-driven: same endpoint refetched 3–4× on one page load (runs in Suite 2's api toggle)."),
 ]
@@ -425,6 +427,15 @@ def collect_findings():
             elif "timeout" in low:
                 add("high", GROUPS[2], "page:" + cells[0],
                     "Page-load timeout (" + cells[1] + " incident(s)): " + detail)
+
+    # 3d) browser page 502 screenshot sweep — rows "| Page | Incidents | Screenshot | Detail |"
+    for line in _read("page-502-screenshot-report.md").splitlines():
+        if not line.startswith("| ") or "Incidents" in line or "---" in line:
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) >= 4 and cells[0] and cells[0] != "Page":
+            add("critical", GROUPS[1], "page:" + cells[0],
+                "BROWSER-VISIBLE 5xx (" + cells[1] + " incident(s), screenshot: " + cells[2] + "): " + cells[3], ev=True)
 
     # 4) duplicate-endpoint criticals
     for line in _read("api-duplicate-endpoints-report.md").splitlines():
