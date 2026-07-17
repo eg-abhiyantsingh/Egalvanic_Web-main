@@ -65,6 +65,8 @@ AREAS = [
      "Every app page's live-captured backing endpoints swept repeatedly for 502/5xx/timeout, per page."),
     ("Page502ScreenshotSweepTestNG", "Page 502 Screenshot Sweep",     "page-502-screenshot-report.md",
      "Real logged-in browser walks every sidebar page; any 5xx/502 its API calls return is screenshotted as evidence."),
+    ("Page502ScreenshotSweepTestNG", "Per-Page Network & Console",    "page-network-console-report.md",
+     "DevTools-style per-page evidence: the app /api calls each page fired (method/status/timing, duplicates flagged) + console errors."),
     ("Sentry502CorrelationApiTest",  "Sentry 502 Correlation",        "sentry-502-report.md",
      "Unresolved 502 issues (last 24h) pulled from Sentry — the inside view pairing with the outside sweeps."),
     ("ApiDuplicateCallTestNG",       "Runtime Duplicate Calls (Suite 2)", "api-duplicate-calls-report.md",

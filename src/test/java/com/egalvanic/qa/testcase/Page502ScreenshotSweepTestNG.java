@@ -60,9 +60,23 @@ public class Page502ScreenshotSweepTestNG extends BaseTest {
     };
 
     private final List<String[]> reportRows = new ArrayList<>();
+    // Per-page DevTools-style evidence for the consolidated report: the Network calls the page fired
+    // (method/url/status/ms) and the Console errors/warnings — so a developer sees the actual data.
+    private final Map<String, List<String[]>> networkByPage = new LinkedHashMap<>();
+    private final Map<String, List<String>> consoleByPage = new LinkedHashMap<>();
+
+    /** Injected once (persists across client-side nav): record every request's method/url/status/ms + console errors. */
+    private static final String RECORDER_JS =
+        "if(!window.__allReqInstalled){window.__allReqInstalled=true;window.__allReq=[];window.__consoleLog=[];" +
+        "var of=window.fetch;window.fetch=function(){var a=arguments,t=performance.now();" +
+        " return of.apply(this,a).then(function(r){try{window.__allReq.push({m:(a[1]&&a[1].method)||'GET',u:String(r.url||a[0]),s:r.status,ms:Math.round(performance.now()-t)});}catch(e){}return r;});};" +
+        "var oo=XMLHttpRequest.prototype.open;XMLHttpRequest.prototype.open=function(m,u){this.__m=m;this.__u=u;this.__t=performance.now();return oo.apply(this,arguments);};" +
+        "var os=XMLHttpRequest.prototype.send;XMLHttpRequest.prototype.send=function(){var x=this;x.addEventListener('loadend',function(){try{window.__allReq.push({m:x.__m||'GET',u:x.__u,s:x.status,ms:Math.round(performance.now()-x.__t)});}catch(e){}});return os.apply(this,arguments);};" +
+        "var ce=console.error;console.error=function(){try{window.__consoleLog.push('ERROR '+Array.prototype.slice.call(arguments).join(' ').slice(0,300));}catch(e){}return ce.apply(this,arguments);};" +
+        "var cw=console.warn;console.warn=function(){try{window.__consoleLog.push('WARN '+Array.prototype.slice.call(arguments).join(' ').slice(0,300));}catch(e){}return cw.apply(this,arguments);};}";
 
     @Test(timeOut = 900_000,
-          description = "Walk every sidebar page, capture any 5xx/502 its API calls return, screenshot the page as evidence")
+          description = "Walk every sidebar page, capture any 5xx/502 its API calls return, screenshot the page + record its Network & Console")
     public void page502SweepWithScreenshots() {
         ExtentReportManager.createTest(MODULE, "502 sweep", "PAGE_502_SCREENSHOT_SWEEP");
         JavascriptExecutor js = (JavascriptExecutor) driver;
@@ -76,9 +90,10 @@ public class Page502ScreenshotSweepTestNG extends BaseTest {
             for (int pi = 0; pi < PAGES.length; pi++) {
                 String label = PAGES[pi][0], route = PAGES[pi][1];
                 try {
-                    // Reset the recorder for per-page attribution, then client-side navigate.
+                    // Reset the recorders for per-page attribution, then client-side navigate.
                     AssetLoadVerifier.installFailedRequestCapture(driver);
-                    js.executeScript("window.__failedRequests = [];");
+                    js.executeScript(RECORDER_JS);
+                    js.executeScript("window.__failedRequests = []; window.__allReq = []; window.__consoleLog = [];");
                     Object clicked = js.executeScript(
                             "var a = document.querySelector(\"a[href='" + route + "']\");" +
                             "if (a) { a.click(); return true; } return false;");
@@ -113,6 +128,7 @@ public class Page502ScreenshotSweepTestNG extends BaseTest {
                         String slug = String.format("%02d-%s", pi + 1, label.toLowerCase().replaceAll("[^a-z0-9]+", "-"));
                         String path = saveShot("evidence-page-" + slug + ".png");
                         if (path != null) shots.putIfAbsent(label, path);
+                        captureNetworkAndConsole(label);   // DevTools-style Network + Console data for the report
                     }
 
                     if (!pageIncidents.isEmpty()) {
@@ -152,6 +168,44 @@ public class Page502ScreenshotSweepTestNG extends BaseTest {
         else ExtentReportManager.logWarning(msg + "  (reported; -DSTRICT_PAGE_502=true enforces)");
     }
 
+    /** Read the injected recorder for the current page: app /api Network rows + Console errors/warnings. */
+    @SuppressWarnings("unchecked")
+    private void captureNetworkAndConsole(String label) {
+        try {
+            Object net = ((JavascriptExecutor) driver).executeScript("return window.__allReq || [];");
+            List<String[]> rows = new ArrayList<>();
+            java.util.Set<String> seen = new java.util.HashSet<>();
+            if (net instanceof List) {
+                for (Object o : (List<Object>) net) {
+                    Map<String, Object> m = (Map<String, Object>) o;
+                    String url = String.valueOf(m.get("u"));
+                    if (url == null || !url.contains("/api/")) continue;
+                    if (url.contains("sentry") || url.contains("devrev") || url.contains("beamer")) continue;
+                    String method = String.valueOf(m.get("m"));
+                    String status = m.get("s") == null ? "?" : String.valueOf(((Number) m.get("s")).intValue());
+                    String ms = m.get("ms") == null ? "?" : String.valueOf(((Number) m.get("ms")).intValue());
+                    String path = url.replaceFirst("^https?://[^/]+", "");   // strip host — show /api/... path
+                    String key = method + " " + path;
+                    // annotate exact-URL duplicates (same call fired 2x+ on this load)
+                    rows.add(new String[]{ method, path, status, ms + "ms", seen.add(key) ? "" : "DUPLICATE" });
+                }
+            }
+            if (rows.size() > 40) rows = new ArrayList<>(rows.subList(0, 40));   // keep the report readable
+            networkByPage.put(label, rows);
+
+            Object con = ((JavascriptExecutor) driver).executeScript("return window.__consoleLog || [];");
+            List<String> logs = new ArrayList<>();
+            if (con instanceof List) for (Object o : (List<Object>) con) {
+                String s = String.valueOf(o);
+                if (!logs.contains(s)) logs.add(s);   // de-dupe repeated console spam
+            }
+            if (logs.size() > 25) logs = new ArrayList<>(logs.subList(0, 25));
+            consoleByPage.put(label, logs);
+        } catch (Exception e) {
+            System.out.println("[Page502] network/console capture failed for " + label + ": " + e.getMessage());
+        }
+    }
+
     /** Save a screenshot of the current page to reports/evidence/{fileName}; returns its path or null. */
     private String saveShot(String fileName) {
         try {
@@ -187,5 +241,41 @@ public class Page502ScreenshotSweepTestNG extends BaseTest {
             try (FileWriter w = new FileWriter("reports/page-502-screenshot-report.md")) { w.write(md.toString()); }
             System.out.println("[Page502] Report → reports/page-502-screenshot-report.md");
         } catch (Exception e) { System.out.println("[Page502] report write failed: " + e.getMessage()); }
+
+        writeNetworkConsoleReport();
+    }
+
+    /** Per-page Network + Console evidence (DevTools-style) → the consolidated report renders it. */
+    private void writeNetworkConsoleReport() {
+        StringBuilder md = new StringBuilder();
+        md.append("# Per-Page Network & Console (browser evidence)\n\n");
+        md.append("Captured live in a logged-in browser as each page loaded — the app `/api` calls it fired ")
+          .append("(method, path, status, timing; `DUPLICATE` = same call repeated on one load) and any ")
+          .append("console errors/warnings. This is the DevTools Network + Console data, for developer triage.\n");
+        for (String[] page : PAGES) {
+            String label = page[0];
+            List<String[]> net = networkByPage.get(label);
+            List<String> con = consoleByPage.get(label);
+            if (net == null && con == null) continue;
+            md.append("\n## ").append(label).append("  `").append(page[1]).append("`\n\n");
+            md.append("**Network — ").append(net == null ? 0 : net.size()).append(" app API call(s)");
+            if (net != null) {
+                long dup = net.stream().filter(r -> "DUPLICATE".equals(r[4])).count();
+                if (dup > 0) md.append(" · ").append(dup).append(" DUPLICATE");
+            }
+            md.append("**\n\n| Method | Path | Status | Time | Note |\n|---|---|---|---|---|\n");
+            if (net != null) for (String[] r : net) md.append("| ").append(String.join(" | ", r)).append(" |\n");
+            md.append("\n**Console — ").append(con == null ? 0 : con.size()).append(" error/warning(s)**\n\n");
+            if (con == null || con.isEmpty()) {
+                md.append("_(none captured)_\n");
+            } else {
+                md.append("```\n");
+                for (String s : con) md.append(s).append("\n");
+                md.append("```\n");
+            }
+        }
+        try (FileWriter w = new FileWriter("reports/page-network-console-report.md")) { w.write(md.toString()); }
+        catch (Exception e) { System.out.println("[Page502] network/console report write failed: " + e.getMessage()); }
+        System.out.println("[Page502] Report → reports/page-network-console-report.md");
     }
 }

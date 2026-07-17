@@ -160,6 +160,7 @@ jobs:
             reports/sld-v3-payload-benchmark.md
             reports/all-pages-502-report.md
             reports/page-502-screenshot-report.md
+            reports/page-network-console-report.md
             reports/sentry-502-report.md
             reports/evidence/
             reports/api-evidence.json
