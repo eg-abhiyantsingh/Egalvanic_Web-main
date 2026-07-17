@@ -73,8 +73,8 @@ public class Page502ScreenshotSweepTestNG extends BaseTest {
         int total5xx = 0, total502 = 0;
 
         for (int round = 1; round <= ROUNDS; round++) {
-            for (String[] page : PAGES) {
-                String label = page[0], route = page[1];
+            for (int pi = 0; pi < PAGES.length; pi++) {
+                String label = PAGES[pi][0], route = PAGES[pi][1];
                 try {
                     // Reset the recorder for per-page attribution, then client-side navigate.
                     AssetLoadVerifier.installFailedRequestCapture(driver);
@@ -106,19 +106,20 @@ public class Page502ScreenshotSweepTestNG extends BaseTest {
                             if (f.status == 502) total502++;
                         }
                     }
+                    // ALWAYS screenshot each page (last round = settled state) so the consolidated
+                    // report carries visual proof every page was swept, not only on a 502. Stable
+                    // per-page filename (index-prefixed for gallery order); overwritten each round.
+                    if (round == ROUNDS) {
+                        String slug = String.format("%02d-%s", pi + 1, label.toLowerCase().replaceAll("[^a-z0-9]+", "-"));
+                        String path = saveShot("evidence-page-" + slug + ".png");
+                        if (path != null) shots.putIfAbsent(label, path);
+                    }
+
                     if (!pageIncidents.isEmpty()) {
                         incidents.computeIfAbsent(label, k -> new ArrayList<>()).addAll(pageIncidents);
-                        // SCREENSHOT the page the user would see broken → reports/evidence (report embeds it).
-                        String shotName = "evidence-502-" + label.toLowerCase().replaceAll("[^a-z0-9]+", "-") + ".png";
-                        try {
-                            File src = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-                            File dst = new File("reports/evidence/" + shotName);
-                            dst.getParentFile().mkdirs();
-                            Files.copy(src.toPath(), dst.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                            shots.put(label, "reports/evidence/" + shotName);
-                        } catch (Exception se) {
-                            System.out.println("[Page502] screenshot failed for " + label + ": " + se.getMessage());
-                        }
+                        // Additional dedicated shot of the BROKEN page (distinct filename → its own report tile).
+                        String path = saveShot("evidence-502-" + label.toLowerCase().replaceAll("[^a-z0-9]+", "-") + ".png");
+                        if (path != null) shots.put(label, path);
                         System.out.println("[Page502][incident] [" + label + "] " + pageIncidents);
                         logStepWithScreenshot("5xx on " + label + ": " + pageIncidents);
                     } else {
@@ -149,6 +150,20 @@ public class Page502ScreenshotSweepTestNG extends BaseTest {
                 + summary + " Pages: " + incidents.keySet() + " (screenshots in reports/evidence/)";
         if (STRICT) { ExtentReportManager.logFail(msg); org.testng.Assert.fail(msg); }
         else ExtentReportManager.logWarning(msg + "  (reported; -DSTRICT_PAGE_502=true enforces)");
+    }
+
+    /** Save a screenshot of the current page to reports/evidence/{fileName}; returns its path or null. */
+    private String saveShot(String fileName) {
+        try {
+            File src = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+            File dst = new File("reports/evidence/" + fileName);
+            dst.getParentFile().mkdirs();
+            Files.copy(src.toPath(), dst.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            return "reports/evidence/" + fileName;
+        } catch (Exception se) {
+            System.out.println("[Page502] screenshot save failed (" + fileName + "): " + se.getMessage());
+            return null;
+        }
     }
 
     @AfterClass(alwaysRun = true)
