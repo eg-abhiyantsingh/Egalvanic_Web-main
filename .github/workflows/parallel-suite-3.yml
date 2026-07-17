@@ -75,6 +75,9 @@ jobs:
           # QA uses the repo's default QA login; Prod requires its own secrets (read-only probe).
           PROD_EMAIL: ${{ secrets.EG_PROD_EMAIL }}
           PROD_PASSWORD: ${{ secrets.EG_PROD_PASSWORD }}
+          # Sentry 502 correlation (org auth token, scopes org:read/project:read/event:read).
+          # Absent secret → the Sentry area SKIPS with instructions; everything else unaffected.
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
           if [ "$TARGET_ENV" = "prod" ]; then
             export USER_EMAIL="$PROD_EMAIL"
@@ -154,6 +157,7 @@ jobs:
             reports/sld-v3-payload-benchmark.md
             reports/all-pages-502-report.md
             reports/page-502-screenshot-report.md
+            reports/sentry-502-report.md
             reports/evidence/
             reports/api-evidence.json
             reports/pagination-behavior-report.md

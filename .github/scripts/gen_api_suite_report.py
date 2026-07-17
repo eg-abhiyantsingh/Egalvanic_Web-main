@@ -65,6 +65,8 @@ AREAS = [
      "Every app page's live-captured backing endpoints swept repeatedly for 502/5xx/timeout, per page."),
     ("Page502ScreenshotSweepTestNG", "Page 502 Screenshot Sweep",     "page-502-screenshot-report.md",
      "Real logged-in browser walks every sidebar page; any 5xx/502 its API calls return is screenshotted as evidence."),
+    ("Sentry502CorrelationApiTest",  "Sentry 502 Correlation",        "sentry-502-report.md",
+     "Unresolved 502 issues (last 24h) pulled from Sentry — the inside view pairing with the outside sweeps."),
     ("ApiDuplicateCallTestNG",       "Runtime Duplicate Calls (Suite 2)", "api-duplicate-calls-report.md",
      "Browser-driven: same endpoint refetched 3–4× on one page load (runs in Suite 2's api toggle)."),
 ]
@@ -436,6 +438,16 @@ def collect_findings():
         if len(cells) >= 4 and cells[0] and cells[0] != "Page":
             add("critical", GROUPS[1], "page:" + cells[0],
                 "BROWSER-VISIBLE 5xx (" + cells[1] + " incident(s), screenshot: " + cells[2] + "): " + cells[3], ev=True)
+
+    # 3e) Sentry 502 correlation — rows "| Sentry ID | Title | Events | Users | Last seen | Project | Link |"
+    for line in _read("sentry-502-report.md").splitlines():
+        if not line.startswith("| ") or "Sentry ID" in line or "---" in line:
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cells) >= 7 and cells[0] and cells[0] != "Sentry ID":
+            add("critical", GROUPS[1], "sentry:" + cells[5],
+                "Unresolved 502 in Sentry (24h): " + cells[1] + " — " + cells[2] + " events, " + cells[3]
+                + ", last " + cells[4] + " — " + cells[6], ev=True)
 
     # 4) duplicate-endpoint criticals
     for line in _read("api-duplicate-endpoints-report.md").splitlines():

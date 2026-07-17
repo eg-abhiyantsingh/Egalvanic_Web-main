@@ -160,6 +160,14 @@
             <class name="com.egalvanic.qa.testcase.api.MutationSemanticsApiTest"/>
         </classes>
     </test>
+    <!-- Sentry 502 correlation: pulls the org's unresolved 502 issues (last 24h) from Sentry's REST
+         API — the inside view pairing with the outside sweeps. Needs SENTRY_AUTH_TOKEN (skips with
+         setup instructions when absent). -DSTRICT_SENTRY_502=true escalates. -->
+    <test name="API Sentry 502 Correlation">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.Sentry502CorrelationApiTest"/>
+        </classes>
+    </test>
     <!-- Browser 502 sweep with SCREENSHOT evidence (needs Chrome — CI installs it): logs in once,
          walks every sidebar page via client-side routing, records any 5xx/502 the page's API calls
          return, and screenshots the page as user-visible evidence (reports/evidence/*.png, embedded
