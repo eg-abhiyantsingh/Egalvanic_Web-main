@@ -83,7 +83,10 @@ jobs:
             export USER_EMAIL="$PROD_EMAIL"
             export USER_PASSWORD="$PROD_PASSWORD"
           fi
-          mvn -B test -DsuiteXmlFile=suite-api-health.xml
+          # -Dheadless=true is REQUIRED for the browser Page-502 screenshot sweep: this is a
+          # display-less Ubuntu runner, so non-headless Chrome exits immediately ("Chrome instance
+          # exited"). The API-only areas ignore it. (Same flag the web parallel-suite uses in CI.)
+          mvn -B test -DsuiteXmlFile=suite-api-health.xml -Dheadless=true
 
       - name: Render styled HTML report (Z-Platform format)
         if: always()
