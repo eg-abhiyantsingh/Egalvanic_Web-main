@@ -1,0 +1,202 @@
+name: Parallel Suite 3 — API Health Check
+
+# ============================================================
+# PARALLEL SUITE 3 — API HEALTH CHECK
+# ============================================================
+#
+# Read-only health monitor for the Z-Platform API, ported from the Egalvanic
+# Utility Toolkit v3.0 health check. Probes the ~50-endpoint registry across 15
+# categories and classifies each pass / warn / fail, with the same recommendation
+# buckets (slow, large payload, no-pagination, scaling, plain-array, empty).
+#
+#   - GET-only (+ read-only /auth/verify-token & /health). No writes on any env.
+#   - Fails the build ONLY on a genuine outage (5xx / timeout / connection error);
+#     a 4xx is a healthy server responding and is reported, not failed.
+#   - Latency / payload / pagination findings are advisory (reports/api-health-report.md).
+#
+# Runs on a daily schedule and on demand. Environment is selectable; QA uses the
+# repo's QA login, Prod requires EG_PROD_EMAIL / EG_PROD_PASSWORD secrets (never
+# committed). Prod is read-only here — no writes are ever issued.
+# ============================================================
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment to health-check'
+        type: choice
+        options: [qa, prod]
+        default: qa
+  schedule:
+    - cron: '0 6 * * *'   # daily 06:00 UTC
+
+concurrency:
+  group: parallel-suite-3-${{ github.event.inputs.environment || 'qa' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  api-health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.3.1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4.8.0
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      # For the browser-based Page 502 Screenshot Sweep (last test block in suite-api-health.xml).
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1.7.3
+        with:
+          chrome-version: 'stable'
+
+      - name: Resolve target environment
+        env:
+          TARGET_ENV: ${{ github.event.inputs.environment || 'qa' }}
+        run: |
+          if [ "$TARGET_ENV" = "prod" ]; then
+            echo "BASE_URL=https://acme.egalvanic.ai" >> "$GITHUB_ENV"
+          else
+            echo "BASE_URL=https://acme.qa.egalvanic.ai" >> "$GITHUB_ENV"
+          fi
+          echo "Health-checking $TARGET_ENV" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run API health check
+        env:
+          TARGET_ENV: ${{ github.event.inputs.environment || 'qa' }}
+          # QA uses the repo's default QA login; Prod requires its own secrets (read-only probe).
+          PROD_EMAIL: ${{ secrets.EG_PROD_EMAIL }}
+          PROD_PASSWORD: ${{ secrets.EG_PROD_PASSWORD }}
+          # Sentry 502 correlation (org auth token, scopes org:read/project:read/event:read).
+          # Absent secret → the Sentry area SKIPS with instructions; everything else unaffected.
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          if [ "$TARGET_ENV" = "prod" ]; then
+            export USER_EMAIL="$PROD_EMAIL"
+            export USER_PASSWORD="$PROD_PASSWORD"
+          fi
+          # -Dheadless=true is REQUIRED for the browser Page-502 screenshot sweep: this is a
+          # display-less Ubuntu runner, so non-headless Chrome exits immediately ("Chrome instance
+          # exited"). The API-only areas ignore it. (Same flag the web parallel-suite uses in CI.)
+          mvn -B test -DsuiteXmlFile=suite-api-health.xml -Dheadless=true
+
+      - name: Render styled HTML report (Z-Platform format)
+        if: always()
+        run: |
+          if [ -f reports/api-health-report.md ]; then
+            python3 .github/scripts/gen_api_health_report.py reports/api-health-report.md reports/api-health-report.html || echo "HTML render skipped"
+          fi
+          # Full-catalog report (spec-driven, ~973 ops) → its own styled HTML.
+          if [ -f reports/api-catalog-report.md ]; then
+            python3 .github/scripts/gen_api_health_report.py reports/api-catalog-report.md reports/api-catalog-report.html || echo "Catalog HTML render skipped"
+          fi
+          # CONSOLIDATED report — one styled page covering EVERY Suite-3 area (pagination curated +
+          # catalog-wide, agent-token contract, error/transport, security, CRUD, input-validation,
+          # mutation, health, full-catalog). This is the landing page: open api-suite-report.html.
+          # Generate the ONE combined report. Do NOT swallow failure silently:
+          # a swallowed crash used to leave the run with NO combined report and
+          # no signal ("the report isn't showing"). Capture the exit code, then
+          # guarantee api-suite-report.html always exists and is non-trivial —
+          # writing a clear fallback page if the generator failed — so the
+          # api-suite-report artifact is never empty/absent.
+          set +e
+          python3 .github/scripts/gen_api_suite_report.py \
+            target/surefire-reports/testng-results.xml reports reports/api-suite-report.html
+          GEN_RC=$?
+          set -e
+          MIN_BYTES=2048
+          SIZE=$(wc -c < reports/api-suite-report.html 2>/dev/null || echo 0)
+          if [ "$GEN_RC" -ne 0 ] || [ ! -s reports/api-suite-report.html ] || [ "$SIZE" -lt "$MIN_BYTES" ]; then
+            echo "::error::Combined Suite-3 report was not generated (gen rc=$GEN_RC, size=${SIZE}B). Writing fallback."
+            mkdir -p reports
+            {
+              echo '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+              echo '<title>Parallel Suite 3 — report generation failed</title>'
+              echo '<style>body{font:15px/1.6 -apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:820px;margin:40px auto;padding:0 20px;color:#111}'
+              echo 'h1{color:#b3261e}code{background:#f2f4f8;padding:2px 5px;border-radius:4px}.b{background:#fdecea;border:1px solid #f5c6cb;border-radius:8px;padding:14px 18px}</style></head><body>'
+              echo '<h1>Combined report could not be generated</h1>'
+              echo '<div class="b"><p>The API test suite ran, but <code>gen_api_suite_report.py</code> did not'
+              echo "produce a valid <code>api-suite-report.html</code> (generator exit code <b>${GEN_RC}</b>, output ${SIZE} bytes).</p>"
+              echo '<p>The per-area source reports are still available in the <b>api-suite-raw</b> artifact'
+              echo '(the <code>reports/*.md</code> files), and the full run log shows the generator error above.</p></div>'
+              echo "<p style=\"color:#5b6b82\">Run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}</p>"
+              echo '</body></html>'
+            } > reports/api-suite-report.html
+          else
+            echo "Combined Suite-3 report generated OK (${SIZE} bytes)."
+          fi
+
+      - name: Publish health report to run summary
+        if: always()
+        run: |
+          echo "## eGalvanic API Test Suite — all areas" >> "$GITHUB_STEP_SUMMARY"
+          echo "Open the **\`api-suite-report\`** artifact — a SINGLE self-contained \`api-suite-report.html\` that combines EVERY area below (findings dashboard, pagination, agent-token, error/transport + 502 detector, all-pages 502 sweep, per-page Network & Console + screenshots, Sentry correlation, security, CRUD, input-validation, mutation, health, full-catalog inventory). Raw per-area sources are in the separate \`api-suite-raw\` artifact." >> "$GITHUB_STEP_SUMMARY"
+          # Catalog-wide pagination findings (the spec-driven audit) — inline the summary here too.
+          if [ -f reports/list-api-catalog-report.md ]; then
+            { echo ""; echo "---"; echo ""; echo "<details><summary>List-API pagination catalog audit</summary>"; echo ""; cat reports/list-api-catalog-report.md; echo ""; echo "</details>"; } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "" >> "$GITHUB_STEP_SUMMARY"; echo "---" >> "$GITHUB_STEP_SUMMARY"; echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f reports/api-health-report.md ]; then
+            cat reports/api-health-report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No health report produced (login or startup failure)." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          # Full-catalog summary: header + recommendations only (the full table is in the artifact).
+          if [ -f reports/api-catalog-report.md ]; then
+            {
+              echo ""
+              echo "---"
+              echo ""
+              sed -n '1,6p' reports/api-catalog-report.md
+              echo ""
+              echo "<details><summary>Full-catalog recommendations</summary>"
+              echo ""
+              sed -n '/## Recommendations/,$p' reports/api-catalog-report.md | head -120
+              echo ""
+              echo "</details>"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+          # Authenticated CRUD / contract reports (consistency, lifecycle, input-validation, mutation).
+          for f in reports/filter-search-consistency-report.md reports/crud-lifecycle-report.md \
+                   reports/input-validation-report.md reports/mutation-semantics-report.md; do
+            if [ -f "$f" ]; then
+              { echo ""; echo "---"; echo ""; cat "$f"; } >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+
+      # ONE combined report. api-suite-report.html is fully self-contained — it inlines EVERY area's
+      # findings, the full endpoint inventory, latency analysis, live HTTP evidence, per-page Network
+      # & Console data, and all screenshots (embedded as base64). Open that single file and you have
+      # the whole of Parallel Suite 3; no other file is needed. (Raw per-area .md sources and the
+      # ExtentReports detail-report/ are still generated on the runner and are in the separate
+      # 'api-suite-raw' artifact below for anyone who wants the drill-down.)
+      - name: Upload combined Suite-3 report (single file)
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: api-suite-report
+          path: reports/api-suite-report.html
+          if-no-files-found: warn
+          retention-days: 30
+
+      # Optional raw inputs + per-test detail — not needed to read the suite; kept for deep drill-down.
+      - name: Upload raw reports (optional drill-down)
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: api-suite-raw
+          path: |
+            reports/*.md
+            reports/api-evidence.json
+            reports/evidence/
+            reports/detail-report/
+          if-no-files-found: warn
+          retention-days: 30
