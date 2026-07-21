@@ -84,6 +84,11 @@ on:
         description: 'Send email report after completion'
         type: boolean
         default: true
+      pause_scale:
+        description: 'Global pause() scale (0.1-1.0). 1.0 = unchanged; 0.5 halves every Thread.sleep. Lower gradually and confirm the run stays green.'
+        required: false
+        type: string
+        default: '1.0'
 
 # Concurrency: allow only one parallel suite at a time.
 # cancel-in-progress: false — a new run queues instead of killing the active one.
@@ -244,6 +249,8 @@ jobs:
           SEND_EMAIL_ENABLED: "true"
           EMAIL_SUBJECT_PREFIX: "[${{ matrix.name }}] "
           FULL_SUITE_GROUP: ${{ matrix.group }}
+          # Speed knob — inherited by the forked Surefire JVM, read by BaseTest.pause().
+          PAUSE_SCALE: ${{ github.event.inputs.pause_scale || '1.0' }}
         run: |
           bash .github/scripts/full-suite-dashboard.sh
 

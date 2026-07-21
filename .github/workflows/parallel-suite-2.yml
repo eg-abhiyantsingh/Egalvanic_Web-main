@@ -104,6 +104,11 @@ on:
         description: 'Send email report after completion'
         type: boolean
         default: true
+      pause_scale:
+        description: 'Global pause() scale (0.1-1.0). 1.0 = unchanged; 0.5 halves every Thread.sleep. Lower gradually and confirm the run stays green.'
+        required: false
+        type: string
+        default: '1.0'
 
 concurrency:
   group: parallel-suite-2
@@ -278,6 +283,8 @@ jobs:
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
           SEND_EMAIL_ENABLED: "false"
           FULL_SUITE_GROUP: ${{ matrix.group }}
+          # Speed knob — inherited by the forked Surefire JVM, read by BaseTest.pause().
+          PAUSE_SCALE: ${{ github.event.inputs.pause_scale || '1.0' }}
           # Per-matrix tenant overrides. The BASE_URL comes from the matrix entry;
           # the BCES-IQ tenant credentials come from repo SECRETS (never committed) and
           # are injected ONLY for the bces-iq-smoke group. Empty string is treated as

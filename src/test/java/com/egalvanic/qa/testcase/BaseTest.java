@@ -739,8 +739,31 @@ public class BaseTest {
         ExtentReportManager.logWarning(message);
     }
 
+    // Global pause scaling — lets CI shorten every Thread.sleep in the suite
+    // from one knob without touching the ~700 call sites. -Dpause.scale / PAUSE_SCALE
+    // is clamped to (0.1 .. 1.0]: it can only ever speed the suite up (never slow it
+    // down), and never collapses a pause to ~0. Default 1.0 = no behaviour change.
+    private static final double PAUSE_SCALE = resolvePauseScale();
+
+    private static double resolvePauseScale() {
+        String v = System.getProperty("pause.scale");
+        if (v == null || v.isEmpty()) v = System.getenv("PAUSE_SCALE");
+        if (v == null || v.isEmpty()) return 1.0;
+        try {
+            double d = Double.parseDouble(v.trim());
+            return Math.max(0.1, Math.min(1.0, d));
+        } catch (NumberFormatException e) {
+            return 1.0;
+        }
+    }
+
     protected void pause(long ms) {
-        try { Thread.sleep(ms); } catch (InterruptedException ignored) {}
+        long scaled = PAUSE_SCALE == 1.0 ? ms : (long) Math.ceil(ms * PAUSE_SCALE);
+        try {
+            Thread.sleep(scaled);
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     protected void shortWait() { pause(200); }
