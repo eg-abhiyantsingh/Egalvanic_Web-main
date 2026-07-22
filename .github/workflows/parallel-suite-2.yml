@@ -22,20 +22,13 @@ name: Parallel Suite 2 — Curated Bug Verification + AI + Smoke + Load + BCES-I
 #
 # Total: ~422 TCs across 10 default groups.
 #
-# Opt-in modules — enter their tokens in the single `extra_modules` text field
-# (space/comma separated; "all" enables every one). OFF by default:
-#   engineering    Asset Engineering (386 TCs)
-#   arc_flash      Arc Flash Readiness (123 TCs — 7 groups, NEW 2026-06-30)
-#   api            API testing (REST contract + List-API pagination audit + network capture, NEW 2026-07-01)
-#   rbac_api       RBAC — API (606 TCs)
-#   rbac_frontend  RBAC — Front-End (303 TCs)
-#   admin_pm       Admin — PM template config ZP-323 (12 TCs)
-#   work_type      Work Type Matrix ZP-3000 Services V2 (NEW 2026-07-22 — 5 groups, 411 green TCs:
-#                  all 14 Work Type options × API-contract / create-dialog / Z1-fixture-detail /
-#                  create-E2E / edge; pins to site Z1; known-product-bug tripwires excluded via
-#                  the suite XMLs' own group filter)
-# (These 7 were separate checkboxes before 2026-07-22; folded into one field because GitHub's
-#  workflow_dispatch UI only renders the first 10 inputs, which was hiding the later toggles.)
+# Opt-in toggles (OFF by default — tick to add their groups):
+#   Asset Engineering (386 TCs), Arc Flash Readiness (123 TCs — 7 groups, NEW 2026-06-30),
+#   API testing (REST contract + List-API pagination audit + network-captured response validation, NEW 2026-07-01),
+#   RBAC (API 606 / FE 303),
+#   Work Type Matrix (ZP-3000 Services V2, NEW 2026-07-22 — 5 groups, 411 green TCs: all 14
+#     Work Type options × API-contract / create-dialog / Z1-fixture-detail / create-E2E / edge;
+#     pins to site Z1; known-product-bug tripwires excluded via the suite XMLs' own group filter).
 #   Arc Flash also runs in parallel-suite.yml's dashboard-bughunt group; here it is opt-in to avoid double-running.
 #
 # The BCES-IQ group runs the SAME test framework against
@@ -54,7 +47,11 @@ on:
     inputs:
       # ── Module groups: checkboxes — tick the ones you want, untick to skip.
       #    All default ON, so a plain "Run workflow" runs everything (as before).
-      #    Only the ticked modules spin up runners (built into a dynamic matrix). ──
+      #    Only the ticked modules spin up runners (built into a dynamic matrix).
+      #    16 inputs total — fine: GitHub raised the workflow_dispatch cap to 25
+      #    (Dec 2025), so every checkbox below renders in the Run-workflow form.
+      #    If you don't see a toggle, pick branch=main in the Run-workflow dropdown
+      #    and hard-refresh — the UI reads inputs from the workflow on that branch. ──
       curated_bug:
         description: 'Curated Bug Verification (8 client-facing regression TCs)'
         type: boolean
@@ -83,17 +80,36 @@ on:
         description: 'Documentation-Inspired Tests'
         type: boolean
         default: true
-      # ── Heavy opt-in modules — ONE free-text field (GitHub's workflow_dispatch UI
-      #    only renders the first 10 inputs; folding these 7 booleans into a single
-      #    string keeps every input visible). Space/comma-separated tokens, any of:
-      #      engineering  arc_flash  api  rbac_api  rbac_frontend  admin_pm  work_type
-      #    ("all" enables all seven). Dashes are accepted too (arc-flash, work-type).
-      #    Examples: "work_type"  ·  "work_type,arc_flash"  ·  "all"  ·  "" (none). ──
-      extra_modules:
-        description: 'Extra opt-in modules (space/comma tokens): engineering arc_flash api rbac_api rbac_frontend admin_pm work_type — or "all". Blank = none.'
-        required: false
-        type: string
-        default: ''
+      engineering:
+        description: 'Asset Engineering (Trip Config + Transformer + per-class matrix + Mains Config + exhaustive options, 386 TCs)'
+        type: boolean
+        default: false
+      arc_flash:
+        description: 'Arc Flash Readiness — 8 groups, 131 TCs (Overview/Eng-Mode/Asset Details + Source-Target/Connection + Platform + Grid/Asset-Class/Role/Pagination matrices + CB library-match Engineering E2E)'
+        type: boolean
+        default: false
+      api:
+        description: 'API testing — REST contract suite (incl. list-API pagination/limit/filter audit) + network-captured API response validation'
+        type: boolean
+        default: false
+      # ── RBAC (opt-in — off by default). Run as normal groups so their results merge
+      #    into the consolidated CLIENT + DETAILED reports like every other module. ──
+      rbac_api:
+        description: 'RBAC — API tests (contract + permission matrix + edit + CRUD enforcement)'
+        type: boolean
+        default: false
+      rbac_frontend:
+        description: 'RBAC — Front-End (UI) tests (per-role login, nav gating, edit gating)'
+        type: boolean
+        default: false
+      admin_pm:
+        description: 'Admin — PM template config (ZP-323: Settings → PM → Offices CRUD + language defaults, 12 TCs)'
+        type: boolean
+        default: false
+      work_type:
+        description: 'Work Type Matrix (ZP-3000 Services V2 — all 14 Work Type options × API/dialog/detail/E2E/edge, 414 TCs, site Z1)'
+        type: boolean
+        default: false
       # ── Delivery. ──
       send_email:
         description: 'Send email report after completion'
@@ -135,8 +151,13 @@ jobs:
           EXPLORATORY: ${{ inputs.exploratory }}
           QUALITY: ${{ inputs.quality_gates }}
           DOC: ${{ inputs.doc_inspired }}
-          # Heavy opt-in modules arrive as one free-text string; derived into flags below.
-          EXTRA: ${{ inputs.extra_modules }}
+          ENGINEERING: ${{ inputs.engineering }}
+          ARC_FLASH: ${{ inputs.arc_flash }}
+          API: ${{ inputs.api }}
+          RBAC_API: ${{ inputs.rbac_api }}
+          RBAC_FRONTEND: ${{ inputs.rbac_frontend }}
+          ADMIN_PM: ${{ inputs.admin_pm }}
+          WORK_TYPE: ${{ inputs.work_type }}
         run: |
           # Catalog of all groups; each tagged with the checkbox (toggle) that enables it.
           # Merged checkboxes (smoke, ai, exploratory) map to >1 group.
@@ -175,18 +196,6 @@ jobs:
             {"toggle":"WORK_TYPE","group":"work-type-create-e2e","name":"Work Type — Create E2E Matrix","xml":"suite-worktype-create-e2e.xml","tests":42,"stagger":110},
             {"toggle":"WORK_TYPE","group":"work-type-edge","name":"Work Type — Auto-Schedule & Edge","xml":"suite-worktype-edge.xml","tests":33,"stagger":112}
           ]'
-          # Derive the heavy opt-in flags from the free-text EXTRA field. Normalize to
-          # one lowercase token per line (dashes -> underscores); "all" enables all seven.
-          EXTRA_NORM=$(printf '%s' "${EXTRA:-}" | tr 'A-Z' 'a-z' | tr ' ,;|\t' '\n' | sed 's/-/_/g' | sed '/^$/d')
-          has() { printf '%s\n' "$EXTRA_NORM" | grep -qx "$1" || printf '%s\n' "$EXTRA_NORM" | grep -qx "all"; }
-          ENGINEERING=false;   has engineering   && ENGINEERING=true
-          ARC_FLASH=false;     has arc_flash     && ARC_FLASH=true
-          API=false;           has api           && API=true
-          RBAC_API=false;      has rbac_api      && RBAC_API=true
-          RBAC_FRONTEND=false; has rbac_frontend && RBAC_FRONTEND=true
-          ADMIN_PM=false;      has admin_pm      && ADMIN_PM=true
-          WORK_TYPE=false;     has work_type     && WORK_TYPE=true
-          echo "Extra modules requested: '${EXTRA:-}' -> ENGINEERING=$ENGINEERING ARC_FLASH=$ARC_FLASH API=$API RBAC_API=$RBAC_API RBAC_FRONTEND=$RBAC_FRONTEND ADMIN_PM=$ADMIN_PM WORK_TYPE=$WORK_TYPE"
           ENABLED=$(for t in CURATED SMOKE LOAD_API AI EXPLORATORY QUALITY DOC ENGINEERING ARC_FLASH API RBAC_API RBAC_FRONTEND ADMIN_PM WORK_TYPE; do
                       [ "${!t}" = "true" ] && echo "$t"; done | jq -R . | jq -cs .)
           SEL=$(echo "$CATALOG" | jq -c --argjson en "$ENABLED" \
