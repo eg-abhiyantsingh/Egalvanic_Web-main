@@ -25,7 +25,10 @@ name: Parallel Suite 2 — Curated Bug Verification + AI + Smoke + Load + BCES-I
 # Opt-in toggles (OFF by default — tick to add their groups):
 #   Asset Engineering (386 TCs), Arc Flash Readiness (123 TCs — 7 groups, NEW 2026-06-30),
 #   API testing (REST contract + List-API pagination audit + network-captured response validation, NEW 2026-07-01),
-#   RBAC (API 606 / FE 303).
+#   RBAC (API 606 / FE 303),
+#   Work Type Matrix (ZP-3000 Services V2, NEW 2026-07-22 — 5 groups, 411 green TCs: all 14
+#     Work Type options × API-contract / create-dialog / Z1-fixture-detail / create-E2E / edge;
+#     pins to site Z1; known-product-bug tripwires excluded via the suite XMLs' own group filter).
 #   Arc Flash also runs in parallel-suite.yml's dashboard-bughunt group; here it is opt-in to avoid double-running.
 #
 # The BCES-IQ group runs the SAME test framework against
@@ -99,6 +102,10 @@ on:
         description: 'Admin — PM template config (ZP-323: Settings → PM → Offices CRUD + language defaults, 12 TCs)'
         type: boolean
         default: false
+      work_type:
+        description: 'Work Type Matrix (ZP-3000 Services V2 — all 14 Work Type options × API/dialog/detail/E2E/edge, 414 TCs, site Z1)'
+        type: boolean
+        default: false
       # ── Delivery. ──
       send_email:
         description: 'Send email report after completion'
@@ -146,6 +153,7 @@ jobs:
           RBAC_API: ${{ inputs.rbac_api }}
           RBAC_FRONTEND: ${{ inputs.rbac_frontend }}
           ADMIN_PM: ${{ inputs.admin_pm }}
+          WORK_TYPE: ${{ inputs.work_type }}
         run: |
           # Catalog of all groups; each tagged with the checkbox (toggle) that enables it.
           # Merged checkboxes (smoke, ai, exploratory) map to >1 group.
@@ -177,9 +185,14 @@ jobs:
             {"toggle":"ARC_FLASH","group":"arc-flash-engineering","name":"Arc Flash — Engineering E2E (CB library match → recalc)","xml":"suite-arc-flash-engineering.xml","tests":8,"stagger":100},
             {"toggle":"RBAC_API","group":"rbac-api","name":"RBAC — API","xml":"suite-rbac-api.xml","tests":606,"stagger":82},
             {"toggle":"RBAC_FRONTEND","group":"rbac-frontend","name":"RBAC — Front-End (UI)","xml":"suite-rbac-frontend.xml","tests":303,"stagger":90},
-            {"toggle":"ADMIN_PM","group":"admin-pm","name":"Admin — PM template config (ZP-323)","xml":"suite-admin-pm.xml","tests":12,"stagger":102}
+            {"toggle":"ADMIN_PM","group":"admin-pm","name":"Admin — PM template config (ZP-323)","xml":"suite-admin-pm.xml","tests":12,"stagger":102},
+            {"toggle":"WORK_TYPE","group":"work-type-api","name":"Work Type — API Catalog Contract","xml":"suite-worktype-api.xml","tests":81,"stagger":104},
+            {"toggle":"WORK_TYPE","group":"work-type-detail","name":"Work Type — Detail Contract (Z1 fixtures)","xml":"suite-worktype-detail.xml","tests":102,"stagger":106},
+            {"toggle":"WORK_TYPE","group":"work-type-dialog","name":"Work Type — Create Dialog Matrix","xml":"suite-worktype-dialog.xml","tests":153,"stagger":108},
+            {"toggle":"WORK_TYPE","group":"work-type-create-e2e","name":"Work Type — Create E2E Matrix","xml":"suite-worktype-create-e2e.xml","tests":42,"stagger":110},
+            {"toggle":"WORK_TYPE","group":"work-type-edge","name":"Work Type — Auto-Schedule & Edge","xml":"suite-worktype-edge.xml","tests":33,"stagger":112}
           ]'
-          ENABLED=$(for t in CURATED SMOKE LOAD_API AI EXPLORATORY QUALITY DOC ENGINEERING ARC_FLASH API RBAC_API RBAC_FRONTEND ADMIN_PM; do
+          ENABLED=$(for t in CURATED SMOKE LOAD_API AI EXPLORATORY QUALITY DOC ENGINEERING ARC_FLASH API RBAC_API RBAC_FRONTEND ADMIN_PM WORK_TYPE; do
                       [ "${!t}" = "true" ] && echo "$t"; done | jq -R . | jq -cs .)
           SEL=$(echo "$CATALOG" | jq -c --argjson en "$ENABLED" \
                   '[ .[] | select(.toggle as $t | $en | index($t)) | del(.toggle) ]')

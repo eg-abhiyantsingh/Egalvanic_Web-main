@@ -74,6 +74,11 @@ ALL_GROUPS=(
   "api-network"
   "doc-inspired"
   "admin-pm"
+  "work-type-api"
+  "work-type-detail"
+  "work-type-dialog"
+  "work-type-create-e2e"
+  "work-type-edge"
 )
 ALL_GROUP_NAMES=(
   "Auth + Site"
@@ -114,8 +119,13 @@ ALL_GROUP_NAMES=(
   "API — network-captured response validation"
   "Documentation-Inspired Tests"
   "Admin — PM template config (ZP-323)"
+  "Work Type — API Catalog Contract"
+  "Work Type — Detail Contract (Z1 fixtures)"
+  "Work Type — Create Dialog Matrix"
+  "Work Type — Create E2E Matrix"
+  "Work Type — Auto-Schedule & Edge"
 )
-ALL_GROUP_TESTS=(56 135 241 75 76 65 76 115 62 37 56 4 7 3 8 3 32 225 8 12 10 39 17 308 606 303 16 9 5 46 30 8 9 8 35 1 17 12)
+ALL_GROUP_TESTS=(56 135 241 75 76 65 76 115 62 37 56 4 7 3 8 3 32 225 8 12 10 39 17 308 606 303 16 9 5 46 30 8 9 8 35 1 17 12 81 102 153 42 33)
 ALL_GROUP_XMLS=(
   "suite-auth-site.xml"
   "suite-location-task.xml"
@@ -155,6 +165,11 @@ ALL_GROUP_XMLS=(
   "suite-network-api.xml"
   "suite-doc-inspired.xml"
   "suite-admin-pm.xml"
+  "suite-worktype-api.xml"
+  "suite-worktype-detail.xml"
+  "suite-worktype-dialog.xml"
+  "suite-worktype-create-e2e.xml"
+  "suite-worktype-edge.xml"
 )
 
 # ─────────────────────────────────────────────────────
@@ -200,6 +215,11 @@ get_group_index() {
     api-network)                  echo 35 ;;
     doc-inspired)                 echo 36 ;;
     admin-pm)                     echo 37 ;;
+    work-type-api)                echo 38 ;;
+    work-type-detail)             echo 39 ;;
+    work-type-dialog)             echo 40 ;;
+    work-type-create-e2e)         echo 41 ;;
+    work-type-edge)               echo 42 ;;
     # Backwards-compat aliases for old workflow dispatch values.
     # Connection and SLD modules are excluded from CI in May 2026 release.
     auth-site-connection) echo 0 ;;
@@ -219,7 +239,7 @@ else
   IDX=$(get_group_index "$SELECTED")
   if [ "$IDX" -eq -1 ]; then
     echo "Unknown group: $SELECTED"
-    echo "   Valid: all, auth-site, location-task, workorder-issue, asset-1-2, asset-3, asset-4, asset-5, dashboard-bughunt, load-api, smoke, ai-form, monkey, visual-regression, ai-analyzer, curated-bug-verification, bces-iq-smoke, workorder-planning, quality-gates, opportunities, asset-engineering, asset-transformer, asset-engineering-matrix, asset-mains-config, asset-engineering-exhaustive, rbac-api, rbac-frontend, arc-flash, arc-flash-connections, arc-flash-platform, arc-flash-grid-matrix, arc-flash-asset-class, arc-flash-role, arc-flash-filters-pagination, arc-flash-engineering, api-rest-contract, api-network, doc-inspired, admin-pm"
+    echo "   Valid: all, auth-site, location-task, workorder-issue, asset-1-2, asset-3, asset-4, asset-5, dashboard-bughunt, load-api, smoke, ai-form, monkey, visual-regression, ai-analyzer, curated-bug-verification, bces-iq-smoke, workorder-planning, quality-gates, opportunities, asset-engineering, asset-transformer, asset-engineering-matrix, asset-mains-config, asset-engineering-exhaustive, rbac-api, rbac-frontend, arc-flash, arc-flash-connections, arc-flash-platform, arc-flash-grid-matrix, arc-flash-asset-class, arc-flash-role, arc-flash-filters-pagination, arc-flash-engineering, api-rest-contract, api-network, doc-inspired, admin-pm, work-type-api, work-type-detail, work-type-dialog, work-type-create-e2e, work-type-edge"
     exit 1
   fi
   RUN_GROUPS=("${ALL_GROUPS[$IDX]}")
