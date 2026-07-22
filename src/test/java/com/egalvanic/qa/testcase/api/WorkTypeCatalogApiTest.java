@@ -275,7 +275,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     @Test(priority = 1, dataProvider = "catalogShapeChecks",
           description = "TC_WTAPI_001: GET /procedures-v2/services — 200 success envelope with exactly 13 uniquely keyed/id'd/named services")
     public void testServicesCatalogShape(String check) {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTAPI_001 — " + check);
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_001 — " + check);
         requireAuth();
         JSONArray data = servicesData();   // hard-asserts 200 / JSON / success:true / data[]
         ExtentReportManager.logInfo("services catalog: " + data.length() + " entries; checking '" + check + "'");
@@ -312,7 +312,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     @Test(priority = 2, dataProvider = "allServices",
           description = "TC_WTAPI_002: services catalog entry matches the WorkTypeCatalog pin (name/id/de_energized/family)")
     public void testServicePinned(WorkTypeCatalog.WorkTypeProfile profile) {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTAPI_002 — " + profile);
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_002 — " + profile);
         requireAuth();
         JSONArray data = servicesData();
 
@@ -358,7 +358,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     @Test(priority = 3, dataProvider = "allServices",
           description = "TC_WTAPI_003: GET /procedures-v2/procedures?service_id={id} — 200 JSON envelope with a data[] array")
     public void testProceduresListPerService(WorkTypeCatalog.WorkTypeProfile profile) {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTAPI_003 — " + profile);
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_003 — " + profile);
         requireAuth();
 
         Response r = getAuthenticatedRequestSpec()
@@ -407,7 +407,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     @Test(priority = 4, dataProvider = "allServices",
           description = "TC_WTAPI_004: POST /ir_session/scope-preview — success envelope, int matching_count >= 0, and matching_count == assets.length")
     public void testScopePreviewContract(WorkTypeCatalog.WorkTypeProfile profile) {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTAPI_004 — " + profile);
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_004 — " + profile);
         requireAuth();
 
         JSONObject data = scopePreviewData(profile);   // hard-asserts 200 / success:true / data{}
@@ -445,7 +445,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     @Test(priority = 5, dataProvider = "allServices",
           description = "TC_WTAPI_005: scope-preview assets[0] carries non-empty id/label/node_class_name (cached response — one POST per service)")
     public void testScopePreviewAssetShape(WorkTypeCatalog.WorkTypeProfile profile) {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTAPI_005 — " + profile);
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_005 — " + profile);
         requireAuth();
 
         JSONObject data = scopePreviewData(profile);   // cache hit — no second POST for this service
@@ -481,8 +481,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     @Test(priority = 6, dataProvider = "fixtureEndpoints",
           description = "TC_WTAPI_006: GET /ir_session/{fixture}/{full|assets|team} — 200 JSON; /full identifies the fixture WO")
     public void testFixtureSessionEndpoint(WorkTypeCatalog.Family family, String sub) {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE,
-                "TC_WTAPI_006 — " + family + " /" + sub);
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_006 — " + family + " /" + sub);
         requireAuth();
 
         String sessionId = WorkTypeCatalog.Z1_FIXTURE_SESSION_IDS.get(family);
@@ -531,7 +530,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     @Test(priority = 7, dataProvider = "noAuthEndpoints",
           description = "TC_WTAPI_007: every Work Type endpoint rejects requests without an Authorization header (401/403)")
     public void testNegativeNoAuth(String label, String method, String path, String jsonBody) {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTAPI_007 — no-auth " + label);
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_007 — no-auth " + label);
         requireAuth();   // env sanity: prove login works before trusting a 401 as an auth gate
 
         Response r;
@@ -557,7 +556,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     @Test(priority = 8, dataProvider = "malformedRequests", groups = {"known-product-bug"},
           description = "TC_WTAPI_008: malformed service_id / sld_id must be a 4xx, never a 500 (currently 500s — verified backend bug)")
     public void testMalformedRequestNotServerError(String key) {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTAPI_008 — " + key);
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_008 — " + key);
         requireAuth();
 
         Response r = fireMalformed(key);
@@ -577,8 +576,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     @Test(priority = 9,
           description = "TC_WTAPI_009: procedures?service_id=not-a-uuid — whatever the status, the body must not leak psycopg2/SQL internals")
     public void testNoSqlLeakOnBadServiceId() {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE,
-                "TC_WTAPI_009 — leak tripwire: procedures?service_id=not-a-uuid");
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_009 — leak tripwire: procedures?service_id=not-a-uuid");
         requireAuth();
 
         Response r = fireMalformed("procedures?service_id=not-a-uuid");
@@ -597,8 +595,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     @Test(priority = 9, groups = {"known-product-bug"},
           description = "TC_WTAPI_010: scope-preview with garbage sld_id must not leak psycopg2/SQL (currently leaks the full SELECT — verified backend bug)")
     public void testNoSqlLeakOnGarbageSldId() {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE,
-                "TC_WTAPI_010 — leak tripwire: scope-preview sld_id=garbage");
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_010 — leak tripwire: scope-preview sld_id=garbage");
         requireAuth();
 
         Response r = fireMalformed("scope-preview sld_id=garbage-not-a-uuid");
@@ -622,8 +619,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     @Test(priority = 10,
           description = "TC_WTAPI_011: scope-preview without work_type_id — graceful no-op (200 applicable:false/0 assets) or clean 4xx, never 5xx")
     public void testScopePreviewMissingWorkTypeGraceful() {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE,
-                "TC_WTAPI_011 — scope-preview missing work_type_id");
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_011 — scope-preview missing work_type_id");
         requireAuth();
 
         JSONObject payload = new JSONObject();
@@ -670,8 +666,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
           description = "TC_WTAPI_012: DELETE /ir_session/{random-uuid} — 200 async receipt {_mutation.status:received} even for a nonexistent id (pinned observation)")
     public void testDeleteNonexistentUuidAsyncReceipt() {
         String randomId = UUID.randomUUID().toString();
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE,
-                "TC_WTAPI_012 — DELETE nonexistent /ir_session/" + randomId);
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_012 — DELETE nonexistent /ir_session/" + randomId);
         requireAuth();
 
         // CONTRACT OBSERVATION (live 2026-07-21), not an endorsement: the delete path is an async

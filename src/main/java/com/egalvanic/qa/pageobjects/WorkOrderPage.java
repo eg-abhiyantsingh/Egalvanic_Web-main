@@ -508,6 +508,41 @@ public class WorkOrderPage {
     }
 
     /**
+     * Best-effort Priority setter that does NOT wait on the MUI Autocomplete inner input's
+     * visibility (that hidden text input reports not-displayed even when the field is present —
+     * the documented quirk behind selectPriority()/typeAndSelectDropdown timing out on the
+     * create dialog). Opens the Priority combobox via its wrapper, clicks the option, and
+     * verifies the committed value. Never throws; returns true only if the value committed.
+     */
+    public boolean trySelectPriority(String priority) {
+        try {
+            java.util.List<WebElement> inputs = driver.findElements(PRIORITY_INPUT);
+            if (inputs.isEmpty()) { expandAdvancedSettings(); inputs = driver.findElements(PRIORITY_INPUT); }
+            if (inputs.isEmpty()) { System.out.println("[WorkOrderPage] trySelectPriority: no Priority input present"); return false; }
+            WebElement input = inputs.get(0);
+            if (priority.equalsIgnoreCase(String.valueOf(input.getAttribute("value")))) return true; // already set
+            js.executeScript(
+                "var i=arguments[0]; i.scrollIntoView({block:'center'}); i.focus();" +
+                "var w=i.closest('.MuiAutocomplete-root'); if(w){var b=w.querySelector('.MuiAutocomplete-popupIndicator'); if(b) b.click();}", input);
+            pause(700);
+            java.util.List<WebElement> opts = driver.findElements(By.xpath("//ul[@role='listbox']/li[normalize-space()='" + priority + "']"));
+            if (opts.isEmpty()) opts = driver.findElements(By.xpath("//li[@role='option'][normalize-space()='" + priority + "']"));
+            if (opts.isEmpty()) { System.out.println("[WorkOrderPage] trySelectPriority: option '" + priority + "' not offered"); input.sendKeys(Keys.ESCAPE); return false; }
+            WebElement opt = opts.get(0);
+            for (String t : new String[]{"pointerdown","mousedown","pointerup","mouseup","click"}) {
+                try { js.executeScript("arguments[0].dispatchEvent(new MouseEvent(arguments[1],{bubbles:true,cancelable:true}));", opt, t); } catch (Exception ignored) {}
+            }
+            pause(700);
+            boolean ok = priority.equalsIgnoreCase(getPriorityValue());
+            System.out.println("[WorkOrderPage] trySelectPriority('" + priority + "') committed=" + ok + " (value now '" + getPriorityValue() + "')");
+            return ok;
+        } catch (Exception e) {
+            System.out.println("[WorkOrderPage] trySelectPriority failed: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Select asset from dropdown.
      */
     public void selectAsset(String assetName) {
@@ -598,8 +633,13 @@ public class WorkOrderPage {
     }
 
     public void fillEstHours(String hours) {
-        try { typeField(WO_EST_HOURS_INPUT, hours); System.out.println("[WorkOrderPage] Est. Hours: " + hours); }
-        catch (Exception e) { System.out.println("[WorkOrderPage] Est. Hours not fillable: " + e.getMessage()); }
+        try { typeField(WO_EST_HOURS_INPUT, hours); }
+        catch (Exception e) { System.out.println("[WorkOrderPage] Est. Hours typeField note: " + e.getMessage()); }
+        // Read back; if the sendKeys path didn't stick, use the React native-setter (proven to
+        // persist — value must be present in the input BEFORE Create for the backend to save it).
+        boolean ok = valueReadBackEquals(WO_EST_HOURS_INPUT, hours);
+        if (!ok) ok = setValueViaNativeSetter(WO_EST_HOURS_INPUT, hours);
+        System.out.println("[WorkOrderPage] Est. Hours: " + hours + " (committed=" + ok + ")");
     }
 
     public void fillWoDescription(String desc) {
@@ -608,8 +648,41 @@ public class WorkOrderPage {
             js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].focus(); arguments[0].click();", el);
             pause(150);
             el.sendKeys(desc);
-            System.out.println("[WorkOrderPage] WO Description filled");
-        } catch (Exception e) { System.out.println("[WorkOrderPage] WO Description not fillable: " + e.getMessage()); }
+        } catch (Exception e) { System.out.println("[WorkOrderPage] WO Description sendKeys note: " + e.getMessage()); }
+        boolean ok = valueReadBackEquals(WO_DESCRIPTION_INPUT, desc);
+        if (!ok) ok = setValueViaNativeSetter(WO_DESCRIPTION_INPUT, desc);
+        System.out.println("[WorkOrderPage] WO Description filled (committed=" + ok + ")");
+    }
+
+    /** True if the element at {@code by} currently holds exactly {@code expected}. */
+    private boolean valueReadBackEquals(By by, String expected) {
+        java.util.List<WebElement> els = driver.findElements(by);
+        return !els.isEmpty() && expected.equals(String.valueOf(els.get(0).getAttribute("value")));
+    }
+
+    /**
+     * Set an input/textarea value via the React-aware native setter + input/change events —
+     * the path proven live (2026-07-22) to actually commit Est. Hours / WO Description so the
+     * backend saves them. Returns true if the value read back equals {@code value}.
+     */
+    private boolean setValueViaNativeSetter(By by, String value) {
+        try {
+            java.util.List<WebElement> els = driver.findElements(by);
+            if (els.isEmpty()) return false;
+            WebElement el = els.get(0);
+            js.executeScript(
+                "var el=arguments[0], v=arguments[1];" +
+                "var proto = el.tagName==='TEXTAREA' ? window.HTMLTextAreaElement.prototype : window.HTMLInputElement.prototype;" +
+                "var set = Object.getOwnPropertyDescriptor(proto,'value').set;" +
+                "el.focus(); set.call(el, v);" +
+                "el.dispatchEvent(new Event('input',{bubbles:true}));" +
+                "el.dispatchEvent(new Event('change',{bubbles:true}));", el, value);
+            pause(250);
+            return value.equals(String.valueOf(el.getAttribute("value")));
+        } catch (Exception e) {
+            System.out.println("[WorkOrderPage] setValueViaNativeSetter failed: " + e.getMessage());
+            return false;
+        }
     }
 
     /** Type a MM/DD/YYYY due date (real keystrokes — these custom date inputs accept typed values). */
@@ -1041,6 +1114,37 @@ public class WorkOrderPage {
             if (t.equals("High") || t.equals("Medium") || t.equals("Low")) return true;
         }
         return false;
+    }
+
+    /**
+     * Read a value from the (expanded) WO detail header details panel by its label. The panel
+     * renders label→value pairs — PRIORITY, FACILITY, TIMEFRAME, CERTIFIER, BACK OFFICE, FIELD,
+     * SCHEDULE (live-verified 2026-07-22). Call {@link #expandWoDetailHeader()} first. Returns the
+     * value text with the label stripped, or "" if not found. Match is case-insensitive prefix.
+     */
+    public String getWoDetailHeaderField(String label) {
+        try {
+            Object v = js.executeScript(
+                "var lab=arguments[0].toLowerCase();" +
+                "var all=[...document.querySelectorAll('main *')].filter(e=>e.children.length===0 && e.textContent.trim());" +
+                "var el=all.find(e=>e.textContent.trim().toLowerCase().replace(/[: ]+$/,'')===lab" +
+                "   || e.textContent.trim().toLowerCase().startsWith(lab));" +
+                "if(!el) return '';" +
+                "var c=el.parentElement; if(!c) return '';" +
+                "return c.textContent.replace(el.textContent,'').trim();", label);
+            return v == null ? "" : String.valueOf(v);
+        } catch (Exception e) {
+            System.out.println("[WorkOrderPage] getWoDetailHeaderField('" + label + "') failed: " + e.getMessage());
+            return "";
+        }
+    }
+
+    /** Full innerText of the WO detail header/summary area (for substring persistence checks). */
+    public String getWoDetailHeaderText() {
+        try {
+            Object v = js.executeScript("var m=document.querySelector('main'); return m ? m.innerText : '';");
+            return v == null ? "" : String.valueOf(v);
+        } catch (Exception e) { return ""; }
     }
 
     /**
