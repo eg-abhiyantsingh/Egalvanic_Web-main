@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<!--
+  Umbrella: the complete per-Work-Type matrix (ZP-3000 Services V2) — 415 data-driven TCs
+  covering all 14 Work Type dropdown options (13 services + General) across five dimensions:
+  API catalog contract, create-dialog matrix, Z1-fixture detail contracts, create-E2E, edge cases.
+  Green gate: known-product-bug is excluded on the API test (backend 500/psycopg2-leak tripwires);
+  run those explicitly with: mvn test -DsuiteXmlFile=suite-worktype-api.xml -Dgroups=known-product-bug
+  Run: mvn test -DsuiteXmlFile=suite-worktype-all.xml [-Dpause.scale=0.5]
+-->
+<suite name="Work Type Matrix — all dimensions (415 TCs)" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <test name="1. Work Type — API Catalog Contract (84 TCs)">
+        <groups>
+            <run>
+                <exclude name="known-product-bug"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.WorkTypeCatalogApiTest"/>
+        </classes>
+    </test>
+
+    <test name="2. Work Type — Detail Contract on Z1 fixtures (102 TCs, read-only)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkTypeDetailContractTestNG"/>
+        </classes>
+    </test>
+
+    <test name="3. Work Type — Create Dialog Matrix (153 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkTypeCreateDialogMatrixTestNG"/>
+        </classes>
+    </test>
+
+    <test name="4. Work Type — Create E2E Matrix (42 TCs, self-cleaning)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkTypeCreateE2EMatrixTestNG"/>
+        </classes>
+    </test>
+
+    <test name="5. Work Type — Auto-Schedule &amp; Edge (34 TCs, self-cleaning)">
+        <groups>
+            <run>
+                <exclude name="known-product-bug"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkTypeAutoScheduleEdgeTestNG"/>
+        </classes>
+    </test>
+
+</suite>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Full Suite — Work Type Auto-Schedule &amp; Edge (34 TCs)" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <!-- Green gate: TC_WTE_011b (whitespace-only name accepted end-to-end, verified 2026-07-22)
+         is a known-product-bug tripwire — run it RED on purpose with:
+         mvn test -Dtest=WorkTypeAutoScheduleEdgeTestNG -Dgroups=known-product-bug -->
+    <test name="Work Orders — Work Type Auto-Schedule &amp; Edge (enablement matrix, Shutdown/General pins, name edges, dup/date pins) (34 TCs)">
+        <groups>
+            <run>
+                <exclude name="known-product-bug"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkTypeAutoScheduleEdgeTestNG"/>
+        </classes>
+    </test>
+
+</suite>

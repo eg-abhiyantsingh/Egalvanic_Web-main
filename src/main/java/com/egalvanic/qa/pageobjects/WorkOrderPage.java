@@ -795,6 +795,337 @@ public class WorkOrderPage {
         return System.getProperty("os.name", "").toLowerCase().contains("mac") ? Keys.COMMAND : Keys.CONTROL;
     }
 
+    // ================================================================
+    // Per-Work-Type matrix support (2026-07-21, ZP-3000 Services V2).
+    // Live-verified dialog contract on acme.qa/Z1:
+    //  - 14 Work Type options (13 services + General) — WorkTypeCatalog is authoritative
+    //  - selecting a service with procedures fires POST /api/ir_session/scope-preview and
+    //    the Scope section settles on "N matching assets" (+ "View" toggle + preview rows)
+    //  - a 0-procedure service (Shutdown (Composite)) shows instead:
+    //    "This work type has no procedures configured — no assets will be pulled in automatically."
+    //  - General fires NO preview and shows neither text
+    //  - an Auto-Schedule button renders for ALL types, disabled until its preconditions are met
+    // ================================================================
+
+    /** Open the Work Type dropdown and return its option labels in display order. Closes the menu afterwards. */
+    public java.util.List<String> getWorkTypeOptions() {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        try {
+            WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(WORK_TYPE_INPUT));
+            js.executeScript("arguments[0].scrollIntoView({block:'center'}); arguments[0].focus(); arguments[0].click();"
+                    + "var w=arguments[0].closest('.MuiAutocomplete-root'); if(w){var b=w.querySelector('.MuiAutocomplete-popupIndicator'); if(b) b.click();}", input);
+            pause(800);
+            for (WebElement li : driver.findElements(By.xpath("//ul[@role='listbox']/li[@role='option']"))) {
+                String t = li.getText().trim();
+                if (!t.isEmpty()) out.add(t);
+            }
+            input.sendKeys(Keys.ESCAPE);   // closes the Autocomplete popup only, not the dialog
+            pause(200);
+        } catch (Exception e) { System.out.println("[WorkOrderPage] getWorkTypeOptions failed: " + e.getMessage()); }
+        return out;
+    }
+
+    /** The COMMITTED Work Type input value (empty string when unset or dialog absent). */
+    public String getWorkTypeValue() {
+        java.util.List<WebElement> e = driver.findElements(WORK_TYPE_INPUT);
+        return e.isEmpty() ? "" : String.valueOf(e.get(0).getAttribute("value"));
+    }
+
+    /** The Facility input value on the create dialog. */
+    public String getFacilityValue() {
+        java.util.List<WebElement> e = driver.findElements(woComboByLabel("Facility"));
+        return e.isEmpty() ? "" : String.valueOf(e.get(0).getAttribute("value"));
+    }
+
+    /** Click the create dialog's Cancel button. Returns true once the dialog is gone. */
+    public boolean cancelCreateDialog() {
+        try {
+            By cancel = By.xpath(WO_DIALOG + "//button[normalize-space()='Cancel']");
+            WebElement b = wait.until(ExpectedConditions.elementToBeClickable(cancel));
+            try { b.click(); } catch (Exception e) { js.executeScript("arguments[0].click();", b); }
+            for (int i = 0; i < 20 && isCreateWorkOrderDialogOpen(); i++) pause(300);
+            return !isCreateWorkOrderDialogOpen();
+        } catch (Exception e) {
+            System.out.println("[WorkOrderPage] cancelCreateDialog failed: " + e.getMessage());
+            return !isCreateWorkOrderDialogOpen();
+        }
+    }
+
+    /** Full text of the create dialog (for scope-preview / notice matching). */
+    public String getCreateDialogText() {
+        java.util.List<WebElement> d = driver.findElements(By.xpath(WO_DIALOG));
+        return d.isEmpty() ? "" : d.get(0).getText();
+    }
+
+    /**
+     * Poll the dialog until the scope preview settles on "N matching asset(s)" and return N.
+     * Live 2026-07-21: the label is SINGULAR for one match ("1 matching asset" — UPS on Z1) and
+     * plural otherwise, including zero ("0 matching assets" — DGA on Z1, plus an eligibility
+     * notice, see {@link #hasNoEligibleAssetsNotice()}).
+     * Returns -1 if it never settles (still "Matching assets…", a no-procedures notice, or absent).
+     */
+    public int getMatchingAssetsCount(int timeoutSeconds) {
+        java.util.regex.Pattern p = java.util.regex.Pattern.compile("(\\d+)\\s+matching asset");
+        long end = System.currentTimeMillis() + timeoutSeconds * 1000L;
+        while (System.currentTimeMillis() < end) {
+            java.util.regex.Matcher m = p.matcher(getCreateDialogText());
+            if (m.find()) return Integer.parseInt(m.group(1));
+            pause(500);
+        }
+        return -1;
+    }
+
+    /**
+     * The zero-match scope state (live 2026-07-21, DGA on Z1): "0 matching assets" plus
+     * "No assets in this site are eligible for this work type with the current filters."
+     */
+    public boolean hasNoEligibleAssetsNotice() {
+        return getCreateDialogText().contains("No assets in this site are eligible");
+    }
+
+    /**
+     * Clear the WO Name field with real keystrokes (+ React native-setter fallback). Needed
+     * because the dialog KEEPS the WO Name as a sticky draft across Cancel + reopen
+     * (live-verified 2026-07-21) — "fresh dialog" flows must clear it explicitly.
+     */
+    public void clearWoName() {
+        try {
+            WebElement el = wait.until(ExpectedConditions.visibilityOfElementLocated(WO_NAME_INPUT));
+            js.executeScript("arguments[0].scrollIntoView({block:'center'});", el);
+            el.click();
+            try { el.sendKeys(Keys.chord(macOrCtrl(), "a"), Keys.DELETE); } catch (Exception ignored) {}
+            pause(300);
+            String v = String.valueOf(el.getAttribute("value"));
+            if (!v.isEmpty()) {
+                js.executeScript(
+                        "var i=arguments[0];"
+                        + "var set=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;"
+                        + "set.call(i,''); i.dispatchEvent(new Event('input',{bubbles:true}));", el);
+                pause(300);
+            }
+            System.out.println("[WorkOrderPage] WO Name cleared (was '" + v + "')");
+        } catch (Exception e) { System.out.println("[WorkOrderPage] clearWoName failed: " + e.getMessage()); }
+    }
+
+    /** Current WO Name input value on the create dialog. */
+    public String getWoNameValue() {
+        java.util.List<WebElement> e = driver.findElements(WO_NAME_INPUT);
+        return e.isEmpty() ? "" : String.valueOf(e.get(0).getAttribute("value"));
+    }
+
+    /** True while the scope preview is loading ("Matching assets…"). */
+    public boolean isScopePreviewLoading() {
+        return getCreateDialogText().contains("Matching assets");
+    }
+
+    /** True when ANY scope-preview surface is present (loading, settled count, or preview rows). */
+    public boolean hasScopePreviewSurface() {
+        String t = getCreateDialogText();
+        return t.contains("Matching assets")
+                || java.util.regex.Pattern.compile("\\d+\\s+matching assets").matcher(t).find();
+    }
+
+    /**
+     * The 0-procedure-service notice (live 2026-07-21, Shutdown (Composite)):
+     * "This work type has no procedures configured — no assets will be pulled in automatically."
+     * Matched loosely on the stable phrase to survive copy tweaks.
+     */
+    public boolean hasNoProceduresNotice() {
+        return getCreateDialogText().contains("no procedures configured");
+    }
+
+    public boolean isAutoScheduleButtonPresent() {
+        return !driver.findElements(WO_AUTO_SCHEDULE_BTN).isEmpty();
+    }
+
+    public boolean isAutoScheduleButtonEnabled() {
+        java.util.List<WebElement> b = driver.findElements(WO_AUTO_SCHEDULE_BTN);
+        return !b.isEmpty() && b.get(b.size() - 1).isEnabled();
+    }
+
+    // ---------------- WO detail page (/sessions/{id}) readers ----------------
+
+    /** True when the current URL is a WO detail page. */
+    public boolean isOnWoDetailPage() {
+        String url = String.valueOf(driver.getCurrentUrl());
+        return url.matches(".*/sessions/[a-f0-9-]{8,}.*");
+    }
+
+    /** The {id} segment of the current /sessions/{id} URL, or empty string. */
+    public String getWoDetailId() {
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("/sessions/([a-f0-9-]{8,})").matcher(String.valueOf(driver.getCurrentUrl()));
+        return m.find() ? m.group(1) : "";
+    }
+
+    /**
+     * Detail-page tab labels in order with trailing count badges stripped
+     * ("Assets46" -> "Assets", "Forms96" -> "Forms", "Assets99+" -> "Assets").
+     */
+    public java.util.List<String> getDetailTabNames() {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (WebElement t : driver.findElements(By.xpath("//button[@role='tab']"))) {
+            String txt = t.getText().trim().replaceAll("\\d+\\+?$", "").trim();
+            if (!txt.isEmpty()) out.add(txt);
+        }
+        return out;
+    }
+
+    /** Click a detail tab by its label (count badge ignored). Returns true when the tab is selected. */
+    public boolean clickWoDetailTab(String tabName) {
+        try {
+            for (WebElement t : driver.findElements(By.xpath("//button[@role='tab']"))) {
+                String txt = t.getText().trim().replaceAll("\\d+\\+?$", "").trim();
+                if (txt.equalsIgnoreCase(tabName)) {
+                    js.executeScript("arguments[0].scrollIntoView({block:'center'});", t);
+                    try { t.click(); } catch (Exception e) { js.executeScript("arguments[0].click();", t); }
+                    pause(800);
+                    return "true".equals(t.getAttribute("aria-selected"));
+                }
+            }
+        } catch (Exception e) { System.out.println("[WorkOrderPage] clickWoDetailTab failed: " + e.getMessage()); }
+        return false;
+    }
+
+    /**
+     * Header chip texts on the WO detail page. Live contract 2026-07-21: chip[0] = the
+     * Work Type name, chip[1] = Priority, then count badges — so callers should assert
+     * containment of the type name, not position-fragile equality.
+     */
+    public java.util.List<String> getWoHeaderChips() {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (WebElement c : driver.findElements(By.cssSelector(".MuiChip-root"))) {
+            String t = c.getText().trim();
+            if (!t.isEmpty()) out.add(t);
+        }
+        return out;
+    }
+
+    /**
+     * Expand the WO detail header's details area. Live contract 2026-07-21: the header is
+     * COLLAPSED by default on page load — the priority chip (High/Medium/Low) and other detail
+     * chips exist in the DOM but are visibility:hidden until the chevron (first small icon
+     * button at the right edge of the title row, before the kebab) is clicked. Idempotent:
+     * returns immediately when a priority chip is already visible.
+     */
+    public boolean expandWoDetailHeader() {
+        try {
+            if (visiblePriorityChipPresent()) return true;
+            int viewportW = ((Number) js.executeScript("return window.innerWidth;")).intValue();
+            int tabY = Integer.MAX_VALUE;
+            java.util.List<WebElement> tabs = driver.findElements(By.xpath("//button[@role='tab']"));
+            if (!tabs.isEmpty()) tabY = tabs.get(0).getRect().getY();
+            for (WebElement b : driver.findElements(By.cssSelector("main .MuiIconButton-sizeSmall, main button.MuiIconButton-root"))) {
+                org.openqa.selenium.Rectangle r;
+                try { r = b.getRect(); } catch (Exception e) { continue; }
+                // right side of the title row (skips the back arrow on the left), above the tab strip
+                if (r.getY() < tabY && r.getX() > viewportW * 0.6 && r.getWidth() < 60) {
+                    js.executeScript("arguments[0].click();", b);   // first match in document order = chevron (kebab is after it)
+                    for (int i = 0; i < 10; i++) {
+                        pause(300);
+                        if (visiblePriorityChipPresent()) return true;
+                    }
+                    // wrong button (kebab menu opened) — close it and give up on this candidate
+                    java.util.List<WebElement> backdrops = driver.findElements(By.cssSelector(".MuiBackdrop-root, .MuiBackdrop-invisible"));
+                    if (!backdrops.isEmpty()) { js.executeScript("arguments[0].click();", backdrops.get(backdrops.size() - 1)); pause(300); }
+                }
+            }
+        } catch (Exception e) { System.out.println("[WorkOrderPage] expandWoDetailHeader failed: " + e.getMessage()); }
+        return visiblePriorityChipPresent();
+    }
+
+    /** True when a VISIBLE High/Medium/Low chip is rendered (Selenium getText() skips hidden chips). */
+    public boolean visiblePriorityChipPresent() {
+        for (WebElement c : driver.findElements(By.cssSelector(".MuiChip-root"))) {
+            String t = c.getText().trim();
+            if (t.equals("High") || t.equals("Medium") || t.equals("Low")) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Collapse the WO detail header back (inverse of {@link #expandWoDetailHeader()}). The
+     * expanded details panel pushes the virtualized asset DataGrid out of the viewport, where
+     * it renders NO column headers — restore the default collapsed state after header checks.
+     */
+    public boolean collapseWoDetailHeader() {
+        try {
+            if (!visiblePriorityChipPresent()) return true;   // already collapsed
+            int viewportW = ((Number) js.executeScript("return window.innerWidth;")).intValue();
+            int tabY = Integer.MAX_VALUE;
+            java.util.List<WebElement> tabs = driver.findElements(By.xpath("//button[@role='tab']"));
+            if (!tabs.isEmpty()) tabY = tabs.get(0).getRect().getY();
+            for (WebElement b : driver.findElements(By.cssSelector("main .MuiIconButton-sizeSmall, main button.MuiIconButton-root"))) {
+                org.openqa.selenium.Rectangle r;
+                try { r = b.getRect(); } catch (Exception e) { continue; }
+                if (r.getY() < tabY && r.getX() > viewportW * 0.6 && r.getWidth() < 60) {
+                    js.executeScript("arguments[0].click();", b);
+                    for (int i = 0; i < 10; i++) {
+                        pause(300);
+                        if (!visiblePriorityChipPresent()) return true;
+                    }
+                }
+            }
+        } catch (Exception e) { System.out.println("[WorkOrderPage] collapseWoDetailHeader failed: " + e.getMessage()); }
+        return !visiblePriorityChipPresent();
+    }
+
+    /** Column header labels of the detail page's asset grid, in order. */
+    public java.util.List<String> getAssetGridColumnHeaders() {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (WebElement h : driver.findElements(By.xpath("//div[@role='columnheader']|//th[@role='columnheader']|//*[@role='columnheader']"))) {
+            String t = h.getText().trim();
+            if (!t.isEmpty()) out.add(t.replace("Sort", "").trim());
+        }
+        return out;
+    }
+
+    /** True when a visible button with this exact text exists inside &lt;main&gt; (detail-page action bar). */
+    public boolean woDetailButtonPresent(String text) {
+        for (WebElement b : driver.findElements(By.xpath("//main//button[normalize-space()='" + text + "']"))) {
+            if (b.isDisplayed()) return true;
+        }
+        return false;
+    }
+
+    /** Open the detail page's "Actions" menu; returns the menu item labels (empty list on failure). */
+    public java.util.List<String> openActionsMenuAndListItems() {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        try {
+            By actions = By.xpath("//main//button[normalize-space()='Actions']");
+            WebElement b = wait.until(ExpectedConditions.elementToBeClickable(actions));
+            try { b.click(); } catch (Exception e) { js.executeScript("arguments[0].click();", b); }
+            pause(800);
+            for (WebElement li : driver.findElements(By.xpath("//li[@role='menuitem']"))) {
+                String t = li.getText().trim();
+                if (!t.isEmpty()) out.add(t);
+            }
+        } catch (Exception e) { System.out.println("[WorkOrderPage] openActionsMenuAndListItems failed: " + e.getMessage()); }
+        return out;
+    }
+
+    /** Click an open menu's item whose text contains {@code label}. Returns true on click. */
+    public boolean clickMenuItemContaining(String label) {
+        try {
+            for (WebElement li : driver.findElements(By.xpath("//li[@role='menuitem']"))) {
+                if (li.getText().trim().toLowerCase().contains(label.toLowerCase())) {
+                    try { li.click(); } catch (Exception e) { js.executeScript("arguments[0].click();", li); }
+                    pause(600);
+                    return true;
+                }
+            }
+        } catch (Exception e) { System.out.println("[WorkOrderPage] clickMenuItemContaining failed: " + e.getMessage()); }
+        return false;
+    }
+
+    /** Close any open MUI menu by clicking its backdrop (NEVER Keys.ESCAPE — that can close drawers). */
+    public void closeOpenMenu() {
+        try {
+            java.util.List<WebElement> backdrops = driver.findElements(By.cssSelector(".MuiBackdrop-root, .MuiBackdrop-invisible"));
+            if (!backdrops.isEmpty()) { js.executeScript("arguments[0].click();", backdrops.get(backdrops.size() - 1)); pause(400); }
+        } catch (Exception ignored) {}
+    }
+
     /**
      * Submit the Create Work Order form (click Save/Create inside the drawer).
      */

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Full Suite — Work Type Detail Contract (6 Z1 fixture WOs, read-only, 102 rows)" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <test name="Work Orders — per-family detail-page contract on the Z1 fixtures (96 matrix + 6 health rows)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkTypeDetailContractTestNG"/>
+        </classes>
+    </test>
+
+</suite>

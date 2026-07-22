@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Full Suite — Work Type Create E2E Matrix (14 types x 3 phases = 42 TCs)" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <!-- Phases A/B/C communicate via static maps and rely on same-class priority ordering:
+         preserve-order keeps TestNG from reshuffling the single class's invocations. -->
+    <test name="Work Orders — per-Work-Type create → verify → cleanup E2E matrix (42 TCs)" preserve-order="true">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkTypeCreateE2EMatrixTestNG"/>
+        </classes>
+    </test>
+
+</suite>

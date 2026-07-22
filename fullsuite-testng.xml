@@ -361,4 +361,52 @@
         </classes>
     </test>
 
+    <!-- ============================================================ -->
+    <!-- MODULES 45-49: WORK TYPE MATRIX (ZP-3000 Services V2)        -->
+    <!-- All 14 Work Type dropdown options (13 services + General)    -->
+    <!-- x create-dialog / API-contract / E2E-create / detail-page /  -->
+    <!-- auto-schedule+edge dimensions. 415 data-driven TCs pinned    -->
+    <!-- to site Z1 fixtures (2026-07-21). Green gate excludes        -->
+    <!-- known-product-bug (backend 500/psycopg2-leak tripwires).     -->
+    <!-- ============================================================ -->
+    <test name="45. Work Type — API Catalog Contract (84 TCs)">
+        <groups>
+            <run>
+                <exclude name="known-product-bug"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.WorkTypeCatalogApiTest"/>
+        </classes>
+    </test>
+
+    <test name="46. Work Type — Create Dialog Matrix (153 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkTypeCreateDialogMatrixTestNG"/>
+        </classes>
+    </test>
+
+    <test name="47. Work Type — Detail Contract on Z1 fixtures (102 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkTypeDetailContractTestNG"/>
+        </classes>
+    </test>
+
+    <test name="48. Work Type — Create E2E Matrix (42 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkTypeCreateE2EMatrixTestNG"/>
+        </classes>
+    </test>
+
+    <test name="49. Work Type — Auto-Schedule &amp; Edge (34 TCs)">
+        <groups>
+            <run>
+                <exclude name="known-product-bug"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkTypeAutoScheduleEdgeTestNG"/>
+        </classes>
+    </test>
+
 </suite>

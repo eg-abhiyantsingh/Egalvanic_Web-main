@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Full Suite — Work Type API Contract (procedures-v2 / scope-preview / fixtures) (84 TCs)" verbose="1">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <!-- Green gate: known-product-bug tripwires (backend 500-on-malformed-uuid + psycopg2/SQL
+         leak on scope-preview, both live-verified 2026-07-21) are excluded here per repo
+         convention. Run them RED on purpose with:
+         mvn test -Dtest=WorkTypeCatalogApiTest -Dgroups=known-product-bug -->
+    <test name="Work Type API — services catalog, pinned entries, procedures, scope-preview, fixture sessions, negatives (84 TCs)">
+        <groups>
+            <run>
+                <exclude name="known-product-bug"/>
+            </run>
+        </groups>
+        <classes>
+            <class name="com.egalvanic.qa.testcase.api.WorkTypeCatalogApiTest"/>
+        </classes>
+    </test>
+
+</suite>
