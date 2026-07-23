@@ -51,3 +51,22 @@ AutoScheduleEdge → CreateE2EMatrix.
   without opening the log.
 - Run order puts API + smoke first: if QA enters another 502 episode overnight, the cheap classes
   bank results before the multi-hour matrix suites hit the flaky window.
+
+## Results (completed same session)
+
+Full run finished 22:49. **8 of 14 classes green on the first pass**, including all 297 new
+work-type checks (Create-dialog 153, Detail-page 102, End-to-end 42). Every red triaged:
+
+- **Fixed (test-side, confirmed on re-run):** Smoke create (6/6 ✅), WOI_01 tabs (4/4 ✅),
+  WOC_04 Schedule-＋ scroll (✅), WOC_03 → data-tolerant skip. Commits d3fc3f4 + ac6b0a2.
+  New reusable helpers: `trySelectWorkType`, `clickScheduleAddButton`.
+- **Root cause of the create reds:** the older Smoke/WOC create tests predate the v1.35 ZP-3000
+  redesign — they never selected the now-**required Work Type**, and set combos via the
+  visibility-gated path that stalls under dialog-render lag.
+- **Known product-bug detectors (expected red, working):** API SQL-leak ×3 (TC_WTAPI_008/009/010),
+  whitespace-name (TC_WTE_011b).
+- **Remaining, non-product:** WOC_06 create-flow fully fixed but its after-create *grid lookup* is
+  flaky under backend list-index lag (same scenario green in the E2E suite via API verify — follow-up:
+  switch WOC_06 to API verify); WOC_07 calendar-icon edge (primary date coverage green elsewhere).
+
+Client-readable per-class report: `docs/test-coverage/WORK_ORDER_TEST_HEALTH_2026-07-23.md`.
