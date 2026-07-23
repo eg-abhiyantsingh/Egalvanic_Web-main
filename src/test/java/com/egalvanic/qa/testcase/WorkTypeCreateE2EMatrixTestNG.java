@@ -105,9 +105,9 @@ public class WorkTypeCreateE2EMatrixTestNG extends WorkTypeUiBase {
     // ================================================================
 
     @Test(priority = 1, dataProvider = "allWorkTypes",
-          description = "TC_WTC_001: Create WO — fill every field (type, dates, priority, est hours, description, team)")
+          description = "TC_WTC_001: Create a work order filling every field (type, dates, priority, hours, description, team)")
     public void testTC_WTC_001_CreatePerType(WorkTypeCatalog.WorkTypeProfile profile) {
-        ExtentReportManager.createTest(MODULE, FEATURE, "TC_WTC_001 — " + profile.name);
+        ExtentReportManager.createTest(MODULE, FEATURE, "TC_WTC_001 — create filling every field · " + profile.name);
         String shortKey = profile.isService() ? profile.apiKey : "general";
         long ts = System.currentTimeMillis();
         String woName = "WTC_" + shortKey + "_" + ts;
@@ -124,33 +124,40 @@ public class WorkTypeCreateE2EMatrixTestNG extends WorkTypeUiBase {
         // Create dialog can mount without its Name input rendering in time (the WO Name field
         // never appears). Re-opening the dialog recovers it. Only after the name is actually in
         // the field do we proceed; a persistent failure to mount is a genuine (env) failure.
-        boolean nameReady = false;
-        for (int attempt = 1; attempt <= 4 && !nameReady; attempt++) {
+        // Open the dialog and set BOTH required fields (WO Name + Work Type) under ONE retry,
+        // because on a laggy QA either field can fail to render/commit; reopening the dialog
+        // recovers it. Each attempt: reopen, wait for Name+Work-Type inputs to render, fill both,
+        // and only succeed when BOTH read back correctly. All the underlying calls are caught so a
+        // transient timeout reopens instead of failing the test.
+        boolean requiredReady = false;
+        for (int attempt = 1; attempt <= 4 && !requiredReady; attempt++) {
             closeCreateDialogIfOpen();
             if (!ensureCreateDialogOpen()) { logStep("Dialog open attempt " + attempt + " failed — retrying"); pause(1500); continue; }
-            // Wait for the Name input to actually render before filling (the dialog can mount
-            // without it). fillWoName() can THROW a TimeoutException if it never appears — catch
-            // it so the retry can reopen instead of failing the whole test.
-            boolean nameInputPresent = false;
-            for (int w = 0; w < 20 && !nameInputPresent; w++) {   // up to ~10s per attempt
-                nameInputPresent = !driver.findElements(By.xpath("//input[@placeholder='e.g., Q1 2024 Maintenance']")).isEmpty();
-                if (!nameInputPresent) pause(500);
+            boolean fieldsPresent = false;
+            for (int w = 0; w < 20 && !fieldsPresent; w++) {   // up to ~10s per attempt
+                boolean nameIn = !driver.findElements(By.xpath("//input[@placeholder='e.g., Q1 2024 Maintenance']")).isEmpty();
+                boolean typeIn = !driver.findElements(By.xpath("//div[@role='dialog']//div[contains(@class,'MuiAutocomplete-root')][.//label[starts-with(normalize-space(),'Work Type')]]//input")).isEmpty();
+                fieldsPresent = nameIn && typeIn;
+                if (!fieldsPresent) pause(500);
             }
-            if (!nameInputPresent) { logStep("Attempt " + attempt + ": Name input never rendered — reopening dialog"); pause(1200); continue; }
-            try { workOrderPage.fillWoName(woName); } catch (Exception e) { logStep("fillWoName threw on attempt " + attempt + ": " + e.getMessage()); }
-            nameReady = woName.equals(workOrderPage.getWoNameValue());
-            if (!nameReady) { logStep("WO Name did not take on attempt " + attempt + " — reopening"); pause(1200); }
+            if (!fieldsPresent) { logStep("Attempt " + attempt + ": Name/Work-Type inputs did not render — reopening"); pause(1200); continue; }
+            try {
+                workOrderPage.fillWoName(woName);
+                selectWorkTypeCommitted(profile.name);
+            } catch (Exception e) { logStep("fill/select threw on attempt " + attempt + ": " + e.getMessage()); }
+            requiredReady = woName.equals(workOrderPage.getWoNameValue())
+                    && profile.name.equals(workOrderPage.getWorkTypeValue());
+            if (!requiredReady) {
+                logStep("Required fields not both set on attempt " + attempt + " (name='"
+                        + workOrderPage.getWoNameValue() + "', type='" + workOrderPage.getWorkTypeValue() + "') — reopening");
+                pause(1200);
+            }
         }
-        Assert.assertTrue(nameReady,
-                "Create dialog should open and accept the WO Name for '" + profile.name
-                + "' within 4 attempts (QA dialog-mount). Name field value: '" + workOrderPage.getWoNameValue() + "'.");
-        logStep("Dialog open (facility='" + workOrderPage.getFacilityValue() + "'), WO name set: '" + woName + "'");
-
-        // ---- (2) Work Type: SELECT FROM THE DROPDOWN and confirm it COMMITTED ----
-        Assert.assertTrue(selectWorkTypeCommitted(profile.name),
-                "Work Type '" + profile.name + "' must COMMIT in the Autocomplete (display-text-only is NOT enough).");
-        Assert.assertEquals(workOrderPage.getWorkTypeValue(), profile.name,
-                "Committed Work Type value must equal the selected option before we proceed.");
+        Assert.assertTrue(requiredReady,
+                "Create dialog should open and accept WO Name + Work Type for '" + profile.name
+                + "' within 4 attempts (QA dialog-mount). name='" + workOrderPage.getWoNameValue()
+                + "', type='" + workOrderPage.getWorkTypeValue() + "'.");
+        logStep("Dialog ready — name='" + woName + "', workType='" + profile.name + "'");
 
         // ---- (3) Scope policy: Start-Empty for ALL preview services ----
         // This E2E's job is "fill the WHOLE form for every type and prove each field persists".
@@ -258,9 +265,9 @@ public class WorkTypeCreateE2EMatrixTestNG extends WorkTypeUiBase {
     // ================================================================
 
     @Test(priority = 2, dataProvider = "allWorkTypes",
-          description = "TC_WTC_002: Verify created WO — detail contract + fields persisted")
+          description = "TC_WTC_002: Open the created work order and confirm every saved value shows correctly")
     public void testTC_WTC_002_VerifyCreated(WorkTypeCatalog.WorkTypeProfile profile) {
-        ExtentReportManager.createTest(MODULE, FEATURE, "TC_WTC_002 — " + profile.name);
+        ExtentReportManager.createTest(MODULE, FEATURE, "TC_WTC_002 — created values persist · " + profile.name);
         String woName = createdByType.get(profile.name);
         if (woName == null) {
             Assert.fail("Phase A (TC_WTC_001) recorded no created WO for '" + profile.name
@@ -420,9 +427,9 @@ public class WorkTypeCreateE2EMatrixTestNG extends WorkTypeUiBase {
     // ================================================================
 
     @Test(priority = 3, dataProvider = "allWorkTypes",
-          description = "TC_WTC_003: Delete created WO")
+          description = "TC_WTC_003: Delete the created work order (cleanup)")
     public void testTC_WTC_003_CleanupPerType(WorkTypeCatalog.WorkTypeProfile profile) {
-        ExtentReportManager.createTest(MODULE, FEATURE, "TC_WTC_003 — " + profile.name);
+        ExtentReportManager.createTest(MODULE, FEATURE, "TC_WTC_003 — delete created work order · " + profile.name);
         String woName = createdByType.get(profile.name);
         if (woName == null) {
             Assert.fail("Phase A (TC_WTC_001) never created a WO for '" + profile.name

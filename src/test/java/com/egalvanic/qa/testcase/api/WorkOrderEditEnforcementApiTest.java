@@ -120,11 +120,11 @@ public class WorkOrderEditEnforcementApiTest extends BaseAPITest {
     }
 
     @Test(dataProvider = "roles",
-          description = "Only roles allowed to edit Work Orders can edit them (others are blocked)")
+          description = "API testing - Only roles allowed to edit Work Orders can edit them (others are blocked)")
     public void workOrderEditEnforcement(Role role) {
         ExtentReportManager.createTest(
                 AppConstants.MODULE_AUTHENTICATION, AppConstants.FEATURE_ROLE_ACCESS,
-                "WO Edit Enforcement: " + role.name);
+                "API testing - Work Order edit allowed/blocked per role: " + role.name);
 
         if (jobId == null || jobBody == null) {
             throw new SkipException("No work order (job) available to test edit enforcement against.");

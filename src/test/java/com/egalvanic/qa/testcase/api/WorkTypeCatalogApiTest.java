@@ -273,7 +273,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     // ════════════════════════════════════════════════════════════════════════
 
     @Test(priority = 1, dataProvider = "catalogShapeChecks",
-          description = "TC_WTAPI_001: GET services — 13 unique services")
+          description = "API testing - TC_WTAPI_001: the services list returns all 13 work types exactly once")
     public void testServicesCatalogShape(String check) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_001 — " + check);
         requireAuth();
@@ -310,7 +310,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     // ════════════════════════════════════════════════════════════════════════
 
     @Test(priority = 2, dataProvider = "allServices",
-          description = "TC_WTAPI_002: Service entry matches the catalog pin")
+          description = "API testing - TC_WTAPI_002: each service's details match the expected catalog")
     public void testServicePinned(WorkTypeCatalog.WorkTypeProfile profile) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_002 — " + profile);
         requireAuth();
@@ -356,7 +356,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     // ════════════════════════════════════════════════════════════════════════
 
     @Test(priority = 3, dataProvider = "allServices",
-          description = "TC_WTAPI_003: GET procedures for a service")
+          description = "API testing - TC_WTAPI_003: the procedures list loads for each service")
     public void testProceduresListPerService(WorkTypeCatalog.WorkTypeProfile profile) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_003 — " + profile);
         requireAuth();
@@ -405,7 +405,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     // ════════════════════════════════════════════════════════════════════════
 
     @Test(priority = 4, dataProvider = "allServices",
-          description = "TC_WTAPI_004: scope-preview: matching_count == assets.length")
+          description = "API testing - TC_WTAPI_004: the asset-preview count matches the number of assets returned")
     public void testScopePreviewContract(WorkTypeCatalog.WorkTypeProfile profile) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_004 — " + profile);
         requireAuth();
@@ -443,7 +443,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     // ════════════════════════════════════════════════════════════════════════
 
     @Test(priority = 5, dataProvider = "allServices",
-          description = "TC_WTAPI_005: scope-preview asset shape")
+          description = "API testing - TC_WTAPI_005: each previewed asset carries its id, name and type fields")
     public void testScopePreviewAssetShape(WorkTypeCatalog.WorkTypeProfile profile) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_005 — " + profile);
         requireAuth();
@@ -479,7 +479,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     // ════════════════════════════════════════════════════════════════════════
 
     @Test(priority = 6, dataProvider = "fixtureEndpoints",
-          description = "TC_WTAPI_006: GET fixture session full/assets/team")
+          description = "API testing - TC_WTAPI_006: a known work order returns its full data, assets and team")
     public void testFixtureSessionEndpoint(WorkTypeCatalog.Family family, String sub) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_006 — " + family + " /" + sub);
         requireAuth();
@@ -528,7 +528,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     // ════════════════════════════════════════════════════════════════════════
 
     @Test(priority = 7, dataProvider = "noAuthEndpoints",
-          description = "TC_WTAPI_007: Endpoints require auth (401/403)")
+          description = "API testing - TC_WTAPI_007: calls without login are rejected")
     public void testNegativeNoAuth(String label, String method, String path, String jsonBody) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_007 — no-auth " + label);
         requireAuth();   // env sanity: prove login works before trusting a 401 as an auth gate
@@ -554,7 +554,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     // ════════════════════════════════════════════════════════════════════════
 
     @Test(priority = 8, dataProvider = "malformedRequests", groups = {"known-product-bug"},
-          description = "TC_WTAPI_008: Malformed id → 4xx not 500 (known bug)")
+          description = "API testing - TC_WTAPI_008: a bad id must return a clean error, not a server crash (known bug)")
     public void testMalformedRequestNotServerError(String key) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_008 — " + key);
         requireAuth();
@@ -574,9 +574,9 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     // ════════════════════════════════════════════════════════════════════════
 
     @Test(priority = 9,
-          description = "TC_WTAPI_009: Bad service_id → no SQL leak")
+          description = "API testing - TC_WTAPI_009: an invalid service id must not leak database internals")
     public void testNoSqlLeakOnBadServiceId() {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_009 — leak tripwire: procedures?service_id=not-a-uuid");
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_009 — no database-leak check: procedures?service_id=not-a-uuid");
         requireAuth();
 
         Response r = fireMalformed("procedures?service_id=not-a-uuid");
@@ -593,9 +593,9 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     }
 
     @Test(priority = 9, groups = {"known-product-bug"},
-          description = "TC_WTAPI_010: Garbage sld_id → no SQL leak (known bug)")
+          description = "API testing - TC_WTAPI_010: an invalid site id must not leak database internals (known bug)")
     public void testNoSqlLeakOnGarbageSldId() {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_010 — leak tripwire: scope-preview sld_id=garbage");
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_010 — no database-leak check: scope-preview sld_id=garbage");
         requireAuth();
 
         Response r = fireMalformed("scope-preview sld_id=garbage-not-a-uuid");
@@ -617,7 +617,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     // ════════════════════════════════════════════════════════════════════════
 
     @Test(priority = 10,
-          description = "TC_WTAPI_011: scope-preview missing work_type_id — graceful")
+          description = "API testing - TC_WTAPI_011: asset preview without a work type fails gracefully")
     public void testScopePreviewMissingWorkTypeGraceful() {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_011 — scope-preview missing work_type_id");
         requireAuth();
@@ -663,7 +663,7 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     // ════════════════════════════════════════════════════════════════════════
 
     @Test(priority = 11,
-          description = "TC_WTAPI_012: DELETE random id → async receipt")
+          description = "API testing - TC_WTAPI_012: deleting a nonexistent work order still returns a proper acknowledgement")
     public void testDeleteNonexistentUuidAsyncReceipt() {
         String randomId = UUID.randomUUID().toString();
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_012 — DELETE nonexistent /ir_session/" + randomId);

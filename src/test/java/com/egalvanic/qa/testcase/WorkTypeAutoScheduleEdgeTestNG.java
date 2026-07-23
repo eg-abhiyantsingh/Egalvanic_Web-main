@@ -117,9 +117,9 @@ public class WorkTypeAutoScheduleEdgeTestNG extends WorkTypeUiBase {
     // ================================================================
 
     @Test(priority = 1, dataProvider = "allWorkTypes",
-          description = "TC_WTE_001: Auto-Schedule not enabled by Est Hours + Technician alone")
+          description = "TC_WTE_001: Auto-Schedule stays disabled even with estimated hours and a technician filled in")
     public void testTC_WTE_001_AutoScheduleEnablement(WorkTypeProfile profile) {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_001 — " + profile.name);
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_001 — Auto-Schedule stays disabled · " + profile.name);
         // LIVE-VERIFIED 2026-07-22 (full 14-type truth table, fresh dialog per type, site Z1):
         // the top-level Schedule-section Auto-Schedule button renders for EVERY work type but
         // stays DISABLED after setting WO Name + Est. Hours + Field Technician — for all 13
@@ -162,9 +162,9 @@ public class WorkTypeAutoScheduleEdgeTestNG extends WorkTypeUiBase {
     // ================================================================
 
     @Test(priority = 2,
-          description = "TC_WTE_002: Shutdown shows the no-procedures notice")
+          description = "TC_WTE_002: 'Shutdown' work type shows the 'no procedures' message")
     public void testTC_WTE_002_ShutdownNoProceduresNoticePinned() {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_002 — Shutdown (Composite) notice pinned");
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_002 — Shutdown shows the 'no procedures' message");
         boolean opened = freshCreateDialog();
         Assert.assertTrue(opened, "Create dialog should open.");
         boolean committed = selectWorkTypeCommitted("Shutdown (Composite)");
@@ -186,9 +186,9 @@ public class WorkTypeAutoScheduleEdgeTestNG extends WorkTypeUiBase {
     }
 
     @Test(priority = 3,
-          description = "TC_WTE_003: Shutdown WO creates with 0 assets")
+          description = "TC_WTE_003: A Shutdown work order can be created with zero assets")
     public void testTC_WTE_003_ShutdownZeroProcedureCreateSucceeds() {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_003 — Shutdown (Composite) create with 0 assets");
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_003 — Shutdown creates with zero assets");
         boolean opened = ensureCreateDialogOpen();
         Assert.assertTrue(opened, "Create dialog should be open (reused from TC_WTE_002 or reopened).");
         if (!"Shutdown (Composite)".equals(workOrderPage.getWorkTypeValue())) {
@@ -222,9 +222,9 @@ public class WorkTypeAutoScheduleEdgeTestNG extends WorkTypeUiBase {
     }
 
     @Test(priority = 4,
-          description = "TC_WTE_004: Delete the Shutdown WO")
+          description = "TC_WTE_004: Delete the test's Shutdown work order (cleanup)")
     public void testTC_WTE_004_ShutdownCleanupDeleted() {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_004 — Shutdown (Composite) cleanup");
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_004 — delete the Shutdown work order (cleanup)");
         Assert.assertNotNull(shutdownWoName, "Precondition: TC_WTE_003 must have created the Shutdown WO.");
         boolean deleted = deleteTracked(shutdownSessionId);
         logStep("DELETE /api/ir_session/" + shutdownSessionId + " ok=" + deleted + " (async receipt)");
@@ -239,9 +239,9 @@ public class WorkTypeAutoScheduleEdgeTestNG extends WorkTypeUiBase {
     // ================================================================
 
     @Test(priority = 5,
-          description = "TC_WTE_005: Create a General WO")
+          description = "TC_WTE_005: A 'General' work order can be created")
     public void testTC_WTE_005_GeneralCreateSucceeds() {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_005 — General create");
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_005 — create a General work order");
         boolean opened = freshCreateDialog();
         Assert.assertTrue(opened, "Create dialog should open.");
         Assert.assertTrue(selectWorkTypeCommitted("General"), "'General' should commit.");
@@ -257,9 +257,9 @@ public class WorkTypeAutoScheduleEdgeTestNG extends WorkTypeUiBase {
     }
 
     @Test(priority = 6,
-          description = "TC_WTE_006: General WO detail-page contract")
+          description = "TC_WTE_006: General work order detail page shows the expected tabs and fields")
     public void testTC_WTE_006_GeneralDetailContractPinned() {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_006 — General detail contract pin");
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_006 — General detail page shows expected tabs/fields");
         Assert.assertNotNull(generalWoName, "Precondition: TC_WTE_005 must have created the General WO.");
         ensureOnWorkOrdersList();
         searchWorkOrders(generalWoName);
@@ -283,9 +283,9 @@ public class WorkTypeAutoScheduleEdgeTestNG extends WorkTypeUiBase {
     }
 
     @Test(priority = 7,
-          description = "TC_WTE_007: General WO header chips")
+          description = "TC_WTE_007: General work order header shows the correct status and priority labels")
     public void testTC_WTE_007_GeneralHeaderChips() {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_007 — General header chips truth");
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_007 — General header shows correct labels");
         Assert.assertNotNull(generalChips, "Precondition: TC_WTE_006 must have captured the chips.");
         boolean containsGeneral = false;
         for (String c : generalChips) {
@@ -299,9 +299,9 @@ public class WorkTypeAutoScheduleEdgeTestNG extends WorkTypeUiBase {
     }
 
     @Test(priority = 8,
-          description = "TC_WTE_008: Delete the General WO")
+          description = "TC_WTE_008: Delete the test's General work order (cleanup)")
     public void testTC_WTE_008_GeneralCleanupDeleted() {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_008 — General cleanup");
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_008 — delete the General work order (cleanup)");
         Assert.assertNotNull(generalWoName, "Precondition: TC_WTE_005 must have created the General WO.");
         boolean deleted = deleteTracked(generalSessionId);
         logStep("DELETE /api/ir_session/" + generalSessionId + " ok=" + deleted + " (async receipt)");
@@ -316,9 +316,9 @@ public class WorkTypeAutoScheduleEdgeTestNG extends WorkTypeUiBase {
     // ================================================================
 
     @Test(priority = 9, dataProvider = "servicePlusGeneral",
-          description = "TC_WTE_009: Cancel discards a filled dialog")
+          description = "TC_WTE_009: Cancel throws away everything typed in the dialog")
     public void testTC_WTE_009_CancelDiscards(WorkTypeProfile profile) {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_009 — cancel discards / " + profile.name);
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_009 — Cancel discards typed data · " + profile.name);
         String name = "WTE_CXL_" + System.currentTimeMillis();
         boolean opened = freshCreateDialog();
         Assert.assertTrue(opened, "Create dialog should open.");
@@ -339,9 +339,9 @@ public class WorkTypeAutoScheduleEdgeTestNG extends WorkTypeUiBase {
     // ================================================================
 
     @Test(priority = 10, dataProvider = "servicePlusGeneral",
-          description = "TC_WTE_010: Reopen resets Work Type, keeps WO Name draft")
+          description = "TC_WTE_010: Reopening the dialog clears the work type but keeps the typed name")
     public void testTC_WTE_010_ReopenStateReset(WorkTypeProfile profile) {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_010 — reopen state / " + profile.name);
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_010 — reopen keeps name, clears type · " + profile.name);
         // PINNED live 2026-07-21 (Playwright + Selenium agree): after Cancel + reopen the dialog
         // KEEPS the WO Name as a sticky draft but RESETS the Work Type — so Create is disabled
         // again (type is the missing gate). Draft-keeping may be by-design; this row pins it so
@@ -376,9 +376,9 @@ public class WorkTypeAutoScheduleEdgeTestNG extends WorkTypeUiBase {
     // ================================================================
 
     @Test(priority = 11, dataProvider = "nameEdges",
-          description = "TC_WTE_011: WO name edge cases render literally")
+          description = "TC_WTE_011: Unusual names (symbols, quotes, very long) display exactly as typed")
     public void testTC_WTE_011_NameEdgeCases(String kind) {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_011 — name edge / " + kind);
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_011 — unusual name displays correctly · " + kind);
         long millis = System.currentTimeMillis();
         String prefix = "WTE_EDGE_" + millis;
         String name;
@@ -452,10 +452,10 @@ public class WorkTypeAutoScheduleEdgeTestNG extends WorkTypeUiBase {
      * The probe WO created during verification was deleted (DELETE /ir_session/{id}).
      */
     @Test(priority = 11, groups = {"known-product-bug"},
-          description = "TC_WTE_011b: Whitespace-only name should block Create (known bug)")
+          description = "TC_WTE_011b: A name made only of spaces should NOT enable Create (known product bug)")
     public void testTC_WTE_011b_WhitespaceOnlyNameBlocked() {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE,
-                "TC_WTE_011b — whitespace-only name tripwire (known product bug)");
+                "TC_WTE_011b — spaces-only name should not enable Create (known product bug)");
         boolean opened = freshCreateDialog();
         Assert.assertTrue(opened, "Create dialog should open.");
         Assert.assertTrue(selectWorkTypeCommitted("General"), "'General' should commit.");
@@ -477,9 +477,9 @@ public class WorkTypeAutoScheduleEdgeTestNG extends WorkTypeUiBase {
     // ================================================================
 
     @Test(priority = 12, dataProvider = "facilityFlips",
-          description = "TC_WTE_012: Facility change re-fires the scope preview")
+          description = "TC_WTE_012: Changing the facility refreshes the matching-assets preview")
     public void testTC_WTE_012_FacilityChangeRefiresPreview(String direction) {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_012 — facility flip / " + direction);
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_012 — facility change refreshes preview · " + direction);
         // Flip between the suite's pinned (home) site and another site ("Test Site"); the point
         // is that changing Facility RE-FIRES the scope preview and the dialog survives — not the
         // specific counts (site-agnostic since this suite may run on a light site).
@@ -524,9 +524,9 @@ public class WorkTypeAutoScheduleEdgeTestNG extends WorkTypeUiBase {
     // ================================================================
 
     @Test(priority = 13, dataProvider = "dupRuns",
-          description = "TC_WTE_013: Duplicate WO name — allowed or blocked (pinned)")
+          description = "TC_WTE_013: Creating two work orders with the same name — records whether the app allows or blocks it")
     public void testTC_WTE_013_DuplicateNamePinned(String run) {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_013 — duplicate name / " + run);
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_013 — same name used twice · " + run);
         String name = "WTE_DUP_" + System.currentTimeMillis();
 
         // First create (must succeed)
@@ -589,9 +589,9 @@ public class WorkTypeAutoScheduleEdgeTestNG extends WorkTypeUiBase {
     // ================================================================
 
     @Test(priority = 14,
-          description = "TC_WTE_014: Past due date doesn't crash the dialog")
+          description = "TC_WTE_014: A due date in the past does not break the dialog")
     public void testTC_WTE_014_PastDueDate() {
-        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_014 — past due date 01/01/2020");
+        ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTE_014 — past due date (01/01/2020) handled");
         String name = "WTE_DUE_" + System.currentTimeMillis();
         boolean opened = freshCreateDialog();
         Assert.assertTrue(opened, "Create dialog should open.");

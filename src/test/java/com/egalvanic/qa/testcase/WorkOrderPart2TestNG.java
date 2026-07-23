@@ -388,7 +388,7 @@ public class WorkOrderPart2TestNG extends BaseTest {
         logStep("PASS: Row count pagination check completed");
     }
 
-    @Test(priority = 107, description = "TC_WOL2_007: Verify grid cells have data-field attributes")
+    @Test(priority = 107, description = "TC_WOL2_007: Verify each grid cell is tagged with its column name (structure check)")
     public void testTC_WOL2_007_CellsHaveDataField() {
         ExtentReportManager.createTest(MODULE, FEATURE_LIST_EXT, "TC_WOL2_007_CellsHaveDataField");
         logStep("Checking grid cells for data-field attributes");
@@ -695,7 +695,7 @@ public class WorkOrderPart2TestNG extends BaseTest {
         logStep("PASS: Special characters check completed");
     }
 
-    @Test(priority = 210, description = "TC_CWO2_010: Verify drawer closes on overlay/backdrop click")
+    @Test(priority = 210, description = "TC_CWO2_010: Verify clicking outside the create form closes it")
     public void testTC_CWO2_010_DrawerCloseOnBackdropClick() {
         ExtentReportManager.createTest(MODULE, FEATURE_CREATE_EXT, "TC_CWO2_010_DrawerCloseOnBackdropClick");
         logStep("Testing drawer close on backdrop click");
@@ -843,7 +843,7 @@ public class WorkOrderPart2TestNG extends BaseTest {
         logStep("PASS: Detail Facility label check completed");
     }
 
-    @Test(priority = 308, description = "TC_WOD2_008: Verify detail page has Edit button or kebab menu")
+    @Test(priority = 308, description = "TC_WOD2_008: Verify detail page has an Edit button or 3-dot menu")
     public void testTC_WOD2_008_DetailHasEditOption() {
         ExtentReportManager.createTest(MODULE, FEATURE_DETAIL, "TC_WOD2_008_DetailHasEditOption");
         logStep("Checking detail page Edit option");

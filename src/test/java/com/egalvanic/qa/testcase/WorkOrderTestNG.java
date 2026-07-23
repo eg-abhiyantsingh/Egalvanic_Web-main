@@ -1364,7 +1364,7 @@ public class WorkOrderTestNG extends BaseTest {
         logStep("PASS: Total count consistency verified");
     }
 
-    @Test(priority = 81, description = "TC_CI_002: Detect SmokeTest data pollution")
+    @Test(priority = 81, description = "TC_CI_002: Detect leftover auto-created test work orders in the list")
     public void testTC_CI_002_SmokeTestDataPollution() {
         ExtentReportManager.createTest(MODULE, FEATURE_CLEANUP, "TC_CI_002_SmokeTestDataPollution");
         logStep("Detecting SmokeTest data pollution");

@@ -126,10 +126,10 @@ public class WorkTypeDetailContractTestNG extends WorkTypeUiBase {
     // ================================================================
 
     @Test(priority = 1, dataProvider = "matrix",
-          description = "TC_WTF_001-016: Detail-page contract — 16 checks x 6 fixtures")
+          description = "TC_WTF_001-016: Each work-order type's detail page shows the right tabs, columns and fields (16 checks per type)")
     public void testDetailContract(Family family, String checkKey) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE,
-                tcId(checkKey) + " " + checkKey + " — " + family + " (" + fixtureName(family) + ")");
+                tcId(checkKey) + " — " + plainCheck(checkKey) + " · " + family + " (" + fixtureName(family) + ")");
 
         switch (checkKey) {
             case "deepLinkLoads":           checkDeepLinkLoads(family);           break;
@@ -153,10 +153,10 @@ public class WorkTypeDetailContractTestNG extends WorkTypeUiBase {
     }
 
     @Test(priority = 2, dataProvider = "fixturesHealth",
-          description = "TC_WTF_017: Detail page health gate per fixture")
+          description = "TC_WTF_017: Detail page loads with no errors (health check) for each work-order type")
     public void testFixturePageHealth(Family family) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE,
-                "TC_WTF_017 pageHealth — " + family + " (" + fixtureName(family) + ")");
+                "TC_WTF_017 — page loads error-free · " + family + " (" + fixtureName(family) + ")");
 
         String id = fixtureId(family);
         logStep("Fresh deep-link /sessions/" + id + " then full health gate for " + family);
@@ -473,6 +473,32 @@ public class WorkTypeDetailContractTestNG extends WorkTypeUiBase {
             if (CHECKS[i].equals(checkKey)) return String.format("TC_WTF_%03d", i + 1);
         }
         return "TC_WTF_UNK";
+    }
+
+    /** Client-readable phrase per check key (report names must say WHAT is verified). */
+    private static final Map<String, String> PLAIN_CHECK = new LinkedHashMap<String, String>();
+    static {
+        PLAIN_CHECK.put("deepLinkLoads",           "page opens from a direct link");
+        PLAIN_CHECK.put("urlStable",               "web address stays stable after load");
+        PLAIN_CHECK.put("headerShowsName",         "header shows the work order name");
+        PLAIN_CHECK.put("tabStripExact",           "shows exactly the right tabs");
+        PLAIN_CHECK.put("typeChip",                "header shows the work-type label");
+        PLAIN_CHECK.put("priorityChip",            "header shows the priority label");
+        PLAIN_CHECK.put("assetColumnsExact",       "asset table shows the right columns");
+        PLAIN_CHECK.put("commonActionButtons",     "standard action buttons present");
+        PLAIN_CHECK.put("dataMaskExclusive",       "shows only this type's data view");
+        PLAIN_CHECK.put("issuesTabUniversal",      "Issues tab present");
+        PLAIN_CHECK.put("attachmentsTabUniversal", "Attachments tab present");
+        PLAIN_CHECK.put("assetsTabBadge",          "Assets tab shows its count");
+        PLAIN_CHECK.put("typeTabClickable",        "type-specific tab opens");
+        PLAIN_CHECK.put("actionsMenuContract",     "Actions menu shows the right options");
+        PLAIN_CHECK.put("moreMenuPresent",         "'more' (3-dot) menu present");
+        PLAIN_CHECK.put("gridHasRows",             "asset table has rows");
+    }
+
+    private static String plainCheck(String checkKey) {
+        String p = PLAIN_CHECK.get(checkKey);
+        return p != null ? p : checkKey;
     }
 
     /** Visible page body text ('' when unreadable). */
