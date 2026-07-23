@@ -167,8 +167,11 @@ public class WorkOrderCreateTestNG extends BaseTest {
         logStep("Creating work order '" + name + "'");
 
         openFreshCreateForm();
+        // v1.35 (ZP-3000): Work Type is required and gates Create. "General" is the simplest type.
+        boolean typeOk = workOrderPage.trySelectWorkType("General");     // step 1 (required)
+        logStep("Work type 'General' selected: " + typeOk);
         workOrderPage.fillWoName(name);                                   // step 2
-        workOrderPage.selectWoPriority("High");                          // step 3
+        workOrderPage.trySelectPriority("High");                        // step 3 (render-lag-proof)
         workOrderPage.fillEstHours("8");                                 // step 4
         workOrderPage.fillWoDescription("Automated WO-creation coverage — scope: verify the full Create flow."); // step 5
         workOrderPage.selectWoFacility(SITE);                            // step 6 — open Facility dropdown + select

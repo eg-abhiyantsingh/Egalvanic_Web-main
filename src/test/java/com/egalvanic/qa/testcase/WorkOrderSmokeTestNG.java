@@ -64,25 +64,24 @@ public class WorkOrderSmokeTestNG extends BaseTest {
             // 3. Fill all required form fields
             createdWorkOrderName = "SmokeTest_WO_" + System.currentTimeMillis();
 
+            // Required (v1.35 ZP-3000): Work Type — Create is gated on it. "General" is the simplest
+            // type (no procedures, creates with 0 assets), so the smoke path stays deterministic.
+            boolean typeOk = workOrderPage.trySelectWorkType("General");
+            logStep("Selected work type 'General': " + typeOk);
+
             // Required: WO Name / # *
-            workOrderPage.fillName(createdWorkOrderName);
+            workOrderPage.fillWoName(createdWorkOrderName);
             logStep("Filled name: " + createdWorkOrderName);
 
-            // Required: Priority *
-            workOrderPage.selectPriority(TEST_PRIORITY);
-            logStep("Selected priority: " + TEST_PRIORITY);
+            // Priority lives in the Advanced Settings accordion and defaults to Medium; set it via the
+            // render-lag-proof best-effort helper (the visibility-wait selectPriority() times out under
+            // QA's dialog-render lag — the documented MUI hidden-inner-input quirk).
+            boolean prioOk = workOrderPage.trySelectPriority(TEST_PRIORITY);
+            logStep("Selected priority '" + TEST_PRIORITY + "': " + prioOk);
 
             // Optional: Description
-            workOrderPage.fillDescription("Smoke test work order");
+            workOrderPage.fillWoDescription("Smoke test work order");
             logStep("Filled description");
-
-            // Required: Facility *
-            workOrderPage.selectFacility(TEST_FACILITY);
-            logStep("Selected facility: " + TEST_FACILITY);
-
-            // Required: Photo Type *
-            workOrderPage.selectPhotoType(TEST_PHOTO_TYPE);
-            logStep("Selected photo type: " + TEST_PHOTO_TYPE);
 
             logStepWithScreenshot("All required fields filled — about to submit");
 

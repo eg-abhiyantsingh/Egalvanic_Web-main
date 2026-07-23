@@ -428,6 +428,43 @@ public class WorkOrderPage {
     }
 
     /**
+     * Best-effort Work Type setter that does NOT wait on the MUI Autocomplete inner input's
+     * visibility (that hidden text input reports not-displayed under QA's dialog-render lag, so a
+     * visibility-gated pick times out). Opens the combobox via its wrapper, types to filter, clicks
+     * the exact-text option, and verifies the value COMMITTED (a raw click sets display text without
+     * committing React state — Create would stay disabled). Never throws; true only if committed.
+     */
+    public boolean trySelectWorkType(String workType) {
+        try {
+            java.util.List<WebElement> inputs = driver.findElements(WORK_TYPE_INPUT);
+            if (inputs.isEmpty()) { System.out.println("[WorkOrderPage] trySelectWorkType: no Work Type input present"); return false; }
+            WebElement input = inputs.get(0);
+            if (workType.equalsIgnoreCase(String.valueOf(input.getAttribute("value")))) return true;
+            js.executeScript(
+                "var i=arguments[0]; i.scrollIntoView({block:'center'}); i.focus();" +
+                "var w=i.closest('.MuiAutocomplete-root'); if(w){var b=w.querySelector('.MuiAutocomplete-popupIndicator'); if(b) b.click();}", input);
+            pause(700);
+            // type to filter the list, then click the exact-text <li> (the proven commit path)
+            try { input.sendKeys(workType); } catch (Exception ignored) {}
+            pause(600);
+            java.util.List<WebElement> opts = driver.findElements(By.xpath("//li[@role='option'][normalize-space()='" + workType + "']"));
+            if (opts.isEmpty()) opts = driver.findElements(By.xpath("//ul[contains(@class,'MuiAutocomplete-listbox')]/li[normalize-space()='" + workType + "']"));
+            if (opts.isEmpty()) { System.out.println("[WorkOrderPage] trySelectWorkType: option '" + workType + "' not offered"); try { input.sendKeys(Keys.ESCAPE); } catch (Exception ignored) {} return false; }
+            WebElement opt = opts.get(0);
+            for (String t : new String[]{"pointerdown","mousedown","pointerup","mouseup","click"}) {
+                try { js.executeScript("arguments[0].dispatchEvent(new MouseEvent(arguments[1],{bubbles:true,cancelable:true}));", opt, t); } catch (Exception ignored) {}
+            }
+            pause(700);
+            boolean ok = workType.equalsIgnoreCase(getWorkTypeValue());
+            System.out.println("[WorkOrderPage] trySelectWorkType('" + workType + "') committed=" + ok + " (value now '" + getWorkTypeValue() + "')");
+            return ok;
+        } catch (Exception e) {
+            System.out.println("[WorkOrderPage] trySelectWorkType failed: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Tenant-agnostic fallback: open the Work Type combobox and pick the first
      * real option. Work-type catalogs differ per tenant, so an exact-label pick
      * can miss; this keeps the required field satisfied for create-flow tests.
