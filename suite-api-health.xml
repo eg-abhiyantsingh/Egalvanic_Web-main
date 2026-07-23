@@ -89,7 +89,11 @@
          planned_workorder_line confirmed live), trailing-slash twins, singular/plural roots,
          v1/v2 overlaps. Pure spec analysis (only fetches swagger.json). Report mode;
          -DSTRICT_SPEC_HYGIENE=true gates exact twins. Runtime duplicate CALLS stay in Suite 2's
-         browser-driven ApiDuplicateCallTestNG (needs Chrome). -->
+         browser-driven ApiDuplicateCallTestNG (needs Chrome).
+         + 2026-07-23 FIX-CHECK tripwires (hard-fail, always on): dev reported the critical twin
+         fixed — live re-verify says NOT fixed (underscore list still unbounded/times out, both
+         spellings registered, dash paginated list REMOVED). The two testFixCheck* tests stay RED
+         until the fix contract holds; they SKIP during QA-wide 502 degradation episodes. -->
     <test name="API Duplicate-Endpoint Audit (spec-driven)">
         <classes>
             <class name="com.egalvanic.qa.testcase.api.DuplicateApiAuditTest"/>

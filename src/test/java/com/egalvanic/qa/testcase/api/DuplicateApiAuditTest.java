@@ -49,6 +49,16 @@ import java.util.TreeSet;
  * {@code reports/api-duplicate-endpoints-report.md}; {@code -DSTRICT_SPEC_HYGIENE=true} makes
  * exact twins (dash/underscore + trailing-slash) hard-fail. Read-only: the audit is pure spec
  * analysis, no endpoint is called beyond fetching swagger.json.</p>
+ *
+ * <p><b>FIX-CHECK tripwires (added 2026-07-23, HARD-FAIL, exempt from report-mode):</b> the dev
+ * team reported the critical planned-workorder-line twin fixed; live re-verification proved it is
+ * NOT — {@code GET /planned_workorder_line/?page=1&per_page=5} still ignores pagination and times
+ * out (40s+, same as 17 Jul), BOTH spellings are still registered (6 dash + 12 underscore paths),
+ * and the paginated dash list ({@code /planned-workorder-lines/}) that worked on 17 Jul has been
+ * REMOVED from the spec, leaving the broken unbounded read as the only list. The two
+ * {@code testFixCheck*} tests below encode the fix contract and stay RED until it is genuinely
+ * met. They SKIP (not fail) when a control endpoint shows the QA backend is in one of its ambient
+ * 502/504 degradation episodes, so they never produce false reds.</p>
  */
 public class DuplicateApiAuditTest extends BaseAPITest {
 
@@ -177,6 +187,86 @@ public class DuplicateApiAuditTest extends BaseAPITest {
         conclude("v1/v2 overlaps", overlaps, false);
     }
 
+    // ── FIX-CHECK tripwires (2026-07-23) — hard-fail until the planned-workorder-line twin is fixed ──
+
+    /** 35s socket budget: long enough to measure the defect (hangs 40s+), far above the 10s pass bar. */
+    private static final RestAssuredConfig TRIPWIRE_CONFIG = RestAssured.config().httpClient(
+            HttpClientConfig.httpClientConfig()
+                    .setParam("http.connection.timeout", 10000)
+                    .setParam("http.socket.timeout", 35000));
+
+    /**
+     * Ambient-degradation guard: the QA host periodically 502/504s EVERYTHING (verified again
+     * 2026-07-23: even action-items/counts returned 502 after 41s). A tripwire that reds on those
+     * episodes would be noise — so skip unless an unrelated control endpoint is healthy.
+     */
+    private void requireHealthyBackend() {
+        if (!hasAuthToken()) throw new SkipException("No auth token — cannot probe authenticated endpoints.");
+        try {
+            Response r = getAuthenticatedRequestSpec().config(PROBE_CONFIG).relaxedHTTPSValidation()
+                    .when().get("/action-items/counts").then().extract().response();
+            if (r.statusCode() >= 500 || r.getTime() > 10000) {
+                throw new SkipException("QA backend in ambient degradation (control /action-items/counts → HTTP "
+                        + r.statusCode() + " in " + r.getTime() + "ms) — tripwire probe would be meaningless. Re-run later.");
+            }
+        } catch (SkipException se) { throw se; }
+        catch (Exception e) {
+            throw new SkipException("QA backend unreachable (control probe: " + e.getMessage() + ") — re-run later.");
+        }
+    }
+
+    @Test(description = "API testing - FIX CHECK: planned_workorder_line list honours pagination and answers <10s (RED until fixed)")
+    public void testFixCheckUnderscoreListPaginates() {
+        ExtentReportManager.createTest(MODULE, "fix-check", "API testing - FIX CHECK: planned_workorder_line list paginates <10s");
+        requireHealthyBackend();
+        String path = "/planned_workorder_line/?page=1&per_page=5";
+        long t0 = System.currentTimeMillis();
+        try {
+            Response r = getAuthenticatedRequestSpec().config(TRIPWIRE_CONFIG).relaxedHTTPSValidation()
+                    .when().get(path).then().extract().response();
+            long ms = System.currentTimeMillis() - t0;
+            String msg = "GET " + path + " → HTTP " + r.statusCode() + " in " + ms + "ms ("
+                    + r.asString().length() + " bytes)";
+            System.out.println("[DupAudit/FixCheck] " + msg);
+            if (r.statusCode() != 200 || ms > 10000) {
+                ExtentReportManager.logFail(msg);
+                Assert.fail("NOT FIXED — " + msg + ". Contract: the list read must honour page/per_page and answer"
+                        + " <10s. First flagged 2026-07-09, dev-reported fixed, re-verified broken 2026-07-23"
+                        + " (hangs 40s+, unbounded read). Fix: paginate the read and collapse the dash/underscore"
+                        + " twin onto ONE canonical route.");
+            }
+            ExtentReportManager.logPass("FIXED: " + msg);
+        } catch (AssertionError ae) { throw ae; }
+        catch (Exception e) {
+            long ms = System.currentTimeMillis() - t0;
+            String msg = "GET " + path + " gave NO response in " + ms + "ms (socket timeout — unbounded/unpaginated read)";
+            ExtentReportManager.logFail(msg);
+            Assert.fail("NOT FIXED — " + msg + ". Same signature as 2026-07-09 and 2026-07-17; re-verified live"
+                    + " 2026-07-23 (45s browser probe aborted with no response while bounded reads on the same"
+                    + " resource answered). The endpoint ignores page/per_page and scans unbounded.");
+        }
+    }
+
+    @Test(description = "API testing - FIX CHECK: planned-workorder-line exists in ONE spelling only (RED until twin retired)")
+    public void testFixCheckSingleSpelling() {
+        ExtentReportManager.createTest(MODULE, "fix-check", "API testing - FIX CHECK: planned-workorder-line single spelling");
+        List<String> dash = new ArrayList<>(), under = new ArrayList<>();
+        for (Map.Entry<String, TreeSet<String>> e : SPEC.entrySet()) {
+            if (e.getKey().contains("planned-workorder-line")) dash.add(e.getKey() + " " + e.getValue());
+            if (e.getKey().contains("planned_workorder_line")) under.add(e.getKey() + " " + e.getValue());
+        }
+        String detail = "dash family (" + dash.size() + "): " + dash + " | underscore family (" + under.size() + "): " + under;
+        System.out.println("[DupAudit/FixCheck] " + detail);
+        if (!dash.isEmpty() && !under.isEmpty()) {
+            ExtentReportManager.logFail(detail);
+            Assert.fail("NOT FIXED — the resource is still registered under BOTH spellings (" + dash.size()
+                    + " dash + " + under.size() + " underscore paths; 17 Jul it was 6+13, so the twin persists and"
+                    + " the families have drifted: writes live on both sides, the paginated dash LIST was removed)."
+                    + " Contract: ONE canonical route family. " + detail);
+        }
+        ExtentReportManager.logPass("FIXED: only one spelling remains — " + detail);
+    }
+
     private void conclude(String what, int n, boolean gated) {
         if (n == 0) { ExtentReportManager.logPass("No " + what + " in the spec."); return; }
         String msg = n + " " + what + " found in the live spec (see api-duplicate-endpoints-report.md).";
@@ -191,6 +281,11 @@ public class DuplicateApiAuditTest extends BaseAPITest {
         md.append("The live `/api/swagger.json` surface, audited for duplicated endpoint definitions: ")
           .append("dash/underscore twins, trailing-slash twins, singular/plural root families, v1/v2 overlaps. ")
           .append("Exact twins split traffic across two registrations that drift independently.\n\n");
+        md.append("**FIX-CHECK status (tripwires above in this class):** the critical ")
+          .append("`planned_workorder_line` twin was dev-reported fixed and re-verified NOT fixed on ")
+          .append("2026-07-23 — the underscore list still ignores pagination (40s+ timeout), both spellings ")
+          .append("remain registered, and the paginated dash list was removed from the spec. Full evidence: ")
+          .append("`docs/bug-repro/duplicate-api-endpoints/`.\n\n");
         md.append("Runtime duplicate CALLS (same endpoint refetched on one page load) are covered separately by ")
           .append("the browser-driven `ApiDuplicateCallTestNG` (Suite 2 `api` toggle) — latest findings: ")
           .append("21 redundant logical endpoints (3–4x per load) + 68 exact-URL duplicates.\n\n");
