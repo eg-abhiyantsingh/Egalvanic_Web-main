@@ -66,14 +66,22 @@ public class WorkOrderIssueTestNG extends BaseTest {
     // TESTS
     // ================================================================
 
-    @Test(priority = 1, description = "WOI_01: Opening a work order shows its detail tab strip (Tasks, EG Forms, Issues)")
+    @Test(priority = 1, description = "WOI_01: Opening a work order shows its detail tab strip (Tasks + Issues are universal)")
     public void testWOI_01_WorkOrderDetailTabs() {
         ExtentReportManager.createTest(MODULE, FEATURE, "WOI_01_WorkOrderDetailTabs");
         Assert.assertTrue(openFirstWorkOrder(), "Should open a work order detail page (/sessions/{id}).");
-        for (String tab : new String[]{"Tasks", "EG Forms", "Issues"}) {
-            Assert.assertTrue(hasTab(tab), "Work order detail should expose the '" + tab + "' tab.");
+        // v1.35 / ZP-3000 (Services V2): the detail tab strip is now WORK-TYPE-SPECIFIC — only Tasks
+        // and Issues are universal across every type; type-specific tabs (EG Forms, IR Photos, SLD,
+        // Panel Schedules…) appear only for the matching family (see WorkTypeDetailContractTestNG,
+        // which pins the exact strip per family). So hard-assert only the universal tabs here.
+        for (String tab : new String[]{"Tasks", "Issues"}) {
+            Assert.assertTrue(hasTab(tab), "Every work order detail should expose the universal '" + tab + "' tab.");
         }
-        ExtentReportManager.logPass("Work order detail page shows the tab strip (Assets/Tasks/EG Forms/Issues/IR Photos/Attachments).");
+        boolean egForms = hasTab("EG Forms");
+        logStep("Type-specific 'EG Forms' tab present on this work order: " + egForms
+                + " (expected only for form-bearing work types — informational, not required).");
+        ExtentReportManager.logPass("Work order detail shows the universal tab strip (Tasks + Issues); "
+                + "type-specific tabs vary by work type (EG Forms present=" + egForms + ").");
     }
 
     @Test(priority = 2, description = "WOI_02: Issues tab → Actions → Add Issues opens the Add Issue drawer")

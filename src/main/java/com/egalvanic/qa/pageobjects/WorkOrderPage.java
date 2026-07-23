@@ -938,6 +938,38 @@ public class WorkOrderPage {
     }
 
     /** Schedule ＋ icon → (optionally assign first technician, optionally Auto-Schedule) → Add Block. */
+    /**
+     * Click the Schedule section's "＋" (add-block) icon after scrolling it into view. The Schedule
+     * heading sits low in the dialog, so the button is often below the fold and Selenium's
+     * elementToBeClickable never fires (the WOC_04 timeout) even though the button exists — a JS
+     * click after scroll is reliable. Returns true if the block controls (Add Block / Assign
+     * Technician) then appear.
+     */
+    public boolean clickScheduleAddButton() {
+        try {
+            java.util.List<WebElement> btns = driver.findElements(WO_SCHEDULE_ADD_BTN);
+            if (btns.isEmpty()) { System.out.println("[WorkOrderPage] Schedule ＋ button not present"); return false; }
+            WebElement b = btns.get(0);
+            js.executeScript("arguments[0].scrollIntoView({block:'center'});", b);
+            pause(300);
+            try { b.click(); } catch (Exception e) { js.executeScript("arguments[0].click();", b); }
+            pause(1000);
+            boolean revealed = !driver.findElements(WO_ADD_BLOCK_BTN).isEmpty()
+                    || bodyContainsInDialog("Assign Technician");
+            System.out.println("[WorkOrderPage] Schedule ＋ clicked, block controls revealed=" + revealed);
+            return revealed;
+        } catch (Exception e) {
+            System.out.println("[WorkOrderPage] clickScheduleAddButton failed: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /** True if the given text appears anywhere inside the open create dialog. */
+    private boolean bodyContainsInDialog(String text) {
+        java.util.List<WebElement> d = driver.findElements(By.xpath(WO_DIALOG));
+        return !d.isEmpty() && d.get(0).getText().contains(text);
+    }
+
     public boolean addScheduleBlock(boolean assignTechnician) {
         try {
             click(WO_SCHEDULE_ADD_BTN);
