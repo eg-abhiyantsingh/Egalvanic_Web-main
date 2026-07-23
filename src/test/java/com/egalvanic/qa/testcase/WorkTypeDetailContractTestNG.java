@@ -126,7 +126,7 @@ public class WorkTypeDetailContractTestNG extends WorkTypeUiBase {
     // ================================================================
 
     @Test(priority = 1, dataProvider = "matrix",
-          description = "TC_WTF_001-016: read-only detail-page contract — 16 checks x 6 Z1 fixture families (96 rows, 6 navigations)")
+          description = "TC_WTF_001-016: Detail-page contract — 16 checks x 6 fixtures")
     public void testDetailContract(Family family, String checkKey) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE,
                 tcId(checkKey) + " " + checkKey + " — " + family + " (" + fixtureName(family) + ")");
@@ -153,7 +153,7 @@ public class WorkTypeDetailContractTestNG extends WorkTypeUiBase {
     }
 
     @Test(priority = 2, dataProvider = "fixturesHealth",
-          description = "TC_WTF_017: verifyPageHealth gate on each fixture detail page (fresh navigation, ambient-502 tolerant)")
+          description = "TC_WTF_017: Detail page health gate per fixture")
     public void testFixturePageHealth(Family family) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE,
                 "TC_WTF_017 pageHealth — " + family + " (" + fixtureName(family) + ")");

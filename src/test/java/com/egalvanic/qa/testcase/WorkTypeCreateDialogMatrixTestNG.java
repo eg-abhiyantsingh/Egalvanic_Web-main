@@ -144,7 +144,7 @@ public class WorkTypeCreateDialogMatrixTestNG extends WorkTypeUiBase {
     // ================================================================
 
     @Test(priority = 1, dataProvider = "optionCatalogRows",
-          description = "TC_WTD_001: Work Type dropdown offers exactly the 14 catalog options in display order")
+          description = "TC_WTD_001: Work Type dropdown lists all 14 options in order")
     public void testTC_WTD_001_OptionCatalogPinned(String label) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTD_001 — " + label);
         requireDialogOpen();
@@ -160,7 +160,7 @@ public class WorkTypeCreateDialogMatrixTestNG extends WorkTypeUiBase {
     }
 
     @Test(priority = 2, dataProvider = "anatomyRows",
-          description = "TC_WTD_002: dialog anatomy — heading present; Create disabled with empty name+type")
+          description = "TC_WTD_002: Dialog anatomy + Create disabled when empty")
     public void testTC_WTD_002_DialogAnatomy(String aspect) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTD_002 — " + aspect);
         requireDialogOpen();
@@ -185,7 +185,7 @@ public class WorkTypeCreateDialogMatrixTestNG extends WorkTypeUiBase {
     }
 
     @Test(priority = 3, dataProvider = "allTypes",
-          description = "TC_WTD_003: every Work Type option commits in the Autocomplete")
+          description = "TC_WTD_003: Work Type selection commits")
     public void testTC_WTD_003_TypeCommits(WorkTypeProfile profile) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTD_003 — " + profile.name);
         requireDialogOpen();
@@ -201,7 +201,7 @@ public class WorkTypeCreateDialogMatrixTestNG extends WorkTypeUiBase {
     }
 
     @Test(priority = 4, dataProvider = "allTypes",
-          description = "TC_WTD_004: scope-preview semantics per type — count settles / notice / neither (General)")
+          description = "TC_WTD_004: Scope preview per type")
     public void testTC_WTD_004_ScopePreviewPerType(WorkTypeProfile profile) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTD_004 — " + profile.name);
         requireDialogOpen();
@@ -246,7 +246,7 @@ public class WorkTypeCreateDialogMatrixTestNG extends WorkTypeUiBase {
     }
 
     @Test(priority = 5, dataProvider = "serviceTypes",
-          description = "TC_WTD_005: preview and no-procedures notice are mutually exclusive per service")
+          description = "TC_WTD_005: Preview vs no-procedures notice are exclusive")
     public void testTC_WTD_005_NoticeExclusivity(WorkTypeProfile profile) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTD_005 — " + profile.name);
         requireDialogOpen();
@@ -273,7 +273,7 @@ public class WorkTypeCreateDialogMatrixTestNG extends WorkTypeUiBase {
     }
 
     @Test(priority = 6, dataProvider = "allTypes",
-          description = "TC_WTD_006: Auto-Schedule renders for every type and stays disabled without preconditions")
+          description = "TC_WTD_006: Auto-Schedule renders but stays disabled")
     public void testTC_WTD_006_AutoSchedulePresence(WorkTypeProfile profile) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTD_006 — " + profile.name);
         requireDialogOpen();
@@ -297,7 +297,7 @@ public class WorkTypeCreateDialogMatrixTestNG extends WorkTypeUiBase {
     }
 
     @Test(priority = 7, dataProvider = "allTypes",
-          description = "TC_WTD_007: Advanced Settings defaults Priority=Medium / Photo Type=FLIR-SEP for every type")
+          description = "TC_WTD_007: Advanced defaults: Priority=Medium, Photo Type=FLIR-SEP")
     public void testTC_WTD_007_AdvancedDefaults(WorkTypeProfile profile) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTD_007 — " + profile.name);
         requireDialogOpen();
@@ -319,7 +319,7 @@ public class WorkTypeCreateDialogMatrixTestNG extends WorkTypeUiBase {
     }
 
     @Test(priority = 8, dataProvider = "allTypes",
-          description = "TC_WTD_008: Start Date stays pre-filled and Due Date stays empty across type switches")
+          description = "TC_WTD_008: Dates survive a Work Type switch")
     public void testTC_WTD_008_DateDefaults(WorkTypeProfile profile) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTD_008 — " + profile.name);
         requireDialogOpen();
@@ -342,7 +342,7 @@ public class WorkTypeCreateDialogMatrixTestNG extends WorkTypeUiBase {
     }
 
     @Test(priority = 9, dataProvider = "allTypes",
-          description = "TC_WTD_009: all five dialog sections render for every type")
+          description = "TC_WTD_009: All five dialog sections render")
     public void testTC_WTD_009_SectionsPresent(WorkTypeProfile profile) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTD_009 — " + profile.name);
         requireDialogOpen();
@@ -359,7 +359,7 @@ public class WorkTypeCreateDialogMatrixTestNG extends WorkTypeUiBase {
     }
 
     @Test(priority = 10, dataProvider = "allTypes",
-          description = "TC_WTD_010: required-field asterisks (WO Name, Facility, Work Type) render for every type")
+          description = "TC_WTD_010: Required-field asterisks render")
     public void testTC_WTD_010_RequiredMarkers(WorkTypeProfile profile) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTD_010 — " + profile.name);
         requireDialogOpen();
@@ -381,7 +381,7 @@ public class WorkTypeCreateDialogMatrixTestNG extends WorkTypeUiBase {
     }
 
     @Test(priority = 11, dataProvider = "adjacentPairs",
-          description = "TC_WTD_011: switching type in the open dialog retargets the committed value + scope preview")
+          description = "TC_WTD_011: Type switch retargets scope preview")
     public void testTC_WTD_011_TypeSwitchRetargets(Integer pairIdx) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE,
                 "TC_WTD_011 — " + WorkTypeCatalog.ALL.get(pairIdx).name
@@ -413,7 +413,7 @@ public class WorkTypeCreateDialogMatrixTestNG extends WorkTypeUiBase {
     // ================================================================
 
     @Test(priority = 12, dataProvider = "allTypes",
-          description = "TC_WTD_012: Create gating per type — disabled with type only, enabled once WO Name is set")
+          description = "TC_WTD_012: Create gating: needs WO Name + Work Type")
     public void testTC_WTD_012_CreateGatingPerType(WorkTypeProfile profile) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTD_012 — " + profile.name);
         // Fresh dialog per row — gating depends on pristine WO Name state. NOTE (live-verified
@@ -447,7 +447,7 @@ public class WorkTypeCreateDialogMatrixTestNG extends WorkTypeUiBase {
     }
 
     @Test(priority = 13, dataProvider = "previewServices",
-          description = "TC_WTD_013: 'Start Empty Instead' clears the auto-pulled scope for every preview service")
+          description = "TC_WTD_013: Start Empty clears the auto-pulled scope")
     public void testTC_WTD_013_StartEmptyInstead(WorkTypeProfile profile) {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "TC_WTD_013 — " + profile.name);
         // Fresh dialog per row — Start Empty mutates scope state that must not leak between rows.

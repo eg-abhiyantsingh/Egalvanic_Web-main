@@ -796,6 +796,96 @@ public class WorkOrderPage {
         return out;
     }
 
+    // ================================================================
+    // FULL-FORM coverage helpers (2026-07-23): resilient setters for the
+    // remaining Create-WO fields so a test can fill EVERY field and verify
+    // each committed. These all avoid waiting on the MUI Autocomplete inner
+    // input's visibility (the hidden-input trap that times out selectPriority),
+    // and read the value back so the caller knows it truly took.
+    // ================================================================
+
+    /**
+     * Commit a value into a create-dialog MUI Autocomplete addressed by its field label
+     * (Priority / Photo Type / Facility / Assign Technician …) WITHOUT waiting on the hidden
+     * inner input's visibility. Opens the popup via the wrapper, clicks the exact-text option,
+     * verifies the committed value. Never throws; returns true only if the value read back matches.
+     */
+    public boolean tryCommitComboByLabel(String labelPrefix, String optionText) {
+        try {
+            By by = woComboByLabel(labelPrefix);
+            java.util.List<WebElement> inputs = driver.findElements(by);
+            if (inputs.isEmpty()) { System.out.println("[WorkOrderPage] tryCommitCombo: no input for label '" + labelPrefix + "'"); return false; }
+            WebElement input = inputs.get(0);
+            if (optionText.equalsIgnoreCase(String.valueOf(input.getAttribute("value")))) return true;
+            js.executeScript(
+                "var i=arguments[0]; i.scrollIntoView({block:'center'}); i.focus();" +
+                "var w=i.closest('.MuiAutocomplete-root'); if(w){var b=w.querySelector('.MuiAutocomplete-popupIndicator'); if(b) b.click();}", input);
+            pause(700);
+            java.util.List<WebElement> opts = driver.findElements(By.xpath("//ul[@role='listbox']/li[normalize-space()='" + optionText + "']"));
+            if (opts.isEmpty()) opts = driver.findElements(By.xpath("//li[@role='option'][normalize-space()='" + optionText + "']"));
+            if (opts.isEmpty()) { System.out.println("[WorkOrderPage] tryCommitCombo: option '" + optionText + "' not offered for '" + labelPrefix + "'"); try { input.sendKeys(Keys.ESCAPE); } catch (Exception ignored) {} return false; }
+            WebElement opt = opts.get(0);
+            for (String t : new String[]{"pointerdown","mousedown","pointerup","mouseup","click"}) {
+                try { js.executeScript("arguments[0].dispatchEvent(new MouseEvent(arguments[1],{bubbles:true,cancelable:true}));", opt, t); } catch (Exception ignored) {}
+            }
+            pause(600);
+            boolean ok = optionText.equalsIgnoreCase(String.valueOf(input.getAttribute("value")));
+            System.out.println("[WorkOrderPage] tryCommitCombo('" + labelPrefix + "'='" + optionText + "') committed=" + ok);
+            return ok;
+        } catch (Exception e) {
+            System.out.println("[WorkOrderPage] tryCommitComboByLabel failed: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /** Best-effort Photo Type commit (resilient). Returns true if the value read back matches. */
+    public boolean trySelectPhotoType(String photoType) { return tryCommitComboByLabel("Photo Type", photoType); }
+
+    /** Type a MM/DD/YYYY Start Date (Advanced Settings, second MM/DD/YYYY input). Real keystrokes. */
+    public void typeStartDate(String mmddyyyy) {
+        try {
+            WebElement el = wait.until(ExpectedConditions.visibilityOfElementLocated(WO_START_DATE_INPUT));
+            js.executeScript("arguments[0].scrollIntoView({block:'center'});", el);
+            el.click();
+            try { el.sendKeys(Keys.chord(macOrCtrl(), "a"), Keys.DELETE); } catch (Exception ignored) {}
+            el.sendKeys(mmddyyyy);
+            pause(300);
+            System.out.println("[WorkOrderPage] Start Date typed: " + mmddyyyy + " (value now '" + el.getAttribute("value") + "')");
+        } catch (Exception e) { System.out.println("[WorkOrderPage] Start Date not fillable: " + e.getMessage()); }
+    }
+
+    /**
+     * Fill the FIRST empty "Select user" team slot (the field_technician row) with the first
+     * offered user, using the resilient pointer-event commit. Returns true if a user committed.
+     * (Unlike addFirstTeamMember, this does not click the ＋ — it fills an already-present empty row.)
+     */
+    public boolean fillEmptyTeamUser() {
+        try {
+            java.util.List<WebElement> slots = driver.findElements(By.xpath("//input[@placeholder='Select user']"));
+            WebElement empty = null;
+            for (WebElement s : slots) {
+                String v = String.valueOf(s.getAttribute("value"));
+                if (v == null || v.trim().isEmpty() || "null".equals(v)) { empty = s; break; }
+            }
+            if (empty == null) { System.out.println("[WorkOrderPage] fillEmptyTeamUser: no empty 'Select user' slot"); return false; }
+            js.executeScript(
+                "var i=arguments[0]; i.scrollIntoView({block:'center'}); i.focus(); i.click();" +
+                "var w=i.closest('.MuiAutocomplete-root'); if(w){var b=w.querySelector('.MuiAutocomplete-popupIndicator'); if(b) b.click();}", empty);
+            pause(800);
+            java.util.List<WebElement> opts = driver.findElements(By.xpath("//ul[@role='listbox']/li[@role='option']"));
+            for (int i = 0; i < 8 && opts.isEmpty(); i++) { pause(300); opts = driver.findElements(By.xpath("//ul[@role='listbox']/li[@role='option']")); }
+            if (opts.isEmpty()) { System.out.println("[WorkOrderPage] fillEmptyTeamUser: no user options"); return false; }
+            WebElement opt = opts.get(0);
+            for (String t : new String[]{"pointerdown","mousedown","pointerup","mouseup","click"}) {
+                try { js.executeScript("arguments[0].dispatchEvent(new MouseEvent(arguments[1],{bubbles:true,cancelable:true}));", opt, t); } catch (Exception ignored) {}
+            }
+            pause(600);
+            boolean ok = !String.valueOf(empty.getAttribute("value")).trim().isEmpty();
+            System.out.println("[WorkOrderPage] fillEmptyTeamUser committed=" + ok + " (value now '" + empty.getAttribute("value") + "')");
+            return ok;
+        } catch (Exception e) { System.out.println("[WorkOrderPage] fillEmptyTeamUser failed: " + e.getMessage()); return false; }
+    }
+
     /** Team ＋ icon → pick the first available user. Returns true if a member was added. */
     public boolean addFirstTeamMember() {
         try {
