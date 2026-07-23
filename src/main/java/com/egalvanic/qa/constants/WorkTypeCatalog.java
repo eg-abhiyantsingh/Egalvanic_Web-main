@@ -98,10 +98,23 @@ public final class WorkTypeCatalog {
     /** "General" — no service, legacy-neutral WO. */
     public static final WorkTypeProfile GENERAL;
 
-    /** Site whose SLD backs all pinned scope/fixture facts. */
+    /** Site whose SLD backs all pinned scope/fixture facts (the 6 detail-contract fixtures live here). */
     public static final String FIXTURE_SITE = "Z1";
     /** Z1's sld_id as sent by the create dialog's scope-preview calls (live 2026-07-21). */
     public static final String Z1_SLD_ID = "f5be0573-dd42-44de-906f-534e72c08eb0";
+
+    /**
+     * LIGHT site for CREATE-heavy suites (dialog / create-E2E / edge). Z1 has grown past ~1,000
+     * eligible assets, so a WO create there takes ~23s on the backend (dialog hangs on
+     * "Creating...") — measured 2026-07-23. A small SLD creates in well under 1s (measured 444ms
+     * on "test-no-account"), which removes the create-latency flakiness. These suites only CREATE
+     * WOs (they don't need the Z1 fixtures), so they pin here instead. Override with
+     * -Dworktype.create.site / -Dworktype.create.sld. The detail-contract suite stays on Z1.
+     */
+    public static final String CREATE_SITE = System.getProperty("worktype.create.site", "test-no-account");
+    /** SLD id of {@link #CREATE_SITE} — used for scope-preview / WO-list API calls in create suites. */
+    public static final String CREATE_SLD_ID =
+            System.getProperty("worktype.create.sld", "825b59ac-c440-4f92-b395-e289b93e360a");
 
     /** Z1 fixture WO name per family (docs/changelogs/2026-07-21-service-wo-fixture-set-z1.md). */
     public static final Map<Family, String> Z1_FIXTURE_WO_NAMES;

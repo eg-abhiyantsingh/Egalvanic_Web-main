@@ -628,8 +628,13 @@ public class WorkOrderPage {
     }
 
     public void fillWoName(String name) {
-        typeField(WO_NAME_INPUT, name);
-        System.out.println("[WorkOrderPage] WO Name: " + name);
+        try { typeField(WO_NAME_INPUT, name); }
+        catch (Exception e) { System.out.println("[WorkOrderPage] WO Name typeField note: " + e.getMessage()); }
+        // Read back; under load the sendKeys path can drop and leave the field empty, so fall back
+        // to the React native-setter (the value MUST be present before Create gates enable).
+        boolean ok = valueReadBackEquals(WO_NAME_INPUT, name);
+        if (!ok) ok = setValueViaNativeSetter(WO_NAME_INPUT, name);
+        System.out.println("[WorkOrderPage] WO Name: " + name + " (committed=" + ok + ")");
     }
 
     public void fillEstHours(String hours) {

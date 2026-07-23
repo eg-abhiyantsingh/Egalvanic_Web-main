@@ -28,12 +28,24 @@ public abstract class WorkTypeUiBase extends BaseTest {
         return (org.openqa.selenium.JavascriptExecutor) driver;
     }
 
+    /**
+     * The site this suite pins to. Defaults to the fixture site (Z1) for fixture-based suites
+     * (e.g. the detail-contract suite). CREATE-heavy suites override this to a LIGHT site
+     * (WorkTypeCatalog.CREATE_SITE) because a WO create on the huge Z1 SLD takes ~23s and hangs
+     * the dialog, whereas a small SLD creates in <1s.
+     */
+    protected String workTypeSite() { return WorkTypeCatalog.FIXTURE_SITE; }
+
+    /** The sld_id matching {@link #workTypeSite()} — used by create suites' scope/list API calls. */
+    protected String workTypeSldId() { return WorkTypeCatalog.Z1_SLD_ID; }
+
     @Override
     @BeforeClass(alwaysRun = true)
     public void classSetup() {
         super.classSetup();
-        boolean onZ1 = ensureSiteByKeystrokes(WorkTypeCatalog.FIXTURE_SITE);
-        System.out.println("[WorkTypeUiBase] site pinned to " + WorkTypeCatalog.FIXTURE_SITE + ": " + onZ1);
+        String site = workTypeSite();
+        boolean onSite = ensureSiteByKeystrokes(site);
+        System.out.println("[WorkTypeUiBase] site pinned to " + site + ": " + onSite);
     }
 
     /**

@@ -51,6 +51,11 @@ public class WorkTypeCreateE2EMatrixTestNG extends WorkTypeUiBase {
     private static final String MODULE = AppConstants.MODULE_WORK_ORDERS;
     private static final String FEATURE = "Work Type Create E2E Matrix";
 
+    // Create on a LIGHT site — a WO create on the huge Z1 SLD takes ~23s and hangs the dialog;
+    // a small SLD creates in <1s. This suite only CREATES WOs (no Z1-fixture dependency).
+    @Override protected String workTypeSite()  { return WorkTypeCatalog.CREATE_SITE; }
+    @Override protected String workTypeSldId() { return WorkTypeCatalog.CREATE_SLD_ID; }
+
     /** Phase A -> B/C: work-type name -> created WO name. */
     private static final Map<String, String> createdByType = new LinkedHashMap<String, String>();
     /** Phase B -> C: work-type name -> /sessions/{id} session id of the created WO. */
@@ -120,16 +125,25 @@ public class WorkTypeCreateE2EMatrixTestNG extends WorkTypeUiBase {
         // never appears). Re-opening the dialog recovers it. Only after the name is actually in
         // the field do we proceed; a persistent failure to mount is a genuine (env) failure.
         boolean nameReady = false;
-        for (int attempt = 1; attempt <= 3 && !nameReady; attempt++) {
+        for (int attempt = 1; attempt <= 4 && !nameReady; attempt++) {
             closeCreateDialogIfOpen();
             if (!ensureCreateDialogOpen()) { logStep("Dialog open attempt " + attempt + " failed — retrying"); pause(1500); continue; }
-            workOrderPage.fillWoName(woName);
+            // Wait for the Name input to actually render before filling (the dialog can mount
+            // without it). fillWoName() can THROW a TimeoutException if it never appears — catch
+            // it so the retry can reopen instead of failing the whole test.
+            boolean nameInputPresent = false;
+            for (int w = 0; w < 20 && !nameInputPresent; w++) {   // up to ~10s per attempt
+                nameInputPresent = !driver.findElements(By.xpath("//input[@placeholder='e.g., Q1 2024 Maintenance']")).isEmpty();
+                if (!nameInputPresent) pause(500);
+            }
+            if (!nameInputPresent) { logStep("Attempt " + attempt + ": Name input never rendered — reopening dialog"); pause(1200); continue; }
+            try { workOrderPage.fillWoName(woName); } catch (Exception e) { logStep("fillWoName threw on attempt " + attempt + ": " + e.getMessage()); }
             nameReady = woName.equals(workOrderPage.getWoNameValue());
-            if (!nameReady) { logStep("WO Name did not take on attempt " + attempt + " (dialog slow to mount) — reopening"); pause(1500); }
+            if (!nameReady) { logStep("WO Name did not take on attempt " + attempt + " — reopening"); pause(1200); }
         }
         Assert.assertTrue(nameReady,
                 "Create dialog should open and accept the WO Name for '" + profile.name
-                + "' within 3 attempts (QA dialog-mount). Name field value: '" + workOrderPage.getWoNameValue() + "'.");
+                + "' within 4 attempts (QA dialog-mount). Name field value: '" + workOrderPage.getWoNameValue() + "'.");
         logStep("Dialog open (facility='" + workOrderPage.getFacilityValue() + "'), WO name set: '" + woName + "'");
 
         // ---- (2) Work Type: SELECT FROM THE DROPDOWN and confirm it COMMITTED ----
@@ -537,7 +551,7 @@ public class WorkTypeCreateE2EMatrixTestNG extends WorkTypeUiBase {
             String token = workTypeApiToken();
             String cid = resolveCompanyId();
             if (token == null || cid == null) return false;
-            String body = "{\"sld_id\":\"" + WorkTypeCatalog.Z1_SLD_ID + "\",\"page\":1,\"page_size\":25,"
+            String body = "{\"sld_id\":\"" + workTypeSldId() + "\",\"page\":1,\"page_size\":25,"
                     + "\"search\":\"" + woName + "\",\"include_planned\":true,\"filters\":{},"
                     + "\"sort_by\":\"created_at\",\"sort_dir\":\"desc\"}";
             io.restassured.response.Response r = io.restassured.RestAssured.given()

@@ -45,6 +45,12 @@ public class WorkTypeCreateDialogMatrixTestNG extends WorkTypeUiBase {
 
     private static final String FEATURE = "Work Type Create Dialog Matrix";
 
+    // Run on a LIGHT site: this suite opens the create dialog / previews scope repeatedly, which
+    // is slow on the huge Z1 SLD (~23s creates, laggy previews). Scope-count assertions here are
+    // tolerant (n >= 0), so a small site works and runs far faster / more reliably.
+    @Override protected String workTypeSite()  { return WorkTypeCatalog.CREATE_SITE; }
+    @Override protected String workTypeSldId() { return WorkTypeCatalog.CREATE_SLD_ID; }
+
     /** Same dialog root the page object anchors on (its constant is private). */
     private static final String DIALOG_XPATH =
             "//div[@role='dialog'][.//*[normalize-space()='Create New Work Order']]";
