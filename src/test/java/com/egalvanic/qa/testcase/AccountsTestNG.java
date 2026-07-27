@@ -122,9 +122,10 @@ public class AccountsTestNG extends BaseTest {
         pause(500);
         boolean enabledNameOnly = page.isSaveEnabled();
         page.clickCancel();
-        // Subdomain/Owner/Address are also required, so name-only must NOT enable Create.
+        // v1.35 (ZP-3156): Owner + the mandatory Contact (First/Last/Email/Job Title) are also
+        // required — subdomain is hidden and address is optional now — so name-only must NOT enable Create.
         Assert.assertFalse(enabledNameOnly,
-                "Create must stay disabled with only the name filled (Subdomain/Owner/Address are required).");
+                "Create must stay disabled with only the name filled (Owner + contact details are required).");
         ExtentReportManager.logPass("Name-only does not satisfy the required-field set");
     }
 
