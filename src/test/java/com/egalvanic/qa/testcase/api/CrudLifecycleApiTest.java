@@ -144,7 +144,7 @@ public class CrudLifecycleApiTest extends BaseAPITest {
         Assert.assertFalse(got.optBoolean("is_deleted", false), "fresh task is already is_deleted=true");
 
         // LIST visibility
-        Assert.assertTrue(pollTaskInList(id, true), "created task never appeared in GET /tasks/{sld}");
+        Assert.assertTrue(pollTaskInList(id, true), "created task never appeared in GET /tasks/{sld}" + lastListDiagnosis);
 
         // UPDATE — partial PUT (title only) must stick and not clobber other fields
         String edited = title + "_EDITED";
@@ -163,7 +163,7 @@ public class CrudLifecycleApiTest extends BaseAPITest {
         JSONObject afterDel = readData("/task/" + id);
         Assert.assertTrue(afterDel.optBoolean("is_deleted", false),
                 "task not marked is_deleted after DELETE");
-        Assert.assertTrue(pollTaskInList(id, false), "deleted task still listed in GET /tasks/{sld}");
+        Assert.assertTrue(pollTaskInList(id, false), "deleted task still listed in GET /tasks/{sld}" + lastListDiagnosis);
         REPORT.add(new String[]{"task", "OK",
                 "create 201 → read → list-visible → partial-update stuck → delete → is_deleted + delisted"});
         ExtentReportManager.logPass("Task CRUD lifecycle clean (id " + id + ").");
@@ -312,11 +312,22 @@ public class CrudLifecycleApiTest extends BaseAPITest {
         return o.optJSONObject("data") != null ? o.getJSONObject("data") : o;
     }
 
+    /** Human diagnosis of the last list-poll problem (e.g. the endpoint 500-ing) — for assert messages. */
+    static String lastListDiagnosis = "";
+
     private boolean pollTaskInList(String id, boolean expectPresent) {
+        lastListDiagnosis = "";
         for (int t = 0; t < POLL_TRIES; t++) {
             try {
                 Response r = getAuthenticatedRequestSpec()
                         .when().get("/tasks/" + sandboxSldId).then().extract().response();
+                if (r.statusCode() != 200) {
+                    // e.g. the verified 2026-07-28 regression: GET /tasks/{sld} → 500 HTML page while
+                    // GET /task/{id} still returns the task — the LIST endpoint is broken, not the data.
+                    lastListDiagnosis = " [GET /tasks/{sld} → HTTP " + r.statusCode()
+                            + (String.valueOf(r.asString()).trim().startsWith("<") ? " (HTML error page)" : "")
+                            + " — the tasks LIST endpoint itself is failing]";
+                }
                 if (r.statusCode() == 200) {
                     JSONArray tasks = new JSONObject(r.asString()).optJSONArray("user_tasks");
                     boolean present = false;

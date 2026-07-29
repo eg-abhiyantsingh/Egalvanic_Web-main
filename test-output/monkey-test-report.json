@@ -1,0 +1,411 @@
+{
+  "maxActionsConfig": 100,
+  "maxDurationConfig": 300,
+  "totalActions": 114,
+  "totalAnomalies": 79,
+  "anomalies": [
+    {
+      "actionIndex": 0,
+      "description": "Console error after navigating to Dashboard: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/issues"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after navigating to Dashboard: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/issues"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after navigating to Assets: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/assets"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after navigating to Locations: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/locations"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after navigating to Connections: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/connections"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after navigating to Jobs: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/connections"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after navigating to Dashboard: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/connections"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #1 on Dashboard: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/ops-dashboard"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #2 on Dashboard: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/panel-schedules"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #3 on Dashboard: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/panel-schedules"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #4 on Dashboard: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/panel-schedules"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #5 on Dashboard: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/emps"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #6 on Dashboard: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/emps"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #7 on Dashboard: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/emps"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #8 on Dashboard: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/emps"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #9 on Dashboard: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/panel-schedules"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #10 on Dashboard: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/panel-schedules/f0674d1f-3909-4d38-94a2-d48c056d0394"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #11 on Dashboard: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/panel-schedules/f0674d1f-3909-4d38-94a2-d48c056d0394"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #12 on Dashboard: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/locations"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #13 on Dashboard: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/locations"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #14 on Dashboard: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/locations"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #15 on Assets: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/locations"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #16 on Assets: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/assets"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #17 on Assets: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/assets"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #18 on Assets: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/assets"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #19 on Assets: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/assets"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #20 on Assets: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/assets"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #21 on Assets: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/sessions"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #22 on Assets: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/sessions"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #23 on Assets: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/sessions"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #24 on Assets: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/assets"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #25 on Assets: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/assets"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #26 on Assets: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/sessions"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #27 on Assets: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/sessions"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #28 on Assets: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/assets"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #29 on Locations: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/sales-overview"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #30 on Locations: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/goals"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #31 on Locations: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/panel-schedules"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #32 on Locations: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/admin/audit-log"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #33 on Locations: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/admin"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #34 on Locations: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/sales-overview"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #35 on Locations: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/locations"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #36 on Locations: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/tasks"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after click #37 on Locations: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/locations"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after filling inputs on Assets: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/assets"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error after filling inputs on Issues: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/issues"
+    },
+    {
+      "actionIndex": 0,
+      "description": "Console error action #0: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/equipment-designations"
+    },
+    {
+      "actionIndex": 3,
+      "description": "Console error action #3: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/accounts"
+    },
+    {
+      "actionIndex": 6,
+      "description": "Console error action #6: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/reporting/builder"
+    },
+    {
+      "actionIndex": 9,
+      "description": "Console error action #9: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/ops-dashboard"
+    },
+    {
+      "actionIndex": 12,
+      "description": "Console error action #12: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/ops-dashboard"
+    },
+    {
+      "actionIndex": 15,
+      "description": "Console error action #15: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/assets"
+    },
+    {
+      "actionIndex": 18,
+      "description": "Console error action #18: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/assets"
+    },
+    {
+      "actionIndex": 24,
+      "description": "Console error action #24: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/assets"
+    },
+    {
+      "actionIndex": 27,
+      "description": "Console error action #27: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/assets"
+    },
+    {
+      "actionIndex": 30,
+      "description": "Console error action #30: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/issues"
+    },
+    {
+      "actionIndex": 33,
+      "description": "Console error action #33: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/issues"
+    },
+    {
+      "actionIndex": 36,
+      "description": "Console error action #36: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/assets"
+    },
+    {
+      "actionIndex": 39,
+      "description": "Console error action #39: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/tasks"
+    },
+    {
+      "actionIndex": 42,
+      "description": "Console error action #42: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/dashboard"
+    },
+    {
+      "actionIndex": 45,
+      "description": "Console error action #45: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/locations"
+    },
+    {
+      "actionIndex": 48,
+      "description": "Console error action #48: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/sessions"
+    },
+    {
+      "actionIndex": 51,
+      "description": "Console error action #51: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/tasks"
+    },
+    {
+      "actionIndex": 54,
+      "description": "Console error action #54: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/assets"
+    },
+    {
+      "actionIndex": 57,
+      "description": "Console error action #57: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/assets"
+    },
+    {
+      "actionIndex": 60,
+      "description": "Console error action #60: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/assets"
+    },
+    {
+      "actionIndex": 63,
+      "description": "Console error action #63: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/assets"
+    },
+    {
+      "actionIndex": 66,
+      "description": "Console error action #66: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/tasks"
+    },
+    {
+      "actionIndex": 69,
+      "description": "Console error action #69: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/issues"
+    },
+    {
+      "actionIndex": 72,
+      "description": "Console error action #72: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/connections"
+    },
+    {
+      "actionIndex": 75,
+      "description": "Console error action #75: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/connections"
+    },
+    {
+      "actionIndex": 78,
+      "description": "Console error action #78: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/eg-forms"
+    },
+    {
+      "actionIndex": 81,
+      "description": "Console error action #81: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/tasks"
+    },
+    {
+      "actionIndex": 84,
+      "description": "Console error action #84: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/slds"
+    },
+    {
+      "actionIndex": 87,
+      "description": "Console error action #87: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/issues"
+    },
+    {
+      "actionIndex": 90,
+      "description": "Console error action #90: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/issues"
+    },
+    {
+      "actionIndex": 93,
+      "description": "Console error action #93: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/issues"
+    },
+    {
+      "actionIndex": 96,
+      "description": "Console error action #96: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/connections"
+    },
+    {
+      "actionIndex": 99,
+      "description": "Console error action #99: [LookupService] Error fetching nodes: {}",
+      "pageUrl": "https://acme.qa.egalvanic.ai/pm-readiness"
+    }
+  ],
+  "actionBreakdown": {
+    "ERROR": 1,
+    "CLICK": 39,
+    "SCROLL": 24,
+    "NAVIGATE": 32,
+    "FILL_INPUT": 18
+  },
+  "timestamp": "2026-07-04T01:10:31.332677"
+}

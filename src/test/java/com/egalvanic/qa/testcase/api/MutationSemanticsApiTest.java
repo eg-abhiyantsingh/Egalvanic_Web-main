@@ -111,10 +111,21 @@ public class MutationSemanticsApiTest extends BaseAPITest {
         } catch (Exception e) { return ""; }
     }
 
+    /** Human diagnosis of the last list problem (e.g. the endpoint 500-ing) — for assert messages. */
+    private static String lastListDiagnosis = "";
+
     private boolean taskListed(String id) {
         try {
             Response r = getAuthenticatedRequestSpec().when().get("/tasks/" + sandboxSldId).then().extract().response();
-            if (r.statusCode() != 200) return false;
+            if (r.statusCode() != 200) {
+                // e.g. the verified 2026-07-28 regression: GET /tasks/{sld} → 500 HTML page while the
+                // task itself persists (GET /task/{id} fine) — the LIST endpoint is broken, not the write.
+                lastListDiagnosis = " [GET /tasks/{sld} → HTTP " + r.statusCode()
+                        + (String.valueOf(r.asString()).trim().startsWith("<") ? " (HTML error page)" : "")
+                        + " — the tasks LIST endpoint itself is failing, not the write path]";
+                return false;
+            }
+            lastListDiagnosis = "";
             JSONArray tasks = new JSONObject(r.asString()).optJSONArray("user_tasks");
             for (int i = 0; tasks != null && i < tasks.length(); i++) {
                 JSONObject t = tasks.getJSONObject(i);
@@ -156,7 +167,7 @@ public class MutationSemanticsApiTest extends BaseAPITest {
         REPORT.add(new String[]{"async-convergence", converged ? "OK" : "DEFECT",
                 "envelope=" + hadEnvelope + " convergedWithin=" + (CONVERGE_TRIES * CONVERGE_SLEEP / 1000) + "s"});
         Assert.assertTrue(converged,
-                "A queued (non-direct-write) create never became visible — silent data loss. id=" + id);
+                "A queued (non-direct-write) create never became visible. id=" + id + lastListDiagnosis);
         if (!hadEnvelope) ExtentReportManager.logWarning(
                 "async create did not carry a {_mutation} envelope (queue contract may have changed): " + trim(create));
         ExtentReportManager.logPass("Async write converged; envelope present=" + hadEnvelope + ".");
@@ -201,7 +212,7 @@ public class MutationSemanticsApiTest extends BaseAPITest {
                 "direct-write did not return the created object body synchronously (no full object in response)");
         Assert.assertTrue(noEnvelope,
                 "direct-write create carried a {_mutation} queue envelope — it was NOT synchronous");
-        Assert.assertTrue(visibleInList, "direct-write create never became visible — write not persisted");
+        Assert.assertTrue(visibleInList, "direct-write create never became visible — write not persisted" + lastListDiagnosis);
         if (!quicklyReadable) ExtentReportManager.logWarning(
                 "GET /task/{id} did not reflect a direct-write create within ~3s though it is in the list "
                 + "— genuine read-after-write lag on the single-resource read path.");
@@ -220,7 +231,7 @@ public class MutationSemanticsApiTest extends BaseAPITest {
                 .when().post("/task/create").then().extract().response().asString())
                 .getJSONObject("data").getString("id");
         createdTaskIds.add(id);
-        Assert.assertTrue(pollListed(id, true), "task not visible before delete");
+        Assert.assertTrue(pollListed(id, true), "task not visible before delete" + lastListDiagnosis);
 
         int d1 = directWrite().body("{}").when().delete("/task/delete/" + id).then().extract().response().statusCode();
         int d2 = directWrite().body("{}").when().delete("/task/delete/" + id).then().extract().response().statusCode();

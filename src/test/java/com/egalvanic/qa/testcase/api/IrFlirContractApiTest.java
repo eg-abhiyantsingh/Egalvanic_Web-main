@@ -154,15 +154,25 @@ public class IrFlirContractApiTest extends BaseAPITest {
         ExtentReportManager.createTest(MODULE, "flir-watch", "FLIR-IND visual generation contract");
         JSONObject paths = specPaths();
 
-        // Find a candidate op: path or raw definition mentioning flir / ir_photo_key.
+        // Find a candidate op for the NEW FLIR-IND visual-generation endpoint. Since ~2026-07-24 the
+        // EXISTING /ir_photo/* pipeline definitions mention "flir" (the photo_type enum gained
+        // FLIR-IND), which false-activated this watch onto /ir_photo/{photo_id}/... and blew up on
+        // the unsubstituted {photo_id} (CI red Jul-24..29). So require the acceptance-criteria
+        // signature — the request definition must carry ir_photo_key AND visual_photo_key AND
+        // platform — and skip the existing pipeline ops this class already covers via auth-gates.
         String found = null;
         for (String raw : paths.keySet()) {
+            String p = raw.startsWith("/api/") ? raw.substring(4) : raw;
+            if (p.startsWith("/ir_photo/") || p.startsWith("/ir_photos")) continue;   // existing pipeline
             String def = paths.getJSONObject(raw).toString().toLowerCase(Locale.ROOT);
-            if (raw.toLowerCase(Locale.ROOT).contains("flir") || def.contains("flir")
-                    || def.contains("ir_photo_key") || def.contains("visual_photo_key")) {
-                found = raw.startsWith("/api/") ? raw.substring(4) : raw;
+            if (def.contains("ir_photo_key") && def.contains("visual_photo_key") && def.contains("platform")) {
+                found = p;
                 break;
             }
+        }
+        // Any surviving candidate may still carry path params — substitute before probing.
+        if (found != null && found.contains("{")) {
+            found = found.replaceAll("\\{[^}]*}", "00000000-0000-0000-0000-000000000000");
         }
         if (found == null) {
             String msg = "FLIR-IND visual-generation endpoint is NOT yet in the live spec (checked "
