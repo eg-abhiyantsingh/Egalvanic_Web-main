@@ -156,17 +156,18 @@ public class IrFlirContractApiTest extends BaseAPITest {
 
         // Find a candidate op for the NEW FLIR-IND visual-generation endpoint. Since ~2026-07-24 the
         // EXISTING /ir_photo/* pipeline definitions mention "flir" (the photo_type enum gained
-        // FLIR-IND), which false-activated this watch onto /ir_photo/{photo_id}/... and blew up on
-        // the unsubstituted {photo_id} (CI red Jul-24..29). So require the acceptance-criteria
+        // FLIR-IND), which false-activated the old OR-based matcher onto /ir_photo/{photo_id}/... and
+        // blew up on the unsubstituted {photo_id} (CI red Jul-24..29). Fix: require the ACCEPTANCE
         // signature — the request definition must carry ir_photo_key AND visual_photo_key AND
-        // platform — and skip the existing pipeline ops this class already covers via auth-gates.
+        // platform together. Verified 2026-07-29 that NO current path (incl. every /ir_photo/* op)
+        // has all three, so this alone excludes the existing pipeline WITHOUT a path-prefix skip —
+        // which matters because the real FLIR-IND endpoint may well ship under /ir_photo/, and a
+        // blanket /ir_photo/ skip would then miss it (a latent false-negative).
         String found = null;
         for (String raw : paths.keySet()) {
-            String p = raw.startsWith("/api/") ? raw.substring(4) : raw;
-            if (p.startsWith("/ir_photo/") || p.startsWith("/ir_photos")) continue;   // existing pipeline
             String def = paths.getJSONObject(raw).toString().toLowerCase(Locale.ROOT);
             if (def.contains("ir_photo_key") && def.contains("visual_photo_key") && def.contains("platform")) {
-                found = p;
+                found = raw.startsWith("/api/") ? raw.substring(4) : raw;
                 break;
             }
         }

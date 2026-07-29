@@ -128,10 +128,16 @@ public class DuplicateApiAuditTest extends BaseAPITest {
             if (distinct.size() < 2) continue;
             twins++;
             String a = variants.get(0), b = variants.get(1);
-            report("dash-underscore-twin", "critical", a + " " + SPEC.get(a), b + " " + SPEC.get(b),
-                    "same path in both spellings — two registrations to drift apart");
+            // 2026-07-29: verified the flagship case (planned-workorder-line vs planned_workorder_line)
+            // is TWO DIFFERENT resources (quote lines vs planned-WO lines), not one split registration.
+            // So this is a NAMING-CONFUSION smell (a client can hit the wrong one), reported as INFO —
+            // NOT a "same resource drifting" critical. Confirm each pair's operationIds/summaries
+            // before treating it as a true duplicate.
+            report("dash-underscore-similar", "info", a + " " + SPEC.get(a), b + " " + SPEC.get(b),
+                    "paths differ only by dash/underscore — verify these are intentionally distinct "
+                    + "resources (confusing naming) vs an accidental split registration");
         }
-        conclude("dash/underscore twins", twins, true);
+        conclude("dash/underscore look-alike paths", twins, false);
     }
 
     @Test(description = "No path is published both with and without a trailing slash")
@@ -215,57 +221,51 @@ public class DuplicateApiAuditTest extends BaseAPITest {
         }
     }
 
-    @Test(description = "API testing - FIX CHECK: planned_workorder_line list honours pagination and answers <10s (RED until fixed)")
-    public void testFixCheckUnderscoreListPaginates() {
-        ExtentReportManager.createTest(MODULE, "fix-check", "API testing - FIX CHECK: planned_workorder_line list paginates <10s");
+    @Test(description = "API testing - FIX CHECK: the planned_workorder_line list read RESPONDS (does not time out) — RED until fixed")
+    public void testFixCheckUnderscoreListResponds() {
+        ExtentReportManager.createTest(MODULE, "fix-check",
+                "API testing - FIX CHECK: GET /planned_workorder_line/ responds (no unbounded-read timeout)");
         requireHealthyBackend();
+        // NOTE (2026-07-29 re-verification): the defect this guards is an UNBOUNDED-READ TIMEOUT, not a
+        // "dash/underscore twin". Deep spec review proved /planned-workorder-line/* (operationId
+        // quote_api.*_quote_line, summary "quote line") and /planned_workorder_line/* (planned WO
+        // lines) are DIFFERENT resources with confusingly-similar paths — NOT one resource split in
+        // two. The real, still-live defect: GET /planned_workorder_line/ hangs 45s+ and never answers,
+        // with OR without page/per_page/limit params (re-probed all three, all timed out). That is a
+        // genuine availability defect regardless of the naming question. This tripwire asserts only
+        // that — the list must RESPOND (any non-5xx) within the budget — and flips green when it does.
         String path = "/planned_workorder_line/?page=1&per_page=5";
         long t0 = System.currentTimeMillis();
         try {
             Response r = getAuthenticatedRequestSpec().config(TRIPWIRE_CONFIG).relaxedHTTPSValidation()
                     .when().get(path).then().extract().response();
             long ms = System.currentTimeMillis() - t0;
-            String msg = "GET " + path + " → HTTP " + r.statusCode() + " in " + ms + "ms ("
-                    + r.asString().length() + " bytes)";
+            String msg = "GET " + path + " → HTTP " + r.statusCode() + " in " + ms + "ms";
             System.out.println("[DupAudit/FixCheck] " + msg);
-            if (r.statusCode() != 200 || ms > 10000) {
+            if (r.statusCode() >= 500 || ms > 10000) {
                 ExtentReportManager.logFail(msg);
-                Assert.fail("NOT FIXED — " + msg + ". Contract: the list read must honour page/per_page and answer"
-                        + " <10s. First flagged 2026-07-09, dev-reported fixed, re-verified broken 2026-07-23"
-                        + " (hangs 40s+, unbounded read). Fix: paginate the read and collapse the dash/underscore"
-                        + " twin onto ONE canonical route.");
+                Assert.fail("NOT FIXED — " + msg + ". The list read must answer (non-5xx) within 10s; today it"
+                        + " scans unbounded and hangs (re-verified 2026-07-29: 45s timeout with page/per_page,"
+                        + " with limit=1, and bare — pagination params make no difference). This is an"
+                        + " availability defect (unbounded list read), first flagged 2026-07-09.");
             }
             ExtentReportManager.logPass("FIXED: " + msg);
         } catch (AssertionError ae) { throw ae; }
         catch (Exception e) {
             long ms = System.currentTimeMillis() - t0;
-            String msg = "GET " + path + " gave NO response in " + ms + "ms (socket timeout — unbounded/unpaginated read)";
+            String msg = "GET " + path + " gave NO response in " + ms + "ms (socket timeout — unbounded read)";
             ExtentReportManager.logFail(msg);
-            Assert.fail("NOT FIXED — " + msg + ". Same signature as 2026-07-09 and 2026-07-17; re-verified live"
-                    + " 2026-07-23 (45s browser probe aborted with no response while bounded reads on the same"
-                    + " resource answered). The endpoint ignores page/per_page and scans unbounded.");
+            Assert.fail("NOT FIXED — " + msg + ". Re-verified live 2026-07-29 (times out identically with"
+                    + " page/per_page, limit=1, and no params). Unbounded list read that never returns.");
         }
     }
 
-    @Test(description = "API testing - FIX CHECK: planned-workorder-line exists in ONE spelling only (RED until twin retired)")
-    public void testFixCheckSingleSpelling() {
-        ExtentReportManager.createTest(MODULE, "fix-check", "API testing - FIX CHECK: planned-workorder-line single spelling");
-        List<String> dash = new ArrayList<>(), under = new ArrayList<>();
-        for (Map.Entry<String, TreeSet<String>> e : SPEC.entrySet()) {
-            if (e.getKey().contains("planned-workorder-line")) dash.add(e.getKey() + " " + e.getValue());
-            if (e.getKey().contains("planned_workorder_line")) under.add(e.getKey() + " " + e.getValue());
-        }
-        String detail = "dash family (" + dash.size() + "): " + dash + " | underscore family (" + under.size() + "): " + under;
-        System.out.println("[DupAudit/FixCheck] " + detail);
-        if (!dash.isEmpty() && !under.isEmpty()) {
-            ExtentReportManager.logFail(detail);
-            Assert.fail("NOT FIXED — the resource is still registered under BOTH spellings (" + dash.size()
-                    + " dash + " + under.size() + " underscore paths; 17 Jul it was 6+13, so the twin persists and"
-                    + " the families have drifted: writes live on both sides, the paginated dash LIST was removed)."
-                    + " Contract: ONE canonical route family. " + detail);
-        }
-        ExtentReportManager.logPass("FIXED: only one spelling remains — " + detail);
-    }
+    // NOTE: the former testFixCheckSingleSpelling was RETRACTED 2026-07-29. It asserted that
+    // /planned-workorder-line/* and /planned_workorder_line/* must be "collapsed to ONE canonical
+    // route" — but deep spec verification showed they are DIFFERENT resources (quote lines vs
+    // planned-workorder lines, separate controllers/summaries), so that assertion was wrong
+    // (over-claim). The confusingly-similar naming is still surfaced as an INFO observation by
+    // testDashUnderscoreTwins below; it is no longer asserted as a hard-fail defect.
 
     private void conclude(String what, int n, boolean gated) {
         if (n == 0) { ExtentReportManager.logPass("No " + what + " in the spec."); return; }
@@ -281,11 +281,15 @@ public class DuplicateApiAuditTest extends BaseAPITest {
         md.append("The live `/api/swagger.json` surface, audited for duplicated endpoint definitions: ")
           .append("dash/underscore twins, trailing-slash twins, singular/plural root families, v1/v2 overlaps. ")
           .append("Exact twins split traffic across two registrations that drift independently.\n\n");
-        md.append("**FIX-CHECK status (tripwires above in this class):** the critical ")
-          .append("`planned_workorder_line` twin was dev-reported fixed and re-verified NOT fixed on ")
-          .append("2026-07-23 — the underscore list still ignores pagination (40s+ timeout), both spellings ")
-          .append("remain registered, and the paginated dash list was removed from the spec. Full evidence: ")
-          .append("`docs/bug-repro/duplicate-api-endpoints/`.\n\n");
+        md.append("**FIX-CHECK status (tripwire above in this class):** the still-live defect is that ")
+          .append("`GET /planned_workorder_line/` (planned-workorder-line LIST) performs an UNBOUNDED read ")
+          .append("and TIMES OUT (45s+, re-verified 2026-07-29 with and without page/per_page/limit). ")
+          .append("CORRECTION (2026-07-29): the earlier 'critical dash/underscore twin' framing was an ")
+          .append("over-claim — deep spec review proved `/planned-workorder-line/*` (quote lines, controller ")
+          .append("`quote_api`) and `/planned_workorder_line/*` (planned-WO lines) are DIFFERENT resources ")
+          .append("with confusingly-similar names, not one resource split in two. The retired ")
+          .append("`testFixCheckSingleSpelling` asserted the wrong contract and was removed; the naming ")
+          .append("smell is now an INFO observation only.\n\n");
         md.append("Runtime duplicate CALLS (same endpoint refetched on one page load) are covered separately by ")
           .append("the browser-driven `ApiDuplicateCallTestNG` (Suite 2 `api` toggle) — latest findings: ")
           .append("21 redundant logical endpoints (3–4x per load) + 68 exact-URL duplicates.\n\n");
