@@ -13,19 +13,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Page Object for the Accounts [SALES] module (/accounts).
+ * Page Object for the customer-account list.
  *
- * Customer accounts (the third SALES nav item alongside Goals + Opportunities).
- * Grid columns: Account Name, Owner, Created, Actions. Create dialog ("Create New
- * Account") collects Account Name, Subdomain, Account Owner, and a full Address.
- * The account detail (/accounts/:id) carries tabs: Details, Internal Team, Portal
- * Access, Contacts, Opportunities, Sites, Goals, Notes — Contacts are what an
- * Opportunity quote's "Recipient" pulls from (/accounts/:id?tab=contacts).
+ * Route history: originally /accounts as the third SALES nav item; v1.35 (ZP-3157)
+ * moved it under the ADMIN sidebar group; since late V1.36 (observed 2026-07-30) the
+ * nav item is "Customers" under OPERATIONS at /customers and /accounts REDIRECTS
+ * there — open() still navigates via /accounts on purpose so the legacy deep link
+ * keeps being exercised. Grid columns: Account Name, Owner, Created, Actions.
  *
- * NOTE (test safety): creating an account collects a Subdomain (tenant-ish) so the
- * suite does NOT submit new accounts — it exercises create-dialog VALIDATION and
- * cancels. Read/search/detail run against existing accounts; delete is confirmation-
- * gated and cancelled (never deletes shared data).
+ * v1.35 create dialog (ZP-3156): ACCOUNT DETAILS (Account Name*, async Account
+ * Owner* Autocomplete) + mandatory CONTACT DETAILS (firstname/lastname/email/
+ * job_title name= inputs) + optional "Add a site now" + License Type radios.
+ * Subdomain is HIDDEN (server derives it from the contact email's domain). The
+ * pre-v1.35 note about never submitting is obsolete: creates are safe when tests
+ * use QA_* names, "No license", and delete their rows afterwards.
  *
  * Patterns mirror OpportunitiesPage: CSS-first locators, relative XPath only for MUI
  * text buttons, explicit waits (no blind sleeps that force green), tolerant JS clicks.

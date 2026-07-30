@@ -172,12 +172,28 @@ public class AccountsTestNG extends BaseTest {
         if (token.length() < 2) throw new SkipException("First row has no usable search token");
         int before = page.rowCount();
         page.search(token);
-        int after = page.rowCount();
-        Assert.assertTrue(after <= before, "Search must not increase row count (" + before + "->" + after + ").");
-        for (WebElement r : page.rows()) {
-            Assert.assertTrue(r.getText().toLowerCase().contains(token.toLowerCase()),
-                    "Filtered row does not contain search token '" + token + "': " + r.getText());
+        // Since the v2 list API (observed 2026-07-30) search is SERVER-side (POST
+        // by-company/{id}/v2 {search}) and debounced — the grid repaints async, so poll
+        // until the filtered rows settle instead of reading them straight away (reading
+        // immediately sees the stale unfiltered page and fails on rows like the 07-27
+        // "Sam email account" red, which was this race, not a matching bug).
+        int after = -1;
+        boolean allMatch = false;
+        long deadline = System.currentTimeMillis() + 10000;
+        while (System.currentTimeMillis() < deadline) {
+            after = page.rowCount();
+            allMatch = true;
+            for (WebElement r : page.rows()) {
+                String rowText;
+                try { rowText = r.getText(); } catch (Exception stale) { allMatch = false; break; }
+                if (!rowText.toLowerCase().contains(token.toLowerCase())) { allMatch = false; break; }
+            }
+            if (allMatch && after <= before) break;
+            pause(500);
         }
+        Assert.assertTrue(after <= before, "Search must not increase row count (" + before + "->" + after + ").");
+        Assert.assertTrue(allMatch,
+                "Rows still show entries not matching '" + token + "' after the server-side search settled (10s).");
         page.clearSearch();
         ExtentReportManager.logPass("Search filtered " + before + " -> " + after + " rows, all match '" + token + "'");
     }
@@ -188,6 +204,9 @@ public class AccountsTestNG extends BaseTest {
         goToAccounts();
         if (!page.isGridPresent()) throw new SkipException("No accounts grid");
         page.search("zzqqxx_nomatch_" + System.nanoTime());
+        // server-side search (v2) — give the async filter time to settle before asserting
+        long deadline = System.currentTimeMillis() + 10000;
+        while (System.currentTimeMillis() < deadline && page.rowCount() != 0) pause(500);
         Assert.assertEquals(page.rowCount(), 0, "A no-match search must yield 0 rows.");
         Assert.assertFalse(page.bodyText().toLowerCase().contains("undefined is not"),
                 "No-result render must not surface a raw JS error in the body.");

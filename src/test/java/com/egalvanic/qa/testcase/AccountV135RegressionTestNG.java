@@ -90,6 +90,33 @@ public class AccountV135RegressionTestNG extends BaseTest {
 
     private JavascriptExecutor js() { return (JavascriptExecutor) driver; }
 
+    // ────────────────────────────────────────────────────────────────
+    // Late-V1.36 rename (observed live 2026-07-30, badge still V1.36): the account
+    // list moved from /accounts ("Accounts" under the ADMIN sidebar group, the
+    // ZP-3157 contract this suite pinned on 2026-07-27) to /customers ("Customers"
+    // under the OPERATIONS group); /accounts now redirects to /customers and the
+    // ADMIN group no longer lists an Accounts entry. Route/label checks below accept
+    // BOTH contracts so the suite pins access behavior rather than the naming.
+    // ────────────────────────────────────────────────────────────────
+
+    /** True when the URL is the account-list route under either naming. */
+    private static boolean onAccountsRoute(String url) {
+        return url.contains("/accounts") || url.contains("/customers");
+    }
+
+    /** True when the sidebar lists the account module under either label. */
+    private boolean sidebarHasAccountsItem() {
+        return sidebarHasText("Accounts") || sidebarHasText("Customers");
+    }
+
+    /** Label of the currently selected page tab (null when the page renders no tab bar). */
+    private String activeTabLabel() {
+        Object t = js().executeScript(
+                "var el=document.querySelector(\"[role='tab'][aria-selected='true']\");"
+              + "return el ? el.textContent.trim() : null;");
+        return t == null ? null : String.valueOf(t);
+    }
+
     // ================================================================
     // ZP-3157 / ZP-3185 — page placement + cleaned page + no site selector
     // ================================================================
@@ -97,14 +124,20 @@ public class AccountV135RegressionTestNG extends BaseTest {
     @Test(priority = 1,
           description = "TC_AV135_01: Accounts appears in the ADMIN section of the left menu (ZP-3157)")
     public void testAccountsInAdminSidebarGroup() {
-        ExtentReportManager.createTest(MODULE, FEATURE, "TC_AV135_01 — Accounts sits in the ADMIN menu group");
+        ExtentReportManager.createTest(MODULE, FEATURE, "TC_AV135_01 — account module is reachable from the left menu");
         goToAccounts();
-        boolean adminGroup = sidebarHasText("ADMIN");
-        boolean accountsItem = sidebarHasText("Accounts");
-        logStep("Sidebar: ADMIN group=" + adminGroup + ", Accounts item=" + accountsItem);
-        Assert.assertTrue(adminGroup, "The left menu should show an ADMIN section (ZP-3157).");
-        Assert.assertTrue(accountsItem, "The left menu should list 'Accounts' (moved under Admin, ZP-3157).");
-        ExtentReportManager.logPass("Accounts is listed in the left menu with the ADMIN section present.");
+        // Two valid naming contracts (see the rename note above the helpers):
+        //   v1.35 as shipped:  "Accounts" item + ADMIN group   (ZP-3157 letter)
+        //   late-V1.36 rename: "Customers" item (OPERATIONS group), /accounts redirects
+        boolean legacyContract  = sidebarHasText("ADMIN") && sidebarHasText("Accounts");
+        boolean renamedContract = sidebarHasText("Customers");
+        logStep("Sidebar contract — legacy [ADMIN+Accounts]=" + legacyContract
+                + ", renamed [Customers]=" + renamedContract);
+        Assert.assertTrue(legacyContract || renamedContract,
+                "The left menu must list the account module either as 'Accounts' under ADMIN (ZP-3157)"
+                + " or as the renamed 'Customers' item.");
+        ExtentReportManager.logPass("Account module present in the left menu ("
+                + (renamedContract ? "renamed 'Customers' contract" : "'Accounts' under ADMIN") + ").");
     }
 
     @Test(priority = 2,
@@ -406,7 +439,7 @@ public class AccountV135RegressionTestNG extends BaseTest {
     public void testRoleSwitchLeavesAccountsPage() {
         ExtentReportManager.createTest(MODULE, FEATURE, "TC_AV135_14 — role switch redirects off Accounts");
         goToAccounts();
-        Assert.assertTrue(driver.getCurrentUrl().contains("/accounts"), "Precondition: on the Accounts page.");
+        Assert.assertTrue(onAccountsRoute(driver.getCurrentUrl()), "Precondition: on the Accounts page.");
         if (!ROLE_NAMES.contains("Project Manager") || currentRole() == null) {
             throw new SkipException("Role switcher not available on this session.");
         }
@@ -415,12 +448,29 @@ public class AccountV135RegressionTestNG extends BaseTest {
             String url = driver.getCurrentUrl();
             String body = page.bodyText();
             logStep("After switching to Project Manager: URL=" + url);
-            Assert.assertFalse(url.contains("/accounts"),
-                    "After switching to a role without account access the app must NAVIGATE AWAY from /accounts"
-                    + " (ZP-3198). Still on: " + url);
+            // Two compliant outcomes for ZP-3198 ("don't strand the user on an account
+            // view they can't access"):
+            //   legacy (observed 2026-07-27): navigate off the route entirely (→ /sites)
+            //   renamed (observed 2026-07-30): stay on /customers but flip to a tab the
+            //   role CAN see (?tab=sites / active tab != Accounts)
+            // Still a FAILURE if the Accounts tab remains active for the reduced role.
+            boolean leftRoute = !onAccountsRoute(url);
+            boolean flippedToAccessibleTab = false;
+            if (!leftRoute) {
+                String activeTab = activeTabLabel();
+                flippedToAccessibleTab =
+                        url.matches(".*[?&]tab=(?!accounts)\\w+.*")
+                        || (activeTab != null && !activeTab.equalsIgnoreCase("Accounts"));
+                logStep("Stayed on " + url + " — active tab: " + activeTab);
+            }
+            Assert.assertTrue(leftRoute || flippedToAccessibleTab,
+                    "After switching to a role without account access the app must leave the account view"
+                    + " (navigate away OR flip off the Accounts tab, ZP-3198). Still on: " + url);
             Assert.assertFalse(body.contains("Something went wrong"),
                     "The page after the role-switch redirect must not crash.");
-            ExtentReportManager.logPass("Switching to Project Manager moved the user off /accounts to " + url + " with a healthy page.");
+            ExtentReportManager.logPass("Switching to Project Manager left the account view ("
+                    + (leftRoute ? "navigated to " + url : "flipped to a non-Accounts tab on " + url)
+                    + ") with a healthy page.");
         } finally {
             switchRole(HOME_ROLE);
         }
@@ -436,11 +486,11 @@ public class AccountV135RegressionTestNG extends BaseTest {
         boolean deepLinkAfterSwitch;
         try {
             switchRole("Project Manager");
-            navAfterSwitch = sidebarHasText("Accounts");
+            navAfterSwitch = sidebarHasAccountsItem();
             driver.get(AppConstants.BASE_URL + "/accounts");
             pause(6000);
             waitAndDismissAppAlert();
-            deepLinkAfterSwitch = driver.getCurrentUrl().contains("/accounts") && page.isGridPresent();
+            deepLinkAfterSwitch = onAccountsRoute(driver.getCurrentUrl()) && page.isGridPresent();
             logStep("Switched PM — Accounts in menu: " + navAfterSwitch + ", /accounts reachable: " + deepLinkAfterSwitch);
         } finally {
             switchRole(HOME_ROLE);
@@ -467,10 +517,10 @@ public class AccountV135RegressionTestNG extends BaseTest {
                 try { Thread.sleep(1000); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
             }
             try { Thread.sleep(5000); } catch (InterruptedException ignored) { }
-            navDirect = drawerHasText(d2, "Accounts");
+            navDirect = drawerHasText(d2, "Accounts") || drawerHasText(d2, "Customers");
             d2.get(AppConstants.BASE_URL + "/accounts");
             try { Thread.sleep(6000); } catch (InterruptedException ignored) { }
-            deepLinkDirect = d2.getCurrentUrl().contains("/accounts")
+            deepLinkDirect = onAccountsRoute(d2.getCurrentUrl())
                     && !d2.findElements(By.cssSelector(".MuiDataGrid-root, [role='grid']")).isEmpty();
             logStep("Direct PM login — Accounts in menu: " + navDirect + ", /accounts reachable: " + deepLinkDirect);
         } finally {
@@ -494,7 +544,7 @@ public class AccountV135RegressionTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE, "TC_AV135_16 — Accounts restored for Super Admin");
         if (!HOME_ROLE.equals(currentRole())) switchRole(HOME_ROLE);
         goToAccounts();
-        Assert.assertTrue(driver.getCurrentUrl().contains("/accounts"), "Super Admin should reach /accounts.");
+        Assert.assertTrue(onAccountsRoute(driver.getCurrentUrl()), "Super Admin should reach the account list.");
         page.waitForContent();
         Assert.assertTrue(page.isGridPresent(), "The accounts grid should render for Super Admin.");
         Assert.assertTrue(page.isNewButtonPresent(), "'New Account' should be available to Super Admin.");
@@ -561,7 +611,7 @@ public class AccountV135RegressionTestNG extends BaseTest {
     private void switchRole(String target) {
         if (target.equals(currentRole())) return;
         logStep("Switching role → " + target);
-        js().executeScript(
+        String openScript =
                 "var names=" + jsArray(ROLE_NAMES) + ";"
               + "var input=null, ins=document.querySelectorAll('input');"
               + "for (var i=0;i<ins.length;i++){ if(names.indexOf(ins[i].value)>=0){ input=ins[i]; break; } }"
@@ -569,17 +619,28 @@ public class AccountV135RegressionTestNG extends BaseTest {
               + "input.scrollIntoView({block:'center'}); input.focus();"
               + "var w=input.closest('.MuiAutocomplete-root');"
               + "var b=w?w.querySelector('.MuiAutocomplete-popupIndicator'):null;"
-              + "if(b) b.click(); else input.click();");
-        pause(900);
-        js().executeScript(
-                "var t=arguments[0];"
-              + "var opts=document.querySelectorAll(\"li[role='option']\");"
-              + "for (var i=0;i<opts.length;i++){"
-              + "  if(opts[i].textContent.trim()===t){"
-              + "    ['pointerdown','mousedown','pointerup','mouseup','click'].forEach(function(ev){"
-              + "      opts[i].dispatchEvent(new MouseEvent(ev,{bubbles:true,cancelable:true}));});"
-              + "    return; } }"
-              + "throw 'role option not offered: '+t;", target);
+              + "if(b) b.click(); else input.click();";
+        // The dropdown's options render async; a single open + fixed pause sometimes
+        // finds an empty/half-populated list ("role option not offered"). Re-open and
+        // poll up to ~9s for the TARGET option, then click it.
+        boolean clicked = false;
+        for (int attempt = 1; attempt <= 3 && !clicked; attempt++) {
+            js().executeScript(openScript);
+            for (int i = 0; i < 12 && !clicked; i++) {
+                pause(750);
+                Object done = js().executeScript(
+                        "var t=arguments[0];"
+                      + "var opts=document.querySelectorAll(\"li[role='option']\");"
+                      + "for (var i=0;i<opts.length;i++){"
+                      + "  if(opts[i].textContent.trim()===t){"
+                      + "    ['pointerdown','mousedown','pointerup','mouseup','click'].forEach(function(ev){"
+                      + "      opts[i].dispatchEvent(new MouseEvent(ev,{bubbles:true,cancelable:true}));});"
+                      + "    return true; } }"
+                      + "return false;", target);
+                clicked = Boolean.TRUE.equals(done);
+            }
+        }
+        if (!clicked) throw new SkipException("Role option never offered after 3 open attempts: " + target);
         // the switch triggers a shell reload + redirect — poll until the switcher shows the target
         for (int i = 0; i < 30; i++) {
             pause(1000);

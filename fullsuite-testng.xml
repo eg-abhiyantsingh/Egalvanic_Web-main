@@ -345,6 +345,11 @@
                  subdomain/address, Accounts-under-Admin, no site dropdown, pagination, role-switch
                  redirect + PM direct-vs-switch parity. Role tests restore Super Admin. -->
             <class name="com.egalvanic.qa.testcase.AccountV135RegressionTestNG"/>
+            <!-- v1.35 extension (2026-07-30): old-route redirect (/accounts→/customers rename),
+                 generic/malformed-email create validation, edit-dialog contract, facility-selector
+                 cross-page check, v2 list-API pagination contract, duplicate-name tripwire
+                 (known-product-bug), Admin/Account-Manager access matrix. -->
+            <class name="com.egalvanic.qa.testcase.AccountV135ExtendedTestNG"/>
         </classes>
     </test>
 
