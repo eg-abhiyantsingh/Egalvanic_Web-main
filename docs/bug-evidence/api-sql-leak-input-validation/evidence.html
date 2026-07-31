@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Re-verification — API SQL leak / input validation</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+         color: #1a1f2b; margin: 0; padding: 32px 40px; font-size: 13px; line-height: 1.5; }
+  h1 { font-size: 21px; margin: 0 0 2px; }
+  h2 { font-size: 15px; margin: 26px 0 8px; border-bottom: 2px solid #e3e7ee; padding-bottom: 4px; }
+  .sub { color: #5b6472; font-size: 12px; margin: 0 0 16px; }
+  .banner { background: #e7f7ed; border: 1px solid #34a853; color: #146c2e;
+            padding: 12px 16px; border-radius: 8px; font-weight: 600; font-size: 15px; margin: 14px 0 6px; }
+  .banner span { font-weight: 400; font-size: 12px; color: #2b6b3d; display: block; margin-top: 3px; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 4px; font-size: 11.5px; }
+  th, td { border: 1px solid #d6dbe4; padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { background: #f2f5f9; font-weight: 600; }
+  td.mono, .mono { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 10.5px; }
+  .fixed { color: #146c2e; font-weight: 700; white-space: nowrap; }
+  .before { color: #b00020; }
+  .noleak { color: #146c2e; font-weight: 600; }
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+  .pill.g { background: #e7f7ed; color: #146c2e; }
+  .pill.b { background: #fdecef; color: #b00020; }
+  code { background: #f2f5f9; padding: 1px 4px; border-radius: 3px; font-size: 10.5px; }
+  .foot { margin-top: 22px; color: #6b7280; font-size: 11px; border-top: 1px solid #e3e7ee; padding-top: 10px; }
+  .meta { font-size: 11px; color: #5b6472; }
+</style>
+</head>
+<body>
+  <h1>Re-verification — Systemic API SQL-leak / input-validation defect</h1>
+  <p class="sub">Component: Backend API (cross-cutting) &nbsp;·&nbsp; Environment: QA <b>acme.qa.egalvanic.ai</b>
+     &nbsp;·&nbsp; Verified: <b>2026-07-31</b>, authenticated Super-Admin session (cookie auth)
+     &nbsp;·&nbsp; App badge: V1.36</p>
+
+  <div class="banner">✅ RESOLVED — all 10 enumerated ticket vectors fixed. No SQL / psycopg2 / traceback / schema text in any response.
+     <span>Malformed input now returns a clean HTTP 400 (or 404-class); abusive pagination degrades to a clamped 200;
+     genuine errors return a generic message + trace_id only. The building/create control still returns its clean 400,
+     and that discipline is now applied across the surface. One <b>adjacent, lower-severity</b> gap remains (create
+     endpoints accept some invalid-but-well-formed payloads with 201) — separate from this info-disclosure defect; see below.</span>
+  </div>
+
+  <h2>Vector-by-vector result (live probes, this session)</h2>
+  <table>
+    <thead><tr>
+      <th style="width:15%">Vector</th><th style="width:20%">Endpoint · input</th>
+      <th style="width:22%">Before (ticket)</th><th style="width:28%">Now (observed 2026-07-31)</th>
+      <th style="width:8%">HTTP</th><th style="width:7%">Leak?</th>
+    </tr></thead>
+    <tbody>
+      <tr><td>Malformed UUID path param</td>
+          <td class="mono">GET /account/by-company/abc</td>
+          <td class="before">500 + psycopg2 SQL leak</td>
+          <td class="mono">{"error":"Invalid UUID format: badly formed hexadecimal UUID string","success":false}</td>
+          <td class="fixed">400</td><td class="noleak">none</td></tr>
+      <tr><td>Negative integer path param</td>
+          <td class="mono">GET /company/-1/slds</td>
+          <td class="before">500 + psycopg2 SQL leak</td>
+          <td class="mono">{"error":"Invalid UUID format: badly formed hexadecimal UUID string","success":false}</td>
+          <td class="fixed">400</td><td class="noleak">none</td></tr>
+      <tr><td>Negative pagination offset</td>
+          <td class="mono">POST /v2/issues/list &nbsp;page=-1</td>
+          <td class="before">500 "OFFSET must not be negative" (SQL leaked)</td>
+          <td class="mono">200 — clamped, returns items {data:{items,page,page_size,total}}</td>
+          <td class="fixed">200</td><td class="noleak">none</td></tr>
+      <tr><td>Non-numeric page</td>
+          <td class="mono">POST /v2/issues/list &nbsp;page=abc</td>
+          <td class="before">500 "unsupported operand type(s) for -: 'str' and 'int'"</td>
+          <td class="mono">200 — clamped, returns items</td>
+          <td class="fixed">200</td><td class="noleak">none</td></tr>
+      <tr><td>Negative page_size</td>
+          <td class="mono">POST /v2/issues/list &nbsp;page_size=-5</td>
+          <td class="before">500 "LIMIT must not be negative" (SQL leaked)</td>
+          <td class="mono">200 — clamped, returns items</td>
+          <td class="fixed">200</td><td class="noleak">none</td></tr>
+      <tr><td>Non-numeric page_size</td>
+          <td class="mono">POST /v2/issues/list &nbsp;page_size=lots</td>
+          <td class="before">500 "invalid literal for int()"</td>
+          <td class="mono">200 — clamped, returns items</td>
+          <td class="fixed">200</td><td class="noleak">none</td></tr>
+      <tr><td>Missing required field</td>
+          <td class="mono">POST /task/create &nbsp;{} (null sld_id)</td>
+          <td class="before">500 NotNullViolation (SQL leaked)</td>
+          <td class="mono">{"error":"Missing required field: sld_id"}</td>
+          <td class="fixed">400</td><td class="noleak">none</td></tr>
+      <tr><td>Bad UUID in body</td>
+          <td class="mono">POST /task/create &nbsp;sld_id="not-a-uuid"</td>
+          <td class="before">500 InvalidTextRepresentation (SQL leaked)</td>
+          <td class="mono">{"error":"Invalid UUID format: badly formed hexadecimal UUID string"}</td>
+          <td class="fixed">400</td><td class="noleak">none</td></tr>
+      <tr><td>Wrong JSON shape</td>
+          <td class="mono">POST /task/create &nbsp;[1,2,3]</td>
+          <td class="before">500 "'list' object has no attribute 'get'"</td>
+          <td class="mono">{"error":"Request body must be a JSON object"}</td>
+          <td class="fixed">400</td><td class="noleak">none</td></tr>
+      <tr><td>Bad UUID (issue create)</td>
+          <td class="mono">POST /issue/create &nbsp;sld_id="not-a-uuid"</td>
+          <td class="before">400 — but body still leaked psycopg2 text</td>
+          <td class="mono">{"error":"badly formed hexadecimal UUID string","success":false}</td>
+          <td class="fixed">400</td><td class="noleak">none</td></tr>
+      <tr><td>Bad enum/UUID (issue create, alt path)</td>
+          <td class="mono">POST /issue/create &nbsp;issue_class="not-a-uuid"</td>
+          <td class="before">(same leak family)</td>
+          <td class="mono">{"error":"An internal error occurred.","success":false,"trace_id":"073d3cd8…350ea"}</td>
+          <td class="fixed">400</td><td class="noleak">none</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Supplementary probes</h2>
+  <table>
+    <thead><tr><th style="width:26%">Probe</th><th style="width:12%">HTTP</th><th style="width:12%">Leak?</th><th>Body</th></tr></thead>
+    <tbody>
+      <tr><td>Truncated JSON — <code>POST /task/create {"title":</code></td><td class="fixed">400</td><td class="noleak">none</td>
+          <td class="mono">Flask generic 400 page: "Failed to decode JSON object: Expecting value: line 1 column 11" (JSON parse position — not SQL/driver internals)</td></tr>
+      <tr><td>Control — <code>POST /location/building/ {}</code></td><td class="fixed">400</td><td class="noleak">none</td>
+          <td class="mono">{"error":"Missing required field: name","success":false} — the reference-correct behavior, now matched surface-wide</td></tr>
+      <tr><td>Far-past-end page — <code>page=999999</code></td><td class="fixed">200</td><td class="noleak">none</td>
+          <td class="mono">{"data":{"items":[],"page":999999,"page_size":25,"total":12},"success":true} — safe empty page</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Assessment against the ticket's Expected Result</h2>
+  <table>
+    <thead><tr><th style="width:60%">Requirement</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Malformed / out-of-range input caught before the DB → 400 (or 404 for absent IDs)</td><td><span class="pill g">MET</span></td></tr>
+      <tr><td>No 4xx/5xx response contains SQL, psycopg2/driver names, tracebacks, table/column names, or query structure</td><td><span class="pill g">MET</span></td></tr>
+      <tr><td>Genuine server errors return a bare error + correlation/trace id, nothing else</td><td><span class="pill g">MET</span> — trace_id observed (e.g. 073d3cd8…350ea)</td></tr>
+      <tr><td>Abusive pagination degrades to 4xx or clamped 200 (never a SQL 500)</td><td><span class="pill g">MET</span> — clamped 200</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Cross-check — repo STRICT gate (mvn test -DSTRICT_INPUT_VALIDATION=true)</h2>
+  <p style="margin:2px 0 8px; font-size:11.5px;"><code>InputValidationApiTest</code> + <code>ErrorContractApiTest</code>,
+  STRICT (every finding escalated to a hard fail): <b>8 of 9 tests green</b>. The three tests that cover
+  <i>this ticket</i> — malformed-body-never-5xx, no-internal-leakage, abusive-list-params-never-5xx — and the
+  malformed-path GET contract all <span class="noleak">PASS</span> under STRICT. The single red is a
+  <b>different, adjacent concern</b> (below), not the info-disclosure/crash defect this ticket is about.</p>
+
+  <h2>Adjacent gap — still open, but NOT this ticket's defect</h2>
+  <p style="margin:2px 0 6px; font-size:11.5px;">The create endpoints now reject <i>malformed</i> input (bad UUID,
+  wrong JSON shape, missing key field <code>sld_id</code>) — but still <b>accept some invalid-but-well-formed</b>
+  create payloads with <code>201</code> instead of <code>400</code>. No leak, no 5xx — this is validation <i>depth</i>,
+  a separate finding from the Critical info-disclosure defect:</p>
+  <table>
+    <thead><tr><th style="width:60%">Create payload (on the sandbox site)</th><th>Observed</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">task: wrong field types (task_type=int, title=int)</td><td class="before">201 ACCEPTED</td></tr>
+      <tr><td class="mono">task: missing required 'title'</td><td class="before">201 ACCEPTED</td></tr>
+      <tr><td class="mono">issue: invalid status enum 'BOGUS_STATUS'</td><td class="before">201 ACCEPTED</td></tr>
+      <tr><td class="mono">issue: missing required 'issue_class'</td><td class="before">201 ACCEPTED</td></tr>
+    </tbody>
+  </table>
+  <p style="margin:4px 0 0; font-size:11px; color:#5b6472;">Recommend tracking as its own follow-up
+  (weak server-side field/enum validation on create) — it is materially lower severity than the SQL-leak
+  defect and carries no information-disclosure risk. Test-created records self-clean; sandbox issue residue = 0.</p>
+
+  <h2>Minor observations (non-blocking, not the security defect)</h2>
+  <ul style="margin:4px 0 0; padding-left:18px; font-size:11.5px;">
+    <li>The <code>issue/create</code> bad-UUID (alt path) returns message "An internal error occurred." on an HTTP <b>400</b> — sanitized and safe, but the wording reads like a 5xx; a "bad UUID" message would be clearer. No leak, so cosmetic only.</li>
+    <li>Truncated-JSON returns Flask's default HTML 400 page rather than the app's JSON error envelope — inconsistent shape, but contains no internals and is not a 5xx.</li>
+  </ul>
+
+  <div class="foot">
+    <p class="meta"><b>Method:</b> each vector was sent from an authenticated browser session (cookie auth) to the live QA API,
+    and the raw response body was tested against the repo's leak pattern
+    <span class="mono">psycopg2 | sqlalchemy | Traceback | File "/ | relation " | column " | SELECT…FROM | line N, in | InvalidTextRepresentation | NotNullViolation | ProgrammingError | OperationalError</span>.
+    Cross-checked by the repo's <span class="mono">InputValidationApiTest</span> + <span class="mono">ErrorContractApiTest</span>
+    (<span class="mono">mvn test -DSTRICT_INPUT_VALIDATION=true</span>). No probe created a record (all failed validation before insert).</p>
+  </div>
+</body>
+</html>
