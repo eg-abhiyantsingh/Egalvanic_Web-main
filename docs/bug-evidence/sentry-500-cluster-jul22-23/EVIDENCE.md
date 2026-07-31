@@ -68,6 +68,33 @@ curl -sk -X POST https://acme.qa.egalvanic.ai/api/skm/import-xml/preview \
 | `qp_real_quote.body` | quote_preview 200 with per-page `render_error` (the "fixed" shape) |
 | `rs_ghost_uuid.body` | rules-status SPA HTML shell (route absent on QA) |
 
+## Sentry-side check — is it coming TODAY or YESTERDAY? (added 2026-07-31 ~18:05 IST)
+
+Queried Sentry directly (org `egalvanic-yb`, all 4 team projects, issues API, local
+`.sentry-auth-token`) for the last **48h** (= today 31 Jul + yesterday 30 Jul):
+
+- **Org-wide, exactly ONE "returned 500" issue fired in the last 48h — and it's ours:**
+  **`EGALVANIC-PZ-4` — "API Failure: /mapping/node-session/bulk-create returned 500"** —
+  **4 events in 48h, lastSeen 2026-07-31T07:44:59Z (13:14 IST today)**, culprit
+  `screen.session_detail/{sessionId}` (real users adding assets to a WO), **status unresolved,
+  91 events since firstSeen 2026-05-05**. Permalink:
+  <https://egalvanic-yb.sentry.io/issues/7023335482/>
+  → **YES — this one is actively hitting users today and yesterday**, independently of our
+  probes (07:44Z predates all of today's QA probing).
+- **SKM preview** (`EGALVANIC-REACT-APP-4PV`, "Failed to preview SKM XML: not well-formed…"):
+  5 events total, **lastSeen 2026-07-22** — the original window. NOT seen today/yesterday in
+  Sentry, but our QA probes 500'd again today at 17:51 IST — the defect is still in the code
+  and is dormant only because no user has uploaded SKM XML since.
+- **quote_preview_html / lookup/procedures / rules-status / onboarding/jobs**: zero
+  endpoint-specific 500 issues in the 48h and 90d windows (text matches that did appear were
+  unrelated iOS/React noise — offline errors, generic "API RESPONSE"/"callback" issues).
+
+Corroboration from the daily Suite-3 CI runs (Jul 30 + Jul 31 artifacts):
+`GET /lookup/procedures` passed 200 both days (217/332 ms, still 1,196 rows unbounded).
+CI's unauthenticated-mutation policy means it cannot witness the authed bulk-create/SKM 500s.
+Unrelated known reds still present both days: `GET /tasks/{sld_id}` → 500 (3/3 samples) and
+`POST /v2/issues/list` array-filter → 500.
+
 ## Recommended actions
 
 1. **bulk-create (13 ev):** wrap the node-id resolution/insert in existence validation → 404/400
