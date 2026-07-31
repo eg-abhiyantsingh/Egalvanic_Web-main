@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sentry 500-Cluster (22–23 Jul 2026) — QA Re-verification — 2026-07-31</title>
+<style>
+  @page { size: A4; margin: 12mm; }
+  body { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; color: #1a1a1a; margin: 0; }
+  h1 { font-size: 21px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 22px 0 8px; border-bottom: 2px solid #d0d4da; padding-bottom: 4px; }
+  .sub { color: #444; font-size: 12.5px; margin-bottom: 10px; }
+  .meta td { font-size: 11.5px; padding: 1px 12px 1px 0; }
+  .meta td:first-child { color: #666; }
+  .verdict { margin: 12px 0; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+             background: #fdf3f3; border: 1px solid #f0c8c8; }
+  .shot { width: 100%; border: 1px solid #cfd4da; border-radius: 6px; margin: 6px 0 2px; }
+  .cap { font-size: 11px; color: #555; margin: 2px 0 14px; }
+  .block { break-inside: avoid; page-break-inside: avoid; }
+  pre { background: #f6f8fa; border: 1px solid #e0e4e8; border-radius: 6px; padding: 9px 11px;
+        font-size: 10.5px; white-space: pre-wrap; word-break: break-all; font-family: Menlo, monospace; }
+  .foot { color: #777; font-size: 10.5px; margin-top: 18px; border-top: 1px solid #d0d4da; padding-top: 6px; }
+</style>
+</head>
+<body>
+
+<h1>Sentry 500-Cluster (22–23 Jul 2026) — QA Re-verification</h1>
+<div class="sub">80 × HTTP 500 across 6 endpoints (66% of all 5xx in the period). Action item: <i>"Verify fixes in QA before deploying — check this issue is coming or not."</i></div>
+<table class="meta">
+  <tr><td>Environment</td><td><b>https://acme.qa.egalvanic.ai</b> (acme tenant) — all responses captured live in-browser from this origin</td></tr>
+  <tr><td>Verified</td><td><b>2026-07-31, ~17:36 IST</b> (probes re-executed at capture time; timestamps visible inside each screenshot)</td></tr>
+  <tr><td>Tester</td><td>abhiyant.singh@egalvanic.com — admin account, bearer-token auth via POST /api/auth/login</td></tr>
+  <tr><td>Method</td><td>Non-mutating probes: ghost UUIDs / malformed inputs that fail server-side before any row is written</td></tr>
+  <tr><td>Rerunnable gate</td><td><code>mvn test -DsuiteXmlFile=suite-sentry500-reverify.xml</code> — red until backend fixed (commit 3c033b3)</td></tr>
+</table>
+
+<div class="verdict">VERDICT: 2 of 6 endpoints STILL return 500 on QA (deterministic) — POST /mapping/node-session/bulk-create and POST /skm/import-xml/preview (two distinct triggers). 3 endpoints are clean today; GET /bulk-edit/rules-status/{id} cannot be verified because the route is not deployed on the QA build.</div>
+
+<div class="block">
+<h2>Summary — all six endpoints at a glance</h2>
+<img class="shot" src="sentry500-summary.png" alt="summary table">
+<div class="cap">Live status per endpoint, captured 2026-07-31. Red = bug still live; green = not reproducible / fixed; orange = route absent on QA.</div>
+</div>
+
+<div class="block">
+<h2>1 — POST /api/mapping/node-session/bulk-create (13 events) — STILL 500</h2>
+<img class="shot" src="card-1-bulk-create-500.png" alt="bulk-create 500">
+<div class="cap">Valid session_id + one nonexistent node UUID → HTTP 500 with trace_id. Deterministic: 4/4 runs today (curl ×3: trace_ids d908012d…, 42eb8478…, 3ad96f96…; browser: cc97cac4…). Malformed bodies DO get clean 400s — only the unknown-id path is unhandled. Expected: 404/400 naming the unknown id.</div>
+</div>
+
+<div class="block">
+<h2>2 — POST /api/skm/import-xml/preview (7 events) — STILL 500, trigger A: malformed XML</h2>
+<img class="shot" src="card-2-skm-malformed-500.png" alt="SKM malformed XML 500">
+<div class="cap">Client-supplied malformed XML answers HTTP 500 and leaks the raw parser message ("mismatched tag: line 1, column 59"). Contract answer is 400 with a user-safe message.</div>
+</div>
+
+<div class="block">
+<h2>3 — POST /api/skm/import-xml/preview — STILL 500, trigger B: spec-legal XML rejected</h2>
+<img class="shot" src="card-3-skm-noenc-500.png" alt="SKM legal declaration 500">
+<div class="cap">&lt;?xml version="1.0"?&gt; without the OPTIONAL encoding attribute is legal XML 1.0 — SKM PowerTools exports may omit it — yet it answers HTTP 500. This rejects valid customer files, not just bad ones.</div>
+</div>
+
+<div class="block">
+<h2>4 — Control: identical document WITH encoding="UTF-8" — passes</h2>
+<img class="shot" src="card-4-skm-control-200.png" alt="SKM control 200">
+<div class="cap">Same document body, only the encoding attribute added → HTTP 200 preview summary. Proves the trigger in §3 is precisely the missing optional attribute.</div>
+</div>
+
+<div class="block">
+<h2>5 — GET /api/lookup/procedures (26 events) — NOT reproducible</h2>
+<img class="shot" src="card-5-lookup-200.png" alt="lookup procedures 200">
+<div class="cap">200/JSON on every hit today (6× consecutive via curl + this capture); junk node_class_id → clean 400. Residual risk: unbounded ~2 MB / 1,196-row response — a load-dependent 500/timeout candidate, consistent with errors confined to the 22–23 Jul window.</div>
+</div>
+
+<div class="block">
+<h2>6 — POST /api/reporting/quote_preview_html (19 events) — NOT reproducible (appears fixed)</h2>
+<img class="shot" src="card-6-quote-preview-200.png" alt="quote preview 200">
+<div class="cap">Render failures are now caught per page and returned inside a 200 body as render_error — the likely fix for the render-exception cluster. Follow-ups: ghost/junk quote_id is accepted (no existence validation); one 67.7 s validation response observed once via curl.</div>
+</div>
+
+<div class="block">
+<h2>7 — GET /api/bulk-edit/rules-status/{id} (10 events) — route ABSENT on QA build</h2>
+<img class="shot" src="card-7-rules-status-shell.png" alt="rules-status SPA shell">
+<div class="cap">Any id returns the SPA HTML shell (the &lt;!DOCTYPE html&gt; visible in the response pane) while sibling POST /bulk-edit/explain-warnings answers JSON — the prefix is routed, this one route is not deployed here. Re-verify on prod / after it ships.</div>
+</div>
+
+<div class="block">
+<h2>8 — POST /api/onboarding/jobs (2 events) — NOT reproducible</h2>
+<img class="shot" src="card-8-onboarding-400.png" alt="onboarding 400">
+<div class="cap">Clean 400 "sld_id is required" on every payload shape tried (empty, ghost sld_id top-level / nested / query-param). No 500 reachable.</div>
+</div>
+
+<div class="block">
+<h2>Copy-paste repros for the two live bugs</h2>
+<pre>TOKEN=$(curl -sk -X POST https://acme.qa.egalvanic.ai/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"&lt;AppConstants.VALID_EMAIL&gt;","password":"&lt;AppConstants.VALID_PASSWORD&gt;","subdomain":"acme"}' \
+  | python3 -c 'import json,sys;print(json.load(sys.stdin)["access_token"])')
+
+# BUG 1 — bulk-create: nonexistent node UUID → 500 (expect 400/404)
+curl -sk -X POST https://acme.qa.egalvanic.ai/api/mapping/node-session/bulk-create \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"session_id":"b158deb5-044f-44ca-89ce-60fecc4f7169","node_ids":["00000000-0000-4000-8000-000000000001"]}'
+
+# BUG 2a — SKM preview: malformed XML → 500 + raw parser message (expect 400)
+printf '&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;DAPPER&gt;&lt;unclosed&gt;&lt;/DAPPER&gt;' &gt; /tmp/broken.xml
+curl -sk -X POST https://acme.qa.egalvanic.ai/api/skm/import-xml/preview \
+  -H "Authorization: Bearer $TOKEN" \
+  -F 'xml_file=@/tmp/broken.xml;type=text/xml' -F 'sld_id=aadcee4c-7dd0-45b3-81b9-309c5c166084'
+
+# BUG 2b — SKM preview: LEGAL declaration without encoding attr → 500 (expect 200)
+printf '&lt;?xml version="1.0"?&gt;\n&lt;DAPPER&gt;&lt;PROJECT NAME="qa-probe"/&gt;&lt;/DAPPER&gt;\n' &gt; /tmp/noenc.xml
+curl -sk -X POST https://acme.qa.egalvanic.ai/api/skm/import-xml/preview \
+  -H "Authorization: Bearer $TOKEN" \
+  -F 'xml_file=@/tmp/noenc.xml;type=text/xml' -F 'sld_id=aadcee4c-7dd0-45b3-81b9-309c5c166084'</pre>
+</div>
+
+<div class="foot">
+Artifacts: docs/bug-evidence/sentry-500-cluster-jul22-23/ (EVIDENCE.md — full analysis &amp; recommended actions; raw 500 bodies; exact XML fixtures; these screenshots).
+Regression gate: Sentry500ClusterReverifyApiTest (8 probes; live run 2026-07-31 = 3 fail / 5 pass, the 3 failures being exactly the live repros above). Commit 3c033b3.
+Generated 2026-07-31 by QA automation (Claude Code) for abhiyant.singh@egalvanic.com.
+</div>
+
+</body>
+</html>
