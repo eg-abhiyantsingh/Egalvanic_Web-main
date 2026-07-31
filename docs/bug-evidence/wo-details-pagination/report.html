@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Verification — Work Order Details pagination</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+         color: #1a1f2b; margin: 0; padding: 30px 36px; font-size: 12.5px; line-height: 1.5; }
+  h1 { font-size: 20px; margin: 0 0 2px; }
+  h2 { font-size: 14.5px; margin: 22px 0 7px; border-bottom: 2px solid #e3e7ee; padding-bottom: 4px; }
+  h3 { font-size: 12.5px; margin: 14px 0 5px; }
+  .sub { color: #5b6472; font-size: 11.5px; margin: 0 0 13px; }
+  .banner { background: #e7f7ed; border: 1px solid #34a853; color: #146c2e;
+            padding: 11px 15px; border-radius: 8px; font-weight: 600; font-size: 14px; margin: 13px 0 6px; }
+  .banner span { font-weight: 400; font-size: 11.5px; color: #2b6b3d; display: block; margin-top: 3px; }
+  table { border-collapse: collapse; width: 100%; margin: 5px 0 4px; font-size: 11px; }
+  th, td { border: 1px solid #d6dbe4; padding: 5px 7px; text-align: left; vertical-align: top; }
+  th { background: #f2f5f9; font-weight: 600; }
+  td.mono, .mono { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 10px; }
+  .ok  { color: #146c2e; font-weight: 700; white-space: nowrap; }
+  .gap { color: #9a6700; font-weight: 700; white-space: nowrap; }
+  code { background: #f2f5f9; padding: 1px 4px; border-radius: 3px; font-size: 10px; }
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 9.5px; font-weight: 600; }
+  .pill.g { background: #e7f7ed; color: #146c2e; }
+  .pill.w { background: #fff4d6; color: #9a6700; }
+  figure { margin: 8px 0 14px; page-break-inside: avoid; }
+  figure img { width: 100%; border: 1px solid #cfd6e0; border-radius: 6px; display: block; }
+  figcaption { font-size: 10.5px; color: #5b6472; margin-top: 4px; }
+  .foot { margin-top: 20px; color: #6b7280; font-size: 10.5px; border-top: 1px solid #e3e7ee; padding-top: 9px; }
+  ul { margin: 4px 0 0; padding-left: 17px; }
+  li { margin-bottom: 3px; }
+</style>
+</head>
+<body>
+  <h1>Verification — Work Order Details: paginate all content sections</h1>
+  <p class="sub">Ticket: “[Web] Work Order Details — Paginate all content sections (Assets, Issues, Tasks, Photos, Attachments)”
+     &nbsp;·&nbsp; Environment: QA <b>acme.qa.egalvanic.ai</b> (app badge V1.36)
+     &nbsp;·&nbsp; Page verified: <span class="mono">/sessions/{id}</span> (Work Order Details)
+     &nbsp;·&nbsp; Verified: <b>2026-07-31</b>, authenticated Super-Admin session</p>
+
+  <div class="banner">✅ IMPLEMENTED — all five named sections are server-side paginated with controls and total counts.
+     <span>Each section lazily calls a versioned <code>/v2</code> endpoint with <code>limit</code> + <code>offset</code>,
+     renders a “Rows per page / 1–N of N” footer, and shows a total count in both the tab badge and the section heading
+     (e.g. “IR Photos (8)”). One residual gap: the <b>Forms</b> sub-tab is still unpaginated.</span>
+  </div>
+
+  <h2>1. Per-section result (live network capture)</h2>
+  <table>
+    <thead><tr>
+      <th style="width:13%">Section</th><th style="width:34%">Endpoint actually called</th>
+      <th style="width:11%">Page size</th><th style="width:13%">Pagination UI</th>
+      <th style="width:14%">Total count shown</th><th style="width:15%">Verdict</th>
+    </tr></thead>
+    <tbody>
+      <tr><td><b>Assets</b></td>
+          <td class="mono">GET /ir_session/{id}/assets/v2?limit=20&amp;offset=0</td>
+          <td>20</td><td>Rows-per-page + range footer</td><td>Tab badge “Assets 1”</td>
+          <td class="ok">PAGINATED</td></tr>
+      <tr><td><b>Tasks</b></td>
+          <td class="mono">GET /ir_session/{id}/tasks/v2?limit=20&amp;offset=0</td>
+          <td>20</td><td>Rows-per-page + range footer</td><td>Tab badge</td>
+          <td class="ok">PAGINATED</td></tr>
+      <tr><td><b>Issues</b></td>
+          <td class="mono">GET /ir_session/{id}/issues/v2?limit=20&amp;offset=0</td>
+          <td>20</td><td>Rows-per-page + range footer</td><td>Tab badge</td>
+          <td class="ok">PAGINATED</td></tr>
+      <tr><td><b>IR Photos</b></td>
+          <td class="mono">GET /ir_session/{id}/photos/v2?limit=25&amp;offset=0</td>
+          <td>25</td><td>Rows-per-page (10/25/50) + “1–8 of 8”</td><td>Badge “8” + heading “IR Photos (8)”</td>
+          <td class="ok">PAGINATED</td></tr>
+      <tr><td><b>Attachments</b></td>
+          <td class="mono">GET /ir_session/{id}/attachments/v2?limit=25&amp;offset=0</td>
+          <td>25</td><td>Rows-per-page + range footer</td><td>Tab badge</td>
+          <td class="ok">PAGINATED</td></tr>
+      <tr><td><b>Forms</b></td>
+          <td class="mono">GET /eg-form-instance/by-session/{id} <b>— no params</b></td>
+          <td>—</td><td>grid footer only (client-side, “0–0 of 0”)</td><td>no badge</td>
+          <td class="gap">NOT SERVER-PAGINATED</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:10.5px;color:#5b6472;margin:3px 0 0;">Each section fetches <b>lazily on tab activation</b> (verified by
+  diffing <code>performance.getEntriesByType('resource')</code> before/after each tab click) — so opening a work order no longer
+  downloads every section's rows up front. Additionally a <code>GET /ir_session/{id}/summary/v2</code> supplies the per-section
+  totals (<code>counts: {assets, issues, tasks, photos, attachments, asset_nodes}</code>) without fetching rows.</p>
+
+  <h2>2. Proof the pagination is server-side (not client-side slicing)</h2>
+  <p style="margin:2px 0 5px;">Two independent checks — this is the distinction the ticket asks for
+  (“Backend APIs support limit/offset … for each section”):</p>
+  <table>
+    <thead><tr><th style="width:34%">Check</th><th>Observation</th></tr></thead>
+    <tbody>
+      <tr><td>Changing “Rows per page” issues a NEW request</td>
+          <td class="mono">Setting IR Photos to 10 → fresh call <b>photos/v2?limit=10&amp;offset=0</b> (a client-side grid would re-slice in memory with no network call).</td></tr>
+      <tr><td>Distinct offsets return distinct records + metadata</td>
+          <td class="mono">photos/v2?limit=3&amp;<b>offset=0</b> → 3 rows, first id d4acb762…, pagination {limit:3, offset:0, total:8, has_more:true}<br>
+              photos/v2?limit=3&amp;<b>offset=3</b> → 3 rows, first id e62f6926…, pagination {limit:3, offset:3, total:8, has_more:true}</td></tr>
+    </tbody>
+  </table>
+
+  <h2>3. Acceptance criteria</h2>
+  <table>
+    <thead><tr><th style="width:64%">Criterion</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Each section loads a reasonable page size (e.g. 20–25) with pagination controls or infinite scroll</td>
+          <td><span class="pill g">MET</span> — 20 (Assets/Tasks/Issues), 25 (Photos/Attachments)</td></tr>
+      <tr><td>Backend APIs support limit/offset or cursor pagination for each section</td>
+          <td><span class="pill g">MET</span> — <code>limit</code>/<code>offset</code> + <code>total</code>/<code>has_more</code>; <span class="pill w">Forms excepted</span></td></tr>
+      <tr><td>Page load time significantly improved for work orders with 50+ items</td>
+          <td><span class="pill w">NOT VOLUME-TESTED</span> — mechanism verified; QA tenant has no 50+ item work order (largest available: 8 photos). Needs seeded data or a Prod-scale WO to measure.</td></tr>
+      <tr><td>Total count displayed per section (e.g. “Assets (147)”)</td>
+          <td><span class="pill g">MET</span> — tab badges + section heading “IR Photos (8)”</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4. Screenshots</h2>
+
+  <figure>
+    <img src="wo-irphotos-pagination.png" alt="IR Photos tab with pagination footer">
+    <figcaption><b>IR Photos — pagination + total count.</b> Tab badges show per-section totals (“Assets 1”, “IR Photos 8”);
+    the section heading reads <b>“IR Photos (8)”</b> — exactly the format the ticket's AC #4 requests. The grid footer provides
+    <b>“Rows per page: 10”</b> with a 10/25/50 selector and the range <b>“1–8 of 8”</b> plus prev/next controls. Selecting a
+    different page size re-queries the server (<span class="mono">photos/v2?limit=10&amp;offset=0</span>).</figcaption>
+  </figure>
+
+  <figure>
+    <img src="wo-assets-pagination.png" alt="Assets tab with pagination footer">
+    <figcaption><b>Assets — paginated grid.</b> Populated by <span class="mono">assets/v2?limit=20&amp;offset=0</span> (page size 20)
+    with its own rows-per-page/range footer, and the location tree on the left for scoping. Tasks and Issues follow the identical
+    pattern at <span class="mono">tasks/v2</span> and <span class="mono">issues/v2</span>.</figcaption>
+  </figure>
+
+  <figure>
+    <img src="wo-forms-no-pagination.png" alt="Forms tab without pagination">
+    <figcaption><b>Forms — the residual gap.</b> This tab calls <span class="mono">GET /eg-form-instance/by-session/{id}</span>
+    with <b>no limit/offset</b>, and the response carries no <code>pagination</code> object (confirmed by re-requesting with
+    <span class="mono">?limit=1&amp;offset=0</span> — the parameters are ignored). The grid does show a footer (“0–0 of 0” here,
+    since this work order has no forms), but that is <b>client-side</b> paging over a fully-downloaded array — the server always
+    returns every form instance.
+    Low impact today (form instances per work order are few), but it is the one section still matching the ticket's original
+    “loads all records at once” description, and is covered by the ticket's “Any other sub-sections (Forms, Connections, etc.)”.</figcaption>
+  </figure>
+
+  <h2>5. Recommendation</h2>
+  <ul>
+    <li><b>Close the main scope</b> — Assets, Issues, Tasks, Photos and Attachments all meet the pagination, controls and
+        total-count criteria with genuine server-side <code>limit</code>/<code>offset</code>.</li>
+    <li><b>Keep open (or split out) two items:</b> (a) paginate the <b>Forms</b> sub-tab for parity; (b) run the
+        <b>50+ item load-time measurement</b> once a large work order exists on QA — the improvement is architecturally
+        implied by lazy per-tab fetching but has not been measured against a numeric target.</li>
+  </ul>
+
+  <div class="foot">
+    <p><b>Method.</b> A real work order was opened at <span class="mono">/sessions/b6bcc81d-…</span> and each of the six tabs
+    activated in turn; the API calls attributable to each tab were isolated by diffing the browser's resource-timing buffer
+    around every click. Server-side behaviour was then confirmed directly against the API from the same authenticated session.
+    Note: the repo's frontend reference clone (snapshot of <span class="mono">developer</span> @ d168200, 30 May 2026) still shows
+    the pre-fix single <span class="mono">/full</span> load-everything pattern and no <span class="mono">/v2</span> endpoints —
+    that clone is stale; all findings above are from the live QA build.</p>
+  </div>
+</body>
+</html>
