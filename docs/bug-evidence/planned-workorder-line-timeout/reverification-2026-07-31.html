@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Re-verification — GET /planned_workorder_line/ timeout</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+         color: #1a1f2b; margin: 0; padding: 32px 40px; font-size: 13px; line-height: 1.5; }
+  h1 { font-size: 21px; margin: 0 0 2px; }
+  h2 { font-size: 15px; margin: 24px 0 8px; border-bottom: 2px solid #e3e7ee; padding-bottom: 4px; }
+  .sub { color: #5b6472; font-size: 12px; margin: 0 0 14px; }
+  .banner { background: #fdecef; border: 1px solid #d33; color: #a01020;
+            padding: 12px 16px; border-radius: 8px; font-weight: 600; font-size: 15px; margin: 14px 0 6px; }
+  .banner span { font-weight: 400; font-size: 12px; color: #8a1020; display: block; margin-top: 3px; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 4px; font-size: 11.5px; }
+  th, td { border: 1px solid #d6dbe4; padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { background: #f2f5f9; font-weight: 600; }
+  td.mono, .mono { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 10.5px; }
+  .bad { color: #b00020; font-weight: 700; white-space: nowrap; }
+  .ok  { color: #146c2e; font-weight: 700; white-space: nowrap; }
+  .warn { color: #9a6700; font-weight: 700; white-space: nowrap; }
+  code { background: #f2f5f9; padding: 1px 4px; border-radius: 3px; font-size: 10.5px; }
+  .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+  .pill.b { background: #fdecef; color: #b00020; }
+  .pill.w { background: #fff4d6; color: #9a6700; }
+  .foot { margin-top: 22px; color: #6b7280; font-size: 11px; border-top: 1px solid #e3e7ee; padding-top: 10px; }
+</style>
+</head>
+<body>
+  <h1>Re-verification — <span class="mono">GET /planned_workorder_line/</span> timeout</h1>
+  <p class="sub">Component: Backend API — Work Order Service &nbsp;·&nbsp; Environment: QA <b>acme.qa.egalvanic.ai</b> (badge V1.36)
+     &nbsp;·&nbsp; Verified: <b>2026-07-31</b>, authenticated Super-Admin session (cookie auth)</p>
+
+  <div class="banner">⛔ NOT FIXED — the endpoint still does not return; pagination does not help; unknown ids do not fail fast.
+     <span>The bare collection <b>and</b> the suggested <code>?page=1&amp;per_page=5</code> variant both hit a client read
+     timeout at 30 s (and a CloudFront 504 at ~181 s earlier today). A bounded query on the same table returns in ~1 s,
+     confirming the ticket's "unbounded list / scaling" diagnosis is still live.</span>
+  </div>
+
+  <h2>Timed probes (this session)</h2>
+  <table>
+    <thead><tr>
+      <th style="width:30%">Request</th><th style="width:15%">Result</th><th style="width:12%">Time</th>
+      <th style="width:8%">HTTP</th><th>Body</th>
+    </tr></thead>
+    <tbody>
+      <tr><td class="mono">GET /planned_workorder_line/ <br>(bare collection — the ticket)</td>
+          <td class="bad">TIMEOUT</td><td class="bad">&gt; 30,000 ms</td><td class="bad">none</td>
+          <td>No response within a 30 s client read window. Earlier today the same call returned a CloudFront <b>504 after 181,247 ms</b>.</td></tr>
+      <tr><td class="mono">GET /planned_workorder_line/?page=1&amp;per_page=5 <br>(the Suggested-Fix pagination)</td>
+          <td class="bad">TIMEOUT</td><td class="bad">&gt; 30,000 ms</td><td class="bad">none</td>
+          <td>Adding <code>page</code>/<code>per_page</code> does <b>not</b> help — identical hang. (CI 2026-07-30 also: 35 s socket timeout with these params.)</td></tr>
+      <tr><td class="mono">GET /planned_workorder_line/00000000-0000-0000-0000-000000000000 <br>(unknown id)</td>
+          <td class="warn">200 + HTML</td><td class="ok">~1,305 ms</td><td class="warn">200</td>
+          <td>Returns the SPA index shell, <b>not a 404</b> — a client cannot tell the resource is absent (masking). Expected: fast 404.</td></tr>
+      <tr><td class="mono">GET /planned_workorder_line/not-a-uuid <br>(malformed id)</td>
+          <td class="warn">500</td><td class="ok">~1,089 ms</td><td class="warn">500</td>
+          <td class="mono">{"error":"An internal error occurred.","success":false,"trace_id":"9eb0ff51…367a"} — sanitized (no SQL leak), but a 500, not a 404.</td></tr>
+      <tr><td class="mono">GET /planned_workorder_line/by-workorder/&lt;id&gt; <br>(bounded variant — baseline)</td>
+          <td class="ok">200</td><td class="ok">~1,089 ms</td><td class="ok">200</td>
+          <td class="mono">{"count":2,"lines":[…]} — a bounded query on the SAME table is fast. This is the fast path the UI actually uses.</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:11px;color:#5b6472;margin:4px 0 0;">Timing method: each request fired concurrently and awaited on a page global;
+  the two hanging calls used a 30 s <code>AbortController</code> (the ticket's "client-side read timeout"). Fast-path timings are from an
+  unblocked run (a re-run inflates them because the hanging calls head-of-line-block the connection).</p>
+
+  <h2>Assessment against the ticket's Expected Result</h2>
+  <table>
+    <thead><tr><th style="width:62%">Requirement</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Return within the standard performance SLA</td><td><span class="pill b">NOT MET</span> — &gt;30 s / 504 at ~181 s</td></tr>
+      <tr><td>Pagination (page + per_page) combined with query-plan / index fix</td><td><span class="pill b">NOT MET</span> — <code>page/per_page</code> still times out</td></tr>
+      <tr><td>Unrecognized resource id fails fast with 404</td><td><span class="pill b">NOT MET</span> — unknown id → 200+HTML; malformed → 500</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Interpretation</h2>
+  <ul style="margin:4px 0 0; padding-left:18px; font-size:11.5px;">
+    <li>The reliability defect is <b>unchanged</b>: the collection endpoint is still effectively down at scale — it does not return, so the client sees a read timeout rather than any HTTP status (exactly the ticket's "Actual Result").</li>
+    <li>The Suggested-Fix pagination is either not deployed or not effective on this route — <code>?page=1&amp;per_page=5</code> hangs the same way. The query-plan / index audit the ticket pairs with pagination appears still outstanding.</li>
+    <li>The bounded <code>by-workorder/&lt;id&gt;</code> path answering in ~1 s on the same table shows the data volume is servable when the query is scoped — supporting "unbounded list read" as the root cause, not raw table size.</li>
+    <li>The fast-404 sub-requirement is also unmet: an unknown id falls through to the SPA shell (200 + HTML) and a malformed id 500s; neither is a fast, honest 404.</li>
+  </ul>
+
+  <div class="foot">
+    <p>Corroboration: session probe earlier today — bare endpoint → CloudFront <span class="mono">504</span> after <b>181,247 ms</b>
+    (<span class="mono">x-cache: Error from cloudfront</span>). CI Parallel Suite 3 (2026-07-30):
+    <span class="mono">GET /planned_workorder_line/?page=1&amp;per_page=5</span> → socket timeout at 35,043 ms
+    ("NOT FIXED — unbounded list read that never returns"). Frontend caller & scope: see
+    <span class="mono">docs/bug-evidence/planned-workorder-line-timeout/EVIDENCE.md</span>.</p>
+  </div>
+</body>
+</html>
