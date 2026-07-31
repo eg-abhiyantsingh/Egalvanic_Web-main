@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' 'sha256-RtrBkOW2bTlPbtWdXpPU4dBrMccSrOQRh24CA8xGP3E=' https://*.getbeamer.com https://plug-platform.devrev.ai https://cdn.form.io https://cdn.jsdelivr.net https://*.ingest.us.sentry.io https://sentry.io https://*.sentry.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.getbeamer.com https://*.devrev.ai https://cdn.jsdelivr.net https://cdn.form.io; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https://*.s3.us-east-2.amazonaws.com https://*.s3.amazonaws.com https://*.getbeamer.com; connect-src 'self' http://localhost:* https://*.egalvanic.ai https://*.bces-iq.com https://*.execute-api.us-east-2.amazonaws.com https://*.ingest.us.sentry.io https://sentry.io https://*.getbeamer.com https://*.s3.us-east-2.amazonaws.com https://*.devrev.ai https://cdn.jsdelivr.net https://*.launchdarkly.com; worker-src 'self' blob: https://cdn.jsdelivr.net; frame-src https://*.retool.com https://www.loom.com https://*.getbeamer.com https://*.devrev.ai; media-src 'self' https://*.s3.us-east-2.amazonaws.com https://*.s3.amazonaws.com; object-src 'none'; base-uri 'self'; form-action 'self';" />
+  <script>try{window.self!==window.top&&(window.top.location=window.self.location)}catch(e){window.self.location=window.self.location}</script>
+  <link rel="icon" type="image/png" href="/pjz_transparent.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <title>Egalvanic Project Z</title>
+  <script type="module" crossorigin src="/assets/index-xukgiUUl.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-87e64eyv.css">
+</head>
+
+<body>
+  <div id="root"></div>
+</body>
+
+</html>

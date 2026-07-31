@@ -1,0 +1,21 @@
+{
+  "job_uuid": "93516dee-0270-4b99-bd65-922c2db78e62",
+  "page_count": 2,
+  "pages": [
+    {
+      "html": null,
+      "label": "Cover",
+      "page_type": "cover",
+      "render_error": "Template '' is not HTML; preview unavailable",
+      "type": "page"
+    },
+    {
+      "html": null,
+      "label": "P3",
+      "page_type": "page",
+      "render_error": "Template '' is not HTML; preview unavailable",
+      "type": "page"
+    }
+  ],
+  "success": true
+}
