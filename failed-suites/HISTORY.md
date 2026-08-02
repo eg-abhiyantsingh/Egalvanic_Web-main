@@ -2,6 +2,7 @@
 
 One line per day. Run a day's failures with `mvn test -DsuiteXmlFile=failed-suites/failed-tests-<date>.xml`.
 
+- **2026-08-02** — 81 failed test(s) — Parallel Suite 2 (run 54) → [failed-tests-2026-08-02.xml](failed-tests-2026-08-02.xml)
 - **2026-08-01** — 108 failed test(s) — Parallel Suite (run 60) → [failed-tests-2026-08-01.xml](failed-tests-2026-08-01.xml)
 - **2026-07-28** — 8 failed test(s) — Parallel Suite 2 (run 53) → [failed-tests-2026-07-28.xml](failed-tests-2026-07-28.xml)
 - **2026-07-24** — 107 failed test(s) — Parallel Suite (run 59) → [failed-tests-2026-07-24.xml](failed-tests-2026-07-24.xml)
