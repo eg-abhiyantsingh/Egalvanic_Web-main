@@ -213,6 +213,14 @@ public class WorkOrderCreateTestNG extends BaseTest {
         logStep("Create dialog closed: " + closed);
         pause(1500);
 
+        // On success the app redirects to the new WO's detail page (/sessions/{id}), which has no
+        // grid/search box — go back to the list first (also refreshes it so the new row shows).
+        if (workOrderPage.isOnWoDetailPage()) {
+            logStep("Create redirected to detail page — returning to the WO list to verify persistence");
+            workOrderPage.navigateToWorkOrders();
+            reinstallHealthCapture();
+        }
+
         // Persistence: search (real keystrokes) and confirm the WO appears, then open it.
         boolean visible = searchWorkOrder(name);
         logStepWithScreenshot("After create — searched for '" + name + "'");
@@ -230,16 +238,20 @@ public class WorkOrderCreateTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE, "WOC_07_DatePickerViaCalendarIcon");
         openFreshCreateForm();
 
-        // Start Date via the calendar icon → today's day (current month, enabled).
-        boolean start = workOrderPage.pickDate(1, 0, LocalDateTime.now().getDayOfMonth());
+        // Calendar-button order in the V1.36 dialog is [1] = Due Date (top-level, empty), [2] = Start
+        // Date (lower, pre-filled with today) — verified live 2026-08-03. Pick each via its icon.
+        // Due Date → the 15th of NEXT month (exercises month navigation; always enabled).
+        boolean due = workOrderPage.pickDate(1, 1, 15);
+        Assert.assertTrue(due, "Should be able to pick a Due Date day from the calendar icon (next month).");
+        String dueImmediate = workOrderPage.getDueDateValue();
+
+        // Start Date → a day in the current month (today is enabled).
+        boolean start = workOrderPage.pickDate(2, 0, LocalDateTime.now().getDayOfMonth());
         Assert.assertTrue(start, "Should be able to pick a Start Date day from the calendar icon.");
         Assert.assertFalse(workOrderPage.getStartDateValue().isEmpty(), "Start Date should be set after picking.");
-
-        // Due Date via the calendar icon → the 15th of NEXT month (exercises month navigation; always enabled).
-        boolean due = workOrderPage.pickDate(2, 1, 15);
-        Assert.assertTrue(due, "Should be able to pick a Due Date day from the calendar icon (next month).");
         String dueVal = workOrderPage.getDueDateValue();
-        logStep("After calendar pick — Start=" + workOrderPage.getStartDateValue() + " Due=" + dueVal);
+        logStep("After calendar pick — Start=" + workOrderPage.getStartDateValue() + " Due=" + dueVal
+                + " (Due right after its pick=" + dueImmediate + ")");
         Assert.assertTrue(dueVal.matches("\\d{2}/15/\\d{4}"),
                 "Due Date should reflect the 15th picked from the calendar. Got: '" + dueVal + "'");
         logStepWithScreenshot("Dates set via calendar icon");
@@ -325,6 +337,10 @@ public class WorkOrderCreateTestNG extends BaseTest {
     /** Re-navigate to Work Orders (tears down any leftover dialog) and open a fresh, verified create dialog. */
     private void openFreshCreateForm() {
         workOrderPage.navigateToWorkOrders();
+        // navigateToWorkOrders() may driver.get(/sessions) when the active role's sidebar has no
+        // Work Orders link (setup-console role) — that full reload drops the JS health hooks, so
+        // put them back before the @AfterMethod console/network gates read them.
+        reinstallHealthCapture();
         for (int attempt = 1; attempt <= 3; attempt++) {
             workOrderPage.openCreateWorkOrderForm();
             pause(800);

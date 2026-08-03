@@ -1,5 +1,6 @@
 package com.egalvanic.qa.pageobjects;
 
+import com.egalvanic.qa.constants.AppConstants;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.JavascriptExecutor;
@@ -204,9 +205,21 @@ public class WorkOrderPage {
             "}"
         );
         pause(2000);
-
         waitForSpinner();
         pause(1000);
+
+        // Fallback: the sidebar link is absent when the session's active role renders the
+        // config/setup console (e.g. the V1.36 "Admin" role, whose nav has no Work Orders item —
+        // see the role rename), so the click above is a no-op and we're still on /dashboard. Go
+        // straight to the route: /sessions renders the WO grid + "Create Work Order" for any role
+        // that holds features.jobs.view (verified live 2026-08-03 under the Admin role).
+        if (!isOnWorkOrdersPage()) {
+            System.out.println("[WorkOrderPage] Work Orders sidebar link not found (setup-console role?) — "
+                + "navigating to /sessions by URL. Was: " + driver.getCurrentUrl());
+            driver.get(AppConstants.BASE_URL + "/sessions");
+            waitForSpinner();
+            pause(1500);
+        }
         System.out.println("[WorkOrderPage] On work orders page: " + driver.getCurrentUrl());
     }
 
@@ -784,8 +797,22 @@ public class WorkOrderPage {
     public boolean pickDate(int calendarIndex, int monthsForward, int day) {
         try {
             By calBtn = By.xpath("(" + WO_DIALOG + "//button[contains(@aria-label,'Choose date')])[" + calendarIndex + "]");
-            WebElement b = wait.until(ExpectedConditions.elementToBeClickable(calBtn));
+            By picker = By.xpath("//div[contains(@class,'MuiPickersPopper-root')] | //div[contains(@class,'MuiPickersLayout-root')]");
+            // Close any popper a previous pickDate() left open first.
+            waitPickerClosed(picker);
+            // Locate by PRESENCE, then scroll in, THEN click — do NOT gate on elementToBeClickable:
+            // the 2nd ("Start Date") calendar button sits below the dialog's scroll fold (measured
+            // y≈875, clipped by the content area's overflow), so elementToBeClickable never resolves
+            // and times out at 25s (the WOC_07 [2] failure) even though the button is functional. A
+            // scrollIntoView + click reaches it reliably (verified live 2026-08-03).
+            WebElement b = null;
+            for (int i = 0; i < 25 && b == null; i++) {
+                java.util.List<WebElement> f = driver.findElements(calBtn);
+                if (!f.isEmpty()) b = f.get(0); else pause(200);
+            }
+            if (b == null) { System.out.println("[WorkOrderPage] calendar button " + calendarIndex + " not present"); return false; }
             js.executeScript("arguments[0].scrollIntoView({block:'center'});", b);
+            pause(250);
             try { b.click(); } catch (Exception e) { js.executeScript("arguments[0].click();", b); }
             By anyDay = By.xpath("//button[contains(@class,'MuiPickersDay-root')]");
             new WebDriverWait(driver, Duration.ofSeconds(8)).until(ExpectedConditions.presenceOfElementLocated(anyDay));
@@ -796,11 +823,24 @@ public class WorkOrderPage {
             }
             By dayBtn = By.xpath("//button[contains(@class,'MuiPickersDay-root')][normalize-space()='" + day + "']");
             for (int i = 0; i < 8 && driver.findElements(dayBtn).isEmpty(); i++) pause(250);
+            By popper = By.xpath("//div[contains(@class,'MuiPickersPopper-root')] | //div[contains(@class,'MuiPickersLayout-root')]");
             for (WebElement d : driver.findElements(dayBtn)) {
                 if (d.isEnabled()) {
                     js.executeScript("arguments[0].scrollIntoView({block:'center'});", d);
-                    try { d.click(); } catch (Exception e) { js.executeScript("arguments[0].click();", d); }
-                    pause(500);
+                    // Prefer a NATIVE click — MUI closes the picker on a real pointer-select, which
+                    // matters because the picker popper is a MODAL: while it's open the main Create
+                    // dialog is inert, so the OTHER "Choose date" button stays unclickable (the WOC_07
+                    // [2] timeout). A JS click sets the value but can leave the popper open, so fall
+                    // back to it only if the native click fails, then force-close with ESC.
+                    try { new org.openqa.selenium.interactions.Actions(driver).moveToElement(d).pause(Duration.ofMillis(80)).click().perform(); }
+                    catch (Exception e) { try { d.click(); } catch (Exception e2) { js.executeScript("arguments[0].click();", d); } }
+                    pause(400);
+                    // If the popper (top-most modal) is still up, ESC closes it without touching the
+                    // underlying Create dialog; then wait for it to fully detach.
+                    if (!driver.findElements(popper).isEmpty()) {
+                        try { new Actions(driver).sendKeys(Keys.ESCAPE).perform(); } catch (Exception ignored) {}
+                    }
+                    waitPickerClosed(popper);
                     System.out.println("[WorkOrderPage] picked day " + day + " via calendar " + calendarIndex);
                     return true;
                 }
@@ -812,6 +852,11 @@ public class WorkOrderPage {
             System.out.println("[WorkOrderPage] pickDate failed: " + e.getMessage());
             return false;
         }
+    }
+
+    /** Wait (bounded, ~4s) for any open MUI date-picker popper/layout to close. */
+    private void waitPickerClosed(By picker) {
+        for (int i = 0; i < 20 && !driver.findElements(picker).isEmpty(); i++) pause(200);
     }
 
     /** Select equipment by name (e.g. "Megger"); equipment is a MUI Autocomplete. */
@@ -947,6 +992,7 @@ public class WorkOrderPage {
      */
     public boolean clickScheduleAddButton() {
         try {
+            ensureScheduleSectionVisible();
             java.util.List<WebElement> btns = driver.findElements(WO_SCHEDULE_ADD_BTN);
             if (btns.isEmpty()) { System.out.println("[WorkOrderPage] Schedule ＋ button not present"); return false; }
             WebElement b = btns.get(0);
@@ -970,8 +1016,36 @@ public class WorkOrderPage {
         return !d.isEmpty() && d.get(0).getText().contains(text);
     }
 
+    /**
+     * Ensure the Schedule / Auto-Schedule controls are mounted. In the V1.36 Create dialog these
+     * live in a section that renders only after the "Advanced Settings" header is toggled — Priority
+     * is visible on open but the Schedule heading is NOT, so {@link #expandAdvancedSettings()} (which
+     * no-ops while Priority shows) does not reveal it. Click the header once IF the Schedule heading
+     * is absent; a fresh open needs exactly one toggle and it does not hide Priority (verified live
+     * 2026-08-03). Idempotent and safe: never clicks when Schedule is already present.
+     */
+    private void ensureScheduleSectionVisible() {
+        By scheduleHeading = By.xpath(WO_DIALOG + "//*[self::h5 or self::h6][normalize-space()='Schedule']");
+        for (int i = 0; i < 3; i++) {
+            if (!driver.findElements(WO_SCHEDULE_ADD_BTN).isEmpty()
+                    || !driver.findElements(scheduleHeading).isEmpty()) {
+                return;
+            }
+            java.util.List<WebElement> toggles = driver.findElements(ADVANCED_SETTINGS_TOGGLE);
+            if (toggles.isEmpty()) {
+                System.out.println("[WorkOrderPage] Advanced Settings toggle absent — cannot reveal Schedule");
+                return;
+            }
+            js.executeScript("arguments[0].scrollIntoView({block:'center'});", toggles.get(0));
+            pause(200);
+            js.executeScript("arguments[0].click();", toggles.get(0));
+            pause(900);
+        }
+    }
+
     public boolean addScheduleBlock(boolean assignTechnician) {
         try {
+            ensureScheduleSectionVisible();
             click(WO_SCHEDULE_ADD_BTN);
             pause(1000);
             if (assignTechnician) {
