@@ -120,11 +120,12 @@ public class LocationPage {
             System.out.println("[LocationPage] JS text-match click failed: " + e.getMessage());
         }
 
-        // Strategy 4: Direct URL navigation (last resort — works in all environments)
+        // Strategy 4: Direct URL navigation (last resort — works in all environments).
+        // Use the configured BASE_URL, NOT a regex-stripped current URL: on routes outside the
+        // old strip-list (e.g. the V1.36 setup console's /admin-dashboard, /eg-forms, /sessions)
+        // the strip was a no-op and produced broken URLs like /admin-dashboard/locations.
         try {
-            String currentUrl = driver.getCurrentUrl();
-            String baseUrl = currentUrl.replaceAll("/(assets|connections|issues|workorders|locations|dashboard).*", "");
-            String locationsUrl = baseUrl + "/locations";
+            String locationsUrl = com.egalvanic.qa.constants.AppConstants.BASE_URL + "/locations";
             System.out.println("[LocationPage] Falling back to direct URL: " + locationsUrl);
             driver.get(locationsUrl);
             pause(3000);
@@ -137,8 +138,10 @@ public class LocationPage {
 
     public boolean isOnLocationsPage() {
         try {
+            // Path-anchored: contains("location") also matched broken URLs like
+            // /admin-dashboard/locations produced by the old fallback.
             return driver.findElements(ADD_BUILDING_BTN).size() > 0
-                    || driver.getCurrentUrl().contains("location");
+                    || driver.getCurrentUrl().matches(".*//[^/]+/locations([/?#].*)?$");
         } catch (Exception e) {
             return false;
         }

@@ -16,6 +16,16 @@ public class AppConstants {
     public static final String BASE_URL = getEnv("BASE_URL", "https://acme.qa.egalvanic.ai");
     public static final String BROWSER = getEnv("BROWSER", "chrome");
 
+    /**
+     * The header-Role the suites assume: "Super Admin" (role_id b60006dd…) renders the OPERATIONAL
+     * console (Dashboards/Assets/Issues/SLDs/Work Orders sidebar). Since the V1.36 role rename the
+     * frontend's initial active-role pick is unreliable — a fresh login can land on the renamed
+     * "Admin" (= old EG Admin) SETUP console whose sidebar has none of those links, which silently
+     * breaks every click-the-sidebar navigation. BaseTest.ensureActiveRole() pins this role right
+     * after login. Override with -DACTIVE_ROLE / env ACTIVE_ROLE for role-specific runs.
+     */
+    public static final String DEFAULT_ACTIVE_ROLE = getEnv("ACTIVE_ROLE", "Super Admin");
+
     // ============================================
     // TEST DATA - AUTHENTICATION
     // ============================================

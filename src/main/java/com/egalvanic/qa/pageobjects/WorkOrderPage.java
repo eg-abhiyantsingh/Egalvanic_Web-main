@@ -224,9 +224,17 @@ public class WorkOrderPage {
     }
 
     public boolean isOnWorkOrdersPage() {
-        String url = driver.getCurrentUrl().toLowerCase();
-        return url.contains("/jobs") || url.contains("/work-orders") || url.contains("/workorders")
-            || url.contains("/sessions");
+        // TRUE only for the WO LIST (/sessions, /sessions?…, /sessions/), NOT a detail page
+        // (/sessions/{id}). A successful create redirects to /sessions/{id}, which has the grid's
+        // Create button ABSENT — treating the detail page as "on the WO page" made
+        // navigateToWorkOrders skip its return-to-list fallback, so every following create in a
+        // per-type matrix failed with "Create form opened: false" (WorkTypeCreateE2EMatrix).
+        // /jobs, /work-orders, /workorders are dead legacy routes (dropped in V1.35).
+        String u = driver.getCurrentUrl().toLowerCase();
+        int i = u.indexOf("/sessions");
+        if (i < 0) return false;
+        String rest = u.substring(i + "/sessions".length());
+        return rest.isEmpty() || rest.equals("/") || rest.startsWith("?") || rest.startsWith("#");
     }
 
     // ── v1.35 /sessions list: "Show planned" toggle (ZP-3000/3130/3041/3043) ──

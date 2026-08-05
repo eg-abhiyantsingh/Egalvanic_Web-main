@@ -158,6 +158,16 @@ public class IssuePage {
 
         waitForSpinner();
         pause(1000);
+
+        // The JS loop returns SILENTLY when no 'Issues' anchor exists (V1.36 setup-console role).
+        // Fall back to the direct route — same pattern as WorkOrderPage.navigateToWorkOrders.
+        if (!isOnIssuesPage()) {
+            System.out.println("[IssuePage] Issues sidebar link not found (setup-console role?) — "
+                    + "navigating to /issues by URL. Was: " + driver.getCurrentUrl());
+            driver.get(com.egalvanic.qa.constants.AppConstants.BASE_URL + "/issues");
+            waitForSpinner();
+            pause(1500);
+        }
         System.out.println("[IssuePage] On issues page: " + driver.getCurrentUrl());
     }
 

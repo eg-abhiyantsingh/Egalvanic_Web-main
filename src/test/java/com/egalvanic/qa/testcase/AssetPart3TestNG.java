@@ -777,6 +777,22 @@ public class AssetPart3TestNG extends BaseTest {
                 logStep("Detail page value for '" + fieldLabel + "': " + val + " (attempt " + (attempt + 1) + ")");
                 return val;
             }
+            // V1.36: some classes (verified live: Generator, 2026-08-04) render their electrical
+            // attributes on the detail page's "Engineering" tab, not Basic Info — the whole
+            // GEN_EAD_* cluster failed here reading the default tab while the saved values sat
+            // one tab over. If the field isn't on the current tab after a few polls, flip to
+            // Engineering once and keep polling.
+            if (attempt == 3) {
+                try {
+                    List<WebElement> engTabs = driver.findElements(By.xpath(
+                            "//button[@role='tab' and normalize-space()='Engineering' and @aria-selected='false']"));
+                    if (!engTabs.isEmpty()) {
+                        engTabs.get(0).click();
+                        logStep("Field not on current tab — switched to 'Engineering' tab");
+                        pause(2000);
+                    }
+                } catch (Exception ignored) {}
+            }
             pause(1500);
         }
         logStep("Detail page value for '" + fieldLabel + "': null (after 10 attempts)");

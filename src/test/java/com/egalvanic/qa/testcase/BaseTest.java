@@ -338,10 +338,17 @@ public class BaseTest {
             // Strategy 1: Dismiss Sentry dialog
             try { driver.findElement(By.xpath("//button[contains(@aria-label,'Close')]")).click(); pause(500); } catch (Exception ignored) {}
 
-            // Strategy 2: Navigate away using sidebar nav (preserves SPA state unlike page refresh)
+            // Strategy 2: Navigate away using sidebar nav (preserves SPA state unlike page refresh).
+            // The 'Locations' link is absent on the V1.36 setup console, so fall back to the direct
+            // route in the same strategy rather than silently skipping to the full-reload path.
             try {
                 By locationsNav = By.xpath("//span[normalize-space()='Locations'] | //a[normalize-space()='Locations']");
-                driver.findElement(locationsNav).click();
+                java.util.List<WebElement> nav = driver.findElements(locationsNav);
+                if (!nav.isEmpty()) {
+                    nav.get(0).click();
+                } else {
+                    driver.get(AppConstants.BASE_URL + "/locations");
+                }
                 pause(2000);
                 if (!isApplicationErrorPage()) {
                     System.out.println("[BaseTest] Recovery successful via nav to Locations");
@@ -369,6 +376,7 @@ public class BaseTest {
                 loginPage.login(AppConstants.VALID_EMAIL, AppConstants.VALID_PASSWORD);
                 pause(2000);
                 dashboardPage.waitForDashboard();
+                ensureActiveRole(AppConstants.DEFAULT_ACTIVE_ROLE);
                 selectTestSite();
             }
         } catch (Exception e) {
@@ -564,6 +572,7 @@ public class BaseTest {
                 // the DISMISS button doesn't exist in the DOM yet.
                 // WebDriverWait polls repeatedly until the button appears (up to 10s).
                 waitAndDismissAppAlert();
+                ensureActiveRole(AppConstants.DEFAULT_ACTIVE_ROLE);
                 selectTestSite();
                 return; // success
             } catch (Exception e) {
@@ -794,21 +803,120 @@ public class BaseTest {
      * including the update alert.
      */
     protected void waitAndDismissAppAlert() {
-        // Step 1: Try Selenium wait for DISMISS button (catches late-rendering alerts)
+        // Step 1: Poll for the DISMISS button (catches late-rendering alerts). The wait used to be
+        // a fixed 10s elementToBeClickable — which blocked the FULL 10s in the common no-alert
+        // case, costing ~10s × every class setup per run. A short presence-poll keeps the CI
+        // late-render coverage without the constant tax; APP_ALERT_WAIT_SECONDS overrides for
+        // environments where the alert renders slower.
+        int waitSecs = Integer.parseInt(System.getProperty("APP_ALERT_WAIT_SECONDS",
+                System.getenv().getOrDefault("APP_ALERT_WAIT_SECONDS", "4")));
         try {
-            WebElement dismissBtn = new WebDriverWait(driver, Duration.ofSeconds(10))
-                    .until(ExpectedConditions.elementToBeClickable(
-                            By.xpath("//button[text()='DISMISS']")));
-            dismissBtn.click();
-            System.out.println("[BaseTest] Dismissed app update alert via Selenium click");
-            pause(1000); // let React re-render after alert dismissal
+            By dismiss = By.xpath("//button[text()='DISMISS']");
+            long deadline = System.currentTimeMillis() + waitSecs * 1000L;
+            while (System.currentTimeMillis() < deadline) {
+                java.util.List<WebElement> btns = driver.findElements(dismiss);
+                if (!btns.isEmpty() && btns.get(0).isDisplayed()) {
+                    btns.get(0).click();
+                    System.out.println("[BaseTest] Dismissed app update alert via Selenium click");
+                    pause(1000); // let React re-render after alert dismissal
+                    break;
+                }
+                pause(500);
+            }
         } catch (Exception e) {
-            // No alert appeared within 10s — that's normal on subsequent calls.
-            // Fall through to backdrop cleanup.
+            // No alert / stale click — normal; fall through to backdrop cleanup.
         }
         // Step 2: Always run fire-and-forget cleanup as safety net
         // (removes any residual MUI backdrops, Beamer overlays, etc.)
         dismissBackdrops();
+    }
+
+    // ================================================================
+    // ACTIVE-ROLE PINNING (V1.36 dual-console fix)
+    // ================================================================
+
+    /** The five roles the header Role Autocomplete offers on this tenant (V1.36). */
+    private static final String[] HEADER_ROLE_NAMES =
+            {"Admin", "Project Manager", "Account Manager", "Super Admin", "Electrical Engineer"};
+
+    /**
+     * Pin the header Role dropdown to {@code target} right after login. Since the V1.36 role
+     * rename a fresh session can land on either the OPERATIONAL console ("Super Admin") or the
+     * SETUP console ("Admin" = old EG Admin) — and every sidebar-text navigation silently no-ops
+     * on the wrong console. Pinning the role makes the landing console deterministic for the
+     * whole class session. Tolerant by design: if the Role control never renders (older build,
+     * restricted account), it logs and returns — it must never fail a suite by itself.
+     */
+    protected void ensureActiveRole(String target) {
+        try {
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            String namesJs = "['" + String.join("','", HEADER_ROLE_NAMES) + "']";
+            String readRole =
+                    "var names=" + namesJs + ";"
+                  + "var ins=document.querySelectorAll('input');"
+                  + "for (var i=0;i<ins.length;i++){ if(names.indexOf(ins[i].value)>=0) return ins[i].value; }"
+                  + "return null;";
+            // The role input renders with the header shell; poll briefly for it.
+            Object current = null;
+            for (int i = 0; i < 10 && current == null; i++) {
+                current = js.executeScript(readRole);
+                if (current == null) pause(500);
+            }
+            if (current == null) {
+                System.out.println("[BaseTest] Role switcher not found — leaving active role as-is");
+                return;
+            }
+            if (target.equals(current)) {
+                System.out.println("[BaseTest] Active role already '" + target + "'");
+                return;
+            }
+            System.out.println("[BaseTest] Active role is '" + current + "' — switching to '" + target + "'");
+            String openScript =
+                    "var names=" + namesJs + ";"
+                  + "var input=null, ins=document.querySelectorAll('input');"
+                  + "for (var i=0;i<ins.length;i++){ if(names.indexOf(ins[i].value)>=0){ input=ins[i]; break; } }"
+                  + "if(!input) return false;"
+                  + "input.scrollIntoView({block:'center'}); input.focus();"
+                  + "var w=input.closest('.MuiAutocomplete-root');"
+                  + "var b=w?w.querySelector('.MuiAutocomplete-popupIndicator'):null;"
+                  + "if(b) b.click(); else input.click(); return true;";
+            // Options render async — reopen + poll for the target option (mirrors the proven
+            // AccountV135RegressionTestNG.switchRole flow).
+            boolean clicked = false;
+            for (int attempt = 1; attempt <= 3 && !clicked; attempt++) {
+                js.executeScript(openScript);
+                for (int i = 0; i < 10 && !clicked; i++) {
+                    pause(700);
+                    Object done = js.executeScript(
+                            "var t=arguments[0];"
+                          + "var opts=document.querySelectorAll(\"li[role='option']\");"
+                          + "for (var i=0;i<opts.length;i++){"
+                          + "  if(opts[i].textContent.trim()===t){"
+                          + "    ['pointerdown','mousedown','pointerup','mouseup','click'].forEach(function(ev){"
+                          + "      opts[i].dispatchEvent(new MouseEvent(ev,{bubbles:true,cancelable:true}));});"
+                          + "    return true; } }"
+                          + "return false;", target);
+                    clicked = Boolean.TRUE.equals(done);
+                }
+            }
+            if (!clicked) {
+                System.out.println("[BaseTest] Role option '" + target + "' never offered — continuing on '" + current + "'");
+                return;
+            }
+            // The switch reloads the app shell — poll until the switcher reflects the target.
+            for (int i = 0; i < 30; i++) {
+                pause(1000);
+                try { if (target.equals(js.executeScript(readRole))) break; } catch (Exception ignored) { }
+            }
+            pause(2000);
+            waitAndDismissAppAlert();
+            // The shell reload dropped the JS health hooks — reinstall for the health gates.
+            try { reinstallHealthCapture(); } catch (Exception ignored) { }
+            System.out.println("[BaseTest] Active role now: " + js.executeScript(readRole)
+                    + " @ " + driver.getCurrentUrl());
+        } catch (Exception e) {
+            System.out.println("[BaseTest] ensureActiveRole failed (non-fatal): " + e.getMessage());
+        }
     }
 
     // ================================================================

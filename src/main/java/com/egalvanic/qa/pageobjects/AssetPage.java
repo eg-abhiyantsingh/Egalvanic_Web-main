@@ -103,7 +103,25 @@ public class AssetPage {
             }
         }
 
-        click(ASSETS_NAV);
+        // Sidebar click first (keeps SPA state); but the Assets link does not exist on the V1.36
+        // setup console ("Admin" role) — there click() would burn its 25s wait and THROW, so guard
+        // it and fall back to the direct route, which renders for any role holding the perm
+        // (same pattern as WorkOrderPage.navigateToWorkOrders, verified live 2026-08-03).
+        try {
+            click(ASSETS_NAV);
+        } catch (Exception navClickFailed) {
+            System.out.println("[AssetPage] Assets sidebar link not clickable (setup-console role?) — "
+                    + "navigating to /assets by URL. Was: " + driver.getCurrentUrl());
+            driver.get(com.egalvanic.qa.constants.AppConstants.BASE_URL + "/assets");
+            pause(1500);
+        }
+        // Belt-and-braces: a matched-but-inert click (stray 'Assets' span) leaves us off-route.
+        if (!driver.getCurrentUrl().contains("/assets")
+                && driver.findElements(CREATE_ASSET_BTN).isEmpty()) {
+            System.out.println("[AssetPage] Not on /assets after nav click — direct URL fallback");
+            driver.get(com.egalvanic.qa.constants.AppConstants.BASE_URL + "/assets");
+            pause(1500);
+        }
 
         // CI hardening: the default 25s `wait` is enough locally but CI runners are
         // 2-3x slower at SPA hydration. Confirmed via run 25001241790 (GEN_EAD_09):

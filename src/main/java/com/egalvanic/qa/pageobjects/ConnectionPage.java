@@ -97,6 +97,17 @@ public class ConnectionPage {
         // Wait for spinner to clear
         waitForSpinner();
         pause(1000);
+
+        // The JS loop returns SILENTLY when no 'Connections' anchor exists — which is the case on
+        // the V1.36 setup console ("Admin" role sidebar). Fall back to the direct route (renders
+        // for any role holding the perm; same pattern as WorkOrderPage.navigateToWorkOrders).
+        if (!isOnConnectionsPage()) {
+            System.out.println("[ConnectionPage] Connections sidebar link not found (setup-console role?) — "
+                    + "navigating to /connections by URL. Was: " + driver.getCurrentUrl());
+            driver.get(com.egalvanic.qa.constants.AppConstants.BASE_URL + "/connections");
+            waitForSpinner();
+            pause(1500);
+        }
         System.out.println("[ConnectionPage] On connections page: " + driver.getCurrentUrl());
     }
 
