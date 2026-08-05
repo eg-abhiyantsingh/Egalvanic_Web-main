@@ -608,6 +608,20 @@ public class BaseTest {
             // The facility selector uses placeholder='Select facility'
             By facilityInput = By.xpath("//input[@placeholder='Select facility']");
 
+            // V1.36 (live 2026-08-05): the company dashboard NO LONGER carries the facility
+            // selector — it only exists on site-scoped module pages (/assets, /slds, /sessions…).
+            // Since login lands on /dashboard, the old 15s wait always timed out and site
+            // selection was SILENTLY SKIPPED for every class ("Facility selector not found after
+            // 15s"), leaving tests on a sticky/arbitrary site — the root of many data-dependent
+            // search/create failures. Hop to /assets (facility-scoped) to make the selection.
+            if (driver.findElements(facilityInput).isEmpty()) {
+                System.out.println("[BaseTest] No facility selector on " + driver.getCurrentUrl()
+                        + " (V1.36 dashboard) — navigating to /assets to select the site");
+                driver.get(AppConstants.BASE_URL + "/assets");
+                pause(2000);
+                try { reinstallHealthCapture(); } catch (Exception ignored) { }
+            }
+
             // Wait for facility input to appear (React may still be hydrating)
             try {
                 new WebDriverWait(driver, Duration.ofSeconds(15))

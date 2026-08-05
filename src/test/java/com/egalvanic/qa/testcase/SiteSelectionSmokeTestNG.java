@@ -132,6 +132,10 @@ public class SiteSelectionSmokeTestNG {
 
         // Login as Admin but DO NOT select site — that's what we're testing
         loginAsAdmin();
+        // V1.36: the dashboard no longer carries the facility selector — the site-selection UX
+        // this class tests lives on site-scoped module pages. Anchor the class on /assets.
+        driver.get(AppConstants.BASE_URL + "/assets");
+        pause(3000);
     }
 
     @AfterClass
@@ -193,17 +197,20 @@ public class SiteSelectionSmokeTestNG {
             try {
                 new WebDriverWait(driver, Duration.ofSeconds(20)).until(d -> {
                     String u = d.getCurrentUrl();
-                    return u.contains("dashboard") || u.contains("sites")
+                    // /assets: classSetup anchors there now (V1.36 — the facility selector no
+                    // longer exists on the dashboard, only on site-scoped module pages).
+                    return u.contains("dashboard") || u.contains("sites") || u.contains("/assets")
                             || (!u.contains("/login") && u.matches("https?://[^/]+/?$"));
                 });
             } catch (Exception ignoreTimeout) { /* fall through — final assert prints the URL */ }
             String currentUrl = driver.getCurrentUrl();
             boolean landedPastLogin = currentUrl.contains("dashboard")
                     || currentUrl.contains("sites")
+                    || currentUrl.contains("/assets")
                     || (!currentUrl.contains("/login") && currentUrl.matches("https?://[^/]+/?$"));
             Assert.assertTrue(landedPastLogin,
                     "Not past login after 20s. URL: " + currentUrl
-                    + " (accepted: /dashboard, /sites, or bare root /)");
+                    + " (accepted: /dashboard, /sites, /assets, or bare root /)");
             logStep("Past login. URL: " + currentUrl);
 
             // Wait up to 20s for the facility input to appear — SPA may still be
@@ -537,8 +544,10 @@ public class SiteSelectionSmokeTestNG {
             logStepWithScreenshot("Post-navigation state");
 
             // Final assertion: we should NOT be on the login page (session is alive)
-            boolean onLoginPage = driver.findElements(By.id("email")).size() > 0
-                    && driver.findElements(By.id("password")).size() > 0;
+            boolean onLoginPage = driver.findElements(By.xpath("//input[@id='email'] | //input[@type='email'] | //input[@name='email']"
+                                + " | //input[@placeholder='Email Address' or @placeholder='Email']"
+                                + " | //input[@aria-label='Email Address' or @aria-label='Email']")).size() > 0
+                    && driver.findElements(By.xpath("//input[@id='password'] | //input[@type='password'] | //input[@name='password']")).size() > 0;
             Assert.assertFalse(onLoginPage,
                     "Session lost — redirected to login page after navigation");
             logStep("Session is active — not redirected to login");
@@ -577,7 +586,9 @@ public class SiteSelectionSmokeTestNG {
 
                 // Wait for login page
                 new WebDriverWait(driver, Duration.ofSeconds(LOGIN_TIMEOUT))
-                        .until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
+                        .until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input[@id='email'] | //input[@type='email'] | //input[@name='email']"
+                                + " | //input[@placeholder='Email Address' or @placeholder='Email']"
+                                + " | //input[@aria-label='Email Address' or @aria-label='Email']")));
                 System.out.println("[Site] Login page loaded. URL: " + driver.getCurrentUrl());
 
                 loginPage.login(AppConstants.ADMIN_EMAIL, AppConstants.ADMIN_PASSWORD);
@@ -585,8 +596,10 @@ public class SiteSelectionSmokeTestNG {
 
                 // Wait for post-login page (dashboard or site selector)
                 wait.until(driver -> {
-                    boolean leftLogin = driver.findElements(By.id("email")).size() == 0
-                            || driver.findElements(By.id("password")).size() == 0;
+                    boolean leftLogin = driver.findElements(By.xpath("//input[@id='email'] | //input[@type='email'] | //input[@name='email']"
+                                + " | //input[@placeholder='Email Address' or @placeholder='Email']"
+                                + " | //input[@aria-label='Email Address' or @aria-label='Email']")).size() == 0
+                            || driver.findElements(By.xpath("//input[@id='password'] | //input[@type='password'] | //input[@name='password']")).size() == 0;
                     boolean hasNav = driver.findElements(By.cssSelector("nav")).size() > 0;
                     boolean hasFacilityInput = driver.findElements(FACILITY_INPUT).size() > 0;
                     return leftLogin || hasNav || hasFacilityInput;
@@ -594,6 +607,9 @@ public class SiteSelectionSmokeTestNG {
 
                 pause(2000);
                 System.out.println("[Site] Post-login page loaded. URL: " + driver.getCurrentUrl());
+                // V1.36: pin the operational console — the facility selector this class tests is
+                // absent on the setup console the login can otherwise land on.
+                com.egalvanic.qa.utils.RolePinUtil.pin(driver, AppConstants.DEFAULT_ACTIVE_ROLE);
                 return;
 
             } catch (Exception e) {

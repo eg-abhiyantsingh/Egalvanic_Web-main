@@ -72,6 +72,16 @@ public class SiteSelectionTestNG {
 
     // Element locators — facility dropdown
     private static final By FACILITY_INPUT = By.xpath("//input[@placeholder='Select facility']");
+    /** May-2026 login page dropped id="email" — same 5-way fallback as BaseTest/LoginPage.
+     *  loginAsAdmin() previously waited on By.id("email") only, which times out on the current
+     *  login page → classSetup threw → every TC failed at 0s (the 14-fail cluster in the
+     *  2026-08-04 full run). */
+    private static final By EMAIL_ANY = By.xpath(
+            "//input[@id='email'] | //input[@type='email'] | //input[@name='email']"
+            + " | //input[@placeholder='Email Address' or @placeholder='Email']"
+            + " | //input[@aria-label='Email Address' or @aria-label='Email']");
+    private static final By PASSWORD_ANY = By.xpath(
+            "//input[@id='password'] | //input[@type='password'] | //input[@name='password']");
     private static final By LISTBOX = By.xpath("//ul[@role='listbox']");
     // OPTIONS: scope to the currently-open listbox so we count ONLY visible/filtered options.
     // Old locator `//li[@role='option']` matched every option in any listbox anywhere in the
@@ -144,6 +154,61 @@ public class SiteSelectionTestNG {
 
         // Login as Admin — do NOT select site yet
         loginAsAdmin();
+        // V1.36: a fresh login can land on the SETUP console (renamed "Admin" role) whose header
+        // pages don't carry the facility selector this class is anchored on. Pin the operational
+        // role so the console is deterministic (tolerant no-op if the switcher is absent).
+        pinOperationalRole();
+    }
+
+    /**
+     * Pin the header Role dropdown to the operational role (default "Super Admin",
+     * env/-D ACTIVE_ROLE). Self-contained twin of BaseTest.ensureActiveRole() — this class
+     * builds its own driver and cannot reuse it. Never fails the suite by itself.
+     */
+    private void pinOperationalRole() {
+        String target = AppConstants.DEFAULT_ACTIVE_ROLE;
+        try {
+            String namesJs = "['Admin','Project Manager','Account Manager','Super Admin','Electrical Engineer']";
+            String readRole =
+                    "var names=" + namesJs + ";"
+                  + "var ins=document.querySelectorAll('input');"
+                  + "for (var i=0;i<ins.length;i++){ if(names.indexOf(ins[i].value)>=0) return ins[i].value; }"
+                  + "return null;";
+            Object current = null;
+            for (int i = 0; i < 10 && current == null; i++) { current = js.executeScript(readRole); if (current == null) pause(500); }
+            if (current == null || target.equals(current)) return;
+            System.out.println("[SiteSelection] Active role '" + current + "' — switching to '" + target + "'");
+            String openScript =
+                    "var names=" + namesJs + ";"
+                  + "var input=null, ins=document.querySelectorAll('input');"
+                  + "for (var i=0;i<ins.length;i++){ if(names.indexOf(ins[i].value)>=0){ input=ins[i]; break; } }"
+                  + "if(!input) return false;"
+                  + "input.scrollIntoView({block:'center'}); input.focus();"
+                  + "var w=input.closest('.MuiAutocomplete-root');"
+                  + "var b=w?w.querySelector('.MuiAutocomplete-popupIndicator'):null;"
+                  + "if(b) b.click(); else input.click(); return true;";
+            boolean clicked = false;
+            for (int attempt = 1; attempt <= 3 && !clicked; attempt++) {
+                js.executeScript(openScript);
+                for (int i = 0; i < 10 && !clicked; i++) {
+                    pause(700);
+                    Object done = js.executeScript(
+                            "var t=arguments[0];var opts=document.querySelectorAll(\"li[role='option']\");"
+                          + "for (var i=0;i<opts.length;i++){ if(opts[i].textContent.trim()===t){"
+                          + "['pointerdown','mousedown','pointerup','mouseup','click'].forEach(function(ev){"
+                          + "opts[i].dispatchEvent(new MouseEvent(ev,{bubbles:true,cancelable:true}));}); return true; } }"
+                          + "return false;", target);
+                    clicked = Boolean.TRUE.equals(done);
+                }
+            }
+            if (!clicked) { System.out.println("[SiteSelection] Role option '" + target + "' never offered"); return; }
+            for (int i = 0; i < 30; i++) { pause(1000); try { if (target.equals(js.executeScript(readRole))) break; } catch (Exception ignored) { } }
+            pause(2000);
+            waitAndDismissAppAlert();
+            System.out.println("[SiteSelection] Active role now: " + js.executeScript(readRole));
+        } catch (Exception e) {
+            System.out.println("[SiteSelection] pinOperationalRole failed (non-fatal): " + e.getMessage());
+        }
     }
 
     @AfterClass
@@ -166,7 +231,9 @@ public class SiteSelectionTestNG {
         try {
             driver.get("about:blank");
             pause(500);
-            driver.get(AppConstants.BASE_URL + "/dashboard");
+            // V1.36: the dashboard no longer carries the facility selector — the site-selection
+            // UX this class tests lives on site-scoped module pages. Anchor on /assets.
+            driver.get(AppConstants.BASE_URL + "/assets");
 
             // Wait for page to reach at least interactive state before checking elements
             new WebDriverWait(driver, Duration.ofSeconds(30))
@@ -187,6 +254,7 @@ public class SiteSelectionTestNG {
             if (hasLoginForm) {
                 System.out.println("[SiteSelection] Session expired after reset — re-logging in");
                 loginAsAdmin();
+                pinOperationalRole();
             }
 
             waitAndDismissAppAlert();
@@ -1374,7 +1442,7 @@ public class SiteSelectionTestNG {
 
                 // Check if we're on the dashboard without the facility selector yet
                 boolean hasNav = !driver.findElements(By.cssSelector("nav")).isEmpty();
-                if (hasNav && driver.findElements(By.id("email")).isEmpty()) {
+                if (hasNav && driver.findElements(EMAIL_ANY).isEmpty()) {
                     System.out.println("[SiteSelection] Already logged in (nav present, no login form). Waiting for facility selector...");
                     waitAndDismissAppAlert();
                     return;
@@ -1389,7 +1457,7 @@ public class SiteSelectionTestNG {
                 }
 
                 new WebDriverWait(driver, Duration.ofSeconds(LOGIN_TIMEOUT))
-                        .until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
+                        .until(ExpectedConditions.visibilityOfElementLocated(EMAIL_ANY));
                 System.out.println("[SiteSelection] Login page loaded. URL: " + driver.getCurrentUrl());
 
                 loginPage.login(AppConstants.ADMIN_EMAIL, AppConstants.ADMIN_PASSWORD);
@@ -1397,8 +1465,8 @@ public class SiteSelectionTestNG {
 
                 // Wait for post-login page OR login error
                 new WebDriverWait(driver, Duration.ofSeconds(LOGIN_TIMEOUT)).until(d -> {
-                    boolean leftLogin = d.findElements(By.id("email")).isEmpty()
-                            || d.findElements(By.id("password")).isEmpty();
+                    boolean leftLogin = d.findElements(EMAIL_ANY).isEmpty()
+                            || d.findElements(PASSWORD_ANY).isEmpty();
                     boolean foundNav = !d.findElements(By.cssSelector("nav")).isEmpty();
                     boolean hasFacility = !d.findElements(FACILITY_INPUT).isEmpty();
                     boolean hasLoginError = !d.findElements(By.xpath(
@@ -1412,8 +1480,8 @@ public class SiteSelectionTestNG {
                 System.out.println("[SiteSelection] Post-login page loaded. URL: " + driver.getCurrentUrl());
 
                 // Check if login actually succeeded
-                boolean stillOnLogin = !driver.findElements(By.id("email")).isEmpty()
-                        && !driver.findElements(By.id("password")).isEmpty()
+                boolean stillOnLogin = !driver.findElements(EMAIL_ANY).isEmpty()
+                        && !driver.findElements(PASSWORD_ANY).isEmpty()
                         && driver.findElements(By.cssSelector("nav")).isEmpty();
                 if (stillOnLogin) {
                     System.out.println("[SiteSelection] Login failed — credentials invalid or locked");

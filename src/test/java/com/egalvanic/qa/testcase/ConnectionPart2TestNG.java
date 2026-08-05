@@ -1425,14 +1425,19 @@ public class ConnectionPart2TestNG extends BaseTest {
         // For robustness: just check label text contains the field name; the
         // asterisk check is a SEPARATE assertion below.
 
-        // The 6 expected Cable fields. Order matches the screenshot.
+        // The expected Cable core-attribute fields — V1.36 REDESIGNED this set (verified from the
+        // live drawer, 2026-08-04 full run): "Wire Size - N" and "# of Conductors" were REMOVED;
+        // "Conductors Description", "Wire Size - H", "Diameter (inches)" and "Raceway Material"
+        // were added. Current live contract:
+        //   Length (ft)* / Conductors Description* / Parallel Sets* / Conductor Material* /
+        //   Wire Size - H* / Diameter (inches) / Raceway Material / Comments / Notes
         String[] expectedFields = {
                 "Length (ft)",
+                "Conductors Description",
                 "Parallel Sets",
                 "Conductor Material",
-                "Wire Size - N",
-                "Comments",
-                "# of Conductors"
+                "Wire Size - H",
+                "Comments"
         };
 
         // For each expected field: substring-search the drawer's textContent.

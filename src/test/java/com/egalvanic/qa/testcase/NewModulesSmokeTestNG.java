@@ -63,7 +63,33 @@ public class NewModulesSmokeTestNG extends BaseTest {
                 pause(2000);
             }
         }
+        // V1.36 split the app across TWO role consoles and NO single role can reach every module:
+        // "Super Admin" (operational) lacks features.goals/salesdb.view and is Access-Denied on
+        // /eg-forms; the renamed "Admin" (setup) holds those. If the module didn't render under
+        // the pinned role AND the page shows Access Denied, retry ONCE under "Admin", then
+        // restore the default role so later tests keep the deterministic console.
+        if (isAccessDenied()) {
+            logStep("Module '" + path + "' is Access-Denied under " + AppConstants.DEFAULT_ACTIVE_ROLE
+                    + " — retrying under 'Admin' (V1.36 dual-console permission split)");
+            try {
+                ensureActiveRole("Admin");
+                boolean ok = smokeOpenModuleOnce(path, expectedTextAnyOf);
+                return ok;
+            } finally {
+                try { ensureActiveRole(AppConstants.DEFAULT_ACTIVE_ROLE); } catch (Exception ignored) { }
+            }
+        }
         return false;
+    }
+
+    /** True when the current page shows the app's Access Denied screen. */
+    private boolean isAccessDenied() {
+        try {
+            Object t = ((JavascriptExecutor) driver).executeScript(
+                    "var m=document.querySelector('main'); return m ? m.innerText.slice(0,400) : '';");
+            String s = String.valueOf(t);
+            return s.contains("Access Denied") || s.contains("do not have permission");
+        } catch (Exception e) { return false; }
     }
 
     private boolean smokeOpenModuleOnce(String path, String... expectedTextAnyOf) {
@@ -132,9 +158,32 @@ public class NewModulesSmokeTestNG extends BaseTest {
      * shells the SPA serves for unknown routes.
      */
     private boolean smokeAssertShellRendered() {
+        // The token check can pass off SIDEBAR text the instant the route mounts, while <main>
+        // still shows only the loading spinner (slow module APIs) — the old single-shot check
+        // then failed at ~4s with "did not render". Poll up to 25s for main/body content.
+        long deadline = System.currentTimeMillis() + 25_000;
+        while (true) {
+            boolean ok = smokeShellRenderedOnce();
+            if (ok || System.currentTimeMillis() > deadline) return ok;
+            pause(1200);
+        }
+    }
+
+    private boolean smokeShellRenderedOnce() {
         try {
             List<WebElement> mains = driver.findElements(By.tagName("main"));
-            if (mains.isEmpty()) return false;
+            // V1.36 (live 2026-08-05): some pages render OUTSIDE a <main> landmark entirely —
+            // /z-university has no <main> at all yet shows "Z University | Learning Center |
+            // Welcome…" in the body. Fall back to a body-level check instead of failing.
+            if (mains.isEmpty()) {
+                String body = String.valueOf(((org.openqa.selenium.JavascriptExecutor) driver)
+                        .executeScript("return (document.body && document.body.innerText) || ''")).toLowerCase();
+                if (body.contains("404") || body.contains("not found")
+                        || body.contains("application error") || body.contains("something went wrong")) {
+                    return false;
+                }
+                return body.trim().length() > 100; // substantial content rendered without <main>
+            }
             WebElement main = mains.get(0);
             String mainText = main.getText().toLowerCase();
             // Negative markers — if these appear we did NOT land on a real page
@@ -175,7 +224,11 @@ public class NewModulesSmokeTestNG extends BaseTest {
     @Test(priority = 1, description = "TC_NM_01: Sales Overview page loads")
     public void testTC_NM_01_SalesOverview() {
         ExtentReportManager.createTest(MODULE, "Sales Overview", "TC_NM_01");
-        boolean ok = smokeOpenModule("/sales-overview", "Sales", "Overview", "Pipeline", "Revenue");
+        // V1.36 (live 2026-08-05): the page renders "Planned Work / … unreleased work orders /
+        // OVERDUE / DUE IN 30 DAYS / Needs Attention" — none of the old Sales/Pipeline/Revenue
+        // words appear in the body, so keep old tokens AND add the current ones.
+        boolean ok = smokeOpenModule("/sales-overview", "Sales", "Overview", "Pipeline", "Revenue",
+                "Planned Work", "unreleased work orders", "Needs Attention");
         logStepWithScreenshot("Sales Overview rendered: " + ok);
         Assert.assertTrue(ok && smokeAssertShellRendered(),
                 "Sales Overview module did not render");
@@ -239,7 +292,11 @@ public class NewModulesSmokeTestNG extends BaseTest {
     @Test(priority = 6, description = "TC_NM_06: Panel Schedules page loads")
     public void testTC_NM_06_PanelSchedules() {
         ExtentReportManager.createTest(MODULE, "Panel Schedules", "TC_NM_06");
-        boolean ok = smokeOpenModule("/panel-schedules", "Panel Schedule", "Panel Schedules");
+        // V1.36 (live 2026-08-05): the page body shows "Schedule Status / N of M current" + a grid
+        // with "Panel Name / Amperage / Voltage" — the literal words "Panel Schedule" no longer
+        // appear anywhere in the body text.
+        boolean ok = smokeOpenModule("/panel-schedules", "Panel Schedule", "Panel Schedules",
+                "Schedule Status", "Panel Name");
         logStepWithScreenshot("Panel Schedules rendered: " + ok);
         Assert.assertTrue(ok && smokeAssertShellRendered(),
                 "Panel Schedules module did not render");
@@ -366,20 +423,24 @@ public class NewModulesSmokeTestNG extends BaseTest {
         driver.get(AppConstants.BASE_URL + "/dashboard");
         pause(3000);
 
-        // Poll up to 30s for the KPI cards row to render
+        // V1.36 (live 2026-08-05): the dashboard KPI row is now TOTAL ASSETS / ACTIVE WORK ORDERS /
+        // EQUIPMENT AT RISK — the May-2026 'Opportunities Value' card was REMOVED in the redesign.
+        // Assert the current KPI trio instead (any 2 of 3 = rendered; tolerates copy tweaks).
         long deadline = System.currentTimeMillis() + 30_000;
-        boolean found = false;
-        while (System.currentTimeMillis() < deadline && !found) {
-            List<WebElement> cards = driver.findElements(By.xpath(
-                    "//*[contains(text(),'Opportunities Value')]"));
-            if (!cards.isEmpty()) { found = true; break; }
-            pause(750);
+        int found = 0;
+        String[] kpis = {"TOTAL ASSETS", "ACTIVE WORK ORDERS", "EQUIPMENT AT RISK"};
+        while (System.currentTimeMillis() < deadline && found < 2) {
+            found = 0;
+            String body = String.valueOf(((org.openqa.selenium.JavascriptExecutor) driver)
+                    .executeScript("return (document.body && document.body.innerText) || '';"));
+            for (String k : kpis) if (body.contains(k)) found++;
+            if (found < 2) pause(750);
         }
-        logStepWithScreenshot("Opportunities Value KPI on dashboard: " + found);
-        Assert.assertTrue(found,
-                "Dashboard is missing the 'Opportunities Value' KPI card "
-                + "(added in May 2026 release)");
-        ExtentReportManager.logPass("Opportunities Value KPI is present on dashboard");
+        logStepWithScreenshot("Dashboard KPI cards found: " + found + "/3");
+        Assert.assertTrue(found >= 2,
+                "Dashboard should render the V1.36 KPI row (TOTAL ASSETS / ACTIVE WORK ORDERS / "
+                + "EQUIPMENT AT RISK) — found " + found + " of 3");
+        ExtentReportManager.logPass("Dashboard KPI row present (" + found + "/3 cards)");
     }
 
     @Test(priority = 17, description = "TC_NM_17: Dashboard shows new Equipment at Risk KPI card")

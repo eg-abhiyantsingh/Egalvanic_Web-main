@@ -843,6 +843,15 @@ public class AssetPart3TestNG extends BaseTest {
         if (subtypeInput == null) subtypeInput = findInputByLabel("Subtype");
         if (subtypeInput == null) subtypeInput = findInputByLabel("Asset Subtype");
 
+        // V1.36: classes WITHOUT subtypes (verified in the 2026-08-04 full run: OCP, Utility,
+        // MCCB fail here while subtype-bearing VFD passes) no longer render a Subtype control at
+        // all. When this check expects no default (the *_AST_01_SubtypeNone cases), treat the
+        // absent control as the valid product state rather than failing.
+        if (subtypeInput == null && expectedDefault == null && expectedOptions.length == 0) {
+            logStep("No Subtype control rendered — V1.36 omits it for subtype-less classes; OK");
+            return;
+        }
+
         Assert.assertNotNull(subtypeInput, "Subtype field should be present");
 
         String currentValue = subtypeInput.getAttribute("value");
