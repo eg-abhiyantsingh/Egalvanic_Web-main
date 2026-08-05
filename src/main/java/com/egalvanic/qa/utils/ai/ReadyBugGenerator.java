@@ -213,6 +213,7 @@ public final class ReadyBugGenerator {
             case FLAKY_TEST: return "LOW";
             case ENVIRONMENT_ISSUE: return "LOW";
             case LOCATOR_CHANGE: return "MEDIUM";
+            case TEST_OR_DATA_ISSUE: return "LOW";
             default: return "MEDIUM";
         }
     }
@@ -224,6 +225,7 @@ public final class ReadyBugGenerator {
             case "FLAKY_TEST": return "Flake";
             case "ENVIRONMENT_ISSUE": return "Env";
             case "LOCATOR_CHANGE": return "Locator";
+            case "TEST_OR_DATA_ISSUE": return "Test/Data (verify before filing)";
             default: return enumName.toLowerCase(Locale.ROOT);
         }
     }
