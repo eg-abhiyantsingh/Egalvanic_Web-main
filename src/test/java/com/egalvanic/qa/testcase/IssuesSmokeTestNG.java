@@ -8,6 +8,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 /**
@@ -635,527 +636,80 @@ public class IssuesSmokeTestNG extends BaseTest {
                 AppConstants.MODULE_ISSUES, AppConstants.FEATURE_DELETE_ISSUE,
                 "TC_Issue_Delete");
 
-        try {
-            // 1. Navigate to Issues page
-            issuePage.navigateToIssues();
-            logStep("Navigated to Issues page");
+        // WHAT THIS VERIFIES: deleting an issue from the list removes it from the grid.
+        //
+        // V1.36 flow, established live 2026-08-06: delete lives on the LIST row's Actions column
+        // (3rd icon = trash) and confirms through a MUI dialog:
+        //   "Delete Issue — Are you sure you want to delete the issue "X"?"  [Cancel] [Delete]
+        // The old test drove a detail-page kebab -> "Delete Issue" -> native window.confirm(). None
+        // of that exists any more: the detail kebab now offers only "Edit Issue", and there is no
+        // native confirm — so it opened the Edit drawer, polled 8x for an alert that never came, and
+        // failed with "delete was not completed" while nothing had ever been deleted.
+        issuePage.navigateToIssues();
+        logStep("Navigated to the Issues list");
 
-            String firstTitle = issuePage.getFirstCardTitle();
-            logStep("Target issue: " + firstTitle);
+        String title = deleteFirstIssueViaRowAction();
+        logStepWithScreenshot("Confirmed delete of '" + title + "'");
 
-            JavascriptExecutor jsExec = (JavascriptExecutor) driver;
-            dismissBackdrops();
+        // Verify: the deleted title must no longer be in the grid.
+        issuePage.searchIssues(title);
+        pause(2500);
+        String gridText = String.valueOf(((org.openqa.selenium.JavascriptExecutor) driver).executeScript(
+                "var m = document.querySelector('main'); return m ? m.innerText : '';"));
+        boolean stillPresent = gridText.contains(title);
+        Assert.assertFalse(stillPresent,
+                "Issue '" + title + "' was deleted (confirmation dialog accepted) but it is still "
+                + "listed in the grid after searching for it.");
+        ExtentReportManager.logPass("Issue '" + title + "' deleted via the row action and gone from the grid.");
+    }
 
-            // ─── 2. Get issue detail URL from DOM ───────────────────────────
-            // Table rows use React onClick (no <a> tags). Clicking them hangs
-            // WebDriver. Instead, extract the URL without navigating.
-            String detailUrl = null;
-
-            // Try <a> links first
-            detailUrl = (String) jsExec.executeScript(
-                    "var links = document.querySelectorAll('a[href]');" +
-                            "for (var a of links) {" +
-                            "  var h = a.getAttribute('href') || '';" +
-                            "  if (h.match(/\\/issues\\/[a-f0-9-]{8,}/)) return h;" +
-                            "}" +
-                            "return null;");
-            if (detailUrl != null)
-                logStep("Found issue link: " + detailUrl);
-
-            // Try row data-id attribute
-            if (detailUrl == null) {
-                String rowId = (String) jsExec.executeScript(
-                        "var rows = document.querySelectorAll('[role=\"rowgroup\"] [role=\"row\"]');" +
-                                "for (var r of rows) {" +
-                                "  var id = r.getAttribute('data-id') || '';" +
-                                "  if (id.match(/^[a-f0-9-]{8,}$/)) return id;" +
-                                "}" +
-                                "return null;");
-                if (rowId != null) {
-                    detailUrl = "/issues/" + rowId;
-                    logStep("Found row data-id: " + rowId);
-                }
-            }
-
-            // Try React fiber tree
-            if (detailUrl == null) {
-                String issueId = (String) jsExec.executeScript(
-                        "var rows = document.querySelectorAll('[role=\"rowgroup\"] [role=\"row\"]');" +
-                                "if (rows.length === 0) return null;" +
-                                "var el = rows[0];" +
-                                "var key = Object.keys(el).find(function(k) { return k.startsWith('__reactFiber$') || k.startsWith('__reactInternalInstance$'); });"
-                                +
-                                "if (!key) return null;" +
-                                "var fiber = el[key]; var depth = 0;" +
-                                "while (fiber && depth < 50) { depth++;" +
-                                "  var p = fiber.memoizedProps || fiber.pendingProps || {};" +
-                                "  var id = (p.row && p.row.original && p.row.original.id) || (p.row && p.row.id) || (p.issue && p.issue.id) || (p.data && p.data.id) || (p.item && p.item.id) || null;"
-                                +
-                                "  if (id && typeof id === 'string' && id.match(/^[a-f0-9-]{8,}$/)) return id;" +
-                                "  fiber = fiber.return;" +
-                                "}" +
-                                "return null;");
-                if (issueId != null) {
-                    detailUrl = "/issues/" + issueId;
-                    logStep("React fiber ID: " + issueId);
-                }
-            }
-
-            // Last resort: intercept pushState during click
-            if (detailUrl == null) {
-                detailUrl = (String) jsExec.executeScript(
-                        "var captured = null;" +
-                                "var origPush = history.pushState;" +
-                                "history.pushState = function(s, t, url) { captured = url; };" +
-                                "var rows = document.querySelectorAll('[role=\"rowgroup\"] [role=\"row\"]');" +
-                                "if (rows.length > 0) rows[0].click();" +
-                                "history.pushState = origPush;" +
-                                "return captured;");
-                if (detailUrl != null && detailUrl.matches(".*\\/issues\\/[a-f0-9-]{8,}.*")) {
-                    logStep("Intercepted pushState URL: " + detailUrl);
-                } else {
-                    detailUrl = null;
-                }
-            }
-
-            // ─── 3. Navigate to detail page ─────────────────────────────────
-            // Use driver.get() with 30s timeout. Do NOT call window.stop()
-            // after timeout — it kills pending API calls and leaves the page
-            // with 0 buttons (just spinners). Let the page keep loading.
-            boolean onDetail = false;
-            if (detailUrl != null) {
-                String fullUrl = detailUrl.startsWith("http") ? detailUrl
-                        : AppConstants.BASE_URL + detailUrl;
-                logStep("Navigating to: " + fullUrl);
-
-                driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(30));
-                try {
-                    driver.get(fullUrl);
-                    logStep("Page loaded normally");
-                } catch (org.openqa.selenium.TimeoutException te) {
-                    logStep("Page load timed out at 30s — continuing (page still rendering)");
-                    // Do NOT call window.stop() — let the SPA keep rendering
-                }
-                driver.manage().timeouts().pageLoadTimeout(java.time.Duration.ofSeconds(60));
-
-                // Verify URL
-                for (int w = 0; w < 5; w++) {
-                    try {
-                        String url = (String) jsExec.executeScript("return window.location.href;");
-                        if (url != null && url.matches(".*\\/issues\\/[a-f0-9-]{8,}.*")) {
-                            onDetail = true;
-                            break;
-                        }
-                    } catch (Exception ignored) {
-                    }
-                    pause(1000);
-                }
-            }
-            Assert.assertTrue(onDetail, "Could not navigate to issue detail page");
-
-            // ─── 4. Wait for detail page to fully render ────────────────────
-            // The page shows spinners while API data loads. We need the issue
-            // content to render (tabs like Details, Class Details, etc.) which
-            // means many more buttons than just 3. Also wait for spinners to decrease.
-            logStep("Waiting for detail page to fully render...");
-            for (int w = 0; w < 40; w++) {
-                String state = (String) jsExec.executeScript(
-                        "var btns = document.querySelectorAll('button');" +
-                                "var visible = 0; for (var b of btns) { if (b.getBoundingClientRect().width > 0) visible++; }"
-                                +
-                                "var spinners = document.querySelectorAll('.MuiCircularProgress-root, [role=\"progressbar\"]').length;"
-                                +
-                                "var tabs = document.querySelectorAll('[role=\"tab\"]').length;" +
-                                "return visible + '|' + spinners + '|' + tabs;");
-                String[] parts = state.split("\\|");
-                int visibleBtns = Integer.parseInt(parts[0]);
-                int spinners = Integer.parseInt(parts[1]);
-                int tabs = Integer.parseInt(parts[2]);
-                logStep("  render wait " + w + ": " + visibleBtns + " visible btns, " + spinners + " spinners, " + tabs
-                        + " tabs");
-                // We need tabs to appear (Details, Class Details, etc.) — that means content
-                // loaded
-                if (tabs >= 2 && visibleBtns >= 6)
-                    break;
-                pause(1000);
-            }
-            debugPageState("DELETE — Detail page rendered");
-
-            // Debug: dump ALL visible buttons and clickable elements
-            String btnDebug = (String) jsExec.executeScript(
-                    "var info = '';" +
-                            "var btns = document.querySelectorAll('button, [role=\"button\"], .MuiIconButton-root');" +
-                            "for (var i = 0; i < btns.length; i++) {" +
-                            "  var b = btns[i]; var r = b.getBoundingClientRect();" +
-                            "  if (r.width <= 0) continue;" +
-                            "  var text = b.textContent.trim().substring(0, 30);" +
-                            "  var label = b.getAttribute('aria-label') || '';" +
-                            "  var hasSvg = b.querySelector('svg') ? 'SVG' : '';" +
-                            "  var cls = (b.className || '').toString().substring(0, 60);" +
-                            "  info += 'BTN[' + i + '] ' + Math.round(r.left) + ',' + Math.round(r.top)" +
-                            "    + ' ' + Math.round(r.width) + 'x' + Math.round(r.height)" +
-                            "    + ' text=\"' + text + '\" aria=\"' + label + '\" ' + hasSvg" +
-                            "    + ' cls=\"' + cls + '\"\\n';" +
-                            "}" +
-                            "return info;");
-            System.out.println("[DELETE] Buttons on detail page:\n" + btnDebug);
-
-            // ─── 5. Delete flow: ⋮ → Edit Issue → Delete Issue button ─────
-            // The actual UI flow (from manual testing):
-            // 1. Click ⋮ (three dots/kebab) — rightmost icon button in issue header row
-            // 2. Click "Edit Issue" from the dropdown menu that appears
-            // 3. In the Edit Issue drawer, click "Delete Issue" red button (bottom-left)
-            // 4. Confirm deletion in the confirmation dialog
-            //
-            // Key findings from debug output:
-            // - Issue header row is at y≈80 (not 100-300 as previously assumed)
-            // - BTN[22] (1278,82) = chevron/collapse, BTN[23] (1316,82) = ⋮ kebab
-            // - Both are MuiIconButton-sizeSmall, no aria-label, no text, have SVG
-            // - The ⋮ is the RIGHTMOST of the two
-            // - Must exclude: back arrow (BTN[21] at 280,80), sort buttons, FAB, top bar
-            // buttons
-            dismissBackdrops();
-            boolean deleteCompleted = false;
-
-            // ────────────────────────────────────────────────────────────────
-            // PART 1: Click the ⋮ (kebab) button
-            // ────────────────────────────────────────────────────────────────
-            logStep("PART 1: Finding and clicking ⋮ menu button...");
-
-            // Identify the ⋮ precisely: it's a MuiIconButton-sizeSmall in the
-            // issue header (y 50-150), with SVG, no text, no aria-label, and
-            // it's the RIGHTMOST such button at that y level.
-            String kebabInfo = (String) jsExec.executeScript(
-                    "var btns = document.querySelectorAll('button, [role=\"button\"]');" +
-                            "var headerIcons = [];" +
-                            "for (var b of btns) {" +
-                            "  var r = b.getBoundingClientRect();" +
-                            "  var hasSvg = b.querySelector('svg') ? true : false;" +
-                            "  var text = b.textContent.trim();" +
-                            "  var label = b.getAttribute('aria-label') || '';" +
-                            "  var cls = (b.className || '').toString();" +
-                            // Filter: small icon button, in header area (y 50-150), has SVG, minimal text
-                            "  if (r.width > 0 && r.width <= 50 && r.height <= 50" +
-                            "      && r.top >= 50 && r.top <= 150" +
-                            "      && hasSvg && text.length < 3" +
-                            "      && !label.toLowerCase().includes('back')" +
-                            "      && !cls.includes('MuiFab')) {" +
-                            "    headerIcons.push({el: b, left: r.left, top: r.top," +
-                            "      label: label, cls: cls.substring(0,60)});" +
-                            "  }" +
-                            "}" +
-                            // Sort rightmost first
-                            "headerIcons.sort(function(a,b) { return b.left - a.left; });" +
-                            // Log what we found
-                            "var info = 'Header icons found: ' + headerIcons.length + '\\n';" +
-                            "for (var i = 0; i < headerIcons.length; i++) {" +
-                            "  info += '  [' + i + '] left=' + Math.round(headerIcons[i].left)" +
-                            "    + ' top=' + Math.round(headerIcons[i].top)" +
-                            "    + ' label=\"' + headerIcons[i].label + '\"'" +
-                            "    + ' cls=\"' + headerIcons[i].cls + '\"\\n';" +
-                            "}" +
-                            // Click the rightmost one (the ⋮)
-                            "if (headerIcons.length > 0) {" +
-                            "  headerIcons[0].el.click();" +
-                            "  info += 'CLICKED: index 0 (rightmost) at left=' + Math.round(headerIcons[0].left);" +
-                            "} else {" +
-                            "  info += 'NO HEADER ICONS FOUND';" +
-                            "}" +
-                            "return info;");
-            System.out.println("[DELETE] Kebab search:\n" + kebabInfo);
-            Assert.assertTrue(kebabInfo != null && kebabInfo.contains("CLICKED"),
-                    "Could not find ⋮ button in issue header. " + kebabInfo);
-            logStep("⋮ button clicked");
-            pause(2000);
-
-            // Verify a menu appeared — if not, the click hit the wrong button
-            String menuCheck = (String) jsExec.executeScript(
-                    "var info = '';" +
-                            "var menus = document.querySelectorAll('[role=\"menu\"], .MuiMenu-root, .MuiPopover-root');"
-                            +
-                            "var visMenus = 0;" +
-                            "for (var m of menus) { if (m.getBoundingClientRect().width > 0) visMenus++; }" +
-                            "info += 'Visible menus: ' + visMenus + '\\n';" +
-                            "var items = document.querySelectorAll('[role=\"menuitem\"], .MuiMenuItem-root');" +
-                            "var visItems = 0;" +
-                            "for (var it of items) { if (it.getBoundingClientRect().width > 0) visItems++; }" +
-                            "info += 'Visible menu items: ' + visItems + '\\n';" +
-                            // Dump all visible menu items
-                            "for (var it of items) {" +
-                            "  var r = it.getBoundingClientRect();" +
-                            "  if (r.width > 0) info += '  \"' + it.textContent.trim().substring(0,50) + '\"\\n';" +
-                            "}" +
-                            // Also check for any new overlays/popovers that appeared
-                            "var papers = document.querySelectorAll('.MuiPopover-paper, .MuiMenu-paper');" +
-                            "var visPapers = 0;" +
-                            "for (var p of papers) { if (p.getBoundingClientRect().width > 0) visPapers++; }" +
-                            "info += 'Visible popover papers: ' + visPapers + '\\n';" +
-                            "for (var p of papers) {" +
-                            "  var r = p.getBoundingClientRect();" +
-                            "  if (r.width > 0) info += '  Paper text: \"' + p.textContent.trim().substring(0,80) + '\"\\n';"
-                            +
-                            "}" +
-                            // Check for any visible elements containing 'Edit'
-                            "var edits = document.querySelectorAll('*');" +
-                            "var editFound = [];" +
-                            "for (var el of edits) {" +
-                            "  var t = el.textContent.trim();" +
-                            "  var r = el.getBoundingClientRect();" +
-                            "  if (r.width > 0 && el.children.length === 0 && t.length < 30 && t.toLowerCase().includes('edit')) {"
-                            +
-                            "    editFound.push(el.tagName + '[' + Math.round(r.left) + ',' + Math.round(r.top) + ']: \"' + t + '\"');"
-                            +
-                            "  }" +
-                            "}" +
-                            "info += 'Leaf elements with edit: ' + editFound.length + '\\n';" +
-                            "for (var f of editFound) info += '  ' + f + '\\n';" +
-                            "return info;");
-            System.out.println("[DELETE] After ⋮ click — menu state:\n" + menuCheck);
-
-            // If no menu appeared, try clicking via Selenium Actions (dispatchEvent)
-            // JS .click() might not trigger React's synthetic event system properly
-            if (menuCheck.contains("Visible menus: 0") && menuCheck.contains("Visible menu items: 0")
-                    && menuCheck.contains("Visible popover papers: 0")) {
-                logStep("No menu appeared from JS click — trying dispatchEvent and Selenium click...");
-
-                // Re-find the ⋮ button and try dispatchEvent with bubbles
-                Boolean retryClick = (Boolean) jsExec.executeScript(
-                        "var btns = document.querySelectorAll('button, [role=\"button\"]');" +
-                                "var best = null; var bestLeft = -1;" +
-                                "for (var b of btns) {" +
-                                "  var r = b.getBoundingClientRect();" +
-                                "  var hasSvg = b.querySelector('svg') ? true : false;" +
-                                "  var text = b.textContent.trim();" +
-                                "  var label = b.getAttribute('aria-label') || '';" +
-                                "  var cls = (b.className || '').toString();" +
-                                "  if (r.width > 0 && r.width <= 50 && r.height <= 50" +
-                                "      && r.top >= 50 && r.top <= 150" +
-                                "      && hasSvg && text.length < 3" +
-                                "      && !label.toLowerCase().includes('back')" +
-                                "      && !cls.includes('MuiFab')" +
-                                "      && r.left > bestLeft) {" +
-                                "    best = b; bestLeft = r.left;" +
-                                "  }" +
-                                "}" +
-                                "if (!best) return false;" +
-                                // Try multiple click approaches
-                                "var r = best.getBoundingClientRect();" +
-                                "var cx = r.left + r.width/2; var cy = r.top + r.height/2;" +
-                                // Approach 1: MouseEvent with full event chain
-                                "best.dispatchEvent(new MouseEvent('mousedown', {bubbles:true, clientX:cx, clientY:cy}));"
-                                +
-                                "best.dispatchEvent(new MouseEvent('mouseup', {bubbles:true, clientX:cx, clientY:cy}));"
-                                +
-                                "best.dispatchEvent(new MouseEvent('click', {bubbles:true, clientX:cx, clientY:cy}));" +
-                                "return true;");
-                if (Boolean.TRUE.equals(retryClick)) {
-                    logStep("Retried ⋮ click via dispatchEvent");
-                    pause(2000);
-                }
-
-                // If still no menu, try Selenium WebElement click as last resort
-                String stillNoMenu = (String) jsExec.executeScript(
-                        "var menus = document.querySelectorAll('[role=\"menu\"]');" +
-                                "for (var m of menus) { if (m.getBoundingClientRect().width > 0) return 'found'; }" +
-                                "var items = document.querySelectorAll('[role=\"menuitem\"]');" +
-                                "for (var it of items) { if (it.getBoundingClientRect().width > 0) return 'found'; }" +
-                                "return 'none';");
-                if ("none".equals(stillNoMenu)) {
-                    logStep("Still no menu — trying Selenium WebElement.click()...");
-                    try {
-                        // Find the rightmost small icon button in header via Selenium
-                        java.util.List<org.openqa.selenium.WebElement> iconBtns = driver.findElements(
-                                org.openqa.selenium.By.cssSelector(".MuiIconButton-sizeSmall"));
-                        org.openqa.selenium.WebElement rightmost = null;
-                        int maxX = 0;
-                        for (org.openqa.selenium.WebElement btn : iconBtns) {
-                            org.openqa.selenium.Point loc = btn.getLocation();
-                            org.openqa.selenium.Dimension size = btn.getSize();
-                            if (loc.getY() >= 50 && loc.getY() <= 150 && size.getWidth() <= 50
-                                    && loc.getX() > maxX && btn.isDisplayed()) {
-                                maxX = loc.getX();
-                                rightmost = btn;
-                            }
-                        }
-                        if (rightmost != null) {
-                            rightmost.click();
-                            logStep("Selenium click on ⋮ at x=" + maxX);
-                            pause(2000);
-                        }
-                    } catch (Exception se) {
-                        logStep("Selenium click failed: " + se.getMessage());
-                    }
-                }
-            }
-
-            // ────────────────────────────────────────────────────────────────
-            // PART 2: Click "Edit Issue" from the dropdown menu
-            // ────────────────────────────────────────────────────────────────
-            logStep("PART 2: Finding 'Edit Issue' in menu...");
-            Boolean editClicked = (Boolean) jsExec.executeScript(
-                    // Strategy 1: Standard MUI menu items
-                    "var items = document.querySelectorAll('[role=\"menuitem\"], .MuiMenuItem-root');" +
-                            "for (var item of items) {" +
-                            "  var text = item.textContent.trim();" +
-                            "  var r = item.getBoundingClientRect();" +
-                            "  if (r.width > 0 && (text === 'Edit Issue' || text.startsWith('Edit Issue') || text === 'Edit')) {"
-                            +
-                            "    item.click(); return true;" +
-                            "  }" +
-                            "}" +
-                            // Strategy 2: Any list item in popover/menu containers
-                            "var containers = document.querySelectorAll('.MuiPopover-paper, .MuiMenu-paper, .MuiPopper-root, [role=\"presentation\"] .MuiPaper-root');"
-                            +
-                            "for (var c of containers) {" +
-                            "  if (c.getBoundingClientRect().width <= 0) continue;" +
-                            "  var children = c.querySelectorAll('li, div, span, a, button');" +
-                            "  for (var ch of children) {" +
-                            "    var t = ch.textContent.trim();" +
-                            "    var r = ch.getBoundingClientRect();" +
-                            "    if (r.width > 0 && (t === 'Edit Issue' || t === 'Edit')) { ch.click(); return true; }"
-                            +
-                            "  }" +
-                            "}" +
-                            // Strategy 3: Any visible leaf element with 'Edit Issue' text
-                            "var all = document.querySelectorAll('*');" +
-                            "for (var el of all) {" +
-                            "  var t = el.textContent.trim();" +
-                            "  var r = el.getBoundingClientRect();" +
-                            "  if (r.width > 0 && el.children.length === 0 && (t === 'Edit Issue' || t === 'Edit')) {" +
-                            "    el.click(); return true;" +
-                            "  }" +
-                            "}" +
-                            "return false;");
-            if (!Boolean.TRUE.equals(editClicked)) {
-                ScreenshotUtil.captureScreenshot("testDeleteIssue_NO_EDIT_MENU");
-                Assert.fail("Could not find 'Edit Issue' menu item.\nMenu state:\n" + menuCheck);
-            }
-            logStep("'Edit Issue' clicked — waiting for drawer to open");
-            pause(4000); // extra wait so user can see the drawer open
-
-            // ────────────────────────────────────────────────────────────────
-            // PART 3: Click "Delete Issue" in the Edit drawer
-            // PART 4: Accept the native confirm() dialog
-            // ────────────────────────────────────────────────────────────────
-            // CRITICAL: Clicking "Delete Issue" triggers a native window.confirm().
-            // The confirm() blocks JS execution, so executeScript may not return.
-            // We must handle this as a two-step process:
-            // Step A: Click the button (may or may not return from executeScript)
-            // Step B: IMMEDIATELY accept the alert — no other WebDriver calls between
-            System.out.println("[DELETE] PART 3+4: Finding Delete Issue button and handling confirm...");
-
-            // Step A: Wait for drawer, find and dump all buttons, then click Delete Issue
-            // Use a single executeScript that also dumps debug info BEFORE clicking
-            pause(3000); // let drawer fully render so user can see it
-            String drawerDebug = "";
-            try {
-                drawerDebug = (String) jsExec.executeScript(
-                        "var info = 'Drawer buttons: ';" +
-                                "var btns = document.querySelectorAll('button');" +
-                                "var deleteBtn = null;" +
-                                "for (var b of btns) {" +
-                                "  var text = b.textContent.trim();" +
-                                "  var r = b.getBoundingClientRect();" +
-                                "  if (r.width <= 0) continue;" +
-                                "  if (text.includes('Delete') || text.includes('Cancel') || text.includes('Save')) {" +
-                                "    info += '[' + text.substring(0,25) + ' at ' + Math.round(r.left) + ',' + Math.round(r.top) + '] ';"
-                                +
-                                "  }" +
-                                "  if (text.includes('Delete Issue') && !deleteBtn) deleteBtn = b;" +
-                                "}" +
-                                "if (deleteBtn) {" +
-                                "  info += '\\nCLICKING Delete Issue button...';" +
-                                "  deleteBtn.click();" +
-                                "  info += ' CLICKED';" +
-                                "} else {" +
-                                "  info += '\\nDelete Issue button NOT FOUND';" +
-                                "}" +
-                                "return info;");
-            } catch (org.openqa.selenium.UnhandledAlertException uae) {
-                // The confirm() fired during executeScript — this is expected!
-                drawerDebug = "Delete Issue clicked — confirm() fired during JS (UnhandledAlertException)";
-            } catch (Exception ex) {
-                drawerDebug = "executeScript error: " + ex.getClass().getSimpleName() + ": " + ex.getMessage();
-            }
-            System.out.println("[DELETE] " + drawerDebug);
-
-            // Step B: IMMEDIATELY handle the native confirm() dialog
-            // Try multiple times — the alert should be open right now
-            System.out.println("[DELETE] PART 4: Accepting native confirm() dialog...");
-            for (int attempt = 0; attempt < 8; attempt++) {
-                try {
-                    org.openqa.selenium.Alert alert = driver.switchTo().alert();
-                    String alertText = alert.getText();
-                    System.out.println("[DELETE] Alert found (attempt " + (attempt + 1) + "): \"" + alertText + "\"");
-                    alert.accept();
-                    deleteCompleted = true;
-                    System.out.println("[DELETE] Alert ACCEPTED — delete confirmed!");
-                    break;
-                } catch (org.openqa.selenium.NoAlertPresentException nape) {
-                    System.out.println("[DELETE] No alert on attempt " + (attempt + 1));
-                    // Maybe the alert was auto-dismissed by unhandledPromptBehavior
-                    // Check if we already navigated back to issues list
-                    try {
-                        String url = (String) jsExec.executeScript("return window.location.href;");
-                        if (url != null && url.matches(".*/issues/?$")) {
-                            deleteCompleted = true;
-                            System.out.println("[DELETE] Already back on issues list — delete succeeded");
-                            break;
-                        }
-                    } catch (Exception ignored) {
-                    }
-                    pause(1000);
-                } catch (org.openqa.selenium.UnhandledAlertException uae2) {
-                    // Alert exists but threw UnhandledAlertException — try accepting directly
-                    System.out
-                            .println("[DELETE] UnhandledAlertException on attempt " + (attempt + 1) + " — retrying...");
-                    pause(500);
-                } catch (Exception alertEx) {
-                    System.out.println("[DELETE] Alert error (attempt " + (attempt + 1) + "): "
-                            + alertEx.getClass().getSimpleName() + ": " + alertEx.getMessage());
-                    pause(1000);
-                }
-            }
-
-            // ────────────────────────────────────────────────────────────────
-            // PART 5: Verify deletion
-            // ────────────────────────────────────────────────────────────────
-            pause(4000); // wait so user can see the result
-            if (!deleteCompleted) {
-                try {
-                    String url = (String) jsExec.executeScript("return window.location.href;");
-                    System.out.println("[DELETE] Current URL after delete: " + url);
-                    if (url != null && (url.matches(".*/issues/?$") || !url.contains("/issues/"))) {
-                        deleteCompleted = true;
-                        System.out.println("[DELETE] Verified — back on issues list");
-                    }
-                } catch (Exception ex) {
-                    System.out.println("[DELETE] URL check error: " + ex.getMessage());
-                }
-            }
-            Assert.assertTrue(deleteCompleted, "Issue '" + firstTitle + "' delete was not completed");
-            try {
-                logStepWithScreenshot("Issue deleted successfully");
-            } catch (Exception screenshotEx) {
-                logStep("Issue deleted successfully (screenshot failed)");
-            }
-            ExtentReportManager.logPass("Issue deleted: " + firstTitle);
-
-        } catch (Exception e) {
-            System.out.println("[DELETE] EXCEPTION: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-            // Dismiss any open alert before trying to screenshot
-            try {
-                driver.switchTo().alert().accept();
-                System.out.println("[DELETE] Dismissed leftover alert in catch block");
-            } catch (Exception ignored) {
-            }
-            try {
-                ScreenshotUtil.captureScreenshot("testDeleteIssue_FAIL_" +
-                        new java.text.SimpleDateFormat("yyyyMMdd_HHmmss").format(new java.util.Date()));
-            } catch (Exception screenshotEx) {
-                System.out.println("[DELETE] Screenshot also failed: " + screenshotEx.getMessage());
-            }
-            Assert.fail("Delete issue failed: " + e.getMessage());
+    /**
+     * Delete the first grid row through the V1.36 row action: trash icon (3rd Actions button) then
+     * the MUI "Delete Issue" confirmation. Returns the deleted issue's title.
+     */
+    private String deleteFirstIssueViaRowAction() {
+        org.openqa.selenium.JavascriptExecutor js = (org.openqa.selenium.JavascriptExecutor) driver;
+        String title = String.valueOf(js.executeScript(
+                "var c = document.querySelector('.MuiDataGrid-row .MuiDataGrid-cell');"
+                + "return c ? c.textContent.trim() : '';"));
+        if (title == null || title.isBlank()) {
+            throw new SkipException("No issues in the grid to delete (empty data is not a failure)");
         }
+        logStep("Target issue: '" + title + "'");
+
+        Boolean clicked = (Boolean) js.executeScript(
+                "var row = document.querySelector('.MuiDataGrid-row');"
+                + "if (!row) return false;"
+                + "var bs = row.querySelectorAll('button');"
+                + "if (bs.length < 1) return false;"
+                + "bs[bs.length - 1].click();"   // trash is the LAST action icon
+                + "return true;");
+        Assert.assertTrue(Boolean.TRUE.equals(clicked),
+                "Could not click the delete (trash) action on the first issue row.");
+
+        // MUI confirmation dialog — poll for it, then press Delete.
+        org.openqa.selenium.WebElement dialog = new org.openqa.selenium.support.ui.WebDriverWait(
+                driver, java.time.Duration.ofSeconds(15))
+                .until(d -> {
+                    for (org.openqa.selenium.WebElement e
+                            : d.findElements(org.openqa.selenium.By.cssSelector("[role='dialog']"))) {
+                        if (e.isDisplayed() && e.getText().toLowerCase().contains("delete")) return e;
+                    }
+                    return null;
+                });
+        logStep("Confirmation dialog: " + dialog.getText().replace("\n", " | "));
+        Boolean confirmed = (Boolean) js.executeScript(
+                "var dlgs = document.querySelectorAll(\"[role='dialog']\");"
+                + "for (var i = 0; i < dlgs.length; i++) {"
+                + "  var bs = dlgs[i].querySelectorAll('button');"
+                + "  for (var j = 0; j < bs.length; j++) {"
+                + "    if (bs[j].textContent.trim().toLowerCase() === 'delete') { bs[j].click(); return true; }"
+                + "  }"
+                + "}"
+                + "return false;");
+        Assert.assertTrue(Boolean.TRUE.equals(confirmed),
+                "The delete confirmation dialog opened but had no 'Delete' button to press.");
+        pause(3000);
+        return title;
     }
 }

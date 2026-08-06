@@ -5,6 +5,7 @@ import com.egalvanic.qa.utils.ExtentReportManager;
 import com.egalvanic.qa.utils.ScreenshotUtil;
 
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 /**
@@ -247,20 +248,35 @@ public class AssetSmokeTestNG extends BaseTest {
                 AppConstants.MODULE_ASSET, AppConstants.FEATURE_EDIT_ASSET, "TC_Asset_OCP");
 
         try {
-            // 1. Navigate to assets and open edit for the first asset
+            // 1. Open the edit drawer of an asset that ALREADY IS an enclosure class.
+            //
+            // This used to grab the FIRST asset (any class) and switch its class to Panelboard
+            // inside the drawer, expecting the OCP section to appear from that unsaved selection.
+            // Live 2026-08-06: the OCP section renders off the asset's SAVED class — a real
+            // Panelboard's drawer shows h6 sections [BASIC INFO, ENGINEERING, SCHEDULE, OCP,
+            // CONNECTIONS, COMMERCIAL, NOTES], while flipping the class on an arbitrary asset does
+            // not conjure it. So the old flow reported "OCP section not visible for enclosure type"
+            // as a product failure when the section was simply never applicable to that asset.
             assetPage.navigateToAssets();
-            assetPage.openEditForFirstAsset();
-            logStep("Opened edit form for first asset");
-
-            // 2. Change asset class to enclosure type (required for OCP section)
-            assetPage.editAssetClass(TEST_ENCLOSURE_CLASS);
-            logStep("Changed asset class to: " + TEST_ENCLOSURE_CLASS);
+            assetPage.searchAsset(TEST_ENCLOSURE_CLASS);
+            pause(2500);
+            if (!assetPage.isGridPopulated()) {
+                throw new SkipException("No '" + TEST_ENCLOSURE_CLASS + "' asset on this site — "
+                        + "OCP child flow needs an enclosure-class asset (missing data is not a failure)");
+            }
+            assetPage.navigateToFirstAssetDetail();
             pause(2000);
-            logStepWithScreenshot("Asset class set to enclosure type");
+            assetPage.clickKebabMenuItem("Edit Asset");
+            pause(2500);
+            logStep("Opened edit drawer for an existing " + TEST_ENCLOSURE_CLASS);
+            logStepWithScreenshot("Edit drawer for enclosure-class asset");
 
             // 3. Verify OCP section is present
             boolean ocpPresent = assetPage.isOCPSectionPresent();
-            Assert.assertTrue(ocpPresent, "OCP section not visible for enclosure type: " + TEST_ENCLOSURE_CLASS);
+            Assert.assertTrue(ocpPresent,
+                    "The edit drawer of an existing " + TEST_ENCLOSURE_CLASS + " must expose its OCP "
+                    + "section (live V1.36 drawer sections: BASIC INFO / ENGINEERING / SCHEDULE / OCP / "
+                    + "CONNECTIONS / COMMERCIAL / NOTES).");
             logStep("OCP section is present");
 
             // 4. Expand OCP and get initial child count

@@ -3057,8 +3057,30 @@ public class WorkOrderPage {
         }
     }
 
+    /**
+     * First DISPLAYED element matching {@code locator}. Use instead of
+     * {@code visibilityOfElementLocated} whenever duplicate fields can exist in other mounted
+     * drawers/dialogs.
+     */
+    private WebElement waitForFirstDisplayed(By locator) {
+        return new WebDriverWait(driver, Duration.ofSeconds(TIMEOUT))
+                .until(d -> {
+                    for (WebElement e : d.findElements(locator)) {
+                        try {
+                            if (e.isDisplayed() && e.getRect().getWidth() > 0) return e;
+                        } catch (Exception ignored) { /* stale mid-render — keep polling */ }
+                    }
+                    return null;
+                });
+    }
+
     private void typeAndSelectDropdown(By inputLocator, String textToType, String optionText) {
-        WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(inputLocator));
+        // First DISPLAYED match, not merely the first match: several MuiDrawer/dialog papers stay
+        // mounted at once (one at w=0 h=0 holding duplicate fields), and
+        // visibilityOfElementLocated() only ever inspects the first node in document order — the
+        // invisible copy — which is why TC_CWO_003 timed out for 25s on a Facility field that was
+        // right there in the open dialog (live-confirmed 2026-08-06).
+        WebElement input = waitForFirstDisplayed(inputLocator);
 
         js.executeScript(
             "arguments[0].scrollIntoView({block:'center'});" +

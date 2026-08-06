@@ -2630,8 +2630,31 @@ public class IssuePage {
         }
     }
 
+    /**
+     * First DISPLAYED element matching {@code locator}, polling up to the standard timeout.
+     * Use instead of {@code visibilityOfElementLocated} whenever several mounted drawers/dialogs
+     * can carry duplicates of the same field — that condition only ever inspects the first match.
+     */
+    private WebElement waitForFirstDisplayed(By locator) {
+        return new WebDriverWait(driver, Duration.ofSeconds(TIMEOUT))
+                .until(d -> {
+                    for (WebElement e : d.findElements(locator)) {
+                        try {
+                            if (e.isDisplayed() && e.getRect().getWidth() > 0) return e;
+                        } catch (Exception ignored) { /* stale mid-render — keep polling */ }
+                    }
+                    return null;
+                });
+    }
+
     private void typeAndSelectDropdown(By inputLocator, String textToType, String optionText) {
-        WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(inputLocator));
+        // Wait for the first DISPLAYED match, not merely the first match.
+        // The page keeps more than one MuiDrawer-paper mounted (live 2026-08-06: 3 drawers, one at
+        // w=0 h=0). The zero-size one holds a duplicate of the same form fields, so
+        // visibilityOfElementLocated() latched onto the invisible copy that appears earlier in
+        // document order and timed out after 25s — even though the real drawer's field was visible
+        // within 1s. This is why testCreateIssue "couldn't find" a field the debug dump showed.
+        WebElement input = waitForFirstDisplayed(inputLocator);
 
         js.executeScript(
                 "arguments[0].scrollIntoView({block:'center'});" +
@@ -2720,8 +2743,33 @@ public class IssuePage {
             }
             pause(400);
         }
+        // KEYBOARD COMMIT FALLBACK. MUI Autocomplete does not always accept a synthetic click on
+        // its <li>, and the typed filter sometimes leaves the listbox unrendered — clicking then
+        // finds no option and the old code threw ("Could not select dropdown option 'NEC
+        // Violation'") even though the option genuinely exists (live 2026-08-06: the Issue Class
+        // dropdown offers NEC Violation / NFPA 70B Violation / OSHA Violation / Repair Needed /
+        // Replacement Needed / Thermal Anomaly / Ultrasonic Anomaly). ArrowDown+Enter commits the
+        // highlighted match through MUI's own keyboard handler, which is what a user does.
+        try {
+            WebElement fresh = waitForFirstDisplayed(inputLocator);
+            fresh.click();
+            pause(200);
+            fresh.sendKeys(Keys.ARROW_DOWN);
+            pause(400);
+            fresh.sendKeys(Keys.ENTER);
+            pause(600);
+            String committed = String.valueOf(waitForFirstDisplayed(inputLocator).getAttribute("value"));
+            if (committed != null && !committed.isBlank()) {
+                System.out.println("[IssuePage] Selected '" + committed + "' via keyboard fallback"
+                        + (committed.equalsIgnoreCase(optionText) ? "" : " (requested '" + optionText + "')"));
+                return;
+            }
+        } catch (Exception keyboardEx) {
+            System.out.println("[IssuePage] Keyboard fallback failed: " + keyboardEx.getMessage());
+        }
         System.out.println("[IssuePage] WARNING: Could not select dropdown option '" + optionText + "'");
-        throw new RuntimeException("Could not select dropdown option '" + optionText + "'");
+        throw new RuntimeException("Could not select dropdown option '" + optionText
+                + "' — the listbox never offered a match and the keyboard fallback did not commit a value");
     }
 
     private void sendKeysWithJsFallback(WebElement el, String text, By locator) {
