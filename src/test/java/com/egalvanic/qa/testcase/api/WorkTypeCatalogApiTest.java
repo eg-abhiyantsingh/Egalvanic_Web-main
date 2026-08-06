@@ -281,10 +281,23 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
         ExtentReportManager.logInfo("services catalog: " + data.length() + " entries; checking '" + check + "'");
 
         if ("count-is-13".equals(check)) {
-            Assert.assertEquals(data.length(), 13,
-                    "services catalog must hold exactly 13 services (the WO dialog shows these 13 + 'General'). "
-                            + "Drifted? Re-pull " + SERVICES_PATH + " and update WorkTypeCatalog in the same commit.");
-            ExtentReportManager.logPass("services catalog has exactly 13 entries.");
+            // CANONICAL SUBSET, not exact count: services are tenant-editable — users can create
+            // their own (live 2026-08-07: 15 entries, incl. hand-made "abhiyant Preventive" and
+            // "abhiyant service corrective"), so pinning length==13 reported someone's fixture as
+            // catalog drift. The real regression is a MISSING canonical service.
+            List<String> live = new ArrayList<String>();
+            for (int i = 0; i < data.length(); i++) live.add(data.getJSONObject(i).optString("name", ""));
+            List<String> missing = new ArrayList<String>();
+            for (WorkTypeCatalog.WorkTypeProfile pr : WorkTypeCatalog.ALL) {
+                if (!live.contains(pr.name)) missing.add(pr.name);
+            }
+            Assert.assertTrue(missing.isEmpty(),
+                    "services catalog is MISSING canonical service(s) " + missing + " — live catalog ("
+                            + data.length() + "): " + live + ". If the catalog changed by design, re-pull "
+                            + SERVICES_PATH + " and update WorkTypeCatalog in the same commit.");
+            ExtentReportManager.logPass("all " + WorkTypeCatalog.ALL.size()
+                    + " canonical services present (live catalog has " + data.length()
+                    + " entries incl. tenant-created ones).");
             return;
         }
 
