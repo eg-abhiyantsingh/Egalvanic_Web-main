@@ -92,7 +92,11 @@ public class OpportunitiesTestNG extends BaseTest {
         logStep("Columns: " + headers);
         String joined = String.join(" | ", headers).toLowerCase();
         // Strong: the sales-pipeline columns must actually be present.
-        Assert.assertTrue(joined.contains("name"), "Grid must have a Name column. Got: " + headers);
+        // V1.36 (verified live 2026-08-06) renamed the identity column "Name" -> "Opportunity"
+        // (live headers: Created | Quote | Opportunity | Facility | Type | Value | Status | Actions),
+        // so requiring the literal "name" reported a product failure for a deliberate rename.
+        Assert.assertTrue(joined.contains("name") || joined.contains("opportunity"),
+                "Grid must have an identity column ('Opportunity' in V1.36, formerly 'Name'). Got: " + headers);
         Assert.assertTrue(joined.contains("status") || joined.contains("stage"),
                 "Grid must have a Status/Stage column. Got: " + headers);
         Assert.assertTrue(joined.contains("value") || joined.contains("quote"),
@@ -536,6 +540,21 @@ public class OpportunitiesTestNG extends BaseTest {
         ExtentReportManager.logPass("Clear restored " + after + " rows (filtered to " + filtered + ")");
     }
 
+    /**
+     * Row count after the debounced server-side search settles: polls until the count repeats
+     * twice in a row (or ~8s elapses). Counting before that reads a half-updated grid.
+     */
+    private int settledRowCount() {
+        int last = -1, stable = 0;
+        for (int i = 0; i < 16 && stable < 2; i++) {
+            pause(500);
+            int now = page.rowCount();
+            stable = (now == last) ? stable + 1 : 0;
+            last = now;
+        }
+        return last;
+    }
+
     @Test(priority = 28, description = "TC_OPP_29: Search is case-insensitive")
     public void testOpp29_SearchCaseInsensitive() {
         ExtentReportManager.createTest(MODULE, "Search", "Opp_29_CaseInsensitive");
@@ -543,14 +562,22 @@ public class OpportunitiesTestNG extends BaseTest {
         if (!page.isGridPresent() || page.rowCount() == 0) throw new SkipException("No opportunities to search");
         String token = page.rows().get(0).getText().replace("\n", " ").trim().split(" ")[0];
         if (token.length() < 2) throw new SkipException("No usable token");
+        // Search is SERVER-SIDE and DEBOUNCED: rowCount() taken right after typing reads the grid
+        // mid-update, which produced bogus mismatches (lower=6 vs upper=9, 2026-08-06 run) even
+        // though the backend is case-insensitive — verified directly against
+        // POST /api/company/{id}/quotes/v2: search 'test' / 'TEST' / 'Test' all return 80. So wait
+        // for the row count to STOP CHANGING before comparing, otherwise this test reports a
+        // product bug for its own timing.
         page.search(token.toLowerCase());
-        int lower = page.rowCount();
+        int lower = settledRowCount();
         page.clearSearch(); page.waitForContent();
         page.search(token.toUpperCase());
-        int upper = page.rowCount();
+        int upper = settledRowCount();
         page.clearSearch();
         // Strong: case must not change the match set.
-        Assert.assertEquals(lower, upper, "Search must be case-insensitive (lower=" + lower + ", upper=" + upper + ").");
+        Assert.assertEquals(lower, upper,
+                "Search must be case-insensitive: '" + token.toLowerCase() + "' matched " + lower
+                + " row(s) but '" + token.toUpperCase() + "' matched " + upper + ".");
         Assert.assertTrue(lower > 0, "Searching a real token (any case) should match at least one row.");
         ExtentReportManager.logPass("Case-insensitive search: " + lower + " matches either case");
     }
@@ -708,7 +735,13 @@ public class OpportunitiesTestNG extends BaseTest {
         // Response / Closed Won / Closed Lost / Abandoned, plus the legacy "Qualified" seen on
         // older rows.
         java.util.List<String> valid = java.util.Arrays.asList(
-                "qualifying", "qualified", "pending response", "closed won", "closed lost", "abandoned");
+                // V1.36 pipeline stages, read live off the /opportunities pipeline header
+                // 2026-08-06: DRAFT | PENDING RESPONSE | CLOSED WON | CLOSED LOST | CANCELLED.
+                // "draft"/"cancelled" were missing here (so a perfectly valid Draft quote was
+                // reported as an invalid stage), and "qualifying"/"qualified"/"abandoned" are
+                // legacy stages kept only for backward tolerance.
+                "draft", "pending response", "closed won", "closed lost", "cancelled",
+                "qualifying", "qualified", "abandoned");
         java.util.List<String> statuses = page.statusValues();
         if (statuses.isEmpty()) throw new SkipException("Status column not rendered (virtualized)");
         for (String s : statuses) {

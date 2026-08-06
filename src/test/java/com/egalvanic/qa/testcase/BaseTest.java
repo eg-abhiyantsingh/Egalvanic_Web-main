@@ -614,13 +614,19 @@ public class BaseTest {
             // selection was SILENTLY SKIPPED for every class ("Facility selector not found after
             // 15s"), leaving tests on a sticky/arbitrary site — the root of many data-dependent
             // search/create failures. Hop to /assets (facility-scoped) to make the selection.
+            // Remember where we were: selectTestSite() is ALSO called from the mid-test recovery
+            // paths, and hopping to /assets without coming back stranded the test on the wrong
+            // page (testCreateWorkOrder searched the WO list while sitting on /assets, 2026-08-06).
+            String routeBeforeSiteSelection = null;
             if (driver.findElements(facilityInput).isEmpty()) {
-                System.out.println("[BaseTest] No facility selector on " + driver.getCurrentUrl()
-                        + " (V1.36 dashboard) — navigating to /assets to select the site");
+                routeBeforeSiteSelection = driver.getCurrentUrl();
+                System.out.println("[BaseTest] No facility selector on " + routeBeforeSiteSelection
+                        + " (V1.36 dashboard) — hopping to /assets to select the site");
                 driver.get(AppConstants.BASE_URL + "/assets");
                 pause(2000);
                 try { reinstallHealthCapture(); } catch (Exception ignored) { }
             }
+            final String returnRoute = routeBeforeSiteSelection;
 
             // Wait for facility input to appear (React may still be hydrating)
             try {
@@ -628,6 +634,7 @@ public class BaseTest {
                         .until(ExpectedConditions.presenceOfElementLocated(facilityInput));
             } catch (Exception waitTimeout) {
                 System.out.println("Facility selector not found after 15s — skipping site selection");
+                restoreRoute(returnRoute);
                 return;
             }
 
@@ -636,6 +643,7 @@ public class BaseTest {
             if (currentValue != null && currentValue.toLowerCase().contains(
                     AppConstants.TEST_SITE_NAME.toLowerCase())) {
                 System.out.println("Correct site already selected: " + currentValue);
+                restoreRoute(returnRoute);
                 return;
             }
             if (currentValue != null && !currentValue.isEmpty()) {
@@ -653,6 +661,7 @@ public class BaseTest {
                 w.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//ul[@role='listbox']")));
             } catch (Exception e) {
                 System.out.println("Facility dropdown did not open — skipping");
+                restoreRoute(returnRoute);
                 return;
             }
 
@@ -677,8 +686,26 @@ public class BaseTest {
                     });
             pause(500);
             System.out.println("Site selected: " + AppConstants.TEST_SITE_NAME);
+            restoreRoute(returnRoute);
         } catch (Exception e) {
             System.out.println("Site selection skipped or failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Navigate back to {@code route} after the /assets hop that site selection may need.
+     * No-op when the hop never happened (route == null) or we are already there.
+     */
+    private void restoreRoute(String route) {
+        if (route == null) return;
+        try {
+            if (driver.getCurrentUrl().equals(route)) return;
+            System.out.println("[BaseTest] Returning to " + route + " after site selection");
+            driver.get(route);
+            pause(1500);
+            try { reinstallHealthCapture(); } catch (Exception ignored) { }
+        } catch (Exception e) {
+            System.out.println("[BaseTest] Could not return to " + route + ": " + e.getMessage());
         }
     }
 

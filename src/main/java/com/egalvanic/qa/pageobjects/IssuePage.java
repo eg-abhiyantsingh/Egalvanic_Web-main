@@ -69,8 +69,14 @@ public class IssuePage {
     //   - role=combobox inside dialog (last-resort spatial)
     // The original 4 placeholders + label-following-input are kept first
     // for fast match when the build matches one of them.
+    // DRAWER-SCOPED FIRST: the issues LIST page also carries a *filter* named "Select issue
+    // class". An unscoped union matched that filter (or raced the drawer's async render), so the
+    // visibility wait could resolve against the wrong control / time out while the drawer was
+    // still mounting (testCreateIssue, 2026-08-06 run). The drawer's own field is
+    // placeholder="Select an issue class"; prefer it inside the Add-Issue drawer.
     private static final By ISSUE_CLASS_INPUT = By.xpath(
-            "//input[@placeholder='Select an issue class' or @placeholder='Select issue class'"
+            "//div[contains(@class,'MuiDrawer-paper')]//input[@placeholder='Select an issue class']"
+                    + " | //input[@placeholder='Select an issue class' or @placeholder='Select issue class'"
                     + " or @placeholder='Issue Class' or @placeholder='Select a class']"
                     + " | //label[contains(text(),'Issue Class')]/following::input[1]"
                     + " | //input[contains(translate(@placeholder, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',"
@@ -172,7 +178,15 @@ public class IssuePage {
     }
 
     public boolean isOnIssuesPage() {
-        return driver.getCurrentUrl().contains("/issues");
+        // TRUE only for the issues LIST (/issues, /issues?…), NOT a detail page (/issues/{id}).
+        // A detail page has no search box or grid, so treating it as "on the issues page" made
+        // searchIssues() wait 25s for an input that cannot exist there (ISS_014-017, DI_001/002 —
+        // a prior test had drilled into an issue and never returned to the list).
+        String u = driver.getCurrentUrl().toLowerCase();
+        int i = u.indexOf("/issues");
+        if (i < 0) return false;
+        String rest = u.substring(i + "/issues".length());
+        return rest.isEmpty() || rest.equals("/") || rest.startsWith("?") || rest.startsWith("#");
     }
 
     // ================================================================
@@ -1678,6 +1692,15 @@ public class IssuePage {
      * Cascading strategy: tries DataGrid-scoped input first, then general SEARCH_INPUT.
      */
     public void searchIssues(String query) {
+        // Self-heal the page state first: the search box only exists on the LIST. If a previous
+        // step left us on /issues/{id} (or anywhere else), go back to the list before searching.
+        if (!isOnIssuesPage()) {
+            System.out.println("[IssuePage] Not on the issues LIST (" + driver.getCurrentUrl()
+                    + ") — returning to /issues before searching");
+            driver.get(com.egalvanic.qa.constants.AppConstants.BASE_URL + "/issues");
+            waitForSpinner();
+            pause(2000);
+        }
         try {
             // Find the correct search input — prefer DataGrid Quick Filter over global search
             WebElement searchInput = null;

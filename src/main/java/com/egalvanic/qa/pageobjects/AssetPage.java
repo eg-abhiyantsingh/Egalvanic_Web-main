@@ -150,8 +150,16 @@ public class AssetPage {
 
     public boolean isOnAssetsPage() {
         try {
-            return driver.findElements(CREATE_ASSET_BTN).size() > 0
-                    || driver.getCurrentUrl().contains("asset");
+            // Create-Asset button = definitely the LIST. URL half tightened to the exact list
+            // route: contains("asset") also matched /assets/{id} detail pages (no grid/search).
+            String u = driver.getCurrentUrl().toLowerCase();
+            int i = u.indexOf("/assets");
+            boolean urlIsList = i >= 0
+                    && (u.substring(i + "/assets".length()).isEmpty()
+                        || u.substring(i + "/assets".length()).equals("/")
+                        || u.substring(i + "/assets".length()).startsWith("?")
+                        || u.substring(i + "/assets".length()).startsWith("#"));
+            return driver.findElements(CREATE_ASSET_BTN).size() > 0 || urlIsList;
         } catch (Exception e) {
             return false;
         }
@@ -2665,7 +2673,7 @@ public class AssetPage {
         Boolean found = (Boolean) js.executeScript(
             "var h6s = document.querySelectorAll('h6');" +
             "for (var el of h6s) {" +
-            "  if (el.textContent.trim() === 'OCP') {" +
+            "  if (/^OCP\\b/.test(el.textContent.trim())) {" +
             "    var accordion = el.closest('[class*=\"MuiAccordion\"]');" +
             "    if (accordion && !accordion.classList.contains('Mui-expanded')) {" +
             "      var summary = accordion.querySelector('[class*=\"MuiAccordionSummary\"]');" +
@@ -2689,7 +2697,7 @@ public class AssetPage {
         Boolean present = (Boolean) js.executeScript(
             "var h6s = document.querySelectorAll('h6');" +
             "for (var el of h6s) {" +
-            "  if (el.textContent.trim() === 'OCP') return true;" +
+            "  if (/^OCP\\b/.test(el.textContent.trim())) return true;" +
             "}" +
             "return false;"
         );
@@ -2706,7 +2714,7 @@ public class AssetPage {
         js.executeScript(
             "var h6s = document.querySelectorAll('h6');" +
             "for (var el of h6s) {" +
-            "  if (el.textContent.trim() === 'OCP') {" +
+            "  if (/^OCP\\b/.test(el.textContent.trim())) {" +
             "    var parent = el.parentElement;" +
             "    for (var i = 0; i < 4; i++) {" +
             "      var btns = parent.querySelectorAll('button[class*=\"MuiIconButton\"]');" +
@@ -2831,7 +2839,7 @@ public class AssetPage {
             "// Find OCP accordion\n" +
             "var h6s = document.querySelectorAll('h6');" +
             "for (var el of h6s) {" +
-            "  if (el.textContent.trim() === 'OCP') {" +
+            "  if (/^OCP\\b/.test(el.textContent.trim())) {" +
             "    var accordion = el.closest('[class*=\"MuiAccordion\"]');" +
             "    if (accordion) {" +
             "      info += 'OCP accordion found. expanded=' + accordion.classList.contains('Mui-expanded');" +
@@ -2867,7 +2875,7 @@ public class AssetPage {
         Long count = (Long) js.executeScript(
             "var h6s = document.querySelectorAll('h6');" +
             "for (var el of h6s) {" +
-            "  if (el.textContent.trim() === 'OCP') {" +
+            "  if (/^OCP\\b/.test(el.textContent.trim())) {" +
             "    var accordion = el.closest('[class*=\"MuiAccordion\"]');" +
             "    if (!accordion) continue;" +
             "    // Expand if collapsed\n" +

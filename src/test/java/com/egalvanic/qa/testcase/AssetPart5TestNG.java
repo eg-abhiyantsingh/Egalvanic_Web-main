@@ -213,8 +213,19 @@ public class AssetPart5TestNG extends BaseTest {
     }
 
     private boolean openEditForAssetClass(String assetClassName) {
-        if (!navigateToAssetByClass(assetClassName)) return false;
-        return openEditForm(assetClassName);
+        // MUI DataGrid re-renders while server-side search results stream in; a row grabbed
+        // mid-render throws StaleElementReference (2026-08-05 run). Retry once on settled grid.
+        for (int attempt = 1; attempt <= 2; attempt++) {
+            try {
+                if (!navigateToAssetByClass(assetClassName)) return false;
+                return openEditForm(assetClassName);
+            } catch (org.openqa.selenium.StaleElementReferenceException stale) {
+                logStep("Grid re-rendered mid-interaction (stale element, attempt " + attempt
+                        + ") — retrying against the settled grid");
+                pause(1500);
+            }
+        }
+        return false;
     }
 
     /**
@@ -388,6 +399,23 @@ public class AssetPart5TestNG extends BaseTest {
     }
 
     private String editTextField(String fieldLabel, String newValue) {
+        // The edit drawer re-renders its dynamic core-attribute inputs (async class config),
+        // which can detach the element BETWEEN our re-find and the native setter — the stale
+        // window the old single re-find couldn't close (TRF_07/15/20, 2026-08-06 run). Retry the
+        // whole find->set->verify against the re-rendered drawer.
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            try {
+                return editTextFieldOnce(fieldLabel, newValue);
+            } catch (org.openqa.selenium.StaleElementReferenceException stale) {
+                logStep("Drawer re-rendered mid-edit of '" + fieldLabel + "' (stale, attempt "
+                        + attempt + ") — retrying with fresh elements");
+                pause(1200);
+            }
+        }
+        return null;
+    }
+
+    private String editTextFieldOnce(String fieldLabel, String newValue) {
         logStep("Editing '" + fieldLabel + "' → '" + newValue + "'");
         JavascriptExecutor js = (JavascriptExecutor) driver;
         // Prefer drawer-scoped lookup (avoids matching the read-only detail table)

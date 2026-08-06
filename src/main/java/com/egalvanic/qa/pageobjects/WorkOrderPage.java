@@ -110,9 +110,19 @@ public class WorkOrderPage {
             + " or @placeholder='Select an assignee' or @placeholder='Assign to']"
             + " | //label[contains(text(),'Assign')]/following::input[1]");
 
-    // Facility dropdown (required field on Create form)
+    // Facility dropdown (required field on Create form).
+    // DIALOG-SCOPED FIRST: the /sessions LIST also carries a facility FILTER with placeholder
+    // "Select facility". While the Create dialog is open MUI marks the background inert/aria-hidden,
+    // so that filter input can never satisfy a visibility wait — an unscoped union therefore hung
+    // the full 25s and reported "create flow crashed" (TC_CWO_003, 2026-08-06 run) even though the
+    // dialog's own Facility field was right there. Prefer the field inside the dialog/drawer.
     private static final By FACILITY_INPUT = By.xpath(
-            "//label[contains(text(),'Facility')]/following::input[1]"
+            "//div[@role='dialog' or contains(@class,'MuiDrawer-paper')]"
+            + "//label[contains(text(),'Facility')]/following::input[1]"
+            + " | //div[@role='dialog' or contains(@class,'MuiDrawer-paper')]"
+            + "//input[@placeholder='Select facility' or @placeholder='Facility'"
+            + " or @placeholder='Select a facility']"
+            + " | //label[contains(text(),'Facility')]/following::input[1]"
             + " | //input[@placeholder='Select facility' or @placeholder='Facility'"
             + " or @placeholder='Select a facility']");
 

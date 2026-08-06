@@ -159,10 +159,31 @@ public class WorkTypeCreateDialogMatrixTestNG extends WorkTypeUiBase {
         List<String> expected = WorkTypeCatalog.expectedOptionLabels();
         logStep("Live options (" + actual.size() + "): " + actual);
         logStep("Expected  (" + expected.size() + "): " + expected);
-        Assert.assertEquals(actual, expected,
-                "Work Type dropdown must offer EXACTLY the 14 catalog options in display order "
-                        + "(catalog drifted? re-pull GET /api/procedures-v2/services).");
-        ExtentReportManager.logPass("All 14 Work Type options match WorkTypeCatalog exactly, in order.");
+        // WHAT THIS VERIFIES: every canonical work type is offered, in the catalog's relative order.
+        //
+        // It used to demand the list be EXACTLY 14. But work types come from
+        // GET /api/procedures-v2/services, and users can CREATE services on the tenant — on
+        // 2026-08-06 the live catalog held 15 services, two of them hand-made test data
+        // ("abhiyant Preventive", "abhiyant service corrective"), so the dropdown offered 16 and the
+        // test reported a product failure for someone else's fixture. A missing/renamed canonical
+        // type is the real regression; an extra tenant-authored one is not.
+        List<String> missing = new java.util.ArrayList<>(expected);
+        missing.removeAll(actual);
+        Assert.assertTrue(missing.isEmpty(),
+                "Work Type dropdown is MISSING canonical catalog option(s) " + missing
+                        + " — live options were " + actual
+                        + " (re-pull GET /api/procedures-v2/services if the catalog changed by design).");
+
+        // Relative order of the canonical entries must still hold (extras may interleave).
+        List<String> canonicalInLiveOrder = new java.util.ArrayList<>(actual);
+        canonicalInLiveOrder.retainAll(expected);
+        Assert.assertEquals(canonicalInLiveOrder, expected,
+                "Canonical Work Type options are offered but OUT OF ORDER. Expected order "
+                        + expected + " but the live dropdown ordered them " + canonicalInLiveOrder);
+
+        int extras = actual.size() - expected.size();
+        ExtentReportManager.logPass("All " + expected.size() + " canonical Work Type options present and in order"
+                + (extras > 0 ? " (plus " + extras + " tenant-created service(s), ignored)" : "") + ".");
     }
 
     @Test(priority = 2, dataProvider = "anatomyRows",

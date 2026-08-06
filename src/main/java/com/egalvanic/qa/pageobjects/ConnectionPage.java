@@ -112,7 +112,14 @@ public class ConnectionPage {
     }
 
     public boolean isOnConnectionsPage() {
-        return driver.getCurrentUrl().contains("/connections");
+        // LIST only (/connections, /connections?…) — a detail page (/connections/{id}) has no grid
+        // or search box, so accepting it here would skip the return-to-list navigation and make
+        // downstream grid/search steps fail with a misleading "element not found".
+        String u = driver.getCurrentUrl().toLowerCase();
+        int i = u.indexOf("/connections");
+        if (i < 0) return false;
+        String rest = u.substring(i + "/connections".length());
+        return rest.isEmpty() || rest.equals("/") || rest.startsWith("?") || rest.startsWith("#");
     }
 
     // ================================================================
