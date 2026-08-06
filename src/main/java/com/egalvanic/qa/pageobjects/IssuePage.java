@@ -74,17 +74,19 @@ public class IssuePage {
     // visibility wait could resolve against the wrong control / time out while the drawer was
     // still mounting (testCreateIssue, 2026-08-06 run). The drawer's own field is
     // placeholder="Select an issue class"; prefer it inside the Add-Issue drawer.
+    // PLACEHOLDER-ONLY, DELIBERATELY. An XPath union returns its matches in DOCUMENT ORDER, not in
+    // the order the alternatives are written — so a loose alternative such as
+    // "//label[contains(text(),'Issue Class')]/following::input[1]" could resolve to the PRIORITY
+    // combobox, which sits earlier in the drawer. That is exactly what happened on 2026-08-06:
+    // the helper typed "NEC Violation" into Priority and committed "High". Every live layout of
+    // this field carries a placeholder (drawer field = "Select an issue class"; the LIST page's
+    // filter is "Select issue class" and is excluded by scoping the first branch to the drawer),
+    // so match on placeholder only and never on positional/text-proximity guesses.
     private static final By ISSUE_CLASS_INPUT = By.xpath(
             "//div[contains(@class,'MuiDrawer-paper')]//input[@placeholder='Select an issue class']"
-                    + " | //input[@placeholder='Select an issue class' or @placeholder='Select issue class'"
-                    + " or @placeholder='Issue Class' or @placeholder='Select a class']"
-                    + " | //label[contains(text(),'Issue Class')]/following::input[1]"
-                    + " | //input[contains(translate(@placeholder, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',"
-                    + " 'abcdefghijklmnopqrstuvwxyz'), 'issue class')]"
-                    + " | //input[contains(translate(@aria-label, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',"
-                    + " 'abcdefghijklmnopqrstuvwxyz'), 'issue class')]"
-                    + " | //*[contains(text(),'Issue Class')]/ancestor::*[self::div or self::label]"
-                    + "[1]/following::input[@role='combobox' or contains(@class,'MuiAutocomplete')][1]");
+                    + " | //div[@role='dialog']//input[@placeholder='Select an issue class']"
+                    + " | //input[@placeholder='Select an issue class']"
+                    + " | //input[@placeholder='Issue Class' or @placeholder='Select a class']");
 
     // Asset dropdown (placeholder = "Select an asset")
     private static final By ASSET_INPUT = By.xpath(
