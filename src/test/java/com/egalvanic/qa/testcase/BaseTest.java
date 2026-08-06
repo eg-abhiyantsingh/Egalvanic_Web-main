@@ -719,16 +719,33 @@ public class BaseTest {
         try {
             JavascriptExecutor js = (JavascriptExecutor) driver;
             By facilityInput = By.xpath("//input[@placeholder='Select facility']");
+            // Not every route carries the facility selector (V1.36 keeps it only on site-scoped
+            // module pages — /opportunities has none). Hopping to /assets to make the selection and
+            // then returning is what makes scoping work off-route; without it this returned false
+            // and the caller's whole class ran unscoped, then skipped itself with "no data"
+            // (Opportunities: 46 skips while the API held 146 quotes — 2026-08-06).
+            String routeBeforeSiteSelection = null;
+            if (driver.findElements(facilityInput).isEmpty()) {
+                routeBeforeSiteSelection = driver.getCurrentUrl();
+                System.out.println("[site] no facility selector on " + routeBeforeSiteSelection
+                        + " — hopping to /assets to select '" + name + "'");
+                driver.get(AppConstants.BASE_URL + "/assets");
+                pause(2000);
+                try { reinstallHealthCapture(); } catch (Exception ignored) { }
+            }
+            final String returnRoute = routeBeforeSiteSelection;
             try {
                 new WebDriverWait(driver, Duration.ofSeconds(15))
                         .until(ExpectedConditions.presenceOfElementLocated(facilityInput));
             } catch (Exception waitTimeout) {
                 System.out.println("[site] facility selector not found — cannot select '" + name + "'");
+                restoreRoute(returnRoute);
                 return false;
             }
             String currentValue = driver.findElement(facilityInput).getAttribute("value");
             if (currentValue != null && currentValue.toLowerCase().contains(name.toLowerCase())) {
                 System.out.println("[site] already on '" + currentValue + "'");
+                restoreRoute(returnRoute);
                 return true;
             }
             WebElement input = driver.findElement(facilityInput);
@@ -747,6 +764,7 @@ public class BaseTest {
                 w.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//ul[@role='listbox']")));
             } catch (Exception e) {
                 System.out.println("[site] dropdown did not open for '" + name + "'");
+                restoreRoute(returnRoute);
                 return false;
             }
             String lower = name.toLowerCase();
@@ -766,6 +784,7 @@ public class BaseTest {
                     });
             pause(600);
             System.out.println("[site] selected '" + name + "'" + (picked != null ? "" : " (no exact option?)"));
+            restoreRoute(returnRoute);
             return picked != null;
         } catch (Exception e) {
             System.out.println("[site] selectSiteByName('" + name + "') failed: " + e.getMessage());

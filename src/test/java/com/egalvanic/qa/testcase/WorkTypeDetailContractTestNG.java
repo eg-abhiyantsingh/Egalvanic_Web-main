@@ -237,15 +237,32 @@ public class WorkTypeDetailContractTestNG extends WorkTypeUiBase {
     private void checkTypeChip(Family family) {
         ensureOnFixture(family);
         String typeName = FIXTURE_TYPE_NAME.get(family);
+
+        // WHAT THIS VERIFIES: the WO detail page tells you which work type the WO is.
+        //
+        // V1.36 (verified live 2026-08-06 on the PM_FORMS fixture) reworked the header chip row to
+        // [status, assetCount, formCount] — e.g. [Overdue, 47, 96] — so the work-type CHIP is gone.
+        // Requiring it in the chips reported a product failure for a chip-row redesign. The
+        // contract that actually matters is that the type is discoverable on the page, so look in
+        // the chips first and then in the expanded header details panel.
         List<String> chips = workOrderPage.getWoHeaderChips();
         logStep("Header chips: " + chips);
         boolean found = false;
         for (String c : chips) {
             if (c.contains(typeName)) { found = true; break; }
         }
+        String where = "header chips";
+        if (!found) {
+            workOrderPage.expandWoDetailHeader();
+            String headerText = workOrderPage.getWoDetailHeaderText();
+            found = headerText.contains(typeName);
+            where = "expanded header details panel";
+            logStep("Type not in chips — expanded header panel contains '" + typeName + "': " + found);
+        }
         Assert.assertTrue(found,
-                "Header chips should contain the work type '" + typeName + "' for " + family + "; chips=" + chips);
-        ExtentReportManager.logPass("Type chip '" + typeName + "' present for " + family + ".");
+                "The " + family + " detail page must identify its work type '" + typeName + "' "
+                + "somewhere in the header (chips or expanded details). Chips were " + chips + ".");
+        ExtentReportManager.logPass("Work type '" + typeName + "' shown for " + family + " (" + where + ").");
     }
 
     /** 6 — a header chip is one of High/Medium/Low (priority chip). */
