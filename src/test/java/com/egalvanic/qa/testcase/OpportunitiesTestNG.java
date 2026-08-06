@@ -438,13 +438,23 @@ public class OpportunitiesTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, "SLD Scoping", "Opp_06_SldColumn");
         goToOpportunities();
         if (!page.isGridPresent() || page.rowCount() == 0) throw new SkipException("No opportunities on this SLD");
+        // WHAT THIS VERIFIES: every quote row is attributed to a facility/SLD (data integrity).
+        //
+        // The old assertion demanded a SINGLE distinct SLD across the grid — that described the
+        // pre-V1.36 SLD-scoped view. Verified live 2026-08-07: /opportunities is now a
+        // COMPANY-WIDE pipeline with no SLD selector anywhere (filters: Search / Any status /
+        // Any type), and its grid column is Facility — rows legitimately span facilities
+        // ("(s) Wild Goose Brewery", "Android Site 2", "Z - Hospital"). Requiring distinct==1
+        // reported the redesign as a product bug.
         java.util.List<String> slds = page.columnValues("sld_name");
-        if (slds.isEmpty()) throw new SkipException("No SLD column values rendered (virtualized grid)");
-        // Strong: every row carries an SLD, and (SLD-scoped) they are all the same active SLD.
+        if (slds.isEmpty()) throw new SkipException("No facility/SLD column values rendered (virtualized grid)");
         long distinct = slds.stream().distinct().count();
-        Assert.assertTrue(slds.stream().noneMatch(String::isEmpty), "Every row must have a non-empty SLD. Got: " + slds);
-        Assert.assertEquals(distinct, 1L, "SLD-scoped grid should show a single active SLD. Got distinct: " + distinct);
-        ExtentReportManager.logPass(slds.size() + " rows all on SLD '" + slds.get(0) + "'");
+        Assert.assertTrue(slds.stream().noneMatch(String::isEmpty),
+                "Every quote row must be attributed to a facility/SLD — found row(s) with an empty "
+                + "value: " + slds);
+        ExtentReportManager.logPass(slds.size() + " rows, all attributed ("
+                + distinct + " distinct facilit" + (distinct == 1 ? "y" : "ies")
+                + " — company-wide pipeline view)");
     }
 
     // ── C. Create (remaining) ──
