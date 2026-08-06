@@ -1225,16 +1225,27 @@ public class TaskTestNG extends BaseTest {
         logStep("Searching for a token taken from the first task row: '" + token + "'");
 
         typeIntoSearch(token);
-        pause(3000);
 
-        int rows = countGridRows();
-        boolean tokenVisible = getPageText().toLowerCase().contains(token.toLowerCase());
+        // Search is server-side and debounced — a single count 3s after typing raced the response
+        // and produced a false fail (2026-08-07 run: token 'AutoTest' read FROM the grid, yet
+        // "0 rows"). Poll until the result contains the token or ~15s passes; only a settled empty
+        // result is a real search defect.
+        int rows = 0;
+        boolean tokenVisible = false;
+        long searchDeadline = System.currentTimeMillis() + 15_000L;
+        while (System.currentTimeMillis() < searchDeadline) {
+            pause(1500);
+            rows = countGridRows();
+            tokenVisible = getPageText().toLowerCase().contains(token.toLowerCase());
+            if (rows > 0 && tokenVisible) break;
+        }
         logStep("Results for '" + token + "': " + rows + " rows (token visible on page: " + tokenVisible + ")");
         logStepWithScreenshot("Search results");
 
         Assert.assertTrue(rows > 0 && tokenVisible,
                 "Searching a title token that EXISTS in the grid ('" + token + "') must return the "
-                + "matching task — got " + rows + " rows, token visible=" + tokenVisible);
+                + "matching task — got " + rows + " rows, token visible=" + tokenVisible
+                + " after polling ~15s (settled result, so this would be a real search defect)");
 
         // Clear search
         typeIntoSearch("");

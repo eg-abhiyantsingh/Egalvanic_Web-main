@@ -679,41 +679,60 @@ public class SiteSelectionTestNG {
         ExtentReportManager.logPass("Search correctly shows no-results state for non-existent query");
     }
 
+    /**
+     * Option count once the dropdown has SETTLED: polls until the count repeats twice in a row
+     * (or ~8s). The ~180-site list filters/repopulates asynchronously, so a single-shot count
+     * reads a half-updated list.
+     */
+    private int settledOptionCount() {
+        int last = -1, stable = 0;
+        for (int i = 0; i < 16 && stable < 2; i++) {
+            pause(500);
+            int now = driver.findElements(OPTIONS).size();
+            stable = (now == last) ? stable + 1 : 0;
+            last = now;
+        }
+        return last;
+    }
+
     @Test(priority = 11, description = "TC_SS_011: Verify clearing search shows all sites")
     public void testTC_SS_011_ClearingSearchShowsAll() {
         ExtentReportManager.createTest(AppConstants.MODULE_SITE_SELECTION,
                 AppConstants.FEATURE_SEARCH_SITES, "TC_SS_011_ClearingSearchShowsAll");
         logStep("Verifying clearing search restores full site list");
 
-        // First search to filter
+        // BOTH counts must be read from a SETTLED dropdown. The ~180-site option list filters and
+        // repopulates asynchronously; single-shot reads after a fixed 1s pause produced a false
+        // fail on 2026-08-06 — the "filtered" read fired before the typed text registered (so it
+        // counted ALL 181 sites) and the "full" read caught the list mid-repopulation (1 option),
+        // inverting the comparison. Poll until the count stops changing before trusting it.
         WebElement input = driver.findElement(FACILITY_INPUT);
         clearAndType(input, "Test");
-        pause(1000);
-        int filteredCount = driver.findElements(OPTIONS).size();
-        logStep("Filtered count for 'Test': " + filteredCount);
+        int filteredCount = settledOptionCount();
+        logStep("Filtered count for 'Test' (settled): " + filteredCount);
 
         // Clear search
         clearFacilityInput();
-        pause(1000);
+        pause(500);
 
         // Open dropdown to see all sites
         openFacilityDropdown();
-        pause(1000);
-        int fullCount = driver.findElements(OPTIONS).size();
-        logStep("Full count after clearing: " + fullCount);
+        int fullCount = settledOptionCount();
+        logStep("Full count after clearing (settled): " + fullCount);
 
         // If dropdown didn't populate, retry by clicking input and waiting
         if (fullCount == 0) {
             logStep("Dropdown empty — retrying with input click");
             WebElement retryInput = driver.findElement(FACILITY_INPUT);
             safeClick(retryInput);
-            pause(1500);
-            fullCount = driver.findElements(OPTIONS).size();
-            logStep("Retry full count: " + fullCount);
+            fullCount = settledOptionCount();
+            logStep("Retry full count (settled): " + fullCount);
         }
 
         Assert.assertTrue(fullCount >= filteredCount,
-                "Full list (" + fullCount + ") should be >= filtered list (" + filteredCount + ")");
+                "Clearing the search must restore at least as many options as the filtered view: "
+                + "full=" + fullCount + " vs filtered=" + filteredCount
+                + " (both counts settled-polled, so this would be a real filtering defect)");
         logStep("Full site list restored after clearing search");
 
         closeFacilityDropdown();

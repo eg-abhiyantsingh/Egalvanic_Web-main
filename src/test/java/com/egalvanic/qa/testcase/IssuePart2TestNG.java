@@ -433,6 +433,13 @@ public class IssuePart2TestNG extends BaseTest {
                 pause(2000);
             }
 
+            // Re-issue the search periodically — the index may only converge on a fresh query.
+            if (i > 5 && i % 5 == 0 && paginationTotal != 0 && !noRowsOverlay) {
+                logStep("Still indexed after ~" + i + "s — re-searching (index lag)");
+                issuePage.searchIssues(title);
+                pause(1500);
+            }
+
             // Last resort at 6s: reload page and search fresh
             if (i == 5 && paginationTotal != 0 && !noRowsOverlay) {
                 logStep("Filter still not working after 6s — reloading page and re-searching");
@@ -1188,9 +1195,13 @@ public class IssuePart2TestNG extends BaseTest {
         pause(2000);
 
         // Poll for search results: check pagination text, DataGrid overlay, and DOM rows.
+        // 25 iterations (~30s incl. re-searches): the DELETE->search-index lag on the QA backend
+        // can exceed the old ~10s window — on 2026-08-07 the deleted issue was still returned by
+        // the search (pagination=1, domRows=1) after 10s and the test reported a false product
+        // fail. Only an issue still indexed after ~30s is worth calling a defect.
         int paginationTotal = -1;
         boolean noRowsOverlay = false;
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 25; i++) {
             pause(1000);
 
             // Strategy 1: MUI Table Pagination text ("X–Y of Z") or DataGrid footer
