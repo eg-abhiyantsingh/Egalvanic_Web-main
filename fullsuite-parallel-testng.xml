@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  eGalvanic FULL SUITE — HYBRID PARALLEL (built 2026-08-07)
+
+  Run: mvn test -DsuiteXmlFile=fullsuite-parallel-testng.xml
+
+  WHY HYBRID AND NOT parallel="classes"
+  ─────────────────────────────────────
+  All 51 classes drive ONE shared QA tenant. Flipping a blanket parallel flag makes the report
+  WORSE, because concurrent classes collide on the same records and the collisions look exactly
+  like flaky product failures:
+    • AssetPart2-5 each search "Generator"/"Transformer" and edit the FIRST match — two classes
+      editing the same asset at once genuinely conflict.
+    • Issue classes create AND delete issues; one class's delete changes another's row counts.
+    • WO/WorkType classes create work orders that appear in other classes' grids.
+    • CriticalPath cross-checks dashboard counts against module grids — ANY concurrent mutation
+      anywhere invalidates it.
+
+  DESIGN: parallel="tests" (NOT "classes").
+    • Classes INSIDE one <test> stay strictly serial → same-module records are never contended.
+    • Different <test> blocks run concurrently → the wall-clock win.
+    • thread-count=4 → at most 4 Chrome sessions; each BaseTest subclass owns its own driver
+      (BaseTest.driver is an instance field, so this is safe).
+
+  SERIAL-ONLY, deliberately NOT in this suite:
+    • CriticalPathTestNG — its whole purpose is cross-module count consistency, which cannot hold
+      while other groups mutate data. Run it from fullsuite-testng.xml (or on its own) instead.
+    • SiteSelection* — they build their own ChromeDriver outside BaseTest and assert on the global
+      site selector; keep them serial to avoid fighting other groups over the active site.
+
+  Thread-safety prerequisites (all shipped 2026-08-07, needed for ANY parallel run):
+    • ScreenshotUtil holds the driver in a ThreadLocal (was one static field → wrong-browser
+      screenshots).                                                          [bcc0104]
+    • ExtentReportManager's cross-module maps are synchronized (were plain HashMap/LinkedHashMap
+      → lost report entries / corrupt fail counts).
+    • SmartBugDetector's report list is synchronized (was ArrayList → dropped failure records).
+-->
+<suite name="eGalvanic Full Suite — Hybrid Parallel" verbose="1"
+       parallel="tests" thread-count="4" data-provider-thread-count="2">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <!-- ══════════ GROUP 1 — Auth + Dashboard (read-mostly; no shared-record writes) ══════════ -->
+    <test name="G1 Auth and Dashboard">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AuthenticationTestNG"/>
+            <class name="com.egalvanic.qa.testcase.AuthSmokeTestNG"/>
+            <class name="com.egalvanic.qa.testcase.DashboardBugTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ══════════ GROUP 2 — ASSETS (serial within: all edit the first matching asset) ══════════ -->
+    <test name="G2 Assets">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.AssetPart1TestNG"/>
+            <class name="com.egalvanic.qa.testcase.AssetPart2TestNG"/>
+            <class name="com.egalvanic.qa.testcase.AssetPart3TestNG"/>
+            <class name="com.egalvanic.qa.testcase.AssetPart4TestNG"/>
+            <class name="com.egalvanic.qa.testcase.AssetPart5TestNG"/>
+            <class name="com.egalvanic.qa.testcase.AssetSmokeTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ══════════ GROUP 3 — Locations + SLD (SLD reads the graph; locations own their records) ══ -->
+    <test name="G3 Locations and SLD">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.LocationTestNG"/>
+            <class name="com.egalvanic.qa.testcase.LocationPart2TestNG"/>
+            <class name="com.egalvanic.qa.testcase.LocationSmokeTestNG"/>
+            <class name="com.egalvanic.qa.testcase.SLDTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ══════════ GROUP 4 — Connections ══════════ -->
+    <test name="G4 Connections">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ConnectionTestNG"/>
+            <class name="com.egalvanic.qa.testcase.ConnectionPart2TestNG"/>
+            <class name="com.egalvanic.qa.testcase.ConnectionSmokeTestNG"/>
+            <class name="com.egalvanic.qa.testcase.BugHuntConnectionsTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ══════════ GROUP 5 — Issues + Tasks (create/delete heavy — MUST stay together) ══════════ -->
+    <test name="G5 Issues and Tasks">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.IssueTestNG"/>
+            <class name="com.egalvanic.qa.testcase.IssuePart2TestNG"/>
+            <class name="com.egalvanic.qa.testcase.IssuesSmokeTestNG"/>
+            <class name="com.egalvanic.qa.testcase.TaskTestNG"/>
+            <class name="com.egalvanic.qa.testcase.BugHuntTasksTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ══════════ GROUP 6 — Work Orders + Work Types (all create WOs) ══════════ -->
+    <test name="G6 Work Orders and Work Types">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.WorkOrderTestNG"/>
+            <class name="com.egalvanic.qa.testcase.WorkOrderPart2TestNG"/>
+            <class name="com.egalvanic.qa.testcase.WorkOrderSmokeTestNG"/>
+            <class name="com.egalvanic.qa.testcase.BugHuntWorkOrdersTestNG"/>
+            <class name="com.egalvanic.qa.testcase.api.WorkTypeCatalogApiTest"/>
+            <class name="com.egalvanic.qa.testcase.WorkTypeCreateDialogMatrixTestNG"/>
+            <class name="com.egalvanic.qa.testcase.WorkTypeDetailContractTestNG"/>
+            <class name="com.egalvanic.qa.testcase.WorkTypeCreateE2EMatrixTestNG"/>
+            <class name="com.egalvanic.qa.testcase.WorkTypeAutoScheduleEdgeTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ══════════ GROUP 7 — Sales (Opportunities / Accounts / Goals) ══════════ -->
+    <test name="G7 Sales">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.OpportunitiesTestNG"/>
+            <class name="com.egalvanic.qa.testcase.AccountsTestNG"/>
+            <class name="com.egalvanic.qa.testcase.AccountV135RegressionTestNG"/>
+            <class name="com.egalvanic.qa.testcase.AccountV135ExtendedTestNG"/>
+            <class name="com.egalvanic.qa.testcase.GoalsTestNG"/>
+        </classes>
+    </test>
+
+    <!-- ══════════ GROUP 8 — Read-only sweeps + API (no shared-record writes) ══════════ -->
+    <test name="G8 Sweeps and API">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.BugHuntGlobalTestNG"/>
+            <class name="com.egalvanic.qa.testcase.BugHuntDashboardTestNG"/>
+            <class name="com.egalvanic.qa.testcase.BugHuntLocationsTestNG"/>
+            <class name="com.egalvanic.qa.testcase.BugHuntPagesTestNG"/>
+            <class name="com.egalvanic.qa.testcase.BugHuntTestNG"/>
+            <class name="com.egalvanic.qa.testcase.LoadTestNG"/>
+            <class name="com.egalvanic.qa.testcase.Phase1BugHunterTestNG"/>
+            <class name="com.egalvanic.qa.testcase.NewModulesSmokeTestNG"/>
+            <class name="com.egalvanic.qa.testcase.api.AuthenticationAPITest"/>
+            <class name="com.egalvanic.qa.testcase.api.UserAPITest"/>
+            <class name="com.egalvanic.qa.testcase.api.APISecurityTest"/>
+            <class name="com.egalvanic.qa.testcase.api.APIPerformanceTest"/>
+        </classes>
+    </test>
+
+</suite>

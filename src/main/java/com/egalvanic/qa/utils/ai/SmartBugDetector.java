@@ -32,7 +32,11 @@ import java.util.List;
 public class SmartBugDetector {
 
     private static final String REPORT_PATH = "test-output/bug-detection-report.json";
-    private static final List<BugReport> reports = new ArrayList<>();
+    // SYNCHRONIZED: a parallel suite adds reports from multiple worker threads; an unsynchronized
+    // ArrayList drops entries or throws ArrayIndexOutOfBounds mid-add, so failures would go
+    // unrecorded in the bug-detection report.
+    private static final List<BugReport> reports =
+            java.util.Collections.synchronizedList(new ArrayList<BugReport>());
 
     /**
      * Analyze a test failure and produce a structured bug report.

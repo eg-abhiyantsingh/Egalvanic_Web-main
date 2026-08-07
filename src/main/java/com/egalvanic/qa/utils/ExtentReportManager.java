@@ -11,6 +11,7 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,10 +33,17 @@ public class ExtentReportManager {
     // Per-module Detailed Reports — one HTML file per Module so reviewers can open just
     // the module they care about (Auth, Asset, WO, etc.) and see all its screenshots.
     // Insertion-ordered so generation order matches first-seen order.
-    private static final Map<String, ExtentReports> detailedByModule = new LinkedHashMap<>();
-    private static final Map<String, String> detailedPathsByModule = new LinkedHashMap<>();
+    // SYNCHRONIZED: with a parallel suite these are mutated from several TestNG worker threads at
+    // once. Unsynchronized LinkedHashMap/HashMap can lose entries (or spin during a concurrent
+    // resize), which silently corrupts the very report used to judge the run — an inaccurate report
+    // is worse than a slow one. Wrapped maps keep insertion order and stay correct when serial.
+    private static final Map<String, ExtentReports> detailedByModule =
+            Collections.synchronizedMap(new LinkedHashMap<String, ExtentReports>());
+    private static final Map<String, String> detailedPathsByModule =
+            Collections.synchronizedMap(new LinkedHashMap<String, String>());
     // Per-module fail counters — used by EmailUtil to prioritize attachments under the size cap.
-    private static final Map<String, Integer> failsByModule = new HashMap<>();
+    private static final Map<String, Integer> failsByModule =
+            Collections.synchronizedMap(new HashMap<String, Integer>());
 
     private static ExtentReports clientReport;
 
@@ -44,8 +52,10 @@ public class ExtentReportManager {
     private static ThreadLocal<ExtentTest> clientTest = new ThreadLocal<>();
 
     // Hierarchical nodes for Client Report
-    private static Map<String, ExtentTest> clientModuleNodes = new HashMap<>();
-    private static Map<String, ExtentTest> clientFeatureNodes = new HashMap<>();
+    private static Map<String, ExtentTest> clientModuleNodes =
+            Collections.synchronizedMap(new HashMap<String, ExtentTest>());
+    private static Map<String, ExtentTest> clientFeatureNodes =
+            Collections.synchronizedMap(new HashMap<String, ExtentTest>());
 
     private static String timestamp;
     private static String clientReportPath;
