@@ -35,17 +35,31 @@ public class ScreenshotUtil {
         ImageIO.setUseCache(false);
     }
 
-    private static WebDriver driver;
+    // PER-THREAD driver. This used to be a single static slot, which is a correctness bug the
+    // moment the suite runs classes in parallel: every class calls setDriver() on the SAME field,
+    // so the last writer wins and a failing test captures a screenshot of a DIFFERENT class's
+    // browser — misleading evidence, which is worse than no evidence. ThreadLocal keeps each
+    // TestNG worker pinned to its own driver, and behaviour is unchanged when running serially.
+    private static final ThreadLocal<WebDriver> DRIVER = new ThreadLocal<>();
+    /** Last driver registered by any thread — fallback for helper threads that never set one. */
+    private static volatile WebDriver lastRegisteredDriver;
 
     private ScreenshotUtil() {
         // Private constructor
     }
 
     /**
-     * Set the driver instance for screenshot capture
+     * Set the driver instance for screenshot capture (scoped to the calling thread).
      */
     public static void setDriver(WebDriver webDriver) {
-        driver = webDriver;
+        DRIVER.set(webDriver);
+        lastRegisteredDriver = webDriver;
+    }
+
+    /** Driver for the calling thread, falling back to the most recently registered one. */
+    private static WebDriver driver() {
+        WebDriver d = DRIVER.get();
+        return d != null ? d : lastRegisteredDriver;
     }
 
     /**
@@ -62,7 +76,7 @@ public class ScreenshotUtil {
             String fileName = screenshotName.replaceAll("[^a-zA-Z0-9_-]", "_") + "_" + timestamp + ".png";
             String filePath = AppConstants.SCREENSHOT_PATH + fileName;
 
-            TakesScreenshot ts = (TakesScreenshot) driver;
+            TakesScreenshot ts = (TakesScreenshot) driver();
             byte[] screenshotBytes = ts.getScreenshotAs(OutputType.BYTES);
             Files.write(Path.of(filePath), screenshotBytes);
 
@@ -80,7 +94,7 @@ public class ScreenshotUtil {
      */
     public static String getScreenshotAsBase64() {
         try {
-            TakesScreenshot ts = (TakesScreenshot) driver;
+            TakesScreenshot ts = (TakesScreenshot) driver();
             return ts.getScreenshotAs(OutputType.BASE64);
         } catch (Exception e) {
             System.err.println("Failed to get Base64 screenshot: " + e.getMessage());
@@ -101,7 +115,7 @@ public class ScreenshotUtil {
      */
     public static String getCompressedScreenshotAsBase64(float quality, int maxWidth) {
         try {
-            TakesScreenshot ts = (TakesScreenshot) driver;
+            TakesScreenshot ts = (TakesScreenshot) driver();
             byte[] pngBytes = ts.getScreenshotAs(OutputType.BYTES);
             BufferedImage source = ImageIO.read(new ByteArrayInputStream(pngBytes));
             if (source == null) return null;

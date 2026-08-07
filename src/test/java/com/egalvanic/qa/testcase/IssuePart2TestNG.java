@@ -433,12 +433,6 @@ public class IssuePart2TestNG extends BaseTest {
                 pause(2000);
             }
 
-            // Re-issue the search periodically — the index may only converge on a fresh query.
-            if (i > 5 && i % 5 == 0 && paginationTotal != 0 && !noRowsOverlay) {
-                logStep("Still indexed after ~" + i + "s — re-searching (index lag)");
-                issuePage.searchIssues(title);
-                pause(1500);
-            }
 
             // Last resort at 6s: reload page and search fresh
             if (i == 5 && paginationTotal != 0 && !noRowsOverlay) {
