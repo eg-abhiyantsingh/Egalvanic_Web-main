@@ -128,10 +128,10 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
                 body.put("sld_id", WorkTypeCatalog.Z1_SLD_ID);
                 body.put("work_type_id", serviceId);
                 body.put("asset_scope", JSONObject.NULL);
-                Response r = getAuthenticatedRequestSpec()
+                Response r = withAuthRetry(() -> getAuthenticatedRequestSpec()
                         .body(body.toString())
                         .when().post(SCOPE_PREVIEW_PATH)
-                        .then().extract().response();
+                        .then().extract().response());
                 System.out.println("[WorkTypeApi] scope-preview " + profile.name + " -> "
                         + r.statusCode() + " in " + r.getTime() + "ms");
                 return r;
@@ -254,18 +254,18 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     /** Execute one named malformed request (shared by the strict-status and leak-tripwire rows). */
     private Response fireMalformed(String key) {
         if (key.startsWith("procedures")) {
-            return getAuthenticatedRequestSpec()
+            return withAuthRetry(() -> getAuthenticatedRequestSpec()
                     .when().get(PROCEDURES_PATH + "?service_id=not-a-uuid")
-                    .then().extract().response();
+                    .then().extract().response());
         }
         JSONObject body = new JSONObject();
         body.put("sld_id", "garbage-not-a-uuid");
         body.put("work_type_id", WorkTypeCatalog.byName("Infrared Thermography").serviceId);
         body.put("asset_scope", JSONObject.NULL);
-        return getAuthenticatedRequestSpec()
+        return withAuthRetry(() -> getAuthenticatedRequestSpec()
                 .body(body.toString())
                 .when().post(SCOPE_PREVIEW_PATH)
-                .then().extract().response();
+                .then().extract().response());
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -505,9 +505,9 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
         String sessionId = WorkTypeCatalog.Z1_FIXTURE_SESSION_IDS.get(family);
         Assert.assertNotNull(sessionId, "no Z1 fixture session id pinned for family " + family);
 
-        Response r = getAuthenticatedRequestSpec()
+        Response r = withAuthRetry(() -> getAuthenticatedRequestSpec()
                 .when().get("/ir_session/" + sessionId + "/" + sub)
-                .then().extract().response();
+                .then().extract().response());
         String body = r.asString();
         ExtentReportManager.logInfo("GET /ir_session/" + sessionId + "/" + sub + " -> " + r.statusCode()
                 + " in " + r.getTime() + "ms (" + (body == null ? 0 : body.length()) + " chars)");
@@ -643,10 +643,10 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
         JSONObject payload = new JSONObject();
         payload.put("sld_id", WorkTypeCatalog.Z1_SLD_ID);
         payload.put("asset_scope", JSONObject.NULL);   // work_type_id deliberately absent
-        Response r = getAuthenticatedRequestSpec()
+        Response r = withAuthRetry(() -> getAuthenticatedRequestSpec()
                 .body(payload.toString())
                 .when().post(SCOPE_PREVIEW_PATH)
-                .then().extract().response();
+                .then().extract().response());
         int status = r.statusCode();
         String body = r.asString();
         ExtentReportManager.logInfo("missing work_type_id -> " + status + " (body: " + head(body) + ")");
@@ -692,10 +692,10 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
         // checking the id exists (a fresh random uuid gets the same receipt). Pinned so a move to
         // synchronous 404 semantics — which would change WorkTypeUiBase.apiDeleteWorkOrder() and
         // every cleanup path — is flagged immediately. Requires Content-Type: application/json.
-        Response r = getAuthenticatedRequestSpec()
+        Response r = withAuthRetry(() -> getAuthenticatedRequestSpec()
                 .body("{}")
                 .when().delete("/ir_session/" + randomId)
-                .then().extract().response();
+                .then().extract().response());
         String body = r.asString();
         ExtentReportManager.logInfo("DELETE /ir_session/" + randomId + " -> " + r.statusCode()
                 + " (body: " + head(body) + ")");
