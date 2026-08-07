@@ -21,8 +21,14 @@
   DESIGN: parallel="tests" (NOT "classes").
     • Classes INSIDE one <test> stay strictly serial → same-module records are never contended.
     • Different <test> blocks run concurrently → the wall-clock win.
-    • thread-count=4 → at most 4 Chrome sessions; each BaseTest subclass owns its own driver
-      (BaseTest.driver is an instance field, so this is safe).
+    • thread-count=2 — MEASURED, not guessed, on this 10-core/16GB machine:
+          4 threads -> 0.31 tests/min, load 12.57, 10 chromedrivers + 12 Chrome  (SWAPPING)
+          2 threads -> 5.56 tests/min, load 1.90                                 (HEALTHY)
+      This app costs ~1-1.5GB per Chrome (React + GoJS/React-Flow + big DataGrids), so RAM — not
+      cores — is the limit. Over-threading does not just cost wall-clock: every Selenium wait here
+      is WALL-CLOCK (25s elements / 45s grids), so a starved machine expires them while the app is
+      merely slow, manufacturing exactly the false failures this suite exists to avoid.
+      Raise thread-count only on a box with more RAM, or on a CI grid with one runner per thread.
 
   SERIAL-ONLY, deliberately NOT in this suite:
     • CriticalPathTestNG — its whole purpose is cross-module count consistency, which cannot hold
@@ -38,7 +44,7 @@
     • SmartBugDetector's report list is synchronized (was ArrayList → dropped failure records).
 -->
 <suite name="eGalvanic Full Suite — Hybrid Parallel" verbose="1"
-       parallel="tests" thread-count="4" data-provider-thread-count="2">
+       parallel="tests" thread-count="2" data-provider-thread-count="2">
 
     <listeners>
         <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
