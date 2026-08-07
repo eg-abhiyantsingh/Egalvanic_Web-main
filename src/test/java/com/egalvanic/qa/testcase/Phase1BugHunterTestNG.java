@@ -4218,6 +4218,50 @@ public class Phase1BugHunterTestNG extends BaseTest {
      * Honest skip: if `performance.memory` is unavailable (non-Chromium
      * or browser doesn't expose it), skip with explanation.
      */
+    /**
+     * Force a real garbage collection, then report {@code usedJSHeapSize} in MB.
+     *
+     * WHY THIS EXISTS: this test used to call {@code window.gc()}, which is a SILENT NO-OP here —
+     * Chrome only defines it under {@code --js-flags=--expose-gc}, and BaseTest does not set that
+     * flag. So the "leak" it measured was just un-collected transient allocation: V8 grows the heap
+     * lazily and collects only under pressure, so tens of MB of uncollected garbage after nine
+     * navigations is completely normal. That made the assertion a coin flip which nonetheless
+     * reported "BUG: ... Likely event-listener leak, retained closure, or lingering subscription".
+     *
+     * CDP's {@code HeapProfiler.collectGarbage} performs a real collection with no browser flag
+     * required. Collecting at BOTH ends (baseline and post-cycles) makes the delta mean
+     * RETAINED memory, which is the only thing that can evidence a leak. Two collections plus the
+     * smaller of two samples guards against sampling mid-collection.
+     *
+     * Consequence worth stating: this makes the test HARDER to fail, but the failures it does
+     * report become trustworthy. If growth still exceeds the threshold after this, it is real.
+     */
+    private long forceGcAndSampleHeapMb() {
+        for (int attempt = 0; attempt < 2; attempt++) {
+            try {
+                if (driver instanceof org.openqa.selenium.chrome.ChromeDriver) {
+                    ((org.openqa.selenium.chrome.ChromeDriver) driver)
+                            .executeCdpCommand("HeapProfiler.collectGarbage", new java.util.HashMap<>());
+                }
+            } catch (Exception e) {
+                logStep("CDP HeapProfiler.collectGarbage unavailable (" + e.getClass().getSimpleName()
+                        + ") — heap delta may include uncollected garbage");
+            }
+            pause(1200);
+        }
+        long a = heapMb();
+        pause(800);
+        long b = heapMb();
+        return Math.min(a, b);   // the more-collected of the two samples
+    }
+
+    private long heapMb() {
+        Object v = js().executeScript(
+                "return (performance.memory && performance.memory.usedJSHeapSize)"
+                + " ? performance.memory.usedJSHeapSize : 0;");
+        return v == null ? 0L : ((Number) v).longValue() / 1024 / 1024;
+    }
+
     @Test(priority = 37, description = "TC_BH_37: JS heap doesn't grow >50MB across 3 navigation cycles")
     public void testTC_BH_37_HeapDoesntLeakAcrossNavigation() {
         ExtentReportManager.createTest(
@@ -4227,15 +4271,18 @@ public class Phase1BugHunterTestNG extends BaseTest {
             assetPage.navigateToAssets();
             pause(4000);
 
-            Long baseline = (Long) js().executeScript(
+            Long probe = (Long) js().executeScript(
                 "return (performance.memory && performance.memory.usedJSHeapSize) "
                 + "? performance.memory.usedJSHeapSize : null;");
-            if (baseline == null) {
+            if (probe == null) {
                 throw new org.testng.SkipException(
                     "performance.memory unavailable in this browser/context — "
                     + "cannot measure heap growth");
             }
-            logStep("Baseline JS heap: " + (baseline / 1024 / 1024) + " MB");
+            // Baseline must be taken AFTER a forced collection, so it is comparable to the
+            // post-cycle reading. See forceGcAndSampleHeapMb() for why this matters.
+            long baselineMb = forceGcAndSampleHeapMb();
+            logStep("Baseline JS heap (after forced GC): " + baselineMb + " MB");
 
             String[] cycle = {
                 "https://acme.qa.egalvanic.ai/assets",
@@ -4251,18 +4298,7 @@ public class Phase1BugHunterTestNG extends BaseTest {
                 logStep("Cycle " + (i + 1) + " complete");
             }
 
-            // Hint to the engine that GC could run (not guaranteed)
-            try {
-                js().executeScript(
-                    "if (window.gc) { window.gc(); } else if (window.CollectGarbage) "
-                    + "{ window.CollectGarbage(); }");
-            } catch (Exception ignore) {}
-            pause(2000);
-
-            Long after = (Long) js().executeScript(
-                "return performance.memory.usedJSHeapSize;");
-            long baselineMb = baseline / 1024 / 1024;
-            long afterMb = after / 1024 / 1024;
+            long afterMb = forceGcAndSampleHeapMb();
             long growthMb = afterMb - baselineMb;
             ScreenshotUtil.captureScreenshot("TC_BH_37");
             logStep("Post-cycles heap: " + afterMb + " MB (growth: " + growthMb + " MB)");

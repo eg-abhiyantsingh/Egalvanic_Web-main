@@ -1870,6 +1870,17 @@ public class SLDTestNG extends BaseTest {
             "                 || /^https?:\\/\\/[^/]*egalvanic\\.ai\\//.test(u)" +
             "                 || u.charAt(0) === '/';" +
             "  if (!firstParty) continue;" +
+            // The first-party filter above is NOT sufficient on its own: Sentry is TUNNELLED through
+            // the app's own origin (its `tunnel` option, used to satisfy the app's CSP), so its
+            // ingest posts arrive as SAME-ORIGIN '/api/{projectId}/envelope/' and pass the check.
+            // That is how '/api/4510464365101056/envelope/' x5 blew the budget of 4 on 2026-08-07
+            // and reported "the SLD view should de-dup/memoize" about a request the SLD never made.
+            // Exclude by PATH SHAPE, which is unambiguous — no eGalvanic route is /api/<digits>/…
+            // and none ends in /envelope/. Telemetry volume is not our fetch hygiene.
+            "  var path = u.replace(/https?:\\/\\/[^/]+/, '').split('?')[0];" +
+            "  if (/^\\/api\\/\\d+\\//.test(path)) continue;" +          // Sentry: /api/{projectId}/...
+            "  if (/\\/envelope\\/?$/.test(path)) continue;" +           // Sentry ingest envelopes
+            "  if (/(sentry|launchdarkly|getbeamer|devrev|beamer)/i.test(path)) continue;" +
             "  var key = u.split('?')[0]" +
             "            .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g, '{id}')" +
             "            .replace(/https?:\\/\\/[^/]+/, '');" +
