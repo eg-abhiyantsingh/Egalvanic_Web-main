@@ -481,8 +481,9 @@ public class PlanningPage {
             try {
                 WebElement el = wait.until(ExpectedConditions.visibilityOfElementLocated(by));
                 el.click();
-                el.sendKeys(Keys.chord(Keys.CONTROL, "a"));
-                el.sendKeys(Keys.DELETE);
+                // Platform-correct, React-safe clear (CONTROL+A is not select-all on macOS —
+                // see InputUtil for the false "SEARCH DEFECT" this idiom produced).
+                com.egalvanic.qa.utils.InputUtil.clearReactInput(driver, el);
                 el = driver.findElement(by);
                 el.sendKeys(text);
                 return;

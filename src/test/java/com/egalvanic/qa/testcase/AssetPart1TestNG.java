@@ -813,8 +813,8 @@ public class AssetPart1TestNG extends BaseTest {
         WebElement classInput = driver.findElement(ASSET_CLASS_INPUT);
         classInput.click();
         pause(300);
-        classInput.sendKeys(Keys.chord(Keys.CONTROL, "a"));
-        classInput.sendKeys(Keys.DELETE);
+        // Platform-correct, React-safe clear (CONTROL+A is not select-all on macOS — see InputUtil).
+        com.egalvanic.qa.utils.InputUtil.clearReactInput(driver, classInput);
         pause(200);
         classInput.sendKeys("Circuit Breaker");
         pause(1000);

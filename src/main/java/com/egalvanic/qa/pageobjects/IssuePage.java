@@ -1723,8 +1723,10 @@ public class IssuePage {
             // Primary: sendKeys (real keyboard events — always triggers MUI Quick Filter)
             searchInput.click();
             pause(300);
-            searchInput.sendKeys(Keys.chord(Keys.CONTROL, "a"));
-            searchInput.sendKeys(Keys.DELETE);
+            // Platform-correct, React-safe clear: CONTROL+A is NOT select-all on macOS (it moves the
+            // caret to line start), so the old sequence left the previous query in the box and
+            // prepended the new one. See InputUtil for the failure this caused in TaskTestNG.
+            com.egalvanic.qa.utils.InputUtil.clearReactInput(driver, searchInput);
             pause(200);
             searchInput.sendKeys(query);
             pause(1500);

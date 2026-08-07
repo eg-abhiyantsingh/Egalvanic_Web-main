@@ -146,8 +146,12 @@ public class TaskTestNG extends BaseTest {
                 WebElement el = findVisibleSearchInput();
                 try {
                     el.click();
-                    el.sendKeys(Keys.chord(Keys.CONTROL, "a"));
-                    el.sendKeys(Keys.DELETE);
+                    // CONTROL+A does NOT select-all on macOS (that is COMMAND+A), so the old
+                    // "CONTROL+A then DELETE" cleared nothing and the new term was CONCATENATED onto
+                    // the previous one — measured: "SmokeTask" + "AutoTest" = "SmokeTaskAutoTest".
+                    // That is how this test queried a nonexistent title, got 0 rows, and reported a
+                    // SEARCH DEFECT. The search itself is fine (4 rows for "AutoTest"). See InputUtil.
+                    com.egalvanic.qa.utils.InputUtil.clearReactInput(driver, el);
                     el = findVisibleSearchInput(); // re-find — React may have re-mounted
                     el.sendKeys(text);
                     return;
@@ -582,8 +586,8 @@ public class TaskTestNG extends BaseTest {
                 safeClick(el);
                 pause(150);
                 el = driver.findElement(locator); // re-find after click
-                el.sendKeys(Keys.chord(Keys.CONTROL, "a"));
-                el.sendKeys(Keys.DELETE);
+                // Platform-correct, React-safe clear (CONTROL+A is not select-all on macOS).
+                com.egalvanic.qa.utils.InputUtil.clearReactInput(driver, el);
                 pause(200);
                 el = driver.findElement(locator); // re-find after clear
                 el.sendKeys(text);
