@@ -19,6 +19,7 @@ import org.openqa.selenium.support.ui.FluentWait;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.ITestResult;
 
 import org.testng.annotations.AfterClass;
@@ -679,6 +680,28 @@ public class SiteSelectionTestNG {
         ExtentReportManager.logPass("Search correctly shows no-results state for non-existent query");
     }
 
+    /** Set the facility search text through React's native setter (what a real keystroke does). */
+    private void setFacilityText(WebElement input, String text) {
+        ((org.openqa.selenium.JavascriptExecutor) driver).executeScript(
+                "var s = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;"
+                + "s.call(arguments[0], arguments[1]);"
+                + "arguments[0].dispatchEvent(new Event('input', {bubbles: true}));",
+                input, text);
+    }
+
+    /**
+     * Option count after the list has CHANGED from {@code previous} and then settled. Waiting only
+     * for stability is not enough: the list before a filter applies is perfectly stable, so a
+     * pure settle-poll returns the stale count.
+     */
+    private int optionCountAfterChangeFrom(int previous) {
+        for (int i = 0; i < 20; i++) {
+            pause(400);
+            if (driver.findElements(OPTIONS).size() != previous) break;
+        }
+        return settledOptionCount();
+    }
+
     /**
      * Option count once the dropdown has SETTLED: polls until the count repeats twice in a row
      * (or ~8s). The ~180-site list filters/repopulates asynchronously, so a single-shot count
@@ -701,38 +724,35 @@ public class SiteSelectionTestNG {
                 AppConstants.FEATURE_SEARCH_SITES, "TC_SS_011_ClearingSearchShowsAll");
         logStep("Verifying clearing search restores full site list");
 
-        // BOTH counts must be read from a SETTLED dropdown. The ~180-site option list filters and
-        // repopulates asynchronously; single-shot reads after a fixed 1s pause produced a false
-        // fail on 2026-08-06 — the "filtered" read fired before the typed text registered (so it
-        // counted ALL 181 sites) and the "full" read caught the list mid-repopulation (1 option),
-        // inverting the comparison. Poll until the count stops changing before trusting it.
+// Measured live 2026-08-07: open = 182 options, type "Test" = 83, clear = 182 again.
+        // The dropdown is healthy; the old test misread it twice. A plain "settle" is not enough
+        // either — the PRE-filter list is also stable, so polling for stability alone locks onto
+        // the stale 182 (that produced filtered=182 vs full=1). Wait for the count to CHANGE from
+        // the previous value, then settle.
         WebElement input = driver.findElement(FACILITY_INPUT);
-        clearAndType(input, "Test");
-        int filteredCount = settledOptionCount();
-        logStep("Filtered count for 'Test' (settled): " + filteredCount);
-
-        // Clear search
-        clearFacilityInput();
-        pause(500);
-
-        // Open dropdown to see all sites
         openFacilityDropdown();
-        int fullCount = settledOptionCount();
-        logStep("Full count after clearing (settled): " + fullCount);
-
-        // If dropdown didn't populate, retry by clicking input and waiting
-        if (fullCount == 0) {
-            logStep("Dropdown empty — retrying with input click");
-            WebElement retryInput = driver.findElement(FACILITY_INPUT);
-            safeClick(retryInput);
-            fullCount = settledOptionCount();
-            logStep("Retry full count (settled): " + fullCount);
+        int baseline = settledOptionCount();
+        logStep("Baseline options with empty search: " + baseline);
+        if (baseline == 0) {
+            throw new SkipException("Facility dropdown rendered no options — cannot assess filtering");
         }
 
+        setFacilityText(input, "Test");
+        int filteredCount = optionCountAfterChangeFrom(baseline);
+        logStep("Filtered count for 'Test': " + filteredCount);
+
+        setFacilityText(input, "");
+        int fullCount = optionCountAfterChangeFrom(filteredCount);
+        logStep("Full count after clearing: " + fullCount);
+
+        Assert.assertTrue(filteredCount <= baseline,
+                "Typing a filter must not ADD options: baseline=" + baseline
+                + " but filtered=" + filteredCount);
         Assert.assertTrue(fullCount >= filteredCount,
                 "Clearing the search must restore at least as many options as the filtered view: "
-                + "full=" + fullCount + " vs filtered=" + filteredCount
-                + " (both counts settled-polled, so this would be a real filtering defect)");
+                + "baseline=" + baseline + ", filtered=" + filteredCount + ", cleared=" + fullCount
+                + " (each count taken after the list changed AND settled — a real filtering defect)");
+
         logStep("Full site list restored after clearing search");
 
         closeFacilityDropdown();

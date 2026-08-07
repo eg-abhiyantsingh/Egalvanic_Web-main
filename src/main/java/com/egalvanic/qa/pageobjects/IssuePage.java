@@ -2354,7 +2354,56 @@ public class IssuePage {
      * Delete the current issue from its detail page via kebab menu or delete
      * button.
      */
+    /**
+     * V1.36 delete: read the open issue's title, return to the LIST, search for it, and click the
+     * row's trash icon. Leaves the MUI confirmation dialog open for {@link #confirmDelete()}.
+     * Returns false if the flow could not be driven (caller falls back to the legacy path).
+     */
+    private boolean deleteCurrentIssueViaListRow() {
+        try {
+            String title = String.valueOf(js.executeScript(
+                    "var h = document.querySelector('main h4, main h5, main h3');"
+                    + "return h ? h.textContent.trim() : '';"));
+            if (title == null || title.isBlank()) return false;
+
+            driver.get(com.egalvanic.qa.constants.AppConstants.BASE_URL + "/issues");
+            waitForSpinner();
+            pause(2000);
+            searchIssues(title);
+            pause(2500);
+
+            Boolean clickedTrash = (Boolean) js.executeScript(
+                    "var rows = document.querySelectorAll('.MuiDataGrid-row');"
+                  + "for (var i = 0; i < rows.length; i++) {"
+                  + "  if (rows[i].textContent.indexOf(arguments[0]) === -1) continue;"
+                  + "  var bs = rows[i].querySelectorAll('button');"
+                  + "  if (!bs.length) continue;"
+                  + "  bs[bs.length - 1].click();"   // trash = last action icon
+                  + "  return true;"
+                  + "}"
+                  + "return false;", title);
+            if (Boolean.TRUE.equals(clickedTrash)) {
+                System.out.println("[IssuePage] Delete initiated from list row for '" + title + "'");
+                pause(1200);
+                return true;
+            }
+            System.out.println("[IssuePage] No list row matched '" + title + "' for delete");
+        } catch (Exception e) {
+            System.out.println("[IssuePage] deleteCurrentIssueViaListRow failed: " + e.getMessage());
+        }
+        return false;
+    }
+
     public void deleteCurrentIssue() {
+        // V1.36 (verified live 2026-08-07): there is NO delete affordance on the issue detail page
+        // or in its edit drawer — the detail kebab offers only "Edit Issue", and the drawer's
+        // buttons are Cancel / Save Changes / Mark Resolved. Delete lives on the LIST row's Actions
+        // cell (trash = last icon) and confirms via a MUI dialog. The old detail-page hunt below
+        // silently found nothing, so the issue was never deleted and callers then blamed SEARCH for
+        // "still showing a deleted issue" (ISS_046). Do the real flow first, keeping the legacy
+        // path as a fallback for older builds.
+        if (deleteCurrentIssueViaListRow()) return;
+
         Boolean clicked = (Boolean) js.executeScript(
                 "var btns = document.querySelectorAll('button');" +
                         "for (var b of btns) {" +

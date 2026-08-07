@@ -288,14 +288,16 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
             List<String> live = new ArrayList<String>();
             for (int i = 0; i < data.length(); i++) live.add(data.getJSONObject(i).optString("name", ""));
             List<String> missing = new ArrayList<String>();
-            for (WorkTypeCatalog.WorkTypeProfile pr : WorkTypeCatalog.ALL) {
+            // SERVICES, not ALL: ALL = the 13 API services + the UI-only "General" pseudo-type,
+            // which has no service record and is never returned by this endpoint.
+            for (WorkTypeCatalog.WorkTypeProfile pr : WorkTypeCatalog.SERVICES) {
                 if (!live.contains(pr.name)) missing.add(pr.name);
             }
             Assert.assertTrue(missing.isEmpty(),
                     "services catalog is MISSING canonical service(s) " + missing + " — live catalog ("
                             + data.length() + "): " + live + ". If the catalog changed by design, re-pull "
                             + SERVICES_PATH + " and update WorkTypeCatalog in the same commit.");
-            ExtentReportManager.logPass("all " + WorkTypeCatalog.ALL.size()
+            ExtentReportManager.logPass("all " + WorkTypeCatalog.SERVICES.size()
                     + " canonical services present (live catalog has " + data.length()
                     + " entries incl. tenant-created ones).");
             return;
