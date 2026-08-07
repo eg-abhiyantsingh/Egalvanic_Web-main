@@ -38,10 +38,48 @@ public final class A11yVerifier {
 
     private static final List<String> BLOCKING_IMPACTS = Arrays.asList("critical", "serious");
 
+    /**
+     * SHARED CHROME — DOM that is identical on every route (sidebar nav, drawer, the global
+     * floating action button) plus the third-party widgets the app embeds.
+     *
+     * Verified live on 2026-08-08 against V1.36: the sidebar renders
+     * {@code li.MuiListItem-root} ("Legacy Procedures") directly inside a {@code div.MuiBox-root}
+     * instead of a {@code <ul>} (axe rule {@code listitem}, serious), and the global
+     * {@code MuiFab} carries no accessible name (axe rule {@code button-name}, critical).
+     * Both reproduce byte-identically on {@code /customers} and {@code /assets}.
+     *
+     * Consequence: those are ONE real defect each, but a whole-page scan re-reports them in
+     * EVERY module that runs an a11y check — turning 2 defects into N failures and burying each
+     * module's own, page-specific violations in duplicate noise. The dedicated per-module a11y
+     * tripwires (BUG-B) own the whole-page reporting; functional tests should use
+     * {@link #assertNoPageSpecificViolations} so they only go red on THEIR page's markup.
+     */
+    private static final List<String> SHARED_CHROME_SELECTORS = Arrays.asList(
+            "nav",                    // sidebar <nav> wrapper
+            ".MuiDrawer-root",        // sidebar drawer paper (holds the stray <li>)
+            ".MuiFab-root",           // global floating action button (no accessible name)
+            "[id*='beamer']",         // Beamer notification widget (third-party)
+            "[class*='beamer']",
+            "[id*='devrev']",         // DevRev support widget (third-party)
+            "iframe");                // any embedded third-party frame
+
     /** Run an axe audit on the whole page and return all violations. */
     public static List<Rule> scan(WebDriver driver) {
         Results results = new AxeBuilder().withTags(WCAG_AA_TAGS).analyze(driver);
         List<Rule> v = results.getViolations();
+        return v == null ? new ArrayList<>() : v;
+    }
+
+    /**
+     * Run an axe audit with the app's shared chrome excluded, so only violations owned by the
+     * CURRENT page's own markup are returned. See {@link #SHARED_CHROME_SELECTORS} for why.
+     */
+    public static List<Rule> scanPageOnly(WebDriver driver) {
+        AxeBuilder b = new AxeBuilder().withTags(WCAG_AA_TAGS);
+        for (String sel : SHARED_CHROME_SELECTORS) {
+            b = b.exclude(sel);
+        }
+        List<Rule> v = b.analyze(driver).getViolations();
         return v == null ? new ArrayList<>() : v;
     }
 
@@ -53,7 +91,12 @@ public final class A11yVerifier {
                 .collect(Collectors.toList());
     }
 
-    /** Human-readable one-liner per violation: impact, rule id, node count, help. */
+    /**
+     * Human-readable one-liner per violation: impact, rule id, node count, help — PLUS the CSS
+     * target of each offending node. Without the targets an a11y failure reads "2 node(s): Buttons
+     * must have discernible text", which tells whoever debugs it nothing about WHERE the button is;
+     * with them the fix is a direct lookup in the DOM.
+     */
     public static String describe(List<Rule> violations) {
         if (violations.isEmpty()) return "no violations";
         StringBuilder sb = new StringBuilder();
@@ -62,6 +105,38 @@ public final class A11yVerifier {
             sb.append("\n  - [").append(r.getImpact()).append("] ")
               .append(r.getId()).append(" (").append(nodes).append(" node(s)): ")
               .append(r.getHelp());
+            if (r.getNodes() != null) {
+                int shown = 0;
+                for (com.deque.html.axecore.results.CheckedNode n : r.getNodes()) {
+                    if (shown++ >= 3) {                       // keep the message readable
+                        sb.append("\n        … and ").append(nodes - 3).append(" more node(s)");
+                        break;
+                    }
+                    sb.append("\n        at ").append(targetOf(n));
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    /** axe's node target is an untyped nested list of CSS selectors — flatten it defensively. */
+    private static String targetOf(com.deque.html.axecore.results.CheckedNode n) {
+        Object t;
+        try {
+            t = n.getTarget();
+        } catch (RuntimeException e) {
+            return "<target unavailable>";
+        }
+        if (t == null) return "<unknown>";
+        String s = (t instanceof List) ? flatten((List<?>) t) : String.valueOf(t);
+        return s.length() > 160 ? s.substring(0, 157) + "..." : s;
+    }
+
+    private static String flatten(List<?> list) {
+        StringBuilder sb = new StringBuilder();
+        for (Object o : list) {
+            if (sb.length() > 0) sb.append(" ");
+            sb.append(o instanceof List ? flatten((List<?>) o) : String.valueOf(o));
         }
         return sb.toString();
     }
@@ -90,5 +165,36 @@ public final class A11yVerifier {
                     + blocking.size() + " critical/serious WCAG violation(s):"
                     + describe(blocking));
         }
+    }
+
+    /**
+     * Hard-assert there are no critical/serious WCAG violations owned by THIS PAGE's own markup,
+     * ignoring the app's shared chrome (sidebar / global FAB / third-party widgets).
+     *
+     * Use this inside FUNCTIONAL tests. The shared-chrome violations are real, but they are the
+     * same two defects on every route and the dedicated per-module a11y tripwires (BUG-B) already
+     * report them; re-failing every functional test on them costs the functional coverage that test
+     * exists to provide while adding no new information.
+     *
+     * Use {@link #assertNoBlockingViolations} in dedicated a11y tests, where whole-page scope is
+     * the point.
+     */
+    public static void assertNoPageSpecificViolations(WebDriver driver, String context) {
+        List<Rule> all = scanPageOnly(driver);
+        List<Rule> blocking = all.stream()
+                .filter(r -> r.getImpact() != null
+                        && BLOCKING_IMPACTS.contains(r.getImpact().toLowerCase()))
+                .collect(Collectors.toList());
+
+        if (blocking.isEmpty()) {
+            System.out.println("[A11yVerifier] " + context
+                    + " — no page-specific critical/serious WCAG violations"
+                    + " (shared chrome excluded; tracked separately as BUG-B)");
+            return;
+        }
+        throw new AssertionError("[A11yVerifier] " + context + " has "
+                + blocking.size() + " critical/serious WCAG violation(s) in its OWN markup"
+                + " (shared sidebar/FAB chrome excluded — those are BUG-B):"
+                + describe(blocking));
     }
 }

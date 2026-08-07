@@ -261,8 +261,55 @@ public class BaseTest {
      * page (axe-core). Moderate/minor are logged only. Opt-in: call after a page
      * is fully rendered. Catches contrast, missing labels, ARIA, alt-text, etc.
      */
+    /** Month names/abbrevs + status/enum words that appear in grids but are NOT searchable text. */
+    private static final java.util.Set<String> NON_SEARCHABLE_WORDS =
+            new java.util.HashSet<>(java.util.Arrays.asList(
+                    "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec",
+                    "january", "february", "march", "april", "june", "july", "august",
+                    "september", "october", "november", "december",
+                    "draft", "open", "closed", "active", "inactive", "pending", "standard",
+                    "none", "null", "true", "false", "yes", "no", "n/a"));
+
+    /**
+     * Pick a token from a grid row that the backend can plausibly match on, for search tests.
+     *
+     * WHY THIS EXISTS: the obvious `row.getText().split(" ")[0]` takes the FIRST cell, which in
+     * every grid in this app is the rendered DATE — so the search term becomes a month abbreviation
+     * ("Aug 5, 2026" -> "Aug"). Nothing indexes formatted date strings, so such a query tells you
+     * nothing about the filter and produces a failure that looks like a product bug but is not.
+     *
+     * Skips dates, currency, pure numbers, IDs and status/enum words; prefers the longest remaining
+     * alphabetic word (the most distinctive, least likely to match everything).
+     *
+     * @return a usable token, or {@code null} if the row has no searchable text.
+     */
+    protected String searchableTokenFrom(String rowText) {
+        if (rowText == null || rowText.trim().isEmpty()) return null;
+        String best = null;
+        for (String raw : rowText.split("[\\s\\n\\r,]+")) {
+            String w = raw.replaceAll("^[^\\p{L}\\p{N}]+|[^\\p{L}\\p{N}]+$", "");   // trim punctuation
+            if (w.length() < 4) continue;                                  // too short to be selective
+            if (NON_SEARCHABLE_WORDS.contains(w.toLowerCase())) continue;  // month / status word
+            if (!w.matches(".*\\p{L}.*")) continue;                        // needs at least one letter
+            if (w.matches(".*\\d.*") && w.matches(".*[-_].*")) continue;    // looks like an ID/uuid chunk
+            if (w.matches("\\p{L}{1,3}\\d+")) continue;                    // e.g. "WO123" style codes
+            if (best == null || w.length() > best.length()) best = w;
+        }
+        return best;
+    }
+
     protected void verifyAccessibility(String context) {
         com.egalvanic.qa.utils.verify.A11yVerifier.assertNoBlockingViolations(driver, context);
+    }
+
+    /**
+     * A11y check scoped to the current page's OWN markup — the app's shared chrome (sidebar,
+     * global FAB, third-party widgets) is excluded. Use this in FUNCTIONAL tests; use
+     * {@link #verifyAccessibility} in dedicated a11y tests where whole-page scope is the point.
+     * See {@code A11yVerifier.SHARED_CHROME_SELECTORS} for the verified rationale.
+     */
+    protected void verifyAccessibilityPageOnly(String context) {
+        com.egalvanic.qa.utils.verify.A11yVerifier.assertNoPageSpecificViolations(driver, context);
     }
 
     /**

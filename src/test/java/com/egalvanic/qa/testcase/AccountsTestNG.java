@@ -167,9 +167,11 @@ public class AccountsTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, "Read / Search", "Acc_08_Search");
         goToAccounts();
         if (!page.isGridPresent() || page.rowCount() == 0) throw new SkipException("No accounts to search (empty grid)");
-        String firstRow = page.rows().get(0).getText().replace("\n", " ").trim();
-        String token = firstRow.split(" ")[0];
-        if (token.length() < 2) throw new SkipException("First row has no usable search token");
+        // Token must come from a SEARCHABLE column — see BaseTest.searchableTokenFrom. Taking
+        // split(" ")[0] grabs the rendered date cell and searches a month abbreviation.
+        String sourceRowText = page.rows().get(0).getText();
+        String token = searchableTokenFrom(sourceRowText);
+        if (token == null) throw new SkipException("First row has no usable text token to search on");
         int before = page.rowCount();
         page.search(token);
         // Since the v2 list API (observed 2026-07-30) search is SERVER-side (POST
@@ -177,25 +179,42 @@ public class AccountsTestNG extends BaseTest {
         // until the filtered rows settle instead of reading them straight away (reading
         // immediately sees the stale unfiltered page and fails on rows like the 07-27
         // "Sam email account" red, which was this race, not a matching bug).
-        int after = -1;
-        boolean allMatch = false;
-        long deadline = System.currentTimeMillis() + 10000;
-        while (System.currentTimeMillis() < deadline) {
-            after = page.rowCount();
-            allMatch = true;
-            for (WebElement r : page.rows()) {
-                String rowText;
-                try { rowText = r.getText(); } catch (Exception stale) { allMatch = false; break; }
-                if (!rowText.toLowerCase().contains(token.toLowerCase())) { allMatch = false; break; }
-            }
-            if (allMatch && after <= before) break;
+        // Poll until the row count STOPS CHANGING (debounced server-side search), then assert.
+        // The old loop waited for "every row visibly contains the token", which is not the filter's
+        // contract: the v2 search also matches description/contact/domain fields the grid does not
+        // render, so a correct result set could never satisfy it and the test burned its full 10s
+        // then failed on working behaviour.
+        int after = -1, stable = 0;
+        long deadline = System.currentTimeMillis() + 12000;
+        while (System.currentTimeMillis() < deadline && stable < 2) {
             pause(500);
+            int now = page.rowCount();
+            stable = (now == after) ? stable + 1 : 0;
+            after = now;
         }
+
+        long visiblyMatching = 0;
+        for (WebElement r : page.rows()) {
+            try {
+                if (r.getText().toLowerCase().contains(token.toLowerCase())) visiblyMatching++;
+            } catch (Exception stale) { /* row repainted mid-read — ignore, count is best-effort */ }
+        }
+
+        // Contract 1 — filtering must never grow the set.
         Assert.assertTrue(after <= before, "Search must not increase row count (" + before + "->" + after + ").");
-        Assert.assertTrue(allMatch,
-                "Rows still show entries not matching '" + token + "' after the server-side search settled (10s).");
+        // Contract 2 — the token came from a row currently in the grid, so something must match it.
+        Assert.assertTrue(after > 0 && visiblyMatching > 0,
+                "SEARCH DEFECT: '" + token + "' was taken from a row in the grid, so at least one"
+                        + " result must contain it. Got " + after + " row(s), " + visiblyMatching
+                        + " containing the token. Source row: " + sourceRowText);
+        // Contract 3 — the filter must actually act.
+        if (after == before && visiblyMatching == 0) {
+            Assert.fail("SEARCH DEFECT: typing '" + token + "' left the grid unchanged (" + before
+                    + " rows, none containing the token) — the filter was not applied.");
+        }
         page.clearSearch();
-        ExtentReportManager.logPass("Search filtered " + before + " -> " + after + " rows, all match '" + token + "'");
+        ExtentReportManager.logPass("Search filtered " + before + " -> " + after + " rows for '"
+                + token + "' (" + visiblyMatching + " visibly matching)");
     }
 
     @Test(priority = 9, description = "TC_ACC_09: Search with no matches shows an empty result, not a crash")
@@ -220,7 +239,11 @@ public class AccountsTestNG extends BaseTest {
         goToAccounts();
         if (!page.isGridPresent() || page.rowCount() == 0) throw new SkipException("No accounts to search");
         int before = page.rowCount();
-        String token = page.rows().get(0).getText().replace("\n", " ").trim().split(" ")[0];
+        // A searchable token keeps the grid populated while filtered. A date-derived token matches
+        // nothing, which empties the grid and can take the toolbar (and the search box) with it —
+        // then clearSearch() has nothing to clear and this test fails for its own setup.
+        String token = searchableTokenFrom(page.rows().get(0).getText());
+        if (token == null) throw new SkipException("First row has no usable text token to search on");
         page.search(token);
         page.clearSearch();
         // poll for the grid to repopulate (async re-render)
@@ -333,14 +356,35 @@ public class AccountsTestNG extends BaseTest {
     public void testAcc_ApiFlatEndpointRequiresAuth() {
         ExtentReportManager.createTest(MODULE, "API Security", "Acc_API_FlatAuth");
         RestAssured.baseURI = AppConstants.API_BASE_URL;
+        // The accounts API is /api/account/v2 (SINGULAR, v2). This test used to probe
+        // "/accounts/", which is NOT an API route at all: unmatched paths under /api fall through
+        // to the SPA catch-all and return 200 with text/html (index.html, ~2KB). The test read that
+        // static HTML as an authenticated data response and reported BROKEN ACCESS CONTROL — a
+        // fabricated security finding. Verified 2026-08-08:
+        //     GET /api/accounts/    -> 200 text/html  (SPA fallback, no data)
+        //     GET /api/account/v2   -> 401            (correctly enforced)
+        String path = "/account/v2";
         Response flat;
         try {
-            flat = given().get("/accounts/");
+            flat = given().get(path);
         } catch (Exception e) {
             throw new SkipException("API host unreachable from this network: " + e.getMessage());
         }
+
+        // Guard against the SPA fallback ever masquerading as an API answer again: if the body is
+        // HTML we are not talking to the API, so no auth conclusion can be drawn either way.
+        String ctype = String.valueOf(flat.getContentType()).toLowerCase();
+        if (ctype.contains("text/html")) {
+            throw new SkipException("GET " + path + " returned text/html (" + flat.statusCode()
+                    + ") — that is the SPA catch-all, not the API. The route has moved; update the"
+                    + " path rather than reading this as an auth result.");
+        }
+
         Assert.assertTrue(flat.statusCode() == 401 || flat.statusCode() == 403,
-                "BAC: GET /accounts/ should require auth, but returned " + flat.statusCode() + " unauthenticated.");
-        ExtentReportManager.logPass("Flat /accounts/ enforces auth");
+                "BAC: unauthenticated GET " + path + " must be rejected, but returned "
+                        + flat.statusCode() + " (content-type " + ctype + "). Body: "
+                        + flat.asString().substring(0, Math.min(300, flat.asString().length())));
+        ExtentReportManager.logPass("Unauthenticated GET " + path + " correctly rejected with "
+                + flat.statusCode());
     }
 }

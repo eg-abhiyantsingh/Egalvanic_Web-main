@@ -248,21 +248,54 @@ public class OpportunitiesTestNG extends BaseTest {
         if (!page.isGridPresent() || page.rowCount() == 0) {
             throw new SkipException("No opportunities to search on this SLD (empty grid)");
         }
-        // take a token from the first row to search for
-        String firstRow = page.rows().get(0).getText().replace("\n", " ").trim();
-        String token = firstRow.split(" ")[0];
-        if (token.length() < 2) throw new SkipException("First row has no usable search token");
+        // Pick a token the backend can actually match on. This used to be
+        // firstRow.split(" ")[0] — the first whitespace token of the row, which is the RENDERED
+        // DATE cell, so the search term became a month abbreviation ("Aug 5, 2026" -> "Aug"). The
+        // grid does not index formatted date strings, so that query proved nothing about filtering
+        // and failed on a legitimately-returned July row. Take a word from a text column instead.
+        String sourceRowText = page.rows().get(0).getText();
+        String token = searchableTokenFrom(sourceRowText);
+        if (token == null) throw new SkipException("First row has no usable text token to search on");
+
         int before = page.rowCount();
         page.search(token);
         int after = page.rowCount();
-        // Strong: every remaining row actually contains the token, and result set didn't grow.
-        Assert.assertTrue(after <= before, "Search must not increase row count (" + before + "->" + after + ").");
-        for (WebElement r : page.rows()) {
-            Assert.assertTrue(r.getText().toLowerCase().contains(token.toLowerCase()),
-                    "Filtered row does not contain search token '" + token + "': " + r.getText());
+
+        // Contract 1 — filtering must never GROW the result set.
+        Assert.assertTrue(after <= before,
+                "Search must not increase row count (" + before + " -> " + after + ") for '" + token + "'.");
+
+        // Contract 2 — a row that demonstrably contains the token must not be filtered AWAY.
+        // This is the real filter guarantee, and it is falsifiable without assuming which columns
+        // the backend indexes.
+        List<WebElement> rowsAfter = page.rows();
+        long visiblyMatching = rowsAfter.stream()
+                .filter(r -> r.getText().toLowerCase().contains(token.toLowerCase()))
+                .count();
+        Assert.assertTrue(after > 0 && visiblyMatching > 0,
+                "SEARCH DEFECT: '" + token + "' was taken from a row that is currently in the grid,"
+                        + " so at least one result must contain it. Got " + after + " row(s), "
+                        + visiblyMatching + " containing the token. Source row: " + sourceRowText);
+
+        // Contract 3 — the filter must actually DO something. If the count is unchanged AND no row
+        // shows the token, the input was ignored rather than applied.
+        if (after == before && visiblyMatching == 0) {
+            Assert.fail("SEARCH DEFECT: typing '" + token + "' left the grid completely unchanged ("
+                    + before + " rows, none containing the token) — the filter was not applied.");
+        }
+
+        // Rows WITHOUT the token in their visible text are NOT a defect: the backend may legitimately
+        // match description/notes/account fields the grid does not render. Reported as info only —
+        // asserting the opposite is what made this test fail on correct behaviour.
+        long nonVisiblyMatching = after - visiblyMatching;
+        if (nonVisiblyMatching > 0) {
+            ExtentReportManager.logInfo(nonVisiblyMatching + " of " + after + " result(s) matched '"
+                    + token + "' on a field the grid does not display (description/notes/account) —"
+                    + " expected, not a defect.");
         }
         page.clearSearch();
-        ExtentReportManager.logPass("Search filtered " + before + " -> " + after + " rows, all match '" + token + "'");
+        ExtentReportManager.logPass("Search filtered " + before + " -> " + after + " rows for '"
+                + token + "' (" + visiblyMatching + " visibly matching)");
     }
 
     // Tripwire: searching triggers BUG-A (the crash fires on the search interaction).
@@ -294,7 +327,11 @@ public class OpportunitiesTestNG extends BaseTest {
         boolean opened = after != null && (!after.equals(before) || after.contains("/opportunities/"));
         if (!opened) throw new SkipException("Row click did not open a detail view");
         verifyPageHealth("Opportunity detail");
-        verifyAccessibility("Opportunity detail");      // strong: WCAG on the detail screen
+        // NOTE: the WCAG check used to sit HERE, ahead of the tab walk. Because the app's shared
+        // sidebar/FAB chrome carries permanent critical/serious violations (BUG-B), it threw every
+        // run and this test never reached the tabs — so "quote editor tabs render", the thing the
+        // test is named for, was never actually verified. The a11y check now runs LAST and is
+        // scoped to the detail screen's own markup; BUG-B is owned by TC_OPP_43.
         // walk any quote-editor tabs that are present (Overview/Pricing/Visualizer/...)
         int tabs = 0;
         List<WebElement> tabEls = driver.findElements(By.cssSelector("[role='tab'], .MuiTab-root"));
@@ -310,6 +347,7 @@ public class OpportunitiesTestNG extends BaseTest {
                 break;
             }
         }
+        verifyAccessibilityPageOnly("Opportunity detail");   // detail screen's own WCAG markup
         ExtentReportManager.logPass("Detail healthy + accessible (+" + tabs + " tab(s) checked)");
     }
 
@@ -537,9 +575,10 @@ public class OpportunitiesTestNG extends BaseTest {
         if (!page.isGridPresent() || page.rowCount() == 0) throw new SkipException("No opportunities to search");
         int before = page.rowCount();
         // Use a REAL token so the grid stays populated (a no-match search empties the grid and
-        // can remove the toolbar/search box, breaking the subsequent clear).
-        String token = page.rows().get(0).getText().replace("\n", " ").trim().split(" ")[0];
-        if (token.length() < 2) throw new SkipException("First row has no usable token");
+        // can remove the toolbar/search box, breaking the subsequent clear). split(" ")[0] took the
+        // rendered DATE cell, which matches nothing — the exact opposite of that intent.
+        String token = searchableTokenFrom(page.rows().get(0).getText());
+        if (token == null) throw new SkipException("First row has no usable text token to search on");
         page.search(token);
         int filtered = page.rowCount();
         Assert.assertTrue(filtered <= before, "Search must not grow the list (" + before + "->" + filtered + ").");
@@ -570,8 +609,10 @@ public class OpportunitiesTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, "Search", "Opp_29_CaseInsensitive");
         goToOpportunities();
         if (!page.isGridPresent() || page.rowCount() == 0) throw new SkipException("No opportunities to search");
-        String token = page.rows().get(0).getText().replace("\n", " ").trim().split(" ")[0];
-        if (token.length() < 2) throw new SkipException("No usable token");
+        // Must be a SEARCHABLE token: the assertion below requires lower > 0, so a date-derived
+        // token ("Aug") that legitimately matches nothing would fail this test for its own input.
+        String token = searchableTokenFrom(page.rows().get(0).getText());
+        if (token == null) throw new SkipException("First row has no usable text token to search on");
         // Search is SERVER-SIDE and DEBOUNCED: rowCount() taken right after typing reads the grid
         // mid-update, which produced bogus mismatches (lower=6 vs upper=9, 2026-08-06 run) even
         // though the backend is case-insensitive — verified directly against
