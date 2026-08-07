@@ -371,6 +371,31 @@ public class FlakinessPrevention {
     /**
      * Wait for MUI DataGrid to finish loading (spinner gone, rows rendered).
      */
+    /**
+     * Block until the DataGrid's row count repeats twice in a row (~1s of stability), capped at
+     * ~6s. MUI streams rows in after the loading overlay clears, so "at least one row" is not the
+     * same as "the grid has finished rendering".
+     */
+    private static void waitForRowCountToSettle(WebDriver driver, JavascriptExecutor js) {
+        int last = -1, stable = 0;
+        for (int i = 0; i < 20 && stable < 2; i++) {
+            try {
+                Thread.sleep(300);
+                Number n = (Number) js.executeScript(
+                        "var g = document.querySelector('.MuiDataGrid-root');"
+                        + "return g ? g.querySelectorAll('.MuiDataGrid-row').length : 0;");
+                int now = n == null ? 0 : n.intValue();
+                stable = (now == last) ? stable + 1 : 0;
+                last = now;
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                return;
+            } catch (Exception ignored) {
+                return;
+            }
+        }
+    }
+
     public static boolean waitForDataGridReady(WebDriver driver) {
         return waitForDataGridReady(driver, DEFAULT_TIMEOUT_SECONDS);
     }
@@ -395,6 +420,12 @@ public class FlakinessPrevention {
                     + "return rows.length > 0;");
 
                 if (Boolean.TRUE.equals(ready)) {
+                    // ROWS ARE STILL STREAMING IN at this point. Returning on the FIRST row let
+                    // callers snapshot a half-rendered grid: AssetPart1.testAssetGridReloadIntegrity
+                    // captured 1 row before a reload and 7 after, then reported
+                    // "STATE CORRUPTION ... data lost or injected" — a false alarm (2026-08-07).
+                    // Wait for the row count to stop changing before declaring the grid ready.
+                    waitForRowCountToSettle(driver, js);
                     return true;
                 }
             } catch (Exception e) {
