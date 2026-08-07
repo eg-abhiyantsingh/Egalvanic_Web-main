@@ -1860,6 +1860,16 @@ public class SLDTestNG extends BaseTest {
             "for (var i = 0; i < es.length; i++) {" +
             "  var u = es[i].name;" +
             "  if (u.indexOf('/api/') === -1) continue;" +
+            // FIRST-PARTY ONLY. Third-party telemetry also uses '/api/' paths — Sentry
+            // (o*.ingest.*.sentry.io/api/{projectId}/envelope/), DevRev, LaunchDarkly and Beamer
+            // all do. On 2026-08-07 Sentry posted 5 envelopes during one SLD load and blew the
+            // per-endpoint budget of 4, reporting "the SLD view should de-dup/memoize" about a
+            // request the SLD view never made. This test is about OUR fetch hygiene, so count only
+            // same-origin (or *.egalvanic.ai) API calls.
+            "  var firstParty = u.indexOf(location.origin) === 0" +
+            "                 || /^https?:\\/\\/[^/]*egalvanic\\.ai\\//.test(u)" +
+            "                 || u.charAt(0) === '/';" +
+            "  if (!firstParty) continue;" +
             "  var key = u.split('?')[0]" +
             "            .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g, '{id}')" +
             "            .replace(/https?:\\/\\/[^/]+/, '');" +
