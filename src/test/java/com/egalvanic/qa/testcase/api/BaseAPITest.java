@@ -146,6 +146,46 @@ public class BaseAPITest {
     }
 
     /**
+     * Re-login once and hand back a fresh token, or null if the re-login failed.
+     *
+     * WHY THIS EXISTS: the class-level token is captured once in setUp(), but the backend
+     * invalidates a user's earlier session when that user authenticates again. Any concurrently
+     * running UI class logging in as the same account therefore kills this token mid-class, and
+     * every remaining row fails with 401 {"error":"Authentication failed"} — 57 such failures in
+     * one run on 2026-08-08, i.e. 91% of that run's total, none of them real. The UI already
+     * self-heals a 401 via /auth/v2/refresh; the API layer needs the same courtesy.
+     */
+    protected static synchronized String reauthenticate() {
+        String fresh = new BaseAPITest().loginAndGetToken();
+        if (fresh != null && !fresh.isEmpty()) {
+            authToken = fresh;
+            System.out.println("[API] Token was rejected (401) — re-authenticated successfully");
+            return fresh;
+        }
+        System.out.println("[API] Token was rejected (401) and re-authentication ALSO failed");
+        return null;
+    }
+
+    /**
+     * Run an authenticated call and, if it comes back 401/403 because the cached token was
+     * invalidated elsewhere, re-login once and run it again. Use for every authenticated API
+     * assertion so a concurrent login can never masquerade as a product failure.
+     */
+    protected Response withAuthRetry(java.util.function.Supplier<Response> call) {
+        Response r = call.get();
+        if (r != null && (r.statusCode() == 401 || r.statusCode() == 403)) {
+            String body = r.asString();
+            if (body == null || body.toLowerCase().contains("authentication failed")
+                    || body.toLowerCase().contains("unauthorized") || r.statusCode() == 401) {
+                if (reauthenticate() != null) {
+                    return call.get();
+                }
+            }
+        }
+        return r;
+    }
+
+    /**
      * Log API request and response details to console and report.
      */
     protected void logAPIDetails(Response response, String testName) {

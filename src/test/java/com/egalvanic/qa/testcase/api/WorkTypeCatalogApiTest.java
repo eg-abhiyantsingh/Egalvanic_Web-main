@@ -93,9 +93,9 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
     /** GET /procedures-v2/services exactly once per run. */
     private synchronized Response servicesCatalog() {
         if (servicesResponse == null) {
-            servicesResponse = getAuthenticatedRequestSpec()
+            servicesResponse = withAuthRetry(() -> getAuthenticatedRequestSpec()
                     .when().get(SERVICES_PATH)
-                    .then().extract().response();
+                    .then().extract().response());
             System.out.println("[WorkTypeApi] GET " + SERVICES_PATH + " -> "
                     + servicesResponse.statusCode() + " in " + servicesResponse.getTime() + "ms");
         }
@@ -376,10 +376,13 @@ public class WorkTypeCatalogApiTest extends BaseAPITest {
         ExtentReportManager.createTest(AppConstants.MODULE_WORK_ORDERS, FEATURE, "API testing - TC_WTAPI_003 — " + profile);
         requireAuth();
 
-        Response r = getAuthenticatedRequestSpec()
+        // withAuthRetry: the class token can be invalidated mid-class by any concurrent login as the
+        // same account (a parallel UI class doing so caused 57 bogus 401 "Authentication failed"
+        // rows on 2026-08-08). Re-login once and retry rather than blame the endpoint.
+        Response r = withAuthRetry(() -> getAuthenticatedRequestSpec()
                 .queryParam("service_id", profile.serviceId)
                 .when().get(PROCEDURES_PATH)
-                .then().extract().response();
+                .then().extract().response());
         String body = r.asString();
         ExtentReportManager.logInfo("GET " + PROCEDURES_PATH + "?service_id=" + profile.serviceId
                 + " -> " + r.statusCode() + " in " + r.getTime() + "ms");
