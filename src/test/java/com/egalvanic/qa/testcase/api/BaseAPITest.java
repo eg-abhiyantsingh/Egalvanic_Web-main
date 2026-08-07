@@ -29,6 +29,18 @@ public class BaseAPITest {
     // parallel @DataProvider — make the write's visibility unconditional across threads.
     protected static volatile String authToken;
 
+    /** Wall-clock ms at which {@link #authToken} stops being accepted (0 = unknown/not yet set). */
+    private static volatile long tokenExpiresAtMs = 0L;
+
+    /** Fallback lifetime if the login body omits {@code expires_in}. QA measures 3600s. */
+    private static final long DEFAULT_TOKEN_LIFETIME_MS = 3_600_000L;
+
+    /**
+     * Refresh the token this far BEFORE it actually expires, so a request issued just under the
+     * wire cannot land on the far side of expiry while in flight.
+     */
+    private static final long TOKEN_REFRESH_MARGIN_MS = 300_000L;   // 5 min
+
     @BeforeSuite
     public void suiteSetup() {
         System.out.println();
@@ -88,7 +100,21 @@ public class BaseAPITest {
                     String token = response.jsonPath().getString("access_token");
                     if (token == null) token = response.jsonPath().getString("token");
                     if (token != null) {
-                        System.out.println("[API] Auth token obtained (length: " + token.length() + ")");
+                        // Record when this token dies. MEASURED 2026-08-08 against the QA host: the
+                        // JWT carries exp - iat = 3600s exactly, and the login body reports the same
+                        // via expires_in. A full parallel suite runs LONGER than that, so a token
+                        // cached once at class setUp() is guaranteed to be dead for later classes —
+                        // which is what produced the 57-call 401 storm in WorkTypeCatalogApiTest.
+                        Integer expiresIn = null;
+                        try {
+                            expiresIn = response.jsonPath().getInt("expires_in");
+                        } catch (Exception ignored) { /* field absent — fall back below */ }
+                        long lifetimeMs = (expiresIn != null && expiresIn > 0)
+                                ? expiresIn * 1000L
+                                : DEFAULT_TOKEN_LIFETIME_MS;
+                        tokenExpiresAtMs = System.currentTimeMillis() + lifetimeMs;
+                        System.out.println("[API] Auth token obtained (length: " + token.length()
+                                + ", valid for " + (lifetimeMs / 60000) + " min)");
                         return token;
                     }
                 }
@@ -142,18 +168,49 @@ public class BaseAPITest {
      */
     protected RequestSpecification getAuthenticatedRequestSpec() {
         return getRequestSpec()
-                .header("Authorization", "Bearer " + authToken);
+                .header("Authorization", "Bearer " + freshToken());
+    }
+
+    /**
+     * The cached token, re-minted first if it is expired or about to be.
+     *
+     * WHY: the QA token lives exactly 3600s (measured 2026-08-08 — the JWT's exp-iat and the login
+     * body's expires_in agree). A full suite runs longer than that, so a token captured once in
+     * setUp() is simply DEAD by the time later API classes execute, and every call returns 401. The
+     * failure text then blames the endpoint ("async-delete semantics changed: now returns 401"),
+     * which is how one expired token turned into 57 bogus contract failures.
+     *
+     * Refreshing on a clock is strictly better than reacting to 401s: withAuthRetry() still exists
+     * as a safety net, but by the time it fires the assertion has already seen a wrong status.
+     */
+    protected static synchronized String freshToken() {
+        boolean expiring = tokenExpiresAtMs > 0
+                && System.currentTimeMillis() > (tokenExpiresAtMs - TOKEN_REFRESH_MARGIN_MS);
+        if (authToken == null || authToken.isEmpty() || expiring) {
+            if (expiring) {
+                System.out.println("[API] Token is within " + (TOKEN_REFRESH_MARGIN_MS / 60000)
+                        + " min of expiry — refreshing before use");
+            }
+            String fresh = new BaseAPITest().loginAndGetToken();
+            if (fresh != null && !fresh.isEmpty()) authToken = fresh;
+        }
+        return authToken;
     }
 
     /**
      * Re-login once and hand back a fresh token, or null if the re-login failed.
      *
-     * WHY THIS EXISTS: the class-level token is captured once in setUp(), but the backend
-     * invalidates a user's earlier session when that user authenticates again. Any concurrently
-     * running UI class logging in as the same account therefore kills this token mid-class, and
-     * every remaining row fails with 401 {"error":"Authentication failed"} — 57 such failures in
-     * one run on 2026-08-08, i.e. 91% of that run's total, none of them real. The UI already
-     * self-heals a 401 via /auth/v2/refresh; the API layer needs the same courtesy.
+     * WHY THIS EXISTS: the class-level token is captured once in setUp() and then simply EXPIRES —
+     * the QA token lives exactly 3600s. A full suite runs longer than that, so later API classes
+     * authenticate with a dead token and every call returns 401 {"error":"Authentication failed"}.
+     * 57 such failures in one run on 2026-08-08, i.e. 91% of that run's total, none of them real.
+     *
+     * CORRECTION (verified 2026-08-08): this was first attributed to the backend invalidating a
+     * user's earlier session when that user logs in again. That is FALSE — measured directly:
+     * login #1 -> token1, login #2 -> token2 (different), and token1 STILL returns 200 on
+     * /auth/v2/me afterwards. Concurrent logins as the same account are harmless. The cause is
+     * plain 60-minute expiry, which is why {@link #freshToken()} now refreshes on a clock and this
+     * method is only the safety net behind it.
      */
     protected static synchronized String reauthenticate() {
         String fresh = new BaseAPITest().loginAndGetToken();
