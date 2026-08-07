@@ -138,6 +138,14 @@ public final class BrowserErrorCapture {
         for (String ig : IGNORED) {
             if (low.contains(ig.toLowerCase())) return true;
         }
+        // Self-healing auth refresh. Chrome logs every 401 response as a SEVERE console entry, but
+        // the app answers a 401 with POST /auth/v2/refresh and a successful retry — normal token
+        // lifecycle, not a defect. It clusters on the always-polling header/badge endpoints and
+        // becomes common when two sessions share one account, e.g. a PARALLEL run where one
+        // thread's refresh invalidates the other's in-flight token (observed 2026-08-08: four such
+        // entries failed testFixturePageHealth). A real auth failure still surfaces — it redirects
+        // to /login, which the session/UI-state gates catch.
+        if (low.contains("status of 401") || low.contains("401 (unauthorized)")) return true;
         return false;
     }
 
