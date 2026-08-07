@@ -26,7 +26,7 @@ import static io.restassured.RestAssured.given;
  * form collects a Subdomain that may provision a tenant, so we never create accounts),
  * the account DETAIL + Contacts tab (the source of an Opportunity quote's Recipient),
  * confirmation-gated delete (cancelled — never deletes shared data), plus quarantined
- * tripwires for the app-wide bugs (BUG-A crash, BUG-B WCAG, BUG-E flat-endpoint auth).
+ * tripwires for the app-wide bugs (BUG-A crash, BUG-B WCAG). BUG-E is retracted — see BUGS.md.
  *
  * Verification rule (same as the rest of the suite): assert the real contract, never
  * "element present" alone; functional tests assert FUNCTION and do NOT call
@@ -348,11 +348,14 @@ public class AccountsTestNG extends BaseTest {
         ExtentReportManager.logPass("Account detail healthy");
     }
 
-    // Tripwire (BUG-E, see BUGS.md): the flat /accounts/ API endpoint responds 200 with NO auth
-    // (a null-field template, no data leak) while company-scoped reads require it — same auth
-    // inconsistency as /opportunities/ and /quotes/. Assertion NOT weakened.
-    @Test(priority = 16, groups = {"known-product-bug"},
-          description = "TC_ACC_API: flat /accounts/ API should require auth [tripwire: BUG-E BAC inconsistency]")
+    // BUG-E RETRACTED 2026-08-08 (see BUGS.md) — this was never a product defect. The old version
+    // probed GET /api/accounts/, which is not an API route: unmatched /api paths fall through to the
+    // SPA catch-all and return 200 text/html (index.html). The "null-field template" it reported was
+    // just REST Assured's jsonPath returning null for every field of an HTML body. Now probes the
+    // REAL endpoint, /api/account/v2, which correctly enforces auth — so this is expected GREEN and
+    // no longer a known-product-bug tripwire.
+    @Test(priority = 16,
+          description = "TC_ACC_API: unauthenticated read of the accounts API is rejected (401/403)")
     public void testAcc_ApiFlatEndpointRequiresAuth() {
         ExtentReportManager.createTest(MODULE, "API Security", "Acc_API_FlatAuth");
         RestAssured.baseURI = AppConstants.API_BASE_URL;

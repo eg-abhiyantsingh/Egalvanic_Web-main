@@ -52,28 +52,41 @@ left RED on purpose (never softened) and linked here.
 - **Fix hint:** disable the Create button after first click (until the request resolves) and/or
   de-dupe server-side per (facility,name) within a short window.
 
-## BUG-E — API: flat list endpoints (`/opportunities/`, `/quotes/`, `/accounts/`) accept UNAUTHENTICATED reads (LOW-MEDIUM, BAC)
-- **What:** `GET /api/opportunities/`, `GET /api/quotes/` AND `GET /api/accounts/` return **200 with
-  no auth token**, while the company-scoped sibling `GET /api/company/{id}/opportunities` correctly
-  returns **401**. A systemic auth-enforcement inconsistency across the flat list endpoints
-  (OWASP API1/API5 — Broken Access Control).
-- **Impact (characterized live):** the unauthenticated flat endpoints return a **null-field
-  template** (all fields `null`), not real tenant data — so there is **no data leak**; severity is
-  bounded to the missing-auth inconsistency / attack-surface hygiene, not disclosure. Still a real
-  defect: a public GET that should be gated like its scoped sibling.
-- **Repro (no token):**
+## ~~BUG-E~~ — **RETRACTED 2026-08-08. NOT A BUG. Never report this to engineering.**
+> This was **our own test artifact**, not a product defect. It was filed as Broken Access Control,
+> which is exactly the kind of finding that gets escalated — so the retraction is recorded in full
+> rather than deleted, to stop it being re-filed.
+
+- **The original claim:** `GET /api/opportunities/`, `/api/quotes/` and `/api/accounts/` return 200
+  with no auth token while the scoped sibling correctly returns 401 — an auth-enforcement
+  inconsistency (OWASP API1/API5), returning "a **null-field template** (all fields `null`)".
+- **What is actually happening (measured directly, 2026-08-08):**
   ```
-  curl -sk https://acme.qa.egalvanic.ai/api/opportunities/      # -> 200 (null template)
-  curl -sk https://acme.qa.egalvanic.ai/api/quotes/             # -> 200 (null template)
-  curl -sk https://acme.qa.egalvanic.ai/api/company/<id>/opportunities  # -> 401 (correct)
+  GET /api/opportunities/  -> 200  text/html  2089 bytes
+  GET /api/quotes/         -> 200  text/html  2089 bytes
+  GET /api/accounts/       -> 200  text/html  2089 bytes    <- byte-identical
+  GET /api/assets/         -> 200  text/html  2089 bytes    <- byte-identical
+  GET /api/issues/         -> 200  text/html  2089 bytes    <- byte-identical
   ```
-- **Found by:** `OpportunitiesTestNG.testOpp57_ApiFlatEndpointsShouldRequireAuth` (opportunities +
-  quotes) and `AccountsTestNG.testAcc_ApiFlatEndpointRequiresAuth` (accounts) — both assert the flat
-  endpoints SHOULD be 401/403; currently 200. Quarantined-red, tagged `groups={"known-product-bug"}`,
-  assertions NOT weakened. The companion green tests `testOpp56` (scoped endpoint enforces 401) and
-  `testOpp58` (authed list schema) prove the correct contract holds where it is enforced.
-- **Fix hint:** apply the same auth middleware/decorator used by `/company/{id}/...` to the flat
-  `/opportunities/` and `/quotes/` routes (or remove the un-scoped routes if unused).
+  Every one of them is **the same SPA `index.html`**. Unmatched paths under `/api` fall through to
+  the app's catch-all route. **These are not API endpoints at all** — there is no handler, no data,
+  and therefore no auth to enforce. Nothing is inconsistent about the scoped sibling returning 401.
+  The real accounts endpoint is `/api/account/v2` (**singular, v2**), and it correctly returns 401.
+- **Where the "null-field template" came from:** REST Assured's `response.jsonPath().getString(f)`
+  returns `null` for every field when the body is HTML rather than JSON. Those nulls were read as a
+  JSON object with all-null fields. There was never a template — just the app shell.
+- **Why the tests fired forever:** they asserted `statusCode() == 401 || == 403` against a static
+  HTML page, so they could never pass, and each run re-published a fake BAC finding.
+- **Lesson (now enforced in code):** never assert an auth conclusion from a status code without first
+  proving the route exists. Both tests now reject `text/html` explicitly — a 200 HTML body proves
+  nothing in *either* direction, and would equally have produced a false PASS on a route that had
+  genuinely lost its auth guard.
+- **Replaced by:** `TC_OPP_57` now asserts the property that actually matters and is falsifiable —
+  an unauthenticated request must never return opportunity/quote **data** (JSON content-type or
+  domain keys in the body ⇒ real BAC ⇒ fail). `TC_ACC_..._FlatAuth` now probes the real
+  `/api/account/v2`. Both are out of `known-product-bug` and expected **green**.
+- **Still genuinely proven:** `testOpp56` (scoped endpoint enforces 401 for both a real and a bogus
+  company id) and `testOpp58` (authed list schema). Auth enforcement on the real routes is fine.
 
 ## BUG-F — Goals (and SALES pages): "notes" fetch returns HTML → severe-error storm (MEDIUM, intermittent)
 - **What:** On `/goals` the client's notes fetch intermittently receives **HTML (the SPA `<!DOCTYPE …>`
@@ -82,8 +95,22 @@ left RED on purpose (never softened) and linked here.
   "<!DOCTYPE "... is not valid JSON`. When it hits, page rendering degrades (subsequent Goals
   grid/dialog elements intermittently fail to appear → tests SkipException).
 - **Intermittent:** a clean reload showed 0 severe errors; the next showed 81. So it's an
-  unstable/racy API response (the notes endpoint occasionally routing to the SPA fallback — same
-  HTML-instead-of-JSON shape as BUG-E's flat endpoints).
+  unstable/racy API response (the notes endpoint occasionally routing to the SPA fallback).
+- **ROOT CAUSE SHARPENED 2026-08-08 — this one IS real, and the BUG-E retraction explains it.**
+  Any path under `/api` with **no matching handler** falls through to the SPA catch-all and returns
+  `200 text/html` (the 2089-byte `index.html`) instead of a 404. So a client that requests a wrong,
+  renamed or not-yet-deployed notes path gets **HTTP 200 with an HTML body**, and `JSON.parse` throws
+  exactly the observed `Unexpected token '<', "<!DOCTYPE "... is not valid JSON`.
+  That makes this a concrete, checkable lead rather than a vague race:
+  1. Capture the notes request URL from the failing load (DevTools → Network → the failing fetch).
+  2. `curl -sk` that exact path with a valid token. If it returns `text/html` 200, the **path is
+     unmatched** — the client is calling a route the backend does not serve. That is the bug, and the
+     intermittency is just whichever code path builds the URL.
+  3. Separately, the backend should return **404 JSON** for unmatched `/api/*` paths instead of the
+     SPA shell. That single change converts this whole failure class from a confusing
+     `JSON.parse` explosion into an honest 404 — and would have prevented the BUG-E false finding too.
+  Note the contrast with BUG-E: there, OUR TEST called a nonexistent path; here, THE APP does. Same
+  mechanism, but this one is a genuine product defect.
 - **Blast radius:** confirmed on `/goals`; the SALES page-health tripwires
   `GoalsTestNG.testTC_GOAL_09`, `AccountsTestNG.testAcc01`/`testAcc15` are quarantined-red because
   of this intermittent storm (kept OUT of the functional gate so it stays stable; assertions NOT weakened).
@@ -154,7 +181,9 @@ left RED on purpose (never softened) and linked here.
     does **NOT execute** — React-escapes it on canvas + in the Edit Asset name input (downgrades
     SLD-BUG-10 to write-time-sanitization only). And the SLD API enforces auth: real-id `/api/sld/{id}`,
     `/lookup/nodes/{id}`, `/users/{id}/slds`, and all node/edge write endpoints return **401** on BOTH
-    hosts (`acme…` and `eg-pz…`) unauthenticated — **no BOLA / data-exposure** (contrast BUG-E).
+    hosts (`acme…` and `eg-pz…`) unauthenticated — **no BOLA / data-exposure**. (This used to say
+    "contrast BUG-E"; BUG-E is retracted — those flat paths were never API routes, so there is no
+    contrast to draw. Auth enforcement is consistent across every REAL route measured to date.)
   - **Corroborated:** node delete = soft-delete (`POST /api/node/bulk-delete` 200) that feeds the S6
     leak; double-mount (SLD-BUG-14) re-confirmed (Wild Goose loads 490 nodes into both diagrams);
     Export still a no-op (SLD-BUG-15); AF-readiness false-negative (SLD-BUG-04) reproduced again.

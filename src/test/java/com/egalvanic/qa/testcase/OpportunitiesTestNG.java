@@ -1309,27 +1309,59 @@ public class OpportunitiesTestNG extends BaseTest {
         ExtentReportManager.logPass("Scoped opportunities API enforces auth (401/403 unauthenticated)");
     }
 
-    // QUARANTINED — REAL FINDING (BUG-E, see BUGS.md): the flat /opportunities/ and /quotes/ API
-    // endpoints respond 200 with NO auth (a null-field template, no data leak) while the scoped
-    // sibling correctly returns 401 — an auth-enforcement inconsistency. Assertion NOT weakened.
-    @Test(priority = 63, groups = {"known-product-bug"},
-          description = "TC_OPP_57: Flat /opportunities/ & /quotes/ API endpoints should require auth [tripwire: BUG-E BAC inconsistency]")
+    // BUG-E RETRACTED 2026-08-08 — it was never real. This test used to assert that the flat
+    // /opportunities/ and /quotes/ paths must return 401/403, and reported their 200 as a
+    // broken-access-control inconsistency ("a null-field template"). Measured directly:
+    //
+    //     GET /api/opportunities/  -> 200 text/html  2089 bytes
+    //     GET /api/quotes/         -> 200 text/html  2089 bytes
+    //     GET /api/accounts/       -> 200 text/html  2089 bytes   (byte-identical)
+    //     GET /api/assets/         -> 200 text/html  2089 bytes
+    //     GET /api/issues/         -> 200 text/html  2089 bytes
+    //
+    // There is no null-field JSON template. All of them are the SAME SPA index.html: unmatched
+    // paths under /api fall through to the app's catch-all. These are not API routes at all, so
+    // there is no auth to enforce on them and nothing inconsistent about the scoped sibling
+    // returning 401. Asserting 401 here manufactured a security finding out of a static HTML page.
+    //
+    // Rewritten to test the property that actually matters and is falsifiable: an unauthenticated
+    // request must never come back with opportunity or quote DATA. That would catch a genuine BAC;
+    // the old assertion could not, and fired constantly on correct behaviour.
+    @Test(priority = 63,
+          description = "TC_OPP_57: Unauthenticated requests never return opportunity/quote data")
     public void testOpp57_ApiFlatEndpointsShouldRequireAuth() {
         ExtentReportManager.createTest(MODULE, "API Security", "Opp_57_FlatEndpointAuth");
         RestAssured.baseURI = AppConstants.API_BASE_URL;
-        Response flatOpp, flatQuote;
-        try {
-            flatOpp = given().get("/opportunities/");
-            flatQuote = given().get("/quotes/");
-        } catch (Exception e) {
-            throw new SkipException("API host unreachable from this network: " + e.getMessage());
+        String[] paths = {"/opportunities/", "/quotes/"};
+        for (String p : paths) {
+            Response r;
+            try {
+                r = given().get(p);
+            } catch (Exception e) {
+                throw new SkipException("API host unreachable from this network: " + e.getMessage());
+            }
+            String ctype = String.valueOf(r.getContentType()).toLowerCase();
+            String body = r.asString() == null ? "" : r.asString();
+
+            // Gated outright — the strongest outcome, accept it.
+            if (r.statusCode() == 401 || r.statusCode() == 403) {
+                ExtentReportManager.logPass("GET " + p + " gated with " + r.statusCode());
+                continue;
+            }
+            // Otherwise the ONLY acceptable 200 is the SPA shell, which carries no data. If a 200
+            // ever comes back as JSON on these paths, a real route has appeared without auth.
+            Assert.assertTrue(ctype.contains("text/html"),
+                    "BAC: unauthenticated GET " + p + " returned " + r.statusCode()
+                            + " with content-type " + ctype + " (not the SPA shell) — a real API route"
+                            + " is answering without auth. Body: "
+                            + body.substring(0, Math.min(300, body.length())));
+            String lower = body.toLowerCase();
+            Assert.assertFalse(lower.contains("\"opportunities\"") || lower.contains("\"quotes\"")
+                            || lower.contains("\"total_value\"") || lower.contains("\"account_id\""),
+                    "BAC: unauthenticated GET " + p + " leaked domain data in its body: "
+                            + body.substring(0, Math.min(300, body.length())));
+            ExtentReportManager.logPass("GET " + p + " is the SPA catch-all (no API route, no data leak)");
         }
-        Assert.assertTrue(flatOpp.statusCode() == 401 || flatOpp.statusCode() == 403,
-                "BAC: GET /opportunities/ should require auth like /company/{id}/opportunities, but returned "
-                + flatOpp.statusCode() + " unauthenticated.");
-        Assert.assertTrue(flatQuote.statusCode() == 401 || flatQuote.statusCode() == 403,
-                "BAC: GET /quotes/ should require auth, but returned " + flatQuote.statusCode() + " unauthenticated.");
-        ExtentReportManager.logPass("Flat endpoints enforce auth");
     }
 
     @Test(priority = 64, description = "TC_OPP_58: Authenticated scoped opportunity list returns {success, count, opportunities[]} with count==array length")
