@@ -265,47 +265,68 @@ public class BugHuntPagesTestNG extends BaseTest {
 
             logStep("Navigated to SLDs page");
 
-            // Count "Select View" or view-related dropdowns
+            // Count DISTINCT rendered "Select View" dropdowns.
+            //
+            // The previous version counted every element whose textContent equalled "Select View".
+            // textContent includes DESCENDANTS, and each dropdown renders as a nested trio
+            // (div.view-selector > button.view-selector-button > span.view-selector-label) — so ONE
+            // dropdown counted as 3 and the failure message read "6 'Select View' label(s)" when the
+            // page actually had 2 dropdowns. The count was inflated 3x; the duplicate it reported was
+            // nonetheless REAL (verified live 2026-08-08), so the fix here is the arithmetic, not the
+            // assertion.
+            //
+            // Two-step de-duplication:
+            //   1. keep only INNERMOST matches (drop any node that contains another match), and
+            //   2. dedupe by rendered position — two genuinely separate dropdowns occupy different
+            //      coordinates, whereas nested nodes share one bounding box.
             String dropdownCount = (String) js().executeScript(
-                "var selects = document.querySelectorAll('select, [role=\"combobox\"], [role=\"listbox\"]');" +
-                "var viewDropdowns = 0;" +
-                "var allDropdowns = selects.length;" +
-                // Check for elements containing "Select View" text (targeted for performance)
-                "var viewElements = document.querySelectorAll(" +
-                "  'button, label, span, p, div[class*=select], div[class*=Select], " +
-                "  [class*=MuiSelect], [class*=dropdown], [class*=Dropdown], option');" +
-                "var selectViewCount = 0;" +
-                "for (var i = 0; i < viewElements.length; i++) {" +
-                "  var text = viewElements[i].textContent.trim();" +
-                "  if (text === 'Select View' || text === 'Select view') {" +
-                "    selectViewCount++;" +
-                "  }" +
-                "}" +
-                // Also check for MUI Select components with "view" labels
-                "var muiSelects = document.querySelectorAll('[class*=MuiSelect], [class*=select]');" +
-                "return 'selectViewLabels=' + selectViewCount + ',comboboxes=' + allDropdowns + " +
-                "  ',muiSelects=' + muiSelects.length;");
+                "var sel = 'button, label, span, p, div[class*=select], div[class*=Select],"
+                + " [class*=MuiSelect], [class*=dropdown], [class*=Dropdown], option';"
+                + "var raw = [].slice.call(document.querySelectorAll(sel)).filter(function(e){"
+                + "  var t = e.textContent.trim(); return t === 'Select View' || t === 'Select view';"
+                + "});"
+                + "var innermost = raw.filter(function(e){"
+                + "  return !raw.some(function(o){ return o !== e && e.contains(o); });"
+                + "});"
+                + "var visible = innermost.filter(function(e){"
+                + "  var r = e.getBoundingClientRect();"
+                + "  return r.width > 0 && r.height > 0 && e.offsetParent !== null;"
+                + "});"
+                + "var seen = {}, positions = [];"
+                + "visible.forEach(function(e){"
+                + "  var r = e.getBoundingClientRect();"
+                + "  var k = Math.round(r.x) + ',' + Math.round(r.y);"
+                + "  if (!seen[k]) { seen[k] = 1; positions.push(k); }"
+                + "});"
+                + "return 'distinctDropdowns=' + positions.length"
+                + "     + ',rawTextMatches=' + raw.length"
+                + "     + ',positions=[' + positions.join(' | ') + ']'"
+                + "     + ',comboboxes=' + document.querySelectorAll('select, [role=\"combobox\"], [role=\"listbox\"]').length;");
 
             logStep("Dropdown analysis: " + dropdownCount);
             logStepWithScreenshot("SLDs page — checking for duplicate dropdowns");
 
-            int selectViewLabels = 0;
+            int distinctDropdowns = 0;
             for (String part : dropdownCount.split(",")) {
-                if (part.startsWith("selectViewLabels="))
-                    selectViewLabels = Integer.parseInt(part.split("=")[1]);
+                if (part.startsWith("distinctDropdowns="))
+                    distinctDropdowns = Integer.parseInt(part.split("=")[1].trim());
             }
 
-            logStep("Select View label count: " + selectViewLabels);
+            logStep("Distinct 'Select View' dropdowns: " + distinctDropdowns);
 
-            // Regression watchdog: at most one 'Select View' label should ever
-            // be visible. The bug was duplicate rendering (>=2 labels).
-            Assert.assertTrue(selectViewLabels <= 1,
-                    "BUG-026 REGRESSION: " + selectViewLabels +
-                    " 'Select View' label(s) detected — duplicate dropdown is back. " +
-                    dropdownCount);
+            // Regression watchdog: the page heading is "Select a View to Load Assets" (singular) and
+            // there is no grid/list here, so exactly ONE view selector should render.
+            Assert.assertTrue(distinctDropdowns <= 1,
+                    "BUG-026 REGRESSION: " + distinctDropdowns + " separate 'Select View' dropdowns are"
+                    + " rendered at different screen positions — the duplicate is back. " + dropdownCount
+                    + ". VERIFIED live 2026-08-08: two div.view-selector trees in DIFFERENT DOM subtrees"
+                    + " (not a shared parent, not inside any row/card, sldRowCount=0), so this is not a"
+                    + " per-row control. Likely the SAME double-mount as SLD-BUG-14 (the app mounts two"
+                    + " diagram components and loads every node into both) — fixing that should remove"
+                    + " this selector too.");
 
-            ExtentReportManager.logPass("BUG-026 fix holds: " + selectViewLabels +
-                    " 'Select View' label(s) — duplicate render gone. " + dropdownCount);
+            ExtentReportManager.logPass("BUG-026 fix holds: " + distinctDropdowns +
+                    " 'Select View' dropdown — duplicate render gone. " + dropdownCount);
 
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("BUG026_slds_error");

@@ -29,9 +29,27 @@ left RED on purpose (never softened) and linked here.
   plus `aria-required-children`, `scrollable-region-focusable`, `listitem`,
   `aria-input-field-name`.
 - **Repro / evidence:** [ready-bug/2026-06-03-app-wide-wcag-violations.md](ready-bug/2026-06-03-app-wide-wcag-violations.md)
-- **Quarantined-red tests:** `Phase4QualityGatesTestNG.testRouteAccessibility` (per route).
-- **Fix hint:** add `aria-label` to the shared `IconButton`s + DataGrid toolbar; raise theme
-  contrast for secondary/disabled text; label the shared `CircularProgress`.
+  and [docs/bug-evidence/a11y-shared-chrome-wcag/EVIDENCE.md](docs/bug-evidence/a11y-shared-chrome-wcag/EVIDENCE.md)
+- **Quarantined-red tests:** `Phase4QualityGatesTestNG.testRouteAccessibility` (per route),
+  `AccountsTestNG.testAcc14_Accessibility`, `OpportunitiesTestNG.testOpp43_Accessibility`.
+- **PINNED TO EXACT NODES 2026-08-08 — and they are OURS, not third-party.** "28/28 routes" is
+  explained: the worst offenders live in **shared chrome**, so every route inherits them. Verified
+  byte-identical on `/customers` and `/assets`:
+  | axe rule | Impact | Node | Owner |
+  |---|---|---|---|
+  | `listitem` | serious | `li.MuiListItem-root` **"Legacy Procedures"** whose parent is a `div.MuiBox-root`, inside `MuiDrawer`/`nav` | app sidebar |
+  | `button-name` | critical | `button.MuiFab-root` under `div#root`, no accessible name | app (global FAB) |
+  | `button-name` | critical | `button.MuiIconButton-root`, icon-only, no `aria-label` | app (page-level, count varies) |
+  The app embeds Beamer and DevRev (both in the CSP allow-list, both present in the DOM) but **no
+  violating node belongs to either** — so this cannot be deferred as a third-party problem.
+- **Fix hint:** (1) wrap the sidebar nav items in a `<ul>` (or give the container `role="list"`) —
+  an `<li>` inside a `<div>` is invisible to screen-reader list navigation; (2) add `aria-label` to
+  the global `MuiFab` and the shared icon-only `IconButton`s; (3) raise theme contrast for
+  secondary/disabled text; (4) label the shared `CircularProgress`.
+- **Test-suite note:** because these are shared chrome, a whole-page scan re-reported them in every
+  module and, in `TC_OPP_30`, threw *before* the functional assertions so the quote-editor tabs went
+  untested. Functional tests now use `A11yVerifier.assertNoPageSpecificViolations` (shared chrome
+  excluded); the dedicated a11y tripwires keep whole-page scope.
 
 ## BUG-C (cross-repo, iOS backend) — `/auth/v2/me` rejects a valid token (HIGH)
 - **What:** A valid login token is accepted by `GET /accounts/` (200) but rejected by
@@ -87,6 +105,26 @@ left RED on purpose (never softened) and linked here.
   `/api/account/v2`. Both are out of `known-product-bug` and expected **green**.
 - **Still genuinely proven:** `testOpp56` (scoped endpoint enforces 401 for both a real and a bogus
   company id) and `testOpp58` (authed list schema). Auth enforcement on the real routes is fine.
+
+## BUG-026 (REGRESSED) — `/slds`: the duplicate "Select View" dropdown is back (MEDIUM)
+- **What:** `/slds` renders **two** separate "Select View" dropdowns at different screen positions,
+  on a page whose own heading is **"Select a View to Load Assets"** (singular).
+- **Verified live 2026-08-08** — and specifically checked against the by-design explanation:
+  - two `div.view-selector > button.view-selector-button > span.view-selector-label` trees;
+  - rendered at **`x=789,y=395`** and **`x=339,y=432`** — different subtrees, `sharedParent=false`,
+    at different DOM depths under `div.app`;
+  - **not** a per-row control: `sldRowCount=0`, and neither is inside any row/card/list item;
+  - both visible (`offsetParent != null`, non-zero bounding boxes).
+- **Likely root cause — same double-mount as SLD-BUG-14** (see BUG-G: "the app mounts TWO diagram
+  components and lays out every node into both — Wild Goose loaded 490 nodes into BOTH"). Two
+  view-selectors in two subtrees is exactly that fingerprint. Fixing the double-mount should remove
+  this selector too; worth treating as one defect, not two.
+- **Found by:** `BugHuntPagesTestNG.testBUG026_SLDsDuplicateDropdown` — **correctly red.**
+- **Counting corrected 2026-08-08 (the finding stands, the number did not):** the test previously
+  counted every element whose `textContent` equalled "Select View". `textContent` includes
+  descendants and each dropdown is a nested trio, so it reported **"6 labels"** for **2 dropdowns** —
+  inflated 3×. It now keeps only innermost matches and dedupes by rendered position, reporting
+  `distinctDropdowns=2, rawTextMatches=6, positions=[789,395 | 339,432]`. Still fails, as it should.
 
 ## BUG-F — Goals (and SALES pages): "notes" fetch returns HTML → severe-error storm (MEDIUM, intermittent)
 - **What:** On `/goals` the client's notes fetch intermittently receives **HTML (the SPA `<!DOCTYPE …>`
