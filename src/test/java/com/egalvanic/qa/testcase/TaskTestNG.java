@@ -1242,10 +1242,27 @@ public class TaskTestNG extends BaseTest {
         logStep("Results for '" + token + "': " + rows + " rows (token visible on page: " + tokenVisible + ")");
         logStepWithScreenshot("Search results");
 
+        // SELF-DIAGNOSING. A zero-result search has two very different causes and the test must not
+        // conflate them (it reported a "real search defect" twice on 2026-08-06/07 without proving
+        // one). Clear the filter and look again: if the token is ALSO gone from the unfiltered grid,
+        // the row simply changed under us — another task test, or a cleanup, removed it — which is
+        // data churn, not a product bug. Only a token that is still listed while search returns
+        // nothing is a genuine search defect.
+        if (rows == 0 || !tokenVisible) {
+            typeIntoSearch("");
+            pause(2500);
+            boolean stillInGrid = getPageText().toLowerCase().contains(token.toLowerCase());
+            if (!stillInGrid) {
+                throw new SkipException("Task '" + token + "' is no longer in the unfiltered grid — "
+                        + "the row changed under the test (data churn), so this says nothing about search.");
+            }
+            Assert.fail("SEARCH DEFECT: '" + token + "' is present in the unfiltered task grid, but "
+                    + "searching for it returned " + rows + " row(s) after ~15s of polling.");
+        }
+
         Assert.assertTrue(rows > 0 && tokenVisible,
                 "Searching a title token that EXISTS in the grid ('" + token + "') must return the "
-                + "matching task — got " + rows + " rows, token visible=" + tokenVisible
-                + " after polling ~15s (settled result, so this would be a real search defect)");
+                + "matching task — got " + rows + " rows, token visible=" + tokenVisible);
 
         // Clear search
         typeIntoSearch("");
