@@ -160,8 +160,42 @@ public class BaseAPITest {
     protected RequestSpecification getRequestSpec() {
         return given()
                 .contentType(ContentType.JSON)
-                .header("Accept", "application/json");
+                .header("Accept", "application/json")
+                .filter(SPA_SHELL_WARNING);
     }
+
+    /**
+     * Loudly flags any API response that is actually the SPA's index.html.
+     *
+     * WHY THIS EXISTS: unmatched paths under {@code /api} do NOT 404 — they fall through to the
+     * app's catch-all and return {@code 200 text/html} (the ~2KB app shell). An API test that probes
+     * a path which does not exist therefore gets a perfectly ordinary-looking 200, and can conclude
+     * anything at all from it. This produced TWO fabricated Broken-Access-Control findings that were
+     * filed as real product defects (BUG-E, and TC_ACC's flat-endpoint test — both retracted
+     * 2026-08-08): they asserted "must be 401" against a static HTML page, so they could never pass.
+     *
+     * The direction that is easy to miss: the same trap produces false PASSES just as readily. A test
+     * asserting {@code statusCode() != 200} to prove a route is gated will happily "pass" against the
+     * SPA shell even if the real route has genuinely lost its auth guard.
+     *
+     * REST Assured gives no per-response hook, so this filter prints the warning centrally for every
+     * request built through {@link #getRequestSpec()}. Grep runs for "SPA SHELL" to catch the trap.
+     */
+    private static final io.restassured.filter.Filter SPA_SHELL_WARNING =
+            (requestSpec, responseSpec, ctx) -> {
+                Response r = ctx.next(requestSpec, responseSpec);
+                try {
+                    String ct = String.valueOf(r.getContentType()).toLowerCase();
+                    if (ct.contains("text/html")) {
+                        System.out.println("[API] *** SPA SHELL *** " + requestSpec.getMethod() + " "
+                                + requestSpec.getURI() + " -> " + r.getStatusCode()
+                                + " text/html. This path has NO API handler, so its status code says"
+                                + " NOTHING about auth or behaviour. Do not assert on it — verify the"
+                                + " real route first (see the BUG-E retraction in BUGS.md).");
+                    }
+                } catch (Exception ignored) { /* never let diagnostics break a test */ }
+                return r;
+            };
 
     /**
      * Create an authenticated request specification.
