@@ -106,7 +106,36 @@ public class BaseTest {
         ScreenshotUtil.cleanupOldScreenshots(7);
     }
 
-    @AfterSuite
+    /**
+     * Suite-level teardown — final report flush + the report email.
+     *
+     * <p><b>alwaysRun = true</b> is the root-cause fix for the lost-Detailed-Report defect.
+     * TestNG records a failed configuration method against its <em>declaring</em> class, and
+     * under the default {@code configfailurepolicy=skip} it then skips every other
+     * non-{@code alwaysRun} configuration method on that class. Because {@code classSetup}
+     * ({@code @BeforeClass}) and this {@code @AfterSuite} are both declared on
+     * {@code BaseTest}, a failing {@code @BeforeClass} suppressed this method — and with it
+     * the only {@code flushReports()} call, so no Detailed Report HTML was ever written.</p>
+     *
+     * <p><b>Position matters, which is what makes this defect so intermittent.</b> A later
+     * <em>successful</em> {@code @BeforeClass} on the same declaring class clears the failure
+     * record, so a mid-suite failure is "healed" and {@code @AfterSuite} still runs. Only a
+     * failure in the LAST {@code <test>} block leaves the record dirty at suite end. Verified
+     * against this project's TestNG 7.8.0 with a standalone repro mirroring the real shape
+     * (base class + subclass that {@code @Override}s {@code classSetup} and throws): failing
+     * class first → {@code @AfterSuite} ran; failing class last → it did NOT run; with
+     * {@code alwaysRun = true} it ran in both.</p>
+     *
+     * <p>Evidence: CI run 31233370537 "Dashboard + BugHunt" — 271 tests executed and surefire
+     * finished normally, 14 configuration methods were skipped, and the group produced zero
+     * {@code reports/detail-report/*.html}. The failing class,
+     * {@code ArcFlashEngineeringE2ETestNG}, was the suite's LAST {@code <test>} block.</p>
+     *
+     * <p>{@code alwaysRun} alone is not the whole fix: it cannot help when the JVM dies before
+     * suite end. The incremental per-class flush in {@link #classTeardown()} is the belt to
+     * this braces.</p>
+     */
+    @AfterSuite(alwaysRun = true)
     public void suiteTeardown() {
         ExtentReportManager.flushReports();
 
@@ -330,10 +359,38 @@ public class BaseTest {
         FlakinessPrevention.installNetworkInterceptor(driver);
     }
 
-    @AfterClass
+    /**
+     * Class-level teardown.
+     *
+     * <p><b>alwaysRun = true</b> is load-bearing: TestNG's default
+     * {@code configfailurepolicy=skip} skips the remaining configuration methods of a class
+     * whose {@code @BeforeClass} failed, which previously left ChromeDriver processes
+     * orphaned on the CI runner (seen in run 31233370537: "Terminate orphan process:
+     * chromedriver / chrome" at job cleanup after
+     * {@code ArcFlashEngineeringE2ETestNG.classSetup} failed).</p>
+     */
+    @AfterClass(alwaysRun = true)
     public void classTeardown() {
+        // Persist the Extent HTML NOW, not only at @AfterSuite. ExtentReports holds the
+        // whole run in memory until flush(), so a suite that never reaches @AfterSuite —
+        // skipped config, killed JVM, cancelled job — loses 100% of its Detailed Reports.
+        // flush() rewrites the HTML from the in-memory model, so calling it per class is
+        // idempotent; each call just supersedes the file with a more complete one.
+        // Deliberately BEFORE driver.quit() so evidence lands even if quit() hangs.
+        try {
+            ExtentReportManager.flushDetailedReportsOnly();
+        } catch (Throwable t) {
+            // Never let report bookkeeping fail a test run.
+            System.out.println("[ExtentReport] incremental flush failed (non-fatal): " + t);
+        }
+
         if (driver != null) {
-            driver.quit();
+            try {
+                driver.quit();
+            } catch (Exception ignored) {
+                // A dead/unreachable browser must not turn into a config failure that
+                // cascades into the rest of the suite's teardown.
+            }
             driver = null;
         }
     }

@@ -120,6 +120,51 @@ jobs:
             reports/detail-report/
           retention-days: 14
 
+      # ──────────────────────────────────────────────
+      # CUSTOMER BUG REPORT — one shareable PDF (+ DOCX) per run: every failed
+      # test case becomes a formal bug (Title / Environment / Preconditions /
+      # Steps to Reproduce / Actual / Expected / Severity / Priority) with the
+      # REAL executed steps embedded.
+      # Staged into bug-report-input/ so only THIS run's evidence is scanned.
+      # testng-results.xml source: target/surefire-reports/ — this workflow runs
+      # Maven directly (no dashboard script), so there is no reports/groups or
+      # reports/modules tree. This suite is API-only (no browser) so there are no
+      # screenshots; steps/stack traces come from the ExtentSpark detail reports.
+      # --max-bugs caps the PDF: the per-cell matrix is 791 tests, and a broad
+      # RBAC regression would otherwise emit a bug chapter for every one of them.
+      # ──────────────────────────────────────────────
+      - name: Generate customer bug report (PDF + DOCX)
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 -m pip install --quiet reportlab pillow python-docx defusedxml \
+            || python3 -m pip install --quiet --break-system-packages reportlab pillow python-docx defusedxml
+          mkdir -p bug-report-input/reports bug-report-input/test-output
+          cp -r target/surefire-reports bug-report-input/reports/ 2>/dev/null || true
+          cp -r reports/detail-report   bug-report-input/reports/ 2>/dev/null || true
+          cp -r test-output/screenshots bug-report-input/test-output/ 2>/dev/null || true
+          python3 .github/scripts/customer-bug-report.py \
+            bug-report-input reports/customer-bug-report \
+            --title "Customer Bug Report — RBAC Permission Suite (run ${{ github.run_number }})" \
+            --label "RBAC permission matrix (API-only, no screenshots)" \
+            --max-bugs 200 \
+            --run-number "${{ github.run_number }}" \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --run-date "$(date -u '+%Y-%m-%d %H:%M UTC')"
+          if ls reports/customer-bug-report/*.pdf >/dev/null 2>&1; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "- **Customer Bug Report (PDF + DOCX)**: every failed test as a formal bug with real steps — artifact \`customer-bug-report-rbac-api\`" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload customer bug report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: customer-bug-report-rbac-api
+          path: reports/customer-bug-report/
+          retention-days: 30
+          if-no-files-found: warn
+
       - name: Fail job if any RBAC test case failed
         if: always()
         run: |

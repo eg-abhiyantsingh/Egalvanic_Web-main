@@ -115,6 +115,47 @@ jobs:
             test-output/screenshots/
           retention-days: 14
 
+      # ──────────────────────────────────────────────
+      # CUSTOMER BUG REPORT — one shareable PDF (+ DOCX) per run: every failed
+      # test case becomes a formal bug (Title / Environment / Preconditions /
+      # Steps to Reproduce / Actual / Expected / Severity / Priority) with the
+      # REAL executed steps and failure screenshots embedded.
+      # Staged into bug-report-input/ so only THIS run's evidence is scanned.
+      # testng-results.xml source: target/surefire-reports/ — this workflow runs
+      # Maven directly (no dashboard script), so there is no reports/groups or
+      # reports/modules tree.
+      # ──────────────────────────────────────────────
+      - name: Generate customer bug report (PDF + DOCX)
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 -m pip install --quiet reportlab pillow python-docx defusedxml \
+            || python3 -m pip install --quiet --break-system-packages reportlab pillow python-docx defusedxml
+          mkdir -p bug-report-input/reports bug-report-input/test-output
+          cp -r target/surefire-reports bug-report-input/reports/ 2>/dev/null || true
+          cp -r reports/detail-report   bug-report-input/reports/ 2>/dev/null || true
+          cp -r test-output/screenshots bug-report-input/test-output/ 2>/dev/null || true
+          python3 .github/scripts/customer-bug-report.py \
+            bug-report-input reports/customer-bug-report \
+            --title "Customer Bug Report — RBAC UI Gating Suite (run ${{ github.run_number }})" \
+            --label "RBAC UI gating (per-role nav visibility)" \
+            --run-number "${{ github.run_number }}" \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --run-date "$(date -u '+%Y-%m-%d %H:%M UTC')"
+          if ls reports/customer-bug-report/*.pdf >/dev/null 2>&1; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "- **Customer Bug Report (PDF + DOCX)**: every failed test as a formal bug with real steps + screenshots — artifact \`customer-bug-report-rbac-ui\`" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload customer bug report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: customer-bug-report-rbac-ui
+          path: reports/customer-bug-report/
+          retention-days: 30
+          if-no-files-found: warn
+
       - name: Fail job if any UI gating test failed
         if: always()
         run: |

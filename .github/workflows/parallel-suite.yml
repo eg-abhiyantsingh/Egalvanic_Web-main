@@ -565,7 +565,8 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          python3 -m pip install --quiet reportlab pillow python-docx defusedxml
+          python3 -m pip install --quiet reportlab pillow python-docx defusedxml \
+            || python3 -m pip install --quiet --break-system-packages reportlab pillow python-docx defusedxml
           python3 .github/scripts/customer-bug-report.py \
             all-reports reports/customer-bug-report \
             --title "Customer Bug Report — Parallel Full Suite (run ${{ github.run_number }})" \
@@ -744,6 +745,47 @@ jobs:
           echo "STILL_FAILING=${STILL}" >> "$GITHUB_ENV"
           echo "BEFORE_FAILING=${{ needs.summary.outputs.total_failed }}" >> "$GITHUB_ENV"
 
+      # ──────────────────────────────────────────────
+      # AFTER-RERUN CUSTOMER BUG REPORT — the customer-ready deliverable:
+      # ONLY tests that failed the parallel pass AND the clean re-run become
+      # bugs (reproducible, not flaky); recovered tests go to an appendix.
+      # Steps/screenshots come from the re-run's fresh detailed reports when
+      # available, falling back to the first pass.
+      # NOTE: this MUST stay ahead of "Generate AFTER-RERUN consolidated client
+      # report" — that step is the one that sends the email, and it attaches the
+      # PDF produced here (--attach). Reordering these two breaks the email
+      # attachment (the script would just warn "attachment not found").
+      # ──────────────────────────────────────────────
+      - name: Generate AFTER-RERUN customer bug report (PDF + DOCX)
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 -m pip install --quiet reportlab pillow python-docx defusedxml \
+            || python3 -m pip install --quiet --break-system-packages reportlab pillow python-docx defusedxml
+          python3 .github/scripts/customer-bug-report.py \
+            all-reports reports/customer-bug-report-rerun \
+            --rerun-results rerun-results \
+            --rerun-detail reports/detail-report \
+            --extra-screenshots test-output/screenshots \
+            --title "Customer Bug Report — Parallel Full Suite (run ${{ github.run_number }}, after re-run)" \
+            --label "after re-run — reproducible failures only (recovered/flaky tests in appendix)" \
+            --run-number "${{ github.run_number }}" \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --run-date "$(date -u '+%Y-%m-%d %H:%M UTC')"
+
+      - name: Upload AFTER-RERUN customer bug report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: customer-bug-report-after-rerun
+          path: reports/customer-bug-report-rerun/
+          retention-days: 30
+          if-no-files-found: warn
+
+      # Sends the AFTER-RERUN email — the customer deliverable. Carries the
+      # consolidated client report + the customer bug-report PDF/DOCX generated
+      # above. A missing or oversized attachment is warned about and skipped, so
+      # a failed bug-report step can never block this email.
       - name: Generate AFTER-RERUN consolidated client report
         if: always()
         env:
@@ -756,7 +798,9 @@ jobs:
           python3 .github/scripts/consolidated-report.py \
             all-reports \
             reports/client-report-rerun/Consolidated_Client_Report_AfterRerun.html \
-            --rerun-dir rerun-results
+            --rerun-dir rerun-results \
+            --attach reports/customer-bug-report-rerun/Customer_Bug_Report.pdf \
+            --attach reports/customer-bug-report-rerun/Customer_Bug_Report.docx
 
       - name: Generate AFTER-RERUN client-ready report
         if: always()
@@ -799,38 +843,6 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
 
-      # ──────────────────────────────────────────────
-      # AFTER-RERUN CUSTOMER BUG REPORT — the customer-ready deliverable:
-      # ONLY tests that failed the parallel pass AND the clean re-run become
-      # bugs (reproducible, not flaky); recovered tests go to an appendix.
-      # Steps/screenshots come from the re-run's fresh detailed reports when
-      # available, falling back to the first pass.
-      # ──────────────────────────────────────────────
-      - name: Generate AFTER-RERUN customer bug report (PDF + DOCX)
-        if: always()
-        continue-on-error: true
-        run: |
-          python3 -m pip install --quiet reportlab pillow python-docx defusedxml
-          python3 .github/scripts/customer-bug-report.py \
-            all-reports reports/customer-bug-report-rerun \
-            --rerun-results rerun-results \
-            --rerun-detail reports/detail-report \
-            --extra-screenshots test-output/screenshots \
-            --title "Customer Bug Report — Parallel Full Suite (run ${{ github.run_number }}, after re-run)" \
-            --label "after re-run — reproducible failures only (recovered/flaky tests in appendix)" \
-            --run-number "${{ github.run_number }}" \
-            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-            --run-date "$(date -u '+%Y-%m-%d %H:%M UTC')"
-
-      - name: Upload AFTER-RERUN customer bug report
-        if: always()
-        uses: actions/upload-artifact@v4.6.2
-        with:
-          name: customer-bug-report-after-rerun
-          path: reports/customer-bug-report-rerun/
-          retention-days: 30
-          if-no-files-found: warn
-
       - name: Re-run summary
         if: always()
         run: |
@@ -846,4 +858,6 @@ jobs:
             echo "- \`consolidated-detailed-report\` — detailed report **before** re-run"
             echo "- \`consolidated-detailed-report-after-rerun\` — detailed report **after** re-run (merged banner + recovered re-badged + [re-run] modules)"
             echo "- \`customer-bug-report-after-rerun\` — **shareable PDF/DOCX**: one formal bug per reproducible failure (steps + screenshots), recovered/flaky tests in the appendix"
+            echo ""
+            echo "The **After Re-run** email also carries \`Customer_Bug_Report.pdf\` + \`.docx\` as attachments (skipped with a warning if over ~18.8 MB — grab the artifact in that case)."
           } >> "$GITHUB_STEP_SUMMARY"

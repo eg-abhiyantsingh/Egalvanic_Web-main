@@ -7,10 +7,15 @@ HTML client report. Sends one email with the report attached.
 
 Usage:
   python3 consolidated-report.py <results-dir> <output-path>
+                                 [--rerun-dir <dir>] [--attach <file> ...]
 
   results-dir: Directory containing downloaded artifacts.
                Recursively searches for testng-results.xml files.
   output-path: Path for the generated HTML report.
+  --attach:    Extra file to attach to the email (repeatable). Used to ship the
+               customer bug-report PDF/DOCX with the same email. A missing,
+               empty, unreadable or oversized file is warned about and skipped —
+               it never blocks the email.
 
 Environment variables for email:
   SEND_EMAIL_ENABLED  "true" to send email (default: "false")
@@ -34,6 +39,7 @@ import glob
 import smtplib
 import ssl
 import platform
+import mimetypes
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
@@ -698,8 +704,71 @@ def escape_html(text):
 # Email Sending
 # ============================================================
 
-def send_email(report_path, stats):
-    """Send a single email with the consolidated report attached."""
+# Gmail rejects a message whose *encoded* size exceeds ~25 MB. Base64 inflates a
+# binary file by 4/3, and email.encoders.encode_base64 additionally wraps at 76
+# chars, adding a further ~1.3% of line breaks — so a naive 3/4 cap (18.75 MB raw)
+# actually encodes to ~25.3 MB and still bounces, before the HTML body and MIME
+# headers are counted. 0.68 leaves headroom for all three. The cap applies both per
+# file and to the running total, so a multi-MB customer bug-report PDF can never
+# silently produce a 552 "message too large" bounce — it is skipped with a warning
+# and stays available as a CI artifact.
+GMAIL_MESSAGE_LIMIT_BYTES = 25 * 1024 * 1024
+MAX_ATTACHMENT_BYTES = int(GMAIL_MESSAGE_LIMIT_BYTES * 0.68)  # ~17.0 MB of raw bytes
+
+
+def _mb(num_bytes):
+    return f"{num_bytes / (1024 * 1024):.1f}"
+
+
+def build_extra_attachment(path, used_bytes):
+    """Build a base64 MIME part for an --attach file.
+
+    Returns (part, size_bytes), or (None, 0) when the file must be skipped.
+    Never raises: a missing / empty / unreadable / oversized attachment is reported
+    and skipped so the email still goes out with whatever else is valid.
+    """
+    if not path:
+        return None, 0
+    if not os.path.isfile(path):
+        print(f"[Email] WARNING: attachment not found, skipping: {path}")
+        return None, 0
+    try:
+        size = os.path.getsize(path)
+    except OSError as e:
+        print(f"[Email] WARNING: cannot read attachment, skipping: {path} ({e})")
+        return None, 0
+    if size == 0:
+        print(f"[Email] WARNING: attachment is empty (0 bytes), skipping: {path}")
+        return None, 0
+    if size > MAX_ATTACHMENT_BYTES:
+        print(f"[Email] WARNING: attachment is {_mb(size)} MB, over the "
+              f"{_mb(MAX_ATTACHMENT_BYTES)} MB cap — skipping: {path}")
+        print("[Email]          Download it from the workflow run's artifacts instead.")
+        return None, 0
+    if used_bytes + size > MAX_ATTACHMENT_BYTES:
+        print(f"[Email] WARNING: attaching {path} ({_mb(size)} MB) would push this email past the "
+              f"{_mb(MAX_ATTACHMENT_BYTES)} MB total cap ({_mb(used_bytes)} MB already attached) — skipping.")
+        return None, 0
+
+    try:
+        with open(path, 'rb') as f:
+            data = f.read()
+    except OSError as e:
+        print(f"[Email] WARNING: cannot read attachment, skipping: {path} ({e})")
+        return None, 0
+
+    ctype, _ = mimetypes.guess_type(path)
+    maintype, _, subtype = (ctype or 'application/octet-stream').partition('/')
+    part = MIMEBase(maintype or 'application', subtype or 'octet-stream')
+    part.set_payload(data)
+    encoders.encode_base64(part)
+    part.add_header('Content-Disposition', 'attachment', filename=os.path.basename(path))
+    print(f"[Email] Attached: {os.path.basename(path)} ({_mb(size)} MB)")
+    return part, size
+
+
+def send_email(report_path, stats, extra_attachments=None):
+    """Send a single email with the consolidated report (+ any --attach files) attached."""
     send_enabled = os.environ.get('SEND_EMAIL_ENABLED', 'false').lower()
     if send_enabled != 'true':
         print("[Email] SEND_EMAIL_ENABLED is not 'true' — skipping email")
@@ -726,20 +795,44 @@ def send_email(report_path, stats):
     msg['To'] = email_to
     msg['Subject'] = subject
 
-    # HTML body
-    body_html = build_email_body(stats, timestamp)
-    msg.attach(MIMEText(body_html, 'html', 'utf-8'))
+    # Resolve attachments FIRST so the body can name the ones that actually made it in.
+    parts = []
+    used_bytes = 0
+    extra_names = []
 
-    # Attach the consolidated report
+    # The consolidated report itself — unchanged behaviour, always attached when present.
     if os.path.exists(report_path):
         with open(report_path, 'rb') as f:
-            part = MIMEBase('text', 'html')
-            part.set_payload(f.read())
-            encoders.encode_base64(part)
-            report_filename = os.path.basename(report_path)
-            part.add_header('Content-Disposition', f'attachment; filename="{report_filename}"')
-            msg.attach(part)
-            print(f"[Email] Attached: {report_filename}")
+            report_bytes = f.read()
+        part = MIMEBase('text', 'html')
+        part.set_payload(report_bytes)
+        encoders.encode_base64(part)
+        report_filename = os.path.basename(report_path)
+        part.add_header('Content-Disposition', f'attachment; filename="{report_filename}"')
+        parts.append(part)
+        used_bytes += len(report_bytes)
+        print(f"[Email] Attached: {report_filename}")
+
+    # Optional --attach files (e.g. the customer bug-report PDF/DOCX).
+    seen = set()
+    for extra in (extra_attachments or []):
+        key = os.path.realpath(extra)
+        if key in seen:
+            print(f"[Email] Skipping duplicate attachment: {extra}")
+            continue
+        seen.add(key)
+        part, size = build_extra_attachment(extra, used_bytes)
+        if part is None:
+            continue
+        parts.append(part)
+        used_bytes += size
+        extra_names.append(os.path.basename(extra))
+
+    # HTML body first (so mail clients render it as the message), then the attachments.
+    body_html = build_email_body(stats, timestamp, extra_names)
+    msg.attach(MIMEText(body_html, 'html', 'utf-8'))
+    for part in parts:
+        msg.attach(part)
 
     # Send
     try:
@@ -755,8 +848,12 @@ def send_email(report_path, stats):
         print(f"[Email] Failed to send: {e}")
 
 
-def build_email_body(stats, timestamp):
-    """Build HTML email body matching the eGalvanic format."""
+def build_email_body(stats, timestamp, extra_names=None):
+    """Build HTML email body matching the eGalvanic format.
+
+    extra_names: basenames of the --attach files that were actually attached, so the
+    "please find attached" list names them too (empty/None = original wording).
+    """
     date_str = datetime.now().strftime('%B %d, %Y %H:%M')
     plat = f"{platform.system()} {platform.machine()}"
 
@@ -767,6 +864,14 @@ def build_email_body(stats, timestamp):
     else:
         banner_color = '#28a745'
         status_text = 'ALL PASSED'
+
+    # Name any extra attachment (e.g. the customer bug-report PDF) in the "attached" list.
+    extra_items = ''.join(
+        f'\n    <li><strong>{escape_html(name)}</strong></li>'
+        for name in (extra_names or [])
+    )
+    attach_intro = ('Please find the attached test reports:' if extra_items
+                    else 'Please find the attached consolidated test report:')
 
     html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"></head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:#f5f6fa;padding:20px;margin:0;">
@@ -813,9 +918,9 @@ def build_email_body(stats, timestamp):
   </table>
 
   <p style="color:#333;font-size:14px;margin:20px 0 8px;font-weight:500;">
-    Please find the attached consolidated test report:</p>
+    {attach_intro}</p>
   <ul style="color:#555;font-size:13px;margin:0 0 10px 0;padding-left:20px;line-height:1.8;">
-    <li><strong>Consolidated Client Report</strong> (single HTML file covering all modules)</li>
+    <li><strong>Consolidated Client Report</strong> (single HTML file covering all modules)</li>{extra_items}
   </ul>
 """
 
@@ -853,19 +958,25 @@ def main():
     # fresh outcome for each previously-failing test (recovered → PASS, still-broken → FAIL).
     args = sys.argv[1:]
     rerun_dir = None
+    attachments = []
     positionals = []
     i = 0
     while i < len(args):
         if args[i] == '--rerun-dir' and i + 1 < len(args):
             rerun_dir = args[i + 1]; i += 2
+        elif args[i] == '--attach' and i + 1 < len(args):
+            attachments.append(args[i + 1]); i += 2
         else:
             positionals.append(args[i]); i += 1
 
     if len(positionals) < 2:
-        print("Usage: consolidated-report.py <results-dir> <output-path> [--rerun-dir <dir>]")
+        print("Usage: consolidated-report.py <results-dir> <output-path> "
+              "[--rerun-dir <dir>] [--attach <file> ...]")
         print("  results-dir: Directory to search for testng-results.xml files")
         print("  output-path: Path for the consolidated HTML report")
         print("  --rerun-dir: (optional) re-run results that OVERRIDE matching tests in results-dir")
+        print("  --attach:    (optional, repeatable) extra file to attach to the email "
+              "(e.g. Customer_Bug_Report.pdf); missing/oversized files are skipped with a warning")
         sys.exit(1)
 
     results_dir = positionals[0]
@@ -878,6 +989,8 @@ def main():
     print(f"  Output path: {output_path}")
     if rerun_dir:
         print(f"  Re-run override dir: {rerun_dir}")
+    if attachments:
+        print(f"  Extra email attachment(s): {', '.join(attachments)}")
     print()
 
     # 1. Find and parse all testng-results.xml
@@ -924,8 +1037,8 @@ def main():
     print(f"  Total: {stats['total']} | Passed: {stats['passed']} | Failed: {stats['failed']} | Skipped: {stats['skipped']}")
     print(f"  Pass rate: {stats['pass_rate']:.1f}%")
 
-    # 4. Send email
-    send_email(output_path, stats)
+    # 4. Send email (with the consolidated report + any --attach deliverables)
+    send_email(output_path, stats, attachments)
 
     # 5. Write stats to GITHUB_OUTPUT for downstream steps
     github_output = os.environ.get('GITHUB_OUTPUT', '')

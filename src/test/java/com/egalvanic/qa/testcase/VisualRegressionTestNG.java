@@ -124,7 +124,10 @@ public class VisualRegressionTestNG extends BaseTest {
     // CLEANUP
     // ================================================================
 
-    @AfterClass
+    // alwaysRun MUST be repeated here: re-annotating an override drops the base method's
+    // attributes, so without it a failed @BeforeClass would skip this teardown — leaking
+    // the browser AND losing this class's incremental Extent flush (see BaseTest).
+    @AfterClass(alwaysRun = true)
     @Override
     public void classTeardown() {
         VisualRegressionUtil.printSummary();

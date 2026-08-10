@@ -402,21 +402,81 @@ public class ExtentReportManager {
         clientTest.remove();
     }
 
-    public static void flushReports() {
-        // Flush every per-module Detailed Report
+    /**
+     * Write every per-module Detailed Report + the Client Report to disk.
+     *
+     * <p>ExtentReports keeps the whole test tree in memory and only serializes it to HTML
+     * on {@code flush()} — so nothing exists on disk until this runs. {@code flush()}
+     * rewrites each HTML file from the current in-memory model, which makes it idempotent:
+     * calling it repeatedly is safe and each call simply supersedes the previous file with
+     * a more complete one.</p>
+     *
+     * <p>Iteration holds the map's own monitor: {@code Collections.synchronizedMap} only
+     * guards single operations, not {@code entrySet()} traversal, and a parallel suite can
+     * be creating a new module report on another thread while we walk it.</p>
+     *
+     * @param announce print a "generated" line per report (suite-end summary only — the
+     *                 per-class incremental flush stays quiet so it doesn't spam the log)
+     * @return the per-module Detailed Report paths, in creation order
+     */
+    private static List<String> writeReportsToDisk(boolean announce) {
         List<String> detailedPaths = new ArrayList<>();
-        for (Map.Entry<String, ExtentReports> e : detailedByModule.entrySet()) {
-            e.getValue().flush();
-            String path = detailedPathsByModule.get(e.getKey());
-            detailedPaths.add(path);
-            int fails = failsByModule.getOrDefault(e.getKey(), 0);
-            System.out.println("Detailed Report generated for module '" + e.getKey()
-                    + "' (" + fails + " failures): " + path);
+        synchronized (detailedByModule) {
+            for (Map.Entry<String, ExtentReports> e : detailedByModule.entrySet()) {
+                String path = detailedPathsByModule.get(e.getKey());
+                // Per-module try/catch, NOT one around the loop: ExtentReports.flush()
+                // can throw (e.g. ConcurrentModificationException if another thread is
+                // still logging into that module). Containing it here means one bad
+                // module cannot cost us every REMAINING module's evidence plus the
+                // client report — which would defeat the point of flushing early.
+                try {
+                    e.getValue().flush();
+                    detailedPaths.add(path);
+                    if (announce) {
+                        int fails = failsByModule.getOrDefault(e.getKey(), 0);
+                        System.out.println("Detailed Report generated for module '" + e.getKey()
+                                + "' (" + fails + " failures): " + path);
+                    }
+                } catch (Throwable t) {
+                    System.out.println("WARNING: could not flush Detailed Report for module '"
+                            + e.getKey() + "' (" + path + "): " + t);
+                }
+            }
         }
         if (clientReport != null) {
-            clientReport.flush();
-            System.out.println("Client Report generated: " + clientReportPath);
+            try {
+                clientReport.flush();
+                if (announce) {
+                    System.out.println("Client Report generated: " + clientReportPath);
+                }
+            } catch (Throwable t) {
+                System.out.println("WARNING: could not flush Client Report: " + t);
+            }
         }
+        return detailedPaths;
+    }
+
+    /**
+     * Persist the report HTML <em>incrementally</em>, WITHOUT sending the report email.
+     *
+     * <p>"Only" = reports only, no email — it writes the same files {@link #flushReports()}
+     * does. Call this from a class-level teardown so evidence for the classes that already
+     * finished is on disk before anything else can go wrong.</p>
+     *
+     * <p><b>Why this exists.</b> {@link #flushReports()} used to be the single point of
+     * persistence, and it only ran from {@code BaseTest}'s {@code @AfterSuite}. TestNG's
+     * default {@code configfailurepolicy=skip} means one failed {@code @BeforeClass}
+     * declared in {@code BaseTest} causes TestNG to skip the remaining {@code BaseTest}
+     * configuration methods — including that {@code @AfterSuite} — so a whole run's
+     * Detailed Reports were never written even though every test had executed. Flushing
+     * per class means at most one class's worth of evidence can ever be lost.</p>
+     */
+    public static synchronized void flushDetailedReportsOnly() {
+        writeReportsToDisk(false);
+    }
+
+    public static synchronized void flushReports() {
+        List<String> detailedPaths = writeReportsToDisk(true);
 
         // Send report email (if enabled)
         EmailUtil.sendReportEmail(detailedPaths, detailedPathsByModule, failsByModule,

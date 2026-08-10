@@ -188,7 +188,8 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          python3 -m pip install --quiet reportlab pillow python-docx defusedxml
+          python3 -m pip install --quiet reportlab pillow python-docx defusedxml \
+            || python3 -m pip install --quiet --break-system-packages reportlab pillow python-docx defusedxml
           mkdir -p bug-report-input/reports bug-report-input/test-output
           cp -r reports/groups        bug-report-input/reports/ 2>/dev/null || true
           cp -r reports/detail-report bug-report-input/reports/ 2>/dev/null || true

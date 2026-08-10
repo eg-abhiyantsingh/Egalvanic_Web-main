@@ -595,6 +595,17 @@ def normalize_image(spec, max_width, quality):
 SEV_COLORS = {"High": "#c0392b", "Medium": "#b9770e", "Low": "#1e8449"}
 
 
+def empty_reason(args):
+    """What a zero-bug report actually means. 'No bugs' is only trustworthy when we
+    genuinely parsed test results; if no testng-results.xml was found, the evidence is
+    missing and claiming 'all tests passed' would be a false statement to a customer."""
+    if getattr(args, "_invocations_seen", 0) > 0:
+        return f"0 — all {args._invocations_seen} executed test(s) passed"
+    return ("0 — NO TEST RESULTS FOUND in this run's artifacts. This is NOT a "
+            "statement that the application is defect-free: the run's evidence "
+            "could not be read. Check the CI job logs before sharing.")
+
+
 def render_pdf(bugs, recovered, args, out_path):
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4
@@ -655,7 +666,7 @@ def render_pdf(bugs, recovered, args, out_path):
         ["CI run", f"#{args.run_number}  {args.run_url}".strip()],
         ["Bugs in this report", f"{len(bugs)}  ("
          + ", ".join(f"{v} {k}" for k, v in sorted(sev_counts.items())) + ")"
-         if bugs else "0 — all tests passed"],
+         if bugs else empty_reason(args)],
     ]
     if recovered:
         meta_rows.append(["Recovered on re-run (not filed)", str(len(recovered))])
@@ -833,6 +844,8 @@ def render_docx(bugs, recovered, args, out_path):
     p.add_run(f"Generated {args.run_date} · {args.label or 'full run'} · "
               f"{args.environment} — {args.base_url} · CI run #{args.run_number}\n"
               f"{args.run_url}").font.size = Pt(9)
+    if not bugs:
+        d.add_paragraph(empty_reason(args))
     d.add_paragraph(f"Bugs in this report: {len(bugs)}"
                     + (f" · recovered on re-run (not filed): {len(recovered)}"
                        if recovered else ""))
@@ -955,6 +968,12 @@ def main():
     # 1. what failed?
     inv, config_fails = parse_invocations(args.input_dir)
     recovered = []
+    # Keys the re-run actually re-executed AND that failed again. ONLY these may carry the
+    # "reproducible, not flaky" claim. Deriving it from the presence of --rerun-results
+    # instead would stamp that claim on tests the re-run never touched (config failures are
+    # never re-run at all, and an empty rerun dir would mark every bug reproducible) - a
+    # fabricated statement in a document that gets emailed to a customer.
+    reproduced_keys = set()
     if args.rerun_results:
         rerun_inv, rerun_cfg = parse_invocations(args.rerun_results)
         orig_failed = {k for k, r in inv.items() if r["status"] == "FAIL"}
@@ -965,16 +984,29 @@ def main():
         recovered = sorted(short_key(k) for k in orig_failed
                            if rerun_inv.get(k, {}).get("status") == "PASS")
         records = {k: merged[k] for k in failed_keys}
+        reproduced_keys = {k for k in failed_keys
+                           if rerun_inv.get(k, {}).get("status") == "FAIL"}
         # a config failure counts as cleared if the re-run has any result for its class
         rerun_classes = {k[0] for k in rerun_inv}
         config_fails = {k: v for k, v in config_fails.items()
                         if k[0] not in rerun_classes or k in rerun_cfg}
         config_fails.update(rerun_cfg)
+        if not rerun_inv:
+            print("  WARNING: --rerun-results given but no re-run results were found - "
+                  "no bug will be marked 'reproduced on re-run'.")
     else:
         records = {k: r for k, r in inv.items() if r["status"] == "FAIL"}
 
+    # Remember how much evidence we actually read, so a zero-bug report can tell
+    # "everything passed" apart from "we found no results at all" (see empty_reason).
+    args._invocations_seen = len(inv)
+    if not inv:
+        print("  WARNING: no testng-results.xml found under "
+              f"{args.input_dir} — the report cannot claim the run was clean.")
+
     print(f"[customer-bug-report] failed test invocations: {len(records)} "
-          f"| failed configs: {len(config_fails)} | recovered on re-run: {len(recovered)}")
+          f"| failed configs: {len(config_fails)} | recovered on re-run: {len(recovered)}"
+          + (f" | re-confirmed by re-run: {len(reproduced_keys)}" if args.rerun_results else ""))
 
     # 2. evidence
     items = parse_extent_items(args.input_dir)
@@ -995,14 +1027,16 @@ def main():
             if item:
                 item["used"] = True
             bugs.append(build_bug(rec, item, shots, args,
-                                  reproduced_on_rerun=bool(args.rerun_results)))
+                                  reproduced_on_rerun=key in reproduced_keys))
         except Exception as e:
             print(f"  WARNING: bug build failed for {short_key(key)}: {e}")
     for key in sorted(config_fails, key=lambda k: (k[0], k[1])):
         rec = config_fails[key]
         try:
+            # config (setup) methods are never re-run by the failed-tests suite, so a
+            # config bug can never be re-confirmed - never claim it was.
             bugs.append(build_bug(rec, None, shots, args, is_config=True,
-                                  reproduced_on_rerun=bool(args.rerun_results)))
+                                  reproduced_on_rerun=False))
         except Exception as e:
             print(f"  WARNING: config-bug build failed for {short_key(key)}: {e}")
 

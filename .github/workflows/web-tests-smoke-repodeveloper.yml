@@ -190,6 +190,7 @@ jobs:
             echo "### Reports" >> $GITHUB_STEP_SUMMARY
             echo "- **Detailed Report** (QA Team): Download from \`detailed-test-reports\` artifact" >> $GITHUB_STEP_SUMMARY
             echo "- **Client Report** (Presentation): Download from \`client-test-reports\` artifact" >> $GITHUB_STEP_SUMMARY
+            echo "- **Customer Bug Report (PDF + DOCX)**: every failed test as a formal bug with real steps + screenshots — artifact \`customer-bug-report-web-smoke\`" >> $GITHUB_STEP_SUMMARY
           else
             # Single module run — parse TestNG results XML
             RESULTS_XML="target/surefire-reports/testng-results.xml"
@@ -204,6 +205,8 @@ jobs:
               echo "| Passed  | ${PASSED:-0} |" >> $GITHUB_STEP_SUMMARY
               echo "| Failed  | ${FAILED:-0} |" >> $GITHUB_STEP_SUMMARY
               echo "| Skipped | ${SKIPPED:-0} |" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "- **Customer Bug Report (PDF + DOCX)**: every failed test as a formal bug with real steps + screenshots — artifact \`customer-bug-report-web-smoke\`" >> $GITHUB_STEP_SUMMARY
             else
               echo "No test results available." >> $GITHUB_STEP_SUMMARY
             fi
@@ -240,6 +243,45 @@ jobs:
             target/surefire-reports/
             reports/modules/
           retention-days: 14
+
+      # ──────────────────────────────────────────────
+      # CUSTOMER BUG REPORT — one shareable PDF (+ DOCX) per run: every failed
+      # test case becomes a formal bug (Title / Environment / Preconditions /
+      # Steps to Reproduce / Actual / Expected / Severity / Priority) with the
+      # REAL executed steps and failure screenshots embedded.
+      # Staged into bug-report-input/ so only THIS run's evidence is scanned.
+      # testng-results.xml source: BOTH are staged because this workflow has two
+      # execution paths — 'smoke' runs smoke-dashboard.sh (per-module results end
+      # up in reports/modules/module-N-<key>/), while a single smoke-* choice runs
+      # Maven directly and leaves results only in target/surefire-reports/.
+      # ──────────────────────────────────────────────
+      - name: Generate customer bug report (PDF + DOCX)
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 -m pip install --quiet reportlab pillow python-docx defusedxml \
+            || python3 -m pip install --quiet --break-system-packages reportlab pillow python-docx defusedxml
+          mkdir -p bug-report-input/reports bug-report-input/test-output
+          cp -r reports/modules        bug-report-input/reports/ 2>/dev/null || true
+          cp -r target/surefire-reports bug-report-input/reports/ 2>/dev/null || true
+          cp -r reports/detail-report  bug-report-input/reports/ 2>/dev/null || true
+          cp -r test-output/screenshots bug-report-input/test-output/ 2>/dev/null || true
+          python3 .github/scripts/customer-bug-report.py \
+            bug-report-input reports/customer-bug-report \
+            --title "Customer Bug Report — Web Smoke Suite (run ${{ github.run_number }})" \
+            --label "web smoke suite" \
+            --run-number "${{ github.run_number }}" \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --run-date "$(date -u '+%Y-%m-%d %H:%M UTC')"
+
+      - name: Upload customer bug report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: customer-bug-report-web-smoke
+          path: reports/customer-bug-report/
+          retention-days: 30
+          if-no-files-found: warn
 
       # ============================================================
       # STEP 8: Final Status
