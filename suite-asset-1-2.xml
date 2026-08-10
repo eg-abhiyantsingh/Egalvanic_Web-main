@@ -21,6 +21,11 @@
     <test name="Asset — Select or Create Location (Building/Floor/Room cascade) (6 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.AssetLocationTestNG"/>
+            <!-- Guards eg-pz-frontend PR #1127: the "Let's get your assets in" invite must
+                 be held while an Upload Anything job runs, and must FAIL OPEN when the
+                 active-job lookup breaks. Uses fault injection; asserts a positive control
+                 first so a page that never shows the invite cannot pass vacuously. -->
+            <class name="com.egalvanic.qa.testcase.UploadInviteGatingTestNG"/>
         </classes>
     </test>
 

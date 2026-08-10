@@ -133,7 +133,7 @@ jobs:
             {"toggle":"WORK_ORDERS","group":"workorder-issue","name":"Work Order + Issue","xml":"suite-workorder-issue.xml","tests":238,"stagger":20},
             {"toggle":"WORK_ORDERS","group":"workorder-issue-add","name":"Work Order — Add Issue","xml":"suite-workorder-issue-add.xml","tests":4,"stagger":22},
             {"toggle":"WORK_ORDERS","group":"workorder-planning","name":"Work Order Planning","xml":"suite-workorder-planning.xml","tests":32,"stagger":80},
-            {"toggle":"ASSET_1_2","group":"asset-1-2","name":"Asset Parts 1-2","xml":"suite-asset-1-2.xml","tests":69,"stagger":30},
+            {"toggle":"ASSET_1_2","group":"asset-1-2","name":"Asset Parts 1-2","xml":"suite-asset-1-2.xml","tests":70,"stagger":30},
             {"toggle":"ASSET_3","group":"asset-3","name":"Asset Part 3","xml":"suite-asset-3.xml","tests":76,"stagger":40},
             {"toggle":"ASSET_4","group":"asset-4","name":"Asset Part 4","xml":"suite-asset-4.xml","tests":65,"stagger":50},
             {"toggle":"ASSET_5","group":"asset-5","name":"Asset Part 5","xml":"suite-asset-5.xml","tests":76,"stagger":55},
