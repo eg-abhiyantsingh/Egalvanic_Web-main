@@ -25,6 +25,7 @@ most deep bugs come from knowing a contract well enough to notice when it is qui
 | [api-payload-shapes.md](api-payload-shapes.md) | Real response envelopes for the list APIs — the shapes that break naive parsing |
 | [qa-env-test-data.md](qa-env-test-data.md) | QA fixtures: company id, empty sites for onboarding tests, site counts |
 | [browser-testing-techniques.md](browser-testing-techniques.md) | Fault injection, request capture that survives SPA nav, site switching, and the control-first discipline |
+| [scope-hydration-and-role-switching.md](scope-hydration-and-role-switching.md) | Deliberate vs **transitional** 'all', which surfaces are guarded (and why Tasks is an exception), role-switch hydration, and the masked-404 trap |
 
 ## Bug-hunting leads parked here
 
@@ -34,4 +35,5 @@ Things noticed but not yet chased. Each is a candidate for a real finding.
 |---|---|---|
 | `/jobs` renders an empty `<main>` and fires **zero** API calls for a Super Admin | Either a dead route, a flag-gated one, or a genuinely broken page. PR #1127 changed filtering logic here that nobody can observe. | Open — needs a different account/flag to confirm |
 | Dashboard's "Let's get your assets in" invite is unreachable in normal navigation | Dashboard forces `sldId='all'` and the invite bails on `'all'`, so the gating added in PR #1127 has no observable effect there. Dead code, or a latent bug if the bail is ever removed. | Confirmed unreachable 2026-08-10 |
+| Unknown `/api/` paths return **200 + text/html** (SPA shell) instead of 404 | Named by the devs in #1054 and still live. `response.ok` is true and `JSON.parse` fails confusingly, so the next missing endpoint will be just as hard to find. API tests must assert content-type, not just status. | Confirmed 2026-08-10 |
 | Every page logs 7–9 console errors on load (401s on `action-items/counts`, `ops-attention`, `sales-attention`, `issues/open-by-site`) | Known ambient noise, but it means `verifyPageHealth` must keep ignoring them — and a *real* new error can hide in the crowd. | Known; see `project_arc_flash_module` memory |
