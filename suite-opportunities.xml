@@ -26,6 +26,11 @@
         </groups>
         <classes>
             <class name="com.egalvanic.qa.testcase.OpportunitiesTestNG"/>
+            <!-- Guards eg-pz-frontend PR #1127: the FORCED_ALL routes (no site picker)
+                 must never send the topbar site id. Lives here because /opportunities is
+                 the route the defect was found on and SALES already runs in the parallel
+                 suite; the class also covers /emps, /planned-work and /scheduling. -->
+            <class name="com.egalvanic.qa.testcase.ForcedAllPagesScopeTestNG"/>
         </classes>
     </test>
 </suite>
