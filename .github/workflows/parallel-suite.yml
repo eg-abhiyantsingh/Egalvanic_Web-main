@@ -554,6 +554,36 @@ jobs:
           if-no-files-found: ignore
 
       # ──────────────────────────────────────────────
+      # CUSTOMER BUG REPORT — one shareable PDF (+ DOCX) per run: every failed
+      # test case becomes a formal bug (Title / Environment / Preconditions /
+      # Steps to Reproduce / Actual / Expected / Severity / Priority) with the
+      # REAL executed steps and failure screenshots embedded. First-pass edition;
+      # the rerun-failed job produces the after-re-run edition (reproducible
+      # failures only) — that one is the customer-ready deliverable.
+      # ──────────────────────────────────────────────
+      - name: Generate customer bug report (PDF + DOCX)
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 -m pip install --quiet reportlab pillow python-docx defusedxml
+          python3 .github/scripts/customer-bug-report.py \
+            all-reports reports/customer-bug-report \
+            --title "Customer Bug Report — Parallel Full Suite (run ${{ github.run_number }})" \
+            --label "first pass (before re-run; some failures may recover on re-run)" \
+            --run-number "${{ github.run_number }}" \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --run-date "$(date -u '+%Y-%m-%d %H:%M UTC')"
+
+      - name: Upload customer bug report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: customer-bug-report
+          path: reports/customer-bug-report/
+          retention-days: 30
+          if-no-files-found: warn
+
+      # ──────────────────────────────────────────────
       # Combined Step Summary
       # ──────────────────────────────────────────────
       - name: Generate combined summary
@@ -605,6 +635,7 @@ jobs:
             echo ""
             echo "### Reports"
             echo "- **Consolidated Client Report**: Single HTML covering all modules — artifact \`consolidated-client-report\`"
+            echo "- **Customer Bug Report (PDF + DOCX)**: every failed test as a formal bug with steps + screenshots — artifact \`customer-bug-report\` (after-re-run edition: \`customer-bug-report-after-rerun\`)"
             echo "- **Per-group details**: Individual reports in \`reports-{group-name}\` artifacts"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -768,6 +799,38 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
 
+      # ──────────────────────────────────────────────
+      # AFTER-RERUN CUSTOMER BUG REPORT — the customer-ready deliverable:
+      # ONLY tests that failed the parallel pass AND the clean re-run become
+      # bugs (reproducible, not flaky); recovered tests go to an appendix.
+      # Steps/screenshots come from the re-run's fresh detailed reports when
+      # available, falling back to the first pass.
+      # ──────────────────────────────────────────────
+      - name: Generate AFTER-RERUN customer bug report (PDF + DOCX)
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 -m pip install --quiet reportlab pillow python-docx defusedxml
+          python3 .github/scripts/customer-bug-report.py \
+            all-reports reports/customer-bug-report-rerun \
+            --rerun-results rerun-results \
+            --rerun-detail reports/detail-report \
+            --extra-screenshots test-output/screenshots \
+            --title "Customer Bug Report — Parallel Full Suite (run ${{ github.run_number }}, after re-run)" \
+            --label "after re-run — reproducible failures only (recovered/flaky tests in appendix)" \
+            --run-number "${{ github.run_number }}" \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --run-date "$(date -u '+%Y-%m-%d %H:%M UTC')"
+
+      - name: Upload AFTER-RERUN customer bug report
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: customer-bug-report-after-rerun
+          path: reports/customer-bug-report-rerun/
+          retention-days: 30
+          if-no-files-found: warn
+
       - name: Re-run summary
         if: always()
         run: |
@@ -782,4 +845,5 @@ jobs:
             echo "- \`consolidated-client-report-after-rerun\` — client report **after** re-run (merged totals)"
             echo "- \`consolidated-detailed-report\` — detailed report **before** re-run"
             echo "- \`consolidated-detailed-report-after-rerun\` — detailed report **after** re-run (merged banner + recovered re-badged + [re-run] modules)"
+            echo "- \`customer-bug-report-after-rerun\` — **shareable PDF/DOCX**: one formal bug per reproducible failure (steps + screenshots), recovered/flaky tests in the appendix"
           } >> "$GITHUB_STEP_SUMMARY"
