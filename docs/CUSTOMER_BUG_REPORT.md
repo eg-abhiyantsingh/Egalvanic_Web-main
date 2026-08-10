@@ -15,8 +15,10 @@ Open the run in GitHub Actions → **Artifacts** (bottom of the summary page).
 | Parallel Full Suite | `customer-bug-report-after-rerun` | **Send this to the customer.** Only failures that reproduced on a clean re-run. |
 | Parallel Full Suite | `customer-bug-report` | Internal triage — all first-pass failures, including flaky ones. |
 | Parallel Suite 2 | `customer-bug-report-suite2-after-rerun` / `…-suite2` | same split as above |
-| Full Suite (sequential) | `customer-bug-report` | single pass, no re-run |
-| Smoke / RBAC / re-run suites | `customer-bug-report-<suite>` | per-suite editions |
+| Full Suite (sequential) | `customer-bug-report-full-suite` | single pass, no re-run |
+| Smoke | `customer-bug-report-smoke`, `customer-bug-report-web-smoke` | per-suite editions |
+| RBAC | `customer-bug-report-rbac-api` / `-rbac-ui` / `-rbac-login` / `-rbac-manual` | per-suite editions |
+| Re-run failed tests | `customer-bug-report-rerun` | just the re-run subset |
 
 Each artifact contains:
 

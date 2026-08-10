@@ -206,7 +206,9 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4.6.2
         with:
-          name: customer-bug-report
+          # suffixed: parallel-suite.yml already publishes a plain "customer-bug-report",
+          # and "download the customer-bug-report artifact" must name exactly one thing.
+          name: customer-bug-report-full-suite
           path: reports/customer-bug-report/
           retention-days: 30
           if-no-files-found: warn
