@@ -29,10 +29,15 @@ ids: **Cleaning** (21 forms), **NETA Testing** (16), **Insulation Resistance Tes
 
 The reported service is **company-created** — `is_global: false`, `company_id` set, **UUID v4**.
 
-**Consequence:** every company-created service shows an empty Forms dropdown, and there is no
-visible in-product path to attach a form to one. Creating a custom service is the normal
-workflow, so this is the default experience, not an edge case. Even among *global* services,
-only 4 of 13 have any forms.
+**Consequence (observed):** this company-created service shows an empty Forms dropdown, and no
+company-created service on the tenant owns any form. Even among *global* services, only 4 of 13
+have any.
+
+**NOT VERIFIED — do not assert:** whether a form *can* be bound to a company-created service.
+The EG Forms list exposes Title / Form Type / Asset Class / Template and **no Service column**,
+and I found no attach control there — but I did not open the form editor itself, and I did not
+test whether the API accepts `service_id` on write. Treat 'there is no way to attach one' as an
+OPEN QUESTION for the author, not a finding.
 
 ## Secondary UX issue (visible in the report screenshot)
 
@@ -44,8 +49,8 @@ genuinely cannot own forms, hide or disable the field with that reason.
 
 ## Questions for the author
 
-1. Should a **company-created** service be able to own forms? If yes, the attach path is missing
-   (or not surfaced) — that is the actual defect.
+1. Should a **company-created** service be able to own forms? If yes, **where** is a form bound
+   to a service? I could not find that control; that is a question, not an accusation.
 2. If form→service ownership is intended to exist only on the global catalog, should the Forms
    field appear at all on custom services?
 3. Is the red border intentional here, or is the control being treated as invalid-when-empty?
@@ -61,6 +66,21 @@ rows.filter(f => f.service_id).every(f => f.is_global);                         
 
 > Note: use the **unpaginated** endpoint — the paginated shape omits fields (see
 > `2026-08-10-eg-forms-paginated-list-omits-definition.md`).
+
+## Explicitly UNVERIFIED (stated so nobody repeats these as fact)
+
+1. **That the dropdown filters on `service_id`.** This comes from the author's own reply; I did
+   not confirm it in code or in a captured request. Everything here is consistent with it, but
+   it is his premise, not my measurement.
+2. **Whether a form can be attached to a custom service** — see above.
+3. **What the `abhiyant` chip in the report screenshot is.** No form is titled exactly
+   "abhiyant" (nearest: "26 may abhiyant", "abhiyant singh", none bound to this service). Given
+   the dialog's field order it is more likely **Test Equipment** than a form.
+4. The control below.
+
+Also observed: the service page's own Forms panel reads *"This service records its results
+without forms."* Both this service and NETA Testing (which owns 16 forms) are `type: "PM Forms"`,
+so the service **type** does not explain the difference.
 
 ## Prediction worth confirming manually (2 min)
 
