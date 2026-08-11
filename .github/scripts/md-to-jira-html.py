@@ -47,6 +47,7 @@ import mimetypes
 import os
 import re
 import subprocess
+import time
 import sys
 
 # ---------------------------------------------------------------- image embed
@@ -228,8 +229,20 @@ BANNER = ("<div class=\"banner\"><strong>To paste into Jira:</strong> click anyw
           "comment box. The screenshots are embedded in this file, so they travel with the text and "
           "Jira will upload them as attachments.</div>")
 
+# Print styling — keeps screenshots and table rows from being sliced across pages.
+PRINT_CSS = """
+@page{margin:14mm 12mm}
+body{max-width:none;margin:0;font-size:10.5pt}
+h1,h2,h3{page-break-after:avoid;break-after:avoid}
+img{page-break-inside:avoid;break-inside:avoid;max-width:100%;
+border:1px solid #c1c7d0;box-shadow:none}
+table,blockquote,pre.code{page-break-inside:avoid;break-inside:avoid}
+tr{page-break-inside:avoid;break-inside:avoid}
+a{color:#0052cc;text-decoration:none}
+"""
 
-def render(md_path, out_dir):
+
+def render(md_path, out_dir, for_print=False):
     base_dir = os.path.dirname(os.path.abspath(md_path))
     with open(md_path, "r", encoding="utf-8") as fh:
         md = fh.read()
@@ -239,14 +252,130 @@ def render(md_path, out_dir):
     m = re.search(r"^#\s+(.*)$", md, re.M)
     if m:
         title = re.sub(r"[*`]", "", m.group(1))
+    css = CSS + (PRINT_CSS if for_print else "")
+    banner = "" if for_print else BANNER          # irrelevant once it is a PDF
     doc = ("<!doctype html><html><head><meta charset=\"utf-8\">"
            "<title>%s</title><style>%s</style></head><body>%s%s</body></html>"
-           % (html.escape(title), CSS, BANNER, body))
+           % (html.escape(title), css, banner, body))
     os.makedirs(out_dir, exist_ok=True)
-    out_path = os.path.join(out_dir, os.path.splitext(os.path.basename(md_path))[0] + ".html")
+    suffix = ".print.html" if for_print else ".html"
+    out_path = os.path.join(out_dir, os.path.splitext(os.path.basename(md_path))[0] + suffix)
     with open(out_path, "w", encoding="utf-8") as fh:
         fh.write(doc)
     return out_path, stats
+
+
+# ------------------------------------------------------------------------ pdf
+
+CHROME_CANDIDATES = [
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "/Applications/Chromium.app/Contents/MacOS/Chromium",
+    "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+    "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
+]
+
+
+def find_chrome():
+    env = os.environ.get("CHROME_BINARY")
+    if env and os.path.exists(env):
+        return env
+    for p in CHROME_CANDIDATES:
+        if os.path.exists(p):
+            return p
+    return None
+
+
+def to_pdf(md_path, out_dir):
+    """Render to a print-styled HTML, then let Chrome print it to a single PDF.
+
+    Chrome is used headlessly here purely as a PDF renderer — this is not a test
+    run, so it does not conflict with the no-headless rule for Selenium suites.
+    It also runs in its own temp profile, so it will not disturb an open browser.
+    """
+    chrome = find_chrome()
+    if not chrome:
+        print("  no Chrome/Chromium/Edge found — set CHROME_BINARY to a browser binary")
+        return 1
+
+    html_path, stats = render(md_path, out_dir, for_print=True)
+    stem = os.path.splitext(os.path.basename(md_path))[0]
+    pdf_path = os.path.abspath(os.path.join(out_dir, stem + ".pdf"))
+    profile = os.path.join(out_dir, ".chrome-profile")
+
+    # --headless=new is required from Chrome ~112 on; the legacy --headless hangs
+    # indefinitely here (verified on Chrome 151), as does pairing it with
+    # --run-all-compositor-stages-before-draw. Keep this invocation minimal.
+    cmd = [chrome, "--headless=new", "--disable-gpu", "--no-sandbox",
+           "--no-pdf-header-footer",
+           "--user-data-dir=%s" % os.path.abspath(profile),
+           "--print-to-pdf=%s" % pdf_path,
+           "file://%s" % os.path.abspath(html_path)]
+    # Two Chrome behaviours to work around, both verified on Chrome 151:
+    #  1. capture_output() blocks for the whole timeout — Chrome forks updater and
+    #     crash-handler children that inherit the stderr pipe and never close it,
+    #     long after the PDF has been written. So the streams go to a log file.
+    #  2. Chrome then lingers instead of exiting, which wasted 120s per document.
+    #     So rather than waiting on the process, poll for the PDF to be complete
+    #     (a finished PDF ends with %%EOF) and terminate Chrome once it is.
+    log_path = os.path.join(out_dir, ".chrome-print.log")
+    if os.path.exists(pdf_path):
+        os.remove(pdf_path)
+
+    def complete():
+        try:
+            if os.path.getsize(pdf_path) < 2048:
+                return False
+            with open(pdf_path, "rb") as fh:
+                fh.seek(-1024, os.SEEK_END)
+                return b"%%EOF" in fh.read()
+        except OSError:
+            return False
+
+    with open(log_path, "wb") as log:
+        proc = subprocess.Popen(cmd, stdout=log, stderr=log)
+        waited = 0.0
+        while waited < 120:
+            if proc.poll() is not None or complete():
+                break
+            time.sleep(0.4)
+            waited += 0.4
+        if proc.poll() is None:
+            proc.terminate()
+            try:
+                proc.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+
+    if not os.path.exists(pdf_path) or os.path.getsize(pdf_path) < 2048:
+        print("  PDF FAILED for %s" % md_path)
+        try:
+            with open(log_path, "r", errors="replace") as fh:
+                print("  chrome log tail: %s" % fh.read()[-400:])
+        except OSError:
+            pass
+        return 1
+
+    # page count straight from the PDF, so we report what was actually produced
+    pages = 0
+    try:
+        with open(pdf_path, "rb") as fh:
+            blob = fh.read()
+        pages = len(re.findall(rb"/Type\s*/Page[^s]", blob))
+    except OSError:
+        pass
+
+    print("\n%s" % os.path.basename(md_path))
+    print("  -> %s" % pdf_path)
+    print("     %.0f KB, %s page(s), %d screenshot(s) embedded"
+          % (os.path.getsize(pdf_path) / 1024.0, pages or "?", len(stats["embedded"])))
+    if stats["missing"]:
+        print("     !! MISSING: %s" % ", ".join(stats["missing"]))
+        return 1
+    try:
+        os.remove(html_path)                      # intermediate, not worth keeping
+    except OSError:
+        pass
+    return 0
 
 
 # ------------------------------------------------------------------ paste kit
@@ -343,6 +472,8 @@ def main():
     ap.add_argument("--all", action="store_true", help="render every dated report in docs/bug-reports/")
     ap.add_argument("--out", default="docs/jira-export", help="output directory")
     ap.add_argument("--open", dest="do_open", action="store_true", help="open the result in a browser")
+    ap.add_argument("--pdf", action="store_true",
+                    help="produce a single PDF with the screenshots embedded — attach it to Jira")
     ap.add_argument("--paste-kit", action="store_true",
                     help="text + numbered images for Jira (use when HTML paste loses the pictures)")
     ap.add_argument("--copy", type=int, metavar="N",
@@ -371,6 +502,21 @@ def main():
                   % (args.copy, len(images), os.path.basename(src)))
             print("  caption: %s" % (alt or "(none)"))
             print("  -> click the matching marker line in Jira and press Cmd+V")
+        return rc
+
+    if args.pdf:
+        rc = 0
+        made = []
+        for md_path in targets:
+            if not os.path.exists(md_path):
+                print("  SKIP (not found): %s" % md_path); rc = 1; continue
+            rc |= to_pdf(md_path, args.out)
+            made.append(os.path.join(args.out,
+                        os.path.splitext(os.path.basename(md_path))[0] + ".pdf"))
+        if rc == 0:
+            print("\n  Drag the PDF straight onto the Jira ticket — text and screenshots in one file.")
+        if args.do_open and sys.platform == "darwin" and made:
+            subprocess.run(["open"] + [m for m in made if os.path.exists(m)], check=False)
         return rc
 
     if args.paste_kit:
