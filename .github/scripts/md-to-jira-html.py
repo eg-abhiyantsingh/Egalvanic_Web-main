@@ -14,11 +14,27 @@ Jira uploads as attachments automatically.
 No third-party dependencies (no markdown lib, no pandoc) — the converter below
 handles the subset of GFM these reports actually use.
 
+If the HTML paste loses the images
+----------------------------------
+Jira Cloud's editor (ADF) sanitises `data:` URIs out of pasted HTML, so the
+screenshots vanish while the text survives. That is a limitation of Jira, not of
+the HTML. Use --paste-kit instead, which is bulletproof on both Cloud and Server:
+
+  python3 .github/scripts/md-to-jira-html.py REPORT.md --paste-kit
+
+It writes a text version with numbered [SCREENSHOT n] markers plus a flat folder
+of images named in document order, then tells you the command to put each image
+on the clipboard as real PNG data (which every Jira editor accepts):
+
+  python3 .github/scripts/md-to-jira-html.py REPORT.md --copy 1
+
 Usage
 -----
   python3 .github/scripts/md-to-jira-html.py docs/bug-reports/REPORT.md [more.md ...]
   python3 .github/scripts/md-to-jira-html.py --all          # every dated report
   python3 .github/scripts/md-to-jira-html.py REPORT.md --open
+  python3 .github/scripts/md-to-jira-html.py REPORT.md --paste-kit
+  python3 .github/scripts/md-to-jira-html.py REPORT.md --copy 2
 
 Output goes to docs/jira-export/<name>.html and is git-ignored by convention.
 """
@@ -233,6 +249,93 @@ def render(md_path, out_dir):
     return out_path, stats
 
 
+# ------------------------------------------------------------------ paste kit
+
+def find_images(md, base_dir):
+    """Return [(alt, abs_path)] for every image reference, in document order."""
+    found = []
+    for m in re.finditer(r"!\[([^\]]*)\]\(([^)]+)\)", md):
+        alt, src = m.group(1), m.group(2).strip()
+        if re.match(r"^[a-z]+:", src):
+            continue
+        found.append((alt, os.path.normpath(os.path.join(base_dir, src))))
+    return found
+
+
+def strip_for_jira(md, images):
+    """Replace image refs with numbered markers; drop repo-relative link targets."""
+    idx = {"n": 0}
+
+    def marker(m):
+        alt, src = m.group(1), m.group(2).strip()
+        if re.match(r"^[a-z]+:", src):
+            return m.group(0)
+        idx["n"] += 1
+        cap = alt.strip() or os.path.basename(src)
+        return ("\n>>>>>> SCREENSHOT %d — paste here <<<<<<\n_%s_\n" % (idx["n"], cap))
+
+    out = re.sub(r"!\[([^\]]*)\]\(([^)]+)\)", marker, md)
+    # repo-relative links mean nothing in Jira -> keep the label only
+    out = re.sub(r"\[([^\]]+)\]\((?![a-z]+:|#)[^)]+\)", r"\1", out)
+    return out
+
+
+def copy_to_clipboard(path):
+    """Put a PNG on the macOS clipboard as real image data (not a file path)."""
+    if sys.platform != "darwin":
+        print("  --copy is macOS-only; drag the file in instead: %s" % path)
+        return 1
+    script = ('set the clipboard to (read (POSIX file "%s") as %s)'
+              % (os.path.abspath(path), "«class PNGf»"))
+    r = subprocess.run(["osascript", "-e", script], capture_output=True, text=True)
+    if r.returncode != 0:
+        print("  clipboard copy FAILED: %s" % (r.stderr or "").strip())
+        return 1
+    return 0
+
+
+def paste_kit(md_path, out_dir):
+    base_dir = os.path.dirname(os.path.abspath(md_path))
+    stem = os.path.splitext(os.path.basename(md_path))[0]
+    with open(md_path, "r", encoding="utf-8") as fh:
+        md = fh.read()
+    images = find_images(md, base_dir)
+
+    os.makedirs(out_dir, exist_ok=True)
+    txt_path = os.path.join(out_dir, stem + ".jira.md")
+    with open(txt_path, "w", encoding="utf-8") as fh:
+        fh.write(strip_for_jira(md, images))
+
+    img_dir = os.path.join(out_dir, stem + "-images")
+    os.makedirs(img_dir, exist_ok=True)
+    for old in glob.glob(os.path.join(img_dir, "*")):
+        os.remove(old)
+    copied = []
+    for i, (alt, src) in enumerate(images, 1):
+        if not os.path.exists(src):
+            print("  !! missing image %d: %s" % (i, src)); continue
+        dest = os.path.join(img_dir, "%02d-%s" % (i, os.path.basename(src)))
+        with open(src, "rb") as a, open(dest, "wb") as b:
+            b.write(a.read())
+        copied.append((i, alt, dest))
+
+    print("\n%s" % os.path.basename(md_path))
+    print("  text  -> %s" % txt_path)
+    print("  images-> %s/  (%d, numbered in document order)" % (img_dir, len(copied)))
+    print("\n  HOW TO POST THIS TO JIRA")
+    print("  1. Open %s, select all, copy, paste into the Jira comment." % os.path.basename(txt_path))
+    print("     Jira converts the markdown (headings, tables, bold) as you paste.")
+    print("  2. For each >>>>>> SCREENSHOT n <<<<<< marker, run the matching command,")
+    print("     click the marker line in Jira and hit Cmd+V. Then delete the marker line.")
+    for i, alt, _ in copied:
+        print("        python3 .github/scripts/md-to-jira-html.py %s --copy %d   # %s"
+              % (md_path, i, (alt or "")[:52]))
+    print("\n  Alternative: drag everything in %s/ onto the issue at once to attach"
+          % os.path.basename(img_dir))
+    print("  them, then reference by filename. Numbering matches the markers.")
+    return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -240,6 +343,10 @@ def main():
     ap.add_argument("--all", action="store_true", help="render every dated report in docs/bug-reports/")
     ap.add_argument("--out", default="docs/jira-export", help="output directory")
     ap.add_argument("--open", dest="do_open", action="store_true", help="open the result in a browser")
+    ap.add_argument("--paste-kit", action="store_true",
+                    help="text + numbered images for Jira (use when HTML paste loses the pictures)")
+    ap.add_argument("--copy", type=int, metavar="N",
+                    help="put the Nth image of the report on the clipboard as real PNG data")
     args = ap.parse_args()
 
     targets = list(args.files)
@@ -247,6 +354,32 @@ def main():
         targets += sorted(glob.glob("docs/bug-reports/20*.md"))
     if not targets:
         ap.error("give a markdown file, or --all")
+
+    # --copy: clipboard one image, then stop
+    if args.copy is not None:
+        md_path = targets[0]
+        base_dir = os.path.dirname(os.path.abspath(md_path))
+        with open(md_path, "r", encoding="utf-8") as fh:
+            images = find_images(fh.read(), base_dir)
+        if not 1 <= args.copy <= len(images):
+            print("  image %d out of range — this report has %d" % (args.copy, len(images)))
+            return 1
+        alt, src = images[args.copy - 1]
+        rc = copy_to_clipboard(src)
+        if rc == 0:
+            print("  copied image %d/%d to the clipboard: %s"
+                  % (args.copy, len(images), os.path.basename(src)))
+            print("  caption: %s" % (alt or "(none)"))
+            print("  -> click the matching marker line in Jira and press Cmd+V")
+        return rc
+
+    if args.paste_kit:
+        rc = 0
+        for md_path in targets:
+            if not os.path.exists(md_path):
+                print("  SKIP (not found): %s" % md_path); rc = 1; continue
+            rc |= paste_kit(md_path, args.out)
+        return rc
 
     rc = 0
     for md_path in targets:
