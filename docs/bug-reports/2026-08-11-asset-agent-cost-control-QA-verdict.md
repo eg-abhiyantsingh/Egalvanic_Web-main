@@ -71,3 +71,44 @@ way to reach them from QA.
 - Trigger a real bulk extraction via Upload Anything on an empty site and confirm the job reaches
   `imported` (proves the changed Lambda path still completes end-to-end) — but I still could not
   read the ledger or the per-photo decisions, so it only proves "not broken", not "cost reduced".
+
+
+---
+
+## UPDATE — I ran a real bulk extraction on QA (2026-08-11)
+
+Rather than only reasoning about observability, I drove the full Upload Anything -> bulk
+extraction path on the empty site "Test without location" with two purpose-built photos:
+a **detail** GE Spectra nameplate (readable SRPG400A, 400 A, 600 VAC, static-trip) and a
+**wide** whole-switchboard shot -- deliberately mirroring the ticket's ground-truth pair.
+
+**Kickoff:** `POST /api/onboarding/jobs` (multipart, 200) -> job
+`5195f2cf-8ebe-4931-a0c3-c86b842bf9de`, ran on QA, polled via `.../status`.
+
+**Outcome -- `status: succeeded`, `error: null`:**
+- **2 assets extracted, correctly classed: `Circuit Breaker: 1` + `Switchboard: 1`**, 6 attribute
+  values, 2 photos; the breaker was made a child of MSB-1.
+- The in-progress narration explicitly distinguished the two photos --
+  *"Two photos to work with -- a nameplate close-up and a wide switchboard"* -- and the warnings
+  reason about using the nameplate for breaker identity and the wide shot for the board. That is
+  behavioural evidence the **Haiku detail/wide pre-filter ran and labelled correctly** (detail ->
+  breaker identity; wide -> whole-device context), matching the ticket's expected labelling on an
+  equivalent breaker.
+- Screenshot: `docs/bug-evidence/asset-agent-cost-control/EVIDENCE-bulk-extraction-succeeded.png`
+  ("Your onboarding workbook is ready -- 2 Assets, Circuit Breaker: 1, Switchboard: 1").
+
+**Now established (previously unverifiable):**
+- **Item 8 (accuracy not regressed): PASS.** A real extraction on the new **Sonnet** default
+  produced correct classes, parent-child and attributes from a detail+wide pair. The model swap
+  did not break extraction and the pre-filter did not starve the model (no fail-*closed*).
+
+**Still NOT exposed (now confirmed by inspecting the COMPLETED job, not just the bundle):**
+`GET /api/onboarding/jobs/{id}/result` (keys `explorer_url, job, success, summary, url`) contains
+**no** `model` / `usage` / `tokens` / `cost` / `haiku` / `sonnet` / `opus` / `ai_usage` / `filter`
+/ `detail` / `wide` / `unusable` fields. So **items 1, 2, 5, 6, 7 remain backend-only** even after
+a successful run -- the ledger and per-photo labels/rails are not surfaced to any client artifact.
+The SQL above is still the way to close item 2.
+
+**Net:** item 8 upgraded to **PASS** with a real run; items 1/2/5/6/7 still need DB/log access.
+Meaningful improvement on the original "nothing testable" -- the happy path is proven end-to-end
+on Sonnet; only cost-accounting and the fail-open rails stay unreachable from QA.
