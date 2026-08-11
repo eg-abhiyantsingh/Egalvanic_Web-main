@@ -67,6 +67,27 @@ argument that the `/company/{id}/*` behaviour is a defect rather than an intenti
 4. **Actual:** 200 with the other tenant's facilities.
    **Expected:** 401/403, as `/api/reporting/configs/{id}` already does.
 
+
+## Screenshots
+
+![Cross-tenant proof](../bug-evidence/security-cross-tenant/SEC-EVIDENCE-1-cross-tenant-proof.png)
+
+**Evidence 1 — `docs/bug-evidence/security-cross-tenant/SEC-EVIDENCE-1-cross-tenant-proof.png`.**
+All four calls issued live in one EG-ACME session, rendered from the real responses:
+① the caller is `EG-ACME` with **`is_eg_admin: false`**; ② `GET /api/company/93611164-…/slds`
+returns **HTTP 200 with Demo Company's two facilities**, each row carrying the *foreign*
+`company_id` and `account_id`; ③ the same endpoint returns the caller's own 188 facilities
+normally; ④ `GET /api/reporting/configs/{demo-owned}` returns **HTTP 401 Access denied** — the
+same substitution correctly refused elsewhere.
+
+![Blast radius](../bug-evidence/security-cross-tenant/SEC-EVIDENCE-2-blast-radius.png)
+
+**Evidence 2 — `docs/bug-evidence/security-cross-tenant/SEC-EVIDENCE-2-blast-radius.png`.**
+Exposure is not limited to facilities: `…/sessions` returns Demo's work orders — including one
+literally named **“DEMO Company QA”** — and `…/sales-attention` returns Demo's facility names and
+`account_id`. The control (own company, same session, 1066 rows) shows the endpoint behaving
+normally, so the foreign responses are not an error artefact.
+
 ## Impact
 
 - Confidentiality breach across customers: facility names, work-order titles, `account_id`,
