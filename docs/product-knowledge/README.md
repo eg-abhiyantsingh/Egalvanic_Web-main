@@ -27,6 +27,7 @@ most deep bugs come from knowing a contract well enough to notice when it is qui
 | [browser-testing-techniques.md](browser-testing-techniques.md) | Fault injection, request capture that survives SPA nav, site switching, and the control-first discipline |
 | [scope-hydration-and-role-switching.md](scope-hydration-and-role-switching.md) | Deliberate vs **transitional** 'all', which surfaces are guarded (and why Tasks is an exception), role-switch hydration, and the masked-404 trap |
 | [node-mutations-and-arc-flash-inputs.md](node-mutations-and-arc-flash-inputs.md) | The **async** node-mutation pipeline (a 200 ≠ a write), where class attributes really live, `aic_rating` as a node column, SKM's two-stage export, and the unlinked Equipment Designations route |
+| [work-order-types-and-eg-forms.md](work-order-types-and-eg-forms.md) | Work-order types (`work_type_id` → services), the EG Forms instance API, the MuiDrawer-not-dialog trap, and how to fake a LaunchDarkly flag-off state |
 
 ## Bug-hunting leads parked here
 
@@ -41,3 +42,5 @@ Things noticed but not yet chased. Each is a candidate for a real finding.
 | `POST /api/node/create` returns **200 + the echoed value** then silently discards the asset when any field is type-invalid | Web is insulated by client validation, but iOS and bulk import are not — they get a success response for an asset that does not exist. | **Confirmed 2026-08-11**, filed as TEGG-1 |
 | A **non-existent `node_class` UUID** is accepted on create and yields a "No Class" asset | Referential integrity gap found while running the control for TEGG-1. Not chased further. | Open — worth its own look |
 | Bulk Export → Bulk Import proposes **18 connection updates** for an untouched Connections sheet | Either the preview misreports, or the round-trip is not idempotent. Would destroy trust in bulk import either way. | Open — import deliberately not processed |
+| Deleting an EG form instance leaves the Forms tab count stale until reload | Add refreshes the badge, delete does not. Same family as #1077's Equipment Designations staleness — a mutation that refreshes its own view but not the parent counter. | **Confirmed 2026-08-11**, filed as EGF-1 |
+| The QA build badge says **V1.36** while the release panel says **"Fixes in Web v1.39.1"** | "Which build am I on?" is unanswerable from the UI, so ticket claims like "not yet in QA" can't be checked without testing behaviour. Cost real time on #1107. | Open — worth resolving |

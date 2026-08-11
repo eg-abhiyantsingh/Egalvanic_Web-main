@@ -85,9 +85,20 @@ class's `definition[]` array — each entry carries `key`, `type`, `options` and
 flag).
 
 The AF attribute set is **`electrodeConfig`, `enclosureHeight`, `enclosureWidth`,
-`enclosureDepth`**, and it lands exactly on `device_role_code = bus`:
+`enclosureDepth`**.
 
 **Has the AF set (7):** Busduct · Junction Box · MCC · Panelboard · PDU · Switchboard · VFD Panel
+
+**Precise relationship to `device_role_code = bus`** — one direction holds, the other does not:
+
+- Every class carrying the AF set **is** bus-role (`device_role_id = 3`). No non-bus class has it.
+- But **not every bus-role class carries it**: there are **10** bus-role classes, and 3 lack the
+  set — **Disconnect Switch** (6 attrs), **Other** (4 attrs) and **Node Bus** (0 attrs).
+
+That is the correct outcome rather than a gap: Disconnect Switch and Other are both on the ticket's
+*"should no longer have AF attributes"* list, so their exclusion is the fix working, and Node Bus is
+a structural node with no attributes at all. Stated as a rule: the AF set is a **strict subset** of
+bus-role, not a synonym for it.
 
 **Does NOT have it — all six the ticket names:**
 
@@ -179,7 +190,7 @@ browser at all.
 
 ---
 
-# TEGG-1 — `POST /api/node/create` returns HTTP 200 and silently discards the asset
+# TEGG-1 — `POST /api/node/create` returns HTTP 200 for a write that produces no asset
 
 **Severity:** High · **Priority:** Medium · **Component:** Platform / node mutation pipeline
 **Not AIC-specific** — found via this ticket, applies to any field.
@@ -194,10 +205,17 @@ browser at all.
 
 ### Actual result
 
-The asset was never created. The enriched GET returns the SPA shell, and the node is absent from
-the SLD listing. Nothing reported the failure: no error status, no error body, and no
-mutation-status endpoint could be found to poll (`/api/mutations/{id}` and four variants all
-return the SPA shell).
+The asset does not appear. The node is absent from the SLD listing and its enriched GET returns the
+SPA shell. Nothing reported the failure: no error status, no error body, and no mutation-status
+endpoint could be found to poll (`/api/mutations/{id}` and four variants all return the SPA shell —
+though note that on this host an unknown path also returns the SPA shell, so that is "not found by
+me", not "proven not to exist").
+
+**On the observation window:** the checks were made ~9 s after the POST, and again later in the
+session — the final cleanup listing, several minutes on, contained exactly the 5 assets that had been
+created and none of the 3 rejected ones. So "not created" is measured over minutes, not one 9-second
+read. I am describing what is observable through the API, not asserting the row state inside
+Postgres.
 
 Controlled run — identical payloads, only the value differs:
 
@@ -237,9 +255,12 @@ browser use. It is exactly the cross-client gap raised on #1075: **iOS has an un
 field**, and `node.aic_rating` is also a **bulk-import column**. Those callers get a success
 response for an asset that does not exist — silent loss of the entire record, not just the field.
 
-The good news, and worth stating plainly: **bad data does not reach the database.** The negative
-`ShortCircuitRating -5.000` the reviewer feared cannot be produced this way. The defect is the
-misleading success response, not corrupted arc-flash input.
+The good news, and worth stating plainly: **no invalid AIC value became readable through any API
+surface I checked** — not the node detail, not the SLD listing, not the SKM export. So the negative
+`ShortCircuitRating -5.000` the reviewer feared did not materialise on this path. The defect here is
+the misleading success response and the loss of the whole record, not corrupted arc-flash input.
+(Whether the rejection happens as a validation refusal or as a failed insert further down the
+pipeline is a backend question I can't answer from the client.)
 
 ---
 
@@ -247,8 +268,9 @@ misleading success response, not corrupted arc-flash input.
 
 **Severity:** Medium · **Priority:** Medium · **Status:** open, exactly as flagged on #1075/#895
 
-`0` passes the browser field, persists, counts as a satisfied required field in Arc Flash
-Readiness, and reaches the SKM export:
+`0` passes the browser field, **persists as a real value** (the post-settle enriched GET returns the
+number `0`, which is distinct from `null` — the exporter omits the field entirely for `null`), and
+reaches the SKM export:
 
 ```xml
 <s:Bus s:action="create" s:id="1" s:name="QA-AUTO SKM aic0" xsi:ID="skm1">
@@ -256,10 +278,16 @@ Readiness, and reaches the SKM export:
 </s:Bus>
 ```
 
-A zero bus bracing rating is not physically meaningful; it reads as an explicit "no bracing"
-value rather than missing data, and it makes the bus *look* arc-flash-ready. The lower bound
-wants to be `1`, and per the reviewer the fix belongs server-side so it covers web, iOS and
-bulk import together.
+A zero bus bracing rating is not physically meaningful; it reads as an explicit "no bracing" value
+rather than missing data. The lower bound wants to be `1`, and per the reviewer the fix belongs
+server-side so it covers web, iOS and bulk import together.
+
+> **Scope of what I measured.** I verified *persistence* and *export* directly. I did **not**
+> separately observe the Arc Flash Readiness panel for this `0` node, so treat "a bus with
+> `aic_rating = 0` counts as arc-flash-ready" as the reviewer's code-level claim
+> (`isFilled(0)` returns true), not as something I confirmed on screen. What I did confirm is that
+> readiness counts AIC RATING as one of its required fields at all — visible as
+> "AIC RATING · Missing" in the item-1 screenshot.
 
 Evidence: [`skm_aic0.xml`](../bug-evidence/tegg-arc-flash/skm_aic0.xml)
 

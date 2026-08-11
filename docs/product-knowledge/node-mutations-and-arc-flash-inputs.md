@@ -56,9 +56,15 @@ Useful class fields: `requires_phase_config`, `device_role_id` / `device_role_co
 
 ### The arc-flash attribute set
 
-`electrodeConfig`, `enclosureHeight`, `enclosureWidth`, `enclosureDepth` — present on exactly the
-seven `device_role_code = bus` classes: **Busduct, Junction Box, MCC, Panelboard, PDU,
-Switchboard, VFD Panel**. `sections` is on **MCC and Switchboard** only.
+`electrodeConfig`, `enclosureHeight`, `enclosureWidth`, `enclosureDepth` — present on seven classes:
+**Busduct, Junction Box, MCC, Panelboard, PDU, Switchboard, VFD Panel**. `sections` is on **MCC and
+Switchboard** only.
+
+**Don't shorten this to "the bus classes".** The implication runs one way only: every class with the
+AF set is bus-role (`device_role_id = 3`), but there are **10** bus-role classes and 3 lack the set —
+**Disconnect Switch, Other, Node Bus**. The AF set is a *strict subset* of bus-role. (Disconnect
+Switch and Other are supposed to lack it; Node Bus has no attributes at all.) Asserting
+co-extension here was an error caught in review on 2026-08-11.
 
 `requires_phase_config` is a **strict boolean on all 43 classes** — never null/undefined. That
 matters because FE gates differ (`!== false` for rendering vs `=== true` for readiness); with no
