@@ -26,6 +26,7 @@ most deep bugs come from knowing a contract well enough to notice when it is qui
 | [qa-env-test-data.md](qa-env-test-data.md) | QA fixtures: company id, empty sites for onboarding tests, site counts |
 | [browser-testing-techniques.md](browser-testing-techniques.md) | Fault injection, request capture that survives SPA nav, site switching, and the control-first discipline |
 | [scope-hydration-and-role-switching.md](scope-hydration-and-role-switching.md) | Deliberate vs **transitional** 'all', which surfaces are guarded (and why Tasks is an exception), role-switch hydration, and the masked-404 trap |
+| [node-mutations-and-arc-flash-inputs.md](node-mutations-and-arc-flash-inputs.md) | The **async** node-mutation pipeline (a 200 ≠ a write), where class attributes really live, `aic_rating` as a node column, SKM's two-stage export, and the unlinked Equipment Designations route |
 
 ## Bug-hunting leads parked here
 
@@ -37,3 +38,6 @@ Things noticed but not yet chased. Each is a candidate for a real finding.
 | Dashboard's "Let's get your assets in" invite is unreachable in normal navigation | Dashboard forces `sldId='all'` and the invite bails on `'all'`, so the gating added in PR #1127 has no observable effect there. Dead code, or a latent bug if the bail is ever removed. | Confirmed unreachable 2026-08-10 |
 | Unknown `/api/` paths return **200 + text/html** (SPA shell) instead of 404 | Named by the devs in #1054 and still live. `response.ok` is true and `JSON.parse` fails confusingly, so the next missing endpoint will be just as hard to find. API tests must assert content-type, not just status. | Confirmed 2026-08-10 |
 | Every page logs 7–9 console errors on load (401s on `action-items/counts`, `ops-attention`, `sales-attention`, `issues/open-by-site`) | Known ambient noise, but it means `verifyPageHealth` must keep ignoring them — and a *real* new error can hide in the crowd. | Known; see `project_arc_flash_module` memory |
+| `POST /api/node/create` returns **200 + the echoed value** then silently discards the asset when any field is type-invalid | Web is insulated by client validation, but iOS and bulk import are not — they get a success response for an asset that does not exist. | **Confirmed 2026-08-11**, filed as TEGG-1 |
+| A **non-existent `node_class` UUID** is accepted on create and yields a "No Class" asset | Referential integrity gap found while running the control for TEGG-1. Not chased further. | Open — worth its own look |
+| Bulk Export → Bulk Import proposes **18 connection updates** for an untouched Connections sheet | Either the preview misreports, or the round-trip is not idempotent. Would destroy trust in bulk import either way. | Open — import deliberately not processed |
