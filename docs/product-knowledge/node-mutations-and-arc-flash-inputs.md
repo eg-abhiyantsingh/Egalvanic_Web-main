@@ -30,9 +30,15 @@ Verified behaviour, identical payloads differing only in one value:
 | `com: "xyz"` / `width: "big"` | 200 | **NO — silently dropped** |
 | `node_class:` all-zeros UUID | 200 | **yes** — asset created with **"No Class"** |
 
-So: any **type-invalid** field discards the whole asset, but a **non-existent class UUID** is
-accepted. The drop is a property of the pipeline, not of any one field — always run a control with
-a different bad field before blaming the field you are testing.
+The drop is a property of the pipeline, not of any one field — always run a control with a different
+bad field before blaming the field you are testing.
+
+**Don't call the rule "type-invalid"** (an earlier version of this note did, and the table above
+disproves it): `65.5` *is* type-invalid for an int column and was **coerced**, while `-5` and
+`2147483648` are *valid integers* rejected on **range**, and a dangling class UUID is **accepted**.
+What fits every row is that there is **no validation layer** — the worker attempts the write, any
+storage-level rejection aborts the transaction, and the exception is swallowed. Untested and worth
+checking: over-long strings, unique/FK violations.
 
 ## Where class attributes actually live
 

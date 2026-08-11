@@ -54,8 +54,18 @@ an asset rendering as "No Class".
 
 Why it matters: the web UI is insulated (it validates client-side), but **iOS has an unbounded AIC
 field** and `node.aic_rating` is a **bulk-import column**. Those callers get a success response for
-an asset that does not exist. Note the good news too — bad data does *not* reach the DB, so the
-negative `ShortCircuitRating -5.000` the reviewer feared cannot actually be produced.
+an asset that does not exist. Good news alongside it — no invalid AIC became readable through any API
+surface I checked, so the negative `ShortCircuitRating -5.000` the reviewer feared did not materialise
+on this path.
+
+**Third — a mechanism error caught in review, not by me.** I first wrote the rule as "any type-invalid
+field drops the asset". My own results disprove it: `65.5` *is* type-invalid for an int column and was
+**coerced** to `65`; `-5` and `2147483648` are *valid integers* rejected on **range**; a dangling
+`node_class` UUID is **accepted**. What fits every row is that there is **no validation layer** — the
+worker attempts the write and a swallowed storage-level exception aborts the transaction. Naming a
+validator that the evidence gives no reason to believe exists would have pointed dev at the wrong
+layer. The report now states the corrected rule and flags the untested cases (over-long strings,
+unique/FK violations).
 
 ## Where I deliberately stopped
 

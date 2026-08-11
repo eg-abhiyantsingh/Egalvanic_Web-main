@@ -217,6 +217,17 @@ created and none of the 3 rejected ones. So "not created" is measured over minut
 read. I am describing what is observable through the API, not asserting the row state inside
 Postgres.
 
+**How each row was attributed** (so this is reproducible rather than counted): every probe's `label`
+encoded its own value — `QA-AUTO TEGG srv -5`, `srv 0`, `srv 65.5`, `srv 2147483648`, `srv abc` — so
+listing rows map to individual POSTs by name, not by assumption. Each POST also returned an `id`,
+which was read back individually. This matters because the list projection **omits `aic_rating`**, so
+counting rows alone could not have told me which values survived.
+
+**The masked-404 leg, with its control:** `GET /api/graph/nodes/{id}/enriched` returned the SPA shell
+for the three rejected ids — but in the *same session and same loop* it returned real 116-key JSON for
+the ids that did exist (`0`, `65.5`, and the UI-created `65`). Without that pairing the SPA shell
+would prove nothing (unknown paths return it too); with it, the contrast is meaningful.
+
 Controlled run — identical payloads, only the value differs:
 
 | Sent | HTTP | `_mutation` | Asset exists afterwards |
@@ -228,7 +239,10 @@ Controlled run — identical payloads, only the value differs:
 | `aic_rating: 2147483648` | 200 | received | **NO — silently dropped** |
 | `aic_rating: "abc"` | 200 | received | **NO — silently dropped** |
 
-Only 3 of 6 posted assets existed afterwards (`total: 3` on a previously empty SLD).
+Arithmetic, explicitly: **5 API posts** (`0`, `65.5`, `-5`, `2147483648`, `"abc"`) **+ 1 created
+through the UI** (`65`) = 6 attempts → **3 assets existed** afterwards (`total: 3` on a previously
+empty SLD). The 4 scope-control posts below then added **2 more** (valid, bogus-class), for **5
+created in total** — which is exactly the number deleted during cleanup, leaving `total: 0`.
 
 **Scope control — this is not about AIC.** Same payload, a different bad field:
 
@@ -239,8 +253,28 @@ Only 3 of 6 posted assets existed afterwards (`total: 3` on a previously empty S
 | `width: "big"` | 200 | **NO — silently dropped** |
 | `node_class: "00000000-0000-0000-0000-000000000000"` | 200 | **yes** — created with **No Class** |
 
-So any type-invalid field silently drops the whole asset, while a **non-existent class UUID is
-accepted** and produces a classless asset (a second, smaller integrity gap worth its own look).
+### What the rule actually is — *not* "type-invalid"
+
+My first framing was "any type-invalid field drops the asset". My own results contradict that, so
+here is the corrected reading:
+
+| Value | Nature of the problem | Outcome |
+|---|---|---|
+| `65.5` into an int column | **type**-invalid (float ≠ int) | **coerced** to `65`, kept |
+| `-5`, `2147483648` | perfectly valid integers, failing a **range / int4 bound** | dropped |
+| `"abc"`, `com:"xyz"`, `width:"big"` | non-numeric string into a numeric column | dropped |
+| `node_class` = all-zeros UUID | **referentially** invalid (dangling FK) | **accepted**, "No Class" |
+
+So it is neither "type" nor "invalid" that predicts the outcome. What fits every row is: **there is
+no validation layer at all** — the async worker attempts the write, any storage-level rejection
+aborts the whole transaction, and the exception is swallowed. A float is silently truncated because
+that is a legal coercion; a dangling foreign key is accepted because nothing checks it.
+
+That reading also predicts drops for cases I did **not** test — over-long strings, unique/FK
+violations — which is worth a dev confirming, and it is consistent with the already-verified
+`psycopg2`/SQL-error-leak family on this backend.
+
+The **non-existent class UUID being accepted** is a second, smaller integrity gap worth its own look.
 
 ### Expected result
 
