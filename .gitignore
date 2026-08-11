@@ -62,3 +62,6 @@ docs/sld-intelligence/
 
 # Sentry auth token for the 502-correlation test — LOCAL ONLY, never commit
 .sentry-auth-token
+
+# Generated Jira-paste bundles (self-contained HTML with base64 images)
+docs/jira-export/

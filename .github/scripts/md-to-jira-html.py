@@ -1,0 +1,271 @@
+#!/usr/bin/env python3
+"""
+Render a QA markdown report to a SELF-CONTAINED HTML file for pasting into Jira.
+
+Why this exists
+---------------
+Copying a .md file's text into a Jira comment loses the screenshots, because the
+images are relative repo paths (../bug-evidence/foo.png) — plain text that Jira
+cannot resolve. This renders the markdown to HTML and inlines every referenced
+image as a base64 data: URI. Open the result in a browser, Select All, Copy, and
+paste into the Jira comment: the clipboard then carries real image data, which
+Jira uploads as attachments automatically.
+
+No third-party dependencies (no markdown lib, no pandoc) — the converter below
+handles the subset of GFM these reports actually use.
+
+Usage
+-----
+  python3 .github/scripts/md-to-jira-html.py docs/bug-reports/REPORT.md [more.md ...]
+  python3 .github/scripts/md-to-jira-html.py --all          # every dated report
+  python3 .github/scripts/md-to-jira-html.py REPORT.md --open
+
+Output goes to docs/jira-export/<name>.html and is git-ignored by convention.
+"""
+
+import argparse
+import base64
+import glob
+import html
+import mimetypes
+import os
+import re
+import subprocess
+import sys
+
+# ---------------------------------------------------------------- image embed
+
+def data_uri(path):
+    """Read an image and return a base64 data: URI, or None if unreadable."""
+    try:
+        with open(path, "rb") as fh:
+            raw = fh.read()
+    except OSError:
+        return None
+    mime = mimetypes.guess_type(path)[0] or "image/png"
+    return "data:%s;base64,%s" % (mime, base64.b64encode(raw).decode("ascii"))
+
+
+# ------------------------------------------------------------ inline markdown
+
+def inline(text, base_dir, stats):
+    """Convert inline markdown. Text arrives raw; we escape then re-inject tags."""
+    out = html.escape(text, quote=False)
+
+    # images first (they look like links with a leading !)
+    def img_sub(m):
+        alt, src = m.group(1), m.group(2).strip()
+        if not re.match(r"^[a-z]+:", src):
+            resolved = os.path.normpath(os.path.join(base_dir, src))
+            uri = data_uri(resolved)
+            if uri:
+                stats["embedded"].append(os.path.basename(resolved))
+                return ('<img alt="%s" src="%s">' % (html.escape(alt, quote=True), uri))
+            stats["missing"].append(src)
+            return '<em>[missing image: %s]</em>' % html.escape(src)
+        return '<img alt="%s" src="%s">' % (html.escape(alt, quote=True), html.escape(src, quote=True))
+
+    out = re.sub(r"!\[([^\]]*)\]\(([^)]+)\)", img_sub, out)
+
+    # links — drop repo-relative ones to plain text, they mean nothing in Jira
+    def link_sub(m):
+        label, href = m.group(1), m.group(2).strip()
+        if re.match(r"^[a-z]+:", href) or href.startswith("#"):
+            return '<a href="%s">%s</a>' % (html.escape(href, quote=True), label)
+        return "<strong>%s</strong>" % label
+
+    out = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", link_sub, out)
+
+    out = re.sub(r"`([^`]+)`", r"<code>\1</code>", out)
+    out = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", out)
+    out = re.sub(r"(?<![\w*])\*([^*\n]+)\*(?![\w*])", r"<em>\1</em>", out)
+    return out
+
+
+# ------------------------------------------------------------- block markdown
+
+def convert(md, base_dir, stats):
+    lines = md.split("\n")
+    out, i = [], 0
+    n = len(lines)
+
+    while i < n:
+        line = lines[i]
+
+        # fenced code block
+        m = re.match(r"^```(\w*)\s*$", line)
+        if m:
+            lang = m.group(1)
+            i += 1
+            buf = []
+            while i < n and not re.match(r"^```\s*$", lines[i]):
+                buf.append(lines[i]); i += 1
+            i += 1
+            out.append('<pre class="code" data-lang="%s"><code>%s</code></pre>'
+                       % (lang, html.escape("\n".join(buf), quote=False)))
+            continue
+
+        # GFM table: header row, separator row, then body
+        if "|" in line and i + 1 < n and re.match(r"^\s*\|?[\s:|-]+\|[\s:|-]*$", lines[i + 1]):
+            def cells(row):
+                row = row.strip()
+                if row.startswith("|"): row = row[1:]
+                if row.endswith("|"): row = row[:-1]
+                return [c.strip() for c in row.split("|")]
+
+            head = cells(line)
+            i += 2
+            body = []
+            while i < n and "|" in lines[i] and lines[i].strip():
+                body.append(cells(lines[i])); i += 1
+            t = ["<table><thead><tr>"]
+            t += ["<th>%s</th>" % inline(c, base_dir, stats) for c in head]
+            t.append("</tr></thead><tbody>")
+            for row in body:
+                t.append("<tr>" + "".join(
+                    "<td>%s</td>" % inline(c, base_dir, stats) for c in row) + "</tr>")
+            t.append("</tbody></table>")
+            out.append("".join(t))
+            continue
+
+        # heading
+        m = re.match(r"^(#{1,6})\s+(.*)$", line)
+        if m:
+            lvl = len(m.group(1))
+            out.append("<h%d>%s</h%d>" % (lvl, inline(m.group(2), base_dir, stats), lvl))
+            i += 1
+            continue
+
+        # horizontal rule
+        if re.match(r"^\s*(---|\*\*\*|___)\s*$", line):
+            out.append("<hr>")
+            i += 1
+            continue
+
+        # blockquote (consecutive > lines)
+        if re.match(r"^\s*>", line):
+            buf = []
+            while i < n and re.match(r"^\s*>", lines[i]):
+                buf.append(re.sub(r"^\s*>\s?", "", lines[i])); i += 1
+            out.append("<blockquote>%s</blockquote>" % convert("\n".join(buf), base_dir, stats))
+            continue
+
+        # lists
+        if re.match(r"^\s*[-*+]\s+", line) or re.match(r"^\s*\d+\.\s+", line):
+            ordered = bool(re.match(r"^\s*\d+\.\s+", line))
+            items = []
+            while i < n and (re.match(r"^\s*[-*+]\s+", lines[i]) or re.match(r"^\s*\d+\.\s+", lines[i])):
+                txt = re.sub(r"^\s*(?:[-*+]|\d+\.)\s+", "", lines[i])
+                i += 1
+                # continuation lines (indented, not a new item)
+                while i < n and lines[i].strip() and not re.match(r"^\s*(?:[-*+]|\d+\.)\s+", lines[i]) \
+                        and not re.match(r"^(#{1,6})\s", lines[i]) and "|" not in lines[i]:
+                    txt += " " + lines[i].strip(); i += 1
+                items.append("<li>%s</li>" % inline(txt, base_dir, stats))
+            tag = "ol" if ordered else "ul"
+            out.append("<%s>%s</%s>" % (tag, "".join(items), tag))
+            continue
+
+        # blank
+        if not line.strip():
+            i += 1
+            continue
+
+        # paragraph (gather until blank / block start)
+        buf = [line]
+        i += 1
+        while i < n and lines[i].strip() \
+                and not re.match(r"^(#{1,6})\s", lines[i]) \
+                and not re.match(r"^```", lines[i]) \
+                and not re.match(r"^\s*>", lines[i]) \
+                and not re.match(r"^\s*(?:[-*+]|\d+\.)\s+", lines[i]) \
+                and not re.match(r"^\s*(---|\*\*\*|___)\s*$", lines[i]) \
+                and "|" not in lines[i]:
+            buf.append(lines[i]); i += 1
+        out.append("<p>%s</p>" % inline(" ".join(buf), base_dir, stats))
+
+    return "\n".join(out)
+
+
+CSS = """
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+line-height:1.55;color:#172b4d;max-width:900px;margin:24px auto;padding:0 20px}
+h1{font-size:1.7em;border-bottom:2px solid #dfe1e6;padding-bottom:.3em}
+h2{font-size:1.35em;border-bottom:1px solid #dfe1e6;padding-bottom:.25em;margin-top:1.6em}
+h3{font-size:1.12em;margin-top:1.4em}
+table{border-collapse:collapse;width:100%;margin:1em 0}
+th,td{border:1px solid #dfe1e6;padding:7px 10px;text-align:left;vertical-align:top;font-size:.93em}
+th{background:#f4f5f7;font-weight:600}
+code{background:#f4f5f7;padding:1px 5px;border-radius:3px;
+font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.9em}
+pre.code{background:#f4f5f7;padding:12px;border-radius:4px;overflow-x:auto;border:1px solid #dfe1e6}
+pre.code code{background:none;padding:0}
+img{max-width:100%;height:auto;border:1px solid #dfe1e6;border-radius:4px;margin:.6em 0;display:block}
+blockquote{border-left:3px solid #dfe1e6;margin:1em 0;padding:.1em 1em;color:#5e6c84;background:#fafbfc}
+hr{border:0;border-top:1px solid #dfe1e6;margin:1.8em 0}
+.banner{background:#deebff;border:1px solid #b3d4ff;border-radius:4px;padding:10px 14px;
+margin-bottom:20px;font-size:.9em;color:#0747a6}
+"""
+
+BANNER = ("<div class=\"banner\"><strong>To paste into Jira:</strong> click anywhere in this page, "
+          "press <strong>&#8984;A</strong> then <strong>&#8984;C</strong>, and paste into the Jira "
+          "comment box. The screenshots are embedded in this file, so they travel with the text and "
+          "Jira will upload them as attachments.</div>")
+
+
+def render(md_path, out_dir):
+    base_dir = os.path.dirname(os.path.abspath(md_path))
+    with open(md_path, "r", encoding="utf-8") as fh:
+        md = fh.read()
+    stats = {"embedded": [], "missing": []}
+    body = convert(md, base_dir, stats)
+    title = os.path.splitext(os.path.basename(md_path))[0]
+    m = re.search(r"^#\s+(.*)$", md, re.M)
+    if m:
+        title = re.sub(r"[*`]", "", m.group(1))
+    doc = ("<!doctype html><html><head><meta charset=\"utf-8\">"
+           "<title>%s</title><style>%s</style></head><body>%s%s</body></html>"
+           % (html.escape(title), CSS, BANNER, body))
+    os.makedirs(out_dir, exist_ok=True)
+    out_path = os.path.join(out_dir, os.path.splitext(os.path.basename(md_path))[0] + ".html")
+    with open(out_path, "w", encoding="utf-8") as fh:
+        fh.write(doc)
+    return out_path, stats
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("files", nargs="*", help="markdown file(s) to render")
+    ap.add_argument("--all", action="store_true", help="render every dated report in docs/bug-reports/")
+    ap.add_argument("--out", default="docs/jira-export", help="output directory")
+    ap.add_argument("--open", dest="do_open", action="store_true", help="open the result in a browser")
+    args = ap.parse_args()
+
+    targets = list(args.files)
+    if args.all:
+        targets += sorted(glob.glob("docs/bug-reports/20*.md"))
+    if not targets:
+        ap.error("give a markdown file, or --all")
+
+    rc = 0
+    for md_path in targets:
+        if not os.path.exists(md_path):
+            print("  SKIP (not found): %s" % md_path); rc = 1; continue
+        out_path, stats = render(md_path, args.out)
+        size_kb = os.path.getsize(out_path) / 1024.0
+        print("\n%s" % os.path.basename(md_path))
+        print("  -> %s  (%.0f KB)" % (out_path, size_kb))
+        print("     %d image(s) embedded%s" % (
+            len(stats["embedded"]),
+            (": " + ", ".join(stats["embedded"])) if stats["embedded"] else ""))
+        if stats["missing"]:
+            print("     !! %d MISSING: %s" % (len(stats["missing"]), ", ".join(stats["missing"])))
+            rc = 1
+        if args.do_open and sys.platform == "darwin":
+            subprocess.run(["open", out_path], check=False)
+    return rc
+
+
+if __name__ == "__main__":
+    sys.exit(main())
