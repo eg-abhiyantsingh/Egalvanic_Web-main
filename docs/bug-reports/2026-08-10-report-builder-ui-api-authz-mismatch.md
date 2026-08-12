@@ -26,6 +26,22 @@ behind that check with a lock tooltip.
 Also accepted as Super Admin: `POST /reporting/configs/{id}/fork` (200, fork created) and
 `POST /reporting/configs/{id}/ai-edit` (200, job accepted).
 
+### Screenshot — re-run live 2026-08-12, non-destructively
+
+![Three roles, same PUT, contradictory results](../bug-evidence/report-builder/RB-step4-bug2-authz-mismatch.png)
+*Same `PUT /api/reporting/configs/{id}` on config **"abhiyant page"**, driven three times via
+`X-Active-Role-Id`. Electrical Engineer → **422 permission_denied** (backend enforcement is real).
+Super Admin → **200 write accepted**, despite #1085 locking that exact role in the UI.
+Admin (internal EG) → 200, intended.*
+
+**This re-run was a no-op:** the config's current name was read first and written straight back, and
+confirmed byte-identical afterward (`nameUnchanged: true`). The finding is about *who the API lets
+through*, so nothing had to be altered to demonstrate it.
+
+> Method note: my first attempt at this evidence page read the name from `data.name` and got
+> `undefined` — the payload nests it at `config.name`. That would have sent an empty body and still
+> returned 200, which looks like the same finding but proves less. Re-run with the real name.
+
 ## Why this is worth an author check rather than an automatic bug
 
 The backend enforcement is **real and working** — it refuses a low-privilege role outright. This
