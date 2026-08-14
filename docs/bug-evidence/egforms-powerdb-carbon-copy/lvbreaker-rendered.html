@@ -1,0 +1,752 @@
+<html><head>
+<meta charset="UTF-8">
+<style>
+  @page { size: letter; margin: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 7.4pt; color: #111; background: #fff; line-height: 1.15;
+    width: 8.5in; padding: 0.2in 0.3in 0.28in;
+  }
+  .hdr { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2px; }
+  .hdr__logo { max-height: 28px; max-width: 170px; object-fit: contain; }
+  .hdr__org { font-size: 8pt; font-weight: 700; margin-top: 1px; }
+  .hdr__title { font-size: 10.5pt; font-weight: 700; text-align: right; }
+
+  table.grid { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 3px; }
+  table.grid th, table.grid td { border: 1px solid #111; padding: 2px 4px; font-size: 7.2pt; vertical-align: middle; }
+  table.grid td.lbl { font-weight: 700; text-transform: uppercase; font-size: 6.3pt; width: 17%; background: #fff; }
+  table.grid td.val { text-align: center; }
+
+  .banner { border: 1px solid #111; border-bottom: none; background: #c9c9c9;
+            text-align: center; font-weight: 700; font-size: 7.8pt; letter-spacing: 0.02em;
+            padding: 2px 0; margin-top: 5px; }
+  .banner + table.grid { margin-top: 0; }
+  .subbanner { background: #e2e2e2 !important; text-align: center; font-weight: 700;
+               text-transform: uppercase; font-size: 7.2pt; }
+
+  table.test { width: 100%; border-collapse: collapse; margin-bottom: 3px; }
+  table.test th, table.test td { border: 1px solid #111; padding: 2px 3px; font-size: 7pt; text-align: center; }
+  table.test th { font-weight: 700; font-size: 6.3pt; text-transform: uppercase; background: #efefef; }
+  table.test th.group { background: #dcdcdc; }
+  table.test td.rowlbl { text-align: left; font-weight: 700; font-size: 6.3pt; text-transform: uppercase; }
+  .meta-line { border: 1px solid #111; border-bottom: none; padding: 1px 5px; font-size: 6.7pt;
+               display: flex; gap: 18px; background: #fff; }
+  .meta-line b { text-transform: uppercase; font-size: 6.3pt; }
+  .meta-line .mv { border-bottom: 1px solid #111; min-width: 38px; display: inline-block;
+                   text-align: center; padding: 0 4px; }
+  .radio { white-space: nowrap; }
+  .radio span { margin-right: 7px; }
+  .comments { border: 1px solid #111; min-height: 0.3in; padding: 2px 5px; font-size: 6.9pt; }
+  .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 8px; font-size: 7pt; }
+  .sig-line { border-bottom: 1px solid #111; min-width: 3.4in; display: inline-block;
+              padding: 0 6px 1px; vertical-align: bottom; }
+  .sig-line img { max-height: 24px; vertical-align: bottom; }
+  .empty { color: #999; }
+  /* LV breaker additions: disabled matrix cells + extra-dense matrix type */
+  table.test td.na { background: #d8d8d8; color: #555; }
+  table.matrix th, table.matrix td { font-size: 6.4pt; padding: 1px 2px; }
+  table.matrix td.rowlbl { font-size: 6.1pt; }
+</style>
+</head>
+<body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+<header class="hdr">
+  <div>
+    <img class="hdr__logo" src="https://eg-pz-qa-s3-branding-ohio.s3.us-east-2.amazonaws.com/logos/d59d449b-09d8-45d6-8f0a-ef70024b1293_large_logo.png" alt="">
+    <div class="hdr__org">Electrical Services &amp; Systems</div>
+  </div>
+  <div class="hdr__title">Low Voltage Breaker</div>
+</header>
+
+<table class="grid">
+  <tbody><tr><td class="lbl">Customer:</td><td class="val" style="width:33%">Your Company</td>
+      <td class="lbl">Work Order:</td><td class="val">Q3 Preventive Maintenance — WO-1042</td></tr>
+  <tr><td class="lbl">Site:</td><td class="val">Main Building</td>
+      <td class="lbl">Date Tested:</td><td class="val"><span class="empty">N/A</span></td></tr>
+  <tr><td class="lbl">Equipment Location:</td><td class="val">Main Building &gt; Floor 1 &gt; Electrical Room 101</td>
+      <td class="lbl">Device ID:</td><td class="val">PNL-2A</td></tr>
+</tbody></table>
+
+<div class="banner">BREAKER DATA</div>
+<table class="grid">
+  <tbody><tr><td class="lbl">Manufacturer:</td><td class="val" style="width:33%"><span class="empty">N/A</span></td>
+      <td class="lbl">SO/Serial Number:</td><td class="val"><span class="empty">N/A</span></td></tr>
+  <tr><td class="lbl">Interrupt Rating:</td>
+      <td class="val"><span class="empty">N/A</span></td>
+      <td class="lbl">Frame Size:</td>
+      <td class="val"><span class="empty">N/A</span></td></tr>
+  <tr><td class="lbl">RTG Plug:</td>
+      <td class="val"><span class="empty">N/A</span></td>
+      <td class="lbl">Sensor:</td>
+      <td class="val"><span class="empty">N/A</span></td></tr>
+  <tr><td class="lbl">Operation:</td><td class="val"><span class="radio"><span>M.O.&nbsp;○</span><span>E.O.&nbsp;○</span></span></td>
+      <td class="lbl">Mounting:</td><td class="val"><span class="radio"><span>Fixed&nbsp;○</span><span>Drawout&nbsp;○</span></span></td></tr>
+</tbody></table>
+
+<div class="banner">ACCESSORIES</div>
+<table class="test">
+  <tbody><tr><th style="width:17%"></th><th style="width:12%">Equipped</th><th style="width:21%">Rating</th>
+      <th style="width:17%"></th><th style="width:12%">Equipped</th><th>Rating</th></tr>
+  
+  
+  <tr><td class="rowlbl">Charge Motor:</td>
+      <td><span class="empty">N/A</span></td>
+      <td>Sample</td>
+      
+      <td class="rowlbl">Auxiliary Switch(es):</td>
+      <td><span class="empty">N/A</span></td>
+      <td>Sample</td>
+      </tr>
+  
+  <tr><td class="rowlbl">Control Relay:</td>
+      <td><span class="empty">N/A</span></td>
+      <td>Sample</td>
+      
+      <td class="rowlbl">Blown Fuse Ind.:</td>
+      <td><span class="empty">N/A</span></td>
+      <td>Sample</td>
+      </tr>
+  
+  <tr><td class="rowlbl">Close Coil:</td>
+      <td><span class="empty">N/A</span></td>
+      <td>Sample</td>
+      
+      <td class="rowlbl">Neutral Sensor:</td>
+      <td><span class="empty">N/A</span></td>
+      <td>Sample</td>
+      </tr>
+  
+  <tr><td class="rowlbl">Shunt Trip:</td>
+      <td><span class="empty">N/A</span></td>
+      <td>Sample</td>
+      
+      <td></td><td>&nbsp;</td><td>&nbsp;</td>
+      </tr>
+  
+  <tr><td class="rowlbl">Undervoltage:</td>
+      <td><span class="empty">N/A</span></td>
+      <td>Sample</td>
+      
+      <td></td><td>&nbsp;</td><td>&nbsp;</td>
+      </tr>
+  
+  <tr><td class="rowlbl">Fuses:</td>
+      <td><span class="empty">N/A</span></td>
+      <td>Sample</td>
+      
+      <td></td><td>&nbsp;</td><td>&nbsp;</td>
+      </tr>
+  
+</tbody></table>
+
+<div class="banner">INSPECTION DATA</div>
+<table class="grid">
+  
+  
+  <tbody><tr><td class="lbl" style="width:28%">Overall Condition:</td><td class="val" style="width:22%"><span class="empty">N/A</span></td>
+      <td class="lbl" style="width:28%">Manual Close/Trip:</td><td class="val"><span class="empty">N/A</span></td></tr>
+  
+  <tr><td class="lbl" style="width:28%">Main Contacts:</td><td class="val" style="width:22%"><span class="empty">N/A</span></td>
+      <td class="lbl" style="width:28%">Control Wiring:</td><td class="val"><span class="empty">N/A</span></td></tr>
+  
+  <tr><td class="lbl" style="width:28%">Arcing Contacts:</td><td class="val" style="width:22%"><span class="empty">N/A</span></td>
+      <td class="lbl" style="width:28%">Secondary Disconnects:</td><td class="val"><span class="empty">N/A</span></td></tr>
+  
+  <tr><td class="lbl" style="width:28%">Arc Chute Condition:</td><td class="val" style="width:22%"><span class="empty">N/A</span></td>
+      <td class="lbl" style="width:28%">Electrical Devices:</td><td class="val"><span class="empty">N/A</span></td></tr>
+  
+  <tr><td class="lbl" style="width:28%">Frame Condition:</td><td class="val" style="width:22%"><span class="empty">N/A</span></td>
+      <td class="lbl" style="width:28%">General Cleanliness:</td><td class="val"><span class="empty">N/A</span></td></tr>
+  
+  <tr><td class="lbl" style="width:28%">Insulation/Barriers:</td><td class="val" style="width:22%"><span class="empty">N/A</span></td>
+      <td class="lbl" style="width:28%">Primary Disconnects:</td><td class="val"><span class="empty">N/A</span></td></tr>
+  
+</tbody></table>
+
+<div class="banner">TRIP UNIT INFORMATION</div>
+<table class="test">
+  <tbody><tr><th style="width:24%">Customer Settings</th><th>As Found</th><th>As Left</th>
+      <th style="width:24%">Customer Settings</th><th>As Found</th><th>As Left</th></tr>
+  
+  
+  <tr><td class="rowlbl">Long Delay Pick Up:</td>
+      <td>Sample</td><td>Sample</td>
+      
+      <td class="rowlbl">Ground Fault Pick Up:</td>
+      <td>Sample</td><td>Sample</td>
+      </tr>
+  
+  <tr><td class="rowlbl">Long Delay Time:</td>
+      <td>Sample</td><td>Sample</td>
+      
+      <td class="rowlbl">Ground Fault Time:</td>
+      <td>Sample</td><td>Sample</td>
+      </tr>
+  
+  <tr><td class="rowlbl">Short Delay Pick Up:</td>
+      <td>Sample</td><td>Sample</td>
+      
+      <td class="rowlbl">ARMS:</td>
+      <td>Sample</td><td>Sample</td>
+      </tr>
+  
+  <tr><td class="rowlbl">Short Delay Time:</td>
+      <td>Sample</td><td>Sample</td>
+      
+      <td class="rowlbl">Communication Address:</td>
+      <td>Sample</td><td>Sample</td>
+      </tr>
+  
+  <tr><td class="rowlbl">Instantaneous:</td>
+      <td>Sample</td><td>Sample</td>
+      
+      <td></td><td>&nbsp;</td><td>&nbsp;</td>
+      </tr>
+  
+</tbody></table>
+
+<div class="banner">ELECTRICAL TESTS</div>
+<div class="meta-line">
+  <span><span class="radio"><span>Primary Injection&nbsp;○</span><span>Secondary Injection&nbsp;○</span></span></span>
+</div>
+<table class="test matrix">
+  
+  
+  
+  <tbody><tr>
+    <th style="width:11%"></th>
+    <th class="group" colspan="3">Test Setup</th>
+    <th class="group" colspan="2">Limits MIN/MAX</th>
+    <th class="group" colspan="3">As Found</th>
+    <th class="group" colspan="3">As Left</th>
+  </tr>
+  <tr>
+    <th>Function</th>
+    <th style="width:7%">Test Settings</th>
+    <th style="width:9.5%">Test Value (Mult. of Current)</th>
+    <th style="width:9%">Test Current (Amps)</th>
+    <th style="width:8.5%">Limit MIN</th>
+    <th style="width:8.5%">Limit MAX</th>
+    <th>A</th><th>B</th><th>C</th><th>A</th><th>B</th><th>C</th>
+  </tr>
+  
+  
+  <tr>
+    <td class="rowlbl">LDPU (Amps)</td>
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+  </tr>
+  
+  <tr>
+    <td class="rowlbl">LDT (Seconds)</td>
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>80 A DC</td>
+      
+    
+      
+        <td>85 A DC</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+  </tr>
+  
+  <tr>
+    <td class="rowlbl">SDPU (Amps)</td>
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+  </tr>
+  
+  <tr>
+    <td class="rowlbl">SDT (Seconds)</td>
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>39 A DC</td>
+      
+    
+      
+        <td>11 A DC</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+  </tr>
+  
+  <tr>
+    <td class="rowlbl">INSTPU (Amps)</td>
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+  </tr>
+  
+  <tr>
+    <td class="rowlbl">GFPU (Amps)</td>
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+  </tr>
+  
+  <tr>
+    <td class="rowlbl">GFT (Seconds)</td>
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>81 A DC</td>
+      
+    
+      
+        <td>14 A DC</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+      
+        <td>Sample</td>
+      
+    
+  </tr>
+  
+  <tr>
+    <td class="rowlbl">ARMS</td>
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+  </tr>
+  
+  <tr>
+    <td class="rowlbl">Zone Select Int.</td>
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+      
+        <td class="na">—</td>
+      
+    
+  </tr>
+  
+</tbody></table>
+
+<div class="meta-line">
+  <span><b>Insulation Resistance - in</b> <span class="mv"><span class="empty">N/A</span></span> <b>@</b> <span class="mv"><span class="empty">N/A</span></span> VDC</span>
+  <span><b>MicroOhms @</b> <span class="mv"><span class="empty">N/A</span></span> Amps</span>
+  <span><b>Readings in MicroOhms @</b> <span class="mv">&nbsp;</span> Amps</span>
+</div>
+<table class="test">
+  <tbody><tr><th class="group" colspan="2">Closed (Ph-Gnd)</th>
+      <th class="group" colspan="2">Closed (Ph-Ph)</th>
+      <th class="group" colspan="2">Open (Line-Load)</th>
+      <th class="group" colspan="2">Contact Resistance</th>
+      <th class="group" colspan="2">Limiter Resistance</th></tr>
+  
+  
+  <tr><td class="rowlbl" style="width:7%">A-G</td><td style="width:13%">51.95</td>
+      <td class="rowlbl" style="width:7%">A-B</td><td style="width:13%">99.82</td>
+      <td class="rowlbl" style="width:7%">A-A′</td><td style="width:13%">43.96</td>
+      <td class="rowlbl" style="width:7%">A</td><td style="width:13%">68.93</td>
+      <td class="rowlbl" style="width:7%">A</td><td>Sample</td></tr>
+  
+  <tr><td class="rowlbl" style="width:7%">B-G</td><td style="width:13%">57.77</td>
+      <td class="rowlbl" style="width:7%">B-C</td><td style="width:13%">64.98</td>
+      <td class="rowlbl" style="width:7%">B-B′</td><td style="width:13%">51.49</td>
+      <td class="rowlbl" style="width:7%">B</td><td style="width:13%">65.18</td>
+      <td class="rowlbl" style="width:7%">B</td><td>Sample</td></tr>
+  
+  <tr><td class="rowlbl" style="width:7%">C-G</td><td style="width:13%">80.38</td>
+      <td class="rowlbl" style="width:7%">C-A</td><td style="width:13%">63.45</td>
+      <td class="rowlbl" style="width:7%">C-C′</td><td style="width:13%">60.42</td>
+      <td class="rowlbl" style="width:7%">C</td><td style="width:13%">3.12</td>
+      <td class="rowlbl" style="width:7%">C</td><td>Sample</td></tr>
+  
+</tbody></table>
+
+<div class="banner">COMMENTS</div>
+<div class="comments">Sample observation noted during routine inspection.</div>
+
+<div class="footer">
+  <div>Tested By:&nbsp;
+    <span class="sig-line">
+      
+      
+      
+    </span>
+  </div>
+  <div>PAGE&nbsp; <span style="border-bottom:1px solid #111; min-width:0.8in; display:inline-block;">&nbsp;</span></div>
+</div>
+
+
+</body></html>
