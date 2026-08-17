@@ -1,0 +1,25 @@
+{
+  "comments": [],
+  "complexity_level": 1.0,
+  "edges": [],
+  "id": "24eb08b1-bb88-4f47-8ad0-f5b09326cf8d",
+  "ir_photos": [],
+  "ir_sessions": [],
+  "issues": [],
+  "layout_owner_name": null,
+  "layout_owner_user_id": null,
+  "mappings": {
+    "issue_task": [],
+    "quote_task": [],
+    "task_session": [],
+    "user_task": []
+  },
+  "name": "test",
+  "nodes": [],
+  "office_id": null,
+  "office_language": null,
+  "office_name": null,
+  "photos": [],
+  "quotes": [],
+  "tasks": []
+}

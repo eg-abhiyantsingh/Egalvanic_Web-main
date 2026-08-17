@@ -1,0 +1,74 @@
+{
+ "generated_for": "cross-tenant IDOR residual verification",
+ "attacker": "acme is_eg_admin=false Super Admin",
+ "target": "demo tenant",
+ "confirmed_leaks": [
+  {
+   "route": "GET /api/sld/{id}",
+   "attacker_bytes": 488,
+   "identical_to_owner": true
+  },
+  {
+   "route": "GET /api/contact/by-sld/{sld_id}",
+   "attacker_bytes": 452,
+   "identical_to_owner": true,
+   "pii": "email/name/title"
+  },
+  {
+   "route": "GET /api/issues/open-by-site?company_id={foreign}",
+   "attacker_bytes": 165,
+   "identical_to_owner": true
+  }
+ ],
+ "write_surface_probe": [
+  {
+   "route": "/api/sld/24eb08b1-bb88-4f47-8ad0-f5b09326cf8d",
+   "method": "OPTIONS",
+   "status": 200,
+   "allow": "GET, OPTIONS, HEAD"
+  },
+  {
+   "route": "/api/sld/24eb08b1-bb88-4f47-8ad0-f5b09326cf8d",
+   "method": "PUT",
+   "status": 405,
+   "allow": "GET, OPTIONS, HEAD"
+  },
+  {
+   "route": "/api/sld/24eb08b1-bb88-4f47-8ad0-f5b09326cf8d",
+   "method": "DELETE",
+   "status": 405,
+   "allow": "GET, OPTIONS, HEAD"
+  },
+  {
+   "route": "/api/sld/24eb08b1-bb88-4f47-8ad0-f5b09326cf8d",
+   "method": "PATCH",
+   "status": 405,
+   "allow": "GET, OPTIONS, HEAD"
+  },
+  {
+   "route": "/api/contact/by-sld/24eb08b1-bb88-4f47-8ad0-f5b09326cf8d",
+   "method": "OPTIONS",
+   "status": 200,
+   "allow": "GET, OPTIONS, HEAD"
+  },
+  {
+   "route": "/api/contact/by-sld/24eb08b1-bb88-4f47-8ad0-f5b09326cf8d",
+   "method": "PUT",
+   "status": 405,
+   "allow": "GET, OPTIONS, HEAD"
+  },
+  {
+   "route": "/api/contact/by-sld/24eb08b1-bb88-4f47-8ad0-f5b09326cf8d",
+   "method": "DELETE",
+   "status": 405,
+   "allow": "GET, OPTIONS, HEAD"
+  },
+  {
+   "route": "/api/contact/by-sld/24eb08b1-bb88-4f47-8ad0-f5b09326cf8d",
+   "method": "PATCH",
+   "status": 405,
+   "allow": "GET, OPTIONS, HEAD"
+  }
+ ],
+ "write_note": "Read-only characterization only. No cross-tenant mutation payload was sent. Actual PUT/DELETE with a valid body left UNTESTED pending explicit go-ahead (could corrupt the demo tenant)."
+}

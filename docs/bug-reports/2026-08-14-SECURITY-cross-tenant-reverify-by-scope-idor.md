@@ -14,6 +14,19 @@
 
 ---
 
+## Update — 2026-08-17 re-verification (still LIVE + a new confirmed route)
+
+Re-ran the full battery **3 days later** with fresh auth for both tenants. **Nothing has been fixed.** All previously-confirmed leaks still return the victim tenant's data, byte-for-byte identical to the victim's own session (SHA-256 match on every body). Additions from this pass:
+
+- **NEW confirmed leak — `GET /api/sld/{id}` (singular).** A customer admin of EG-ACME (`is_eg_admin:false`) fetching Demo's SLD id `24eb08b1…` receives the **entire foreign SLD document** — the single-line diagram plus its `nodes / edges / issues / tasks / quotes / comments / mappings` — **200, byte-identical** to Demo's own view (`sha256[:16]=089545a705103994` on both sides). This is the purest form of the gap: a top-level resource fetched by its own id, **no `company_id` in the path** for the per-route guard to key on. The own-tenant control returns acme's own SLD (1.67 MB for a populated diagram), so a populated foreign SLD would leak in full. This route is **not** in the `by-<scope>` list above — it is a plain `/{id}` resource route, i.e. a third shape the fix missed.
+- **Precise route note.** The leak is on the **singular** `/api/sld/{id}`. The plural `/api/slds/{id}`, `/api/sessions/{id}`, and `/api/session/{id}` fall through to the SPA `index.html` (200-HTML, no data) — they are not live API routes. `GET /api/ir_session/{id}` is **properly isolated** (foreign id → SPA shell, own id → JSON), so session-by-id is *not* leaking; the exposure is SLD-by-id.
+- **Write surface is bounded (confidentiality, not integrity, on these routes).** Non-destructive method probe (`OPTIONS` + wrong-method, no mutation payload sent): both `/api/sld/{id}` and `/api/contact/by-sld/{id}` return `Allow: GET, OPTIONS, HEAD`; `PUT/DELETE/PATCH` → **405**. So a foreign object cannot be *modified* through these specific routes. Cross-tenant **write** on other `by-<scope>` routes remains UNTESTED by design — I did not send mutation payloads that could corrupt the Demo tenant.
+- **Guard-shape re-confirmed.** `/api/company/{garbage-uuid}/slds` and `/api/company/{malformed}/slds` both → 422 (identical 118 bytes); `/api/company/{demo}/zzz-nonexistent` → SPA shell. Same conclusion as Aug 14: the guard is inside each `/company/{id}/*` handler, not a global `before_request`, and there is no tenant-existence oracle.
+
+Evidence receipts (live bodies, this pass): `docs/bug-evidence/cross-tenant-by-sld-idor/2026-08-17-sld-by-id-leak.json` and `…-reverify-summary.json`.
+
+---
+
 ## What IS fixed (verified)
 
 | Route (foreign company/sld id) | Before (2026-08-11) | Now |

