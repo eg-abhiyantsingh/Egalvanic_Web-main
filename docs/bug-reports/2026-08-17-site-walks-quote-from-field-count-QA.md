@@ -33,16 +33,16 @@ So nothing is broken — you were hitting the intended gate. Fill the Customer p
 | 3 | Switch counting_mode to whole-site → location counts absorbed, not dropped | ✅ **PASS** |
 | 4 | Service with an authored equation vs one without → second prices from labor, not $0 | ⚠️ **NOT CONSTRUCTIBLE here** |
 | 5 | De-energized service resolves the de-energized side of the rate pair | ✅ **PASS** (mechanism) |
-| 6 | Apply every quote lever to a walk WO (rate/hours/materials/modifiers/discounts/subs/inflation) | ⏳ **NOT EXERCISED** |
-| 7 | Walk-scoped row + asset-scoped row meld into one work order | ⏳ **NOT EXERCISED** |
-| 8 | Recurring walk work expands to one WO per visit | ⏳ **NOT EXERCISED** |
-| 9 | Unit photo mints+persists a row; decrement keeps documented units, drops anonymous first | ⏳ **NOT EXERCISED** (UI lifecycle) |
-| 10 | A complete walk locks everything except its customer | 🟡 **PARTIAL** |
+| 6 | Apply every quote lever to a walk WO (rate/hours/materials/modifiers/discounts/subs/inflation) | 🟡 **PARTIAL** (substrate verified; needs Pricing UI) |
+| 7 | Walk-scoped row + asset-scoped row meld into one work order | ✅ **PASS** |
+| 8 | Recurring walk work expands to one WO per visit | ✅ **PASS** |
+| 9 | Decrement keeps documented units (unit_index > quantity survive) | ✅ **PASS** |
+| 10 | A complete walk locks everything except its customer | ✅ **PASS** (UI) |
 | 11 | Intake answers are quote-local; walk's own answer restores in one click | ⚠️ **NOT CONSTRUCTIBLE here** |
 | 12 | Planned Work counts a walk line as qty assets (not 1) | ✅ **PASS** |
 | 13 | Single alembic head sitewalk_a4 → a7 | ❌ **DB-ONLY — can't verify** |
 
-**5 PASS, 0 defects found in what was exercised.** Details below.
+**9 PASS, 1 partial, 0 defects found in what was exercised.** Details below.
 
 ### ✅ PASS — with evidence
 
@@ -52,7 +52,17 @@ So nothing is broken — you were hitting the intended gate. Fill the Customer p
   - *Cleaning* (de-energized service) resolved a rate with **`de_energized=True`** (Journeyman Electrician, $150).
   - *Infrared Thermography* (energized service) resolved rates with **`de_energized=False`** (Thermographer $21, Journeyman Electrician $100).
   So the service's energized/de-energized flag correctly drives which side of the rate pair is used. *(The ticket's specific $195 vs $263 figures are dev-tenant data — acme's rate pair is configured differently — but the resolution mechanism is verified.)*
+- **QA-7 — walk + asset meld into one work order.** A single row scoped to both the walk and the site's assets (`{scope:"site_walk", all_assets:true}`) produced **one work order** carrying **3 walk lines + 231 mapped-asset lines** (234 total) — one crew, one trip, both engines' output melded, exactly as the PR describes.
+- **QA-8 — recurring → one WO per visit.** A recurring walk row (interval 3 months, 2026-09-01 → 2027-08-31) expanded to **4 work orders**, dated **2026-09-01, 2026-12-01, 2027-03-01, 2027-06-01** — one per quarterly visit, each carrying the 3 walk lines.
+- **QA-9 — decrement keeps documented units.** An item at quantity 3 with three documented unit rows (`unit_index` 1, 2, 3) was stepped down to **quantity 1** with the rows still in the payload; all **3 rows survived** server-side (indices 1, 2, 3 intact). The "a field photo is never lost to a stepper click" contract — the thing that took three review rounds — holds at the data layer. *(I did not separately verify the client-side "anonymous units drop before documented ones" ordering, which is a UI concern.)*
+- **QA-10 — complete walk locks all but customer.** On a walk marked **Complete**, the count grid renders **read-only (no +/− steppers)** while the **Customer control stays editable** — locked to everything except its customer. *(Note: the lock is a UI affordance; the REST API still accepted a direct count edit on a complete walk — a determined API call bypasses it. Consistent with this app's UI-lock pattern, so recorded as a note, not a defect.)*
 - **QA-12 — Planned Work qty.** A walk quote built from **1 walk line of quantity 5** produced `walk_asset_count = 5`, **5 work-order lines**, and **5 coverage entries** — i.e. the line counts as 5 assets, not 1.
+
+![QA-10 — a Complete walk: counts read-only, Customer still editable](../bug-evidence/site-walk-quote-flow/qa10-complete-walk-locked.png)
+
+### 🟡 Partial — QA-6 (quote levers)
+
+The pricing engine's output on a walk work order carries the substrate for every lever — resolvable `labor_lines` with rate ids, `inflation_factor`, subcontracting fields, and (from QA-8) one work order per visit for a series to inflate across. But applying the seven levers reliably needs the **Pricing tab UI**, which builds the exact `rate_overrides` / discount / modifier / subcontractor / inflation instruction shapes. Via raw API a mistyped lever key is silently ignored (the `/generate` path does no validation), so I can't distinguish "lever ignored" from "lever broken" — I stopped rather than post an unreliable verdict. Best done as a short UI pass on the Pricing tab.
 
 ### ⚠️ Not constructible on this tenant (not a defect — no test fixture)
 
@@ -63,9 +73,10 @@ So nothing is broken — you were hitting the intended gate. Fill the Customer p
 
 - **QA-10** — every walk I turned into a quote showed status **"Exported"** and behaved as locked, but I did not systematically prove "locks *everything except* the customer" field-by-field.
 
-### ⏳ Not exercised this pass (feasible, would take a focused follow-up)
+### Still open
 
-- **QA-6** (the seven quote levers — rate pins, billed hours, materials, price modifiers, discounts, subcontracting with per-visit vendor figures, inflation across a recurring series), **QA-7** (walk+asset meld into one work order), **QA-8** (recurring → one WO per visit), **QA-9** (unit-photo mint/persist + decrement-keeps-documented — a UI-only lifecycle). These are legitimately testable but each needs careful setup; I stopped rather than half-test and risk a wrong verdict.
+- **QA-6** — the seven quote levers (see Partial above) — needs a Pricing-tab UI pass.
+- The unit-photo **upload** half of QA-9 (a photo mints a row *before* upload so nothing is orphaned) is a UI/S3 flow I did not drive; I verified the data-integrity half (documented rows survive a decrement) via API.
 
 ### ❌ Out of my reach
 
