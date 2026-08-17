@@ -515,6 +515,14 @@ def main():
                         os.path.splitext(os.path.basename(md_path))[0] + ".pdf"))
         if rc == 0:
             print("\n  Drag the PDF straight onto the Jira ticket — text and screenshots in one file.")
+        # Auto-organize: date-stamp the new PDF(s) and refresh the review index so the
+        # export folder always sorts by date with today at the top.
+        try:
+            sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+            import organize_reports
+            organize_reports.organize()
+        except Exception as e:
+            print("  (index refresh skipped: %s)" % e)
         if args.do_open and sys.platform == "darwin" and made:
             subprocess.run(["open"] + [m for m in made if os.path.exists(m)], check=False)
         return rc
