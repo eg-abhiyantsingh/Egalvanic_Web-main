@@ -1,0 +1,423 @@
+<title>Regression Signal Board</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    /* light palette — slate-ink with a blue bias, chosen not defaulted */
+    --ground:#eef1f5; --surface:#ffffff; --surface-2:#f4f6f9; --surface-3:#eaeef3;
+    --ink:#161b22; --muted:#586170; --faint:#889;  --hair:#e2e7ee; --hair-2:#d6dce4;
+    --brand:#1668dc; --brand-soft:#e7f0ff; --brand-ink:#0b47a3;
+    --pass:#1f9d57; --pass-soft:#e3f4ea; --pass-ink:#14663a;
+    --fail:#d64545; --fail-soft:#fbe7e7; --fail-ink:#992b2b;
+    --skip:#c98a12; --skip-soft:#fbf1dc; --skip-ink:#8a5c05;
+    --shadow:0 1px 2px rgba(16,22,34,.04),0 6px 20px rgba(16,22,34,.06);
+    --shadow-lg:0 2px 6px rgba(16,22,34,.06),0 18px 44px rgba(16,22,34,.12);
+    --font-sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --font-mono:ui-monospace,"SF Mono","JetBrains Mono","Roboto Mono",Menlo,Consolas,monospace;
+    --r:14px; --r-sm:9px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#0a0e14; --surface:#111721; --surface-2:#161d29; --surface-3:#1c2531;
+      --ink:#e8edf4; --muted:#9aa6b6; --faint:#68727f; --hair:#232d3a; --hair-2:#2b3644;
+      --brand:#4b9bff; --brand-soft:#12233d; --brand-ink:#9cc4ff;
+      --pass:#3fd07f; --pass-soft:#10281c; --pass-ink:#8ce3b3;
+      --fail:#ff6b6b; --fail-soft:#2c1517; --fail-ink:#ffb3b3;
+      --skip:#e0b341; --skip-soft:#2a2110; --skip-ink:#f2d488;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+      --shadow-lg:0 2px 8px rgba(0,0,0,.5),0 24px 56px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0a0e14; --surface:#111721; --surface-2:#161d29; --surface-3:#1c2531;
+    --ink:#e8edf4; --muted:#9aa6b6; --faint:#68727f; --hair:#232d3a; --hair-2:#2b3644;
+    --brand:#4b9bff; --brand-soft:#12233d; --brand-ink:#9cc4ff;
+    --pass:#3fd07f; --pass-soft:#10281c; --pass-ink:#8ce3b3;
+    --fail:#ff6b6b; --fail-soft:#2c1517; --fail-ink:#ffb3b3;
+    --skip:#e0b341; --skip-soft:#2a2110; --skip-ink:#f2d488;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+    --shadow-lg:0 2px 8px rgba(0,0,0,.5),0 24px 56px rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--font-sans);
+    line-height:1.5;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  .app{max-width:1120px;margin:0 auto;padding:34px 22px 72px}
+  .num{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+
+  /* ---- masthead ---- */
+  .masthead{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;
+    padding-bottom:22px;border-bottom:1px solid var(--hair);margin-bottom:24px}
+  .eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--brand);display:flex;align-items:center;gap:8px;margin-bottom:9px}
+  .eyebrow .spark{width:22px;height:12px;display:inline-block}
+  h1{font-size:30px;line-height:1.08;letter-spacing:-.02em;margin:0 0 8px;font-weight:750;text-wrap:balance}
+  .sub{margin:0;color:var(--muted);font-size:13.5px;max-width:62ch}
+  .sub b{color:var(--ink);font-weight:600}
+  .theme-btn{flex:none;appearance:none;border:1px solid var(--hair-2);background:var(--surface);
+    color:var(--muted);border-radius:999px;padding:7px 13px;font:inherit;font-size:12px;cursor:pointer;
+    display:inline-flex;gap:7px;align-items:center;transition:.15s}
+  .theme-btn:hover{color:var(--ink);border-color:var(--brand)}
+
+  /* ---- date rail ---- */
+  .rail-label{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:9px}
+  .daterail{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px}
+  .dchip{appearance:none;cursor:pointer;font:inherit;text-align:left;background:var(--surface);
+    border:1px solid var(--hair-2);border-radius:var(--r-sm);padding:9px 13px;min-width:104px;
+    color:var(--muted);transition:.15s;position:relative}
+  .dchip:hover{border-color:var(--brand);color:var(--ink);transform:translateY(-1px)}
+  .dchip .d-day{font-size:14px;font-weight:650;color:var(--ink);letter-spacing:-.01em}
+  .dchip .d-rate{font-family:var(--font-mono);font-size:11.5px;margin-top:2px;color:var(--muted)}
+  .dchip .d-dot{position:absolute;top:9px;right:11px;width:8px;height:8px;border-radius:50%}
+  .dchip[aria-pressed="true"]{border-color:var(--brand);background:var(--brand-soft);box-shadow:0 0 0 1px var(--brand) inset}
+  .dchip[aria-pressed="true"] .d-day{color:var(--brand-ink)}
+  .dchip:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+
+  /* ---- KPI readouts ---- */
+  .kpis{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 1fr;gap:12px;margin-bottom:14px}
+  .kpi{background:var(--surface);border:1px solid var(--hair);border-radius:var(--r);padding:16px 17px;
+    box-shadow:var(--shadow);position:relative;overflow:hidden}
+  .kpi .k-label{font-size:11px;font-weight:650;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .kpi .k-val{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:680;
+    letter-spacing:-.02em;line-height:1;margin-top:9px}
+  .kpi .k-sub{font-size:12px;color:var(--muted);margin-top:7px}
+  .kpi.hero{grid-column:span 1}
+  .kpi.hero .k-val{font-size:52px}
+  .kpi .k-val.mid{font-size:30px}
+  .k-delta{display:inline-flex;align-items:center;gap:4px;font-family:var(--font-mono);font-size:12px;
+    font-weight:650;padding:2px 7px;border-radius:999px;margin-top:9px}
+  .k-delta.up{color:var(--pass-ink);background:var(--pass-soft)}
+  .k-delta.down{color:var(--fail-ink);background:var(--fail-soft)}
+  .k-delta.flat{color:var(--muted);background:var(--surface-3)}
+  .kpi.tone-pass .k-val{color:var(--pass)} .kpi.tone-fail .k-val{color:var(--fail)} .kpi.tone-skip .k-val{color:var(--skip)}
+  .spark-hero{position:absolute;right:12px;bottom:10px;width:120px;height:34px;opacity:.9}
+
+  /* ---- trend ---- */
+  .trend{background:var(--surface);border:1px solid var(--hair);border-radius:var(--r);
+    padding:18px 20px 12px;box-shadow:var(--shadow);margin-bottom:26px}
+  .trend-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;gap:12px;flex-wrap:wrap}
+  .trend-head h2{font-size:14px;margin:0;font-weight:650;letter-spacing:-.01em}
+  .trend-head .note{font-size:11.5px;color:var(--faint);font-family:var(--font-mono)}
+  .trend svg{width:100%;height:132px;display:block;overflow:visible}
+
+  /* ---- modules ---- */
+  .sec-head{display:flex;justify-content:space-between;align-items:center;gap:14px;margin:0 2px 14px;flex-wrap:wrap}
+  .sec-head h2{font-size:15px;margin:0;font-weight:700;letter-spacing:-.01em}
+  .sec-head .legend{display:flex;gap:14px;align-items:center;font-size:12px;color:var(--muted);flex-wrap:wrap}
+  .lg{display:inline-flex;align-items:center;gap:6px}
+  .lg i{width:9px;height:9px;border-radius:2px;display:inline-block}
+  .filter-btn{appearance:none;cursor:pointer;font:inherit;font-size:12px;font-weight:600;
+    border:1px solid var(--hair-2);background:var(--surface);color:var(--muted);border-radius:999px;padding:6px 13px;transition:.15s}
+  .filter-btn:hover{color:var(--ink);border-color:var(--brand)}
+  .filter-btn[aria-pressed="true"]{background:var(--fail-soft);color:var(--fail-ink);border-color:var(--fail)}
+  .filter-btn:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+
+  .modules{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:13px}
+  .mod{background:var(--surface);border:1px solid var(--hair);border-radius:var(--r);
+    box-shadow:var(--shadow);overflow:hidden;position:relative;transition:box-shadow .15s,transform .15s}
+  .mod::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--stripe,var(--hair-2))}
+  .mod.s-pass{--stripe:var(--pass)} .mod.s-fail{--stripe:var(--fail)} .mod.s-skip{--stripe:var(--skip)}
+  .mod-btn{appearance:none;width:100%;text-align:left;background:none;border:0;font:inherit;color:inherit;
+    cursor:pointer;padding:15px 16px 15px 18px;display:block}
+  .mod-btn:focus-visible{outline:2px solid var(--brand);outline-offset:-3px}
+  .mod-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .mod-name{font-size:14.5px;font-weight:650;letter-spacing:-.01em;line-height:1.25}
+  .mod-rate{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:680;font-size:19px;line-height:1}
+  .mod.s-pass .mod-rate{color:var(--pass)} .mod.s-fail .mod-rate{color:var(--fail)} .mod.s-skip .mod-rate{color:var(--skip)}
+  .pill{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:999px;white-space:nowrap;display:inline-block;margin-top:5px}
+  .pill.p-pass{background:var(--pass-soft);color:var(--pass-ink)}
+  .pill.p-fail{background:var(--fail-soft);color:var(--fail-ink)}
+  .pill.p-skip{background:var(--skip-soft);color:var(--skip-ink)}
+  .bar{height:7px;border-radius:4px;background:var(--surface-3);display:flex;overflow:hidden;margin:13px 0 9px}
+  .bar i{display:block;height:100%}
+  .bar .b-pass{background:var(--pass)} .bar .b-fail{background:var(--fail)} .bar .b-skip{background:var(--skip)}
+  .counts{display:flex;gap:15px;font-size:12.5px;color:var(--muted);font-family:var(--font-mono)}
+  .counts b{font-weight:680}
+  .counts .c-pass b{color:var(--pass)} .counts .c-fail b{color:var(--fail)} .counts .c-skip b{color:var(--skip)}
+  .chev{color:var(--faint);font-size:12px;transition:transform .2s;display:inline-block;margin-left:6px}
+  .mod.open .chev{transform:rotate(90deg)}
+  .drawer{display:none;padding:2px 16px 15px 18px;border-top:1px solid var(--hair)}
+  .mod.open .drawer{display:block}
+  .drawer h4{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:13px 0 7px}
+  .tlist{display:flex;flex-direction:column;gap:1px;max-height:280px;overflow:auto;border-radius:8px}
+  .trow{display:flex;align-items:center;gap:10px;padding:6px 9px;background:var(--surface-2);font-size:12.5px}
+  .trow:hover{background:var(--surface-3)}
+  .trow .tbadge{flex:none;width:15px;height:15px;border-radius:4px;display:grid;place-items:center;font-size:10px;font-weight:800;color:#fff}
+  .trow .tbadge.b-pass{background:var(--pass)} .trow .tbadge.b-fail{background:var(--fail)} .trow .tbadge.b-skip{background:var(--skip)}
+  .trow .tname{flex:1;min-width:0;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .trow .tdur{flex:none;font-family:var(--font-mono);color:var(--faint);font-size:11px}
+  .trow.is-fail .tname{color:var(--fail-ink);font-weight:550}
+  .allbtn{appearance:none;cursor:pointer;font:inherit;font-size:12px;font-weight:600;color:var(--brand);
+    background:none;border:0;padding:9px 0 2px;display:inline-flex;align-items:center;gap:6px}
+  .allbtn:hover{text-decoration:underline}
+
+  footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--hair);
+    color:var(--faint);font-size:12px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  footer .num{color:var(--muted)}
+  footer a{color:var(--brand);text-decoration:none}
+
+  @media (max-width:820px){
+    .kpis{grid-template-columns:1fr 1fr}
+    .kpi.hero{grid-column:span 2}
+    h1{font-size:25px}
+  }
+  @media (max-width:520px){ .kpis{grid-template-columns:1fr 1fr}.kpi.hero .k-val{font-size:42px} }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="app">
+  <header class="masthead">
+    <div>
+      <div class="eyebrow">
+        <svg class="spark" viewBox="0 0 22 12" fill="none" aria-hidden="true"><path d="M0 9 L6 9 L8 2 L11 11 L14 5 L16 9 L22 9" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>
+        eGalvanic · Web Automation
+      </div>
+      <h1>Regression Signal Board</h1>
+      <p class="sub">The full CI regression suite — <b id="suiteName"></b>. Every figure is read straight from the GitHub&nbsp;Actions run's consolidated report <b>after failed tests were re-run</b>, so flaky retries don't count against a module. Choose a run date to inspect it.</p>
+    </div>
+    <button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle colour theme"><span id="themeIcon">◐</span> <span id="themeTxt">Theme</span></button>
+  </header>
+
+  <div class="rail-label">Automation runs — full suite</div>
+  <nav class="daterail" id="daterail" aria-label="Select a run date"></nav>
+
+  <section class="kpis" id="kpis" aria-live="polite"></section>
+
+  <section class="trend">
+    <div class="trend-head">
+      <h2>Pass rate across runs</h2>
+      <span class="note" id="trendNote"></span>
+    </div>
+    <svg id="trendSvg" viewBox="0 0 900 132" preserveAspectRatio="none" role="img" aria-label="Pass rate trend across runs"></svg>
+  </section>
+
+  <div class="sec-head">
+    <h2 id="modHead">Modules</h2>
+    <div class="legend">
+      <span class="lg"><i style="background:var(--pass)"></i>Healthy</span>
+      <span class="lg"><i style="background:var(--skip)"></i>Skips only</span>
+      <span class="lg"><i style="background:var(--fail)"></i>Needs attention</span>
+      <button class="filter-btn" id="filterBtn" type="button" aria-pressed="false">Only modules with issues</button>
+    </div>
+  </div>
+  <section class="modules" id="modules"></section>
+
+  <footer>
+    <div>Source · <b>GitHub Actions</b> → <span id="fSuite"></span> · consolidated client report (after-rerun). Figures are the run's own recorded results — nothing is estimated.</div>
+    <div class="num" id="fRun"></div>
+  </footer>
+</div>
+
+<script>
+const DATA = __DATA__;
+
+const runs = DATA.runs.slice().sort((a,b)=>a.date<b.date?-1:1);
+let active = runs.length-1;      // latest by default
+let issuesOnly = false;
+
+const $=(s,r=document)=>r.querySelector(s);
+const el=(t,c,txt)=>{const e=document.createElement(t); if(c)e.className=c; if(txt!=null)e.textContent=txt; return e;};
+const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function fmtDate(iso){const [y,m,d]=iso.split("-").map(Number); return {day:`${MONTHS[m-1]} ${d}`, year:y};}
+function modStatus(m){ if(m.failed>0) return "fail"; if(m.skipped>0 && m.passed< m.total) return "skip"; return "pass"; }
+
+$("#suiteName").textContent = DATA.suite;
+$("#fSuite").textContent = DATA.suite;
+
+/* ---------- date rail ---------- */
+function buildRail(){
+  const rail=$("#daterail"); rail.innerHTML="";
+  runs.forEach((r,i)=>{
+    const b=el("button","dchip"); b.type="button"; b.setAttribute("aria-pressed", i===active);
+    const st = r.summary.failed>0 ? "fail" : (r.summary.skipped>0?"skip":"pass");
+    const dot=el("span","d-dot"); dot.style.background=`var(--${st})`;
+    const day=el("span","d-day"); day.textContent=fmtDate(r.date).day;
+    const rate=el("span","d-rate num"); rate.textContent=r.summary.pass_rate.toFixed(1)+"%";
+    b.append(dot,day,document.createElement("br"),rate);
+    b.addEventListener("click",()=>{active=i; render();});
+    rail.appendChild(b);
+  });
+}
+
+/* ---------- KPIs ---------- */
+function kpiCard(cls,label,val,sub,tone){
+  const k=el("div","kpi"+(cls?" "+cls:"")+(tone?" tone-"+tone:""));
+  k.append(el("div","k-label",label));
+  const v=el("div","k-val"+(cls==="hero"?"":" mid")); v.textContent=val; k.append(v);
+  if(sub){ if(typeof sub==="string"){k.append(el("div","k-sub",sub));} else {k.append(sub);} }
+  return k;
+}
+function deltaChip(cur,prev,unit="pp"){
+  if(prev==null) return el("div","k-sub","first run in view");
+  const d=+(cur-prev).toFixed(1);
+  const cls = d>0?"up":(d<0?"down":"flat");
+  const arrow = d>0?"▲":(d<0?"▼":"■");
+  const c=el("div","k-delta "+cls); c.textContent=`${arrow} ${d>0?"+":""}${d}${unit} vs prev run`;
+  return c;
+}
+function heroSpark(){
+  const w=120,h=34,pad=3, rates=runs.map(r=>r.summary.pass_rate);
+  const min=Math.min(...rates)-1,max=Math.max(...rates)+1, span=Math.max(max-min,1);
+  const x=i=>pad+(w-2*pad)*(runs.length<2?0.5:i/(runs.length-1));
+  const y=v=>pad+(h-2*pad)*(1-(v-min)/span);
+  const pts=rates.map((v,i)=>[x(i),y(v)]);
+  const line=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
+  const area=`M${x(0)} ${h-pad} `+pts.map(p=>"L"+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ")+` L${x(runs.length-1)} ${h-pad} Z`;
+  const last=pts[active];
+  return `<svg class="spark-hero" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
+    <path d="${area}" fill="var(--brand)" opacity=".10"/>
+    <path d="${line}" fill="none" stroke="var(--brand)" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" opacity=".85"/>
+    <circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3" fill="var(--brand)"/>
+  </svg>`;
+}
+function buildKpis(){
+  const wrap=$("#kpis"); wrap.innerHTML="";
+  const s=runs[active].summary;
+  const prev = active>0?runs[active-1].summary:null;
+  // hero: pass rate
+  const hero=kpiCard("hero","Pass rate", s.pass_rate.toFixed(1)+"%", null, "pass");
+  hero.append(deltaChip(s.pass_rate, prev?prev.pass_rate:null));
+  hero.insertAdjacentHTML("beforeend", heroSpark());
+  wrap.append(hero);
+  // coverage
+  wrap.append(kpiCard("","Tests executed", s.total.toLocaleString(), "test cases covered this run"));
+  // passed / failed / skipped
+  wrap.append(kpiCard("","Passed", s.passed.toLocaleString(), prevSub(prev,"passed"), "pass"));
+  wrap.append(kpiCard("","Failed", s.failed.toLocaleString(), prevSub(prev,"failed"), s.failed?"fail":null));
+  wrap.append(kpiCard("","Modules healthy", s.modules_clean+" / "+s.modules_total,
+      s.modules_with_issues? s.modules_with_issues+" need attention":"all modules green"));
+}
+function prevSub(prev,key){
+  if(!prev) return "";
+  const cur=runs[active].summary[key], d=cur-prev[key];
+  if(d===0) return "unchanged vs prev";
+  return (d>0?"+":"")+d+" vs prev run";
+}
+
+/* ---------- trend chart ---------- */
+function buildTrend(){
+  const svg=$("#trendSvg"); const W=900,H=132, L=6,R=6,T=14,B=22;
+  const rates=runs.map(r=>r.summary.pass_rate);
+  const lo=Math.max(0,Math.floor((Math.min(...rates)-3)/5)*5);
+  const hi=Math.min(100,Math.ceil((Math.max(...rates)+3)/5)*5);
+  const span=Math.max(hi-lo,1);
+  const x=i=>L+(W-L-R)*(runs.length<2?0.5:i/(runs.length-1));
+  const y=v=>T+(H-T-B)*(1-(v-lo)/span);
+  let g="";
+  for(let gv=lo; gv<=hi; gv+=Math.max(5,Math.round(span/4/5)*5)){
+    const yy=y(gv).toFixed(1);
+    g+=`<line x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}" stroke="var(--hair)" stroke-width="1"/>`;
+    g+=`<text x="${L}" y="${(+yy-4).toFixed(1)}" fill="var(--faint)" font-size="10" font-family="var(--font-mono)">${gv}%</text>`;
+  }
+  const pts=rates.map((v,i)=>[x(i),y(v)]);
+  const line=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
+  const area=`M${x(0)} ${H-B} `+pts.map(p=>"L"+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ")+` L${x(runs.length-1)} ${H-B} Z`;
+  let dots="";
+  pts.forEach((p,i)=>{
+    const on=i===active;
+    dots+=`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${on?5:3.2}" fill="${on?"var(--brand)":"var(--surface)"}" stroke="var(--brand)" stroke-width="${on?0:1.8}"/>`;
+    if(on) dots+=`<text x="${p[0].toFixed(1)}" y="${(p[1]-12).toFixed(1)}" text-anchor="middle" fill="var(--brand)" font-size="11.5" font-weight="700" font-family="var(--font-mono)">${rates[i].toFixed(1)}%</text>`;
+    dots+=`<text x="${p[0].toFixed(1)}" y="${H-6}" text-anchor="middle" fill="${on?"var(--ink)":"var(--faint)"}" font-size="10.5" font-family="var(--font-mono)" font-weight="${on?700:400}">${fmtDate(runs[i].date).day}</text>`;
+  });
+  svg.innerHTML = g +
+    `<path d="${area}" fill="var(--brand)" opacity=".08"/>`+
+    `<path d="${line}" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`+
+    dots;
+  $("#trendNote").textContent = `y-axis ${lo}–${hi}%  ·  ${runs.length} runs`;
+}
+
+/* ---------- modules ---------- */
+function buildModules(){
+  const wrap=$("#modules"); wrap.innerHTML="";
+  const r=runs[active];
+  let mods=r.modules.slice();
+  // sort: issues first (by fail count desc), then skips, then healthy; within, by pass_rate asc
+  const rank=m=>m.failed>0?0:(m.skipped>0&&m.passed<m.total?1:2);
+  mods.sort((a,b)=> rank(a)-rank(b) || b.failed-a.failed || a.pass_rate-b.pass_rate);
+  if(issuesOnly) mods=mods.filter(m=>m.failed>0);
+  $("#modHead").textContent = issuesOnly
+     ? `Modules needing attention · ${mods.length}`
+     : `Modules · ${r.modules.length}  (${r.summary.modules_clean} healthy, ${r.summary.modules_with_issues} with issues)`;
+  if(!mods.length){ wrap.append(el("div","sub","No modules with failures in this run — every module is green. ✓")); return; }
+  mods.forEach(m=>wrap.append(moduleCard(m)));
+}
+function moduleCard(m){
+  const st=modStatus(m);
+  const card=el("div","mod s-"+st);
+  const btn=el("button","mod-btn"); btn.type="button"; btn.setAttribute("aria-expanded","false");
+  // top
+  const top=el("div","mod-top");
+  const lft=el("div"); lft.style.minWidth="0";
+  lft.append(el("div","mod-name",m.name));
+  const pillTxt = st==="fail"?`${m.failed} failing`:(st==="skip"?`${m.skipped} skipped`:"Healthy");
+  lft.append(el("span","pill p-"+st, pillTxt));
+  const rgt=el("div"); rgt.style.textAlign="right"; rgt.style.flex="none";
+  rgt.append(el("div","mod-rate", m.pass_rate.toFixed(0)+"%"));
+  const chev=el("span","chev","▶"); rgt.append(chev);
+  top.append(lft,rgt); btn.append(top);
+  // bar
+  const bar=el("div","bar");
+  const seg=(cls,n)=>{ if(n<=0)return; const i=el("i","b-"+cls); i.style.width=(100*n/m.total)+"%"; bar.append(i); };
+  seg("pass",m.passed); seg("fail",m.failed); seg("skip",m.skipped); btn.append(bar);
+  // counts
+  const counts=el("div","counts");
+  const mk=(cls,label,n)=>{const s=el("span","c-"+cls); s.innerHTML=`<b>${n}</b> ${label}`; return s;};
+  counts.append(mk("pass","passed",m.passed));
+  if(m.failed) counts.append(mk("fail","failed",m.failed));
+  if(m.skipped) counts.append(mk("skip","skipped",m.skipped));
+  btn.append(counts);
+  card.append(btn);
+  // drawer
+  const drawer=el("div","drawer");
+  if(m.failures && m.failures.length){
+    drawer.append(el("h4","Failing tests"));
+    const list=el("div","tlist");
+    m.failures.forEach(f=>list.append(testRow({name:f.name,duration:f.duration,status:"FAIL"})));
+    drawer.append(list);
+  } else {
+    drawer.append(el("h4","No failures — all "+m.total+" tests passed"));
+  }
+  // view all toggle
+  if(m.tests && m.tests.length){
+    const allBtn=el("button","allbtn"); allBtn.type="button";
+    allBtn.textContent=`▸ View all ${m.total} tests in this module`;
+    let shown=false; const allWrap=el("div"); allWrap.style.display="none";
+    const alist=el("div","tlist"); alist.style.marginTop="7px";
+    m.tests.forEach(t=>alist.append(testRow(t)));
+    allWrap.append(alist);
+    allBtn.addEventListener("click",e=>{e.stopPropagation(); shown=!shown; allWrap.style.display=shown?"block":"none";
+      allBtn.textContent=(shown?"▾ Hide":"▸ View")+` all ${m.total} tests in this module`;});
+    drawer.append(allBtn,allWrap);
+  }
+  card.append(drawer);
+  btn.addEventListener("click",()=>{const open=card.classList.toggle("open");
+     btn.setAttribute("aria-expanded",open); if(open)card.style.boxShadow="var(--shadow-lg)"; else card.style.boxShadow="";});
+  return card;
+}
+function testRow(t){
+  const row=el("div","trow"+(t.status==="FAIL"?" is-fail":""));
+  const sc = t.status==="FAIL"?"fail":(t.status==="SKIP"?"skip":"pass");
+  const badge=el("span","tbadge b-"+sc, t.status==="FAIL"?"✕":(t.status==="SKIP"?"⊘":"✓"));
+  const name=el("span","tname",t.name); name.title=t.name;
+  const dur=el("span","tdur",t.duration||"");
+  row.append(badge,name,dur); return row;
+}
+
+/* ---------- theme ---------- */
+(function(){
+  const root=document.documentElement, btn=$("#themeBtn");
+  const icons={light:"☀",dark:"☾",system:"◐"};
+  let mode = root.getAttribute("data-theme") || "system";
+  function apply(){ if(mode==="system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme",mode);
+    $("#themeIcon").textContent=icons[mode]; $("#themeTxt").textContent=mode[0].toUpperCase()+mode.slice(1);}
+  btn.addEventListener("click",()=>{ mode = mode==="system"?"light":(mode==="light"?"dark":"system"); apply();});
+  apply();
+})();
+
+/* ---------- render ---------- */
+function render(){
+  buildRail(); buildKpis(); buildTrend(); buildModules();
+  $("#fRun").textContent = `Run ${runs[active].run_id} · ${fmtDate(runs[active].date).day} ${fmtDate(runs[active].date).year}`;
+}
+$("#filterBtn").addEventListener("click",e=>{issuesOnly=!issuesOnly; e.currentTarget.setAttribute("aria-pressed",issuesOnly); buildModules();});
+render();
+</script>
