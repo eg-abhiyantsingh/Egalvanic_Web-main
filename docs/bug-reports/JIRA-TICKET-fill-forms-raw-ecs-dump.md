@@ -1,61 +1,66 @@
-# Fill Forms from Photos — a *crashed* read job leaks the raw AWS ECS descriptor · Jira ticket (ready to file)
+# Fill Forms from Photos — a failed read job leaks the raw AWS ECS descriptor · Jira ticket (ready to assign)
 
-Full QA verdict: `docs/bug-reports/2026-08-18-fill-forms-nomatch-and-grid-refresh-QA.md`
-
-> **Scope correction (2026-08-18).** An earlier draft of this ticket said the failure is *input-independent* and *reproduced 2/2 → systemic*, and that the read pipeline was down. **That framing was wrong.** On retest with a real photo the pipeline **succeeds** and returns a graceful no-match state, and the *same* input that was in the crashed job now succeeds too. The genuine defect is narrower and is about **how a crash is surfaced**, not that crashes always happen. Corrected below.
+**Verified live 2026-08-18** on QA. Deterministically reproducible. Two proofs below: the user-facing dialog render **and** the API response captured today.
 
 ---
 
 ## Title
-[Work Orders / Fill Forms from Photos] When the read (agent-runner) task crashes, the job's error is the raw AWS ECS task descriptor — served by `/api/form-fill/jobs/{id}/status` and rendered in the dialog — leaking AWS account id, cluster ARN, ECR image, subnet, ENI, MAC, private IP and internal DNS
+[Work Orders / Fill Forms from Photos] A failed "Read pages" job exposes the raw AWS ECS/Fargate task descriptor — `GET /api/form-fill/jobs/{id}/status` returns `job.error` verbatim (AWS account id, cluster ARN, ECR image, subnet, ENI, MAC, private IP, internal DNS), and the dialog renders it
 
 ## Environment
-* Environment: **QA** (`acme.qa.egalvanic.ai`)
-* Platform: **Web** (frontend dialog + `/api/form-fill/jobs/{id}/status` / `/jobs/active` backend)
-* Browser/App Version: Chrome · QA build **V1.36** · 2026-08-18
+* Environment: **QA** — `acme.qa.egalvanic.ai`
+* Platform: **Web** — frontend dialog + `/api/form-fill/jobs/{id}/status` (and `/jobs/active`) backend
+* Build: QA **V1.36** · Chrome · 2026-08-18
+* Auth: any authenticated user who can open a Work Order session (tested as Super Admin)
 
-## What this is / isn't
-* **It IS:** an error-handling + information-disclosure defect on the **failure path**. Whenever the form-fill agent-runner (Fargate) task crashes, the backend stores the ECS failure `Cause` verbatim in `job.error` and returns it to the authenticated client, and the dialog renders it.
-* **It is NOT:** a claim that the pipeline is broken or that any particular upload triggers it. The read pipeline is healthy — verified succeeding twice on retest (see the QA verdict). The crash that produced the leak was **transient** (see Reproducibility).
+## Summary
+When a Fill-from-Photos "Read pages" job fails, the backend stores the **raw ECS/Fargate failure `Cause`** in the job's `error` field and returns it to the client. The failed job **persists**, so the endpoint keeps serving the descriptor on demand, and the dialog renders it verbatim under the error icon. This leaks internal AWS infrastructure to the browser.
 
-## Observed instance (evidence)
-Failed job **`bb8c21c8-752c-4e52-8415-a5a75a978b92`** on session `fcc37c67-01fc-4940-87f3-8028fc86e97a` (created 2026-08-18 11:36, failed 11:38). Its `job.error` is a ~4 KB stringified ECS/Fargate task descriptor. Still retrievable today via `GET /api/form-fill/jobs/active?session_id=fcc37c67-…` and `…/jobs/{id}/status`. Exposed to the authenticated user:
+## Preconditions
+1. Logged in to `https://acme.qa.egalvanic.ai`.
+2. A **failed** form-fill job exists. Failed jobs persist and remain queryable. **Known live instance (still returning the descriptor today):**
+   * session `fcc37c67-01fc-4940-87f3-8028fc86e97a`, job **`bb8c21c8-752c-4e52-8415-a5a75a978b92`**.
+
+## Steps to Reproduce — deterministic (API)
+1. Log in (obtain the session cookie).
+2. Request, same-origin, with the session cookie:
+   ```
+   GET https://acme.qa.egalvanic.ai/api/form-fill/jobs/bb8c21c8-752c-4e52-8415-a5a75a978b92/status
+   ```
+   (In the browser console on the app origin: `fetch('/api/form-fill/jobs/bb8c21c8-752c-4e52-8415-a5a75a978b92/status',{credentials:'include'}).then(r=>r.json()).then(j=>console.log(j.job.error))`.)
+3. Observe **HTTP 200**, `job.status: "failed"`, and **`job.error` = the raw ECS task descriptor** (see Actual Result). Same leak is served by `GET /api/form-fill/jobs/active?session_id=…` whenever the failed job is the session's most recent form-fill job.
+
+## Steps to Reproduce — user-facing (UI)
+1. Have a WO session whose most-recent form-fill job failed (i.e. right after a "Read pages" run fails, before a later run supersedes it).
+2. Open the session → **Forms** tab → **Actions** → **Fill from Photos**.
+3. The dialog restores that job and renders `job.error` verbatim — the raw ECS JSON appears in the dialog body under the red error icon (screenshot below).
+
+> Note on the *trigger*: the read job itself only fails when the `eg-pz-agent-runner:qa` Fargate task crashes (`ExitCode 1`). That crash is **transient** (was happening repeatedly earlier on 2026-08-18 — ≥2 distinct ECS tasks — then recovered; a real photo now reads fine). But **once any job has failed, this leak is permanently and deterministically reproducible** via the steps above, independent of the crash. Fix the presentation regardless of crash frequency.
+
+## Actual Result
+`job.error` is a ~3.8 KB stringified ECS/Fargate task descriptor, returned to the browser and rendered in the dialog. Exposed (values captured live today from job `bb8c21c8`):
 
 * **AWS account id** `165183897698`
 * **ECS cluster ARN** `arn:aws:ecs:us-east-2:165183897698:cluster/eg-pz-qa-ecs-ohio`
-* **ECR image** `165183897698.dkr.ecr.us-east-2.amazonaws.com/eg-pz-agent-runner:qa` (+ image digest `sha256:66483167…`)
-* **VPC internals** — `subnetId`, `networkInterfaceId` (eni-…), `macAddress` `0a:39:c8:df:7b:05`, `privateIPv4Address` `10.1.3.192`, `privateDnsName` `ip-10-1-3-192.us-east-2.compute.internal`
-* Step-Functions **execution ARN** (`…:eg-pz-qa-ai-form-fill-sfn-ohio:bb8c21c8-…`), task ARN, runtime id, Fargate sizing (`Cpu 4096`, `Memory 16384`, arm64), the `JOB_JSON` env, `ExitCode: 1`, `DesiredStatus: STOPPED`
+* **ECR image** `165183897698.dkr.ecr.us-east-2.amazonaws.com/eg-pz-agent-runner:qa` (+ image digest)
+* **subnetId** `subnet-0ebbd054223bcb9e1` · **networkInterfaceId** `eni-0b25dac0f3443b26a`
+* **macAddress** `0a:39:c8:df:7b:05` · **privateIPv4Address** `10.1.3.192` · **privateDnsName** `ip-10-1-3-192.us-east-2.compute.internal`
+* Step-Functions **execution ARN**, **task ARN**, runtime id, Fargate sizing (`Cpu 4096`, `Memory 16384`, arm64), `JOB_JSON` env, `ExitCode: 1`, `DesiredStatus: STOPPED`
 
-Confirmed at the API layer, not just the UI: the `/status` and `/active` endpoints return the descriptor inside the JSON body, so the backend passes the raw failure cause to the client and the dialog renders it.
-
-## Reproducibility (honest)
-* The crash itself is **not reproducible on demand.** Re-uploading the *exact* input from the crashed job (`create-service-forms-pricing-sections.png`) today produced a **successful** job with a graceful no-match message — no crash, no leak. So `bb8c21c8` was a transient agent-runner failure, not an input-driven one.
-* Therefore the leak surfaces **only when an agent-runner task actually dies** (infra hiccup, OOM, image/dependency error, etc.). It cannot be scripted with a specific file. It should be reproduced by **forcing a task failure** (e.g. kill the Fargate task / make the container exit non-zero) and then reading `GET /api/form-fill/jobs/{id}/status`.
-
-## Steps (to observe the leak on the already-captured instance)
-1. Log in to `https://acme.qa.egalvanic.ai` (Super Admin, or any role that can open the session).
-2. `GET https://acme.qa.egalvanic.ai/api/form-fill/jobs/active?session_id=fcc37c67-01fc-4940-87f3-8028fc86e97a` with the session bearer token (or open the IR session → Forms → Actions → **Fill from Photos**, which calls the same endpoint to restore the last job).
-3. Observe `job.error` = the raw ECS task descriptor (fields listed above).
-
-## Actual Result
-The failed job's `job.error` is the raw AWS ECS/Fargate task descriptor, returned to the client and rendered under the dialog's error icon — leaking internal AWS topology (account id, cluster ARN, ECR image, VPC subnet/ENI/MAC/private-IP/DNS, SFN/task ARNs).
+(The user-facing dialog screenshot below is a *different* failed task — `subnet-03964d58…`, MAC `02:32:1a:3e:96:b7`, IP `10.1.1.21` — confirming multiple failed jobs all leak the same way.)
 
 ## Expected Result
-A failed read job shows a **short, readable message** — e.g. *"We couldn't read those pages. Please try again."* — with a retry. The job-status / active endpoints must **not** return the raw Step-Functions/ECS failure `Cause` to the client, and the dialog must not render an unknown error object verbatim. Internal infrastructure (AWS account id, cluster ARN, ECR image, VPC subnet/ENI/MAC/private-IP/DNS, ARNs) must never appear in a user-facing surface. Map the ECS/SFN failure to an internal code + generic client message server-side; log the detail internally only.
+A failed read job shows a **short, readable message** — e.g. *"We couldn't read those pages. Please try again."* — with a retry. Specifically:
+* The `/jobs/{id}/status` and `/jobs/active` responses must **not** contain the raw Step-Functions/ECS failure `Cause`. Map it server-side to an internal error code + generic client message; keep the ECS detail in server logs only.
+* The dialog must **not** render an unknown error object verbatim — guard it to a friendly string.
+* Internal infrastructure (AWS account id, cluster ARN, ECR image, VPC subnet/ENI/MAC/private-IP/DNS, ARNs) must never reach a client surface.
 
-## Severity
-**Medium** — disclosure is to authenticated internal users (not cross-tenant/public), it is rare (only on an actual task crash), and it is QA infra. But internal AWS account id + topology should never reach the client, and the error is unreadable. Fix is small and worth doing regardless of crash frequency.
+## Severity / Priority
+**Medium / Medium.** Disclosure is to authenticated internal users (not cross-tenant/public), and it's QA infra — but internal AWS account id + topology should never reach the browser, the failure is unreadable, and it is **deterministically reproducible on any persisted failed job**. Escalate to **High** if failed-job ids are enumerable across tenants, or if this path can render for customer-facing users.
 
-## Priority
-**Medium**
+## Attachments (both included)
+![LIVE API proof captured 2026-08-18 — GET /api/form-fill/jobs/bb8c21c8…/status returns HTTP 200 with job.status "failed" and job.error = the raw AWS ECS descriptor (account id, cluster ARN, ECR image, subnet, ENI, MAC, private IP, internal DNS)](../bug-evidence/fill-forms-nomatch/ecs-leak-LIVE-api-evidence.png)
 
-## Attachments
-* `verify-screenshot-input-succeeds-not-crash.png` — the *same* input that was in the crashed job now succeeds with a graceful no-match (proves the crash was transient, not input-driven).
-* `verify-realphoto-1176-empty-state-WORKS.png` — a real photo → the polished no-match state (pipeline is healthy).
+![User-facing proof — the "Fill Forms from Photos" dialog rendering the raw ECS JSON verbatim under the error icon (a different failed task: subnet-03964d58…, MAC 02:32:1a:3e:96:b7, private IP 10.1.1.21)](../bug-evidence/fill-forms-nomatch/read-job-failure-raw-ecs-dump.png)
 
-![The same UI-screenshot input that was in the crashed job now SUCCEEDS with a graceful, accurate no-match message — the crash was transient, not caused by the input](../bug-evidence/fill-forms-verify/verify-screenshot-input-succeeds-not-crash.png)
-
-![A real FLIR photo → the read job succeeds and shows the correct no-match empty state, confirming the read pipeline is healthy](../bug-evidence/fill-forms-verify/verify-realphoto-1176-empty-state-WORKS.png)
-
-**Note for the assignee:** the fix is server-side error mapping on the form-fill failure path (return a code + generic message; keep the ECS/SFN `Cause` in internal logs only) plus a dialog guard against rendering an unknown error object. This is independent of *why* a task crashes — even a rare transient crash should never surface the descriptor. There is no "pipeline down" issue to chase; the pipeline works.
+**Fix ownership:** primarily backend (sanitize the form-fill failure path so the API never returns the ECS/SFN `Cause`), plus a small frontend guard (don't render an unknown error object). Independent of the agent-runner crash reliability (that's a separate devops item — the task was crashing repeatedly earlier on 2026-08-18 then recovered; worth a look, but this ticket is only about the leak).
