@@ -20,6 +20,10 @@ Both halves are live on QA (tested directly, not read off the deploy note). The 
 
 So the "none is in QA yet" note is **stale** — consistent with most tickets this session.
 
+![#984 model live on QA — edge_manips x113, node_manips x154, max_connections x342; the first edge carries the virtual-terminal handles](../bug-evidence/real-sld-virtual-terminals/model-live-api-evidence.png)
+
+Note the edge sample: `source_handle: "bottom-source-0"`, `target_handle: "top-target-0"` — the virtual-terminal handles the model is built around, live on the wire.
+
 ## ⚠️ Present but empty — the model is live, no SLD has used it yet
 
 Across **6 SLDs** scanned (Android Site 2, Z-Hospital, ZTest, demo, …): `edge_manips` = `null`, `node_manips` = `null`, **zero** non-null `max_connections`, **zero** `busOff`, **zero** populated `elbows`. That's expected, not a defect: these fields are populated when an edge/terminal is manipulated on the GoJS canvas or when an SLD is brought in through the **markup-import** pipeline — and no existing SLD has been through either. The scaffolding is deployed and ready; there's just no live virtual-terminal data to inspect.

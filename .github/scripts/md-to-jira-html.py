@@ -513,6 +513,13 @@ def main():
             rc |= to_pdf(md_path, args.out)
             made.append(os.path.join(args.out,
                         os.path.splitext(os.path.basename(md_path))[0] + ".pdf"))
+            # also render this report as a standalone Artifact page (publish separately)
+            try:
+                sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+                import build_report_artifact
+                build_report_artifact.build(md_path)
+            except Exception as e:
+                print("  (artifact render skipped: %s)" % e)
         if rc == 0:
             print("\n  Drag the PDF straight onto the Jira ticket — text and screenshots in one file.")
         # Auto-organize: date-stamp the new PDF(s) and refresh the review index so the
