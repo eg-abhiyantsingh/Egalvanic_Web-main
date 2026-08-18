@@ -65,3 +65,4 @@ docs/sld-intelligence/
 
 # Generated Jira-paste bundles (self-contained HTML with base64 images)
 docs/jira-export/
+docs/qa-review-board.html

@@ -523,6 +523,12 @@ def main():
             organize_reports.organize()
         except Exception as e:
             print("  (index refresh skipped: %s)" % e)
+        # Rebuild the visual review board (docs/qa-review-board.html) so it stays current.
+        try:
+            import build_review_dashboard
+            build_review_dashboard.build()
+        except Exception as e:
+            print("  (review board rebuild skipped: %s)" % e)
         if args.do_open and sys.platform == "darwin" and made:
             subprocess.run(["open"] + [m for m in made if os.path.exists(m)], check=False)
         return rc
