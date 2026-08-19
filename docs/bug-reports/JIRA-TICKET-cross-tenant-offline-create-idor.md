@@ -14,16 +14,18 @@ Full QA verdict: `docs/bug-reports/2026-08-18-SECURITY-cross-tenant-offline-idor
 * Auth: attacker is a plain customer admin, `is_eg_admin:false`
 
 ## Severity / Priority
-**High / High** — authenticated cross-tenant WRITE (data integrity), no elevated privilege required, reproducible 2/2. Same class as the parent offline-path IDOR ticket; that fix does **not** cover it.
+**Medium** (server-side authorization hardening). It is a genuine cross-tenant write authz gap and the server should enforce it — but it is **not reachable by normal product use**: it needs an authenticated user to tamper the request *and* to know a foreign `sld_id` (obtainable by chaining the still-open by-scope read IDORs). Not a normal-user, click-to-reproduce bug, so not High on a user-facing scale; treat as a real authz gap to close, weighted by your threat model. (Escalate if foreign `sld_id`s are easily enumerable cross-tenant.)
 
 ## In one line
-A user of **Company A (acme)** can create a task that shows up in **Company B (demo)'s** app. You create it while logged into acme, but it lands in demo — so **look for it on `demo.qa.egalvanic.ai`, NOT on acme** (acme can't even see it; that's the bug).
+The **server** accepts a task-create request that names **another company's `sld_id`** and files the row under that other company — on **both** the offline/queued path *and* the online `x-direct-write:true` path. It is a **server-side authorization gap** (missing ownership check on create).
 
-## See it in the UI in 30 seconds
-1. Open **`https://demo.qa.egalvanic.ai`** — the *victim* tenant (do **not** look on acme; it won't be there).
-2. Log in as a demo user (`shubham.goswami@egalvanic.com` / `Shubham@123`).
-3. Left sidebar → **Tasks**.
-4. The task **"XT-CREATE-2 cross-tenant probe — QA delete me"** (Pending) is in the list — it was created by an *acme* user via the API below. A demo user should never see it. (Real screenshots attached.)
+## Who can trigger it — and who can't (threat model — read this first)
+- **A normal user clicking in the web app CANNOT do this.** The task-create form's site picker only lists *your own* company's sites (it's fed by `GET /company/{yourCompany}/slds`), so you can't choose a foreign site. Confirmed: demo's `sld_id`s are absent from acme's site list.
+- **It requires request tampering.** An authenticated Company-A user who swaps the `sld_id` in the create request (via browser devtools / a proxy / direct API call) to a Company-B `sld_id` gets the row filed under Company B. Not a point-and-click bug.
+- So this is a **defense-in-depth / server-side-authz** issue: the server must reject a create whose `sld_id` isn't the caller's, because "the client won't send it" is not a valid control (an authenticated attacker controls their client). It is **not** "any user can plant data by using the product normally."
+
+## The visible consequence (this part IS real in the UI)
+Once such a tampered create is applied, the row is genuinely Company B's data: log into **`https://demo.qa.egalvanic.ai`** as a demo user (`shubham.goswami@egalvanic.com` / `Shubham@123`) → **Tasks** → the task **"XT-CREATE-2 cross-tenant probe — QA delete me"** (Pending) is there, and acme can't see it. (Real screenshots attached.)
 
 ## Summary
 The offline-path ownership fix (follow-up to ZP-3563) rejects cross-tenant **update/delete** because the canonical row exists at apply time and its owner is checked. A **create** has no canonical row yet, so the fix's "row absent → not-yet-applied → allow" carve-out (added so legitimate offline create-then-update isn't false-blocked) fires — and the create handler does **not** resolve the payload's `sld_id → SLD.company_id`. Result: a Company-A user creates rows under a Company-B-owned `sld_id`, and the row belongs to Company B (visible only in Company B's tenant).

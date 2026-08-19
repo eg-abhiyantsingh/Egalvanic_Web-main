@@ -11,7 +11,11 @@ The fix correctly closes the reported class for **update/delete of existing fore
 
 > This verdict was hardened by an adversarial review panel (3 skeptics + judge). The panel predicted the create hole *before* it was tested — the initial draft was heading toward a "fixed" sign-off that only ever exercised the "foreign row present → reject" branch and never probed the "row absent → allow" branch the fix deliberately opened. The live create test then confirmed the leak. Same discipline that caught the 2026-08-14 cross-tenant near-miss.
 
-## 🔴 Finding (HIGH) — cross-tenant CREATE via the offline/queued path
+## 🟠 Finding (MEDIUM — server-side authz gap, tamper-only) — cross-tenant CREATE not ownership-checked
+
+**Not a normal-user bug.** The web task-create form only lists the caller's *own* company sites (fed by `GET /company/{yourCompany}/slds`), so a user cannot pick a foreign site by clicking — I confirmed demo's `sld_id`s are absent from acme's site list. Triggering this requires an authenticated user to **tamper the request** (devtools/proxy/API) and swap in a foreign `sld_id`. It is a server-side authorization gap (the server must reject a foreign `sld_id` regardless of client), reachable on **both** the offline/queued path **and** the online `x-direct-write:true` path (the header the web app itself sends) — the online create returned **HTTP 201** and also landed in demo. It is *not* "any user can plant data by using the product normally," and I originally over-stated it as HIGH.
+
+### Mechanism
 
 From the acme session (Company A, `is_eg_admin:false`), on the offline path (**no `x-direct-write` header**):
 
@@ -30,7 +34,7 @@ Readable only from the victim tenant ⇒ the row is demo's. **Reproduced 2/2** a
 
 **Root cause.** The fix distinguishes "canonical row absent → not-yet-applied → **ALLOW**" (so a legitimate offline create-then-update isn't false-blocked) from "row present but foreign → reject." For an **update/delete** the row exists at apply time, so the owner check fires and foreign writes are rejected. For a **create** the row is *inherently* absent, so the allow-branch fires — and the handler does **not** resolve the payload's `sld_id → SLD.company_id` to check ownership at create time. So the exact carve-out that makes offline sync work also opens a cross-tenant create.
 
-**Impact.** Any authenticated user of tenant A who knows (or guesses) a tenant B `sld_id` can plant child rows (tasks, and by construction any create routed through the same middleware) under tenant B's site — data poisoning / spam / confusion in another customer's data. Cross-tenant integrity breach; no EG-admin privilege required.
+**Impact (honest).** An authenticated tenant-A user who (a) tampers the create request and (b) supplies a tenant-B `sld_id` can plant child rows under tenant B's site — a cross-tenant write. Requires request tampering + a foreign `sld_id` (obtainable by chaining the still-open by-scope read IDORs), so it is a defense-in-depth server-side authz gap, not a normal-user action. Worth fixing (server-side ownership must not depend on the client), but weighted below a click-reproducible bug.
 
 **Demonstrated in the frontend (not just the API).** Logged into `demo.qa.egalvanic.ai` as a *real demo employee* (`shubham.goswami@egalvanic.com`, company `93611164`), the planted task appears in demo's own **Tasks** page and is counted in the **PENDING: 1** tile — a row this user never created, planted by another company via the offline API. Because it's a real row it also flows into demo's reports, SLD sync, and mobile app. This is the concrete customer-facing consequence.
 
