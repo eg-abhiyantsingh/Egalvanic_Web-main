@@ -16,8 +16,17 @@ Full QA verdict: `docs/bug-reports/2026-08-18-SECURITY-cross-tenant-offline-idor
 ## Severity / Priority
 **High / High** — authenticated cross-tenant WRITE (data integrity), no elevated privilege required, reproducible 2/2. Same class as the parent offline-path IDOR ticket; that fix does **not** cover it.
 
+## In one line
+A user of **Company A (acme)** can create a task that shows up in **Company B (demo)'s** app. You create it while logged into acme, but it lands in demo — so **look for it on `demo.qa.egalvanic.ai`, NOT on acme** (acme can't even see it; that's the bug).
+
+## See it in the UI in 30 seconds
+1. Open **`https://demo.qa.egalvanic.ai`** — the *victim* tenant (do **not** look on acme; it won't be there).
+2. Log in as a demo user (`shubham.goswami@egalvanic.com` / `Shubham@123`).
+3. Left sidebar → **Tasks**.
+4. The task **"XT-CREATE-2 cross-tenant probe — QA delete me"** (Pending) is in the list — it was created by an *acme* user via the API below. A demo user should never see it. (Real screenshots attached.)
+
 ## Summary
-The offline-path ownership fix (follow-up to ZP-3563) rejects cross-tenant **update/delete** because the canonical row exists at apply time and its owner is checked. A **create** has no canonical row yet, so the fix's "row absent → not-yet-applied → allow" carve-out (added so legitimate offline create-then-update isn't false-blocked) fires — and the create handler does **not** resolve the payload's `sld_id → SLD.company_id`. Result: a Company-A user can create rows under a Company-B-owned `sld_id`.
+The offline-path ownership fix (follow-up to ZP-3563) rejects cross-tenant **update/delete** because the canonical row exists at apply time and its owner is checked. A **create** has no canonical row yet, so the fix's "row absent → not-yet-applied → allow" carve-out (added so legitimate offline create-then-update isn't false-blocked) fires — and the create handler does **not** resolve the payload's `sld_id → SLD.company_id`. Result: a Company-A user creates rows under a Company-B-owned `sld_id`, and the row belongs to Company B (visible only in Company B's tenant).
 
 ## Preconditions
 1. Two tenants; attacker authenticated to tenant A (acme, `is_eg_admin:false`).
