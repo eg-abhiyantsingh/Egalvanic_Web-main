@@ -51,7 +51,12 @@ The queued create is rejected (404, matching the ticket's stated intent for cros
 * X-Subdomain spoof (acme token + `X-Subdomain: demo`): **422 refused**. ✅
 * Cross-tenant **CREATE**: **applies → this ticket.** 🔴
 
+## Frontend impact (demonstrated)
+Logged into `demo.qa.egalvanic.ai` as a real demo employee (`shubham.goswami@egalvanic.com`, company `93611164`), the acme-planted task **appears in demo's own Tasks page** and is counted in the **PENDING: 1** tile. The victim sees a task they never created; being a real row, it also rides demo's reports, SLD sync, and mobile client. Not just an API artifact.
+
 ## Attachments
+![Frontend proof — the acme-planted task in the demo tenant's Tasks page (demo employee shubham.goswami)](../bug-evidence/cross-tenant-offline-idor/idor-frontend-demo-tasks.png)
+
 ![Live cross-tenant CREATE — acme plants a task under demo's SLD via the queued path; readable only from the demo tenant](../bug-evidence/cross-tenant-offline-idor/idor-cross-tenant-CREATE-live.png)
 
 ![Update/delete matrix — cross-tenant blocked (with same-tenant controls that applied); create is the gap](../bug-evidence/cross-tenant-offline-idor/idor-offline-verify-matrix.png)

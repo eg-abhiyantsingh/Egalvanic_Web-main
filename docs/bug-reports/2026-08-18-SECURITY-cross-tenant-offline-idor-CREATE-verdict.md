@@ -32,7 +32,11 @@ Readable only from the victim tenant ⇒ the row is demo's. **Reproduced 2/2** a
 
 **Impact.** Any authenticated user of tenant A who knows (or guesses) a tenant B `sld_id` can plant child rows (tasks, and by construction any create routed through the same middleware) under tenant B's site — data poisoning / spam / confusion in another customer's data. Cross-tenant integrity breach; no EG-admin privilege required.
 
+**Demonstrated in the frontend (not just the API).** Logged into `demo.qa.egalvanic.ai` as a *real demo employee* (`shubham.goswami@egalvanic.com`, company `93611164`), the planted task appears in demo's own **Tasks** page and is counted in the **PENDING: 1** tile — a row this user never created, planted by another company via the offline API. Because it's a real row it also flows into demo's reports, SLD sync, and mobile app. This is the concrete customer-facing consequence.
+
 ![Live cross-tenant CREATE: acme plants a task under demo's SLD via the queued path; readable only from the demo tenant](../bug-evidence/cross-tenant-offline-idor/idor-cross-tenant-CREATE-live.png)
+
+![Frontend proof: the acme-planted task shows in the demo tenant's Tasks page for demo employee shubham.goswami](../bug-evidence/cross-tenant-offline-idor/idor-frontend-demo-tasks.png)
 
 ## ✅ What the fix DOES close (verified, with positive controls)
 
