@@ -55,7 +55,9 @@ The queued create is rejected (404, matching the ticket's stated intent for cros
 Logged into `demo.qa.egalvanic.ai` as a real demo employee (`shubham.goswami@egalvanic.com`, company `93611164`), the acme-planted task **appears in demo's own Tasks page** and is counted in the **PENDING: 1** tile. The victim sees a task they never created; being a real row, it also rides demo's reports, SLD sync, and mobile client. Not just an API artifact.
 
 ## Attachments
-![Frontend proof — the acme-planted task in the demo tenant's Tasks page (demo employee shubham.goswami)](../bug-evidence/cross-tenant-offline-idor/idor-frontend-demo-tasks.png)
+![Frontend proof (real screenshot) — the task detail in demo's live web UI showing the full title "XT-CREATE-2 cross-tenant probe — QA delete me", Status Pending, logged in as demo employee shubham.goswami](../bug-evidence/cross-tenant-offline-idor/idor-frontend-demo-task-detail-REAL.jpg)
+
+![Frontend proof (real screenshot) — demo's Tasks list with the planted task and PENDING = 1, under demo user shubham.goswami](../bug-evidence/cross-tenant-offline-idor/idor-frontend-demo-tasks-REAL.jpg)
 
 ![Live cross-tenant CREATE — acme plants a task under demo's SLD via the queued path; readable only from the demo tenant](../bug-evidence/cross-tenant-offline-idor/idor-cross-tenant-CREATE-live.png)
 

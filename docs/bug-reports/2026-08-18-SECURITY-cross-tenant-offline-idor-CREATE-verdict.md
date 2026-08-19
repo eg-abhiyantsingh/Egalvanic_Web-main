@@ -36,7 +36,9 @@ Readable only from the victim tenant ⇒ the row is demo's. **Reproduced 2/2** a
 
 ![Live cross-tenant CREATE: acme plants a task under demo's SLD via the queued path; readable only from the demo tenant](../bug-evidence/cross-tenant-offline-idor/idor-cross-tenant-CREATE-live.png)
 
-![Frontend proof: the acme-planted task shows in the demo tenant's Tasks page for demo employee shubham.goswami](../bug-evidence/cross-tenant-offline-idor/idor-frontend-demo-tasks.png)
+![Frontend proof (real screenshot) — the acme-planted task in the demo tenant's Tasks page, logged in as demo employee shubham.goswami; PENDING shows 1](../bug-evidence/cross-tenant-offline-idor/idor-frontend-demo-tasks-REAL.jpg)
+
+![Frontend proof (real screenshot) — the task detail page in demo's UI showing the full title "XT-CREATE-2 cross-tenant probe — QA delete me", Status Pending, under demo user shubham.goswami](../bug-evidence/cross-tenant-offline-idor/idor-frontend-demo-task-detail-REAL.jpg)
 
 ## ✅ What the fix DOES close (verified, with positive controls)
 
