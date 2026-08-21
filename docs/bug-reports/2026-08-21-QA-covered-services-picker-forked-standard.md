@@ -7,6 +7,16 @@
 
 ## Verdict — **PASS.** The fix is live on QA (contra the "NOT on cicd/qa" note): the covered-services picker now returns services for a customized/forked standard, and a foreign company's standard is rejected. One spec deviation: the tenancy rejection surfaces as the platform's masked-404, not the clean `403` the ticket describes.
 
+## Screenshots (live QA)
+
+**1 — Generate/Create EMP entry point (the flow the picker lives in), live on `acme.qa.egalvanic.ai`:**
+
+![Create EMP dialog on QA — V1 Classic EMP vs V2 Plan Engine (PM-standard driven). The V2 Plan Engine path is where a PM standard is selected and its covered-services picker is shown.](../bug-evidence/covered-services/1-create-emp-v2-plan-engine.jpg)
+
+**2 — The same customized/forked standard's covered services, live on QA:**
+
+![Customized standard "QA-DEMO swap-authz test" (Custom · 229 plans) on QA, with the right rail "Services in this standard (6)" fully populated — Clean/Tighten/Torque (219 plans), De-Energized Visual Inspection (219), NETA Testing (218), Infrared Thermography (208), UPS Maintenance (10) — i.e. the covered-services set is NOT the old empty "No services prescribed" state. This is the same data the Generate-EMP covered-services picker reads.](../bug-evidence/covered-services/2-customized-standard-covered-services.jpg)
+
 ## ✅ The bug is fixed — forked standard now returns services
 `GET /procedures-v2/pm-plans/services?pm_standard_id=<id>` (the picker's backing route):
 
