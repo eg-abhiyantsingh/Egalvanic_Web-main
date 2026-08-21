@@ -5,7 +5,23 @@
 
 ---
 
-## Verdict — PASS. Both halves are live on QA and every exercised behavior checks out, proven by direct persisted-record reads and a captured submit payload — including the falsy-`0` ghost and the required-field cases, verified on TWO templates.
+## Verdict — **PASS-WITH-DEFECTS (corrected 2026-08-21).** The ghost UX itself works (preload, materialize-on-submit, Save-Draft-not-baked, 0/false, required-not-blocked). But a fresh adversarial re-verify overturned two of my earlier "PASS" sub-claims — **both are the ticket's own explicit requirements, and both FAIL on QA:**
+> 1. **Signature/photo DO ghost** — the `previous` payload includes `verdict.photos[]` S3 objects (and a `signature`-typed field on other forms). The ticket requires these to **never** ghost. My 2026-08-20 "signature/photo never materialize" call was a **false negative** — that Bolted prior happened to have no photos; forms whose newest submitted prior *does* carry photos leak them through. **Corrected below.**
+> 2. **Cross-tenant read on `previous`** — a demo-tenant token reads acme's `previous/<form>/<node>` (200 + acme form_submission). The ticket requires **404**. Request-tamper class (demo host masks it; acme-host tamper leaks).
+>
+> Both filed: **[JIRA-TICKET-egforms-ghosts-photo-and-tenant.md](JIRA-TICKET-egforms-ghosts-photo-and-tenant.md)**. Lesson: my earlier photo-exclusion PASS rested on one prior with no photos — a data-luck false negative the panel caught by picking photo-bearing priors.
+
+## Corrected sub-verdicts
+| Ticket requirement | Earlier (2026-08-20) | Corrected (2026-08-21) |
+|---|---|---|
+| Signature/photo never ghost | ✅ PASS (no photos on that prior) | ❌ **FAIL** — `verdict.photos[]` S3 objects present in `previous` payload on the literal Bolted target + ATEST1 signature field |
+| Tenancy: foreign node → 404 | ✅ PASS (masked-404 seen) | ❌ **FAIL** — demo token on acme host gets 200 + acme form_submission (masked-404 only on the demo host) |
+| ghost preload / render | ✅ | ✅ (re-confirmed, screenshot) |
+| materialize-on-submit / Save-Draft-not-baked / 0-false / required-not-blocked | ✅ | ✅ (unchanged) |
+| slim payload, exclude semantics, malformed-exclude 400, exclude-newest→next | ✅ | ✅ (re-confirmed) |
+
+---
+### (original 2026-08-20 body follows — sub-claims on signature/photo and tenancy are superseded by the table above)
 
 ## 🔁 Fresh re-verification (2026-08-21)
 Re-ran the core chain live today. A fresh blank Bolted-Connections instance on Switch 7 renders the prior submission's **80 / 58** as blue "As Found / As Left" values in the Line Bolted data_table (screenshot below). Also confirmed the precondition honestly: with **no submitted prior** on the node the `previous` endpoint returns `data: null` and the fresh form shows **no ghosts** (correct — ghosts derive only from a *submitted* record, not a draft); after submitting a prior, the endpoint returns it and the ghosts appear. So both "no prior → no ghost" and "submitted prior → ghost" hold on the same node.
