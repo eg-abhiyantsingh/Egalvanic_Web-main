@@ -1,11 +1,16 @@
 # EG Forms: preload previous values as blue ghosts (neta-2) — QA verdict (deep)
 
-**Tested:** 2026-08-20 · **Build:** QA V1.36 · **Tenant:** `acme.qa.egalvanic.ai` (2nd tenant: `demo`)
+**Tested:** 2026-08-20 · **Re-verified fresh:** 2026-08-21 · **Build:** QA V1.36 · **Tenant:** `acme.qa.egalvanic.ai` (2nd tenant: `demo`)
 **PRs:** eg-pz-backend **#999** (harden + wire the previous-submission lookup) · eg-pz-frontend **#1180** (blue ghosts)
 
 ---
 
 ## Verdict — PASS. Both halves are live on QA and every exercised behavior checks out, proven by direct persisted-record reads and a captured submit payload — including the falsy-`0` ghost and the required-field cases, verified on TWO templates.
+
+## 🔁 Fresh re-verification (2026-08-21)
+Re-ran the core chain live today. A fresh blank Bolted-Connections instance on Switch 7 renders the prior submission's **80 / 58** as blue "As Found / As Left" values in the Line Bolted data_table (screenshot below). Also confirmed the precondition honestly: with **no submitted prior** on the node the `previous` endpoint returns `data: null` and the fresh form shows **no ghosts** (correct — ghosts derive only from a *submitted* record, not a draft); after submitting a prior, the endpoint returns it and the ghosts appear. So both "no prior → no ghost" and "submitted prior → ghost" hold on the same node.
+
+![Fresh live QA capture (2026-08-21) — a new blank Bolted-Connections instance on Switch 7, Line Bolted Connection section: prior submission's As Found 80 / As Left 58 render as blue ghost values in the data_table cells; the fields are unwritten (stored value still empty until the user acts).](../bug-evidence/eg-forms-ghosts/reverify-2026-08-21-line-bolted-ghosts.jpg)
 
 ## ✅ Backend #999 (the security fix)
 
