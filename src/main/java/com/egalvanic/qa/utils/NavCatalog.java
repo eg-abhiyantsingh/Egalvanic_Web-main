@@ -159,11 +159,10 @@ public final class NavCatalog {
     }
 
     /**
-     * Goals moved to a top-level {@code /goals}. The legacy {@code /accounts/goals} still routes
-     * but its API returns <b>500 "An internal error occurred."</b> every time (reproduced twice
-     * on 2026-08-24, distinct trace_ids), so the page renders an error instead of the grid —
-     * while {@code /goals} serves the module normally. A suite pinned to the legacy path is
-     * testing a broken screen, so point Goals coverage at {@link #GOALS_ROUTE}.
+     * Goals lives at the top-level {@code /goals}. The legacy {@code /accounts/goals} path is
+     * <b>not in use</b> (owner ruling 2026-08-24) — nothing links to it and its API 500s on
+     * load, so it is neither a test target nor a bug to report. Point all Goals coverage at
+     * {@link #GOALS_ROUTE}.
      */
     public static final String GOALS_ROUTE = "/goals";
 

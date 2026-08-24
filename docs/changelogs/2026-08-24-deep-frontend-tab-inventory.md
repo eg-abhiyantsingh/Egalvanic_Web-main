@@ -59,9 +59,11 @@ Proved live: a quote row-click lands on `/plans/{id}`, and loading `/quotes/{sam
 
 ## Product regressions to raise
 
-1. `/accounts/goals` — API 500 on every load (was already flagged; still reproducible).
-2. **`/quotes/{id}` renders "Quote not found" for a valid plan id** — users' old quote
+1. **`/quotes/{id}` renders "Quote not found" for a valid plan id** — users' old quote
    bookmarks/links get a hard dead-end instead of a redirect to `/plans/{id}`.
+
+(`/accounts/goals` 500 was initially listed here; owner ruled 2026-08-24 that the legacy path
+is not in use, so it is NOT a bug to raise — tests just must not target it.)
 
 ## Validation evidence
 

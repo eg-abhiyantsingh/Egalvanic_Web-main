@@ -79,9 +79,12 @@ which is why `PlanningPage.isOnEditorPage()` was permanently false until fixed.
 
 ## Product regressions found during this walk
 
-1. `/accounts/goals` → API 500 "An internal error occurred." on every load (module works at /goals).
-2. `/quotes/{id}` → "Quote not found" for a valid plan id — legacy quote deep links are broken
+1. `/quotes/{id}` → "Quote not found" for a valid plan id — legacy quote deep links are broken
    for users' old bookmarks (no redirect to /plans/{id}).
+
+Not a bug (owner ruling 2026-08-24): `/accounts/goals` API-500s on load, but that legacy path
+is **not in use** — nothing links to it and the module lives at /goals — so it is not to be
+ticketed. Tests must simply never target it.
 
 ## Coverage backing this map
 

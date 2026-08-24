@@ -127,7 +127,7 @@ java -cp "target/classes:target/test-classes:$(cat /tmp/cp.txt)" \
 
 ## Product issue worth raising
 
-`/accounts/goals` returns **500 "An internal error occurred."** on every load (reproduced
-twice, distinct trace_ids) while `/goals` serves the module normally. A stale bookmark or link
-to the old path gives users a hard error rather than a redirect. Low severity — the module
-works at its new path — but it is a real regression on the legacy route.
+~~`/accounts/goals` returns 500 on every load while `/goals` serves the module normally.~~
+**Withdrawn — owner ruling 2026-08-24:** the `/accounts/goals` path is not in use (nothing
+links to it; the module lives at `/goals`), so this is not a bug to ticket. The observation
+stands only as a reason tests must never target that path.
