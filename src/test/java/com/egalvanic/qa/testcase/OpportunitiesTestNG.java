@@ -913,7 +913,7 @@ public class OpportunitiesTestNG extends BaseTest {
             page.createQuote();
             Assert.assertTrue(page.waitForQuoteRow(8000), "EMP quote (Rev 1) should appear after Create Quote.");
             // open the quote editor and accept it
-            Assert.assertTrue(page.openFirstQuoteRow(), "Clicking the quote row should open the quote editor (/quotes/).");
+            Assert.assertTrue(page.openFirstQuoteRow(), "Clicking the quote row should open the quote editor (/plans/).");
             page.setQuoteStatus("Accepted");
             pause(1200);
             // accepting an EMP quote prompts to commit an EMP number
@@ -955,7 +955,7 @@ public class OpportunitiesTestNG extends BaseTest {
             if (!openOpportunityByName(name)) throw new SkipException("Created opportunity did not open its detail");
             page.clickAddQuote(); page.selectQuoteType("Standard"); page.createQuote();
             Assert.assertTrue(page.waitForQuoteRow(8000), "Quote (Rev 1) should appear after Create Quote.");
-            Assert.assertTrue(page.openFirstQuoteRow(), "Quote row should open the editor (/quotes/).");
+            Assert.assertTrue(page.openFirstQuoteRow(), "Quote row should open the editor (/plans/).");
             Assert.assertTrue(page.currentQuoteStatus().toLowerCase().contains("draft"),
                     "Baseline quote status should be Draft. Got: " + page.currentQuoteStatus());
             // Draft → Sent to Customer  ⇒  opp Pending Response
@@ -1277,7 +1277,8 @@ public class OpportunitiesTestNG extends BaseTest {
             Assert.assertTrue(page.waitForQuoteRow(8000), "Quote should appear.");
             Assert.assertTrue(page.openFirstQuoteRow(), "Quote row should open the editor.");
             String quoteUrl = driver.getCurrentUrl();
-            Assert.assertTrue(quoteUrl.contains("/quotes/"), "Editor URL should be /quotes/:id. Got: " + quoteUrl);
+            Assert.assertTrue(quoteUrl.contains("/plans/") || quoteUrl.contains("/quotes/"),
+                    "Editor URL should be /plans/:id (V1.36; /quotes/:id pre-V1.36). Got: " + quoteUrl);
             // navigate away, then cold deep-link back
             page.open();   // /opportunities
             page.openQuoteByUrl(quoteUrl);

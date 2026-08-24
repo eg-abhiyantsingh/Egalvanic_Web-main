@@ -51,9 +51,11 @@ public class UiApiDataConsistencyTestNG extends BaseTest {
     private static final By PAGINATION = By.cssSelector(".MuiTablePagination-displayedRows");
     private static final int SETTLE_MS = 5500;
 
-    /** Modules that render a paginated grid. */
+    /** Modules that render a paginated grid. (/locations removed 2026-08-24 — it is a
+     *  master-detail tree with no grid and no MuiTablePagination, so its consistency check
+     *  skipped on every run while appearing covered.) */
     private static final String[][] PAGES = {
-        {"assets","/assets"}, {"issues","/issues"}, {"locations","/locations"},
+        {"assets","/assets"}, {"issues","/issues"},
         {"connections","/connections"}, {"tasks","/tasks"}, {"opportunities","/opportunities"},
         {"customers","/customers"}, {"work-orders","/sessions"},
     };

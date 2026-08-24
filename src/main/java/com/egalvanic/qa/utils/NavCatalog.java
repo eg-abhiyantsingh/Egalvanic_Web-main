@@ -197,12 +197,104 @@ public final class NavCatalog {
     }
 
     // ================================================================
+    // TAB CATALOG — every role="tab" set on V1.36, verified by CLICKING each tab live
+    // (2026-08-24). Keys are routes; detail pages use the {id} placeholder.
+    // ================================================================
+
+    /**
+     * Route -> ordered tab labels. Numeric badges (e.g. "Engineering 8", "Contacts 2") are
+     * stripped — match tabs with starts-with, not equality, because badge counts vary with data.
+     *
+     * <p>Not listed here because they are NOT tabs: the Quotes sidebar status filters
+     * (?status=draft / pendingResponse / accepted=Closed Won / rejected=Closed Lost /
+     * cancelled), the Planned Work due buckets (?bucket=overdue / due_30 / due_quarter /
+     * due_year), and /reporting/builder's "Report Builder | Branding" view toggle (plain
+     * buttons). Quote and EMP detail (both land on <b>/plans/{id}</b>), Site Walk detail
+     * (/site-walks/{id}), and /admin-dashboard have no tabs at all. /locations is a
+     * master-detail tree with no grid and no tabs.
+     */
+    private static final Map<String, List<String>> TABS = new LinkedHashMap<>();
+    static {
+        TABS.put("/pm-readiness",   Arrays.asList("Overview", "Asset Details"));
+        TABS.put("/arc-flash",      Arrays.asList("Overview", "Asset Details",
+                                                  "Source/Target Connections", "Connection Details"));
+        TABS.put("/customers",      Arrays.asList("Accounts", "Sites"));
+        TABS.put("/labor",          Arrays.asList("Rates", "Types", "Unions"));
+        TABS.put("/materials",      Arrays.asList("Material Library", "Material Presets",
+                                                  "Material Types", "Material Units"));
+        TABS.put("/test-equipment", Arrays.asList("Test Equipment Library", "Equipment"));
+        TABS.put("/classes",        Arrays.asList("Asset Classes", "Connection Classes", "Issue Classes"));
+        TABS.put("/assets/{id}",    Arrays.asList("Basic Info", "Engineering", "Inspections", "Issues",
+                                                  "Schedule", "Connections", "Photos", "Attachments"));
+        TABS.put("/sessions/{id}",  Arrays.asList("Assets", "Tasks", "Forms", "Issues",
+                                                  "IR Photos", "Attachments"));
+        TABS.put("/accounts/{id}",  Arrays.asList("Details", "Internal Team", "Contacts",
+                                                  "Quotes", "Sites", "Notes"));
+        TABS.put("/issues/{id}",    Arrays.asList("Details", "Class Details", "Photos", "Status History"));
+    }
+
+    /** The verified tab labels for a route ({id} form for detail pages), or an empty list. */
+    public static List<String> tabsFor(String route) {
+        List<String> t = TABS.get(normalise(route));
+        return t == null ? Collections.emptyList() : t;
+    }
+
+    /** All routes that carry a tab set, in catalog order. */
+    public static Set<String> tabbedRoutes() {
+        return Collections.unmodifiableSet(new LinkedHashSet<>(TABS.keySet()));
+    }
+
+    /**
+     * Click the tab whose label STARTS WITH {@code label} (badge counts like "Contacts 2"
+     * make exact matching brittle). Returns true when a matching visible tab was clicked.
+     */
+    public static boolean clickTab(WebDriver driver, String label) {
+        try {
+            for (WebElement t : driver.findElements(By.cssSelector("[role='tab']"))) {
+                try {
+                    if (!t.isDisplayed()) continue;
+                    String txt = t.getText().trim().replaceAll("\\s+", " ");
+                    if (txt.equals(label) || txt.startsWith(label + " ")) {
+                        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", t);
+                        Thread.sleep(1500);
+                        return true;
+                    }
+                } catch (Exception ignored) { }
+            }
+        } catch (Exception ignored) { }
+        return false;
+    }
+
+    // ================================================================
     // DRIVER-SIDE NAVIGATION
     // ================================================================
 
     private static By railButton(String category) {
         return By.xpath("//button[.//span[normalize-space()='" + category + "']"
                 + " or normalize-space()='" + category + "']");
+    }
+
+    /**
+     * The logo button at the very top of the rail — the only sidebar way BACK to the
+     * Dashboards panel (Site Overview / Sales Overview / Ops Overview) from a module page.
+     * Its {@code <img>} carries {@code alt="Egalvanic — Dashboards"}. Verified by clicking it
+     * live 2026-08-24: from /locations it lands on /dashboard with the three dashboard links
+     * visible. Without this, the dashboard anchors are simply not in the DOM on module pages.
+     */
+    private static final By DASHBOARDS_LOGO = By.xpath(
+            "//button[.//img[contains(@alt,'Dashboards')]]");
+
+    /** Open the Dashboards panel via the rail logo. Returns false when the logo is absent. */
+    public static boolean openDashboards(WebDriver driver) {
+        try {
+            for (WebElement b : driver.findElements(DASHBOARDS_LOGO)) {
+                if (!b.isDisplayed()) continue;
+                ((JavascriptExecutor) driver).executeScript("arguments[0].click();", b);
+                Thread.sleep(1500);
+                return true;
+            }
+        } catch (Exception ignored) { }
+        return false;
     }
 
     /**
@@ -236,7 +328,16 @@ public final class NavCatalog {
     public static boolean navigateTo(WebDriver driver, String route) {
         String target = resolve(route);
         String category = categoryFor(target);
-        if (category != null) openCategory(driver, category);
+        if (category != null) {
+            openCategory(driver, category);
+        } else if (isNavRoute(target) && !"/z-university".equals(target)) {
+            // Dashboards (and only they) live outside the rail categories. Their anchors are
+            // absent on module pages, so open the Dashboards panel via the rail logo first —
+            // this keeps dashboard navigation on the by-frontend path instead of silently
+            // degrading to the driver.get() fallback below. Help (/z-university) is the one
+            // null-category route that is always present, so it needs no opening step.
+            openDashboards(driver);
+        }
 
         try {
             List<WebElement> links = driver.findElements(
@@ -280,10 +381,19 @@ public final class NavCatalog {
      * seven of the thirty-odd links — so a permission-gating check built on a single read
      * reports almost every module as "not visible" and fails whole roles for a UI reason
      * rather than a permission one.
+     *
+     * <p><b>Side effect:</b> opening the Dashboards panel via the rail logo NAVIGATES to
+     * /dashboard (verified live), so after this call the driver may be on /dashboard rather
+     * than where it started. Callers that need to stay put should re-navigate afterwards.
      */
     public static Set<String> collectAllNavHrefs(WebDriver driver) {
         Set<String> paths = new LinkedHashSet<>();
-        harvestVisibleHrefs(driver, paths);   // dashboards + Help, present without expanding
+        harvestVisibleHrefs(driver, paths);
+        // The three dashboard anchors live behind the rail LOGO, not a category — on a module
+        // page they are absent until the Dashboards panel is opened, so a category-only sweep
+        // under-reports them (observed live: /assets sweep found 33 routes, none of them
+        // /dashboard //sales-overview //ops-dashboard).
+        if (openDashboards(driver)) harvestVisibleHrefs(driver, paths);
         for (String category : CATEGORIES) {
             if (openCategory(driver, category)) harvestVisibleHrefs(driver, paths);
         }

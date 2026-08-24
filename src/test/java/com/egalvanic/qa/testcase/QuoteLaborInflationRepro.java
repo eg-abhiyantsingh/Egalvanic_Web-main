@@ -124,7 +124,9 @@ public class QuoteLaborInflationRepro {
     }
 
     private static void openQuote() {
-        String url = AppConstants.BASE_URL + "/quotes/" + QUOTE_ID;
+        // V1.36 moved the quote editor to /plans/{id}; /quotes/{id} now renders "Quote not
+        // found" (live-verified 2026-08-24 with a real id), so the old deep link opened a dead page.
+        String url = AppConstants.BASE_URL + "/plans/" + QUOTE_ID;
         System.out.println("[REPRO] Opening quote: " + url);
         // QA branding API flaps → retry the load a few times (documented QA blocker).
         for (int attempt = 1; attempt <= 4; attempt++) {

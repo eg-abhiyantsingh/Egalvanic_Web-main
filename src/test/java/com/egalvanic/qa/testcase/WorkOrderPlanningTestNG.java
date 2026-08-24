@@ -454,7 +454,7 @@ public class WorkOrderPlanningTestNG extends BaseTest {
         boolean opened = planningPage.openEditForPlan(null);
         logStep("Editor URL: " + driver.getCurrentUrl());
         logStepWithScreenshot("Plan editor page");
-        Assert.assertTrue(opened, "Edit Plan should navigate to the plan editor page (/quotes/{id})");
+        Assert.assertTrue(opened, "Edit Plan should navigate to the plan editor page (/plans/{id})");
         ExtentReportManager.logPass("Edit opens the plan editor page");
     }
 

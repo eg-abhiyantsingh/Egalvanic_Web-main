@@ -814,7 +814,10 @@ public class MiscFeaturesTestNG extends BaseTest {
             "TC_Misc_04: Schedule page");
         try {
             // Try multiple common paths
-            String[] paths = { "/scheduling", "/schedule", "/calendar" };
+            // /schedule and /calendar are DEAD shells (NavCatalog.DEAD_ROUTES): they render nav
+        // chrome with an empty main and no 404, so falling back to them could "pass" on a blank
+        // page and mask a real /scheduling failure. /scheduling is the only live route.
+        String[] paths = { "/scheduling" };
             String loadedPath = null;
             for (String p : paths) {
                 driver.get(AppConstants.BASE_URL + p);
@@ -1187,7 +1190,10 @@ public class MiscFeaturesTestNG extends BaseTest {
             AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_SCHEDULE,
             "TC_Misc_08: Schedule create entry");
         try {
-            String[] paths = { "/scheduling", "/schedule", "/calendar" };
+            // /schedule and /calendar are DEAD shells (NavCatalog.DEAD_ROUTES): they render nav
+        // chrome with an empty main and no 404, so falling back to them could "pass" on a blank
+        // page and mask a real /scheduling failure. /scheduling is the only live route.
+        String[] paths = { "/scheduling" };
             for (String p : paths) {
                 driver.get(AppConstants.BASE_URL + p);
                 pause(4000);

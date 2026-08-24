@@ -1061,11 +1061,15 @@ public class EgFormAITestNG {
         );
         System.out.println("  " + jsCheck);
 
-        // Click through tabs to trigger any calls
-        String[] tabs = {"Forms", "PM", "Classes", "Sites"};
+        // Click through the LIVE V1.36 Classes tabs to trigger any calls. The previous walk
+        // ({"Forms","PM","Classes","Sites"}) was the pre-V1.36 Admin Settings section set,
+        // which no longer exists anywhere — every click silently missed.
+        com.egalvanic.qa.utils.NavCatalog.navigateTo(driver, "/classes");
+        sleep(4000);
+        String[] tabs = {"Asset Classes", "Connection Classes", "Issue Classes"};
         for (String tab : tabs) {
             try {
-                driver.findElement(By.xpath("//*[text()='" + tab + "']")).click();
+                com.egalvanic.qa.utils.NavCatalog.clickTab(driver, tab);
                 sleep(2000);
             } catch (Exception e) { /* skip */ }
         }

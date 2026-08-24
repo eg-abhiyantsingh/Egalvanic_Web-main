@@ -52,6 +52,8 @@ public final class NavCatalogSelfValidation {
             checkAllCategoriesHarvested(driver);
             checkCrossCategoryNavigation(driver);
             checkCatalogRoutesResolve(driver);
+            checkDashboardsViaLogo(driver);
+            checkTabCatalog(driver);
 
             System.out.println("\n==================================================");
             System.out.println(failures == 0
@@ -149,6 +151,36 @@ public final class NavCatalogSelfValidation {
             }
         }
         System.out.println("[check 3] done");
+    }
+
+    /** The Dashboards panel must be reachable from a module page through the rail logo. */
+    private static void checkDashboardsViaLogo(WebDriver driver) {
+        System.out.println("\n[check 4] Dashboards via the rail logo");
+        NavCatalog.navigateTo(driver, "/assets");
+        sleep(3000);
+        boolean landed = NavCatalog.navigateTo(driver, "/sales-overview");
+        check(landed && NavCatalog.onRoute(driver, "/sales-overview"),
+                "reached /sales-overview from /assets through the logo-opened Dashboards panel",
+                "could not reach /sales-overview from a module page — landed on " + driver.getCurrentUrl());
+    }
+
+    /**
+     * Every tab the catalog claims for a tabbed LIST route must exist and be clickable on the
+     * live page. (Detail-page tab sets need a data row and are exercised by module suites.)
+     */
+    private static void checkTabCatalog(WebDriver driver) {
+        System.out.println("\n[check 5] tab catalog vs live pages");
+        for (String route : NavCatalog.tabbedRoutes()) {
+            if (route.contains("{id}")) continue;
+            NavCatalog.navigateTo(driver, route);
+            sleep(4000);
+            for (String tab : NavCatalog.tabsFor(route)) {
+                boolean clicked = NavCatalog.clickTab(driver, tab);
+                check(clicked,
+                        route + " tab '" + tab + "' present and clicked",
+                        route + " tab '" + tab + "' NOT FOUND on the live page");
+            }
+        }
     }
 
     /** Report a check, stating what actually held on pass and what went wrong on fail. */

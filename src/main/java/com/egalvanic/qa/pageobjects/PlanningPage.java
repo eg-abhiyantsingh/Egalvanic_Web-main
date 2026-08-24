@@ -317,7 +317,8 @@ public class PlanningPage {
     /**
      * Click the Edit button for the row whose Name (title) EXACTLY matches; falls back to
      * the first row. NOTE: "Edit Plan" navigates to the full plan editor page
-     * (/quotes/{id}) — it is NOT a dialog. Returns true once the editor page is reached.
+     * (/plans/{id} since V1.36; formerly /quotes/{id}) — it is NOT a dialog. Returns true
+     * once the editor page is reached.
      */
     /**
      * Poll until the row with the EXACT name is rendered. The grid refilter after
@@ -347,7 +348,7 @@ public class PlanningPage {
         if (editBtn == null) return false;
         String before = driver.getCurrentUrl();
         try { editBtn.click(); } catch (Exception e) { js.executeScript("arguments[0].click();", editBtn); }
-        // Editor opens as a route change to /quotes/{id} (the plan/quote editor)
+        // Editor opens as a route change to /plans/{id} (the plan/quote editor; /quotes/{id} pre-V1.36)
         try {
             new WebDriverWait(driver, Duration.ofSeconds(15)).until(d -> {
                 String u = d.getCurrentUrl();
@@ -357,10 +358,20 @@ public class PlanningPage {
         return isOnEditorPage();
     }
 
-    /** True when the current URL is the plan editor (quote) page. */
+    /**
+     * True when the current URL is the plan editor (quote) page.
+     *
+     * <p>The editor lives at <b>/plans/{id}</b> since V1.36 — verified live 2026-08-24 by
+     * clicking a quote row (lands on /plans/{id}) and then loading /quotes/{same-id}, which
+     * renders "Quote not found" (the legacy route is dead, not redirected). Note the Java
+     * substring trap that made the old predicate permanently false: "/plans/x".contains("/plan/")
+     * is FALSE because the character after "plan" is 's'. The legacy alternatives are kept
+     * for tolerance; /plans/ is the live match.
+     */
     public boolean isOnEditorPage() {
         String u = driver.getCurrentUrl();
-        return u.contains("/quotes/") || u.contains("/plan/") || u.matches(".*/planning/[a-f0-9-]{6,}.*");
+        return u.contains("/plans/") || u.contains("/quotes/") || u.contains("/plan/")
+                || u.matches(".*/planning/[a-f0-9-]{6,}.*");
     }
 
     // ================================================================

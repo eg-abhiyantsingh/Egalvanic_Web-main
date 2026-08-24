@@ -308,16 +308,15 @@ public class AdminPmSettingsTestNG extends BaseTest {
     public void testPM_12_SectionSwitchRoundtrip() {
         ExtentReportManager.createTest(MODULE, FEATURE, "PM_12_SectionSwitchRoundtrip");
         requireOffices();
-        // hop to Sites and back to PM via the page-object entry point
-        try {
-            ((org.openqa.selenium.JavascriptExecutor) driver).executeScript(
-                "var b=[].slice.call(document.querySelectorAll('button')).find(function(e){"
-              + "return (e.textContent||'').trim()==='Sites' && e.offsetParent;});if(b)b.click();");
-            pause(2500);
-        } catch (Exception ignored) {}
-        Assert.assertTrue(pmPage.navigateToPmSection(), "PM section should re-open after visiting Sites.");
+        // Hop to a sibling Admin module and back through the sidebar. The old hop clicked a
+        // 'Sites' section button that V1.36 removed (Sites moved to the /customers Sites tab),
+        // so it silently no-opped and the "roundtrip" never left the page — vacuous. /users is
+        // a real Admin-rail sibling, making the return trip a genuine navigation roundtrip.
+        com.egalvanic.qa.utils.NavCatalog.navigateTo(driver, "/users");
+        pause(2500);
+        Assert.assertTrue(pmPage.navigateToPmSection(), "Offices should re-open after visiting Users.");
         Assert.assertTrue(pmPage.waitForOfficeRows(20), "Offices table should re-render rows after the roundtrip (async load).");
-        logStepWithScreenshot("PM section after Sites roundtrip");
-        ExtentReportManager.logPass("Settings section switcher roundtrip keeps PM → Offices healthy.");
+        logStepWithScreenshot("Offices after Users roundtrip");
+        ExtentReportManager.logPass("Admin sidebar roundtrip (Offices → Users → Offices) keeps the table healthy.");
     }
 }

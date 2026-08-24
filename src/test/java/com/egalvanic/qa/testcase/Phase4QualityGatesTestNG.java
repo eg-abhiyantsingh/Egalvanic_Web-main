@@ -269,7 +269,9 @@ public class Phase4QualityGatesTestNG extends BaseTest {
             {"Account Detail",     "/customers"},
             {"Quote Detail",       "/opportunities"},
             {"Task Detail",        "/tasks"},
-            {"Location Detail",    "/locations"},
+            // "Location Detail" removed 2026-08-24: /locations is a master-detail TREE with no
+            // grid rows, so the row-drill never found anything and the health check silently
+            // skipped every run while looking covered.
             {"Panel Editor",       "/panel-schedules"},   // -> PanelEditor / PanelView
             {"EMP Detail",         "/emps"},              // -> CommittedQuotes / QuoteDetail
         };

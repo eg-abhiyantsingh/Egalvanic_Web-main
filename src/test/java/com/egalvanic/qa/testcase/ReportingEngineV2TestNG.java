@@ -303,28 +303,32 @@ public class ReportingEngineV2TestNG {
     //  TC-1 — BRANDING & ASSETS (ZP-1660)
     // ═══════════════════════════════════════════════════════════════
 
-    @Test(description = "TC-1.1: Navigate to Company Settings → Branding & Assets")
+    @Test(description = "TC-1.1: Navigate to Reporting → Branding view")
     public void TC1_01_navigateToBrandingAndAssets() {
-        logStep("TC-1.1: Navigate to Company Settings → Branding & Assets");
+        logStep("TC-1.1: Navigate to Reporting → Branding view");
 
-        navigateViaUrl("/admin-dashboard");
-        sleep(2000);
+        // V1.36: the live Branding surface is the "Report Builder | Branding" view toggle on
+        // /reporting/builder (plain buttons, not tabs) — verified by clicking it live
+        // 2026-08-24 (it renders the HTML stylesheet editor with Regenerate Default / Save).
+        // The old "Company Settings → Branding & Assets" screen this test hunted on
+        // /admin-dashboard does not exist there.
+        navigateViaUrl("/reporting/builder");
+        sleep(3000);
+        ((org.openqa.selenium.JavascriptExecutor) driver).executeScript(
+            "var b=[].slice.call(document.querySelectorAll('button')).find(function(e){"
+          + "return (e.textContent||'').trim()==='Branding' && e.offsetParent;});if(b)b.click();");
+        sleep(2500);
 
-        boolean pageLoaded = elementExists(BRANDING_ASSETS_TAB)
-            || driver.getCurrentUrl().contains("settings")
-            || elementExists(COMPANY_SETTINGS_NAV);
-
-        if (elementExists(BRANDING_ASSETS_TAB)) {
-            clickSafe(BRANDING_ASSETS_TAB);
-            sleep(1500);
-        }
+        String body = driver.findElement(By.tagName("body")).getText();
+        boolean pageLoaded = body.contains("Branding")
+            && (body.contains("Regenerate Default") || body.contains("Stylesheet") || body.contains("Save"));
 
         screenshot("TC1_01_branding_page");
         assertNoConsoleErrors("TC-1.1");
         Assert.assertTrue(pageLoaded,
-            "Company Settings page should load. Current URL: " + driver.getCurrentUrl());
+            "Reporting Branding view should load (stylesheet editor). Current URL: " + driver.getCurrentUrl());
 
-        logStep("TC-1.1 PASSED: Branding & Assets page loaded");
+        logStep("TC-1.1 PASSED: Reporting Branding view loaded");
     }
 
     @Test(dependsOnMethods = "TC1_01_navigateToBrandingAndAssets",

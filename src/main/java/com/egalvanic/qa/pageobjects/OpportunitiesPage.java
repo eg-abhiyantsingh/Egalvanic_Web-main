@@ -386,10 +386,10 @@ public class OpportunitiesPage {
                 .filter(WebElement::isDisplayed).findFirst().orElse(null);
     }
 
-    /** On an opportunity detail page, click into the first quote (-> /quotes/:id). Returns true if it navigated. */
+    /** On an opportunity detail page, click into the first quote (-> /plans/:id since V1.36). Returns true if it navigated. */
     public boolean openFirstQuoteFromDetail() {
         String before = driver.getCurrentUrl();
-        WebElement quote = driver.findElements(By.cssSelector("a[href*='/quotes/']")).stream()
+        WebElement quote = driver.findElements(By.cssSelector("a[href*='/plans/'], a[href*='/quotes/']")).stream()
                 .filter(WebElement::isDisplayed).findFirst().orElse(null);
         if (quote == null) {
             // fall back to a quote-ish grid row inside the detail
@@ -399,7 +399,8 @@ public class OpportunitiesPage {
         if (quote == null) return false;
         ((JavascriptExecutor) driver).executeScript("arguments[0].click();", quote);
         sleepSettle();
-        return driver.getCurrentUrl().contains("/quotes/") || !driver.getCurrentUrl().equals(before);
+        return driver.getCurrentUrl().contains("/plans/")
+                || driver.getCurrentUrl().contains("/quotes/") || !driver.getCurrentUrl().equals(before);
     }
 
     /** Tab labels present on the current (quote editor) screen. */
@@ -415,7 +416,7 @@ public class OpportunitiesPage {
     /** Quote rows shown on an opportunity detail page (best-effort). */
     public int quoteRowCountOnDetail() {
         return (int) driver.findElements(By.cssSelector(
-                "a[href*='/quotes/'], [data-field='quote'], .MuiDataGrid-row, table tbody tr")).stream()
+                "a[href*='/plans/'], a[href*='/quotes/'], [data-field='quote'], .MuiDataGrid-row, table tbody tr")).stream()
                 .filter(WebElement::isDisplayed).count();
     }
 
@@ -547,7 +548,9 @@ public class OpportunitiesPage {
                 .filter(WebElement::isDisplayed).findFirst().orElse(row);
         jsClick(cell);
         sleepSettle();
-        return driver.getCurrentUrl().contains("/quotes/");
+        // V1.36: the quote row lands on /plans/{id} (live-verified 2026-08-24; /quotes/{id}
+        // now renders "Quote not found"). Keep the legacy match for tolerance.
+        return driver.getCurrentUrl().contains("/plans/") || driver.getCurrentUrl().contains("/quotes/");
     }
 
     /** Delete the first quote on the detail via its row "Delete Quote" control (confirms if prompted). */
