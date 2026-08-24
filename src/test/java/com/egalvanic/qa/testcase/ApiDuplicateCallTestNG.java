@@ -51,7 +51,7 @@ public class ApiDuplicateCallTestNG extends BaseTest {
         {"dashboard","/dashboard"}, {"assets","/assets"}, {"issues","/issues"},
         {"work-orders","/sessions"}, {"connections","/connections"}, {"locations","/locations"},
         {"tasks","/tasks"}, {"opportunities","/opportunities"}, {"arc-flash","/arc-flash"},
-        {"accounts","/accounts"}, {"slds","/slds"},
+        {"customers","/customers"}, {"slds","/slds"},
     };
 
     /** Telemetry / 3rd-party / polling noise — excluded (legit repeats, not our APIs). */

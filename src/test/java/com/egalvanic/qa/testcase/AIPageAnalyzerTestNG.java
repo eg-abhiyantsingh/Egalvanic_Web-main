@@ -42,12 +42,15 @@ public class AIPageAnalyzerTestNG extends BaseTest {
             {"Assets", "/assets"}, {"Locations", "/locations"}, {"Tasks", "/tasks"},
             {"Issues", "/issues"}, {"Attachments", "/attachments"}, {"Planning", "/planning"},
             {"EMPs", "/emps"}, {"Work Orders", "/sessions"}, {"Scheduling", "/scheduling"},
-            {"Goals", "/goals"}, {"Opportunities", "/opportunities"}, {"Accounts", "/accounts"},
-            {"Admin / Settings", "/admin"}, {"Audit Log", "/admin/audit-log"},
-            {"eg-Forms", "/eg-forms"}, {"Equipment Library", "/equipment-library"},
+            {"Goals", "/goals"}, {"Quotes", "/opportunities"}, {"Customers", "/customers"},
+            {"Setup", "/admin-dashboard"}, {"Audit Log", "/admin/audit-log"},
+            {"eg-Forms", "/eg-forms"}, {"Services", "/services"},
             {"Maintenance", "/maintenance"}, {"Notes", "/notes"},
-            {"Panel Schedules", "/panel-schedules"}, {"Release Updates", "/release-updates"},
-            {"Z-University", "/z-university"}, {"Jobs", "/jobs"},
+            {"Panel Schedules", "/panel-schedules"}, {"Site Walks", "/site-walks"},
+            {"Z-University", "/z-university"}, {"Users", "/users"}, {"Offices", "/offices"},
+            // Dropped 2026-08-24 — verified to render an empty shell, so the analyzer was
+            // scoring nav chrome: /equipment-library, /release-updates, /jobs.
+            // /accounts -> /customers and /admin -> /admin-dashboard are V1.36 renames.
     };
 
     private final Map<String, PageAnalysis> allAnalyses = new LinkedHashMap<>();

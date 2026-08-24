@@ -6,6 +6,7 @@ import com.egalvanic.qa.testcase.api.RbacFixtures;
 import com.egalvanic.qa.testcase.api.RbacFixtures.LiveAuth;
 import com.egalvanic.qa.testcase.api.RbacFixtures.Role;
 import com.egalvanic.qa.utils.ExtentReportManager;
+import com.egalvanic.qa.utils.NavCatalog;
 import com.egalvanic.qa.utils.ScreenshotUtil;
 
 import io.restassured.RestAssured;
@@ -97,11 +98,19 @@ public class RbacUiPermissionMatrixTest {
         // flag-coupled (its nav is also a company-feature flag), so View only hard-asserts the security direction.
         MODULES.add(new Module("Panel Schedules","/panel-schedules","features.panel_schedules.view",                  "nodes.manage",                 true,  "Create|Add Panel|New Panel"));
         MODULES.add(new Module("Forms",         "/eg-forms",       "forms.view",                                      "forms.manage",                 false, "Create Form|New Form|Add Form"));
-        MODULES.add(new Module("Opportunities", "/opportunities",  "features.opportunities.view|opportunities.view",  "opportunities.manage",         true,  "Create Opportunity|Add Opportunity|New Opportunity"));
+        // V1.36 renamed this module to "Quotes"; the route is unchanged and the create button now
+        // reads "New Quote" (live-verified 2026-08-24).
+        MODULES.add(new Module("Quotes",        "/opportunities",  "features.opportunities.view|opportunities.view",  "opportunities.manage",         true,  "New Quote|Create Quote|Add Quote|Create Opportunity|Add Opportunity|New Opportunity"));
         // Accounts: real grant is bare `accounts.view` (no `features.accounts.view` for some roles). Goals:
         // there is NO `goals.view` at all — Goals access is implied by `features.goals.manage` (the only goals
         // capability key the tenant defines; features.goals.view exists for Account Manager only).
-        MODULES.add(new Module("Accounts",      "/accounts",       "accounts.view|features.accounts.view",            "accounts.manage",              true,  "Create Account|Add Account|New Account"));
+        // V1.36: the account LIST moved to /customers ("Customers"); /accounts now redirects there and
+        // its sidebar anchor is gone, so keeping /accounts here made the View cell read "hidden" for
+        // every role. The create button is still "New Account". Account DETAIL stays /accounts/{id}.
+        MODULES.add(new Module("Customers",     "/customers",      "accounts.view|features.accounts.view",            "accounts.manage",              true,  "Create Account|Add Account|New Account"));
+        // Goals is alive at /goals but is NO LONGER in any rail category, so its View cell can only
+        // report "hidden". Left flag-coupled (security direction only) rather than removed, so the
+        // "role without the grant must not reach it" check at /goals still runs.
         MODULES.add(new Module("Goals",         "/goals",          "features.goals.manage|features.goals.view",       "features.goals.manage",        true,  "Create Goal|Add Goal|New Goal"));
     }
     private static final String[] ACTIONS = {"View", "Create", "Edit", "Delete"};
@@ -523,17 +532,6 @@ public class RbacUiPermissionMatrixTest {
         return false;
     }
 
-    private static final String NAV_SEL = "nav a[href], aside a[href], [class*='Drawer'] a[href], "
-            + "[class*='idebar'] a[href], [role='navigation'] a[href]";
-
-    private Set<String> readSidebarHrefsOnce() {
-        Set<String> hrefs = new LinkedHashSet<>();
-        for (WebElement a : driver.findElements(By.cssSelector(NAV_SEL))) {
-            try { String h = a.getDomProperty("href"); if (h != null && !h.isEmpty()) hrefs.add(h); } catch (Exception ignored) {}
-        }
-        return hrefs;
-    }
-
     /** Capture the sidebar's SETTLED route set. The sidebar renders incrementally — section by section,
      *  in bursts with gaps >1s — so a single read (or two equal consecutive reads that happen to land in a
      *  between-bursts lull) can miss whole sections → false "route ABSENT" View failures (observed as a CP
@@ -541,20 +539,27 @@ public class RbacUiPermissionMatrixTest {
      *  once /auth/me resolves and never shows unauthorized routes transiently — across many runs we only ever
      *  saw under-shows, never over-shows). So take the UNION of repeated reads across a stabilization window:
      *  that captures every route that renders regardless of burst timing, and (given monotonic growth) never
-     *  introduces a phantom route. Stop early once the set has been unchanged for ~2.4s. */
+     *  introduces a phantom route.
+     *
+     *  <p>Extended 2026-08-24 for the V1.36 two-level nav. Timing is no longer the only reason a
+     *  section can be missing: only the OPEN rail category's anchors are in the DOM at all, so no
+     *  amount of re-reading the same view will ever reveal the other five. Each pass now walks all
+     *  six categories via {@link NavCatalog#collectAllNavHrefs} and unions those. The monotonic
+     *  -growth argument still holds, so the union remains phantom-free; we just stop after two
+     *  identical passes instead of four, because each pass now costs ~4s of expansion. */
     private Set<String> readSidebarHrefs() {
         try {
             new WebDriverWait(driver, Duration.ofSeconds(15))
-                    .until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(NAV_SEL)));
+                    .until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("a[href]")));
         } catch (Exception ignored) {}
         Set<String> union = new LinkedHashSet<>();
         Set<String> last = new LinkedHashSet<>();
         int stableRounds = 0;
-        for (int i = 0; i < 16; i++) { // hard cap ~16 * 600ms ≈ 9.6s
-            Set<String> cur = readSidebarHrefsOnce();
+        for (int i = 0; i < 4; i++) { // hard cap ~4 passes * ~5s ≈ 20s
+            Set<String> cur = NavCatalog.collectAllNavHrefs(driver);
             union.addAll(cur);
             if (!cur.isEmpty() && cur.equals(last)) {
-                if (++stableRounds >= 4) break; // unchanged for ~2.4s → settled
+                if (++stableRounds >= 2) break; // two identical full sweeps → settled
             } else {
                 stableRounds = 0;
             }

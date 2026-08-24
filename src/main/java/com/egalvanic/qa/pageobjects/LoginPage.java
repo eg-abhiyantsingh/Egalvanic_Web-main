@@ -138,18 +138,51 @@ public class LoginPage {
     }
 
     /**
-     * Check if Terms and Conditions checkbox is displayed.
+     * Check if a Terms and Conditions CHECKBOX is displayed.
+     *
+     * <p>Live state (2026-08-24): there is none. The login page carries zero checkboxes —
+     * consent is now the plain sentence "By signing in, you agree to our Terms and Conditions
+     * and Privacy Policy" with two links.
+     *
+     * <p>The previous implementation only looked for a {@code <label>} mentioning
+     * "Terms"/"agree" and never checked for a checkbox at all, so it answered the wrong
+     * question: any wrapper around that new sentence would make it report a checkbox that does
+     * not exist. Assert on the actual control.
      */
     public boolean isTermsCheckboxDisplayed() {
         try {
-            List<WebElement> labels = driver.findElements(By.xpath(
-                    "//label[contains(.,'Terms') or contains(.,'agree')]"));
-            for (WebElement label : labels) {
-                if (label.isDisplayed()) return true;
+            for (WebElement cb : driver.findElements(By.cssSelector("input[type='checkbox']"))) {
+                if (cb.isDisplayed()) return true;
             }
             return false;
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    /**
+     * Pin the login page to English.
+     *
+     * <p>V1.36 added an English/Français toggle to the login screen, and the choice persists.
+     * A session left in French renders "Se connecter" instead of "Sign In", which defeats every
+     * text-matched locator here — so pin the language before asserting on any copy. No-op when
+     * the toggle is absent or English is already active.
+     */
+    public void selectEnglishIfOffered() {
+        try {
+            for (WebElement b : driver.findElements(By.xpath(
+                    "//button[normalize-space()='English' or @value='en']"))) {
+                if (!b.isDisplayed()) continue;
+                if (!"true".equals(b.getAttribute("aria-pressed"))) {
+                    ((JavascriptExecutor) driver).executeScript("arguments[0].click();", b);
+                    Thread.sleep(600);
+                }
+                return;
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Exception ignored) {
+            // Toggle not present on this build — nothing to pin.
         }
     }
 

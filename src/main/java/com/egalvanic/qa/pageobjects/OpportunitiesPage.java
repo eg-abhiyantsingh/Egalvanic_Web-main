@@ -38,11 +38,16 @@ public class OpportunitiesPage {
     public static final By DIALOG_TEXTFIELD = By.cssSelector("[role='dialog'] input[type='text'], .MuiDialog-root input:not([type='hidden'])");
 
     // ── relative XPath for MUI text buttons (no absolute paths) ──
+    // V1.36 renamed the module to "Quotes" (heading and sidebar label) while keeping the
+    // /opportunities route. The create button now reads "New Quote" — live-verified 2026-08-24.
+    // Both vocabularies are matched so the locator spans the rename in either direction.
     public static final By NEW_BTN = By.xpath(
-            "//button[normalize-space()='New' or normalize-space()='New Opportunity' " +
+            "//button[normalize-space()='New Quote' or normalize-space()='Add Quote' " +
+            "or normalize-space()='New' or normalize-space()='New Opportunity' " +
             "or normalize-space()='Add' or normalize-space()='Add Opportunity' or normalize-space()='+ New']");
     public static final By AI_OPP_BTN = By.xpath(
-            "//button[contains(normalize-space(),'AI') and contains(normalize-space(),'Opportunit')]");
+            "//button[contains(normalize-space(),'AI') and "
+            + "(contains(normalize-space(),'Opportunit') or contains(normalize-space(),'Quote'))]");
     public static final By SAVE_BTN = By.xpath(
             "//div[@role='dialog']//button[normalize-space()='Save' or normalize-space()='Create' " +
             "or normalize-space()='Add' or normalize-space()='Save Changes']");
@@ -99,7 +104,8 @@ public class OpportunitiesPage {
                 if (!d.findElements(GRID).isEmpty()) return true;          // DataGrid mounted
                 if (!d.findElements(SEARCH_INPUT).isEmpty()) return true;   // page search box mounted
                 String t = bodyText().toLowerCase();
-                return t.contains("no opportunit") || t.contains("select an sld")
+                return t.contains("no opportunit") || t.contains("no quote")
+                        || t.contains("select an sld")
                         || t.contains("select a site") || t.contains("get started")
                         || t.contains("no records") || t.contains("create your first");
             });

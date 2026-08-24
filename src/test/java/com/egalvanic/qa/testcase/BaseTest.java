@@ -1004,12 +1004,23 @@ public class BaseTest {
             {"Admin", "Project Manager", "Account Manager", "Super Admin", "Electrical Engineer"};
 
     /**
-     * Pin the header Role dropdown to {@code target} right after login. Since the V1.36 role
-     * rename a fresh session can land on either the OPERATIONAL console ("Super Admin") or the
-     * SETUP console ("Admin" = old EG Admin) — and every sidebar-text navigation silently no-ops
-     * on the wrong console. Pinning the role makes the landing console deterministic for the
-     * whole class session. Tolerant by design: if the Role control never renders (older build,
-     * restricted account), it logs and returns — it must never fail a suite by itself.
+     * Pin the header Role dropdown to {@code target} right after login.
+     *
+     * <p><b>No longer functional as of the V1.36 nav redesign — verified 2026-08-24.</b> The
+     * role switcher has been REMOVED from the UI: the account menu (the avatar at the foot of
+     * the icon rail) now renders Roles as a read-only {@code <p>} — "Project Manager, Account
+     * Manager, Electrical Engineer, Super Admin, Admin" — with no Autocomplete, Select or
+     * combobox anywhere in the popover. The only controls left are Edit Company, Email
+     * Preferences, the English/Français toggle and Sign Out.
+     *
+     * <p>So this method now always logs "Role switcher not found" and returns. It is kept
+     * rather than deleted because it is tolerant by contract (it must never fail a suite by
+     * itself) and because the control may return; deleting it would silently drop the pin from
+     * every caller. <b>Do not rely on it to make the landing console deterministic.</b>
+     *
+     * <p>The dual-console problem it existed to solve is also gone: with no role switching, a
+     * multi-role admin now gets all six rail categories at once. What replaced it as the real
+     * navigation hazard is the two-level rail — see {@link com.egalvanic.qa.utils.NavCatalog}.
      */
     protected void ensureActiveRole(String target) {
         try {

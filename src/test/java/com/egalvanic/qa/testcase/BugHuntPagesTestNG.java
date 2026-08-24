@@ -45,10 +45,14 @@ public class BugHuntPagesTestNG extends BaseTest {
                 "BUG-020: Admin 0 Sites");
 
         try {
-            driver.get(AppConstants.BASE_URL + "/admin");
+            // Sites moved out of Settings in V1.36. /admin now redirects to /users, so this
+            // check was counting USERS and reporting the number as a site count. Sites are the
+            // second tab of Customers (live-verified 2026-08-24: /sites -> /customers?tab=sites,
+            // rendering a grid and a "Create Site" action).
+            driver.get(AppConstants.BASE_URL + "/customers?tab=sites");
             pause(6000);
 
-            logStep("Navigated to Admin Settings page");
+            logStep("Navigated to Customers → Sites");
 
             // Check if sites list is empty or shows 0
             String siteInfo = (String) js().executeScript(

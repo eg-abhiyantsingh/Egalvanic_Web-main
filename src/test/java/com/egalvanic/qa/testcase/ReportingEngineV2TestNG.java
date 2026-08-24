@@ -307,7 +307,7 @@ public class ReportingEngineV2TestNG {
     public void TC1_01_navigateToBrandingAndAssets() {
         logStep("TC-1.1: Navigate to Company Settings → Branding & Assets");
 
-        navigateViaUrl("/settings");
+        navigateViaUrl("/admin-dashboard");
         sleep(2000);
 
         boolean pageLoaded = elementExists(BRANDING_ASSETS_TAB)
@@ -466,7 +466,7 @@ public class ReportingEngineV2TestNG {
     public void TC2_01_navigateToStarterTemplates() {
         logStep("TC-2.1: Navigate to Page Templates → Starter Templates");
 
-        navigateViaUrl("/admin/templates");
+        navigateViaUrl("/reporting/builder");
         sleep(3000);
         dismissBanner();
 
@@ -541,8 +541,7 @@ public class ReportingEngineV2TestNG {
     public void TC3_01_navigateToTemplateExplorer() {
         logStep("TC-3.1: Navigate to Template Explorer");
 
-        String[] explorerPaths = {"/admin/templates", "/templates", "/admin/page-templates",
-                                  "/reporting/templates"};
+        String[] explorerPaths = {"/reporting/builder"};
         boolean found = false;
 
         for (String path : explorerPaths) {
@@ -660,7 +659,7 @@ public class ReportingEngineV2TestNG {
     public void TC4_01_navigateToEGFormsCreateNew() {
         logStep("TC-4.1: Go to EG Forms → Create New");
 
-        navigateViaUrl("/admin");
+        navigateViaUrl("/eg-forms");
         sleep(2000);
         dismissBanner();
 
@@ -784,7 +783,7 @@ public class ReportingEngineV2TestNG {
     public void TC5_01_navigateToReportingConfig() {
         logStep("TC-5.1: Navigate to Reporting Config Explorer");
 
-        String[] configPaths = {"/admin/reporting", "/reporting", "/admin/reporting-config"};
+        String[] configPaths = {"/reporting/builder"};
         boolean found = false;
 
         for (String path : configPaths) {
@@ -883,7 +882,7 @@ public class ReportingEngineV2TestNG {
     public void TC6_01_openWorkOrderWithNode() {
         logStep("TC-6.1: Open a work order with at least one node");
 
-        navigateViaUrl("/jobs");
+        navigateViaUrl("/sessions");
         sleep(3000);
         dismissBanner();
 
@@ -999,7 +998,7 @@ public class ReportingEngineV2TestNG {
     public void TC8_01_openExistingV1Config() {
         logStep("TC-8.1: Pick an existing V1 report config (one that worked before this epic)");
 
-        navigateViaUrl("/admin/reporting");
+        navigateViaUrl("/reporting/builder");
         sleep(3000);
 
         screenshot("TC8_01_v1_configs");

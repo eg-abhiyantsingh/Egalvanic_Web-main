@@ -53,12 +53,15 @@ public class Phase5ModuleInteractionTestNG extends BaseTest {
             {"Attachments",       "/attachments"},
             {"Maintenance",       "/maintenance"},
             {"Notes",             "/notes"},
-            {"Accounts",          "/accounts"},
-            {"Opportunities",     "/opportunities"},
+            {"Customers",         "/customers"},
+            {"Quotes",            "/opportunities"},
             {"EMPs",              "/emps"},
-            {"Arc Flash",         "/arc-flash"},
+            {"Arc Flash Readiness","/arc-flash"},
             {"PM Readiness",      "/pm-readiness"},
-            {"Equipment Library", "/equipment-library"},
+            // /equipment-library dropped 2026-08-24: it redirects to /dashboard, so this row
+            // was re-testing the dashboard under an Equipment Library label. The live
+            // equivalent module is Equipment Designations.
+            {"Equipment Designations","/equipment-designations"},
             {"Panel Schedules",   "/panel-schedules"},
             {"Sales Overview",    "/sales-overview"},
             {"Ops Dashboard",     "/ops-dashboard"},

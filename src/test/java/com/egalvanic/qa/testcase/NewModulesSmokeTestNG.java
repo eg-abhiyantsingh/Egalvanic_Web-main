@@ -238,16 +238,17 @@ public class NewModulesSmokeTestNG extends BaseTest {
     @Test(priority = 2, description = "TC_NM_02: Opportunities page renders pipeline grid")
     public void testTC_NM_02_Opportunities() {
         ExtentReportManager.createTest(MODULE, "Opportunities", "TC_NM_02");
+        // V1.36 renamed this module to "Quotes" (route unchanged). Both vocabularies are
+        // accepted so the smoke spans the rename.
         boolean ok = smokeOpenModule("/opportunities",
-                "Opportunity", "Opportunities", "Total Value");
-        // Look for the grid columns we observed live (Opportunity Name,
-        // Facility, Revisions, Total Value, Created, Status, Actions).
+                "Quote", "Quotes", "Opportunity");
         boolean hasGridCol = !driver.findElements(By.xpath(
-                "//*[contains(text(),'Opportunity Name') or contains(text(),'Total Value')]"
+                "//*[contains(text(),'Opportunity Name') or contains(text(),'Total Value') "
+                + "or contains(text(),'Quote')]"
         )).isEmpty();
-        logStepWithScreenshot("Opportunities rendered: " + ok + ", grid col: " + hasGridCol);
+        logStepWithScreenshot("Quotes rendered: " + ok + ", grid col: " + hasGridCol);
         Assert.assertTrue(ok || hasGridCol,
-                "Opportunities module did not render its pipeline grid");
+                "Quotes module did not render its pipeline grid");
         ExtentReportManager.logPass("Opportunities module reachable + grid columns visible");
     }
 
@@ -263,7 +264,7 @@ public class NewModulesSmokeTestNG extends BaseTest {
     @Test(priority = 4, description = "TC_NM_04: Accounts page loads")
     public void testTC_NM_04_Accounts() {
         ExtentReportManager.createTest(MODULE, "Accounts", "TC_NM_04");
-        boolean ok = smokeOpenModule("/accounts", "Account", "Accounts");
+        boolean ok = smokeOpenModule("/customers", "Customer", "Customers", "Account");
         logStepWithScreenshot("Accounts rendered: " + ok);
         Assert.assertTrue(ok && smokeAssertShellRendered(), "Accounts module did not render");
         ExtentReportManager.logPass("Accounts module reachable + shell rendered");
@@ -313,19 +314,19 @@ public class NewModulesSmokeTestNG extends BaseTest {
         ExtentReportManager.logPass("Arc Flash Readiness reachable + shell rendered");
     }
 
-    @Test(priority = 8, description = "TC_NM_08: Equipment Library page loads")
-    public void testTC_NM_08_EquipmentLibrary() {
-        ExtentReportManager.createTest(MODULE, "Equipment Library", "TC_NM_08");
-        boolean ok = smokeOpenModule("/equipment-library",
-                "Equipment Library", "Material", "Voltage Rating");
-        // The Equipment Library has a known tabbed structure
-        boolean hasTabs = !driver.findElements(By.xpath(
-                "//*[@role='tab' and (contains(text(),'Asset Details') "
-                + "or contains(text(),'Connection Details'))]")).isEmpty();
-        logStepWithScreenshot("Equipment Library rendered: " + ok + ", tabs: " + hasTabs);
-        Assert.assertTrue(ok || hasTabs,
-                "Equipment Library module did not render its tabbed view");
-        ExtentReportManager.logPass("Equipment Library reachable + tabs visible");
+    @Test(priority = 8, description = "TC_NM_08: Materials library page loads")
+    public void testTC_NM_08_Materials() {
+        // Was /equipment-library. That route now redirects to /dashboard, so this test was
+        // asserting against the dashboard under an Equipment Library label and could only pass
+        // by accident. The materials library it covered is the top-level /materials in V1.36.
+        ExtentReportManager.createTest(MODULE, "Materials", "TC_NM_08");
+        boolean ok = smokeOpenModule("/materials", "Material", "Materials", "Library");
+        boolean hasGrid = !driver.findElements(By.cssSelector(
+                ".MuiDataGrid-root, [role='grid'], table")).isEmpty();
+        logStepWithScreenshot("Materials rendered: " + ok + ", grid: " + hasGrid);
+        Assert.assertTrue(ok || hasGrid,
+                "Materials module did not render its library view");
+        ExtentReportManager.logPass("Materials reachable + grid visible");
     }
 
     @Test(priority = 9, description = "TC_NM_09: Equipment Designations page loads")

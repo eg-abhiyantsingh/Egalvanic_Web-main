@@ -6,6 +6,7 @@ import com.egalvanic.qa.testcase.api.RbacFixtures;
 import com.egalvanic.qa.testcase.api.RbacFixtures.LiveAuth;
 import com.egalvanic.qa.testcase.api.RbacFixtures.Role;
 import com.egalvanic.qa.utils.ExtentReportManager;
+import com.egalvanic.qa.utils.NavCatalog;
 import com.egalvanic.qa.utils.ScreenshotUtil;
 
 import io.restassured.RestAssured;
@@ -75,17 +76,22 @@ public class RolePermissionUiGatingTest {
      * positive is flag-dependent. Marked flagCoupled=true.
      */
     private static final List<NavModule> NAV_MODULES = Arrays.asList(
-            new NavModule("Assets",        "features.assets.view",        "/assets",          false),
-            new NavModule("SLDs",          "features.slds.view",          "/slds",            false),
-            new NavModule("Locations",     "features.locations.view",     "/locations",       false),
-            new NavModule("Tasks",         "features.tasks.view",         "/tasks",           false),
-            new NavModule("Issues",        "features.issues.view",        "/issues",          false),
-            new NavModule("Arc Flash",     "features.arc_flash.view",     "/arc-flash",       false),
-            new NavModule("Settings",      "features.settings.view",      "/admin",           false),
-            new NavModule("Audit Log",     "features.audit_log.view",     "/admin/audit-log", false),
-            new NavModule("Opportunities", "features.opportunities.view", "/opportunities",   true),
-            new NavModule("Accounts",      "features.accounts.view",      "/accounts",        true),
-            new NavModule("Goals",         "features.goals.view",         "/goals",           true)
+            new NavModule("Assets",        "features.assets.view",        "/assets",           false),
+            new NavModule("SLDs",          "features.slds.view",          "/slds",             false),
+            new NavModule("Locations",     "features.locations.view",     "/locations",        false),
+            new NavModule("Tasks",         "features.tasks.view",         "/tasks",            false),
+            new NavModule("Issues",        "features.issues.view",        "/issues",           false),
+            // V1.36 labels: "Arc Flash Readiness", "Setup", "Quotes", "Customers".
+            new NavModule("Arc Flash Readiness", "features.arc_flash.view", "/arc-flash",      false),
+            new NavModule("Setup",         "features.settings.view",      "/admin-dashboard",  false),
+            new NavModule("Audit Log",     "features.audit_log.view",     "/admin/audit-log",  false),
+            new NavModule("Quotes",        "features.opportunities.view", "/opportunities",    true),
+            new NavModule("Customers",     "features.accounts.view",      "/customers",        true)
+            // Goals dropped from this list on 2026-08-24: it is no longer a sidebar module at
+            // all (neither /goals nor /accounts/goals appears in any rail category), so a
+            // nav-VISIBILITY assertion for it can only ever report "hidden" and proves nothing
+            // about permissions. The module itself is alive at /goals and is covered
+            // functionally by GoalsTestNG.
     );
 
     private WebDriver driver;
@@ -281,38 +287,34 @@ public class RolePermissionUiGatingTest {
         } catch (Exception e) { return false; }
     }
 
-    /** Collect the href targets of all anchors inside the left nav / sidebar / drawer. */
+    /**
+     * Collect the href targets of every anchor the sidebar can reach for this session.
+     *
+     * <p>Rewritten 2026-08-24. The V1.36 sidebar keeps only the OPEN rail category's module
+     * anchors in the DOM, so a single read returns roughly seven of the thirty-odd links and
+     * every other module looks "not visible". That would have failed whole roles for a UI
+     * reason rather than a permission one — exactly the false verdict this suite exists to
+     * avoid. {@link NavCatalog#collectAllNavHrefs} expands all six categories and unions the
+     * result, and returns normalised PATHS so {@code navHasRoute} can compare directly.
+     */
     private Set<String> readSidebarHrefs() {
-        // Wait until at least one sidebar link exists (nav has hydrated).
-        String sel = "nav a[href], aside a[href], [class*='Drawer'] a[href], "
-                + "[class*='idebar'] a[href], [role='navigation'] a[href]";
+        // Wait until the nav has hydrated before expanding anything.
         try {
             new WebDriverWait(driver, Duration.ofSeconds(15))
-                    .until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(sel)));
-        } catch (Exception ignored) { /* admin with all modules should have links; report will show empty */ }
-        Set<String> hrefs = new LinkedHashSet<>();
-        for (WebElement a : driver.findElements(By.cssSelector(sel))) {
-            try {
-                String h = a.getAttribute("href");
-                if (h != null && !h.isEmpty()) hrefs.add(h);
-            } catch (Exception ignored) {}
-        }
-        return hrefs;
+                    .until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("a[href]")));
+        } catch (Exception ignored) { /* a role with no modules legitimately has none */ }
+        return NavCatalog.collectAllNavHrefs(driver);
     }
 
     /**
-     * True if any sidebar href's PATH exactly equals the route. Exact-path (not substring) matching
-     * is required so "/admin" (Settings) does not also match "/admin/audit-log" (Audit Log).
+     * True if any sidebar href's PATH exactly equals the route. Exact-path (not substring)
+     * matching still matters: "/admin-dashboard" (Setup) and "/admin/audit-log" (Audit Log)
+     * are separately-gated modules that a substring test would conflate.
      */
     private static boolean navHasRoute(Set<String> hrefs, String route) {
+        String target = NavCatalog.pathOf(route);
         for (String h : hrefs) {
-            try {
-                String path = java.net.URI.create(h).getPath();
-                if (path != null) {
-                    if (path.length() > 1 && path.endsWith("/")) path = path.substring(0, path.length() - 1);
-                    if (path.equals(route)) return true;
-                }
-            } catch (Exception ignored) { /* malformed href — skip */ }
+            if (NavCatalog.pathOf(h).equals(target)) return true;
         }
         return false;
     }

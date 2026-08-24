@@ -209,12 +209,17 @@ public class ZP1997DOMPurifyXssTestNG extends BaseTest {
     // SECTION 2 — RICH HTML CONTENT RENDERING (sanitizeHtml)
     // ================================================================
 
-    @Test(priority = 10, description = "ZP-1997 HTML-1: /admin/forms text/message blocks render rich HTML")
+    @Test(priority = 10, description = "ZP-1997 HTML-1: /eg-forms text/message blocks render rich HTML")
     public void testHTML_01_EGFormBuilder() {
         ExtentReportManager.createTest(AppConstants.MODULE_BUG_HUNT, FEATURE_ZP1997,
                 "EG Form Builder rich HTML");
         try {
-            driver.get(AppConstants.BASE_URL + "/admin/forms");
+            // Was /admin/forms. V1.36 moved the form builder to the top-level /eg-forms and left
+            // /admin/forms rendering an empty shell — which made the "> 50 elements" assertion
+            // below fail and report it as DOMPurify stripping content. That would have been a
+            // fabricated sanitizer bug: the DOM was empty because the route was dead, not
+            // because anything was sanitized.
+            driver.get(AppConstants.BASE_URL + "/eg-forms");
             pause(5000);
 
             Long bodyChildren = (Long) js().executeScript(
@@ -224,13 +229,13 @@ public class ZP1997DOMPurifyXssTestNG extends BaseTest {
                     + "});"
                     + "return n;");
             ScreenshotUtil.captureScreenshot("ZP1997_HTML_01");
-            logStep("/admin/forms body children: " + bodyChildren);
+            logStep("/eg-forms body children: " + bodyChildren);
 
             Assert.assertTrue(bodyChildren != null && bodyChildren > 50,
-                    "/admin/forms didn't render properly (DOM only " + bodyChildren
+                    "/eg-forms didn't render properly (DOM only " + bodyChildren
                     + " elements). DOMPurify may be stripping form builder content.");
 
-            ExtentReportManager.logPass("/admin/forms rendered with " + bodyChildren + " elements");
+            ExtentReportManager.logPass("/eg-forms rendered with " + bodyChildren + " elements");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("ZP1997_HTML_01_error");
             Assert.fail("HTML_01 crashed: " + e.getMessage());
@@ -589,17 +594,17 @@ public class ZP1997DOMPurifyXssTestNG extends BaseTest {
         ExtentReportManager.createTest(AppConstants.MODULE_BUG_HUNT, FEATURE_ZP1997,
                 "Regression: iframes render");
         try {
-            driver.get(AppConstants.BASE_URL + "/admin/forms");
+            driver.get(AppConstants.BASE_URL + "/eg-forms");
             pause(5000);
 
             Long iframeCount = (Long) js().executeScript(
                     "return document.querySelectorAll('iframe').length;");
-            logStep("/admin/forms iframe count: " + iframeCount);
+            logStep("/eg-forms iframe count: " + iframeCount);
             ScreenshotUtil.captureScreenshot("ZP1997_REG_02");
 
             if (iframeCount == null || iframeCount == 0) {
                 throw new org.testng.SkipException(
-                        "No iframes on /admin/forms to verify sanitizeHtml allowance");
+                        "No iframes on /eg-forms to verify sanitizeHtml allowance");
             }
 
             Long visibleIframes = (Long) js().executeScript(

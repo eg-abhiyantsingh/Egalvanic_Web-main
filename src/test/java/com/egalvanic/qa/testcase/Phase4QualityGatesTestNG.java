@@ -46,81 +46,83 @@ public class Phase4QualityGatesTestNG extends BaseTest {
     }
 
     // EVERY navigable page in the app: {label, path, requiredCss-that-must-render, load-budget-ms}.
-    // Sourced from the dev frontend's NAV_ROUTES (src/constants/navigation.js) plus the
-    // standalone top-level pages in App.jsx. SLD (/slds,/sld) and Connections (/connections)
-    // are intentionally omitted — hidden/deprecated in the May 2026 web release.
     // Pages a given role can't reach are SKIPPED (not failed) by the render-guard below,
     // so this single provider safely covers the whole app regardless of permission set.
+    //
+    // REBUILT 2026-08-24 against the live V1.36 app — every route below was walked with a real
+    // browser rather than copied from the frontend's route table. Three classes of rot were
+    // removed:
+    //
+    //  1. Two deep-link BLOCKS that had quietly collapsed into one screen each. All 17
+    //     "/admin?view=<key>" rows now redirect to /users with the query dropped, and all 9
+    //     "/reporting?view=<key>" rows render the same "Reports — Coming Soon" stub. They were
+    //     reporting 26 green "distinct screens" while covering two. The Settings sub-views are
+    //     replaced below by the real top-level routes they became; the Reporting ones by
+    //     /reporting/builder, which already had a row.
+    //  2. Dead routes that render an empty shell (no 404, so the render-guard SKIPPED them
+    //     forever and the zero coverage was invisible): /equipment-library, /release-updates,
+    //     /jobs. /jobs-v2 dropped as a duplicate — it redirects to /emps.
+    //  3. Renames: /accounts -> /customers, /admin -> /admin-dashboard.
+    //
+    // Kept deliberately, having been verified alive despite NOT appearing in the sidebar:
+    // /planning, /maintenance, /notes, /agent, /analyzer, /reporting, /goals. Absence from the
+    // nav is not evidence a route is dead, so each was checked individually.
+    // SLDs and Connections are back in the primary nav and are no longer omitted.
     @DataProvider(name = "routes")
     public Object[][] routes() {
         return new Object[][]{
-            // ── Primary nav routes (NAV_ROUTES) ──
+            // ── Dashboards ──
             {"Dashboard",        "/dashboard",       "main",                              9000L},
             {"Sales Overview",   "/sales-overview",  "main",                             12000L},
             {"Ops Dashboard",    "/ops-dashboard",   "main",                             12000L},
-            {"Arc Flash",        "/arc-flash",       "main",                             14000L},
-            {"PM Readiness",     "/pm-readiness",    "main",                             14000L},
-            {"Reporting",        "/reporting",       "main",                             12000L},
+            // ── Site Data ──
+            {"Condition Assessment", "/pm-readiness", "main",                            14000L},
             {"Assets",           "/assets",          ".MuiDataGrid-root, [role='grid']", 12000L},
+            {"Connections",      "/connections",     "main",                             12000L},
             {"Locations",        "/locations",       "main",                             10000L},
-            {"Tasks",            "/tasks",           "main",                             10000L},
             {"Issues",           "/issues",          ".MuiDataGrid-root, [role='grid']", 12000L},
+            {"Tasks",            "/tasks",           "main",                             10000L},
             {"Attachments",      "/attachments",     "main",                             12000L},
-            {"Planning",         "/planning",        ".MuiDataGrid-root, [role='grid']", 10000L},
-            {"EMPs / Jobs",      "/emps",            "main",                             12000L},
-            {"Work Orders",      "/sessions",        ".MuiDataGrid-root, [role='grid']", 12000L},
+            // ── Operations ──
+            {"EMPs",             "/emps",            "main",                             12000L},
+            {"Planned Work",     "/planned-work",    "main",                             12000L},
             {"Scheduling",       "/scheduling",      "main",                             12000L},
+            {"Work Orders",      "/sessions",        ".MuiDataGrid-root, [role='grid']", 12000L},
+            // ── Engineering ──
+            {"SLDs",             "/slds",            "main",                             14000L},
+            {"Arc Flash Readiness", "/arc-flash",    "main",                             14000L},
+            {"Panel Schedules",  "/panel-schedules", "main",                             14000L},
+            {"Equipment Designations", "/equipment-designations", "main",                14000L},
+            // ── Sales ──
+            {"Site Walks",       "/site-walks",      "main",                             12000L},
+            {"Quotes",           "/opportunities",   "main",                             10000L},
+            {"Customers",        "/customers",       ".MuiDataGrid-root, [role='grid']", 12000L},
+            // ── Builder ──
+            {"Reports",          "/reporting/builder","main",                            12000L},
+            {"Services",         "/services",        "main",                             12000L},
+            {"Forms",            "/eg-forms",        "main",                             12000L},
+            // ── Admin / Setup (these are the real routes the old /admin?view= links became) ──
+            {"Setup",            "/admin-dashboard", "main",                             12000L},
+            {"Labor",            "/labor",           "main",                             12000L},
+            {"Materials",        "/materials",       "main",                             12000L},
+            {"Users",            "/users",           "main",                             12000L},
+            {"Offices",          "/offices",         "main",                             12000L},
+            {"PM Plans",         "/pm-plans",        "main",                             14000L},
+            {"Test Equipment",   "/test-equipment",  "main",                             12000L},
+            {"Classes",          "/classes",         "main",                             12000L},
+            {"Audit Log",        "/admin/audit-log", "main",                             12000L},
+            {"Legacy Procedures","/legacy-procedures","main",                            12000L},
+            {"Legacy Forms",     "/legacy-forms",    "main",                             12000L},
+            // ── Alive but not in the sidebar (verified individually 2026-08-24) ──
+            {"Help",             "/z-university",    "main",                             14000L},
+            {"Planning",         "/planning",        ".MuiDataGrid-root, [role='grid']", 10000L},
             {"Goals",            "/goals",           "main",                             10000L},
-            {"Opportunities",    "/opportunities",   "main",                             10000L},
-            {"Accounts",         "/accounts",        ".MuiDataGrid-root, [role='grid']", 12000L},
-            // ── Standalone top-level pages (App.jsx, not in primary nav) ──
-            {"Admin",            "/admin",           "main",                             12000L},
-            {"Admin Audit Log",  "/admin/audit-log", "main",                             12000L},
-            {"eg-Forms",         "/eg-forms",        "main",                             12000L},
-            {"Equipment Library","/equipment-library","main",                            14000L},
+            {"Reporting",        "/reporting",       "main",                             12000L},
+            {"Reporting Legacy", "/reporting/legacy","main",                             12000L},
             {"Maintenance",      "/maintenance",     "main",                             14000L},
             {"Notes",            "/notes",           "main",                             10000L},
-            {"Panel Schedules",  "/panel-schedules", "main",                             14000L},
-            {"Release Updates",  "/release-updates", "main",                             10000L},
-            {"Z-University",     "/z-university",     "main",                             14000L},
-            {"Reporting Builder","/reporting/builder","main",                            12000L},
-            {"Reporting Legacy", "/reporting/legacy","main",                             12000L},
-            {"Jobs",             "/jobs",            "main",                             12000L},
-            {"Jobs v2",          "/jobs-v2",         "main",                             12000L},
             {"AI Agent",         "/agent",           "main",                             14000L},
             {"Analyzer",         "/analyzer",        "main",                             14000L},
-            // ── Settings/Admin deep sub-views (Settings.jsx, addressed via ?view=<key>) ──
-            // Each is a distinct screen reached through the Settings tab tree; covering
-            // them via direct ?view= deep-links exercises pages no functional suite touches.
-            {"Settings: Sites",            "/admin?view=sites",                       "main", 12000L},
-            {"Settings: Offices",          "/admin?view=offices",                     "main", 12000L},
-            {"Settings: Users",            "/admin?view=users",                       "main", 12000L},
-            {"Settings: Asset Classes",    "/admin?view=classes.assets.classes",      "main", 12000L},
-            {"Settings: Asset Core Attrs", "/admin?view=classes.assets.coreAttributes","main",12000L},
-            {"Settings: Asset Subtypes",   "/admin?view=classes.assets.subtypes",     "main", 12000L},
-            {"Settings: Issue Classes",    "/admin?view=classes.issues.classes",      "main", 12000L},
-            {"Settings: Issue Core Attrs", "/admin?view=classes.issues.coreAttributes","main",12000L},
-            {"Settings: PM Procedures",    "/admin?view=pm.procedures.list",          "main", 14000L},
-            {"Settings: PM Proc Masters",  "/admin?view=pm.procedures.masters",       "main", 14000L},
-            {"Settings: PM Shortcuts",     "/admin?view=pm.shortcuts",                "main", 12000L},
-            {"Settings: Test Equip Lib",   "/admin?view=pm.testEquipment.library",    "main", 12000L},
-            {"Settings: Test Equipment",   "/admin?view=pm.testEquipment.equipment",  "main", 12000L},
-            {"Settings: Material Library", "/admin?view=pm.materials.library",        "main", 12000L},
-            {"Settings: Material Presets", "/admin?view=pm.materials.presets",        "main", 12000L},
-            {"Settings: Labor Types",      "/admin?view=pm.labor.types",              "main", 12000L},
-            {"Settings: Labor Unions",     "/admin?view=pm.labor.unions",             "main", 12000L},
-            // ── Reporting hub deep sub-views (Reporting.jsx, addressed via ?view=<key>) ──
-            // Reporting is a second tabbed hub like Settings; bare /reporting only lands
-            // on the default view. These deep-links exercise the rest of the hub.
-            {"Reporting: Reports",         "/reporting?view=reports",                 "main", 12000L},
-            {"Reporting: Builder Configs", "/reporting?view=builder.configs",         "main", 12000L},
-            {"Reporting: Forms",           "/reporting?view=forms",                   "main", 12000L},
-            {"Reporting: eg-Forms",        "/reporting?view=forms.eg-forms",          "main", 12000L},
-            {"Reporting: NETA Templates",  "/reporting?view=forms.neta",              "main", 14000L},
-            {"Reporting: Legacy Forms",    "/reporting?view=forms.legacy",            "main", 12000L},
-            {"Reporting: Branding",        "/reporting?view=branding",                "main", 12000L},
-            {"Reporting: Style Guide",     "/reporting?view=branding.style-guide",    "main", 12000L},
-            {"Reporting: Logos & Media",   "/reporting?view=branding.logos-media",    "main", 12000L},
         };
     }
 
@@ -263,12 +265,12 @@ public class Phase4QualityGatesTestNG extends BaseTest {
             {"Asset Detail",       "/assets"},
             {"Work Order Detail",  "/sessions"},
             {"Issue Detail",       "/issues"},
-            {"Account Detail",     "/accounts"},
-            {"Opportunity Detail", "/opportunities"},
+            // The account LIST moved to /customers; the DETAIL it drills into is still /accounts/{id}.
+            {"Account Detail",     "/customers"},
+            {"Quote Detail",       "/opportunities"},
             {"Task Detail",        "/tasks"},
             {"Location Detail",    "/locations"},
             {"Panel Editor",       "/panel-schedules"},   // -> PanelEditor / PanelView
-            {"Job Detail",         "/jobs"},              // -> JobDetail
             {"EMP Detail",         "/emps"},              // -> CommittedQuotes / QuoteDetail
         };
     }
@@ -355,8 +357,8 @@ public class Phase4QualityGatesTestNG extends BaseTest {
         return new Object[][]{
             {"Dashboard", "/dashboard"}, {"Assets", "/assets"}, {"Work Orders", "/sessions"},
             {"Issues", "/issues"}, {"Planning", "/planning"}, {"Locations", "/locations"},
-            {"Tasks", "/tasks"}, {"Accounts", "/accounts"}, {"Scheduling", "/scheduling"},
-            {"Reporting", "/reporting"}, {"Admin", "/admin"}, {"Equipment Library", "/equipment-library"},
+            {"Tasks", "/tasks"}, {"Customers", "/customers"}, {"Scheduling", "/scheduling"},
+            {"Reporting", "/reporting"}, {"Setup", "/admin-dashboard"}, {"Users", "/users"},
         };
     }
 

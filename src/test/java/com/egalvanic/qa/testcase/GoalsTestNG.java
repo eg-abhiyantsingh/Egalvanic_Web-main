@@ -2,6 +2,7 @@ package com.egalvanic.qa.testcase;
 
 import com.egalvanic.qa.constants.AppConstants;
 import com.egalvanic.qa.utils.ExtentReportManager;
+import com.egalvanic.qa.utils.NavCatalog;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -49,7 +50,17 @@ public class GoalsTestNG extends BaseTest {
     private static final String FEATURE_LAYOUT = "Goal Layout";
     private static final String FEATURE_DATA = "Goal Data Integrity";
 
-    private static final String GOALS_URL = AppConstants.BASE_URL + "/accounts/goals";
+    /**
+     * Goals now lives at the top-level /goals.
+     *
+     * <p>Was /accounts/goals. That path still routes but its API answers <b>500 "An internal
+     * error occurred."</b> on every load (reproduced twice on 2026-08-24, distinct trace_ids),
+     * so the page renders an error banner and no grid — every Goals test pointed at it was
+     * exercising a broken screen and reporting the failure as a Goals defect. /goals serves the
+     * module normally, with data. Same route as {@link #GOALS_DIRECT_URL} below, which was
+     * already correct.
+     */
+    private static final String GOALS_URL = AppConstants.BASE_URL + NavCatalog.GOALS_ROUTE;
 
     // Locators — semantic XPath with fallbacks for product-side drift
     private static final By GOALS_TAB = By.xpath(

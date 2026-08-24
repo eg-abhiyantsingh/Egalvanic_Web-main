@@ -52,11 +52,11 @@ public class Page502ScreenshotSweepTestNG extends BaseTest {
             {"Issues", "/issues"},
             {"SLDs", "/slds"},
             {"Work Orders", "/sessions"},
-            {"Arc Flash", "/arc-flash"},
+            {"Arc Flash Readiness", "/arc-flash"},
             {"Condition Assessment", "/pm-readiness"},
             {"EMPs", "/emps"},
-            {"Opportunities", "/opportunities"},
-            {"Accounts", "/accounts"},
+            {"Quotes", "/opportunities"},
+            {"Customers", "/customers"},
     };
 
     private final List<String[]> reportRows = new ArrayList<>();

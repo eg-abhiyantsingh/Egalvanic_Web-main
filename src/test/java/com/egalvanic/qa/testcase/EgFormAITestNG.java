@@ -39,6 +39,14 @@ import java.util.stream.Collectors;
 /**
  * AI-Driven Form/Template Creation — QA Test Suite
  *
+ * <p><b>Routes repointed 2026-08-24 for the V1.36 redesign.</b> This suite used to drive
+ * {@code /admin/templates} (15 navigations) and {@code /admin}. Both are gone: {@code /admin}
+ * redirects to {@code /users}, and {@code /admin/templates} renders an empty shell — nav chrome
+ * with no page content and no 404 — so every downstream element and AI-button assertion was
+ * running against a blank page. They now target {@code /reporting/builder} (the live report and
+ * template surface) and {@code /admin-dashboard} (the Setup hub). The multi-path fallback
+ * arrays were collapsed to the one live path, since every other candidate in them was dead.
+ *
  * Jira: ZP-XXXX (AI-Driven Form/Template Creation)
  * Parent: ZP-1583 — Reporting Engine V2
  *
@@ -206,7 +214,7 @@ public class EgFormAITestNG {
     // ═══════════════════════════════════════════
 
     private void loginToAdmin() {
-        driver.get(AppConstants.BASE_URL + "/admin");
+        driver.get(AppConstants.BASE_URL + "/admin-dashboard");
         sleep(3000);
 
         try {
@@ -231,7 +239,7 @@ public class EgFormAITestNG {
     }
 
     private void navigateToAdmin() {
-        driver.get(AppConstants.BASE_URL + "/admin");
+        driver.get(AppConstants.BASE_URL + "/admin-dashboard");
         sleep(3000);
         dismissBanner();
     }
@@ -405,7 +413,7 @@ public class EgFormAITestNG {
 
         System.out.println("\n📋 TC02: Checking Page Templates for AI option");
 
-        String[] templatePaths = {"/admin/templates", "/admin/page-templates", "/templates", "/reporting"};
+        String[] templatePaths = {"/reporting/builder"};
 
         for (String path : templatePaths) {
             try {
@@ -433,7 +441,7 @@ public class EgFormAITestNG {
         System.out.println("\n📋 TC03: Full platform scan for AI features");
 
         String[][] pages = {
-            {"/admin", "Admin Settings"},
+            {"/admin-dashboard", "Setup"},
             {"/dashboard", "Dashboard"},
             {"/assets", "Assets"},
             {"/issues", "Issues"},
@@ -1135,7 +1143,7 @@ public class EgFormAITestNG {
         System.out.println("\n📋 TC21: Load template explorer");
 
         // Navigate to template explorer
-        String[] explorerPaths = {"/admin/templates", "/templates", "/admin/page-templates", "/reporting/templates"};
+        String[] explorerPaths = {"/reporting/builder"};
         boolean found = false;
 
         for (String path : explorerPaths) {
@@ -1178,7 +1186,7 @@ public class EgFormAITestNG {
 
         System.out.println("\n📋 TC22: Search templates");
 
-        driver.get(AppConstants.BASE_URL + "/admin/templates");
+        driver.get(AppConstants.BASE_URL + "/reporting/builder");
         sleep(3000);
         dismissBanner();
 
@@ -1235,7 +1243,7 @@ public class EgFormAITestNG {
 
         System.out.println("\n📋 TC23: Template preview");
 
-        driver.get(AppConstants.BASE_URL + "/admin/templates");
+        driver.get(AppConstants.BASE_URL + "/reporting/builder");
         sleep(3000);
         dismissBanner();
 
@@ -1314,7 +1322,7 @@ public class EgFormAITestNG {
 
         System.out.println("\n📋 TC26: Template structure breakdown");
 
-        driver.get(AppConstants.BASE_URL + "/admin/templates");
+        driver.get(AppConstants.BASE_URL + "/reporting/builder");
         sleep(3000);
         dismissBanner();
 
@@ -1365,7 +1373,7 @@ public class EgFormAITestNG {
 
         System.out.println("\n📋 TC28: Rapid switching race condition test");
 
-        driver.get(AppConstants.BASE_URL + "/admin/templates");
+        driver.get(AppConstants.BASE_URL + "/reporting/builder");
         sleep(3000);
         dismissBanner();
 
@@ -1409,7 +1417,7 @@ public class EgFormAITestNG {
 
         System.out.println("\n📋 TC29: AI edit entry point in template editor");
 
-        driver.get(AppConstants.BASE_URL + "/admin/templates");
+        driver.get(AppConstants.BASE_URL + "/reporting/builder");
         sleep(3000);
         dismissBanner();
 
@@ -1556,7 +1564,7 @@ public class EgFormAITestNG {
         System.out.println("\n📋 TC34: Agent unavailable fallback test");
 
         // Check if manual editing is still accessible when AI fails
-        driver.get(AppConstants.BASE_URL + "/admin/templates");
+        driver.get(AppConstants.BASE_URL + "/reporting/builder");
         sleep(3000);
         dismissBanner();
 
@@ -1607,7 +1615,7 @@ public class EgFormAITestNG {
 
         System.out.println("\n📋 TC36: Starter template library");
 
-        driver.get(AppConstants.BASE_URL + "/admin/templates");
+        driver.get(AppConstants.BASE_URL + "/reporting/builder");
         sleep(3000);
         dismissBanner();
 
@@ -1646,7 +1654,7 @@ public class EgFormAITestNG {
             "//*[contains(text(),'Start from template')]"
         );
 
-        driver.get(AppConstants.BASE_URL + "/admin/templates");
+        driver.get(AppConstants.BASE_URL + "/reporting/builder");
         sleep(3000);
         dismissBanner();
 
@@ -1673,7 +1681,7 @@ public class EgFormAITestNG {
 
         System.out.println("\n📋 TC38: Duplicate and customize starter template");
 
-        driver.get(AppConstants.BASE_URL + "/admin/templates");
+        driver.get(AppConstants.BASE_URL + "/reporting/builder");
         sleep(3000);
         dismissBanner();
 
@@ -1716,7 +1724,7 @@ public class EgFormAITestNG {
 
         System.out.println("\n📋 TC40: Starter template page types");
 
-        driver.get(AppConstants.BASE_URL + "/admin/templates");
+        driver.get(AppConstants.BASE_URL + "/reporting/builder");
         sleep(3000);
         dismissBanner();
 
@@ -1881,7 +1889,7 @@ public class EgFormAITestNG {
 
         System.out.println("\n📋 TC50: Report generation with migrated template");
 
-        driver.get(AppConstants.BASE_URL + "/admin/templates");
+        driver.get(AppConstants.BASE_URL + "/reporting/builder");
         sleep(3000);
         dismissBanner();
 
@@ -1906,7 +1914,7 @@ public class EgFormAITestNG {
 
         System.out.println("\n📋 TC51: Template versioning");
 
-        driver.get(AppConstants.BASE_URL + "/admin/templates");
+        driver.get(AppConstants.BASE_URL + "/reporting/builder");
         sleep(3000);
         dismissBanner();
 
@@ -1929,7 +1937,7 @@ public class EgFormAITestNG {
         System.out.println("\n📋 TC52: Non-existent template ID");
 
         // Navigate to a fake template ID
-        driver.get(AppConstants.BASE_URL + "/admin/templates/99999-fake-id-nonexistent");
+        driver.get(AppConstants.BASE_URL + "/reporting/builder/99999-fake-id-nonexistent");
         sleep(3000);
 
         String content = driver.getPageSource().toLowerCase();
@@ -1951,7 +1959,7 @@ public class EgFormAITestNG {
 
         System.out.println("\n📋 TC53: Create new template");
 
-        driver.get(AppConstants.BASE_URL + "/admin/templates");
+        driver.get(AppConstants.BASE_URL + "/reporting/builder");
         sleep(3000);
         dismissBanner();
 
@@ -1996,7 +2004,7 @@ public class EgFormAITestNG {
 
         System.out.println("\n📋 TC55: Delete template with active references");
 
-        driver.get(AppConstants.BASE_URL + "/admin/templates");
+        driver.get(AppConstants.BASE_URL + "/reporting/builder");
         sleep(3000);
         dismissBanner();
 
@@ -2025,7 +2033,7 @@ public class EgFormAITestNG {
 
         System.out.println("\n📋 TC56: Template list pagination");
 
-        driver.get(AppConstants.BASE_URL + "/admin/templates");
+        driver.get(AppConstants.BASE_URL + "/reporting/builder");
         sleep(3000);
         dismissBanner();
 

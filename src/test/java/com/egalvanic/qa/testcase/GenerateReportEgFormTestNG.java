@@ -48,19 +48,13 @@ public class GenerateReportEgFormTestNG extends BaseTest {
             AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_GENERATE_REPORT,
             "TC_Report_01: EG Forms admin entry");
         try {
-            // Live-verified 2026-04-28: EG Forms is the Settings → Forms tab at /admin.
-            // The asset-detail page kebab contains ONLY [Edit Asset, Delete Asset] —
-            // confirmed via DOM dump. So "EG Form / Generate Report" is reached via
-            // the admin panel, not directly from an asset.
-            driver.get(AppConstants.BASE_URL + "/admin");
+            // EG Forms is its own route as of V1.36 (live-verified 2026-08-24). It used to be
+            // the Settings → Forms tab at /admin; /admin now redirects to /users, which has no
+            // Forms tab, so the old path landed on the user list and then failed downstream.
+            // The asset-detail page kebab still contains ONLY [Edit Asset, Delete Asset], so
+            // "EG Form / Generate Report" is still reached from the Forms admin, not an asset.
+            driver.get(AppConstants.BASE_URL + "/eg-forms");
             pause(4000);
-
-            // Click the "Forms" tab if not already on it
-            WebElement formsTab = findByText("Forms");
-            if (formsTab != null) {
-                safeClick(formsTab);
-                pause(3000);
-            }
             ScreenshotUtil.captureScreenshot("TC_Report_01");
 
             // Verify the EG Forms grid loaded with at least one form template AND
@@ -346,15 +340,16 @@ public class GenerateReportEgFormTestNG extends BaseTest {
     public void testTC_Report_07_VisibleForAdminRole() {
         ExtentReportManager.createTest(
             AppConstants.MODULE_NEW_COVERAGE, AppConstants.FEATURE_GENERATE_REPORT,
-            "TC_Report_07: Admin /admin/forms access");
+            "TC_Report_07: Admin /eg-forms access");
         try {
             // BaseTest logs in as admin by default. Verify admin reaches the
             // EG Forms admin page without a permission redirect.
-            driver.get(AppConstants.BASE_URL + "/admin");
+            // Route moved in V1.36: /admin -> /users, and the Forms tab went with it.
+            driver.get(AppConstants.BASE_URL + "/eg-forms");
             pause(4000);
             String currentUrl = driver.getCurrentUrl();
             String body = driver.findElement(By.tagName("body")).getText();
-            logStep("After /admin nav: URL=" + currentUrl
+            logStep("After /eg-forms nav: URL=" + currentUrl
                 + ", body length=" + body.length());
 
             // Falsifiable: admin should NOT be redirected to login or a 403 page,
@@ -363,16 +358,20 @@ public class GenerateReportEgFormTestNG extends BaseTest {
                 || currentUrl.contains("/forbidden")
                 || body.toLowerCase().contains("forbidden")
                 || body.toLowerCase().contains("not authorized"),
-                "Admin role redirected away from /admin OR hit forbidden page. URL=" + currentUrl);
+                "Admin role redirected away from /eg-forms OR hit forbidden page. URL=" + currentUrl);
 
-            WebElement formsTab = findByText("Forms");
-            if (formsTab != null) safeClick(formsTab);
             pause(2500);
             ScreenshotUtil.captureScreenshot("TC_Report_07");
-            Assert.assertNotNull(formsTab,
-                "Forms tab not visible to admin in /admin Settings — RBAC misconfigured "
-                + "OR feature gate hiding it.");
-            ExtentReportManager.logPass("Admin role can access /admin → Forms (EG Forms admin)");
+            // Assert on the forms grid itself. The old assertion looked for a "Forms" TAB and
+            // blamed RBAC when it was missing — after the route move that tab does not exist on
+            // any page, so it would have reported a permission bug for a navigation change.
+            List<WebElement> formRows = driver.findElements(By.cssSelector(
+                ".MuiDataGrid-row, table tbody tr"));
+            Assert.assertFalse(formRows.isEmpty(),
+                "EG Forms grid not visible to admin at /eg-forms — RBAC misconfigured "
+                + "OR feature gate hiding it. URL=" + currentUrl);
+            ExtentReportManager.logPass("Admin role can access /eg-forms (EG Forms admin), "
+                + formRows.size() + " rows");
         } catch (Exception e) {
             ScreenshotUtil.captureScreenshot("TC_Report_07_error");
             Assert.fail("TC_Report_07 crashed: " + e.getMessage());

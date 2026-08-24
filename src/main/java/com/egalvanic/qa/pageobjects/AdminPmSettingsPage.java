@@ -10,11 +10,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Page Object for Settings (/admin) → PM section → PM template config (Offices).
- * ZP-323. Live-mapped 2026-07-02 on acme.qa:
+ * Page Object for Offices — the PM template config from ZP-323.
  *
- *   - /admin renders section buttons: Sites | Users | Classes | PM
- *   - PM section breadcrumb: "Settings | PM | Offices"
+ * <p><b>Re-mapped 2026-08-24 for the V1.36 nav redesign.</b> Offices used to be reached as
+ * Settings (/admin) → "PM" section button → Offices. That path is gone on three counts:
+ * {@code /admin} now redirects to {@code /users}, {@code a[href='/admin']} is no longer in the
+ * sidebar, and the {@code Sites | Users | Classes | PM} section switcher no longer exists —
+ * those sections are top-level routes now. Offices is its own route, {@code /offices}, under
+ * the <b>Admin</b> rail category.
+ *
+ * <p>The page itself is UNCHANGED — same table, same dialogs — so only the navigation and the
+ * on-page guard needed rework. Live-verified 2026-08-24 on acme.qa (6 offices, "1–6 of 6"):
+ *
+ *   - /offices renders heading "Offices" + "Add Office" button
  *   - Offices table: columns Name + Default Language, search "Search Offices...",
  *     MUI TablePagination footer ("1–6 of 6")
  *   - Row click → "Edit Office" dialog (Name* prefilled, Default Language select,
@@ -42,7 +50,8 @@ public class AdminPmSettingsPage {
     // LOCATORS
     // ================================================================
 
-    public static final By ADMIN_NAV_LINK = By.cssSelector("a[href='/admin']");
+    /** The live Offices nav link. Only present once the Admin rail category is expanded. */
+    public static final By OFFICES_NAV_LINK = By.cssSelector("a[href='/offices']");
     public static final By DIALOG = By.cssSelector("div[role='dialog']");
     public static final By ADD_OFFICE_BTN = By.xpath("//button[normalize-space()='Add Office']");
 
@@ -54,35 +63,21 @@ public class AdminPmSettingsPage {
     // NAVIGATION
     // ================================================================
 
-    /** Navigate to Settings (/admin) via the left-nav link, then open the PM section. */
+    /**
+     * Open Offices. Goes through the sidebar the way a user does — expanding the Admin rail
+     * category first, since the {@code /offices} anchor is not in the DOM until it is — and
+     * falls back to the direct route so a nav regression cannot silently skip the test.
+     *
+     * <p>Kept its original name: callers ask for "the PM template config screen", and that is
+     * still what this returns; only the route beneath it moved.
+     */
     public boolean navigateToPmSection() {
-        if (!driver.getCurrentUrl().contains("/admin")) {
-            List<WebElement> links = driver.findElements(ADMIN_NAV_LINK);
-            boolean clicked = false;
-            for (WebElement a : links) {
-                try { if (a.isDisplayed()) { a.click(); clicked = true; break; } } catch (Exception ignored) {}
-            }
-            if (!clicked) driver.get(com.egalvanic.qa.constants.AppConstants.BASE_URL + "/admin");
+        if (!com.egalvanic.qa.utils.NavCatalog.onRoute(driver, "/offices")) {
+            com.egalvanic.qa.utils.NavCatalog.navigateTo(driver, "/offices");
         }
-        // wait for the section switcher to render
-        for (int i = 0; i < 30; i++) {
-            if (sectionButton("PM") != null) break;
-            pause(1000);
-        }
-        WebElement pm = sectionButton("PM");
-        if (pm == null) { System.out.println("[AdminPmSettingsPage] PM section button not found"); return false; }
-        try { new Actions(driver).moveToElement(pm).click().perform(); }
-        catch (Exception e) { js.executeScript("arguments[0].click();", pm); }
         boolean on = waitForOffices(20);
-        System.out.println("[AdminPmSettingsPage] PM section open=" + on);
+        System.out.println("[AdminPmSettingsPage] Offices open=" + on + " @ " + driver.getCurrentUrl());
         return on;
-    }
-
-    /** The Sites/Users/Classes/PM switcher button with this exact visible text. */
-    private WebElement sectionButton(String label) {
-        return (WebElement) js.executeScript(
-            "var l=arguments[0];return [].slice.call(document.querySelectorAll('button'))"
-          + ".find(function(b){return (b.textContent||'').trim()===l && b.offsetParent;})||null;", label);
     }
 
     /** Wait until the Offices area renders (breadcrumb + Add Office button). */
@@ -94,13 +89,23 @@ public class AdminPmSettingsPage {
         return false;
     }
 
-    /** True when the PM → Offices area is visible (breadcrumb PM + Offices + Add Office). */
+    /**
+     * True when the Offices area is visible.
+     *
+     * <p>The old guard also required the text "PM" (the {@code Settings | PM | Offices}
+     * breadcrumb). That breadcrumb is gone; the only "PM" left on screen is the sidebar's
+     * unrelated "PM Plans" link, so keeping the check would have passed for an accidental
+     * reason on this page and failed outright wherever the Admin rail happened to be
+     * collapsed. Anchor on what actually identifies the screen instead: the Offices heading
+     * and its "Add Office" action.
+     */
     public boolean isOnPmOffices() {
         Object r = js.executeScript(
-            "var txt=(document.body.innerText||'');"
-          + "var addBtn=[].slice.call(document.querySelectorAll('button')).some(function(b){"
+            "var addBtn=[].slice.call(document.querySelectorAll('button')).some(function(b){"
           + "  return /^Add Office$/.test((b.textContent||'').trim()) && b.offsetParent;});"
-          + "return addBtn && /\\bPM\\b/.test(txt) && /Offices/.test(txt);");
+          + "var heading=[].slice.call(document.querySelectorAll('h1,h2,h3,h4,h5,h6')).some(function(h){"
+          + "  return /^Offices$/.test((h.textContent||'').trim()) && h.offsetParent;});"
+          + "return addBtn && (heading || /Offices/.test(document.body.innerText||''));");
         return Boolean.TRUE.equals(r);
     }
 

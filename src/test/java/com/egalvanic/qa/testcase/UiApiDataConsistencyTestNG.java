@@ -55,7 +55,7 @@ public class UiApiDataConsistencyTestNG extends BaseTest {
     private static final String[][] PAGES = {
         {"assets","/assets"}, {"issues","/issues"}, {"locations","/locations"},
         {"connections","/connections"}, {"tasks","/tasks"}, {"opportunities","/opportunities"},
-        {"accounts","/accounts"}, {"work-orders","/sessions"},
+        {"customers","/customers"}, {"work-orders","/sessions"},
     };
 
     private static final String[] NOISE = {

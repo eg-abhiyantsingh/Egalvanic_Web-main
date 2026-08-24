@@ -51,7 +51,7 @@ public class NetworkApiContractTestNG extends BaseTest {
     /** Module route → the page whose list/detail API calls we want to observe. */
     private static final String[][] PAGES = {
         {"dashboard","/dashboard"}, {"assets","/assets"}, {"issues","/issues"},
-        {"work-orders","/work-orders"}, {"connections","/connections"}, {"locations","/locations"},
+        {"work-orders","/sessions"}, {"connections","/connections"}, {"locations","/locations"},
         {"tasks","/tasks"}, {"opportunities","/opportunities"}, {"arc-flash","/arc-flash"},
     };
 
