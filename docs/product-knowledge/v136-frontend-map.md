@@ -92,3 +92,24 @@ ticketed. Tests must simply never target it.
 list tabs; `TabbedModulesSmokeTestNG` (18 tests, green 2026-08-24) walks every catalogued tab,
 all quote-status params, all planned-work buckets, the Branding toggle, and the Scheduling
 toolbar on every run.
+
+## Locations (/locations) — master-detail tree, V1.36 delete flow
+
+Live-walked 2026-08-24. `/locations` is NOT a grid: no DataGrid, no pagination, no `[role=treeitem]`.
+It renders a Building > Floor > Room hierarchy in a left panel with "Select a location to view
+details" on the right.
+
+Controls on the list view are only: `aria-label="Add Building"`, `aria-label="Add Floor"` and
+unnamed chevron buttons. **There is no Delete or Edit control until a node is selected.**
+
+Delete flow (the one a user actually performs):
+1. Click the location node in the tree — the right panel fills in.
+2. Click the icon button `aria-label="Edit Location"` (NOT "Edit"; its `<svg>` has no `data-testid`).
+3. The dialog is titled "Edit Building" and ends in a **"Danger Zone"** section holding a TEXT
+   button named for the node type: **"Delete Building" / "Delete Floor" / "Delete Room"**.
+
+This broke `LocationPage.deleteLocation()`: all five of its pre-V1.36 strategies (Delete icon,
+aria-label='Delete', kebab menu, edit-dialog-via-`svg[data-testid=EditIcon]`, all-buttons text
+scan) failed, so every cleanup call spent ~39s and then threw
+`RuntimeException: Delete button not found`. Fixed by adding the flow above as Strategy 0 —
+verified by testNB_004 / testNB_008 / testNB_009 going 3-fail → 3-pass.

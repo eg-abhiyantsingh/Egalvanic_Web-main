@@ -74,13 +74,12 @@ public class ArcFlashPage {
     /** Navigate to Arc Flash Readiness (SPA nav click; falls back to direct URL) and wait for the tabs. */
     public void navigateToArcFlash() {
         if (isOnArcFlash()) { waitLoaded(); return; }
-        try {
-            WebElement nav = wait.until(ExpectedConditions.elementToBeClickable(ARC_FLASH_NAV));
-            js.executeScript("arguments[0].scrollIntoView({block:'center'});", nav);
-            try { nav.click(); } catch (Exception e) { js.executeScript("arguments[0].click();", nav); }
-        } catch (Exception e) {
-            driver.get(AppConstants.BASE_URL + "/arc-flash");
-        }
+        // Expand the Engineering rail category first: under the V1.36 two-level nav the
+        // /arc-flash anchor is absent from the DOM while another category is open, so the old
+        // elementToBeClickable wait burned its full 30s TIMEOUT on every cross-category entry
+        // before reaching the URL fallback. NavCatalog clicks the anchor when it appears and
+        // falls back to the direct route itself.
+        com.egalvanic.qa.utils.NavCatalog.navigateTo(driver, "/arc-flash");
         waitLoaded();
     }
 

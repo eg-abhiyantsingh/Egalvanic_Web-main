@@ -113,7 +113,13 @@ public class QuoteLaborInflationRepro {
                 System.out.println("[REPRO] No login form within 12s — assuming already authenticated.");
             }
             // Verify we are past login: a nav sidebar / any /… app route (not /login).
-            boolean authed = !driver.findElements(By.xpath("//nav|//*[normalize-space()='Opportunities']|//*[normalize-space()='Work Orders']")).isEmpty()
+            // Anchor on the rail category buttons, which are present on every authenticated
+            // page regardless of which category is open. The old probe looked for
+            // 'Opportunities' (renamed to "Quotes" in V1.36) or 'Work Orders' (only in the DOM
+            // while Operations is expanded), leaving //nav as the sole reliable arm.
+            boolean authed = !driver.findElements(By.xpath(
+                    "//button[normalize-space()='Site Data']|//button[normalize-space()='Operations']"
+                    + "|//button[normalize-space()='Sales']|//nav")).isEmpty()
                     && !driver.getCurrentUrl().contains("/login");
             if (authed) { System.out.println("[REPRO] Authenticated."); dismissOverlays(); return; }
             System.out.println("[REPRO] Not authenticated yet (attempt " + attempt + "), retrying…");

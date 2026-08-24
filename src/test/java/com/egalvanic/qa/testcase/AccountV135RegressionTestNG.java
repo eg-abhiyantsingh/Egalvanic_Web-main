@@ -104,9 +104,18 @@ public class AccountV135RegressionTestNG extends BaseTest {
         return url.contains("/accounts") || url.contains("/customers");
     }
 
-    /** True when the sidebar lists the account module under either label. */
+    /**
+     * True when the sidebar lists the account module, under either naming.
+     *
+     * <p>Asks by ROUTE across the whole nav rather than by text in the open panel. Under the
+     * V1.36 two-level rail only the open category's items are in the DOM, so the old
+     * {@code sidebarHasText("Customers")} answered "is Customers in the panel that happens to
+     * be open" — true here only because the panel auto-opens to the current route's category.
+     * That made a real presence check depend on where the driver happened to be standing.
+     */
     private boolean sidebarHasAccountsItem() {
-        return sidebarHasText("Accounts") || sidebarHasText("Customers");
+        java.util.Set<String> nav = com.egalvanic.qa.utils.NavCatalog.collectAllNavHrefs(driver);
+        return nav.contains("/customers") || nav.contains("/accounts");
     }
 
     /** Label of the currently selected page tab (null when the page renders no tab bar). */
@@ -129,8 +138,10 @@ public class AccountV135RegressionTestNG extends BaseTest {
         // Two valid naming contracts (see the rename note above the helpers):
         //   v1.35 as shipped:  "Accounts" item + ADMIN group   (ZP-3157 letter)
         //   late-V1.36 rename: "Customers" item (OPERATIONS group), /accounts redirects
-        boolean legacyContract  = sidebarHasText("ADMIN") && sidebarHasText("Accounts");
-        boolean renamedContract = sidebarHasText("Customers");
+        // Route-based so the answer does not depend on which rail category is open.
+        java.util.Set<String> navRoutes = com.egalvanic.qa.utils.NavCatalog.collectAllNavHrefs(driver);
+        boolean legacyContract  = navRoutes.contains("/accounts");
+        boolean renamedContract = navRoutes.contains("/customers");
         logStep("Sidebar contract — legacy [ADMIN+Accounts]=" + legacyContract
                 + ", renamed [Customers]=" + renamedContract);
         Assert.assertTrue(legacyContract || renamedContract,
@@ -575,14 +586,6 @@ public class AccountV135RegressionTestNG extends BaseTest {
      * labels (DASHBOARDS / DATA / OPERATIONS / SALES / ADMIN) and nav items inside the MUI drawer
      * but NOT as clean text() nodes, so we read the drawer's rendered innerText and word-match.
      */
-    private boolean sidebarHasText(String text) {
-        Object r = js().executeScript(
-                "var d=document.querySelector('.MuiDrawer-root, [class*=\"MuiDrawer\"]');"
-              + "if(!d) return false;"
-              + "var re=new RegExp('\\\\b'+arguments[0].replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\$&')+'\\\\b');"
-              + "return re.test(d.innerText||'');", text);
-        return Boolean.TRUE.equals(r);
-    }
 
     /** Drawer innerText word-match on an arbitrary WebDriver (used for the second-browser PM check). */
     private static boolean drawerHasText(WebDriver d, String text) {

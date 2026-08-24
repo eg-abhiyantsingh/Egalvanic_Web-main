@@ -64,7 +64,12 @@ public class DashboardBugTestNG extends BaseTest {
     private static final String DASHBOARD_URL = AppConstants.BASE_URL + "/dashboard";
     private static final String ARC_FLASH_URL = AppConstants.BASE_URL + "/arc-flash";
     private static final String CONDITION_URL = AppConstants.BASE_URL + "/pm-readiness";
-    private static final String INSIGHTS_URL = AppConstants.BASE_URL + "/equipment-insights";
+    // /equipment-insights is a DEAD shell in V1.36 (verified live 2026-08-24: empty <main>,
+    // zero column headers, ~58 visible nav-chrome elements, no 404). It was especially
+    // dangerous here: BUGD70 asserts pageText.contains("Equipment"), which the sidebar's
+    // "Equipment Designations" link satisfies on ANY page — so the test passed on a blank
+    // screen. The live equipment module is /equipment-designations.
+    private static final String INSIGHTS_URL = AppConstants.BASE_URL + "/equipment-designations";
     private static final String TASKS_URL = AppConstants.BASE_URL + "/tasks";
     private static final String ISSUES_URL = AppConstants.BASE_URL + "/issues";
     private static final String PLANNING_URL = AppConstants.BASE_URL + "/planning";
@@ -1534,15 +1539,16 @@ public class DashboardBugTestNG extends BaseTest {
         navigateTo(INSIGHTS_URL);
         pause(3000);
 
-        String pageText = getPageText();
-        logStepWithScreenshot("Equipment Insights page");
+        logStepWithScreenshot("Equipment Designations page");
 
-        boolean hasContent = pageText.contains("Equipment") || pageText.contains("Insights")
-                || pageText.contains("Designation") || pageText.contains("equipment");
-        Assert.assertTrue(hasContent,
-                "Equipment Insights page should contain relevant content");
-
+        // Assert the page's OWN content, not shared chrome. The previous check
+        // (pageText.contains("Equipment") || … || contains("equipment")) is satisfied by the
+        // sidebar's "Equipment Designations" link on literally every route, so it passed even
+        // when the page body was empty — the exact reason the dead /equipment-insights route
+        // went unnoticed. A rendered grid is the real signal here.
         boolean hasGrid = isGridPresent();
+        Assert.assertTrue(hasGrid,
+                "Equipment Designations should render its grid — got none. URL: " + driver.getCurrentUrl());
         logStep("Grid present: " + hasGrid);
 
         logStep("PASS: Equipment Insights page loaded");

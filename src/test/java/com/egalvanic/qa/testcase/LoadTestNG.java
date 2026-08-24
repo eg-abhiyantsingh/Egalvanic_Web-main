@@ -102,18 +102,33 @@ public class LoadTestNG extends BaseTest {
      * Navigate via sidebar and measure transition time.
      */
     private long measureSidebarNav(String linkText, String expectedUrlPart) {
+        // Expand the owning rail category BEFORE starting the clock: under the V1.36 two-level
+        // nav the target anchor is absent from the DOM while another category is open, so the
+        // raw text click silently no-opped, the loop below spun its full 15s, and the method
+        // reported ~16s as a "sidebar navigation time" for a navigation that never happened.
+        // The expansion is setup, not the thing being measured, so it stays outside the timer.
+        String category = com.egalvanic.qa.utils.NavCatalog.categoryFor(expectedUrlPart);
+        if (category != null) com.egalvanic.qa.utils.NavCatalog.openCategory(driver, category);
+
         long start = System.currentTimeMillis();
         js().executeScript(
                 "var links = document.querySelectorAll('a');" +
                 "for(var el of links) { if(el.textContent.trim() === arguments[0]) { el.click(); return; } }", linkText);
 
         // Wait for URL to change
+        boolean navigated = false;
         for (int i = 0; i < 30; i++) {
-            if (driver.getCurrentUrl().contains(expectedUrlPart)) break;
+            if (driver.getCurrentUrl().contains(expectedUrlPart)) { navigated = true; break; }
             pause(500);
         }
         pause(1000);
-        return System.currentTimeMillis() - start;
+        long elapsed = System.currentTimeMillis() - start;
+        if (!navigated) {
+            // Say so rather than returning the timeout as if it were a measurement.
+            logStep("[LoadTestNG] WARNING: sidebar nav to '" + linkText + "' never reached "
+                    + expectedUrlPart + " — " + elapsed + "ms is a timeout, not a nav time.");
+        }
+        return elapsed;
     }
 
     // ================================================================
@@ -415,7 +430,11 @@ public class LoadTestNG extends BaseTest {
     public void testNV03_RapidSwitch() {
         ExtentReportManager.createTest(MODULE, FEATURE_NAV, "TC_LOAD_NV03_RapidSwitch");
 
+        // All four are Site Data siblings, so one expansion covers the whole burst. Without it
+        // every click no-opped whenever another category happened to be open and this reported
+        // a flatteringly fast "rapid switch" for four navigations that never occurred.
         String[] pages = {"Assets", "Connections", "Issues", "Locations"};
+        com.egalvanic.qa.utils.NavCatalog.openCategory(driver, com.egalvanic.qa.utils.NavCatalog.SITE_DATA);
         long totalTime = 0;
 
         for (String page : pages) {

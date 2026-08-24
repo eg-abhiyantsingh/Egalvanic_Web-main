@@ -164,4 +164,13 @@
         </classes>
     </test>
 
+    <!-- V1.36 tab coverage: every catalogued list tab, the Quotes status filters, the
+         Planned Work due buckets, the Reporting Branding toggle and the Scheduling
+         calendar toolbar. Data-driven from NavCatalog, so adding a tab there adds a test. -->
+    <test name="Tabbed Modules Smoke (18 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.TabbedModulesSmokeTestNG"/>
+        </classes>
+    </test>
+
 </suite>

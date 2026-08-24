@@ -84,11 +84,6 @@ public class ReportingEngineV2TestNG {
     // ═══════════════════════════════════════════════════
     // LOCATORS — Sidebar & Navigation
     // ═══════════════════════════════════════════════════
-    private static final By COMPANY_SETTINGS_NAV = By.xpath(
-        "//span[normalize-space()='Company Settings'] | //a[normalize-space()='Company Settings'] | " +
-        "//span[normalize-space()='Settings'] | //a[normalize-space()='Settings'] | " +
-        "//*[contains(@href,'/settings')]"
-    );
 
     private static final By BRANDING_ASSETS_TAB = By.xpath(
         "//*[normalize-space()='Branding & Assets'] | //*[normalize-space()='Branding'] | " +

@@ -75,39 +75,19 @@ public class ConnectionPage {
 
         if (isOnConnectionsPage()) {
             System.out.println("[ConnectionPage] Already on Connections — navigating away and back");
-            // Use JS click to avoid backdrop interception on sidebar links
-            js.executeScript(
-                "var links = document.querySelectorAll('a');" +
-                "for (var el of links) {" +
-                "  if (el.textContent.trim() === 'Assets') { el.click(); return; }" +
-                "}"
-            );
-            pause(1500);
+            // Assets is a same-category (Site Data) sibling, so the away-hop stays inside the
+            // open rail panel. The old raw <a>-text loop no-opped silently whenever another
+            // category was open, leaving this "refresh" doing nothing at all.
+            com.egalvanic.qa.utils.NavCatalog.navigateTo(driver, "/assets");
+            pause(1000);
         }
 
-        // Click Connections in sidebar via JS
-        js.executeScript(
-            "var links = document.querySelectorAll('a');" +
-            "for (var el of links) {" +
-            "  if (el.textContent.trim() === 'Connections') { el.click(); return; }" +
-            "}"
-        );
-        pause(2000);
-
-        // Wait for spinner to clear
+        // Sidebar path via NavCatalog: expands the Site Data rail category first (under the
+        // V1.36 two-level nav the Connections anchor is absent while another category is open),
+        // clicks the anchor, and falls back to the direct route internally.
+        com.egalvanic.qa.utils.NavCatalog.navigateTo(driver, "/connections");
         waitForSpinner();
         pause(1000);
-
-        // The JS loop returns SILENTLY when no 'Connections' anchor exists — which is the case on
-        // the V1.36 setup console ("Admin" role sidebar). Fall back to the direct route (renders
-        // for any role holding the perm; same pattern as WorkOrderPage.navigateToWorkOrders).
-        if (!isOnConnectionsPage()) {
-            System.out.println("[ConnectionPage] Connections sidebar link not found (setup-console role?) — "
-                    + "navigating to /connections by URL. Was: " + driver.getCurrentUrl());
-            driver.get(com.egalvanic.qa.constants.AppConstants.BASE_URL + "/connections");
-            waitForSpinner();
-            pause(1500);
-        }
         System.out.println("[ConnectionPage] On connections page: " + driver.getCurrentUrl());
     }
 

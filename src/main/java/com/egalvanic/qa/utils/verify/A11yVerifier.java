@@ -42,11 +42,17 @@ public final class A11yVerifier {
      * SHARED CHROME — DOM that is identical on every route (sidebar nav, drawer, the global
      * floating action button) plus the third-party widgets the app embeds.
      *
-     * Verified live on 2026-08-08 against V1.36: the sidebar renders
+     * Verified live on 2026-08-08 against V1.36: the sidebar rendered
      * {@code li.MuiListItem-root} ("Legacy Procedures") directly inside a {@code div.MuiBox-root}
      * instead of a {@code <ul>} (axe rule {@code listitem}, serious), and the global
      * {@code MuiFab} carries no accessible name (axe rule {@code button-name}, critical).
-     * Both reproduce byte-identically on {@code /customers} and {@code /assets}.
+     *
+     * <p><b>Re-checked 2026-08-24 after the nav redesign:</b> the selectors below all still
+     * match ({@code nav}×3, {@code .MuiDrawer-root}×2, {@code .MuiFab-root}×1), so the
+     * filtering keeps working. But the stray-{@code <li>} defect appears to be FIXED — every
+     * {@code li.MuiListItem-root} now sits inside a proper {@code ul.MuiList-root}. Re-run the
+     * BUG-B tripwires before citing the {@code listitem} violation as live; the
+     * {@code button-name} Fab defect was not re-verified.
      *
      * Consequence: those are ONE real defect each, but a whole-page scan re-reports them in
      * EVERY module that runs an a11y check — turning 2 defects into N failures and burying each

@@ -304,21 +304,21 @@ public class ZP1997DOMPurifyXssTestNG extends BaseTest {
         ExtentReportManager.createTest(AppConstants.MODULE_BUG_HUNT, FEATURE_ZP1997,
                 "Z University HTML render");
         try {
-            // Z University path varies across tenants — check several common
-            // ones. If NONE renders meaningful content, the feature isn't
-            // available on this tenant — SKIP rather than fail.
-            String[] candidates = {
-                    AppConstants.BASE_URL + "/z-university",
-                    AppConstants.BASE_URL + "/zuniversity",
-                    AppConstants.BASE_URL + "/help",
-                    AppConstants.BASE_URL + "/learn"
-            };
+            // Z University lives at /z-university (V1.36 sidebar "Help"), and ONLY there.
+            //
+            // The old candidate list also tried /zuniversity, /help and /learn. All three are
+            // dead shells that render the nav chrome — and the "> 30 visible elements" guard
+            // below scored them at 59 each while the REAL /z-university scores only ~7 until it
+            // finishes loading (~9s; it renders no <main>, its content arrives late). So the
+            // loop actively preferred a blank page over the real one and then ran the DOMPurify
+            // assertions against nav chrome. Probe the one real route, and wait for it.
+            String[] candidates = { AppConstants.BASE_URL + "/z-university" };
             String workingUrl = null;
             long bestBodyCount = 0;
             for (String url : candidates) {
                 try {
                     driver.get(url);
-                    pause(3500);
+                    pause(9000);   // Z University hydrates late — 3.5s caught it half-rendered
                     String currentUrl = driver.getCurrentUrl();
                     String bodyText = (String) js().executeScript(
                             "return (document.body.textContent || '').toLowerCase();");
@@ -332,9 +332,13 @@ public class ZP1997DOMPurifyXssTestNG extends BaseTest {
                     boolean has404 = bodyText != null && (bodyText.contains("not found")
                             || bodyText.contains("404"));
                     boolean stayedAtUrl = currentUrl.equals(url) || currentUrl.startsWith(url);
-                    // Only accept if URL stuck AND body has meaningful content (>30)
-                    // AND no 404 marker
-                    if (stayedAtUrl && !has404 && bcount > 30) {
+                    // Accept only on the page's OWN content. A visible-element count alone is
+                    // not evidence the page rendered — the shared nav chrome is worth ~59
+                    // elements on any route, dead ones included, which is what made the old
+                    // "> 30" guard accept blank pages.
+                    boolean hasOwnContent = bodyText != null
+                            && (bodyText.contains("z university") || bodyText.contains("learning center"));
+                    if (stayedAtUrl && !has404 && hasOwnContent && bcount > 30) {
                         workingUrl = url;
                         bestBodyCount = bcount;
                         break;
@@ -344,9 +348,8 @@ public class ZP1997DOMPurifyXssTestNG extends BaseTest {
 
             if (workingUrl == null) {
                 throw new org.testng.SkipException(
-                        "Z University not reachable at any of: /z-university, "
-                        + "/zuniversity, /help, /learn — feature not enabled on this tenant. "
-                        + "Skipping rather than false-failing.");
+                        "Z University not reachable at /z-university (the only live route) — "
+                        + "feature not enabled on this tenant. Skipping rather than false-failing.");
             }
 
             ScreenshotUtil.captureScreenshot("ZP1997_HTML_03");

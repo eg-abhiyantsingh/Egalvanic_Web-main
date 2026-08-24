@@ -134,6 +134,21 @@ public final class NavCatalog {
         return ROUTE_LABEL.get(normalise(route));
     }
 
+    /**
+     * Reverse lookup: the route a sidebar LABEL points at, or null when no live item uses that
+     * label. Useful for suites that were written against label lists rather than routes — a
+     * null answer is the signal that the label was renamed or removed (e.g. "Jobs" and
+     * "Dashboard" no longer exist; they are "Work Orders" and "Site Overview").
+     */
+    public static String routeForLabel(String label) {
+        if (label == null) return null;
+        String want = label.trim();
+        for (Map.Entry<String, String> e : ROUTE_LABEL.entrySet()) {
+            if (e.getValue().equalsIgnoreCase(want)) return e.getKey();
+        }
+        return null;
+    }
+
     /** True when {@code route} is a real sidebar destination on V1.36. */
     public static boolean isNavRoute(String route) {
         return ROUTE_CATEGORY.containsKey(normalise(route));

@@ -194,27 +194,18 @@ public class WorkOrderPage {
 
         if (isOnWorkOrdersPage()) {
             System.out.println("[WorkOrderPage] Already on Work Orders — navigating away and back");
-            try {
-                js.executeScript(
-                    "var links = document.querySelectorAll('a');" +
-                    "for (var el of links) {" +
-                    "  if (el.textContent.trim() === 'Assets' || el.textContent.trim() === 'Locations') { el.click(); return; }" +
-                    "}");
-                pause(1500);
-            } catch (Exception e) {
-                System.out.println("[WorkOrderPage] Nav away failed: " + e.getMessage());
-            }
+            // Away target must be a SAME-CATEGORY sibling: under the V1.36 two-level rail, only
+            // the open category's anchors exist in the DOM. The old targets (Assets/Locations)
+            // are Site Data modules, so from /sessions (Operations open) that click silently
+            // no-opped, the "back" click was a same-page no-op, and the fresh-data refresh never
+            // happened while this method logged success. EMPs is the Operations sibling.
+            com.egalvanic.qa.utils.NavCatalog.navigateTo(driver, "/emps");
+            pause(1000);
         }
 
-        // Click Jobs/Work Orders/Sessions in sidebar
-        js.executeScript(
-            "var links = document.querySelectorAll('a');" +
-            "for (var el of links) {" +
-            "  var text = el.textContent.trim();" +
-            "  if (text === 'Jobs' || text === 'Work Orders' || text === 'Job/Work Orders' || text === 'Sessions') { el.click(); return; }" +
-            "}"
-        );
-        pause(2000);
+        // Sidebar path: expand the Operations rail category, then click the Work Orders anchor
+        // (falls back to the direct route internally if the anchor never appears).
+        com.egalvanic.qa.utils.NavCatalog.navigateTo(driver, "/sessions");
         waitForSpinner();
         pause(1000);
 

@@ -16,10 +16,14 @@ import java.util.List;
  * Page Object for the customer-account list.
  *
  * Route history: originally /accounts as the third SALES nav item; v1.35 (ZP-3157)
- * moved it under the ADMIN sidebar group; since late V1.36 (observed 2026-07-30) the
- * nav item is "Customers" under OPERATIONS at /customers and /accounts REDIRECTS
- * there — open() still navigates via /accounts on purpose so the legacy deep link
- * keeps being exercised. Grid columns: Account Name, Owner, Created, Actions.
+ * moved it under the ADMIN sidebar group; since late V1.36 the nav item is "Customers"
+ * at /customers and /accounts REDIRECTS there — open() still navigates via /accounts on
+ * purpose so the legacy deep link keeps being exercised.
+ *
+ * <p>Corrected 2026-08-24 by walking the live sidebar: Customers sits under the <b>Sales</b>
+ * rail category (PIPELINE: Site Walks, Quotes · DATA: Customers), not OPERATIONS. It also
+ * carries two tabs — <b>Accounts</b> (this grid) and <b>Sites</b> ("Create Site"). Account
+ * DETAIL remains /accounts/{id}. Grid columns: Account Name, Owner, Created, Actions.
  *
  * v1.35 create dialog (ZP-3156): ACCOUNT DETAILS (Account Name*, async Account
  * Owner* Autocomplete) + mandatory CONTACT DETAILS (firstname/lastname/email/

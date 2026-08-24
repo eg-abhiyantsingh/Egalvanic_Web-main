@@ -40,10 +40,19 @@ public class LocationPage {
     private static final By ADD_ROOM_BTN = By.xpath(
         "//button[@aria-label='Add Room' or @title='Add Room' or contains(normalize-space(),'Add Room')]");
 
-    // Delete / Edit
-    private static final By DELETE_LOCATION_BTN = By.xpath("//button[@aria-label='Delete' or @title='Delete']");
+    // Delete / Edit.
+    // V1.36 (live-verified 2026-08-24): the detail panel exposes an icon button labelled
+    // "Edit Location" (NOT "Edit", and its svg carries no data-testid), and delete lives inside
+    // that dialog's "Danger Zone" as a TEXT button named for the node type — "Delete Building",
+    // "Delete Floor", "Delete Room". There is no standalone Delete control on the tree at all.
+    private static final By DELETE_LOCATION_BTN = By.xpath(
+        "//button[@aria-label='Delete' or @title='Delete' or starts-with(normalize-space(),'Delete ')]");
     private static final By CONFIRM_DELETE_BTN = By.xpath("//button[contains(@class,'MuiButton-containedError') and contains(.,'Delete')]");
-    private static final By EDIT_LOCATION_BTN = By.xpath("//button[@aria-label='Edit' or @title='Edit']");
+    private static final By EDIT_LOCATION_BTN = By.xpath(
+        "//button[@aria-label='Edit' or @title='Edit' or @aria-label='Edit Location' or @title='Edit Location']");
+    /** The "Danger Zone" delete inside the Edit dialog: "Delete Building" / "Delete Floor" / "Delete Room". */
+    private static final By DIALOG_DANGER_DELETE_BTN = By.xpath(
+        "//div[@role='dialog']//button[starts-with(normalize-space(),'Delete ')]");
     private static final By SAVE_BTN = By.xpath("//button[contains(text(),'Save') or contains(text(),'Update')]");
 
     public LocationPage(WebDriver driver) {
@@ -57,36 +66,31 @@ public class LocationPage {
     public void navigateToLocations() {
         dismissAnyDrawerOrBackdrop();
 
-        // If already on Locations page, navigate away and back for fresh data
+        // If already on Locations page, navigate away and back for fresh data. Assets is a
+        // same-category (Site Data) sibling, so the away-hop stays inside the open rail panel.
         if (isOnLocationsPage()) {
             System.out.println("[LocationPage] Already on Locations — navigating away and back");
             try {
-                js.executeScript(
-                    "var links = document.querySelectorAll('a');" +
-                    "for (var el of links) {" +
-                    "  var t = el.textContent.trim();" +
-                    "  if (t === 'Assets' || t === 'Connections') { el.click(); return; }" +
-                    "}");
-                pause(1500);
+                com.egalvanic.qa.utils.NavCatalog.navigateTo(driver, "/assets");
+                pause(1000);
             } catch (Exception e) {
                 System.out.println("[LocationPage] Navigate-away failed: " + e.getMessage());
             }
         }
 
-        // Strategy 1: JS click on sidebar <a> tag (most reliable — matches IssuePage pattern)
+        // Strategy 1: sidebar click via NavCatalog — expands the Site Data rail category first.
+        // Without the expansion the old raw <a> text loop matched nothing under the V1.36
+        // two-level nav and returned SILENTLY, and because isOnLocationsPage() was still true on
+        // the refresh path it then logged "Navigated via JS <a> click" having navigated nowhere.
         try {
-            js.executeScript(
-                "var links = document.querySelectorAll('a');" +
-                "for (var el of links) {" +
-                "  if (el.textContent.trim() === 'Locations') { el.click(); return; }" +
-                "}");
-            pause(2000);
+            com.egalvanic.qa.utils.NavCatalog.navigateTo(driver, "/locations");
+            pause(1200);
             if (isOnLocationsPage()) {
-                System.out.println("[LocationPage] Navigated via JS <a> click. URL: " + driver.getCurrentUrl());
+                System.out.println("[LocationPage] Navigated via sidebar. URL: " + driver.getCurrentUrl());
                 return;
             }
         } catch (Exception e) {
-            System.out.println("[LocationPage] JS <a> click failed: " + e.getMessage());
+            System.out.println("[LocationPage] Sidebar navigation failed: " + e.getMessage());
         }
 
         // Strategy 2: Selenium click on broader selector
@@ -420,6 +424,41 @@ public class LocationPage {
         pause(800);
 
         boolean clicked = false;
+
+        // Strategy 0 — the actual V1.36 flow (live-verified 2026-08-24):
+        //   select node -> "Edit Location" icon button -> dialog "Danger Zone" -> "Delete <Type>".
+        // The strategies below were all written for a pre-V1.36 UI that exposed a Delete icon
+        // or kebab on the tree; none of them can succeed now, which is why every cleanup call
+        // burned ~39s through five strategies and then threw. Strategy 4 came closest but keyed
+        // on svg[data-testid='EditIcon'] — the live button has NO icon testid and is labelled
+        // "Edit Location", so it fell through to clicking the last MuiIconButton instead.
+        try {
+            List<WebElement> editBtns = driver.findElements(EDIT_LOCATION_BTN);
+            if (!editBtns.isEmpty()) {
+                js.executeScript("arguments[0].click();", editBtns.get(editBtns.size() - 1));
+                pause(1800);
+                List<WebElement> dangerDel = driver.findElements(DIALOG_DANGER_DELETE_BTN);
+                if (!dangerDel.isEmpty()) {
+                    WebElement del = dangerDel.get(dangerDel.size() - 1);
+                    js.executeScript("arguments[0].scrollIntoView({block:'center'});", del);
+                    js.executeScript("arguments[0].click();", del);
+                    clicked = true;
+                    System.out.println("[LocationPage] Delete clicked via Edit Location -> Danger Zone ('"
+                            + del.getText().trim() + "')");
+                } else {
+                    // Leave no modal behind for the next strategy / test.
+                    try {
+                        By cancel = By.xpath("//div[@role='dialog']//button[normalize-space()='Cancel']");
+                        if (!driver.findElements(cancel).isEmpty()) {
+                            driver.findElement(cancel).click();
+                            pause(400);
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("[LocationPage] Edit Location -> Danger Zone strategy failed: " + e.getMessage());
+        }
 
         // Strategy 1: Delete button via SVG data-testid='DeleteIcon' or 'DeleteOutlineIcon'
         try {

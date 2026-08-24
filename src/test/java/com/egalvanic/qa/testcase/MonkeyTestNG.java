@@ -73,9 +73,21 @@ public class MonkeyTestNG {
     ));
 
     // Known sidebar navigation items
+    /**
+     * Sidebar labels the monkey roams between.
+     *
+     * <p>Corrected 2026-08-24 against the live V1.36 nav. Two of the old entries named items
+     * that no longer exist — "Dashboard" (now "Site Overview") and "Jobs" (now "Work Orders")
+     * — so those hops matched nothing and the monkey silently stayed put, re-running its
+     * health checks and random clicks on the previous page while counting the navigation as a
+     * success. Breadth is the whole point of this suite, so a no-op hop is a real loss.
+     *
+     * <p>Spread across rail categories on purpose: {@link #navigateToSidebarItem} expands the
+     * owning category first, so this also exercises the two-level nav itself.
+     */
     private static final String[] NAV_ITEMS = {
-            "Dashboard", "Assets", "Locations", "Connections",
-            "Issues", "Jobs", "Tasks"
+            "Site Overview", "Assets", "Locations", "Connections",
+            "Issues", "Work Orders", "Tasks", "Quotes", "Customers", "SLDs"
     };
 
     protected WebDriver driver;
@@ -373,6 +385,18 @@ public class MonkeyTestNG {
     // ================================================================
 
     private void navigateToSidebarItem(String itemText) {
+        // Expand the owning rail category first — under the V1.36 two-level nav the anchor is
+        // absent from the DOM while another category is open, so the text match below finds
+        // nothing and the hop silently does nothing.
+        String route = com.egalvanic.qa.utils.NavCatalog.routeForLabel(itemText);
+        if (route == null) {
+            logStep("[Monkey] '" + itemText + "' is not a live V1.36 sidebar label — skipping hop");
+            return;
+        }
+        if (com.egalvanic.qa.utils.NavCatalog.navigateTo(driver, route)) {
+            pause(1200);
+            return;
+        }
         try {
             String xpath = "//span[normalize-space()='" + itemText + "'] | //a[normalize-space()='" + itemText + "']";
             new WebDriverWait(driver, Duration.ofSeconds(5))

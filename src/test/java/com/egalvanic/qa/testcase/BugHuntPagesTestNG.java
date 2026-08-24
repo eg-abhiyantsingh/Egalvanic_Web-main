@@ -203,10 +203,13 @@ public class BugHuntPagesTestNG extends BaseTest {
                 "BUG-024: Type Column Truncated");
 
         try {
-            driver.get(AppConstants.BASE_URL + "/equipment-insights");
+            // /equipment-insights is a DEAD shell in V1.36 (verified live 2026-08-24: empty
+            // <main>, zero column headers, but ~58 visible nav-chrome elements). The live
+            // equipment module is /equipment-designations.
+            com.egalvanic.qa.utils.NavCatalog.navigateTo(driver, "/equipment-designations");
             pause(6000);
 
-            logStep("Navigated to Equipment Insights page");
+            logStep("Navigated to Equipment Designations page");
 
             // Check column headers and look for truncation
             String columnInfo = (String) js().executeScript(
@@ -220,8 +223,8 @@ public class BugHuntPagesTestNG extends BaseTest {
                 "}" +
                 "return info.join(', ');");
 
-            logStep("Equipment Insights columns: " + columnInfo);
-            logStepWithScreenshot("Equipment Insights — column headers");
+            logStep("Equipment Designations columns: " + columnInfo);
+            logStepWithScreenshot("Equipment Designations — column headers");
 
             // Check for cell-level truncation in the grid
             String cellTruncation = (String) js().executeScript(

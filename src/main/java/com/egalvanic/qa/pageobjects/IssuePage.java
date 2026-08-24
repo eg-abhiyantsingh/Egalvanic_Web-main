@@ -144,38 +144,22 @@ public class IssuePage {
         if (isOnIssuesPage()) {
             System.out.println("[IssuePage] Already on Issues — navigating away and back");
             try {
-                js.executeScript(
-                        "var links = document.querySelectorAll('a');" +
-                                "for (var el of links) {" +
-                                "  if (el.textContent.trim() === 'Assets' || el.textContent.trim() === 'Locations') { el.click(); return; }"
-                                +
-                                "}");
-                pause(1500);
+                // Assets is a same-category (Site Data) sibling, so the away-hop stays inside
+                // the open rail panel. The old raw <a>-text loop no-opped silently whenever
+                // another category was open, leaving this "refresh" doing nothing at all.
+                com.egalvanic.qa.utils.NavCatalog.navigateTo(driver, "/assets");
+                pause(1000);
             } catch (Exception e) {
                 System.out.println("[IssuePage] Nav away failed: " + e.getMessage());
             }
         }
 
-        // Click Issues in sidebar
-        js.executeScript(
-                "var links = document.querySelectorAll('a');" +
-                        "for (var el of links) {" +
-                        "  if (el.textContent.trim() === 'Issues') { el.click(); return; }" +
-                        "}");
-        pause(2000);
-
+        // Sidebar path via NavCatalog: expands the Site Data rail category first (under the
+        // V1.36 two-level nav the Issues anchor is absent while another category is open),
+        // clicks the anchor, and falls back to the direct route internally.
+        com.egalvanic.qa.utils.NavCatalog.navigateTo(driver, "/issues");
         waitForSpinner();
         pause(1000);
-
-        // The JS loop returns SILENTLY when no 'Issues' anchor exists (V1.36 setup-console role).
-        // Fall back to the direct route — same pattern as WorkOrderPage.navigateToWorkOrders.
-        if (!isOnIssuesPage()) {
-            System.out.println("[IssuePage] Issues sidebar link not found (setup-console role?) — "
-                    + "navigating to /issues by URL. Was: " + driver.getCurrentUrl());
-            driver.get(com.egalvanic.qa.constants.AppConstants.BASE_URL + "/issues");
-            waitForSpinner();
-            pause(1500);
-        }
         System.out.println("[IssuePage] On issues page: " + driver.getCurrentUrl());
     }
 

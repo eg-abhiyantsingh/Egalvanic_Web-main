@@ -92,10 +92,11 @@ public class AssetPage {
                 pause(1500);
             } catch (Exception e) {
                 System.out.println("[AssetPage] Could not navigate to Locations via JS: " + e.getMessage());
-                // Fallback: use direct URL navigation
+                // Fallback: direct URL from BASE_URL. The old regex-strip
+                // (getCurrentUrl().replaceAll("/assets.*","") + "/connections") produced broken
+                // URLs like /admin-dashboard/connections on any route outside the strip list.
                 try {
-                    String baseUrl = driver.getCurrentUrl().replaceAll("/assets.*", "");
-                    driver.get(baseUrl + "/connections");
+                    driver.get(com.egalvanic.qa.constants.AppConstants.BASE_URL + "/connections");
                     pause(1500);
                 } catch (Exception e2) {
                     System.out.println("[AssetPage] URL fallback also failed: " + e2.getMessage());
@@ -103,10 +104,11 @@ public class AssetPage {
             }
         }
 
-        // Sidebar click first (keeps SPA state); but the Assets link does not exist on the V1.36
-        // setup console ("Admin" role) — there click() would burn its 25s wait and THROW, so guard
-        // it and fall back to the direct route, which renders for any role holding the perm
-        // (same pattern as WorkOrderPage.navigateToWorkOrders, verified live 2026-08-03).
+        // Sidebar click first (keeps SPA state). Expand the Site Data rail category before the
+        // click: under the V1.36 two-level nav the Assets anchor is absent while another
+        // category is open, and without the expansion click() burned its full 25s wait on every
+        // cross-category entry before throwing into the URL fallback.
+        com.egalvanic.qa.utils.NavCatalog.openCategory(driver, com.egalvanic.qa.utils.NavCatalog.SITE_DATA);
         try {
             click(ASSETS_NAV);
         } catch (Exception navClickFailed) {
