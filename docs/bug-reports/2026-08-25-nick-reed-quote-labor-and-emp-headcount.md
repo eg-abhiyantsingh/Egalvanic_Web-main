@@ -11,9 +11,13 @@ only as evidence of what the UI itself sent.
 ### Verdict: REAL BUG — and reproducibly worse than reported.
 
 On quote **"Site Walk — Site Walk Navratna"** (`/plans/a3855a99-3195-4d2a-9e6e-4eb3aa34e9ae`),
-Pricing tab, LABOR section:
+Pricing tab, LABOR section.
 
-| Step | Electrical Engineer "Est" |
+**Correction (2026-08-25, from the pixel captures):** the editable input is the **Billed** column,
+not Est. `Est` renders as static text; `Billed` is the `<input type="number">`. That matches the
+`billed_hours` key in the payload below. An earlier draft of this note said "Est" — wrong.
+
+| Step | Electrical Engineer "Billed" |
 |---|---|
 | Baseline | 0.3 |
 | Typed 5, pressed Enter | 5 |
@@ -105,3 +109,16 @@ pricing total). Worth reading before ticketing either of the above.
 ## Test data
 No cleanup needed: because the override does not persist, the quote returned to its original
 0.3 on its own. Nothing was left modified.
+
+
+---
+
+## Published evidence artifact
+
+A shareable page with all six live screenshots (baseline / after-edit / after-reload, the
+Save & Regenerate dialog, the BY EQUATION mode, and the EMP planned-work hours) plus every URL
+touched:
+
+https://claude.ai/code/artifact/bf5b496d-68fb-47c4-a6e3-ef4de1aa10cf
+
+Raw captures: `scratchpad/shots/01..06` (CDP `Page.captureScreenshot`, real pixels).
