@@ -1,11 +1,11 @@
-# BUG 3 — Maintenance Program: role visibility + missing site picker
+# BUG 3 — Maintenance Program: the site picker disappears
 
 **Env:** `https://acme.qa.egalvanic.ai` · V1.36 · **Date:** 2026-08-26 · **Severity:** Medium · **Writes:** none
 **Ticket pack (all 3 bugs):** https://claude.ai/code/artifact/bdca4aad-49c3-4c16-bc86-cd4dc638ddf5
 
 Reported by the repo owner from a live session; verified across all six provisioned roles.
 
-## 3a — Client Portal and Facility Manager see Maintenance; Admin does not
+## 3a — WITHDRAWN: role visibility is per requirement
 
 | Role | Rail categories |
 |---|---|
@@ -16,19 +16,22 @@ Reported by the repo owner from a live session; verified across all six provisio
 | Account Manager | Dashboards · — · Site Data · Operations · Engineering · Sales · Builder |
 | Admin | Dashboards · — · Site Data · Operations · Engineering · Sales · Builder · Admin |
 
-**Actual:** only Client Portal (external customer role) and Facility Manager get the Maintenance
-section. An **Admin cannot see a section an external customer can**. Nobody is blocked from the route
-— every role opens `/maintenance/program` fine by URL.
+**WITHDRAWN — not a bug.** Owner confirmed 2026-08-26: **per requirement the Admin is not meant to
+see the Maintenance section.** I had argued the opposite (that Admin should see everything a customer
+role sees). The observed visibility — Client Portal and Facility Manager only, with Admin, Project
+Manager, Account Manager and Technician excluded — is **correct**.
 
-**Expected:** Admin should see at least everything Client Portal sees; and whether an external client
-should see Maintenance Program at all is a product decision.
+**Still worth a separate decision:** the route carries no permission gate. No role holds any
+`maintenance.*` permission, so visibility is nav-only — every role, Admin included, can open
+`/maintenance/program` by URL and it renders. Low risk, but if the section is customer-facing by
+design the route should enforce it rather than relying on the nav.
 
 **Note:** no role holds any `maintenance.*` permission, so this section is not gated by the
 permission system at all. Links: `/maintenance/overview`, `/maintenance/program`.
 
 Screenshots: `bug3_cp_maintenance.jpeg`, `bug3_admin_no_maintenance.jpeg`
 
-## 3b — The CURRENT SITE picker disappears on this page
+## The real bug — the CURRENT SITE picker disappears on this page
 
 Measured in the same session, same role:
 ```
