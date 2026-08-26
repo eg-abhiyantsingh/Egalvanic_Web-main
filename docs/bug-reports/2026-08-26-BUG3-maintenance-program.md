@@ -1,11 +1,11 @@
-# BUG 3 — Maintenance Program: the site picker disappears
+# BUG 3 — Maintenance routes are not permission-gated + the site picker disappears
 
 **Env:** `https://acme.qa.egalvanic.ai` · V1.36 · **Date:** 2026-08-26 · **Severity:** Medium · **Writes:** none
 **Ticket pack (all 3 bugs):** https://claude.ai/code/artifact/bdca4aad-49c3-4c16-bc86-cd4dc638ddf5
 
 Reported by the repo owner from a live session; verified across all six provisioned roles.
 
-## 3a — WITHDRAWN: role visibility is per requirement
+## 3a — Maintenance routes are not gated (REINSTATED, correctly framed)
 
 | Role | Rail categories |
 |---|---|
@@ -16,15 +16,31 @@ Reported by the repo owner from a live session; verified across all six provisio
 | Account Manager | Dashboards · — · Site Data · Operations · Engineering · Sales · Builder |
 | Admin | Dashboards · — · Site Data · Operations · Engineering · Sales · Builder · Admin |
 
-**WITHDRAWN — not a bug.** Owner confirmed 2026-08-26: **per requirement the Admin is not meant to
-see the Maintenance section.** I had argued the opposite (that Admin should see everything a customer
-role sees). The observed visibility — Client Portal and Facility Manager only, with Admin, Project
-Manager, Account Manager and Technician excluded — is **correct**.
+Requirement (owner, 2026-08-26): Maintenance is for **Client Portal and Facility Manager only** —
+Admin must **not** see it, **including by URL**. The navigation hides it correctly for the other four
+roles. **The routes do not enforce it.**
 
-**Still worth a separate decision:** the route carries no permission gate. No role holds any
-`maintenance.*` permission, so visibility is nav-only — every role, Admin included, can open
-`/maintenance/program` by URL and it renders. Low risk, but if the section is customer-facing by
-design the route should enforce it rather than relying on the nav.
+| Role (should NOT have Maintenance) | `/maintenance/program` | `/maintenance/overview` | CONTROL `/users` | CONTROL `/labor` |
+|---|---|---|---|---|
+| Admin | renders | renders | (has perm) | (has perm) |
+| Project Manager | **renders** | **renders** | Access Denied | Access Denied |
+| Technician | **renders** | **renders** | Access Denied | Access Denied |
+| Account Manager | **renders** | **renders** | Access Denied | Access Denied |
+
+**The control is the proof.** The same sessions get a clean **Access Denied** on `/users` and
+`/labor`, so the route guard exists and works — it is simply not applied to `/maintenance/*`.
+
+**Actual:** a Technician with no Maintenance entry in the rail opens `/maintenance/overview` and gets
+the site's full maintenance record — 90 assets, condition index 99/100, unresolved issue titles,
+maintenance activity log.
+
+**Expected:** Access Denied, exactly as on other restricted routes.
+
+**Likely root cause:** no `maintenance.*` permission exists at all — no role holds one — so there is
+nothing for a route guard to check. The section is hidden by navigation only.
+
+Screenshots: `gate_control_denied.jpeg` (Access Denied on /labor), `gate_maintenance_open.jpeg`
+(same session, full record on /maintenance/overview).
 
 **Note:** no role holds any `maintenance.*` permission, so this section is not gated by the
 permission system at all. Links: `/maintenance/overview`, `/maintenance/program`.
