@@ -52,3 +52,48 @@ maintenance program yet" where other roles see the site name.
 My earlier nav enumeration hardcoded six category names (Site Data, Operations, Engineering, Sales,
 Builder, Admin) and therefore **never saw Maintenance or Dashboards at all**. Rail categories must be
 discovered dynamically from the DOM, not assumed. Corrected here.
+
+---
+
+## Re-tested on a site that HAS a program (owner correction, 2026-08-26)
+
+My first pass tested a site whose page read *"…has no active maintenance program yet"* — an empty
+state that exercises almost no logic. Re-ran everything on **(s) Wild Goose Brewery**
+(90 assets, plan `abhiyant v2 - 29 july brewery`, plan_id `2ad184b0-9337-4740-ae7e-2e91b44b26bb`).
+
+### 3b still stands — and matters more with data
+`/maintenance/program` still renders **0 comboboxes**, while `/maintenance/overview` for the same
+site renders **2** (the CURRENT SITE picker). So the picker is present on Site Overview and absent on
+Maintenance Program — it is specific to that one page, not to the Maintenance section.
+
+### NO BUG in the numbers — retracted before filing
+I nearly filed a third defect ("all four stat cards read 0 while the plan holds 6 released work
+orders"). **That was wrong.** The cards are **window-scoped** and recompute per timeline tab:
+
+| Tab | Header | Scheduled | Completed | Timeline |
+|---|---|---|---|---|
+| 1 year | 2026 service calendar | 0 | 0 of 0 | "No scheduled work falls in this window" |
+| 3 year | 2026–2028 service calendar | **8** | 0 of 8 | Q3 ’27 and Q3 ’28 populated |
+| 5 year | 2026–2030 service calendar | **16** | 0 of 16 | Q3 ’27 → Q3 ’30 populated |
+
+Ground truth from `/api/plans/{id}` — scheduled occurrences are **Q3 2027, Q3 2028, Q3 2029,
+Q3 2030, Q3 2031**. Today is 2026-08-26, so a 1-year window genuinely contains no work: the empty
+1-year timeline and its zeroed cards are **correct**. 8 scheduled over 3 years = 4 service rows × 2
+occurrences — matches the timeline dots exactly. The page is internally consistent.
+
+### Site Overview — verified correct
+| Shown | Cross-check | Result |
+|---|---|---|
+| TOTAL ASSETS 90 | `/assets` grid = 90; `lookup/v2/nodes` total = 90 | matches |
+| ISSUES IDENTIFIED 1 | `/issues` grid = 1 | matches |
+| Resolved 0 / Unresolved 1 | consistent with 1 open issue | matches |
+| Breakdown 89 + 0 + 1 + 0 | = 90 | matches |
+| condition index 99 / 100 | 89 good ÷ 90 = 98.9% | matches |
+
+The page even documents its banding rule ("assets with no issue on record read as good, closed-out
+issues as serviceable, one open issue as watch"). **Site Overview and the condition index are correct
+— nothing to file.**
+
+### Lesson recorded
+`feedback_test_populated_not_empty_states` — empty states prove nothing, and window-scoped widgets
+must be read on every tab before calling a number wrong.
