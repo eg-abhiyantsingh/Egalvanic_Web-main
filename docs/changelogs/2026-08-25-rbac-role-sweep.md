@@ -51,3 +51,65 @@ available; this sweep was done live against QA independently of them.
 `Parallel Suite 3 — API Health Check` has failed every scheduled run since 2026-08-17; its report
 shows 49/50 endpoints passing, with the failure coming from the `malformed-path` error-contract probe
 (12 × 5xx on junk path params) — the same class the owner ruled low priority today.
+
+---
+
+## Addendum — the dispatched CI runs finished (2026-08-26)
+
+Both runs show **cancelled**, but the badge is misleading.
+
+**`Parallel Full Suite — Core Regression` (32860997278) — 6h40m57s**
+20 of 21 jobs green at the GitHub level; only `rerun-failed` was cancelled, after **4h00m51s**.
+The shard jobs report green because the workflow tolerates test failures and defers to the rerun
+step — so "job success" is not "tests passed". Actual test results: **83 failures**.
+
+| Shard | Run | Failed | triaged Bugs | Test/Data | Env |
+|---|---|---|---|---|---|
+| Asset Eng / exhaustive options | 308 | 35 | 35 | 0 | 0 |
+| Asset Eng / per-class matrix | 39 | 10 | 10 | 0 | 0 |
+| Asset Eng / Trip Config | 12 | 7 | 7 | 0 | 0 |
+| Asset Eng / Mains Config | 17 | 5 | 2 | 3 | 0 |
+| Asset Eng / Transformer | 10 | 4 | 4 | 0 | 0 |
+| Work Order + Issue | 249 | 17 | 0 | 16 | 1 |
+| Auth + Site | 59 | 3 | — | — | — |
+| Asset Part 5 | 76 | 1 | 0 | 1 | 0 |
+| Opportunities [SALES] | 46 | 1 | 0 | 1 | 0 |
+
+All 58 "Bugs" are in Asset Engineering, and they share one signature — empty option lists:
+`Phase Configuration should list the standard configs (got: )`, `Mains Type should offer 'MCB'`,
+`Subtype dropdown ... (found 0)`, `Generic should be selectable as manufacturer ... found []`.
+
+### CI-1 — `rerun-failed` runs for 4h and is killed
+It consumed 4h00m51s and was cancelled, which is what turns a run with a green summary job into a
+`cancelled` badge. It also pushed total wall-clock to 6h41m against 3h23m on 2026-08-22 — roughly
+double for the same suite. `Parallel Suite 2` cancels on the same pattern (4h09m here; 4h26m on
+08-22; 4h19m on 08-21). **This is the actionable CI defect from the run** — a rerun step that cannot
+finish masks the status of every suite behind it.
+
+### The 58 Asset Engineering failures — NOT called a product bug
+Live check against `/api/node_classes` (636 classes, 13 tenant copies of each):
+
+```
+Motor Starter    13 entries, definition[] length 0 in ALL 13   <- incl. the global (company_id null) copy
+VFD              13 entries, definition[] length 0 in ALL 13
+Circuit Breaker  13 entries, 9 defs (15 for ACME)
+Transformer      13 entries, 17 defs (26 for ACME)
+Panelboard       13 entries, 10 defs (16 for ACME)
+
+295 of 636 classes (46%) have zero definitions — Cable, Load, DC Bus, Battery,
+Capacitor Bank, Rectifier, Shunt Reactor, Motor Controller …
+```
+
+Motor Starter and VFD have no engineering attributes **in every tenant including the global copy**,
+and 46% of classes are attribute-free in a way that looks deliberate (Cable and Load do not need a
+phase configuration). That points at **test expectations asserting attributes the schema never
+defined for those classes** — not data loss in the ACME tenant.
+
+I could not establish a pass→fail window for these (prior runs don't carry comparable shard output,
+and full-log retrieval on these runs OOMs), so the regression evidence that carried RBAC-1 is absent
+here. Verdict: **test-suite correctness problem, not a filed product defect.** It still matters —
+58 spurious failures bury real signal and are what keeps `rerun-failed` running for four hours.
+
+One loose end worth a separate look: `Subtype dropdown should list options for Circuit Breaker
+(found 0)`. Circuit Breaker *does* carry 9–15 definitions, so that one is not explained by the
+empty-schema theory and was not verified live.
