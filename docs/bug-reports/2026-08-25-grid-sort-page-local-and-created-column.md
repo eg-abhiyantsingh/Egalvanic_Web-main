@@ -1,7 +1,7 @@
 # Data-grid sort defects — QA V1.36
 
 **Env:** `https://acme.qa.egalvanic.ai` · **Date:** 2026-08-25 · **Writes made:** none
-**Artifact:** https://claude.ai/code/artifact/4c7a0e40-8485-4f0c-a68c-859c686eeedf
+**Artifact:** https://claude.ai/code/artifact/8ca35956-54c9-4c95-92f9-108c3705a2cd (consolidated register — the per-report artifact was superseded)
 
 Found while sweeping the V1.36 grid redesign for user-visible breakage. 11 grids exercised
 (load → sort each column → search → clear). Two defects confirmed.

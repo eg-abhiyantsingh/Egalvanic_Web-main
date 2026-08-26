@@ -35,7 +35,7 @@ after RBAC-1 is decided.
 - Suite 2's rerun-failed was killed at 2h01m40s (CI-1 pattern, both suites).
 
 ## Register updated (same URL)
-https://claude.ai/code/artifact/f343d5a5-84d0-41c5-9e63-d9a130492b7e
+https://claude.ai/code/artifact/8ca35956-54c9-4c95-92f9-108c3705a2cd (consolidated register — the per-report artifact was superseded)
 Totals now: 4 High, 9 Medium, 11 Low/deferred, 6 dropped. Combined across suites 1+2:
 55 green jobs over ~506 actual test failures.
 

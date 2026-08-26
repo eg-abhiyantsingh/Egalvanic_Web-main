@@ -1,7 +1,7 @@
 # Technician role has web access and outranks the Project Manager — QA V1.36
 
 **Env:** `https://acme.qa.egalvanic.ai` · **Date:** 2026-08-25 · **Severity:** High · **Writes made:** none
-**Artifact:** https://claude.ai/code/artifact/13c11256-99fd-4bb2-9ebf-79835691e080
+**Artifact:** https://claude.ai/code/artifact/8ca35956-54c9-4c95-92f9-108c3705a2cd (consolidated register — the per-report artifact was superseded)
 
 Found by logging all seven role accounts into a real browser and comparing their live
 `/api/auth/v2/me` permission sets against what each role can actually reach.

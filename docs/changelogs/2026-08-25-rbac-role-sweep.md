@@ -7,7 +7,7 @@ thing you are missing that you could check with different role like project mana
 ## What changed
 - `docs/bug-reports/2026-08-25-rbac-technician-web-access-and-overprivilege.md` — new report
 - `docs/bug-reports/evidence/2026-08-25-rbac-technician/` — live screenshot
-- Artifact: https://claude.ai/code/artifact/13c11256-99fd-4bb2-9ebf-79835691e080
+- Artifact: https://claude.ai/code/artifact/8ca35956-54c9-4c95-92f9-108c3705a2cd (consolidated register — the per-report artifact was superseded)
 
 ## Finding
 **RBAC-1 (High)** — the Technician role holds `platform.web` and 93 permissions, more than the

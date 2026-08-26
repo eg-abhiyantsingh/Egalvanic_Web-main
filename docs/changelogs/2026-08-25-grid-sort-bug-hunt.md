@@ -6,7 +6,7 @@ user crashed or any other major issue" (+ follow-up ruling the bad-URL error han
 ## What changed
 - `docs/bug-reports/2026-08-25-grid-sort-page-local-and-created-column.md` — new report
 - `docs/bug-reports/evidence/2026-08-25-grid-sort/` — 2 live screenshots
-- Artifact: https://claude.ai/code/artifact/4c7a0e40-8485-4f0c-a68c-859c686eeedf
+- Artifact: https://claude.ai/code/artifact/8ca35956-54c9-4c95-92f9-108c3705a2cd (consolidated register — the per-report artifact was superseded)
 
 ## What was found
 | # | Severity | Defect | Where |
