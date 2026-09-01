@@ -309,9 +309,13 @@ public class WorkOrderTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_LIST, "TC_WOL_002_PageTitle");
         logStep("Verifying page title");
 
-        String pageText = getPageText();
+        // Scoped to <main>: the sidebar's own "Work Orders" link satisfies
+        // contains("Work Order") on this route, so a whole-body check passed even with an
+        // empty page body (measured live 2026-08-24).
+        String pageText = getMainText();
         Assert.assertTrue(pageText.contains("Work Order") || pageText.contains("Jobs"),
-                "Page should display 'Work Orders' or 'Jobs' title");
+                "Page should display 'Work Orders' or 'Jobs' title. Main text was: "
+                + pageText.substring(0, Math.min(120, pageText.length())));
         logStep("PASS: Work Orders title displayed");
     }
 

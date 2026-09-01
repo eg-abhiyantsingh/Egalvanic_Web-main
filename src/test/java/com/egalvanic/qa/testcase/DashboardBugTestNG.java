@@ -1254,10 +1254,15 @@ public class DashboardBugTestNG extends BaseTest {
         }
         logStepWithScreenshot("Arc Flash Readiness page");
 
-        Assert.assertTrue(pageText.contains("Arc Flash") || pageText.contains("Readiness")
-                        || pageText.contains("arc flash") || pageText.contains("readiness")
-                        || pageText.contains("%") || pageText.contains("complete"),
-                "Arc Flash page should contain relevant content");
+        // Re-read scoped to <main>. The sidebar item is literally "Arc Flash Readiness", so on
+        // this route the chrome alone satisfied BOTH contains("Arc Flash") and
+        // contains("Readiness") — the assertion could not fail no matter what rendered.
+        String mainText = getMainText();
+        Assert.assertTrue(mainText.contains("Arc Flash") || mainText.contains("Readiness")
+                        || mainText.contains("arc flash") || mainText.contains("readiness")
+                        || mainText.contains("%") || mainText.contains("complete"),
+                "Arc Flash page should contain relevant content. Main text was: "
+                + mainText.substring(0, Math.min(120, mainText.length())));
         logStep("PASS: Arc Flash Readiness page loaded");
     }
 

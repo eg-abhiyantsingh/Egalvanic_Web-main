@@ -672,9 +672,12 @@ public class TaskTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE_LIST, "TC_TL_002_TasksPageTitle");
         logStep("Verifying Tasks page title");
 
-        String pageText = getPageText();
+        // Scoped to <main>: the Site Data sidebar panel contains a "Tasks" link, so a
+        // whole-body contains("Tasks") passed regardless of what the page rendered.
+        String pageText = getMainText();
         Assert.assertTrue(pageText.contains("Tasks"),
-                "Page should display 'Tasks' title");
+                "Page should display 'Tasks' title. Main text was: "
+                + pageText.substring(0, Math.min(120, pageText.length())));
         logStep("PASS: Tasks title is displayed");
     }
 
@@ -870,7 +873,9 @@ public class TaskTestNG extends BaseTest {
 
         openCreateTaskDrawer();
 
-        String pageText = getPageText();
+        // Scoped to <main>: contains("Asset") below is satisfied by the sidebar's "Assets"
+        // link on its own, so this whole block could pass without the drawer opening.
+        String pageText = getMainText();
         Assert.assertTrue(pageText.contains("Task Type"), "Should show Task Type field");
         Assert.assertTrue(pageText.contains("Title"), "Should show Title field");
         Assert.assertTrue(pageText.contains("Description"), "Should show Description field");

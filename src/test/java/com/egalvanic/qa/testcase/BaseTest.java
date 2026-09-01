@@ -900,6 +900,33 @@ public class BaseTest {
     // HELPER / LOGGING METHODS
     // ================================================================
 
+    /**
+     * Visible text of the page's OWN content region ({@code <main>}), excluding the shared
+     * sidebar chrome.
+     *
+     * <p>Prefer this over {@code body.getText()} for any "the page shows X" assertion. The
+     * V1.36 sidebar renders module labels on every route, so a whole-body text check silently
+     * becomes a test of the nav: measured live on 2026-08-24, chrome alone satisfies
+     * {@code contains("Work Order")} on /sessions, {@code contains("Tasks")} and
+     * {@code contains("Asset")} on /assets, and {@code contains("Arc Flash")} /
+     * {@code contains("Readiness")} on /arc-flash — all while the page body could be empty.
+     *
+     * <p>Falls back to the full body when the route renders no {@code <main>} (e.g.
+     * /z-university), so callers never get an empty string by surprise.
+     */
+    protected String getMainText() {
+        try {
+            java.util.List<WebElement> mains = driver.findElements(By.tagName("main"));
+            if (!mains.isEmpty()) {
+                String t = mains.get(0).getText();
+                if (t != null && !t.trim().isEmpty()) return t;
+            }
+            return driver.findElement(By.tagName("body")).getText();
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
     protected void logStep(String message) {
         ExtentReportManager.logInfo(message);
     }
