@@ -1,6 +1,6 @@
 # Staff write surface (ZP-3874 follow-on) — fork-helper regression on QA
 
-**Date:** 2026-09-01 · **Env:** acme.qa.egalvanic.ai (V1.36) · **Outcome:** PASS, no defects filed
+**Date:** 2026-09-01 · **Env:** acme.qa.egalvanic.ai (V1.36) · **Outcome:** PASS (scoped) — no new defects in the refactor; most of the checklist unrun, 2 authz holes still open
 
 ## What was asked
 
@@ -32,7 +32,7 @@ So the testable, valuable work on QA was the regression, plus confirming the sta
 
 ## Result
 
-Every isolation property holds. The specific failure the ticket warns about — a fork whose pages
+Every isolation property reachable through the two endpoints holds, for the two fixtures tested (both GLOBAL sources, so only the global->company branch ran; no negative paths run). The specific failure the ticket warns about — a fork whose pages
 still name the source's template keys — does not occur: **0 of 10** keys shared, **0 of 10**
 `page_template_id`s shared, template rows created once each in the destination, and the copy renders.
 Form fork relinks its own template, carries 76/76 node classes, is reachable, and re-forks

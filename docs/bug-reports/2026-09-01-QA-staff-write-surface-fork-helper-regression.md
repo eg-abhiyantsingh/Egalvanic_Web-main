@@ -7,7 +7,28 @@
 
 ---
 
-## Verdict — **PASS on the part that is testable on QA. No defects found.**
+## Verdict — **PASS, scoped.** No new defects in the fork-helper refactor.
+
+> **Read this before treating it as sign-off.** This covers the two live customer fork endpoints the
+> refactor touched, for the two fixtures tested. It does **not** cover the majority of the ticket's
+> checklist — every positive staff-write path, the `403 wrong_source_tenant` copy negatives, the
+> dataprep `primary_id` refusal, generate → status, and all audit-record checks — none of which has
+> been run by anyone, here or in dev. Two **pre-existing cross-tenant authz holes** on this surface
+> remain open and unfiled. And there is **no pre-refactor baseline**: QA has only the post-merge
+> build, so this shows the endpoints satisfy the properties below, not that they are *unchanged*.
+> **Evidence, not a release gate.**
+
+### Action required
+
+1. **Set `EG_STAFF_ALLOWLIST` + `EG_STAFF_CLIENT_IDS` on QA** — unset, so all nine staff routes 401.
+   This blocks the five positive staff-write paths and both `403 wrong_source_tenant` negatives.
+2. **File the two authz holes as their own tickets** (`PUT /eg-forms/<id>`,
+   `GET /reporting/status/<arn>`) — open and unfiled today.
+3. **Confirm intended:** re-fork returns `200 forked:false`, not `201`. Idempotent, no duplicate, but
+   QA cannot diff against pre-refactor behaviour.
+4. **Confirm `eg-pz-reporting-lambdas` #331 reached QA** — generate → status is untestable until it does.
+5. **Confirm the allowlist is unset on prod (#1080) and stag (#1082)** — inertness verified on QA only.
+6. **Left in QA:** one config labelled "QA-DEMO fork regression ZP-staff-write (delete me)".
 
 The change's stated main risk is the refactor, not the new routes: `fork_config_into_company` and
 `fork_global_form` were lifted out of the customer routes so the customer fork and the staff copy
@@ -15,13 +36,31 @@ share one implementation. That makes **`POST /reporting/configs/<id>/fork`** and
 **`POST /eg-forms/<id>/fork`** — two live customer endpoints that had no test coverage — run through
 new shared code on every branch, allowlist or not.
 
-Both were exercised end to end as an ordinary product user against real QA data. **Every isolation
-property the ticket names holds.** The specific failure the ticket warns about — *"a fork whose pages
-still name the source's keys looks successful while quietly making every edit to the copy rewrite the
-original, and for a global source that is every tenant at once"* — **does not occur**.
+The specific failure the ticket warns about — *"a fork whose pages still name the source's keys looks
+successful while quietly making every edit to the copy rewrite the original, and for a global source
+that is every tenant at once"* — **does not occur**.
+
+**Every isolation property reachable through the two customer fork endpoints holds, for the two
+fixtures tested.** Bounding that claim honestly:
+
+- The EG Forms fork was exercised through the **product UI** as a logged-in Super Admin. The
+  report-config fork was **not** — the Report Builder locks that affordance for this role, so it was
+  issued against `POST /reporting/configs/<id>/fork`, the endpoint the button posts to, on the
+  session's own cookies. **The config fork's permission layer is therefore untested**: no role that
+  can legitimately press the button exercised it.
+- Both fixtures were **global** sources, so only the **global → company** branch of the shared helpers
+  ran; the company-owned-source branch did not.
+- Coverage is **asymmetric**: re-fork idempotency, delete-restores-the-source and downstream
+  reachability were checked on the **form fork only**. The config was forked once, never re-forked,
+  never deleted, and no report was generated from the copy.
+- **No negative paths** were run against either endpoint — nonexistent id, malformed body, caller
+  without the permission, or forking a **foreign tenant's** id. The last is non-destructive (the copy
+  lands in the caller's tenant) and should be run on `demo.qa.egalvanic.ai` before this surface is
+  called clean, now that staff callers share the code.
 
 Three things that looked like findings were each disproved by a control (see
-[Checked and dismissed](#checked-and-dismissed)). Nothing is being filed.
+[Checked and dismissed](#checked-and-dismissed)). QA is filing nothing against #1073/#1074 — but the
+two author-flagged authz holes below are still unfiled and still need tickets.
 
 ---
 
