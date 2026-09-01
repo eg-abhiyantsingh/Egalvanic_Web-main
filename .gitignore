@@ -67,3 +67,8 @@ docs/sld-intelligence/
 docs/jira-export/
 docs/qa-review-board.html
 docs/report-artifacts/
+
+# Large QA reference videos — keep local, never push (GitHub 100MB hard limit)
+testcase/service_workorder_video/
+testcase/IR_video/
+*.mp4

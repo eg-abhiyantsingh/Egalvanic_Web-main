@@ -1,5 +1,6 @@
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/ai/DailyFailureAnalyzer.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/ai/SelfHealingLocator.java
+/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/constants/WorkTypeCatalog.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/verify/AssetLoadVerifier.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/pageobjects/AccountsPage.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/ai/AITestGenerator.java
@@ -14,8 +15,12 @@
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/RolePermissionMatrix.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/pageobjects/ArcFlashPage.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/pageobjects/LoginPage.java
+/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/RolePinUtil.java
+/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/InputUtil.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/pageobjects/IssuePage.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/ai/AIPageAnalyzer.java
+/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/NavCatalog.java
+/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/pageobjects/AdminPmSettingsPage.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/ExtentReportManager.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/EmailUtil.java
 /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/src/main/java/com/egalvanic/qa/utils/verify/PerfVerifier.java
