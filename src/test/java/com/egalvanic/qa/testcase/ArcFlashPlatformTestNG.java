@@ -11,6 +11,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -54,16 +55,28 @@ public class ArcFlashPlatformTestNG extends BaseTest {
         System.out.println("[ArcFlashPlatform] site '" + SITE + "' selected=" + ok);
     }
 
-    @Test(priority = 1, description = "AFP_01: A Role view selector is present and lists roles (TC-AF-006)")
+    /**
+     * The Arc Flash "Role" view selector was REMOVED by the V1.36 redesign, so this test now
+     * skips rather than asserting.
+     *
+     * <p>Confirmed on the live page 2026-09-02: {@code input[placeholder='Select role']} has
+     * zero matches, the word "role" appears nowhere in {@code <main>}, and the only remaining
+     * header control is the Engineering Mode switch. The four tabs are unchanged.
+     *
+     * <p>Skipping is the honest outcome. Asserting presence would fail the build over an
+     * intentional product change, and asserting absence would turn a removed feature into
+     * permanent green — neither tells anyone anything. A skip with this message keeps the case
+     * visible so it is deleted or rewritten deliberately if the lens comes back.
+     */
+    @Test(priority = 1, description = "AFP_01: Role view selector — removed in V1.36, skipped (TC-AF-006)")
     public void testAFP_01_RoleSelectorPresent() {
         ExtentReportManager.createTest(MODULE, FEATURE, "AFP_01_RoleSelectorPresent");
         arcFlashPage.navigateToArcFlash();
-        Assert.assertTrue(arcFlashPage.hasRoleSelector(), "Arc Flash header should have a 'Select role' view selector.");
-        List<String> roles = arcFlashPage.getRoleOptions();
-        logStep("Role value='" + arcFlashPage.getRoleValue() + "', options=" + roles);
-        Assert.assertFalse(roles.isEmpty(), "The Role selector should list at least one role option.");
-        logStepWithScreenshot("Role selector + options");
-        ExtentReportManager.logPass("Role view selector present with " + roles.size() + " options: " + roles);
+        throw new SkipException("The Arc Flash 'Select role' view selector no longer exists — removed "
+                + "by the V1.36 redesign (verified live 2026-09-02: zero matches for "
+                + "input[placeholder='Select role'], no 'role' text in <main>, only the Engineering "
+                + "Mode switch remains). TC-AF-006 needs rewriting against whatever replaced the "
+                + "role lens, or retiring.");
     }
 
     @Test(priority = 2, description = "AFP_02: An SLD diagram canvas renders on /arc-flash (TC-AF-004)")
@@ -116,10 +129,28 @@ public class ArcFlashPlatformTestNG extends BaseTest {
         logStepWithScreenshot("Generate Report control present");
     }
 
-    @Test(priority = 5, description = "AFP_05: Switching the Role view recomputes the page and stays healthy (TC-AF-006)")
+    /**
+     * Also skipped: there is no Role view to switch.
+     *
+     * <p>This one mattered more than AFP_01, because it did not fail — it passed. With the
+     * selector gone {@code getRoleOptions()} returns an empty list, the "fewer than two options"
+     * branch below logs a pass and returns, and the suite reported green for a role-switch test
+     * on a page with no role switch. A vacuous pass is worse than a failure: it hides the gap
+     * instead of surfacing it. The explicit skip below replaces that.
+     */
+    @Test(priority = 5, description = "AFP_05: Role view switching — removed in V1.36, skipped (TC-AF-006)")
     public void testAFP_05_SwitchRoleView() {
         ExtentReportManager.createTest(MODULE, FEATURE, "AFP_05_SwitchRoleView");
         arcFlashPage.navigateToArcFlash();
+        throw new SkipException("No Arc Flash Role view to switch — the selector was removed by the "
+                + "V1.36 redesign (verified live 2026-09-02). Before this skip existed the empty "
+                + "option list fell into the 'fewer than two options' branch and logged a PASS, so "
+                + "this case was reporting green while testing nothing.");
+    }
+
+    /** Retained for reference: the pre-V1.36 role-switch body, unreachable while AFP_05 skips. */
+    @SuppressWarnings("unused")
+    private void legacyRoleSwitchFlow() {
         String original = arcFlashPage.getRoleValue();
         List<String> roles = arcFlashPage.getRoleOptions();
         logStep("Original role='" + original + "', options=" + roles);

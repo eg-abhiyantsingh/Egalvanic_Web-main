@@ -1081,7 +1081,9 @@ public class ConnectionPage {
         try {
             WebElement dismissBtn = new WebDriverWait(driver, Duration.ofSeconds(5))
                     .until(ExpectedConditions.elementToBeClickable(
-                            By.xpath("//button[text()='DISMISS']")));
+                            // normalize-space(.), not text(): MUI nests the label in a span,
+                            // so text() reads the button's own empty text node.
+                            By.xpath("//button[normalize-space(.)='DISMISS']")));
             dismissBtn.click();
             System.out.println("[ConnectionPage] Dismissed app update alert");
             pause(1000);

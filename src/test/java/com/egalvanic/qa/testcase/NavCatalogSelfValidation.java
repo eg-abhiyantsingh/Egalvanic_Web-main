@@ -52,7 +52,7 @@ public final class NavCatalogSelfValidation {
             checkAllCategoriesHarvested(driver);
             checkCrossCategoryNavigation(driver);
             checkCatalogRoutesResolve(driver);
-            checkDashboardsViaLogo(driver);
+            checkDashboardsInCategories(driver);
             checkTabCatalog(driver);
 
             System.out.println("\n==================================================");
@@ -153,15 +153,54 @@ public final class NavCatalogSelfValidation {
         System.out.println("[check 3] done");
     }
 
-    /** The Dashboards panel must be reachable from a module page through the rail logo. */
-    private static void checkDashboardsViaLogo(WebDriver driver) {
-        System.out.println("\n[check 4] Dashboards via the rail logo");
-        NavCatalog.navigateTo(driver, "/assets");
-        sleep(3000);
-        boolean landed = NavCatalog.navigateTo(driver, "/sales-overview");
-        check(landed && NavCatalog.onRoute(driver, "/sales-overview"),
-                "reached /sales-overview from /assets through the logo-opened Dashboards panel",
-                "could not reach /sales-overview from a module page — landed on " + driver.getCurrentUrl());
+    /**
+     * The three dashboards must be reachable from a module page BY CLICKING, not by URL.
+     *
+     * <p>Re-mapped 2026-09-02: the dashboards no longer live behind the rail logo. They moved
+     * into ordinary rail categories — /dashboard under Site Data, /ops-dashboard under
+     * Operations, /sales-overview under Sales — so reaching them is a normal category
+     * expansion and {@code openDashboards} is deprecated.
+     *
+     * <p>This check asserts the SIDEBAR path specifically, by confirming the anchor is in the
+     * DOM after the owning category is expanded. The previous version asserted only that
+     * {@code navigateTo} ended up on the route, which its own {@code driver.get()} fallback
+     * satisfies even when the sidebar click never worked — the check passed against a session
+     * where the app had not rendered a single anchor.
+     */
+    private static void checkDashboardsInCategories(WebDriver driver) {
+        System.out.println("\n[check 4] dashboards reachable through their rail categories");
+        String[][] dashboards = {
+            {"/dashboard",      NavCatalog.SITE_DATA},
+            {"/ops-dashboard",  NavCatalog.OPERATIONS},
+            {"/sales-overview", NavCatalog.SALES},
+        };
+        for (String[] pair : dashboards) {
+            String route = pair[0];
+            String category = pair[1];
+
+            check(category.equals(NavCatalog.categoryFor(route)),
+                    route + " is catalogued under '" + category + "'",
+                    route + " should be catalogued under '" + category + "' but the catalog says '"
+                            + NavCatalog.categoryFor(route) + "'");
+
+            // Start from a page in a DIFFERENT category so the anchor really is absent first.
+            NavCatalog.navigateTo(driver, "/assets");
+            sleep(2500);
+            NavCatalog.openCategory(driver, category);
+            sleep(1800);
+            boolean anchorPresent = !driver.findElements(
+                    By.cssSelector("a[href='" + route + "']")).isEmpty();
+            check(anchorPresent,
+                    route + " anchor is in the DOM after expanding '" + category + "'",
+                    route + " anchor is NOT in the DOM after expanding '" + category
+                            + "' — the sidebar path is broken, so navigateTo would silently "
+                            + "fall back to a direct URL and stop testing the nav");
+
+            boolean landed = NavCatalog.navigateTo(driver, route);
+            check(landed && NavCatalog.onRoute(driver, route),
+                    "reached " + route + " from /assets",
+                    "could not reach " + route + " from /assets — landed on " + driver.getCurrentUrl());
+        }
     }
 
     /**

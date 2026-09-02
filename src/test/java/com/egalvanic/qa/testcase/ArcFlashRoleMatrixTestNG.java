@@ -80,8 +80,12 @@ public class ArcFlashRoleMatrixTestNG extends BaseTest {
         freshState();
         boolean ok = arcFlashPage.selectRole(role);
         if (!ok) {
-            throw new SkipException("Role '" + role + "' did not commit within timeout on this run (slow recompute) — value '"
-                    + arcFlashPage.getRoleValue() + "'. Environmental, not a defect.");
+            throw new SkipException("Cannot select role '" + role + "' — the /arc-flash 'Select role' view "
+                    + "selector was REMOVED by the V1.36 redesign (verified live 2026-09-02: no "
+                    + "input[placeholder='Select role'], no 'role' text in <main>). This skip used to read "
+                    + "'did not commit within timeout (slow recompute) — environmental, not a defect', "
+                    + "which pointed at a timing problem that does not exist; the control is gone. "
+                    + "TC-AF-006 needs rewriting or retiring.");
         }
         Assert.assertTrue(arcFlashPage.isLoaded(), "Page should stay loaded after switching to role '" + role + "'.");
         ExtentReportManager.logPass("Role view '" + role + "' selectable; page healthy.");
@@ -93,8 +97,9 @@ public class ArcFlashRoleMatrixTestNG extends BaseTest {
         ExtentReportManager.createTest(MODULE, FEATURE, "AFR_VIEW_" + slug(role));
         freshState();
         if (!arcFlashPage.selectRole(role)) {
-            throw new SkipException("Role '" + role + "' did not commit within timeout on this run (slow recompute) — "
-                    + "cannot evaluate the view under it. Environmental, not a defect.");
+            throw new SkipException("Cannot evaluate the view under role '" + role + "' — the /arc-flash "
+                    + "'Select role' view selector was REMOVED by the V1.36 redesign (verified live "
+                    + "2026-09-02). Not a recompute timeout; there is no control to drive.");
         }
         // The role switch triggers a re-render — the tab strip momentarily has no selected tab. Retry the
         // navigation until it settles rather than reading once (which races the recompute and returns "").

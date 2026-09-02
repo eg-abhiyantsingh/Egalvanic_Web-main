@@ -17,8 +17,9 @@ import java.util.List;
  *
  * Route history: originally /accounts as the third SALES nav item; v1.35 (ZP-3157)
  * moved it under the ADMIN sidebar group; since late V1.36 the nav item is "Customers"
- * at /customers and /accounts REDIRECTS there — open() still navigates via /accounts on
- * purpose so the legacy deep link keeps being exercised.
+ * at /customers and /accounts REDIRECTS there — open() now navigates to the resolved live
+ * route (NavCatalog.resolve("/accounts") == "/customers") so the landed URL and the
+ * assertions agree; the legacy deep link is exercised by openLegacyAccountsPath().
  *
  * <p>Corrected 2026-08-24 by walking the live sidebar: Customers sits under the <b>Sales</b>
  * rail category (PIPELINE: Site Walks, Quotes · DATA: Customers), not OPERATIONS. It also
@@ -48,8 +49,9 @@ public class AccountsPage {
     public static final By DIALOG = By.cssSelector("[role='dialog'], .MuiDialog-root");
     public static final By DIALOG_TEXTFIELD = By.cssSelector("[role='dialog'] input[type='text'], .MuiDialog-root input:not([type='hidden'])");
 
+    // "New Customer" added for the late-V1.36 rename of the module from Accounts to Customers.
     public static final By NEW_BTN = By.xpath(
-            "//button[normalize-space()='New Account' or normalize-space()='New' or normalize-space()='Add Account' or normalize-space()='+ New']");
+            "//button[normalize-space()='New Account' or normalize-space()='New Customer' or normalize-space()='New' or normalize-space()='Add Account' or normalize-space()='Add Customer' or normalize-space()='+ New']");
     public static final By SAVE_BTN = By.xpath(
             "//div[@role='dialog']//button[normalize-space()='Create' or normalize-space()='Save' or normalize-space()='Add' or normalize-space()='Save Changes']");
     public static final By CANCEL_BTN = By.xpath(
@@ -62,7 +64,36 @@ public class AccountsPage {
         this.wait = new WebDriverWait(driver, Duration.ofSeconds(20));
     }
 
+    /**
+     * Open the account list on its LIVE route.
+     *
+     * <p>Goes through {@code NavCatalog.resolve("/accounts")}, which returns {@code /customers},
+     * so the URL the driver lands on and any assertion made afterwards agree. The legacy
+     * {@code /accounts} deep link is still exercised — by
+     * {@code AccountV135ExtendedTestNG.testOldAccountsRouteRedirects}, which issues its own
+     * {@code driver.get(BASE_URL + "/accounts")} — and by {@link #openLegacyAccountsPath()}.
+     */
     public void open() {
+        String route = com.egalvanic.qa.utils.NavCatalog.resolve("/accounts");
+        for (int attempt = 1; attempt <= 2; attempt++) {
+            driver.get(AppConstants.BASE_URL + route);
+            try {
+                waitForLoaded();
+                waitForContent();
+                return;
+            } catch (org.openqa.selenium.TimeoutException te) {
+                if (attempt == 2) throw te;
+            }
+        }
+    }
+
+    /**
+     * Open the account list through the LEGACY {@code /accounts} path, on purpose, to keep the
+     * old-bookmark redirect covered. This is what {@link #open()} used to do; it was split out
+     * because the driver ends up on {@code /customers}, so a caller must assert against the
+     * landed URL rather than the requested one.
+     */
+    public void openLegacyAccountsPath() {
         for (int attempt = 1; attempt <= 2; attempt++) {
             driver.get(AppConstants.BASE_URL + "/accounts");
             try {

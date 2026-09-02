@@ -203,6 +203,85 @@ public class LoginPage {
             // Proceed anyway
         }
         clickLoginButton();
+        dismissMfaEnrollmentIfPresent();
+    }
+
+    /**
+     * Dismiss the "Set up your authenticator app" enrollment screen that QA began showing
+     * after a successful sign-in (first observed 2026-09-02).
+     *
+     * <p><b>Why this is here and not in one test class.</b> Authentication SUCCEEDS — the
+     * session cookie is set and the app routes to /dashboard — and then this screen covers the
+     * whole application. Measured on QA: {@code #root} drops to 178 bytes, and the page has
+     * zero anchors, zero {@code [role=tab]} elements and no data grid. So every UI test that
+     * logs in finds an empty application: the symptom is "every locator on every page stopped
+     * matching", which reads exactly like a redesign broke the selectors. Putting the dismissal
+     * at the end of {@link #login(String, String)} fixes {@code BaseTest} and every standalone
+     * suite in one place, because they all authenticate through here.
+     *
+     * <p>Enrollment is optional — the screen offers "Set up later", and its own footnote says
+     * "You'll be asked again next time you sign in" — so clicking it is the behaviour of a user
+     * who declines, not a workaround that skips a required step. It reappears per sign-in,
+     * which for a per-class browser session means once per class.
+     *
+     * <p>The poll exits as soon as EITHER the enrollment screen is handled OR the app shell has
+     * mounted, so a login that never sees the prompt pays a few hundred milliseconds rather
+     * than the full timeout.
+     */
+    public void dismissMfaEnrollmentIfPresent() {
+        By setUpLater = By.xpath(
+                "//button[normalize-space(.)='Set up later'"
+                + " or normalize-space(.)='Set up Later'"
+                + " or normalize-space(.)='Skip for now'"
+                + " or normalize-space(.)='Remind me later']");
+        By enrollmentHeading = By.xpath(
+                "//*[contains(normalize-space(.),'Set up your authenticator app')"
+                + " or contains(normalize-space(.),'Scan this code with an authenticator app')]");
+        // The mounted app shell — the signal that no prompt is in the way.
+        By appShell = By.cssSelector("nav[aria-label='navigation'], main");
+
+        long deadline = System.currentTimeMillis() + 15000L;
+        while (System.currentTimeMillis() < deadline) {
+            try {
+                java.util.List<WebElement> later = driver.findElements(setUpLater);
+                if (!later.isEmpty()) {
+                    WebElement btn = later.get(0);
+                    try {
+                        ((org.openqa.selenium.JavascriptExecutor) driver)
+                                .executeScript("arguments[0].click();", btn);
+                    } catch (Exception e) {
+                        btn.click();
+                    }
+                    System.out.println("[LoginPage] Declined authenticator-app enrollment via 'Set up later'");
+                    // Give the shell a moment to mount behind the dismissed screen.
+                    try {
+                        new WebDriverWait(driver, Duration.ofSeconds(20))
+                                .until(ExpectedConditions.presenceOfElementLocated(appShell));
+                    } catch (Exception ignored) { }
+                    return;
+                }
+
+                boolean promptShowing = !driver.findElements(enrollmentHeading).isEmpty();
+                if (!promptShowing && !driver.findElements(appShell).isEmpty()) {
+                    return;   // no prompt, shell is up — nothing to do
+                }
+                if (promptShowing) {
+                    System.out.println("[LoginPage] Authenticator enrollment screen visible; "
+                            + "waiting for its 'Set up later' control");
+                }
+            } catch (Exception ignored) { }
+            try { Thread.sleep(400); } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+        }
+        // Not fatal on its own: report it and let the caller's own waits fail with their
+        // context, rather than throwing from a helper that only tries to clear an overlay.
+        if (!driver.findElements(enrollmentHeading).isEmpty()) {
+            System.out.println("[LoginPage] WARNING: authenticator enrollment screen is still up after 15s "
+                    + "and no 'Set up later' control was found. The app shell is likely covered, so "
+                    + "page locators will not match — this is an auth-flow blocker, not a selector problem.");
+        }
     }
 
     // ================================================================

@@ -36,10 +36,16 @@ public class WorkOrderPage {
     // LOCATORS
     // ================================================================
 
-    // Navigation — sidebar link (may be "Jobs", "Work Orders", or "Job/Work Orders")
-    private static final By WORK_ORDERS_NAV = By.xpath(
-            "//a[normalize-space()='Jobs' or normalize-space()='Work Orders' or normalize-space()='Job/Work Orders']"
-            + " | //span[normalize-space()='Jobs' or normalize-space()='Work Orders' or normalize-space()='Job/Work Orders']");
+    // Navigation — the Work Orders sidebar anchor, by href.
+    //
+    // V1.36 (re-mapped 2026-09-02): the label is "Work Orders" and the route is /sessions,
+    // under the Operations rail category. The old locator matched on the label text and
+    // carried "Jobs" / "Job/Work Orders" alternatives from earlier releases; none of those
+    // strings is in the DOM any more, and text matching cannot distinguish the five sidebar
+    // labels that now appear on more than one route. Href is unique; the label is not.
+    // Prefer navigateToWorkOrders(), which expands Operations first via NavCatalog — this
+    // field only resolves while that category is open.
+    private static final By WORK_ORDERS_NAV = By.cssSelector("a[href='/sessions'], a[href='/sessions/']");
 
     // Create button (page header)
     private static final By CREATE_WORK_ORDER_BTN = By.xpath(
@@ -655,20 +661,84 @@ public class WorkOrderPage {
     // Dropdowns are MUI Autocompletes; date inputs accept typed values.
     // ================================================================
 
+    // ================================================================
+    // CREATE WORK ORDER — now a FOUR-STEP WIZARD (re-walked live 2026-09-02)
+    // ================================================================
+    //
+    // The dialog title is unchanged ("Create New Work Order"), so WO_DIALOG still resolves —
+    // which is exactly why the breakage here is silent. What changed is everything inside it:
+    // the single scrolling form became a gated stepper.
+    //
+    //   Step 1 "Work order"  WO Name / # *, Facility *, Due Date, First service to perform
+    //   Step 2 "Scope"       service selection + LIVE asset-scope resolution
+    //   Step 3 "Team"        not reachable without a scope-matching service (see below)
+    //   Step 4 "Review"      ditto — this is the only step with a "Create" button
+    //
+    // Three consequences for locators, all verified by walking the wizard:
+    //
+    // 1. THE STEPS CANNOT BE JUMPED. The numbered step buttons ("1 Work order" … "4 Review")
+    //    render as buttons but clicking one is a no-op: the wizard stayed on step 1 through
+    //    all three attempts. Advancing requires the step's own required fields plus Continue.
+    //
+    // 2. "CREATE" IS NOT ON THE FIRST STEP. Steps 1-2 offer Continue (plus Back from step 2
+    //    on). So the old fill-the-form-then-click-Create shape cannot complete a work order at
+    //    all — it fills step 1 and then looks for a button that is four steps away.
+    //
+    // 3. FOUR FIELDS THIS CLASS TARGETS ARE ON NEITHER REACHABLE STEP: Est. Hours
+    //    (input[type=number]), the Description textarea, Start Date (the second MM/DD/YYYY
+    //    input) and Equipment. Step 1 has exactly ONE date input, so the old
+    //    "(…MM/DD/YYYY)[2]" locator for Start Date resolves to nothing while
+    //    "(…)[1]" still correctly means Due Date. Their locators are kept below but must not
+    //    be used until the step that owns them has been reached and confirmed.
+    //
+    // Step 2 additionally gates on the resolved scope, not just on field presence: with a
+    // service chosen that matched no assets, the Scope step reported "0 matching assets" and
+    // "This site has 14 open issues, but none are workable (3 not linked to an asset, 10 on
+    // deleted assets)" and Continue stayed disabled. A create test therefore needs a
+    // facility/service pair that actually resolves to at least one asset — otherwise it
+    // stalls at step 2 for a data reason that looks like a locator failure.
+
     private static final String WO_DIALOG =
             "//div[@role='dialog'][.//*[normalize-space()='Create New Work Order']]";
+
+    /** The stepper, and the label of the step currently active. */
+    private static final By WO_STEPPER = By.cssSelector(".MuiStepper-root");
+    private static final By WO_ACTIVE_STEP_LABEL =
+            By.cssSelector(".MuiStep-root .Mui-active .MuiStepLabel-label, .MuiStepLabel-label.Mui-active");
+
+    /** Step 1 — verified present 2026-09-02. */
     private static final By WO_NAME_INPUT = By.xpath("//input[@placeholder='e.g., Q1 2024 Maintenance']");
+    private static final By WO_DUE_DATE_INPUT =
+            By.xpath("(" + WO_DIALOG + "//input[@placeholder='MM/DD/YYYY'])[1]");
+    private static final By WO_FIRST_SERVICE_INPUT = By.xpath(
+            "//div[contains(@class,'MuiAutocomplete-root')]"
+            + "[.//label[starts-with(normalize-space(),'First service to perform')]]//input");
+
+    /** Wizard chrome. Continue advances; Create commits and exists only on the Review step. */
+    private static final By WO_CONTINUE_BTN =
+            By.xpath(WO_DIALOG + "//button[normalize-space(.)='Continue' or normalize-space(.)='Next']");
+    private static final By WO_BACK_BTN = By.xpath(WO_DIALOG + "//button[normalize-space(.)='Back']");
+    private static final By WO_CANCEL_BTN = By.xpath(WO_DIALOG + "//button[normalize-space(.)='Cancel']");
+    private static final By WO_SAVE_SERVICE_BTN =
+            By.xpath(WO_DIALOG + "//button[normalize-space(.)='Save service']");
+    private static final By WO_CREATE_BTN = By.xpath(
+            WO_DIALOG + "//button[normalize-space(.)='Create' or normalize-space(.)='Create Work Order']");
+
+    /** The Scope step's resolved-asset readout — the thing that actually gates Continue. */
+    private static final By WO_SCOPE_MATCH_TEXT =
+            By.xpath(WO_DIALOG + "//*[contains(normalize-space(.),'matching assets')]");
+
+    // ---- Fields NOT present on step 1 or 2 as of 2026-09-02. ----
+    // Retained because callers still reference them, but each is unreachable until the owning
+    // step is confirmed; treat a no-match from these as "wrong step", not "element missing".
     private static final By WO_EST_HOURS_INPUT = By.xpath(WO_DIALOG + "//input[@type='number']");
     private static final By WO_DESCRIPTION_INPUT = By.xpath("//textarea[@placeholder='Describe the scope of this work order...']");
-    // v1.35 (ZP-3000) layout order (verified live 2026-07-15): the FIRST MM/DD/YYYY input in the
-    // dialog is Due Date (main form, empty by default); the SECOND is Start Date (Advanced Settings,
-    // pre-filled with today). Pre-v1.35 these indices were reversed — corrected here.
-    private static final By WO_DUE_DATE_INPUT = By.xpath("(" + WO_DIALOG + "//input[@placeholder='MM/DD/YYYY'])[1]");
     private static final By WO_START_DATE_INPUT = By.xpath("(" + WO_DIALOG + "//input[@placeholder='MM/DD/YYYY'])[2]");
     private static final By WO_EQUIPMENT_INPUT = By.xpath("//input[@placeholder='Select equipment (optional)']");
-    private static final By WO_CREATE_BTN = By.xpath(WO_DIALOG + "//button[normalize-space()='Create']");
-    private static final By WO_ADD_BLOCK_BTN = By.xpath("//button[normalize-space()='Add Block']");
-    private static final By WO_AUTO_SCHEDULE_BTN = By.xpath("//button[normalize-space()='Auto-Schedule']");
+    private static final By WO_ADD_BLOCK_BTN = By.xpath("//button[normalize-space(.)='Add Block']");
+    private static final By WO_AUTO_SCHEDULE_BTN = By.xpath("//button[normalize-space(.)='Auto-Schedule']");
+    // Team and Schedule are wizard STEPS now, not h6 sections with a sibling "+" button, so
+    // the following-sibling form below cannot match on the reachable steps.
     private static final By WO_TEAM_ADD_BTN = By.xpath("//h6[normalize-space()='Team']/following-sibling::button[1]");
     private static final By WO_SCHEDULE_ADD_BTN = By.xpath("//h6[normalize-space()='Schedule']/following-sibling::button[1]");
 
@@ -1080,13 +1150,181 @@ public class WorkOrderPage {
         return !b.isEmpty() && b.get(0).isEnabled();
     }
 
-    /** Click the dialog's Create button (precise — not the page-header "Create Work Order"). */
+    /**
+     * Click the dialog's Create button (precise — not the page-header "Create Work Order").
+     *
+     * <p>Since the four-step wizard landed, Create exists ONLY on the final Review step. If it
+     * is absent this throws with the active step in the message, because the bare
+     * {@code TimeoutException} that used to come out of here reads as "the Create button is
+     * broken" when the real cause is that the caller is still on step 1 or 2.
+     */
     public void clickCreateWorkOrder() {
+        if (driver.findElements(WO_CREATE_BTN).isEmpty() && isCreateWorkOrderDialogOpen()) {
+            throw new IllegalStateException(
+                    "No Create button in the Create Work Order dialog — active step is '"
+                    + currentWizardStep() + "'. Create is only on the Review step; advance with "
+                    + "continueWizard() until reachReviewStep() returns true.");
+        }
         WebElement btn = wait.until(ExpectedConditions.elementToBeClickable(WO_CREATE_BTN));
         js.executeScript("arguments[0].scrollIntoView({block:'center'});", btn);
         pause(150);
         try { btn.click(); } catch (Exception e) { js.executeScript("arguments[0].click();", btn); }
         System.out.println("[WorkOrderPage] Clicked Create");
+    }
+
+    // ================================================================
+    // WIZARD STEP NAVIGATION (V1.36 four-step Create Work Order)
+    // ================================================================
+
+    /** True when the open create dialog renders a stepper rather than a single form. */
+    public boolean isCreateWizard() {
+        return !driver.findElements(WO_STEPPER).isEmpty();
+    }
+
+    /**
+     * The label of the active wizard step — "Work order", "Scope", "Team" or "Review" — or an
+     * empty string when no step is marked active (including when the dialog is closed).
+     * The leading step number MUI renders in the label is stripped.
+     */
+    public String currentWizardStep() {
+        for (WebElement e : driver.findElements(WO_ACTIVE_STEP_LABEL)) {
+            try {
+                if (!e.isDisplayed()) continue;
+                return e.getText().trim().replaceAll("^\\d+\\s*", "").replaceAll("\\s+", " ");
+            } catch (Exception ignored) { }
+        }
+        return "";
+    }
+
+    /** Every step label in the wizard, in order. */
+    public java.util.List<String> getWizardStepNames() {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (WebElement e : driver.findElements(By.cssSelector(".MuiStepLabel-label"))) {
+            try {
+                String t = e.getText().trim().replaceAll("^\\d+\\s*", "").replaceAll("\\s+", " ");
+                if (!t.isEmpty() && !out.contains(t)) out.add(t);
+            } catch (Exception ignored) { }
+        }
+        return out;
+    }
+
+    /** True when Continue is present AND enabled — i.e. the current step's gate is satisfied. */
+    public boolean isContinueEnabled() {
+        java.util.List<WebElement> b = driver.findElements(WO_CONTINUE_BTN);
+        return !b.isEmpty() && b.get(0).isEnabled();
+    }
+
+    /**
+     * Advance one step. Returns true only if the active step actually CHANGED — a disabled
+     * Continue, or a click that the wizard ignores, both return false rather than pretending
+     * to have advanced.
+     *
+     * <p>Do not try to skip ahead by clicking the numbered step buttons: they render as
+     * buttons but are inert. Verified 2026-09-02 — clicking "2 Scope", "3 Team" and "4 Review"
+     * in turn from step 1 left the wizard on step 1 every time, with no error.
+     */
+    public boolean continueWizard() {
+        String before = currentWizardStep();
+        java.util.List<WebElement> btns = driver.findElements(WO_CONTINUE_BTN);
+        if (btns.isEmpty() || !btns.get(0).isEnabled()) {
+            System.out.println("[WorkOrderPage] Continue unavailable/disabled on step '" + before + "'");
+            return false;
+        }
+        WebElement btn = btns.get(0);
+        js.executeScript("arguments[0].scrollIntoView({block:'center'});", btn);
+        pause(150);
+        try { btn.click(); } catch (Exception e) { js.executeScript("arguments[0].click();", btn); }
+        for (int i = 0; i < 16; i++) {
+            pause(400);
+            String now = currentWizardStep();
+            if (!now.equals(before)) {
+                System.out.println("[WorkOrderPage] Wizard advanced: '" + before + "' -> '" + now + "'");
+                return true;
+            }
+        }
+        System.out.println("[WorkOrderPage] Continue clicked but step stayed '" + before + "'");
+        return false;
+    }
+
+    /** Step back one step. Returns true when the active step changed. */
+    public boolean backWizard() {
+        String before = currentWizardStep();
+        java.util.List<WebElement> btns = driver.findElements(WO_BACK_BTN);
+        if (btns.isEmpty() || !btns.get(0).isEnabled()) return false;
+        try { btns.get(0).click(); } catch (Exception e) { js.executeScript("arguments[0].click();", btns.get(0)); }
+        for (int i = 0; i < 12; i++) {
+            pause(400);
+            if (!currentWizardStep().equals(before)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Advance until the Review step is active, at most {@code maxSteps} times. Returns true
+     * when Review is reached.
+     *
+     * <p>Expect this to return false on a facility/service pair whose scope resolves to zero
+     * assets: the Scope step keeps Continue disabled until at least one asset matches. Read
+     * {@link #getMatchingAssetsCount(int)} or {@link #getScopeBlockReason()} to tell that data
+     * condition apart from a locator problem.
+     */
+    public boolean reachReviewStep(int maxSteps) {
+        for (int i = 0; i < maxSteps; i++) {
+            if ("Review".equalsIgnoreCase(currentWizardStep())) return true;
+            if (!continueWizard()) return false;
+        }
+        return "Review".equalsIgnoreCase(currentWizardStep());
+    }
+
+    /**
+     * Why the Scope step is refusing to advance, as the dialog words it, or an empty string
+     * when nothing matches. Covers both the July wording ("No assets in this site are
+     * eligible…") and the phrasing seen on 2026-09-02, which explains the shortfall in terms
+     * of issue workability: "This site has 14 open issues, but none are workable (3 not linked
+     * to an asset, 10 on deleted assets)."
+     */
+    public String getScopeBlockReason() {
+        String text = getCreateDialogText();
+        for (String marker : new String[] {
+                "No assets in this site are eligible",
+                "none are workable",
+                "has no procedures configured",
+                "0 matching assets" }) {
+            int i = text.indexOf(marker);
+            if (i < 0) continue;
+            int start = text.lastIndexOf('\n', i) + 1;
+            int end = text.indexOf('\n', i);
+            return (end < 0 ? text.substring(start) : text.substring(start, end)).trim();
+        }
+        return "";
+    }
+
+    /** Pick the first available option in the Scope step's "First service to perform" field. */
+    public boolean selectFirstService() {
+        return selectFirstAutocompleteOption(WO_FIRST_SERVICE_INPUT);
+    }
+
+    /** True when the Scope step's resolved-asset readout has rendered. */
+    public boolean hasScopeMatchReadout() {
+        return !driver.findElements(WO_SCOPE_MATCH_TEXT).isEmpty();
+    }
+
+    /** Click "Save service" on the wizard's service steps. Returns false when absent. */
+    public boolean clickSaveService() {
+        java.util.List<WebElement> b = driver.findElements(WO_SAVE_SERVICE_BTN);
+        if (b.isEmpty() || !b.get(0).isEnabled()) return false;
+        try { b.get(0).click(); } catch (Exception e) { js.executeScript("arguments[0].click();", b.get(0)); }
+        pause(1200);
+        return true;
+    }
+
+    /** Cancel the wizard without committing. */
+    public boolean cancelWizard() {
+        java.util.List<WebElement> b = driver.findElements(WO_CANCEL_BTN);
+        if (b.isEmpty()) return false;
+        try { b.get(0).click(); } catch (Exception e) { js.executeScript("arguments[0].click();", b.get(0)); }
+        pause(1200);
+        return !isCreateWorkOrderDialogOpen();
     }
 
     /** Open the given MUI Autocomplete and click its first real option; returns the chosen text or null. */

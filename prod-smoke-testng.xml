@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+
+<!--
+  PRODUCTION read-only smoke.
+
+  Deliberately NOT referenced from testng.xml, so a plain `mvn test` cannot reach it.
+  Every test additionally skips unless PROD_SMOKE=true is passed, and skips again if
+  BASE_URL is a QA/staging/local host or if credentials were not supplied through the
+  environment — see ProductionSmokeTestNG's class javadoc for why each interlock exists.
+
+  Configuration follows the repo convention: env vars / -D system properties only, no
+  <parameter> entries. Credentials must come from a secret store and must never be
+  committed — the defaults in AppConstants are the QA tenant's.
+
+  Run:
+    mvn test -DsuiteXmlFile=prod-smoke-testng.xml \
+             -DPROD_SMOKE=true \
+             -DBASE_URL=https://acme.egalvanic.ai \
+             -DUSER_EMAIL=<prod seat> -DUSER_PASSWORD=<secret>
+
+  Expect TC_PROD_06 to skip unless USER_EMAIL points at a seat holding two or more roles:
+  a first-role-only gate is indistinguishable from a correct union on a single-role
+  account, so the test refuses to pass vacuously.
+
+  parallel is off on purpose: this points at production, and one browser at a time keeps
+  the load footprint minimal and the failure attribution unambiguous.
+-->
+<suite name="eGalvanic Production Smoke (7 TCs, read-only)" verbose="1" parallel="false">
+
+    <listeners>
+        <listener class-name="com.egalvanic.qa.listeners.ConsoleProgressListener"/>
+    </listeners>
+
+    <test name="Production-Read-Only-Smoke">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.ProductionSmokeTestNG"/>
+        </classes>
+    </test>
+
+</suite>

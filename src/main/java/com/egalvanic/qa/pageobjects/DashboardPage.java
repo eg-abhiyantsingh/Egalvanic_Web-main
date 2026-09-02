@@ -22,13 +22,12 @@ public class DashboardPage {
     // PageFactory elements
     @FindBy(css = "nav")
     WebElement navigationMenu;
-    
-    @FindBy(xpath = "//*[contains(text(),'Dashboard') or contains(text(),'Sites')]")
-    WebElement dashboardHeader;
-    
-    @FindBy(xpath = "//a[contains(@href,'logout') or contains(text(),'Logout')]")
-    WebElement logoutLink;
-    
+
+    // Removed 2026-09-02: `dashboardHeader` and `logoutLink` had ZERO references anywhere under
+    // src/ and both were wrong for V1.36 — "Sites" is no longer a route (it is a tab on
+    // /customers) and there is no logout ANCHOR at all; logout is the rail avatar button, which
+    // clickLogout() below already drives.
+
     static final int DEFAULT_TIMEOUT = 25;
     
     /**

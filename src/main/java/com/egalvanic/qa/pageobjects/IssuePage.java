@@ -42,9 +42,8 @@ public class IssuePage {
     // LOCATORS
     // ================================================================
 
-    // Navigation
-    private static final By ISSUES_NAV = By.xpath(
-            "//a[normalize-space()='Issues'] | //span[normalize-space()='Issues']");
+    // Navigation is done through NavCatalog.navigateTo(driver, "/issues") — which keys on the
+    // anchor's href — so there is no by-text ISSUES_NAV locator here any more.
 
     // Create Issue button (page header "+" button)
     private static final By CREATE_ISSUE_BTN = By.xpath(

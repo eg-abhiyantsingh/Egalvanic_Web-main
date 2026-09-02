@@ -53,7 +53,11 @@ public class LocationPage {
     /** The "Danger Zone" delete inside the Edit dialog: "Delete Building" / "Delete Floor" / "Delete Room". */
     private static final By DIALOG_DANGER_DELETE_BTN = By.xpath(
         "//div[@role='dialog']//button[starts-with(normalize-space(),'Delete ')]");
-    private static final By SAVE_BTN = By.xpath("//button[contains(text(),'Save') or contains(text(),'Update')]");
+    // normalize-space(.) not contains(text(),…): MUI wraps a button's label in a nested
+    // <span>, so text() is the button's own empty text node and the old form matched nothing.
+    private static final By SAVE_BTN = By.xpath(
+            "//button[normalize-space(.)='Save' or normalize-space(.)='Update'"
+            + " or normalize-space(.)='Save Changes']");
 
     public LocationPage(WebDriver driver) {
         this.driver = driver;
@@ -404,11 +408,19 @@ public class LocationPage {
         boolean hasDialog = driver.findElements(DIALOG).size() > 0;
         System.out.println("[LocationPage] Edit mode: dialog=" + hasDialog);
 
-        // Find the name input — could be in dialog or inline
-        By nameInput = hasDialog ? NAME_INPUT :
-                By.xpath("//input[contains(@name,'name') or contains(@placeholder,'Name') or @id='name'] | " + NAME_INPUT.toString().replace("By.xpath: ", ""));
+        // Find the name input — could be in a dialog or in the inline detail panel.
+        //
+        // This used to build the inline branch by string-surgery on NAME_INPUT.toString()
+        // (stripping the "By.xpath: " prefix off Selenium's debug rendering) and then throw
+        // the result away, typing into the dialog-scoped NAME_INPUT regardless. In inline
+        // mode that locator does not resolve, so the rename silently never happened and the
+        // subsequent Save asserted against an unchanged name. Both halves are now real
+        // locators and the chosen one is actually used.
+        By nameInput = hasDialog
+                ? com.egalvanic.qa.utils.V136Locators.fieldByLabelIn("MuiDialog-paper", "Name")
+                : com.egalvanic.qa.utils.V136Locators.fieldByLabel("Name");
 
-        typeField(NAME_INPUT, newName);
+        typeField(nameInput, newName);
         try {
             wait.until(ExpectedConditions.elementToBeClickable(SAVE_BTN)).click();
         } catch (Exception e) {

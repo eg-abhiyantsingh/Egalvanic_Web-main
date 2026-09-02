@@ -23,24 +23,14 @@ public class AssetPage {
 
     private static final int TIMEOUT = 25;
 
-    // Navigation — match exact text "Assets" AND also sidebar patterns where the label is
-    // wrapped in a larger structure (e.g., <a href="/assets"><span>Assets</span><badge>42</badge></a>).
-    // Includes a href-based fallback so SPA router links match even when text rendering is late.
-    private static final By ASSETS_NAV = By.xpath(
-            "//nav//a[@href='/assets' or @href='/assets/']"
-            + " | //aside//a[@href='/assets' or @href='/assets/']"
-            + " | //a[@href='/assets' or @href='/assets/']"
-            + " | //span[normalize-space()='Assets']"
-            + " | //a[normalize-space()='Assets']"
-            + " | //button[normalize-space()='Assets']"
-            + " | //*[@role='button' and normalize-space()='Assets']");
-    private static final By LOCATIONS_NAV = By.xpath(
-            "//nav//a[@href='/locations' or @href='/locations/']"
-            + " | //aside//a[@href='/locations' or @href='/locations/']"
-            + " | //a[@href='/locations' or @href='/locations/']"
-            + " | //span[normalize-space()='Locations']"
-            + " | //a[normalize-space()='Locations']"
-            + " | //button[normalize-space()='Locations']");
+    // Navigation — href only. V1.36 second-level nav items are real anchors
+    // (a.MuiListItemButton-root[href="/assets"]), and href is the ONLY unique key: the
+    // 2026-09-02 re-map of the live rail found the same sidebar LABEL on up to three
+    // different routes, so the by-text branches this union used to carry
+    // (//span|//a|//button|//*[@role='button'] on 'Assets'/'Locations') were ambiguous by
+    // construction and could match in-page chrome as easily as the nav item.
+    private static final By ASSETS_NAV = By.cssSelector("a[href='/assets'], a[href='/assets/']");
+    private static final By LOCATIONS_NAV = By.cssSelector("a[href='/locations'], a[href='/locations/']");
     private static final By CREATE_ASSET_BTN = By.xpath("//button[normalize-space()='Create Asset']");
 
     // Asset form fields (using placeholder selectors — confirmed by diagnostic)

@@ -42,7 +42,10 @@ public class TabbedModulesSmokeTestNG extends BaseTest {
         List<Object[]> rows = new ArrayList<>();
         for (String route : NavCatalog.tabbedRoutes()) {
             if (route.contains("{id}")) continue;   // detail tab sets need a data row — module suites own those
-            rows.add(new Object[]{route, NavCatalog.labelFor(route)});
+            // displayLabelFor, not labelFor: /classes is a tabbed page that the nav no longer
+            // links (it links the three split *-classes routes since the 2026-09-02 re-map), so
+            // labelFor returns null there and Extent rejects a null feature name.
+            rows.add(new Object[]{route, NavCatalog.displayLabelFor(route)});
         }
         return rows.toArray(new Object[0][]);
     }

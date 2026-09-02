@@ -36,14 +36,19 @@ public class ArcFlashPage {
     private final JavascriptExecutor js;
     private static final int TIMEOUT = 30;
 
-    private static final By ARC_FLASH_NAV = By.xpath(
-            "//a[@href='/arc-flash' or @href='/arc-flash/']"
-            + " | //span[normalize-space()='Arc Flash Readiness']"
-            + " | //p[normalize-space()='Arc Flash Readiness']");
+    // href only. V1.36 second-level nav items are real anchors and href is the only unique key:
+    // the by-text branches ('Arc Flash Readiness' on //span and //p) matched page chrome as
+    // readily as the nav item, and sidebar labels are no longer unique per route (re-map
+    // 2026-09-02).
+    private static final By ARC_FLASH_NAV =
+            By.cssSelector("a[href='/arc-flash'], a[href='/arc-flash/']");
 
     // Tab strip (role=tab). The page renders responsive duplicates — we always act on the visible one.
+    // Scoped to <main> and matched with starts-with by V136Locators.tab: "Engineering" is both a
+    // rail category and an in-page tab label, so an unscoped //*[@role='tab'] match can hit rail
+    // chrome, and live tabs carry count badges ("Engineering 4"), which breaks normalize-space()=.
     private static By tab(String name) {
-        return By.xpath("//*[@role='tab'][normalize-space()='" + name + "']");
+        return com.egalvanic.qa.utils.V136Locators.tab(name);
     }
     private static final By ACTIVE_TAB = By.xpath("//*[@role='tab'][@aria-selected='true']");
 
@@ -610,83 +615,54 @@ public class ArcFlashPage {
         return true;
     }
 
-    // ── Role selector (header "Select role" combobox / Autocomplete) ──
+    // ── Role selector — RETIRED in V1.36 ────────────────────────
+    //
+    // The header "Select role" view selector no longer exists: the V1.36 redesign removed the
+    // role switcher from the UI entirely, so //input[@placeholder='Select role'] matches
+    // nothing. The four methods below are kept only because ArcFlashPlatformTestNG and
+    // ArcFlashRoleMatrixTestNG still call them; each now returns a fixed "not available"
+    // value instead of silently polling a control that cannot appear.
 
+    /**
+     * @deprecated The Arc Flash header role selector was REMOVED from the UI in V1.36, so there
+     *     is no value to read. Always returns the empty string. Callers asserting on a role
+     *     value are testing nothing and should be retired or rewritten against a real
+     *     multi-role signal.
+     */
+    @Deprecated
     public String getRoleValue() {
-        List<WebElement> els = driver.findElements(By.xpath("//input[@placeholder='Select role']"));
-        return els.isEmpty() ? "" : String.valueOf(els.get(0).getAttribute("value"));
+        return "";
     }
 
+    /**
+     * @deprecated The Arc Flash header role selector was REMOVED from the UI in V1.36. Always
+     *     returns false, so an {@code assertTrue(hasRoleSelector())} fails loudly rather than
+     *     passing against a control that no longer exists.
+     */
+    @Deprecated
     public boolean hasRoleSelector() {
-        return !driver.findElements(By.xpath("//input[@placeholder='Select role']")).isEmpty();
+        return false;
     }
 
-    /** Open the role Autocomplete and read all options (polls + retries — a plain click can race the listbox). */
+    /**
+     * @deprecated The Arc Flash header role selector was REMOVED from the UI in V1.36, so it has
+     *     no option list. Always returns an empty list.
+     */
+    @Deprecated
     public List<String> getRoleOptions() {
-        for (int attempt = 0; attempt < 3; attempt++) {
-            List<WebElement> inps = driver.findElements(By.xpath("//input[@placeholder='Select role']"));
-            if (inps.isEmpty()) return new ArrayList<>();
-            WebElement inp = inps.get(0);
-            try { js.executeScript("arguments[0].scrollIntoView({block:'center'});", inp); } catch (Exception ignored) {}
-            try { new Actions(driver).moveToElement(inp).click().perform(); } catch (Exception e) { try { inp.click(); } catch (Exception ignored) {} }
-            for (int i = 0; i < 12 && driver.findElements(LISTBOX_OPTION).isEmpty(); i++) pause(300);
-            List<String> out = new ArrayList<>();
-            for (WebElement li : driver.findElements(LISTBOX_OPTION)) {
-                String t = li.getText().trim(); if (!t.isEmpty()) out.add(t);
-            }
-            try { new Actions(driver).sendKeys(Keys.ESCAPE).perform(); } catch (Exception ignored) {}
-            pause(300);
-            if (!out.isEmpty()) return out;
-            pause(400);
-        }
         return new ArrayList<>();
     }
 
     /**
-     * Select a role in the header view selector — a MUI <b>Autocomplete</b>. Robust pattern: focus, clear,
-     * <b>type the name to filter</b> the option list (avoids virtualisation/scroll misses), then click the
-     * filtered exact match. Retries up to 3×. Returns true once the selector reflects {name}.
+     * @deprecated The Arc Flash header role selector was REMOVED from the UI in V1.36 — there is
+     *     no in-page way to switch roles any more. This is a no-op that always returns false;
+     *     role coverage has to come from logging in as the role instead.
      */
+    @Deprecated
     public boolean selectRole(String name) {
-        if (matchesRole(name)) return true; // already selected
-        Keys mod = System.getProperty("os.name", "").toLowerCase().contains("mac") ? Keys.COMMAND : Keys.CONTROL;
-        By inputBy = By.xpath("//input[@placeholder='Select role']");
-        for (int attempt = 0; attempt < 4; attempt++) {
-            try {
-                // Re-find + wait clickable each attempt (a role-switch recompute can briefly overlay/re-mount it).
-                WebElement inp = new WebDriverWait(driver, Duration.ofSeconds(10))
-                        .until(ExpectedConditions.elementToBeClickable(inputBy));
-                js.executeScript("arguments[0].scrollIntoView({block:'center'});", inp);
-                try { new Actions(driver).moveToElement(inp).click().perform(); } catch (Exception e) { inp.click(); }
-                pause(300);
-                try { inp.sendKeys(Keys.chord(mod, "a"), Keys.DELETE); } catch (Exception ignored) {}
-                pause(250);
-                inp.sendKeys(name);                       // type → filters the Autocomplete to matching options
-                pause(800);
-                // Keyboard-commit the highlighted filtered option (robust vs click-target / virtualisation).
-                inp.sendKeys(Keys.ARROW_DOWN);
-                pause(250);
-                inp.sendKeys(Keys.ENTER);
-                // The readiness recomputes under the new role (some roles, e.g. Electrical Engineer, are slow) —
-                // poll for the selector to settle rather than checking once.
-                for (int w = 0; w < 12; w++) {
-                    pause(1000);
-                    if (matchesRole(name)) {
-                        System.out.println("[ArcFlashPage] selectRole('" + name + "') -> value now '" + getRoleValue() + "'");
-                        return true;
-                    }
-                }
-            } catch (Exception ignored) {}
-            try { new Actions(driver).sendKeys(Keys.ESCAPE).perform(); } catch (Exception ignored) {}
-            pause(500);
-        }
-        System.out.println("[ArcFlashPage] selectRole('" + name + "') FAILED — value '" + getRoleValue() + "'");
-        return matchesRole(name);
-    }
-
-    private boolean matchesRole(String name) {
-        String v = getRoleValue();
-        return name.equalsIgnoreCase(v) || (!v.isEmpty() && v.toLowerCase().contains(name.toLowerCase()));
+        System.out.println("[ArcFlashPage] selectRole('" + name + "') is a NO-OP — "
+                + "the V1.36 redesign removed the role selector from the UI.");
+        return false;
     }
 
     // ════════════════════════════════════════════════════════════

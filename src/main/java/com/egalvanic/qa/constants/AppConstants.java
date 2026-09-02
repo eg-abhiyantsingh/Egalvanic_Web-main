@@ -117,6 +117,11 @@ public class AppConstants {
     public static final String MODULE_CONNECTIONS = "Connections";
     public static final String MODULE_ISSUES = "Issues";
     public static final String MODULE_SMOKE_TEST = "Smoke Test";
+    /** Production read-only smoke — kept a separate module so prod results never merge into a QA report. */
+    public static final String MODULE_PRODUCTION = "Production Smoke";
+    public static final String FEATURE_PROD_AVAILABILITY = "Prod Availability";
+    public static final String FEATURE_PROD_NAV_PARITY = "Prod Nav Parity";
+    public static final String FEATURE_PROD_REGRESSION = "Prod Regression";
 
     // ============================================
     // FEATURE NAMES - SITE SELECTION
