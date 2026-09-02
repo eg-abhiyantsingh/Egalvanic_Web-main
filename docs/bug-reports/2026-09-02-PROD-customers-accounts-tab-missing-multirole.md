@@ -117,3 +117,21 @@ So the exact statement is: QA HAS the accounts feature (as the Customers page, g
 normal route/nav permissions); QA does NOT have the tab split or the first-role gate — both arrived
 together in the V2.0 redesign, which is where the regression lives. On QA no multi-role user loses
 accounts; on prod V2.0 they do, per the root cause above.
+
+## Third instance checked: BCES-IQ (acme.bces-iq.com, V2.0) — the natural experiment
+
+Seat `shubham.goswami+acme` holds the SAME five roles as the affected prod user, but its /me array
+order is **Super Admin first**. Result: **Accounts | Sites tabs render, "New Account" present**
+(live DOM: `tabs:["Accounts","Sites"]`). The bundle (`index-DOYgnfCf.js`) carries the identical
+gate — same Set {Account Manager, Admin, EG Admin, Super Admin}, both first-role reads present.
+
+That completes the proof by controlled comparison:
+
+| Seat | Role SET | /me order | Accounts tab |
+|---|---|---|---|
+| abhiyant+acme @ prod | PM,AM,EE,SA,Admin | **PM first** | ❌ missing |
+| shubham+acme @ BCES-IQ | same five | **SA first** | ✅ shown |
+
+Same code, same role set — outcome flips on array order alone. Also observed: the account-menu
+popover displays chips in a DIFFERENT order than /me (both seats show "Project Manager" first in
+chips), so the popover cannot be used to predict the gate; only the /me array order matters.
