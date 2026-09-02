@@ -50,3 +50,42 @@ Sales → DATA → Customers. The defect is the missing Accounts tab within that
   precedence for AM+admin unions — the #1351 pattern: gate on permission, fall back explicitly).
 - Sweep the remaining RoleGate uses (#1351 named 11) for the same subtractive pattern.
 - When V2.0 lands on QA, QA will regression-test the role matrix on this page.
+
+---
+
+## ROOT CAUSE — found in the shipped V2.0 bundle (2026-09-02, prod access)
+
+Verified live as `abhiyant.singh+acme` on prod: the seat holds EVERY account grant
+(`accounts.view/manage/view_detail_page`, `features.accounts.view`, `features.customers.view`),
+`/me` and `/features/access` agree (129==129, union model working) — yet the page renders zero
+`role="tab"` elements. The gate is in the frontend, and here it is (deminified from
+`assets/index-DmC-eyhY.js`, fn `Vwr` @ ~11905168):
+
+    const y7o = new Set(["Account Manager", "Admin", "EG Admin", "Super Admin"]);
+    function x7o(e){ return y7o.has(e || "") }
+    // Customers page tab builder:
+    const n = userDetails?.roles?.find(g => g)?.name || "";   // <-- FIRST role in the array
+    const tabs = x7o(n) ? [Accounts, Sites] : [Sites];
+
+`roles.find(g => g)` returns the FIRST element, so the Accounts tab depends on which role happens
+to be listed first in the user's roles array. The affected user's /me order is
+["Project Manager", "Account Manager", "Super Admin", "Electrical Engineer", "Admin"] — PM first,
+so three qualifying roles (AM, SA, Admin) are never consulted. A user whose array leads with a
+qualifying role (Mukul) gets the tab. Order-dependent per user: the same role SET can behave
+differently, which is why it looks random across seats.
+
+**Second instance, same bundle:** the Test Equipment page (fn `wGo`) hides the
+"Test Equipment Library" tab when `roles.find(v=>v)?.name === "Project Manager"` — identical
+first-role read, identical order-dependence.
+
+**Fix:** `roles?.some(g => y7o.has(g?.name))` — the correct `.some()` pattern already exists 7
+times in this bundle, including three lines below the broken gate. Better still, gate on the
+`accounts.view` permission per #1351's PermissionGate pattern.
+
+## Prod verification of last week's releases (same session, read-only)
+
+- `/staff/*` routes on prod: `401 eg_staff_denied` (PUT configs + dataprep probed) — closes the
+  fork ticket's "confirm allowlist unset on prod (#1080)" action item.
+- SKM: `/skm-cable-library/sizes?cable_oid=436089` ships `skm_size_id` (1 AWG -> 3841) on prod.
+- NULL-key backfill on prod: **0 NULL keys across 1,862 live classes and 3,539 subtypes** — the
+  ticket's prod spot-check item, clean.
