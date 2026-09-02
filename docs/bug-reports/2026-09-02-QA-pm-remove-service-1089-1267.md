@@ -1,4 +1,6 @@
-# PM standards remove-service (#1089 / #1267) — QA verdict: PASS, 1 discrepancy
+# A service could be added to a PM standard but never removed, and PM Plans sat in Admin away from the Services it is built on
+
+**QA verdict — #1089 / #1267: PASS, 1 discrepancy**
 
 **Tested:** 2026-09-02 · **Env:** acme.qa.egalvanic.ai V1.36 · driven live in the browser (Admin).
 Ticket said "dev only"; per standing rule I tested QA directly — **it is live on QA.**
