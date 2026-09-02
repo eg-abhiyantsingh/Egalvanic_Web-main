@@ -103,3 +103,17 @@ times in this bundle, including three lines below the broken gate. Better still,
 - Note for the sweep: QA's bundle also carries a different role-name Set
   `["Account Manager","Electrical Engineer"]` gating something else — include it when sweeping the
   role-name gates (#1351's remaining-RoleGates follow-up).
+
+### Precision update after owner review ("account tab must be there with a different name")
+
+Checked carefully on QA — live DOM plus component code — and the owner is right in substance:
+**on QA the Accounts capability exists under the name "Customers", as the WHOLE page, not a tab.**
+Proof: the /customers rows cross-checked against `GET /account/by-company/{id}` — 6/6 sampled
+account names from the accounts API appear as page rows; "New Customer" invokes account-create
+(component code path ends in `account.id`). Live DOM: **0** `role="tab"` elements (no tab bar under
+any name), and the component contains no tab array and no role checks.
+
+So the exact statement is: QA HAS the accounts feature (as the Customers page, gated only by the
+normal route/nav permissions); QA does NOT have the tab split or the first-role gate — both arrived
+together in the V2.0 redesign, which is where the regression lives. On QA no multi-role user loses
+accounts; on prod V2.0 they do, per the root cause above.
