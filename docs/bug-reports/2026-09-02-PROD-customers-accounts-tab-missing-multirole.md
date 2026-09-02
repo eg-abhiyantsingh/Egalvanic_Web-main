@@ -89,3 +89,17 @@ times in this bundle, including three lines below the broken gate. Better still,
 - SKM: `/skm-cable-library/sizes?cable_oid=436089` ships `skm_size_id` (1 AWG -> 3841) on prod.
 - NULL-key backfill on prod: **0 NULL keys across 1,862 live classes and 3,539 subtypes** — the
   ticket's prod spot-check item, clean.
+
+## Is this on QA? (checked in QA's own bundle, index-BCC_7hbn.js, 2026-09-02)
+
+- **Customers Accounts-tab bug: NOT on QA — the component does not exist there.** `label:"Accounts"`
+  occurs ZERO times in QA's bundle; QA still ships the older single-list /customers page. The bug
+  will ARRIVE on QA when the V2.0 frontend is promoted — regression-test it then (or pre-empt by
+  fixing before promotion).
+- **The second instance IS on QA today:** the identical Test Equipment gate exists in QA's bundle
+  (fn `Bea` ≡ prod's `wGo`): first role === "Project Manager" hides the Test Equipment Library tab,
+  regardless of other roles held. Demonstrable on QA with a PM-first multi-role seat (e.g. the
+  PM+Admin fixture from the ZP-4033 verification — /me order was ["Project Manager","Admin"]).
+- Note for the sweep: QA's bundle also carries a different role-name Set
+  `["Account Manager","Electrical Engineer"]` gating something else — include it when sweeping the
+  role-name gates (#1351's remaining-RoleGates follow-up).
