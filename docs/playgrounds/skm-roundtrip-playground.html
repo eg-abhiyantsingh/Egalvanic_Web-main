@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SKM Round-Trip Test Designer — ZP-3836</title>
+<style>
+  :root {
+    --bg: #12161d; --panel: #1a202a; --panel2: #202734; --line: #2c3442;
+    --ink: #e8eaed; --ink2: #aab2bf; --ink3: #6f7887;
+    --accent: #6fa3e8; --accent-dim: #1c2a40;
+    --pass: #4cc38a; --fail: #e5645a; --warn: #d9a54a;
+    --mono: "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  .top { padding: 14px 20px 10px; border-bottom: 1px solid var(--line); display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .top h1 { font-size: 16px; margin: 0; font-weight: 650; }
+  .top .sub { color: var(--ink3); font-size: 12.5px; }
+  .presets { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+  .presets button {
+    background: var(--panel2); color: var(--ink2); border: 1px solid var(--line); border-radius: 4px;
+    font-size: 12px; padding: 4px 10px; cursor: pointer;
+  }
+  .presets button:hover { color: var(--ink); border-color: var(--accent); }
+  .layout { display: grid; grid-template-columns: 330px 1fr; gap: 0; min-height: calc(100vh - 51px); }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+  .controls { border-right: 1px solid var(--line); padding: 14px 16px 40px; overflow-y: auto; }
+  .grp { margin-bottom: 18px; }
+  .grp > h2 {
+    font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink3);
+    margin: 0 0 8px; font-weight: 600; font-family: var(--mono);
+  }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 5px 0; }
+  .row label.name { color: var(--ink2); font-size: 13px; }
+  .row .val { font-family: var(--mono); font-size: 12px; color: var(--accent); min-width: 52px; text-align: right; }
+  input[type=range] { width: 130px; accent-color: var(--accent); }
+  select, input[type=text] {
+    background: var(--panel2); color: var(--ink); border: 1px solid var(--line); border-radius: 4px;
+    font-size: 12.5px; padding: 4px 8px; font-family: inherit;
+  }
+  .switch { position: relative; width: 34px; height: 19px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider-t { position: absolute; inset: 0; background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; cursor: pointer; transition: background .15s; }
+  .slider-t:before { content: ""; position: absolute; width: 13px; height: 13px; left: 2px; top: 2px; background: var(--ink3); border-radius: 50%; transition: .15s; }
+  .switch input:checked + .slider-t { background: var(--accent-dim); border-color: var(--accent); }
+  .switch input:checked + .slider-t:before { transform: translateX(15px); background: var(--accent); }
+  .radio-col { display: flex; flex-direction: column; gap: 4px; }
+  .radio-col label {
+    display: flex; gap: 8px; align-items: flex-start; padding: 7px 9px; border: 1px solid var(--line);
+    border-radius: 5px; cursor: pointer; font-size: 12.5px; color: var(--ink2); background: var(--panel);
+  }
+  .radio-col label:has(input:checked) { border-color: var(--accent); background: var(--accent-dim); color: var(--ink); }
+  .radio-col input { accent-color: var(--accent); margin-top: 2px; }
+  .radio-col .hint { display: block; font-size: 11px; color: var(--ink3); }
+  .mut { border: 1px solid var(--line); border-radius: 5px; padding: 2px 9px; margin-bottom: 5px; background: var(--panel); }
+  .mut.on { border-color: var(--warn); }
+  .mut.d1 .name::after { content: " ⚠ D1"; color: var(--fail); font-size: 11px; font-weight: 600; }
+  .disabled-note { font-size: 11.5px; color: var(--ink3); font-style: italic; padding: 2px 0 0; }
+  fieldset.muts { border: none; margin: 0; padding: 0; }
+  fieldset.muts:disabled { opacity: .45; }
+
+  .main { padding: 16px 20px 30px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 1200px) { .cards { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; }
+  .card h3 { margin: 0 0 10px; font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink3); font-family: var(--mono); font-weight: 600; }
+  svg { width: 100%; height: auto; display: block; }
+  .tiles { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .tile { background: var(--panel2); border: 1px solid var(--line); border-radius: 5px; padding: 7px 12px; min-width: 74px; text-align: center; }
+  .tile .n { font-family: var(--mono); font-size: 19px; font-weight: 600; display: block; }
+  .tile .l { font-size: 10.5px; color: var(--ink3); text-transform: uppercase; letter-spacing: .05em; }
+  .tile.new .n { color: var(--pass); } .tile.upd .n { color: var(--accent); } .tile.conn .n { color: var(--ink2); }
+  .btnprev {
+    display: inline-block; background: var(--ink); color: var(--bg); border-radius: 5px;
+    font-size: 13px; font-weight: 600; padding: 7px 16px; margin: 4px 0 10px;
+  }
+  .expect { font-family: var(--mono); font-size: 12px; background: var(--panel2); border: 1px solid var(--line); border-radius: 5px; padding: 10px 12px; overflow-x: auto; white-space: pre; line-height: 1.6; }
+  .expect .ok { color: var(--pass); } .expect .bad { color: var(--fail); } .expect .wr { color: var(--warn); }
+  .d1banner { border: 1px solid var(--fail); background: rgba(229,100,90,.08); color: var(--ink2); border-radius: 5px; padding: 8px 12px; font-size: 12.5px; margin-top: 10px; display: none; }
+  .d1banner b { color: var(--fail); }
+  .xml { font-family: var(--mono); font-size: 11.5px; line-height: 1.55; background: var(--panel2); border: 1px solid var(--line); border-radius: 5px; padding: 10px 12px; overflow-x: auto; white-space: pre; max-height: 300px; overflow-y: auto; }
+  .xml .tag { color: var(--accent); } .xml .attr { color: var(--ink2); } .xml .val { color: var(--pass); } .xml .cm { color: var(--ink3); } .xml .mut { color: var(--warn); background: none; border: none; padding: 0; }
+
+  .promptbar { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; }
+  .promptbar .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .promptbar h3 { margin: 0; font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink3); font-family: var(--mono); font-weight: 600; }
+  #copyBtn { background: var(--accent); color: #0d1117; border: none; border-radius: 5px; font-size: 12.5px; font-weight: 600; padding: 6px 16px; cursor: pointer; }
+  #copyBtn:hover { filter: brightness(1.1); }
+  #promptOut { font-size: 13px; color: var(--ink); line-height: 1.6; white-space: pre-wrap; font-family: inherit; margin: 0; }
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>SKM Round-Trip Test Designer</h1>
+  <span class="sub">ZP-3836 · designs an import scenario + predicts the verified V1.36 outcome · copy the prompt to run it</span>
+  <div class="presets">
+    <button data-p="golden">Golden round trip</button>
+    <button data-p="d1">D1 defect repro</button>
+    <button data-p="fresh">Fresh PTW study</button>
+    <button data-p="mixed">Mixed + rename</button>
+    <button data-p="zero">Zero-value trap</button>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="controls">
+    <div class="grp">
+      <h2>Study composition</h2>
+      <div class="row"><label class="name">Meter (port-2 check)</label>
+        <label class="switch"><input type="checkbox" id="meter" checked><span class="slider-t"></span></label></div>
+      <div class="row"><label class="name">Cable A</label>
+        <select id="cableA"><option value="off">off</option><option value="0" selected>KeyInLibrary 0 · hand</option><option value="3">KeyInLibrary 3 · Red Book</option></select></div>
+      <div class="row"><label class="name">Cable B</label>
+        <select id="cableB"><option value="off">off</option><option value="0">KeyInLibrary 0 · hand</option><option value="3" selected>KeyInLibrary 3 · Red Book</option></select></div>
+      <div class="row"><label class="name">Transformer (typed values)</label>
+        <label class="switch"><input type="checkbox" id="txHand" checked><span class="slider-t"></span></label></div>
+      <div class="row"><label class="name">↳ kVA</label><input type="range" id="kva" min="75" max="1000" step="25" value="500"><span class="val" id="kvaVal">500</span></div>
+      <div class="row"><label class="name">↳ Z%</label><input type="range" id="zpct" min="2" max="8" step="0.25" value="5.75"><span class="val" id="zpctVal">5.75</span></div>
+      <div class="row"><label class="name">Zero-value transformer</label>
+        <label class="switch"><input type="checkbox" id="txZero" checked><span class="slider-t"></span></label></div>
+      <div class="row"><label class="name">Motor</label>
+        <label class="switch"><input type="checkbox" id="motor" checked><span class="slider-t"></span></label></div>
+    </div>
+
+    <div class="grp">
+      <h2>Alternate UID mode</h2>
+      <div class="radio-col" id="uidMode">
+        <label><input type="radio" name="uid" value="none"><span>Fresh PTW study<span class="hint">no altIds → everything creates</span></span></label>
+        <label><input type="radio" name="uid" value="own" checked><span>Own-site EG export<span class="hint">altId = node UUID → round-trip update</span></span></label>
+        <label><input type="radio" name="uid" value="foreign"><span>Foreign SLD UUIDs<span class="hint">another site's UUIDs → must all be New</span></span></label>
+      </div>
+    </div>
+
+    <div class="grp">
+      <h2>Mutations (round-trip only)</h2>
+      <fieldset class="muts" id="mutsFs">
+        <div class="mut d1"><div class="row"><label class="name">Delete a connection</label>
+          <label class="switch"><input type="checkbox" id="mRemove"><span class="slider-t"></span></label></div></div>
+        <div class="mut d1"><div class="row"><label class="name">Rewire a feed</label>
+          <label class="switch"><input type="checkbox" id="mRewire"><span class="slider-t"></span></label></div></div>
+        <div class="mut"><div class="row"><label class="name">Rename the meter</label>
+          <label class="switch"><input type="checkbox" id="mRename"><span class="slider-t"></span></label></div></div>
+        <div class="mut"><div class="row"><label class="name">Change kVA in file (→750)</label>
+          <label class="switch"><input type="checkbox" id="mKva"><span class="slider-t"></span></label></div></div>
+        <div class="mut"><div class="row"><label class="name">Add UID-less components</label>
+          <input type="range" id="mNew" min="0" max="3" value="0" style="width:90px"><span class="val" id="mNewVal">0</span></div></div>
+        <div class="mut"><div class="row"><label class="name">Partial file (backbone only)</label>
+          <label class="switch"><input type="checkbox" id="mPartial"><span class="slider-t"></span></label></div></div>
+      </fieldset>
+      <div class="disabled-note" id="mutNote" style="display:none">Mutations need “Own-site EG export” mode.</div>
+    </div>
+
+    <div class="grp">
+      <h2>Target site</h2>
+      <div class="radio-col" id="siteMode">
+        <label><input type="radio" name="site" value="fixture" checked><span>Addtioanl Site (fixture)<span class="hint">fd1e25c4 · sacrificial, -3836 assets live here</span></span></label>
+        <label><input type="radio" name="site" value="other"><span>Other empty QA site<span class="hint">name it in the prompt before running</span></span></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="cards">
+      <div class="card">
+        <h3>Topology in the file</h3>
+        <svg id="topo" viewBox="0 0 460 10" preserveAspectRatio="xMidYMin meet"></svg>
+      </div>
+      <div class="card">
+        <h3>Expected review &amp; commit (verified V1.36 contract)</h3>
+        <div class="tiles" id="tiles"></div>
+        <div>Commit button → <span class="btnprev" id="btnPrev"></span></div>
+        <div class="expect" id="expect"></div>
+        <div class="d1banner" id="d1b"><b>Defect D1 applies:</b> on QA V1.36 the stale edge is NOT removed (<code>removed_edges: 0</code>). Spec says it should be. Keep the assertion in the prompt so the retest fails until the fix lands.</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>SKM XML skeleton (key blocks)</h3>
+      <div class="xml" id="xmlPrev"></div>
+    </div>
+    <div class="promptbar">
+      <div class="head"><h3>Test prompt for Claude</h3><button id="copyBtn">Copy Prompt</button></div>
+      <pre id="promptOut"></pre>
+    </div>
+  </div>
+</div>
+
+<script>
+const state = {
+  meter: true, cableA: '0', cableB: '3', txHand: true, kva: 500, zpct: 5.75,
+  txZero: true, motor: true, uid: 'own',
+  mRemove: false, mRewire: false, mRename: false, mKva: false, mNew: 0, mPartial: false,
+  site: 'fixture',
+};
+const DEFAULTS = JSON.parse(JSON.stringify(state));
+
+const PRESETS = {
+  golden: { ...DEFAULTS },
+  d1:     { ...DEFAULTS, mRemove: true },
+  fresh:  { ...DEFAULTS, uid: 'none' },
+  mixed:  { ...DEFAULTS, mRename: true, mNew: 1 },
+  zero:   { ...DEFAULTS, cableB: '0', txZero: true, txHand: false, motor: false, uid: 'none' },
+};
+
+// ---------- model ----------
+function buildModel(s) {
+  const nodes = [ {id:'UTIL', label:'UTIL-3836', cls:'Utility'}, {id:'MAIN', label:'MAIN-BUS-3836', cls:'Panelboard'}, {id:'CB', label:'CB-3836', cls:'Circuit Breaker'} ];
+  if (s.meter) nodes.push({id:'MTR', label: s.mRename && s.uid==='own' ? 'MTR-3836-RENAMED' : 'MTR-3836', cls:'Meter', renamed: s.mRename && s.uid==='own'});
+  nodes.push({id:'SUB', label:'SUB-PANEL-3836', cls:'Panelboard'});
+  if (s.cableA !== 'off') nodes.push({id:'CBLA', label: s.cableA==='3' ? 'CBL-REDBOOK-A' : 'CBL-HAND-A', cls:'Cable', kil: s.cableA});
+  if (s.cableB !== 'off') nodes.push({id:'CBLB', label: s.cableB==='3' ? 'CBL-REDBOOK-B' : 'CBL-HAND-B', cls:'Cable', kil: s.cableB});
+  if (s.txHand) nodes.push({id:'TXH', label:'TX-HAND-3836', cls:'Transformer'});
+  if (s.txZero) nodes.push({id:'TXZ', label:'TX-ZERO-3836', cls:'Transformer', zero: true});
+  if (s.motor) nodes.push({id:'MOT', label:'MOT-3836', cls:'Motor'});
+
+  const has = id => nodes.some(n => n.id === id);
+  const edges = [ ['UTIL','MAIN'], ['MAIN','CB'] ];
+  edges.push(s.meter ? ['CB','MTR'] : ['CB','SUB']);
+  if (s.meter) edges.push(['MTR','SUB']);
+  if (has('CBLA')) edges.push(['SUB','CBLA']);
+  if (has('CBLB')) edges.push(['SUB','CBLB']);
+  if (has('TXH')) edges.push(has('CBLA') ? ['CBLA','TXH'] : ['SUB','TXH']);
+  if (has('TXZ')) edges.push(has('CBLB') ? ['CBLB','TXZ'] : ['SUB','TXZ']);
+  if (has('MOT')) edges.push(has('TXH') ? ['TXH','MOT'] : ['SUB','MOT']);
+
+  // mutations act on the FILE view (round-trip only)
+  const mut = { removed: null, rewired: null, newNodes: [] };
+  const rt = s.uid === 'own';
+  if (rt && !s.mPartial) {
+    if (s.mRemove) {
+      mut.removed = has('TXZ') && has('CBLB') ? ['CBLB','TXZ'] : (s.meter ? ['MTR','SUB'] : edges[edges.length-1]);
+    }
+    if (s.mRewire && has('TXZ') && has('CBLB')) mut.rewired = { drop: ['CBLB','TXZ'], add: ['SUB','TXZ'] };
+    for (let i = 0; i < s.mNew; i++) mut.newNodes.push({id:'NEW'+i, label:'MOT-NEW-'+(i+1), cls:'Motor', isNew:true});
+  }
+  return { nodes, edges, mut, rt };
+}
+
+function expected(s, m) {
+  const total = m.nodes.length;
+  const fileComponents = s.mPartial && m.rt ? 3 : total + m.mut.newNodes.length;
+  const willUpdate = m.rt ? (s.mPartial ? 3 : total) : 0;
+  const willCreate = m.rt ? m.mut.newNodes.length : fileComponents;
+  let btn;
+  if (willUpdate > 0 && willCreate === 0) btn = `Update ${willUpdate} asset${willUpdate===1?'':'s'}`;
+  else if (willUpdate > 0) btn = `Import ${willCreate} new, update ${willUpdate}`;
+  else btn = `Import ${fileComponents} asset${fileComponents===1?'':'s'}`;
+  const removedSpec = (m.mut.removed ? 1 : 0) + (m.mut.rewired ? 1 : 0);
+  const createdEdges = (m.mut.rewired ? 1 : 0) + m.mut.newNodes.length; // each new comp declares 1 feed
+  const fileEdges = s.mPartial && m.rt ? 2 : m.edges.length - (m.mut.removed?1:0) - (m.mut.rewired?1:0) + createdEdges;
+  return { total, fileComponents, willUpdate, willCreate, btn, removedSpec, createdEdges, fileEdges };
+}
+
+// ---------- renders ----------
+function esc(t){ return t.replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+function renderTopo(m, s) {
+  const lanes = {}; // simple vertical chain + branch columns
+  const order = ['UTIL','MAIN','CB','MTR','SUB','CBLA','CBLB','TXH','TXZ','MOT'];
+  const col = { UTIL:1, MAIN:1, CB:1, MTR:1, SUB:1, CBLA:0, CBLB:2, TXH:0, TXZ:2, MOT:0 };
+  const rowOf = { UTIL:0, MAIN:1, CB:2, MTR:3, SUB: s.meter?4:3, CBLA:(s.meter?5:4), CBLB:(s.meter?5:4), TXH:(s.meter?6:5), TXZ:(s.meter?6:5), MOT:(s.meter?7:6) };
+  let maxRow = 0;
+  const pos = {};
+  for (const n of m.nodes) { const r = rowOf[n.id] ?? 0; maxRow = Math.max(maxRow, r); pos[n.id] = { x: 40 + (col[n.id] ?? 1) * 150, y: 22 + r * 52 }; }
+  m.mut.newNodes.forEach((n, i) => { maxRow += 1; pos[n.id] = { x: 40 + 150 + (i*10), y: 22 + maxRow * 52 }; });
+  const H = 60 + (maxRow + 1) * 52;
+  const svg = document.getElementById('topo');
+  svg.setAttribute('viewBox', `0 0 460 ${H}`);
+  let out = '';
+  const line = (a, b, cls) => {
+    const p = pos[a], q = pos[b]; if (!p || !q) return '';
+    return `<line x1="${p.x+55}" y1="${p.y+13}" x2="${q.x+55}" y2="${q.y+13}" stroke="${cls==='rm' ? 'var(--fail)' : cls==='add' ? 'var(--pass)' : 'var(--line)'}" stroke-width="1.6" ${cls==='rm'?'stroke-dasharray="5 4"':''}/>`;
+  };
+  const rmKey = m.mut.removed ? m.mut.removed.join('>') : (m.mut.rewired ? m.mut.rewired.drop.join('>') : '');
+  for (const [a,b] of m.edges) out += line(a, b, [a,b].join('>') === rmKey ? 'rm' : '');
+  if (m.mut.rewired) out += line(m.mut.rewired.add[0], m.mut.rewired.add[1], 'add');
+  m.mut.newNodes.forEach(n => out += line('SUB', n.id, 'add'));
+  const partial = s.mPartial && m.rt;
+  for (const n of [...m.nodes, ...m.mut.newNodes]) {
+    const p = pos[n.id];
+    const inFile = !partial || ['UTIL','MAIN','CB'].includes(n.id);
+    const stroke = n.isNew ? 'var(--pass)' : n.renamed ? 'var(--warn)' : inFile ? 'var(--accent)' : 'var(--ink3)';
+    out += `<g opacity="${inFile ? 1 : .45}">
+      <rect x="${p.x}" y="${p.y}" width="110" height="26" rx="4" fill="var(--panel2)" stroke="${stroke}" stroke-width="1.2"/>
+      <text x="${p.x+55}" y="${p.y+17}" text-anchor="middle" font-size="9.5" font-family="var(--mono)" fill="var(--ink)">${esc(n.label)}</text>`;
+    if (n.kil !== undefined) out += `<text x="${p.x+55}" y="${p.y+36}" text-anchor="middle" font-size="8.5" fill="var(--ink3)">KeyInLibrary=${n.kil}</text>`;
+    if (n.zero) out += `<text x="${p.x+55}" y="${p.y+36}" text-anchor="middle" font-size="8.5" fill="var(--ink3)">kVA 0 · Z% 0 → null</text>`;
+    out += '</g>';
+  }
+  if (rmKey) out += `<text x="12" y="${H-10}" font-size="9.5" fill="var(--fail)">— dashed red: deleted from file</text>`;
+  svg.innerHTML = out;
+}
+
+function renderExpect(s, m, e) {
+  const tiles = document.getElementById('tiles');
+  tiles.innerHTML = e.willUpdate > 0
+    ? `<div class="tile new"><span class="n">${e.willCreate}</span><span class="l">New assets</span></div>
+       <div class="tile upd"><span class="n">${e.willUpdate}</span><span class="l">Updated</span></div>
+       <div class="tile conn"><span class="n">${e.fileEdges}</span><span class="l">Connections</span></div>`
+    : `<div class="tile new"><span class="n">${e.fileComponents}</span><span class="l">Assets</span></div>
+       <div class="tile conn"><span class="n">${e.fileEdges}</span><span class="l">Connections</span></div>`;
+  document.getElementById('btnPrev').textContent = e.btn;
+
+  const rows = [];
+  rows.push(`created_nodes   : <span class="ok">${e.willCreate}</span>`);
+  rows.push(`updated_nodes   : <span class="ok">${e.willUpdate}</span>`);
+  rows.push(`created_edges   : <span class="ok">${e.createdEdges}</span>`);
+  if (e.removedSpec > 0) rows.push(`removed_edges   : spec <span class="ok">${e.removedSpec}</span> · QA V1.36 actual <span class="bad">0  ← defect D1</span>`);
+  else rows.push(`removed_edges   : <span class="ok">0</span>`);
+  if (s.uid === 'foreign') rows.push(`<span class="wr">every row must read "New" — foreign-SLD UUIDs match nothing</span>`);
+  if (s.mRename && m.rt && s.meter && !s.mPartial) rows.push(`row chip        : <span class="wr">"Update MTR-3836"</span> (name differs, same UUID)`);
+  if (s.mKva && m.rt && s.txHand && !s.mPartial) rows.push(`TX-HAND after   : kva_rating <span class="ok">750</span>, percent_impedance <span class="ok">6.25</span> (file wins)`);
+  if (s.txZero) rows.push(`TX-ZERO after   : kva_rating <span class="ok">null</span>, percent_impedance <span class="ok">null</span> (zero = unset)`);
+  if (m.rt) rows.push(`node UUIDs      : <span class="ok">unchanged</span> · x/y <span class="ok">unchanged</span> · room <span class="ok">untouched</span>`);
+  if (s.mPartial && m.rt) rows.push(`edges to the ${m.nodes.length - 3} unmentioned assets: <span class="ok">left intact</span>`);
+  document.getElementById('expect').innerHTML = rows.join('\n');
+  document.getElementById('d1b').style.display = e.removedSpec > 0 ? 'block' : 'none';
+}
+
+function renderXml(s, m) {
+  const uidAttr = id => s.uid === 'none' ? 's:altId=""'
+    : s.uid === 'foreign' ? `s:altId="<span class="mut">&lt;uuid from ANOTHER SLD&gt;</span>"`
+    : `s:altId="<span class="val">&lt;this node's EG UUID&gt;</span>"`;
+  const L = [];
+  L.push(`<span class="cm">&lt;!-- ${s.uid === 'own' ? 'EG export of the site, then hand-mutated' : s.uid === 'foreign' ? 'EG export with altIds swapped to another SLD' : 'PTW-authored study — no Alternate UIDs'} --&gt;</span>`);
+  if (s.meter) {
+    L.push(`<span class="tag">&lt;s:Meter</span> <span class="attr">s:name=</span>"<span class="val">${s.mRename && m.rt ? 'MTR-3836-RENAMED' : 'MTR-3836'}</span>" ${uidAttr('MTR')}<span class="tag">&gt;</span>`);
+    L.push(`  <span class="tag">&lt;s:Field</span> <span class="attr">s:id=</span>"29622272" <span class="attr">s:name=</span>"ConnectedComponent1" <span class="attr">s:value=</span>"<span class="val">CB-3836:2</span>"<span class="tag">/&gt;</span>  <span class="cm">← upstream</span>`);
+    L.push(`  <span class="tag">&lt;s:Field</span> <span class="attr">s:id=</span>"29622273" <span class="attr">s:name=</span>"ConnectedComponent2" <span class="attr">s:value=</span>"<span class="val">SUB-PANEL-3836:1</span>"<span class="tag">/&gt;</span>  <span class="cm">← downstream, PORT 2</span>`);
+    L.push(`<span class="tag">&lt;/s:Meter&gt;</span>`);
+  }
+  const cbl = (label, kil, tgt, dropped) => {
+    L.push(`<span class="tag">&lt;s:Cable</span> <span class="attr">s:name=</span>"<span class="val">${label}</span>" ${uidAttr()}<span class="tag">&gt;</span>`);
+    L.push(`  <span class="tag">&lt;s:Field</span> <span class="attr">s:name=</span>"KeyInLibrary" <span class="attr">s:value=</span>"<span class="val">${kil}</span>"<span class="tag">/&gt;</span>  <span class="cm">${kil==='3' ? '← library index (Red Book) — must keep eqp_lib' : '← hand-entered — typed values onto node columns'}</span>`);
+    if (kil === '3') L.push(`  <span class="tag">&lt;s:Field</span> <span class="attr">s:name=</span>"CableModel" <span class="attr">s:value=</span>"<span class="val">Copper…IEEE 141 - Red Book…3-1/C+G</span>"<span class="tag">/&gt;</span>`);
+    L.push(`  <span class="tag">&lt;s:Field</span> <span class="attr">s:name=</span>"Length" <span class="attr">s:value=</span>"<span class="val">${kil==='3'?'120.0':'100.0'}</span>"<span class="tag">/&gt;</span>`);
+    L.push(`  <span class="tag">&lt;s:Field</span> <span class="attr">s:name=</span>"ConnectedComponent2" <span class="attr">s:value=</span>"${dropped ? '<span class="mut">""  ← connection deleted here</span>' : `<span class="val">${tgt}</span>`}"<span class="tag">/&gt;</span>`);
+    L.push(`<span class="tag">&lt;/s:Cable&gt;</span>`);
+  };
+  const rmB = (m.mut.removed && m.mut.removed[0]==='CBLB') || m.mut.rewired;
+  if (s.cableA !== 'off' && !(s.mPartial && m.rt)) cbl(s.cableA==='3'?'CBL-REDBOOK-A':'CBL-HAND-A', s.cableA, 'TX-HAND-3836:1', false);
+  if (s.cableB !== 'off' && !(s.mPartial && m.rt)) cbl(s.cableB==='3'?'CBL-REDBOOK-B':'CBL-HAND-B', s.cableB, 'TX-ZERO-3836:1', !!rmB);
+  if (s.txZero && !(s.mPartial && m.rt)) {
+    L.push(`<span class="tag">&lt;s:Xformer2</span> <span class="attr">s:name=</span>"<span class="val">TX-ZERO-3836</span>" ${uidAttr()}<span class="tag">&gt;</span>`);
+    L.push(`  <span class="tag">&lt;s:Field</span> <span class="attr">s:name=</span>"Nominal kVA" <span class="attr">s:value=</span>"<span class="val">0</span>"<span class="tag">/&gt;</span>  <span class="cm">← must persist as null, never 0</span>`);
+    if (m.mut.rewired) L.push(`  <span class="tag">&lt;s:Field</span> <span class="attr">s:name=</span>"ConnectedComponent1" <span class="attr">s:value=</span>"<span class="mut">SUB-PANEL-3836:1  ← rewired feed</span>"<span class="tag">/&gt;</span>`);
+    L.push(`<span class="tag">&lt;/s:Xformer2&gt;</span>`);
+  }
+  if (s.mKva && m.rt && s.txHand && !s.mPartial) L.push(`<span class="cm">…TX-HAND-3836: "Nominal kVA" changed to </span><span class="mut">750</span><span class="cm">, "Z%" to </span><span class="mut">6.25</span>`);
+  m.mut.newNodes.forEach(n => L.push(`<span class="tag">&lt;s:InductMotor</span> <span class="attr">s:name=</span>"<span class="val">${n.label}</span>" <span class="mut">s:altId=""</span><span class="tag">/&gt;</span>  <span class="cm">← UID-less → New</span>`));
+  if (s.mPartial && m.rt) L.push(`<span class="cm">&lt;!-- file contains ONLY UTIL-3836, MAIN-BUS-3836, CB-3836 — everything else unmentioned --&gt;</span>`);
+  document.getElementById('xmlPrev').innerHTML = L.join('\n');
+}
+
+function updatePrompt(s, m, e) {
+  const site = s.site === 'fixture' ? `the QA fixture site "Addtioanl Site" (sld_id fd1e25c4-4e04-48d7-8ef3-bfa0cba28c56)` : `an empty QA site (name it before running)`;
+  const parts = [];
+  parts.push(`Test the SKM XML import (ZP-3836) on ${site}, through the real UI: Assets → SKM → Import (Full).`);
+
+  const comp = [];
+  if (s.meter) comp.push('a meter wired between the breaker and the sub-panel (upstream + downstream)');
+  if (s.cableA !== 'off') comp.push(`one cable with KeyInLibrary=${s.cableA}${s.cableA==='3' ? ' bound to the IEEE 141 Red Book library' : ' carrying typed Length/CableSize values'}`);
+  if (s.cableB !== 'off') comp.push(`a second cable with KeyInLibrary=${s.cableB}${s.cableB==='3' ? ' (Red Book)' : ' (hand-entered)'}`);
+  if (s.txHand) comp.push(`a transformer with Nominal kVA ${s.kva} and Z% ${s.zpct}`);
+  if (s.txZero) comp.push('a transformer with kVA 0 and Z% 0 (must persist as null, not 0)');
+  if (s.motor) comp.push('a motor fed downstream');
+  parts.push(`Build a study of ${e.total} components — utility → main bus → breaker → ${s.meter ? 'meter → ' : ''}sub-panel backbone, plus ${comp.join(', ')}.`);
+
+  if (s.uid === 'none') parts.push('Author it PTW-style with NO Alternate UIDs.');
+  if (s.uid === 'own') parts.push('First import it as a fresh study, then export the site to SKM XML (SLD page → Export → Export Engineering XML) so every component carries its EG node UUID as Alternate UID, and re-import that export.');
+  if (s.uid === 'foreign') parts.push('Then replace every altId/Alternate UID with real node UUIDs from a DIFFERENT SLD in the same tenant before importing.');
+
+  const muts = [];
+  if (m.mut.removed) muts.push('delete one connection between two synced assets from the file (blank both ConnectedComponent references)');
+  if (m.mut.rewired) muts.push('rewire TX-ZERO from its cable to the sub-panel (old edge absent, new edge declared)');
+  if (s.mRename && m.rt && !s.mPartial) muts.push('rename the meter in the file only (same altId)');
+  if (s.mKva && m.rt && s.txHand && !s.mPartial) muts.push('change the transformer to kVA 750 / Z% 6.25 in the file');
+  if (s.mNew > 0 && m.rt && !s.mPartial) muts.push(`append ${s.mNew} UID-less motor${s.mNew>1?'s':''}`);
+  if (s.mPartial && m.rt) muts.push('cut the file down to just the 3 backbone components (per-building partial export)');
+  if (muts.length) parts.push(`Before re-importing, mutate the XML: ${muts.join('; ')}.`);
+
+  const asserts = [];
+  asserts.push(`review shows ${e.willUpdate > 0 ? `${e.willCreate} New / ${e.willUpdate} Updated` : `${e.fileComponents} assets, all New`} and the commit button reads exactly "${e.btn}"`);
+  if (s.uid === 'foreign') asserts.push('every row is marked New — no updates (SLD-scoped UID matching)');
+  if (s.mRename && m.rt && s.meter && !s.mPartial) asserts.push('the renamed row\'s chip reads "Update MTR-3836"');
+  asserts.push(`commit returns created_nodes=${e.willCreate}, updated_nodes=${e.willUpdate}, created_edges=${e.createdEdges}`);
+  if (e.removedSpec > 0) asserts.push(`removed_edges=${e.removedSpec} and the deleted edge is gone from /api/sld/{id}/graph — NOTE: this is expected to FAIL on QA V1.36 (defect D1: removed_edges always 0; a rewire leaves the asset double-fed). Keep the assertion so the retest proves the fix`);
+  if (m.rt) asserts.push('after commit the asset count is unchanged, every node keeps its UUID, and x/y positions and room are untouched');
+  if (s.cableA === '3' || s.cableB === '3') asserts.push('the Red Book cable keeps its eqp_lib (matched-library card in Edit Asset)');
+  if (s.cableA === '0' || s.cableB === '0') asserts.push('the hand-entered cable has typed values on node columns and NO eqp_lib');
+  if (s.txZero) asserts.push('TX-ZERO persists kva_rating=null and percent_impedance=null');
+  if (s.mKva && m.rt && s.txHand && !s.mPartial) asserts.push('TX-HAND reads kva_rating=750, percent_impedance=6.25 after commit');
+  if (s.mPartial && m.rt) asserts.push('edges to the assets the file does not mention are all still present');
+  parts.push(`Verify: ${asserts.join('; ')}.`);
+  parts.push('Take screenshots of the review screen and the success screen as evidence.');
+
+  document.getElementById('promptOut').textContent = parts.join('\n\n');
+}
+
+// ---------- wiring ----------
+function readControls() {
+  state.meter = el('meter').checked; state.cableA = el('cableA').value; state.cableB = el('cableB').value;
+  state.txHand = el('txHand').checked; state.kva = +el('kva').value; state.zpct = +el('zpct').value;
+  state.txZero = el('txZero').checked; state.motor = el('motor').checked;
+  state.uid = document.querySelector('input[name=uid]:checked').value;
+  state.mRemove = el('mRemove').checked; state.mRewire = el('mRewire').checked; state.mRename = el('mRename').checked;
+  state.mKva = el('mKva').checked; state.mNew = +el('mNew').value; state.mPartial = el('mPartial').checked;
+  state.site = document.querySelector('input[name=site]:checked').value;
+}
+function writeControls() {
+  el('meter').checked = state.meter; el('cableA').value = state.cableA; el('cableB').value = state.cableB;
+  el('txHand').checked = state.txHand; el('kva').value = state.kva; el('zpct').value = state.zpct;
+  el('txZero').checked = state.txZero; el('motor').checked = state.motor;
+  document.querySelector(`input[name=uid][value=${state.uid}]`).checked = true;
+  el('mRemove').checked = state.mRemove; el('mRewire').checked = state.mRewire; el('mRename').checked = state.mRename;
+  el('mKva').checked = state.mKva; el('mNew').value = state.mNew; el('mPartial').checked = state.mPartial;
+  document.querySelector(`input[name=site][value=${state.site}]`).checked = true;
+}
+function el(id) { return document.getElementById(id); }
+
+function updateAll(fromPreset) {
+  if (!fromPreset) readControls(); else writeControls();
+  el('kvaVal').textContent = state.kva; el('zpctVal').textContent = state.zpct; el('mNewVal').textContent = state.mNew;
+  const rt = state.uid === 'own';
+  el('mutsFs').disabled = !rt;
+  el('mutNote').style.display = rt ? 'none' : 'block';
+  const partial = state.mPartial && rt;
+  ['mRemove','mRewire','mRename','mKva','mNew'].forEach(id => { el(id).disabled = !rt || partial; });
+  document.querySelectorAll('.mut').forEach(d => d.classList.toggle('on', !!d.querySelector('input:checked') && rt));
+  const m = buildModel(state);
+  const e = expected(state, m);
+  renderTopo(m, state);
+  renderExpect(state, m, e);
+  renderXml(state, m);
+  updatePrompt(state, m, e);
+}
+
+document.querySelectorAll('input, select').forEach(c => c.addEventListener('input', () => updateAll(false)));
+document.querySelectorAll('.presets button').forEach(b => b.addEventListener('click', () => {
+  Object.assign(state, JSON.parse(JSON.stringify(PRESETS[b.dataset.p])));
+  updateAll(true);
+}));
+el('copyBtn').addEventListener('click', async () => {
+  await navigator.clipboard.writeText(el('promptOut').textContent);
+  el('copyBtn').textContent = 'Copied!';
+  setTimeout(() => el('copyBtn').textContent = 'Copy Prompt', 1200);
+});
+
+updateAll(true);
+</script>
+</body>
+</html>
