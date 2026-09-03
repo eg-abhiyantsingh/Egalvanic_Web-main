@@ -1,12 +1,34 @@
 # QA verdict — "proposed_resolution not appearing until Issue refresh" (DevRev)
 
-**Date:** 2026-09-03 · **Environment:** acme.qa.egalvanic.ai V1.36 (QA only) · **Writes:** none
+**Date:** 2026-09-03 · **Environment:** acme.qa.egalvanic.ai V1.36 + **proven on acme.egalvanic.ai prod V2.0** · **Writes:** none (prod config is the owner's own)
 **Artifact (the deliverable):** https://claude.ai/code/artifact/867b7806-25d5-44a2-a4f4-07bda67860c9
 **Evidence scope:** 1,041 issues · 106 report configs · 866 page templates · 50 issue classes / 84 property definitions
 
 ---
 
-## One-line verdict
+## PROVEN ROOT CAUSE (correction added 2026-09-03, later same day)
+
+An end-to-end test on prod settled the one question this verdict had left open, and it **corrects
+the framing below.** The customer's report is an HTML/Jinja issue report; for that template kind the
+render context comes from the issue-detail query, and **`eg_get_work_order_issue_details` carries
+`proposed_resolution`.** Binding `{{ proposed_resolution }}` on the Issues page OUTSIDE the
+Recommendations gate made the value render immediately — verified live on prod config `f592f046`
+for two issues ("clean tighten torque", "Throw her into the ocean").
+
+So:
+- **The customer's entire bug is the dead `{% if "Recommendations" in details_by_key %}` gate.**
+  It is a one-line template fix; no backend/query change is needed. The field was in the data all
+  along.
+- **The `available_fields` whitelist gap below is real but affects only the OLD DOCX templates**, a
+  different mechanism from the customer's HTML report. It is NOT the customer's cause. Keeping it as
+  a separate low-priority ticket.
+
+Paste-ready tickets reflecting this: [JIRA-TICKETS-proposed-resolution-reporting.md](JIRA-TICKETS-proposed-resolution-reporting.md).
+The rest of this doc is the original QA-only investigation, preserved for the evidence trail.
+
+---
+
+## One-line verdict (original — superseded by the correction above)
 
 Two defects merged into one ticket: (1) `proposed_resolution` is missing from every issue report
 template's field catalogue on the instance — confirmed; (2) the reporter's own template gates the
