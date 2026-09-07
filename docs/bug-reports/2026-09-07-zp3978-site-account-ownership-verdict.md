@@ -80,6 +80,42 @@ attached to it. **Expected:** it is listed — the Assets tab badge has already 
 **Confirmed:** after a page reload the same picker lists both assets. Stale asset list in the
 Add Issue drawer; the two views disagree within the same WO.
 
+## Round 4 — ROLE VISIBILITY: can an account's own users see that account's work orders?
+
+Setup: moved the QA-DEMO site into account **"Abhiyant"** (`43f1d80a-9214-434f-b26a-44d0de07160d`),
+which owns a real Client Portal seat, so the site belongs to that user's account while its WOs stay
+mapped to Acct B.
+
+### ANSWER: NO — and it fails twice over
+
+| Role | WOs visible? | Evidence |
+|---|---|---|
+| **Client Portal** (`+clientportal@`, acct "Abhiyant") | **NO — blocked** | No Work Orders nav entry (portal nav = Site Overview/Assets/Connections/Locations/Issues/Maintenance/Attachments/Notes). `/sessions` renders empty; `/sessions/{id}` → **Access Denied**, including for a WO on the site their own account owns. Yet `/auth/me` grants `sessions.view` + `workorders.view` and their dashboard tile counts **22 Active Work Orders**. |
+| **Facility Manager** (`+fm@`, acct "Abhiyant Singh") | YES | Has `/sessions` nav; opens WO-2 fully — a WO mapped to **Acct B** on a site owned by the **"Abhiyant"** account. Neither matches FM's own account. |
+
+### The visibility model (measured)
+Visibility is **per-site, by explicit assignment**, then gated by role module permissions — it is NOT
+derived from account ownership:
+- CP carries **234 of the tenant's 238 sites** in `accessible_sld_ids` while their account owns 2.
+  **This is NOT over-exposure** — `/api/sld/{id}/access-list` reports `has_access: true, via: "assigned"`
+  for those sites (QA seeding). State this explicitly so it isn't mis-filed as a leak.
+- The site their **own account owns** reports `has_access: false, via: null` — transferring a site to
+  an account grants that account's users nothing.
+- Therefore WO `account_id` is an **attribution label, not an access control**. Who sees a WO is
+  decided by who was assigned its SITE.
+
+### Consequences
+1. **QA step 5 ("both accounts can access the site during transition") has nothing to verify** —
+   access never followed ownership. Admins must add/remove people site by site. If ownership is
+   meant to imply access, that is unbuilt.
+2. **DEFECT — Client Portal advertises work orders it cannot open.** Dashboard shows an Active Work
+   Orders count and the role holds `sessions.view`/`workorders.view`, but no nav route exists and the
+   direct URL is refused. Permissions/tile and route/nav disagree; the customer-facing role is the one
+   left at a dead end.
+
+Evidence: `docs/bug-evidence/zp-3978-cp-role-visibility/01-cp-access-denied-own-account-wo.jpg`,
+`02-cp-dashboard-advertises-work-orders.jpg`
+
 ## Observations for the team
 - **Backfill caveat (confirm with backend):** seeded "WO CECCO A" on Common Site A (created 2026-08-26, pre-#1214) carries **Meta's** account id despite its name recording CECCO intent. Live retention provably works, so existing WOs were most likely backfilled from the site's *current* owner when the feature shipped → pre-feature history does not reflect past ownership (the exact Cecco→Meta case).
 - **"Add Site" inherits its account invisibly:** Create Site dialog has no Account field; target account implied by which group's "Add Site" was clicked. Easy to create a site under the wrong account (this run did, first attempt).
