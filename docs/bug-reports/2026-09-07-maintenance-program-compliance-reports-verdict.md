@@ -37,7 +37,12 @@ As Client Portal, `/pm-readiness` renders literal `API call failed: 422 - {"erro
 | Technician | ❌ | ❌ **BLANK** | ⚠️ not rendered | ✅ |
 | Account Manager | ❌ | ❌ Access Denied | ❌ Access Denied | ✅ |
 | Client Portal | ❌ | ❌ Access Denied | ✅ renders fully | ❌ raw 422 |
-| Electrical Engineer | — | — | — | untestable: stored password no longer logs in (needs reset, not a bug claim) |
+| Facility Manager | ✅ | ✅ opens | ✅ renders (Compliance+Reports too) | ✅ |
+| Electrical Engineer | ❌ | ❌ Access Denied | ❌ Access Denied (Compliance+Reports too) | ❌ raw 422 |
+
+**EE root cause (framework bug, not app):** `AppConstants.EE_EMAIL` points at `abhiyant.singh+electricalengineer@egalvanic.com`, which does NOT exist on QA → "Invalid credentials". The real EE seat is **`abhiyant.singh+electric@egalvanic.com`** (password RP@egalvanic123). Fix the constant.
+**Defect 2 is two-roles-wide:** EE hits the same raw-422 leak on Condition Assessment as CP.
+**Sharper inversion:** customer-facing seats (CP, FM) render Maintenance Program + Compliance fully; internal seats (PM, AM, EE) are denied.
 
 **Inversion for a design decision:** customer-facing CP renders Maintenance Program + Compliance in full (589-deviation drill-down) while internal PM gets Access Denied. Either exposure or an accidental lockout.
 **Account assignment ≠ WO visibility:** added the CP user to the WO's account via Platform Users → Edit User → **Assigned Accounts** (200, 55→56 accounts) — WO still Access Denied. No WO surface exists for the role.

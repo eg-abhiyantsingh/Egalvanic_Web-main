@@ -22,3 +22,13 @@
 - **Positive control turned a "defer is down" claim into "defer is slow":** three timed attempts + a fast GET + a fast validation-400 bracket the failure to the write path's latency crossing the gateway timeout. Severity and fix change completely.
 - **Same perms, four different outcomes:** every role holds sessions/workorders manage+view, yet gets opens/blank/denied/no-nav respectively — V1.36 route gates key on features.*, not the permission grants (consistent with the earlier RBAC memory).
 - **Batched role sweep:** 4 logins × 4 pages in ONE background browser call (~3 min wall) instead of per-step calls.
+
+## Addendum — FM + EE rounds (owner: "electric engineer and facility manager you forget to test why")
+- **Facility Manager** (`+fm@`): FULL PASS — WO detail opens; Program/Compliance/Reports/Condition Assessment all render. The only non-admin seat with complete access.
+- **Electrical Engineer**: the earlier "login failed" had a root cause — `AppConstants.EE_EMAIL`
+  (`+electricalengineer@`) does not exist on QA ("Invalid credentials"). Real seat found via
+  Platform Users: **`abhiyant.singh+electric@egalvanic.com`**. With it: WO detail + all three
+  maintenance pages = Access Denied; Condition Assessment = the same raw-422 leak as CP
+  (defect 2 is two-roles-wide). Framework constant needs correcting.
+- Sharper inversion: customer-facing seats (CP, FM) see Maintenance Program + Compliance fully;
+  internal seats (PM, AM, EE) are denied.
