@@ -1,0 +1,81 @@
+{
+  "done": 3,
+  "job_id": "002070e5-beee-42f9-b6e6-6b50f2f970e8",
+  "results": [
+    {
+      "config": {
+        "assumptions": [
+          "Iu = 250 A is taken as the frame rating and In = 250 A as the sensor/rating-plug value, so frame/sensor/plug are all reported as 250 A.",
+          "Trip unit 'Ekip DIP LI' is an electronic (static) unit, so has_trip_unit=true and trip_type_id=1 (Static Trip); LI means long-time + instantaneous only, and with no Ig/tg dials or GF test button on the plate the breaker is treated as having no ground-fault function.",
+          "UL 1066 / ANSI Cat. B construction places this in the Low-Voltage Power Circuit Breaker subtype rather than a molded-case subtype.",
+          "Applicable interrupting voltage: the plate states Icu at 480 V directly, matching the asset's existing 480V voltage attribute, so the 100 kA figure is the governing rating (operating_voltage in context was null).",
+          "Ampere Rating custom attribute left blank because its options stop at 150A and the true rating is 250A; Voltage attribute left at its existing '480V' value (not overwritten); Catalog Number left blank because the plate prints only a type designation and a serial, no separate catalog number.",
+          "The 'Breaker Settings' attribute was left blank because the trip-unit dip-switch face is not in the photo set."
+        ],
+        "confidence": "medium",
+        "fields": {
+          "ampere_rating": 250,
+          "core_attributes": {
+            "123d2c83-40a9-43b9-ab2c-2fac65d1b426": "100 kA",
+            "4e422968-6ebe-41ff-837d-8cac6a133249": "ABB",
+            "8b5f2926-c354-4929-b40a-911d80e375ea": "E1.2 N 250",
+            "8d4ae956-de94-44dc-8f77-2c303dc91d1c": "1SDA070722R1-QA-0907",
+            "917e66bf-74ab-4c06-a881-363b68afaba6": "SACE Emax 2"
+          },
+          "core_attributes_named": {
+            "Interrupting Rating": "100 kA",
+            "Manufacturer": "ABB",
+            "Model": "SACE Emax 2",
+            "Serial Number": "1SDA070722R1-QA-0907",
+            "Type": "E1.2 N 250"
+          },
+          "eqp_lib": {
+            "agent": {
+              "assumptions": [
+                "Iu = 250 A is taken as the frame rating and In = 250 A as the sensor/rating-plug value, so frame/sensor/plug are all reported as 250 A.",
+                "Trip unit 'Ekip DIP LI' is an electronic (static) unit, so has_trip_unit=true and trip_type_id=1 (Static Trip); LI means long-time + instantaneous only, and with no Ig/tg dials or GF test button on the plate the breaker is treated as having no ground-fault function.",
+                "UL 1066 / ANSI Cat. B construction places this in the Low-Voltage Power Circuit Breaker subtype rather than a molded-case subtype.",
+                "Applicable interrupting voltage: the plate states Icu at 480 V directly, matching the asset's existing 480V voltage attribute, so the 100 kA figure is the governing rating (operating_voltage in context was null).",
+                "Ampere Rating custom attribute left blank because its options stop at 150A and the true rating is 250A; Voltage attribute left at its existing '480V' value (not overwritten); Catalog Number left blank because the plate prints only a type designation and a serial, no separate catalog number.",
+                "The 'Breaker Settings' attribute was left blank because the trip-unit dip-switch face is not in the photo set."
+              ],
+              "confidence": "medium",
+              "extracted_at": "2026-09-07T13:01:51Z",
+              "model": "claude-opus-5",
+              "reasoning": "The nameplate clearly reads ABB SACE Emax 2, Type E1.2 N 250, Ekip DIP LI, In=Iu=250A, 3P, 480 V AC, Icu=Ics=100 kA @ 480 V, UL 1066. SKM does model this family \u2014 the Ekip DIP 'LI' variant (cdevice_oid 318402) even has a 250 A frame with a 250 A sensor and 250 A plug \u2014 but I checked the complete frame trees of every E1.2 entry (DIP LI, DIP LSI, Touch, Hi-Touch) and they only offer 42, 50 and 65 kA at 254/508/635 V; the applicable 250 A/508 V frame for this 480 V asset is 65 kA. Since no E1.2 frame provides the plate's 100 kA, and the one 100 kA/250 A/508 V frame in the library belongs to the physically different E2.2 breaker, every candidate contradicts the nameplate on interrupting class, which is part of the device's identity and not a warnable approximation. I therefore left skm_oid/skm_settings off, kept ABB and all nameplate-derived fields including nameplate_interrupt_ka=100, and spelled out the contradiction (likely an E1.2 H rather than N) plus the un-photographed Ekip DIP switch banks for human follow-up."
+            },
+            "category": "pcb-breakers",
+            "cont_current": 250,
+            "manufacturer": "ABB",
+            "nameplate_interrupt_ka": 100,
+            "no_match": true,
+            "style": "E1.2 N 250",
+            "type": "SACE Emax 2, E1.2, Ekip DIP LI",
+            "warnings": [
+              "No SKM match: plate reads ABB SACE Emax 2, Type E1.2 N 250, Ekip DIP LI, In=Iu=250A, 3P, Ue=480V AC, Icu=Ics=100 kA @ 480 V, Cat B, UL 1066. Searched ABB (canonical id 3), SACE (id 108, empty) and queries 'Emax 2', 'Emax', 'E1.2', 'Ekip' across mccb-/pcb-/iccb-breakers; the only E1.2 entries are 318402 (Ekip DIP LI), 318448 (DIP LSI), 318598/318646 (Touch), 318498 (Hi-Touch) plus their GF companions. Frame trees of all E1.2 entries were inspected: every frame at 254/508/635 V offers only 42, 50 or 65 kA \u2014 the applicable 250 A/508 V frame is 65 kA, so no E1.2 frame anywhere provides the plate's 100 kA. The E2.2 entry does have a 250 A/508 V/100 kA frame, but E2.2 is a different, larger frame than the plate's E1.2, so binding it would contradict the nameplate type. Also note the plate is internally inconsistent with ABB published data: E1.2 'N' is the 65/66 kA class and 100 kA @ 480 V is the E1.2 'H' class \u2014 verify in the field whether this is an E1.2 H (or an E2.2) before designating.",
+              "Trip settings not captured: the Ekip DIP unit is adjustable (I1/t1/I3 dip-switch banks) but only the rating nameplate was photographed, so no switch positions could be read \u2014 actual field settings are unknown."
+            ]
+          },
+          "frame_amps": 250,
+          "has_trip_unit": true,
+          "manufacturer_id": 3,
+          "node_subtype": "8834b021-c2dd-4d12-a73f-426bbde9d773",
+          "node_subtype_name": "Low-Voltage Power Circuit Breaker",
+          "plug_amps": 250,
+          "pole_count": 3,
+          "sensor_amps": 250,
+          "trip_type_id": 1
+        },
+        "kind": "breaker",
+        "reasoning": "The nameplate clearly reads ABB SACE Emax 2, Type E1.2 N 250, Ekip DIP LI, In=Iu=250A, 3P, 480 V AC, Icu=Ics=100 kA @ 480 V, UL 1066. SKM does model this family \u2014 the Ekip DIP 'LI' variant (cdevice_oid 318402) even has a 250 A frame with a 250 A sensor and 250 A plug \u2014 but I checked the complete frame trees of every E1.2 entry (DIP LI, DIP LSI, Touch, Hi-Touch) and they only offer 42, 50 and 65 kA at 254/508/635 V; the applicable 250 A/508 V frame for this 480 V asset is 65 kA. Since no E1.2 frame provides the plate's 100 kA, and the one 100 kA/250 A/508 V frame in the library belongs to the physically different E2.2 breaker, every candidate contradicts the nameplate on interrupting class, which is part of the device's identity and not a warnable approximation. I therefore left skm_oid/skm_settings off, kept ABB and all nameplate-derived fields including nameplate_interrupt_ka=100, and spelled out the contradiction (likely an E1.2 H rather than N) plus the un-photographed Ekip DIP switch banks for human follow-up."
+      },
+      "error": null,
+      "label": "CB1",
+      "node_id": "673505c4-3e7a-4bfd-b569-b831daced7ef",
+      "stage": null,
+      "status": "done"
+    },
+    {
+      "config": {
+        "assumptions": [
+          "operating_voltage is null in the graph; the asset's existing Voltage attribute (480V) and the plate's own '

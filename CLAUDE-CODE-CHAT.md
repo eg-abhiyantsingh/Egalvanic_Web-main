@@ -707,3 +707,11 @@ Branch Panel | Control Panel | Panelboard | Power Panel
 - Some full-suite modules not yet verified on CI after latest fixes
 - Other asset classes (Motor, Relay, OCP, PDU) may have similar label mismatches — verify with Playwright if tests fail
 - `findInputByLabel()` (generic) is still used as fallback — may cause issues for fields where text appears in ancestor elements
+
+## 2026-09-07 — QA: Bulk-extraction review surfaces (backend #1166, frontend #1337/#1338)
+- Ticket said dev-only; all three PRs live on QA V1.36 (API `included_seg_count`/`complex=1`/`sort=segments`; bundle chip/filter/red branch).
+- Feature lives on **/ocpd-settings** only (kind views; `/equipment-designations` has no Settings column). `d2r=3`.
+- Filter + sort PASS (fetch-shim captured `kind=ocpd&complex=1`, `sort=segments`; sort before pagination; boundary 3 in / 2 out by editing trip segments on "Test").
+- Built nameplate fixtures via SLD → Edit Asset → Asset Photos → Nameplate (hidden file input) — unblocks the extraction ticket family. 3 real bulk extractions (6 breakers): no-match rows honest; Mark reviewed clears well + chip; resume path works.
+- `critical_warnings` never produced by the pipeline (Finding); rendering verified with a crafted eqp_lib on CB5: red well ✓, red chip on kind=all ✓, **OCPD Settings shows NO chip on bound rows (Defect 2)**; asset editor says LIBRARY MATCHED for a no-match (Defect 1).
+- Artifact: https://claude.ai/code/artifact/0c777ff4-e6a6-420a-affb-62461323d743 · verdict `docs/bug-reports/2026-09-07-QA-bulk-extraction-review-surfaces-verdict.md` · evidence `docs/bug-evidence/zp-bulk-extraction-review-surfaces/`.
