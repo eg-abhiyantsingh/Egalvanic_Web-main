@@ -776,3 +776,29 @@ fragment submitted via UI also survived Remove Service (`instances_removed:2`). 
 `session.work_type_id` — both "pre-ledger" fixtures were `null` General WOs, so legacy type resolution was NOT
 exercised (step 7 re-marked). Steps 5/8 moved to not-web-testable/objects-present. a2 confirmed directly
 (`session_method_line_id` on the instance). Artifact 18b40ab9 republished.
+
+## 2026-09-08 (evening) — TWELVE tickets tested in one run: the issue-resolution family + the materials-library linkage family
+Owner pasted 12 tickets in sequence. All tested on QA V1.36 / bundle `index-CSsDpG3c.js`; every "dev only" note was
+wrong except ZP-4020. 16 verdicts now sit in docs/bug-reports/2026-09-08-*.
+
+**Issue-resolution family.** Tier-0 pricing WORKS: accept → Add to Quote (auto-opens) → Set-prices → `POST
+/plans/from-issues` → quote priced from the resolution's own labor+materials ($235 = 1h + 3×$45), line badges
+"resolution" and names it. **DEFECT: stale until regenerate** — editing the resolution left the quote at $235
+through reload/reopen/Quotes-list; only Edit Quote → Save & Regenerate repriced to $335. **DEFECT: null-quantity
+material prices as ×0/$0, not TBD.** FINDING: the Add-to-Quote gate is bypassable via Edit Quote (28 unpriced lines
+in one click). Unaccept works and deletes nothing (library 17→17). Minting is at QUOTE time, not accept — which
+supersedes ZP-3944's checklist. **Automatic evaluation FAILS on QA**: a UI-created issue got zero resolutions, never
+flagged processing; `reevaluate` → `{issues:1, jobs:0}`; `resolution_processing` false across 100 rows (the ticket's
+own suspect symptom). Rule-minted proposals DO exist (6 of 19 surveyed, all method-bound) — the trigger is broken,
+not the rule engine. `unit_attributes_available` confirms MCC+Switchboard→sections (MCC 15/15, Swbd 25/27).
+Corrective fix flow has NO unit_attribute and NO eg_form_keys → ZP-3943's 720-min assertion unreachable.
+**Linkage family.** Type-first linkage with exactly nine types; manufacturer is a browse filter absent from the ref;
+catalog browses before typing; frame options carry `{ampere_rating, skm_frame_sid}` patches; per-type id spaces
+correct (disconnect+panelboard→bus, transformer, cable, fuse+breaker→device); Unpriced queue works; legacy free-text
+refs still load. Gaps: "bolted-pressure" finds nothing; manufacturer lists include ANSI/UL standards that return rows.
+**ZP-3938** fixed (list 200, 1059 issues) but the field is `resolution_processing`, not `resolution_processing_at`.
+**ZP-3945** photos work (s3/urls/batch presigns, 200 image/jpeg, 1080×2340, hover-shift fixed) but there is no route
+from the drawer to the full page and no Back control on it.
+**ZP-4020** not testable from QA (env-var gated, external Fargate).
+**Self-correction worth remembering:** I claimed "no proposal on QA is generated_by rule" from a 3-issue sample and
+had to patch three verdicts after a 15-issue survey proved otherwise. Sample before asserting a universal.
