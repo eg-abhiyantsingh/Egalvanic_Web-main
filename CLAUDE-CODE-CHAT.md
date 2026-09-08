@@ -727,3 +727,24 @@ Branch Panel | Control Panel | Panelboard | Power Panel
 - PASS: Pricing setup flags `blended_rate` ("Reserved name" + alert + Save disabled), normalised names caught, `service_price` allowed, rename → PUT 200. Server refuses reserved names at save with row index (400 `pricing.formulas[0]: …`). Walk "Test_sitewalk_21" priced US$350 with a formula READING blended_rate (global AF service written + restored to $291.68).
 - **DEFECT (High):** one real AI "Update service → Set up pricing" build still authored `blended_rate = evaluated_labor/evaluated_hours` + markup chain without `assumes_burden_rate`; refused pricing block dropped silently (job applied, error null, service "Needs pricing") → pipeline #86 not effective on QA. **FINDING:** tenant admin can PUT a global service's site-walk-config via API (UI only offers Customize).
 - Verdict `docs/bug-reports/2026-09-08-QA-blended-rate-reserved-formula-names-verdict.md`, evidence `docs/bug-evidence/zp-blended-rate-reserved-names/`. Artifact: https://claude.ai/code/artifact/bd050b37-a129-4cb7-9764-8650043677a9
+
+## 2026-09-08 — Ticket: Asset PM maintenance programs, explicit check-off registry, check-driven completion (#1171 / #1339 / iOS #522)
+QA V1.36, bundle `index-CSsDpG3c.js`. Ticket's dev-only note wrong again — whole web half live.
+**6/6 web steps PASS** (iOS not web-testable). Core rule confirmed: per-asset due = **effective last-serviced
+(LATER of customer-stated vs check-off registry) + cadence**; proven in both directions, and anchors survive a
+merge re-tune AND a full plan replace (including a stated date the replace never resent). Custom Program tab
+composes lines directly ("Copy from asset"). `/assets` bulk configurator applies one plan to N same-class assets
+in one call with per-asset dates; mixed class *removes* the button; legacy "Edit PM Designations" is dead code.
+WO wheel = sum of per-service rings; **a PM Forms service now gets a ring keyed by its own name** — created WO
+`b2c2657a` (8 assets/9 forms), one tick 0%→13%; AF+IR WO 56%→63% (9/16→10/16). That same tick wrote the registry
+and re-dated the asset (due 2029-09-08) — the whole loop in one action.
+**DEFECT (Medium):** bulk Apply PM Plans drops de-energized schedules silently — 4-service plan on two
+never-shutdown assets wrote 1 service each; `skipped_never_shutdown: 6` + `warnings[]` never shown, and the bulk
+dialog omits the "Won't be set up" labels the single-asset dialog has. 5 Low findings (apply-time-only gate,
+stale outage-aligned date on an undated line, two label sets for the shutdown enum, duplicate plan-picker rows,
+readiness-vs-completion endpoint mismatch).
+Artifact: https://claude.ai/code/artifact/7f56422d-f1ad-45f7-869e-907c058ba8e4
+Also patched ticket 3 (reserved formula names) after its refuter pass — item 2 PASS→PARTIAL, AI-build cause
+marked not isolated, pipeline verdict re-worded "not deployed" with an n=1 caveat; artifact bd050b37 republished.
+**Owner feedback: 41 min for one ticket is too slow** — batch whole flows into one browser call, write all
+deliverables in one batch, launch the refuter workflow before building the artifact.
