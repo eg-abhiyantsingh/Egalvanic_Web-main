@@ -98,3 +98,16 @@ Service "Test" (`0e5f33c1-f0f5-4834-af80-2c6010916d35`, AF, draft) carries the f
 | `when.mains_type` | **0 rules** — 50 rules, none carries a mains-type condition |
 Rule/method totals: 50 rules, 53 methods, 1 menu rule, 1 with AI guidance, 28 with evaluated materials.
 Corrective-service inventory (`GET /api/procedures-v2/services`): 20 services, **none flagged `is_corrective`**; types PM Forms 13 · AF 2 · Checklist · COM · IR · IR Checklist · Schedule. No SCCR-specific fix-flow service exists on QA (the migrations issres_a4–a6 that add SCCR rule dispatch, the NFDS-gated disconnect and the bus-ladder menu are not represented here), which is why the SCCR proposals are agent-generated rather than rule-minted.
+
+## Correction after a wider survey — `generated_by` really does include `rule`
+An earlier note in this file said every proposal on QA is agent-generated. That was drawn from three issues and is wrong. Surveying 15 open issues that carry resolutions:
+| `generated_by` | count | bound to an implementation method |
+|---|---|---|
+| **rule** | **6** | **6 of 6** (`implementation_method_id` set) |
+| agent | 12 | 0 of 12 (`implementation_method_id: null`) |
+| user (manual) | 1 | 0 |
+Rule-minted examples, all with real labor: "Remake damaged termination" (45 min, **`de_energized: true`**), "Correct conductor / OCPD sizing for load" (180 min), "Restore permanent, continuous grounding path" (120 min). So the deterministic pass and its method binding both work on this tenant; the missing piece is the automatic trigger on a newly originated issue. `de_energized` across the same survey: true ×5, null ×14, false ×0.
+
+## Unaccept (ZP-3948) — verified, including the negative
+The OSHA Violation issue's rule proposal "Restore permanent, continuous grounding path" was accepted (`POST /issue-resolution/5429a9af-…/accept` → 200, `accepted_at` set, library unchanged at 17) and the Add-to-Quote dialog opened by itself ("OSHA Violation · New quote | **Existing quote (5)** · Quote Title * · Opportunity *"). Cancelling it left the card accepted with **Add to Quote · Unaccept**.
+`POST /api/issue-resolution/5429a9af-…/unaccept` → **200** with `accepted_at: null` and `generated_by: "rule"` echoed back. Re-read: the resolution is **`proposed`** again, `money: []`, and the card's buttons are back to **Accept · Add manually**. **Materials library before and after: 17 → 17** — unaccept deleted no library entry and no price, which is the ticket's negative case.
