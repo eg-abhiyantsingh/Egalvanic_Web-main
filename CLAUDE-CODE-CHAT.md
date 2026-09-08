@@ -768,3 +768,11 @@ DEFECT 1 re-scoped (the bulk dialog omits the pre-apply "Won't be set up" labels
 shutdownRestriction; the warnings[] toast DOES exist as a transient sonner toast my MUI selector missed); step 6
 PARTIAL; "legacy shortcut gone" softened (per-asset PM Designations dialog still shipped); Finding 6 masks made explicit,
 cause "not isolated". Artifact 7f56422d republished.
+**Method-first ticket corrected after ITS refuter pass (17:10):** the tab rule is service-TYPE-driven (AF → SLD+Engineering,
+PM Forms/row_slot forms → Forms, IR types → IR Photos, Tasks always hidden) — `hide_tabs` is dead data, so "union of
+wo_view.tabs" was wrong as a mechanism (observation stood). Finding 1 withdrawn (the lingering column is the legacy
+EG-Forms column keyed on the WO's form count). Shared-scope confound removed by re-running: a node-scoped Cleaning
+fragment submitted via UI also survived Remove Service (`instances_removed:2`). `/ir_session/{id}/full` exposes
+`session.work_type_id` — both "pre-ledger" fixtures were `null` General WOs, so legacy type resolution was NOT
+exercised (step 7 re-marked). Steps 5/8 moved to not-web-testable/objects-present. a2 confirmed directly
+(`session_method_line_id` on the instance). Artifact 18b40ab9 republished.
