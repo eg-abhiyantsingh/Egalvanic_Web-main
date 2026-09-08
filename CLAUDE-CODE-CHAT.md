@@ -748,3 +748,23 @@ Also patched ticket 3 (reserved formula names) after its refuter pass — item 2
 marked not isolated, pipeline verdict re-worded "not deployed" with an n=1 caveat; artifact bd050b37 republished.
 **Owner feedback: 41 min for one ticket is too slow** — batch whole flows into one browser call, write all
 deliverables in one batch, launch the refuter workflow before building the artifact.
+
+## 2026-09-08 — Ticket: Method-first, multi-service work orders (derived WO type + session_method_lines ledger) (#1161 / #1325 / iOS #517)
+QA V1.36. Dev-only note wrong: smline_a1/a2/a3 live (wo_view populated per service, method-lines ledger serving
+per-line ids). **All web-testable steps PASS, no defects, 3 Low findings.** Session view = UNION of registered
+services' wo_view (tabs: show beats hide; one metric column per distinct data_mask — IR + IR Checklist share `ir`;
+rings per readiness_mask or per service NAME for PM Forms, total = registered nodes). Proven dynamically: Add
+Service put a Forms tab + `forms_status` column + 0/1 ring on screen; Remove took tab + ring away. Add is
+idempotent (`form_instances_created:0` on repeat). Removal scope: submitted a Torque Record via UI, then Remove →
+`instances_removed:3, lines_removed:2`, submitted one survives (reachable via More → Forms; derived Forms tab gone).
+**Uppercase-UUID add AND remove both applied** (the reported uuid::text no-op is fixed). Pre-ledger WOs open in the
+legacy 3-tab view; unknown method ids → 400 named error (mixed batch refused whole, not skipped). Findings: stale
+`forms_status` column after last de-registration (survives reload); whole-batch refusal vs "skip and log"; surviving
+submitted form only via More → Forms.
+Artifact: https://claude.ai/code/artifact/18b40ab9-f75e-4820-9995-6a8b98b58830
+**PM-programs ticket corrected after its refuter pass:** the "later of stated vs registry" rule had never been tested
+in the discriminating direction → ran it (stated 8 Sept vs registry 7 Sept → stated WON, due moved 7→8 Sept 2027);
+DEFECT 1 re-scoped (the bulk dialog omits the pre-apply "Won't be set up" labels — call site doesn't pass
+shutdownRestriction; the warnings[] toast DOES exist as a transient sonner toast my MUI selector missed); step 6
+PARTIAL; "legacy shortcut gone" softened (per-asset PM Designations dialog still shipped); Finding 6 masks made explicit,
+cause "not isolated". Artifact 7f56422d republished.
