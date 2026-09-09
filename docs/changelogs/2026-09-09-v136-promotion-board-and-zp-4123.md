@@ -105,3 +105,40 @@ user does.
 - `docs/bug-reports/2026-09-09-QA-ZP-4123-role-based-access-rendering-verdict.md` (new)
 - `docs/bug-evidence/zp-4123-role-based-rendering/` (6 QA screenshots)
 - `docs/qa-review-board.html` rebuilt
+
+---
+
+## Addendum, same day — owner review of the board
+
+**Feedback:** "you didn't add 2FA … issue suggestion etc are missing … the artifact you have
+screenshared doesn't have proper steps, try to use simple words, and save that in memory."
+
+All four points were right. Fixed in place (both artifacts keep their URLs):
+
+**1. Four features were missing from the board** — none of them ever came to QA as a ticket, which is
+exactly why the board missed them. Each now has its own card with plain steps and a live screenshot:
+
+| Feature | Where | State on QA |
+|---|---|---|
+| **Two-factor authentication** at sign-in | every login | works — enrollment prompt with *Set up later*; enrolled accounts get a "How do you want to verify?" step (authenticator app / emailed 6-digit code) |
+| **Issue Suggestions** | Builder → Issue Suggestions | works — 10 sets (NEC, NFPA 70B, OSHA, Repair Needed, SCCR, Thermal, Ultrasonic + copies), Create Set / Import / Export, Ready vs Draft |
+| **Maintenance Portal** | left rail → Maintenance Portal | works — Site Health reads condition index 94/100, 274 assets, 179 scheduled, 77 issues, 8 critical open on Android Site 2; LICENSE selector empty on our seat, "Premium" on the owner's — unexplained |
+| **Connections graph** | Site Data → Connections → Graph | works — asset nodes + connection lines, asset finder, zoom, "N assets · N connections" |
+
+**2. Simple numbered steps everywhere.** Twelve step blocks added: one per decision on the board
+(8) and one per new feature (4), plus three walks on the ZP-4123 page. The house pattern is now:
+open → click the exact button label → "You should see:" → "What happens instead:". No endpoint
+names, no minified identifiers inside the steps — those stay in a "why" line underneath.
+
+**3. Saved to memory** as `feedback_simple_steps_and_cover_all_new_features`, including the rule that
+a release page must be built by walking the product's navigation rail category by category and
+reconciling that against the ticket list, so features without tickets cannot go missing again.
+
+**Also captured:** the two 2FA screens and the Issue Suggestions / Maintenance Portal / Connections
+graph pages, in `docs/bug-evidence/v136-new-features/`. Board count strip now carries a fifth figure,
+"4 new features, no ticket".
+
+**Worth knowing for next time:** the 2FA enrollment prompt did not reappear on a seat that had
+already dismissed it in this session, so the enrollment screenshot came from an earlier login and the
+verify screenshot from the enrolled admin seat. If a fresh capture of the enrollment box is needed,
+use a seat that has never seen it.

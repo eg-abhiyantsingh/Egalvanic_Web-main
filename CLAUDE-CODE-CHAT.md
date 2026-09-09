@@ -898,3 +898,22 @@ corrected), and the header counts were re-derived to match the table.
 **Traps:** cookie-priming stopped working mid-run → all ZP-4123 results taken through the real login form
 (MFA "Set up later" each time). Route table + guard live in the bundle: search `ZNo=[{path:...permission}]`
 and `function Ume(`. Changelog `docs/changelogs/2026-09-09-v136-promotion-board-and-zp-4123.md`.
+
+## 2026-09-09 (late) — owner review: board was missing four whole features, and the steps were too technical
+Owner reviewed the promotion board and flagged: **2FA missing, Issue Suggestions missing, Maintenance
+Portal + Connections graph missing** (sent 3 screenshots), and "**artifact doesn't have proper steps — use
+simple words**". All correct — the board only covered tickets in my inbox.
+**Saved as memory** `feedback_simple_steps_and_cover_all_new_features`: (a) steps must be numbered plain
+words — open → click the exact label → "You should see" → "What happens instead", no endpoint/minified
+names inside steps; (b) a release page must be built by walking the nav rail category by category and
+reconciling against the ticket list, so untick eted features can't go missing.
+**Verified all four live on QA (PM seat)** and added a new board section "New in this release — features
+that arrived without a ticket": 2FA (enrollment box w/ Set up later; enrolled seats get "How do you want to
+verify?" → authenticator app / email OTP), Issue Suggestions (Builder → 10 sets, Create Set/Import/Export,
+Ready vs Draft, Title/Description/Resolution fields), Maintenance Portal (Site Health: condition index
+94/100, 274 assets, 179 scheduled, 77 issues, 8 critical open on Android Site 2; **LICENSE selector empty on
+our seat but "Premium" on owner's — unexplained**), Connections Graph (List|Graph toggle, node graph +
+finder + zoom). 12 step blocks added across the two pages; both republished to the SAME urls
+(board 88483448…, ZP-4123 e90e971d…). Evidence `docs/bug-evidence/v136-new-features/`.
+**Trap:** the 2FA enrollment prompt doesn't reappear on a seat that already dismissed it this session — use
+a never-prompted seat for that capture.
