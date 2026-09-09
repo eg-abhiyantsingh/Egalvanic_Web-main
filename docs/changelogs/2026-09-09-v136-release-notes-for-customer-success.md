@@ -76,3 +76,31 @@ board was built to be scanned under time pressure.
 - `docs/report-artifacts/2026-09-09-QA-V136-promotion-board.html` — rebuilt as release notes, 1.3 MB,
   20 screenshots (path unchanged deliberately, to preserve the artifact URL)
 - `scratchpad/relnotes.src.html` — new source; `scratchpad/release.board-full.src.html` — the board source, preserved
+
+---
+
+## Addendum — renamed to V2.1, and two blocks removed
+
+**Prompts:** "V2.1 update name" · "…DAY ONE…remove this" · "Release Egalvanic Web V1.36 · … Need the
+detail? … remove this too from artifact"
+
+Three edits, same URL (`88483448-82ad-45f4-be80-822f638c43d1`):
+
+1. **Renamed to V2.1.** Title *V2.1 Release Notes*, H1 *“What customers get in V2.1”*, eyebrow and the
+   Release line all read **Web V2.1**. The build QA tested still labels itself V1.36 in the app footer —
+   that is the internal build number; the customer-facing release is V2.1. (Web v2.1 is also the fix
+   version on the tickets in this batch, e.g. ZP-3978.)
+2. **DAY ONE callout removed** — the two-factor "every customer will notice this" block at the top. The
+   2FA **feature card** under “Signing in” stays, since it is genuinely new in the release; only the
+   callout is gone.
+3. **Footer removed** — the three lines about this not being a test report, where it was checked, and QA
+   holding per-feature reports.
+
+The page is now masthead → contents → 22 features across 7 areas, and nothing else. Verified on the
+published page: no DAY ONE text, no footer element, zero occurrences of "V1.36", 20 screenshots, none
+broken.
+
+**Note on the file name.** The output path is still
+`docs/report-artifacts/2026-09-09-QA-V136-promotion-board.html`, which no longer describes its
+contents. It is deliberate: the artifact URL is tied to that path, and renaming the file would publish
+a new page at a new link. The title and content are what a reader sees.

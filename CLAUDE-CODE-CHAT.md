@@ -967,3 +967,16 @@ promotion view can be republished separately if the release meeting wants it.
 filter — and "just keep new in this release" meant MORE content (the ticket-driven capability), not less.
 Design shifted too: Newsreader serif headings + Plex Sans, new palette, because notes get read rather than
 scanned. Changelog `docs/changelogs/2026-09-09-v136-release-notes-for-customer-success.md`.
+
+## 2026-09-09 (final) — release notes renamed to V2.1, DAY ONE + footer removed
+Three owner edits to artifact **88483448…**, all in place (same URL):
+1. **V1.36 → V2.1** everywhere (title *V2.1 Release Notes*, H1 "What customers get in V2.1", eyebrow,
+   Release line). V1.36 is the internal build number the app footer shows; **V2.1 is the customer-facing
+   release** (and the fix version on this batch's tickets, e.g. ZP-3978).
+2. **DAY ONE callout removed** (the 2FA "every customer will notice" block). The 2FA *feature card* under
+   "Signing in" stays — it is new in the release; only the callout went.
+3. **Footer removed** ("not a test report" / "checked on" / "QA holds a per-feature report").
+Page is now masthead → contents → 22 features / 7 areas, nothing else. Verified on the published page:
+no DAY ONE, no footer, **zero** "V1.36", 20 images, none broken.
+**Kept deliberately:** the output path is still `…QA-V136-promotion-board.html` — the artifact URL is tied
+to the file path, so renaming the file would create a new link. Title/content is what readers see.
