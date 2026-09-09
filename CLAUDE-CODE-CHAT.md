@@ -874,3 +874,27 @@ seats, but `+admin` is truly enrolled (API login = 426, UI asks for authenticato
 **Session side effect:** swapping seats cleared the admin browser session — restoring it needs the Email OTP.
 Use PM as the working seat meanwhile. Artifact https://claude.ai/code/artifact/7aa2ccd7-13c2-4357-a4f1-0a2e3ecda48c
 · changelog `docs/changelogs/2026-09-09-role-coverage-recheck-zp4088-zp3978.md`.
+
+## 2026-09-09 (afternoon) — V1.36 promotion board + ZP-4123 tested across all roles
+Owner asked for one artifact covering "all new things going to production… include all ticket tested this
+week and previous", then added ZP-4123 mid-turn.
+**Promotion board** https://claude.ai/code/artifact/88483448-82ad-45f4-be80-822f638c43d1 — 65 verdicts
+(17 Aug → 9 Sep) generated from `docs/bug-reports/*.md`: 8 decisions before promotion, 14 ready-areas each
+with a live QA screenshot, not-testable list, and a 65-row ledger linking every per-ticket artifact.
+Counts: 22 clean PASS / 21 PASS+issues / 13 defect-led / 3 not testable / 6 "see page".
+**ZP-4123** https://claude.ai/code/artifact/e90e971d-49f8-4987-97dd-521f75cd4d44 — **neither stated symptom
+reproduces** (Condition Assessment renders on all 5 web seats; `features.condition_assessment.view` is
+granted to ALL 6 roles; PM's Maintenance Program works). **Real defect: nav gates on a permission, the route
+ALSO requires a hard-coded role NAME and the guard ANDs them despite being called `orRoles`.**
+EE has the perm → nav shows the link → route says Access Denied. FM lacks the perm → nav hides it → page
+renders anyway (reconfirmed 15s + reload; that path through the guard NOT isolated — said so). AM denied
+consistently. **Client Portal renders the whole programme incl. "Edit Maintenance Program"** via the guard's
+`portal && tier==="T2"` bypass. Four routes share it (overview/program/compliance/reports).
+CP's 422 on Condition Assessment from the 07-09 verdict is GONE.
+**Two false positives killed by controls:** FM's "0–0 of 0" WO grid = all 5 WOs `active:false` + grid
+defaults to Status=Open (Closed → 1–5 of 5); the board's ledger first tagged ZP-3948 BLOCKED because a
+checklist row said an action "must be blocked" → classifier now reads only verdict-bearing lines (14 rows
+corrected), and the header counts were re-derived to match the table.
+**Traps:** cookie-priming stopped working mid-run → all ZP-4123 results taken through the real login form
+(MFA "Set up later" each time). Route table + guard live in the bundle: search `ZNo=[{path:...permission}]`
+and `function Ume(`. Changelog `docs/changelogs/2026-09-09-v136-promotion-board-and-zp-4123.md`.
