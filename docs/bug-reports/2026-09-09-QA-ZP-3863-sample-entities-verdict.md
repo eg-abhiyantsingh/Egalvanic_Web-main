@@ -7,7 +7,9 @@ Task · Medium · labels `api`, `backend` · status **Ready for QA** · reporter
 **Tested:** 2026-09-09 · **Env:** `acme.qa.egalvanic.ai` · V1.36 · tenant acme
 **Endpoint:** `GET /api/reporting/sample-entities`
 **Seat:** PM (`+project@`, 114 mapped sites, holds `reports.view`); cross-checked on Technician, Account
-Manager, Client Portal, FM, Electrical Engineer, and the staff MCP tool `list_sample_entities`.
+Manager, Client Portal, FM and Electrical Engineer — all on QA. The staff `list_sample_entities` tool was
+also run, but it is pointed at **production**, so it is reported separately below and never used as QA
+evidence.
 **Evidence:** `docs/bug-evidence/zp-3863-sample-entities/`
 
 ---
@@ -93,6 +95,12 @@ pool never reaches them — and when the pool contains no match, the endpoint co
 the cases where the shortfall reaches zero at the default and triggers the false note. Work types with at
 least one high-signal member (`PM Forms`, `AF`) mask the bug entirely.
 
+**It reproduces on PRODUCTION too.** The staff `list_sample_entities` tool (pointed at prod) run against
+`acme` with `work_type=IR` returns **10 candidates, none of them IR**, at its default limit of 10 — and
+**6 IR work orders** at `limit=25` (*IR Scan*, *Infrared Thermography (i.R)*, *IR Scan* ×3,
+*Demo-WO-IRScan*, *IR Thermography*). Different tenant data, same defect, so this is not a QA-data
+artefact.
+
 **Why it matters:** an author following the tool's own documented usage asks for IR, is told IR work orders
 don't exist, falls back to "judge from the names", and picks a non-IR session — which renders an empty IR
 page that looks like a broken template. That is verbatim the failure ZP-3863 was filed to remove.
@@ -154,8 +162,12 @@ it leaves the scoping assertion unexercised. Substitute checks, all passing:
 - **Scope is not overridable by parameter.** `company_id`, `company`, `subdomain`, `sld_id` and
   `mapping_user_sld` (foreign UUID / `demo`) are all ignored — the returned id list is *identical* to the
   unparameterised baseline, not merely the same length. No foreign tenant was touched.
-- **Scope demonstrably changes the result set.** The staff MCP seat returns 6 IR work orders whose ids do
-  not overlap the PM seat's 4 at all, so the candidate pool is genuinely scoped per caller.
+- **A caller with wider reach is not enough to test scoping.** I originally cited the staff
+  `list_sample_entities` tool as a per-caller scope comparison. **That was wrong and is retracted:** the
+  staff MCP is pointed at **production** (its `acme` is `0a61e613-7887-4c10-99bf-59cedc4460f2`, branding in
+  `eg-pz-prod-s3-branding-ohio`; QA's `acme` is `d59d449b-09d8-45d6-8f0a-ef70024b1293`), so its 6 IR work
+  orders are different-environment data, not a differently-scoped view of the same tenant. It is not
+  evidence for or against scoping. The two checks above stand on QA-only evidence.
 
 **To close step 5 properly:** a seat with `reports.view` and a narrow `mapping_user_sld` (2–3 sites). I did
 not create or modify any user to manufacture one.

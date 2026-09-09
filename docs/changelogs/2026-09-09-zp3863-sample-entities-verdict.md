@@ -59,10 +59,10 @@ that hold `reports.view` (PM 114, Technician 113, Account Manager 113, Client Po
 effectively unrestricted. Substitute checks, all passing:
 
 - all 25 candidates for each of those four seats resolve to a site inside that seat's own
-  `accessible_sld_ids` — 0 out-of-scope, 0 unresolved;
+  `accessible_sld_ids` — 0 out-of-scope, 0 unresolved (all on QA);
 - `company_id` / `company` / `subdomain` / `sld_id` / `mapping_user_sld` are ignored — returned id list
   *identical* to the unparameterised baseline, not merely the same length. No foreign tenant contacted;
-- scope demonstrably changes the pool — the staff seat's 6 IR work orders don't overlap the PM seat's 4.
+- the staff-seat comparison originally cited here is retracted (see Corrections) — it was prod data.
 
 Closing step 5 properly needs a seat with `reports.view` and a 2–3 site mapping. No user was created or
 modified to manufacture one.
@@ -80,8 +80,11 @@ whoever owns portal scoping.
   (threshold at 16) is what the verdict reports.
 - An earlier hypothesis that matching keys off `session.type` vs `work_type_id` was refuted: both matching
   and non-matching entities have `type = None` and only a `work_type_id`.
-- The staff seat returns 6 IR work orders where the PM seat returns 4. Not nondeterminism — different site
-  scope, which corroborates step 5 rather than contradicting it.
+- **Retracted an evidence claim.** I first read the staff seat's 6 IR work orders vs the PM seat's 4 as a
+  per-caller *scope* difference and cited it as step-5 evidence. The staff MCP is actually pointed at
+  **production** (acme `0a61e613…` + `eg-pz-prod-s3-branding-ohio`, vs QA's `d59d449b…`), so those are two
+  different environments and the comparison proves nothing about scoping. Removed from step 5. It does
+  establish something better: the Defect A behaviour reproduces on prod as well.
 
 ## Deliverables
 
