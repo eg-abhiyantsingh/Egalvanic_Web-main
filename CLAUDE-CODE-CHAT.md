@@ -1034,3 +1034,15 @@ right-anchored MUI Drawer intercepts pointer events until Escape; **the EG form 
 `.MuiDrawer-anchorRight.MuiDrawer-modal` drawer, NOT `[role=dialog]`**; identify participant cards by
 their own copy button (heading walk-up hits shared ancestors and reports all cards identical); button
 labels mutate mid-flow ("Read pages"→"Read 1 page", "Apply"→"Apply 2 Changes").
+
+## 2026-09-09 — TEN TICKETS DELIBERATELY NOT TESTED (owned by another QA)
+Owner assigned then withdrew this batch: **ZP-3838, ZP-3850, ZP-3814, ZP-3847, ZP-3895, ZP-3903,
+ZP-3909, ZP-3940, ZP-3985, ZP-3986** — "don't test, other QA is testing this". I first read the note as
+applying only to ZP-3986 (it was appended to that line) and said so; owner corrected: "3838, 3850, etc
+too" → **all ten are skipped.**
+**Not a coverage gap on my side — deliberate, to avoid duplicate/conflicting verdicts.** If any of these
+appear untested on the promotion board or the review board later, the answer is here: another QA owns
+them. Re-confirm ownership before picking any of them up.
+**Lesson worth keeping:** stating my interpretation of an ambiguous instruction out loud ("I'll skip
+3986 and take the other nine") got it corrected in one line before I burned effort on nine tickets.
+Cheaper than either guessing silently or blocking on a question.
