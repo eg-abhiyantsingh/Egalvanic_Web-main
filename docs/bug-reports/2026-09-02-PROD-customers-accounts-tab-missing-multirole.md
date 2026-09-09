@@ -1,5 +1,8 @@
 # PROD V2.0 — Customers page loses its Accounts tab for a multi-role user
 
+**Ticket:** none filed for this defect yet — family [ZP-4033](https://egalvanic.atlassian.net/browse/ZP-4033) (union-of-roles permissions) / [ZP-4036](https://egalvanic.atlassian.net/browse/ZP-4036) (eg-pz-frontend #1351, 11 RoleGate uses deferred)
+**Artifact:** https://claude.ai/code/artifact/4f22e133-5d2a-4671-8d35-3e39fa493f7b
+
 **Env:** production, web V2.0 · **Found:** 2026-09-02 (reported by owner, analysed by QA)
 **Family:** union-of-roles UI gates — the "remaining 11 RoleGate uses" deferred by eg-pz-frontend #1351
 

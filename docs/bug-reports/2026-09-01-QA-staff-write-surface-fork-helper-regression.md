@@ -4,6 +4,7 @@
 **Tickets/PRs:** eg-pz-backend **#1073** (staff write routes) · **#1074** (fork-helper tests) ·
 **#1080** prod · **#1081** qa · **#1082** stag · companion `eg-pz-reporting-lambdas` **#331**
 **Related:** ZP-3874 (read-only staff elevation: #1064/#1065/#1066)
+**Artifact:** https://claude.ai/code/artifact/73b405c3-3eb4-4f20-adaf-28eab71ae675
 
 ---
 

@@ -1,7 +1,10 @@
 # Ghost EG-form instances on work-order delete (#1094) — QA verdict: PASS
 
+**Ticket:** [ZP-3888](https://egalvanic.atlassian.net/browse/ZP-3888) — "[Web] Deleting a work order left its task-chain EG form instances alive, and reports re-attached them as ghost inspection pages to unrelated work orders"
+**Artifact:** https://claude.ai/code/artifact/2c1a8a42-3843-4ded-92b7-06312f156b46
+
 **Tested:** 2026-09-02 · **Env:** acme.qa.egalvanic.ai (fix markers on all 4 branches per ticket)
-**Ticket:** eg-pz-backend #1094 (HOTFIX) · companion eg-pz-reporting-lambdas #335 (out of scope here)
+**PRs:** eg-pz-backend #1094 (HOTFIX) · companion eg-pz-reporting-lambdas #335 (out of scope here)
 **Method:** wizard-created (job-backed) work orders + real UI deletes; instances created through the
 product's own service machinery plus the task-chain and direct APIs. This supersedes the 2026-09-01
 INCONCLUSIVE attempt, whose bare API sessions were invisible to every JSON view.

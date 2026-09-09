@@ -826,3 +826,27 @@ PR numbers were resolved read-only through the Jira MCP by title: **ZP-3932** (p
 evaluation), **ZP-4024** (blended_rate), **ZP-4019** (PM programs), **ZP-3987** (method-first WOs). All 16 pages
 republished to the same URLs with a `.tref` chip at top and the key in the footer; verdicts got a `**Ticket:**` line
 and the 5 unkeyed changelogs got the key in their H1.
+
+## 2026-09-09 (later) — "done all tickets?" → audit, and the last two missing Artifact pages
+Owner asked twice whether every shared ticket is done **with an artifact**. Counted instead of assuming:
+the 2026-09-08 batch is complete 16/16 (verdict + evidence + Jira key + changelog + published page).
+The audit then found three older holes, all now closed:
+- **ZP-3888** (ghost EG-form instances on WO delete, #1094) — verdict existed since 09-02, **no page**.
+  Built + published https://claude.ai/code/artifact/2c1a8a42-3843-4ded-92b7-06312f156b46. Its fixtures were
+  deleted *by* the test, so it had zero screenshots → captured two fresh ones on QA (Delete Work Order dialog,
+  opened on a QA-DEMO WO and **cancelled**; and the Forms tab of WO `b2c2657a`, 9 instances by form type).
+- **PROD first-role gate** (Customers loses the Accounts tab for multi-role users) — verdict existed, **no page**.
+  Built + published https://claude.ai/code/artifact/4f22e133-5d2a-4671-8d35-3e39fa493f7b. Page draws the roles
+  array as indexed slots with the read pointer on `[0]` and the qualifying-but-ignored roles marked — the
+  mechanism *is* the visual. No Jira ticket exists for it (family ZP-4033 / ZP-4036); none created.
+- **Staff-write fork-helper** (09-01) — page existed and was published as **"Fork Isolation Verdict"**
+  (73b405c3), but the verdict never linked it. Identified by READING the live page, not by filename: published
+  titles are editorial names, so a name search can't find them.
+**Traps hit:** `sips -c H W` *pads* (black bands around both new screenshots) → replaced with
+non-white-bounds auto-crop in PIL; `python3 -m http.server` sends no charset so every em-dash previews as
+mojibake (the published page is fine — the wrapper supplies `<meta charset=utf8>`).
+**Still open (owner's call):** ~25 verdicts dated 08-10 → 08-18 predate the artifact-per-ticket rule and have
+no page; 19 later August verdicts have pages but no cross-ref line (needs a title→file mapping);
+11 `JIRA-TICKET-*.md` are dev-facing ticket drafts and never needed a page.
+Changelog `docs/changelogs/2026-09-09-artifact-gap-audit-and-two-missing-pages.md`; review board rebuilt
+(86 reports / 7,396 KB).
