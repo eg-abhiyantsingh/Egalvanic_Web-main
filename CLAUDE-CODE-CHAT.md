@@ -1010,3 +1010,27 @@ e1577f11-92cb-49a1-865f-051e1f31fe48 · evidence `docs/bug-evidence/zp-3782-3783
 Apply→Done or "Try other pages"); once a sibling is filled the sheet stops matching (model won't guess
 among identical siblings → `filled:0`); **scope file inputs to `[role="dialog"]`** — a page-wide query
 staged the sheet into *Upload IR Photos* (cancelled before upload).
+
+## 2026-09-09 — ZP-3898 PASS (multi-edit copy refresh) · ZP-3887 blocked (MCP gate)
+**ZP-3898 = PASS 7/8.** Fixture WO `465df0c4` + **Signature Test** ×3 via **Forms → Bulk Ops → tick 3 →
+Edit**. Section copy, **Full Form** copy and **Grid Edit** all refresh the other pinned cards
+IMMEDIATELY (no save/reload); typing into a participant char-by-char @60ms sticks (no echo/clobber);
+copy FROM a participant updates the primary; saved == screen (11f1eeb7 "FullForm scope test",
+3d47b92a "Grid row2 value", 61d4cf40 "Grid row3 value", all modified 12:25:50); **zero React warnings**.
+**NOT EXERCISED:** pagination (3 forms = 1 page, no pager).
+**KEY TRAP:** the copy button is **not one click** — it opens "Copy <section> to N other assets?" with
+**Only fill blanks (default)** vs **Overwrite everything**. My first click = no toast, no change → looked
+EXACTLY like the original bug. And under the default, a card with a differing answer is left alone BY
+DESIGN, indistinguishable from "copy did nothing". Establish which option was used before believing a
+repeat report. Artifact 9bfb2949-a484-467f-a40d-7bb3e9937f5b.
+**ZP-3887 = NOT VERIFIABLE from the web surface.** `GET /auth/oauth-config/<code>` returns the SPA
+catch-all on 6 path variants × 2 hosts × 6 company codes; control `/api/auth/me` = proper JSON 401, so
+/api/auth/* does reach the backend but this route isn't exposed here. 7/8 items unreachable; the 8th
+needs the backend repo (GitHub MCP down this session). **Unblock =** (1) the base URL the MCP server
+calls, (2) LaunchDarkly access for `feature-mcp` (connector only exposes authenticate), (3) eg-pz-backend
+read access. Artifact 9dcbfac9-b2ea-44f3-8ef9-fe710c20e5fe.
+**UI traps learned:** JS-dispatched clicks DON'T work on MUI grids (use Playwright locator clicks); a
+right-anchored MUI Drawer intercepts pointer events until Escape; **the EG form renderer is a
+`.MuiDrawer-anchorRight.MuiDrawer-modal` drawer, NOT `[role=dialog]`**; identify participant cards by
+their own copy button (heading walk-up hits shared ancestors and reports all cards identical); button
+labels mutate mid-flow ("Read pages"→"Read 1 page", "Apply"→"Apply 2 Changes").
