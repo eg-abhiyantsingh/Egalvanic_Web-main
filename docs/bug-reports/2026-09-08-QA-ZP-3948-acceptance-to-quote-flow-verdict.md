@@ -5,6 +5,7 @@
 **Tested:** 2026-09-08 · `acme.qa.egalvanic.ai` build **V1.36**, bundle **`index-CSsDpG3c.js`** · tenant acme · Super Admin seat · live UI clicks with every request captured, materials library counted before and after each acceptance.
 **Ticket said "cicd/dev only, not yet promoted to cicd/qa" — wrong:** unaccept, existing-quote targets, the Set-prices step and quote-time minting are all live on QA.
 
+**Ticket:** [ZP-3948](https://egalvanic.atlassian.net/browse/ZP-3948)
 **Artifact:** https://claude.ai/code/artifact/33236b33-a8c8-4cf9-923c-bde7e8e17e73
 
 ---

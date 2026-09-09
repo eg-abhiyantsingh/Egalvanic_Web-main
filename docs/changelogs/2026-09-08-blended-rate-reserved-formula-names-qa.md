@@ -1,4 +1,6 @@
-# 2026-09-08 — QA: Block reserved formula names in pricing (blended_rate) — frontend #1333 + pipeline #86
+# 2026-09-08 — QA: ZP-4024 — Block reserved formula names in pricing (blended_rate) — frontend #1333 + pipeline #86
+
+**Ticket:** https://egalvanic.atlassian.net/browse/ZP-4024
 
 **Prompt:** ticket "Block reserved formula names in pricing (blended_rate) across web and the spec builder" with its 4-step QA review ("test this ticket").
 

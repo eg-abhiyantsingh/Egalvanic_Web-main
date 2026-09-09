@@ -5,6 +5,7 @@
 **Tested:** 2026-09-08 · `acme.qa.egalvanic.ai` build **V1.36**, bundle **`index-CSsDpG3c.js`** · tenant acme · Super Admin seat · procedure-detail payloads read across every MCC / Switchboard / Motor Controller / Panelboard procedure (39 of the tenant's 215).
 **Ticket said "dev only, not yet promoted to QA" — wrong:** `unit_attributes_available` is served on QA and the MCC methods already carry the section axis.
 
+**Ticket:** [ZP-3941](https://egalvanic.atlassian.net/browse/ZP-3941)
 **Artifact:** https://claude.ai/code/artifact/4acd4d82-ea97-45be-8331-f5385fb33e25
 
 ---

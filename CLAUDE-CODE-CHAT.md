@@ -819,3 +819,10 @@ reports / 7,396 KB.
 **Reusable lesson:** generating N artifact pages from one spec-driven generator beats hand-writing each — the house
 head/CSS (`_artifact_head.html`) already carries every class the spec emits (`.res`, `.deriv`, `.defect.finding`,
 `.pair`, `.links`), so a new ticket is ~60 lines of content, not a page of markup.
+**Same day, owner correction:** artifacts must open with the **ticket number as a clickable Jira link** above the H1
+(`https://egalvanic.atlassian.net/browse/<KEY>`) — the verdict badges alone don't say which ticket a page is. The
+offline `testcase/Jira.csv` is stale (tops out at ZP-1851), so the five merge-monitor tickets that arrived with only
+PR numbers were resolved read-only through the Jira MCP by title: **ZP-3932** (pricing/PTW), **ZP-3934** (automatic
+evaluation), **ZP-4024** (blended_rate), **ZP-4019** (PM programs), **ZP-3987** (method-first WOs). All 16 pages
+republished to the same URLs with a `.tref` chip at top and the key in the footer; verdicts got a `**Ticket:**` line
+and the 5 unkeyed changelogs got the key in their H1.

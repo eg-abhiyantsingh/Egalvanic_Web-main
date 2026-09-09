@@ -1,4 +1,6 @@
-# 2026-09-08 — QA: [Web] Issue evaluation only ran when someone remembered to press Suggest with AI
+# 2026-09-08 — QA: ZP-3934 — [Web] Issue evaluation only ran when someone remembered to press Suggest with AI
+
+**Ticket:** https://egalvanic.atlassian.net/browse/ZP-3934
 
 **Prompt:** the ticket text with its 10-step QA review ("test this too").
 

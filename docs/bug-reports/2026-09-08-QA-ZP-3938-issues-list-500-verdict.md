@@ -5,6 +5,7 @@
 **Tested:** 2026-09-08 · `acme.qa.egalvanic.ai` build **V1.36**, bundle **`index-CSsDpG3c.js`** · tenant acme · Super Admin seat.
 **Ticket said "dev only, not yet promoted to cicd/qa" — the endpoint is healthy on QA regardless**, which is what matters for a 500 regression: this build does not reproduce it.
 
+**Ticket:** [ZP-3938](https://egalvanic.atlassian.net/browse/ZP-3938)
 **Artifact:** https://claude.ai/code/artifact/07da2520-8c03-4991-97b8-8b38d341711f
 
 ---

@@ -2,6 +2,7 @@
 
 **QA verdict — frontend #1333 PASS (inline "Reserved name" flag, alert naming the row, Save blocked; normalised names caught; `service_price` allowed; rename → Save 200) · backend reservation live and row-indexed · walk prices when the formula READS `blended_rate` · pipeline #86 NOT effective on QA (one build, leading brief): one real AI build with "Set up pricing" still authored a formula named `blended_rate` (re-derived), emitted no `assumes_burden_rate`, and the reserved pricing block was silently dropped at apply (build "applied", `error null`, service left "Needs pricing")**
 
+**Ticket:** [ZP-4024](https://egalvanic.atlassian.net/browse/ZP-4024)
 **Artifact:** https://claude.ai/code/artifact/bd050b37-a129-4cb7-9764-8650043677a9
 **Tested:** 2026-09-08 · `acme.qa.egalvanic.ai` build **V1.36**, bundle **`index-CSsDpG3c.js`** (new build overnight) · tenant acme · Super Admin seat · live UI + live API + bundle reading.
 **Ticket said "dev only (cicd/dev); not yet promoted to QA" — wrong for the web half.** The QA bundle carries the reserved-name set (`intake, rates, materials, assets, site, evaluated_hours, evaluated_labor, blended_rate` + expression keywords), the row-level `helperText: "Reserved name"`, the alert copy and the Save gate `disabled = saving || missing total_labor_hours || reserved.length > 0`. The backend refuses reserved names at save with a row-indexed problem.

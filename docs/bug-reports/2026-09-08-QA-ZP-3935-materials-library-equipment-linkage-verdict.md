@@ -5,6 +5,7 @@
 **Tested:** 2026-09-08 · `acme.qa.egalvanic.ai` build **V1.36**, bundle **`index-CSsDpG3c.js`** · tenant acme · Super Admin seat · Admin → OPERATIONS → Materials.
 **Ticket said "dev only, not yet promoted to cicd/qa" — wrong:** both halves (the editable `catalog_ref` and the linkage manager UI) are live on QA, and later layers on top of them (ZP-3936's typed linkage, ZP-3937's identity-only refs, ZP-3942's bus-model routing) are live too.
 
+**Ticket:** [ZP-3935](https://egalvanic.atlassian.net/browse/ZP-3935)
 **Artifact:** https://claude.ai/code/artifact/b242ff8a-fe6a-40cb-bac1-85676e04bb05
 
 ---

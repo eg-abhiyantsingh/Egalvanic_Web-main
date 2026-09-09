@@ -5,6 +5,7 @@
 **Tested:** 2026-09-08 · `acme.qa.egalvanic.ai` build **V1.36**, bundle **`index-CSsDpG3c.js`** · tenant acme · Super Admin seat · live UI, the list and resolution endpoints, and the deployed bundle read directly.
 **Ticket said "dev only, not yet promoted to cicd/qa".** The frontend half (#1290) is unquestionably on QA. Whether the backend sweeper (#1118/#1119) is deployed here cannot be read from the product — and the observed symptom is the same either way, which is why it is reported as unverified rather than as a confirmed regression.
 
+**Ticket:** [ZP-3934](https://egalvanic.atlassian.net/browse/ZP-3934)
 **Artifact:** https://claude.ai/code/artifact/9cbd273c-e546-468d-b176-cd2213e00fda
 
 ---

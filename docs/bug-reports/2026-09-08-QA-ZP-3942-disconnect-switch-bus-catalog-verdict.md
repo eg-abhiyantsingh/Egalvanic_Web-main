@@ -5,6 +5,7 @@
 **Tested:** 2026-09-08 · `acme.qa.egalvanic.ai` build **V1.36**, bundle **`index-CSsDpG3c.js`** · tenant acme · Super Admin seat · live UI plus the catalog endpoints the UI calls.
 **Ticket said "dev only, not yet promoted to QA" — wrong here:** the typed linkage editor and the bus-model routing are both live on QA, and an existing library entry already carries a `skm_bus_oid` disconnect link.
 
+**Ticket:** [ZP-3942](https://egalvanic.atlassian.net/browse/ZP-3942)
 **Artifact:** https://claude.ai/code/artifact/cfc44623-3592-4e7b-acf7-af6f12d60bf5
 
 ---

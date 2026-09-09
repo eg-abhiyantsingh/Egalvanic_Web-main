@@ -5,6 +5,7 @@
 **Tested:** 2026-09-08 · `acme.qa.egalvanic.ai` build **V1.36**, bundle **`index-CSsDpG3c.js`** · tenant acme · Super Admin seat · live UI clicks with every request captured, plus the bundle and the service export-spec read directly.
 **Ticket said "dev only (cicd/dev), not yet promoted to cicd/qa" — wrong for the web half.** Pull-Through Work, the issue workbench with accept/unaccept/manual resolutions and editable labor and materials, `plans/from-issues`, the `resolution` / `needs pick` badge code and the fix-flow rule editor (menu selection, AI guidance, evaluated materials) are all live on this build.
 
+**Ticket:** [ZP-3932](https://egalvanic.atlassian.net/browse/ZP-3932)
 **Artifact:** https://claude.ai/code/artifact/cbdaeffb-6bb8-4cd5-8a5e-cb1bf5889ba4
 
 ---

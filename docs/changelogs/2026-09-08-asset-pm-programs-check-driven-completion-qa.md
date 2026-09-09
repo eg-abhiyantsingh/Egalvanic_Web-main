@@ -1,4 +1,6 @@
-# 2026-09-08 — QA: Asset PM maintenance programs, explicit check-off registry, check-driven completion (backend #1171 / frontend #1339 / iOS #522)
+# 2026-09-08 — QA: ZP-4019 — Asset PM maintenance programs, explicit check-off registry, check-driven completion (backend #1171 / frontend #1339 / iOS #522)
+
+**Ticket:** https://egalvanic.atlassian.net/browse/ZP-4019
 
 **Prompt:** the ticket text with its 6-step QA review ("test this ticket").
 

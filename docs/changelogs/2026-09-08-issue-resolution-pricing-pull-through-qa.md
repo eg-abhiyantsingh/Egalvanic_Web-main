@@ -1,4 +1,6 @@
-# 2026-09-08 — QA: [Web] An accepted resolution could not price its own quote line, and there was no company-wide place to work the issue funnel — backend #1116 / frontend #1289
+# 2026-09-08 — QA: ZP-3932 — [Web] An accepted resolution could not price its own quote line, and there was no company-wide place to work the issue funnel — backend #1116 / frontend #1289
+
+**Ticket:** https://egalvanic.atlassian.net/browse/ZP-3932
 
 **Prompt:** the ticket text with its 13-step QA review ("test this ticket too").
 

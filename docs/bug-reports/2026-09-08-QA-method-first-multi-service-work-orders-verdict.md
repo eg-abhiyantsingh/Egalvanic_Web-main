@@ -2,6 +2,7 @@
 
 **QA verdict — every step that can be driven from the web PASSES; two steps are iOS-only and one negative could not be exercised with the fixtures available. The ticket's "dev only, not yet promoted to QA" note is wrong for the web: the ledger endpoint persists per-line ids, every service carries a populated `wo_view`, and form instances carry `session_method_line_id` — the objects the three migrations create are all serving on QA (they were already serving on 7 Sept, so this is consistent with the migrations having run, not proof of *this* deploy). The session view is assembled from the services actually registered — adding a fourth service made a tab, a column and a registration-scoped ring appear live, and removing it took the tab and ring away — though the bundle shows the tab rule is driven by service *type*, not by the `tabs`/`hide_tabs` arrays. Forms mint exactly once, and Remove Service kept a submitted form twice over: a shared-scope Torque Record and, in a re-run to remove the confound, a node-scoped Cleaning fragment. The reported iOS casing bug is fixed on both server boundaries. No defects; 2 Low findings and one design question.**
 
+**Ticket:** [ZP-3987](https://egalvanic.atlassian.net/browse/ZP-3987)
 **Artifact:** https://claude.ai/code/artifact/18b40ab9-f75e-4820-9995-6a8b98b58830
 **Tested:** 2026-09-08 · `acme.qa.egalvanic.ai` build **V1.36**, bundle **`index-CSsDpG3c.js`** · tenant acme · Super Admin seat · live UI clicks with request capture, plus direct calls on the two service boundaries to reproduce the iOS uppercase-UUID case.
 

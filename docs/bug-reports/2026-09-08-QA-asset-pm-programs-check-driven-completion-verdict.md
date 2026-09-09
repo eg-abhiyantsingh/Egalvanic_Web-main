@@ -2,6 +2,7 @@
 
 **QA verdict — five of six web-testable checklist steps PASS on QA and the sixth is PARTIAL. The asset Maintenance tab establishes a program from a Suggested-ranked plan or from directly composed services; per-asset due dates derive from the effective last-serviced (later of customer-stated vs registry) and survive both a line re-tune and a whole-plan replace; the Assets-list bulk configurator applies plans and is gated on a shared asset class, and the legacy PM-designations action is no longer offered from the /assets bulk bar; the work-order wheel is check-driven — a PM Forms service now carries its own ring and one tick moved it live; the de-energized negative gate fires with `skipped_never_shutdown`. One real defect: the BULK dialog gives no pre-apply warning at all — a 4-service plan applied to two never-shutdown assets wrote 1 service each, and the only disclosure was a toast that lasts a few seconds after the fact.**
 
+**Ticket:** [ZP-4019](https://egalvanic.atlassian.net/browse/ZP-4019)
 **Artifact:** https://claude.ai/code/artifact/7f56422d-f1ad-45f7-869e-907c058ba8e4
 **Tested:** 2026-09-08 · `acme.qa.egalvanic.ai` build **V1.36**, bundle **`index-CSsDpG3c.js`** · tenant acme · Super Admin seat · live UI clicks + captured API traffic + bundle reading.
 **Ticket said the change was dev-only / not yet promoted.** Wrong for the web half: the Maintenance tab, the plan/custom-program dialog, the bulk configurator, the shutdown gate and the service-named completion rings are all live on QA today.

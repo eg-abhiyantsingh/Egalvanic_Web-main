@@ -5,6 +5,7 @@
 **Tested:** 2026-09-08 · `acme.qa.egalvanic.ai` build **V1.36**, bundle **`index-CSsDpG3c.js`** · tenant acme · Super Admin seat · Admin → Materials, live UI with the catalog endpoints captured.
 **Ticket said "dev only, not yet promoted to cicd/qa" — wrong:** the browse-by-manufacturer editor and the identity-only `catalog_ref` are both live on QA.
 
+**Ticket:** [ZP-3937](https://egalvanic.atlassian.net/browse/ZP-3937)
 **Artifact:** https://claude.ai/code/artifact/920bf269-332a-4ce4-b0ee-54cdfe2d3081
 
 ---

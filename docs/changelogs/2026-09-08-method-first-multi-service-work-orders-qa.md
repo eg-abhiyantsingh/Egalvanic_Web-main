@@ -1,4 +1,6 @@
-# 2026-09-08 — QA: Method-first, multi-service work orders (derived WO type + session_method_lines ledger) — backend #1161 / frontend #1325 / iOS #517
+# 2026-09-08 — QA: ZP-3987 — Method-first, multi-service work orders (derived WO type + session_method_lines ledger) — backend #1161 / frontend #1325 / iOS #517
+
+**Ticket:** https://egalvanic.atlassian.net/browse/ZP-3987
 
 **Prompt:** the ticket text with its 8-step QA review ("test this ticket too").
 
