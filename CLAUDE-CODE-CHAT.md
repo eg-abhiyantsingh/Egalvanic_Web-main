@@ -980,3 +980,13 @@ Page is now masthead → contents → 22 features / 7 areas, nothing else. Verif
 no DAY ONE, no footer, **zero** "V1.36", 20 images, none broken.
 **Kept deliberately:** the output path is still `…QA-V136-promotion-board.html` — the artifact URL is tied
 to the file path, so renaming the file would create a new link. Title/content is what readers see.
+
+## 2026-09-09 — Issue Suggestions marked web-only (red) on the V2.1 notes
+Owner: add that Issue Suggestions is not available on mobile this release, highlight in red.
+Added under its "Where to find it" steps on artifact 88483448… (same URL): **"WEB ONLY IN THIS RELEASE /
+Not available on mobile. Issue Suggestions is a web feature in V2.1 — a technician working in the mobile
+app will not see the suggestion sets."**
+New `.note.alert` style (red left rule + 6% red tint + uppercase mono flag) with an `--alert` token in
+**all three** theme blocks — `#A32821` light, `#F08878` dark (the light red is unreadable on the dark
+ground). It is the ONLY red on the page, so it reads as the single caveat. Verified live: note is inside
+the Issue Suggestions card, computed colour rgb(163,40,33), other 21 features untouched.

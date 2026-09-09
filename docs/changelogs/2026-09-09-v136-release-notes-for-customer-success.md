@@ -104,3 +104,23 @@ broken.
 `docs/report-artifacts/2026-09-09-QA-V136-promotion-board.html`, which no longer describes its
 contents. It is deliberate: the artifact URL is tied to that path, and renaming the file would publish
 a new page at a new link. The title and content are what a reader sees.
+
+## Addendum 2 — Issue Suggestions flagged as web-only, in red
+
+**Prompt:** "Issue Suggestions — pre-written text instead of blank boxes add point that this in not
+avaible for mobile on this release highlight in red."
+
+Added to the Issue Suggestions card, directly under its "Where to find it" steps:
+
+> **WEB ONLY IN THIS RELEASE**
+> **Not available on mobile.** Issue Suggestions is a web feature in V2.1 — a technician working in the
+> mobile app will not see the suggestion sets.
+
+A red note style was added for it (`.note.alert`): red left rule, a 6%-tint red background, an
+uppercase mono flag line, and red body text. A red token was defined in all three theme blocks so it
+holds in light, dark and system themes — `#A32821` on light, `#F08878` on dark, since the light red
+would fail against a dark ground. It is the only red on the page, which is what makes it read as the
+one caveat rather than as decoration.
+
+Verified on the published page: the note sits inside the "Issue Suggestions — pre-written text instead
+of blank boxes" card, computed colour `rgb(163, 40, 33)`, and the other 21 features are untouched.
