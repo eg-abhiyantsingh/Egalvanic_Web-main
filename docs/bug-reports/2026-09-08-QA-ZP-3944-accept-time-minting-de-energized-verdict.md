@@ -4,6 +4,8 @@
 
 **Tested:** 2026-09-08 · `acme.qa.egalvanic.ai` build **V1.36**, bundle **`index-CSsDpG3c.js`** · tenant acme · Super Admin seat · live UI with request capture, library counted before and after each step.
 
+**Artifact:** https://claude.ai/code/artifact/82876c81-f854-4770-8536-df517a8fb445
+
 ---
 
 ## QA-review checklist — results

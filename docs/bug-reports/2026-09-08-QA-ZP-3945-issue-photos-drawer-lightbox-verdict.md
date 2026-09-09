@@ -5,6 +5,8 @@
 **Tested:** 2026-09-08 · `acme.qa.egalvanic.ai` build **V1.36**, bundle **`index-CSsDpG3c.js`** · tenant acme · Super Admin seat · live UI with the photo and S3 responses captured.
 **Ticket said "dev only, not yet promoted to cicd/qa" — wrong:** drawer photos, presigning and the extracted viewer are all live on QA.
 
+**Artifact:** https://claude.ai/code/artifact/dc586391-7cae-4a23-a4d0-8249c04ff1d9
+
 ---
 
 ## QA-review checklist — results

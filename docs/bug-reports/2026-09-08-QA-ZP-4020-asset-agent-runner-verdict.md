@@ -5,6 +5,8 @@
 **Tested:** 2026-09-08 · `acme.qa.egalvanic.ai` build **V1.36**, bundle **`index-CSsDpG3c.js`** · tenant acme · Super Admin seat.
 **Environment note from the ticket:** "dev only (cicd/dev); classic path is the default (`ASSET_AGENT_RUNTIME` unset) so there is NO behavior change until the env var flips." QA is therefore expected to be on the classic Lambda, and that is consistent with what the product shows.
 
+**Artifact:** https://claude.ai/code/artifact/b62c9cfe-7c23-4c7c-baf7-2b7f0d3429ce
+
 ---
 
 ## QA-review checklist — results

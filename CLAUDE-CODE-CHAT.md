@@ -802,3 +802,20 @@ from the drawer to the full page and no Back control on it.
 **ZP-4020** not testable from QA (env-var gated, external Fargate).
 **Self-correction worth remembering:** I claimed "no proposal on QA is generated_by rule" from a 3-issue sample and
 had to patch three verdicts after a 15-issue survey proved otherwise. Sample before asserting a universal.
+
+### 2026-09-09 — the 13 outstanding artifact pages + changelogs
+Owner asked "done all ticket?" — answer was no: all **16** verdicts and their evidence had landed on 2026-09-08, but
+only 3 tickets had shipped an Artifact page and a changelog (blended-rate, asset-PM-programs, method-first WOs). The
+gap is invisible unless counted (`ls docs/bug-reports | wc -l` vs `ls docs/changelogs`), so that count is now the
+done-check after any multi-ticket session.
+Built the remaining **13** from a compact per-ticket spec in `scratchpad/gen_artifacts.py` (literal ticket title as
+`<h1>`, chips, three verdict cards, the real checklist table, defects/findings, full clickable QA test-data URLs,
+not-covered list, method note, `{{img:NAME}}` placeholders) → `build_artifact.py` swaps in base64 JPEGs from `art/`
+(117 downscaled shots, `sips -Z 1200 … formatOptions 82`) → published each with a favicon. 248–445 KB per page.
+Three tickets had no screenshots in the plan; per the standing 2-screenshots rule, ZP-3941 took the procedure/rule
+editor pair, ZP-3943 the rule-controls + workbench pair, and ZP-4020 the classic bulk-extraction pair (which doubles
+as its documented revert target). All 16 verdicts now carry an `**Artifact:**` line; review board rebuilt at 86
+reports / 7,396 KB.
+**Reusable lesson:** generating N artifact pages from one spec-driven generator beats hand-writing each — the house
+head/CSS (`_artifact_head.html`) already carries every class the spec emits (`.res`, `.deriv`, `.defect.finding`,
+`.pair`, `.links`), so a new ticket is ~60 lines of content, not a page of markup.

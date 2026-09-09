@@ -5,6 +5,8 @@
 **Tested:** 2026-09-08 · `acme.qa.egalvanic.ai` build **V1.36**, bundle **`index-CSsDpG3c.js`** · tenant acme · Super Admin seat · procedure payloads and the fix-flow export-spec read directly; resolutions surveyed across 15 issues.
 **Ticket said "dev only, not yet promoted to cicd/qa".** The rule dispatch and the section axis are both observable on QA; whether *this* backend change is deployed here cannot be read from the product.
 
+**Artifact:** https://claude.ai/code/artifact/ee8f908a-ec4c-4327-bc1b-6032cd545f43
+
 ---
 
 ## QA-review checklist — results

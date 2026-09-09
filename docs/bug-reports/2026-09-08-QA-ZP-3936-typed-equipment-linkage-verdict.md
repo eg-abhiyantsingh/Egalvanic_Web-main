@@ -5,6 +5,8 @@
 **Tested:** 2026-09-08 · `acme.qa.egalvanic.ai` build **V1.36**, bundle **`index-CSsDpG3c.js`** · tenant acme · Super Admin seat · Admin → Materials, live UI with the catalog endpoints captured.
 **Ticket said "dev only, not yet promoted to cicd/qa" — wrong:** typed linkage is live on QA and existing library rows already carry typed refs.
 
+**Artifact:** https://claude.ai/code/artifact/9cf81bd5-c985-4174-ad3c-e7059c057296
+
 ---
 
 ## QA-review checklist — results
