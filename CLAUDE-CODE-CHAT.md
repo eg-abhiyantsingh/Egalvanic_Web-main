@@ -990,3 +990,23 @@ New `.note.alert` style (red left rule + 6% red tint + uppercase mono flag) with
 **all three** theme blocks — `#A32821` light, `#F08878` dark (the light red is unreadable on the dark
 ground). It is the ONLY red on the page, so it reads as the single caveat. Verified live: note is inside
 the Issue Suggestions card, computed colour rgb(163,40,33), other 21 features untouched.
+
+## 2026-09-09 — retest ZP-3782 / ZP-3783 (Fill Forms from Photos): BOTH STILL FAIL
+Owner pasted both tickets: "check this is passed or not". Re-ran the original sheet through the UI on
+V1.36; 3 fresh jobs (6293a4f4 applied, fbe3581f, 8079487d).
+**ZP-3782 NOT FIXED — failure mode changed, loss identical.** Both ticks now reach the value but as a
+comma-joined STRING `'visual_inspection,thermography'` → validator refuses ("use the option KEY") → apply
+wrote **7 keys with `tests_performed` ABSENT**; re-read of the persisted instance confirms no such key.
+The old scalar-collapse + `written twice (d4 and d4)` warning are GONE. Dialog still says only
+"7 values · draft" → still silent. Net: silent partial write → silent total non-write.
+**ZP-3783 NOT FIXED** — descriptors still `label·path·section·type·unit` (no options) while `field_index`
+in the same payload has all 36 fields' options. **Caveat stated:** both fresh jobs returned `filled:0` so
+emitted no questions/gaps; descriptor sample came from a payload *fetched* today. To close: any run that
+fills ≥1 form.
+Verdict `docs/bug-reports/2026-09-09-QA-ZP-3782-ZP-3783-fill-forms-retest-verdict.md` · artifact
+e1577f11-92cb-49a1-865f-051e1f31fe48 · evidence `docs/bug-evidence/zp-3782-3783-fill-forms-retest/`
+(sheet + composed JSON evidence card + Forms grid showing `0/7 Draft Sep 9 05:04 PM`).
+**Traps (now in memory):** a prior job blocks a new run (dialog restores it; Cancel doesn't release —
+Apply→Done or "Try other pages"); once a sibling is filled the sheet stops matching (model won't guess
+among identical siblings → `filled:0`); **scope file inputs to `[role="dialog"]`** — a page-wide query
+staged the sheet into *Upload IR Photos* (cancelled before upload).
