@@ -1,0 +1,1146 @@
+{
+ "A_default_limit_IR": {
+  "candidates": [
+   {
+    "date": "2026-06-25T10:08:33.463143+00:00",
+    "id": "8ccd2aed-dc8a-4dca-ac57-b54fda41cf39",
+    "label": "test",
+    "signal": 412,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-02T08:26:32.717000+00:00",
+    "id": "292723d6-4939-47d2-8278-f2e2a5cb33d8",
+    "label": "test",
+    "signal": 84,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-09T07:44:46+00:00",
+    "id": "82fbe011-3c3c-4fcb-9679-989294ad7fe8",
+    "label": "Work Order - Apr 9, 1:14 PM",
+    "signal": 15,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-05T07:33:59+00:00",
+    "id": "9ad3fc78-0327-44f7-8ef8-dad043e41d45",
+    "label": "Work Order - Mar 5, 1:03 PM",
+    "signal": 11,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-03T13:59:16+00:00",
+    "id": "8d50de0e-3e6f-4f45-bbcd-fb2ede661fde",
+    "label": "ir photo",
+    "signal": 9,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-29T10:36:12+00:00",
+    "id": "3e42a63d-bfd0-4c54-9eec-3a1c815eab0d",
+    "label": "Job - Apr 29, 4:06 PM offline",
+    "signal": 7,
+    "work_type": null
+   },
+   {
+    "date": "2026-02-11T06:54:12.695000+00:00",
+    "id": "7f6fd9e5-746d-48f4-bf80-440036cd95e0",
+    "label": "criticllll",
+    "signal": 6,
+    "work_type": null
+   },
+   {
+    "date": "2026-02-11T05:34:18+00:00",
+    "id": "721e73dc-eec5-4e4d-8f75-7c5d4f77b5c6",
+    "label": "Job - Feb 11, 11:04 am",
+    "signal": 6,
+    "work_type": null
+   },
+   {
+    "date": "2026-07-02T10:51:31.453591+00:00",
+    "id": "8333cf4f-a722-4acb-8c41-aafa4b5afd4e",
+    "label": "NewMediumdefault",
+    "signal": 5,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-02T11:15:39+00:00",
+    "id": "ea9b261e-e5dd-48ba-bc45-99cb94995330",
+    "label": "Job - Apr 2, 4:45 PM",
+    "signal": 4,
+    "work_type": null
+   }
+  ],
+  "count": 10,
+  "entity_kind": "ir_session_id",
+  "name_contains": null,
+  "note": "None carry work type 'IR' \u2014 most entities have no work type set at all. Judge from the names instead, or re-query with name_contains.",
+  "ranked_by": "tasks+issues",
+  "signal_meaning": "rows of 'tasks+issues' this entity has for the query to read; 0 means an empty render",
+  "success": true,
+  "work_type_preference": "IR",
+  "__http": 200
+ },
+ "A_limit25_IR": {
+  "candidates": [
+   {
+    "date": "2026-08-26T06:43:14.546000+00:00",
+    "id": "66e7e7b1-7dc8-4998-81ee-301f39ad940f",
+    "label": "test with ab 26",
+    "signal": 0,
+    "work_type": "IR"
+   },
+   {
+    "date": "2026-08-26T06:07:43.354000+00:00",
+    "id": "6b70f713-b2b5-44d8-a8ca-f84dc3ee2e58",
+    "label": "test wo 26 aug",
+    "signal": 0,
+    "work_type": "IR"
+   },
+   {
+    "date": "2026-07-21T15:48:14.098000+00:00",
+    "id": "bb9c945a-3e2c-4ecd-bf58-15d84e2c0b4b",
+    "label": "QA-WT08 Infrared Thermography",
+    "signal": 0,
+    "work_type": "IR"
+   },
+   {
+    "date": "2026-07-21T09:53:35.699000+00:00",
+    "id": "2b217cd3-a05d-447f-979a-45f069331510",
+    "label": "IR_WO_QA_2026-07-21",
+    "signal": 0,
+    "work_type": "IR"
+   },
+   {
+    "date": "2026-06-25T10:08:33.463143+00:00",
+    "id": "8ccd2aed-dc8a-4dca-ac57-b54fda41cf39",
+    "label": "test",
+    "signal": 412,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-02T08:26:32.717000+00:00",
+    "id": "292723d6-4939-47d2-8278-f2e2a5cb33d8",
+    "label": "test",
+    "signal": 84,
+    "work_type": null
+   },
+   {
+    "date": "2025-12-05T13:51:34+00:00",
+    "id": "3aa16996-e463-4d2b-a422-3abdebcd0f91",
+    "label": "Site Visit - Dec 5, QA1",
+    "signal": 17,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-09T07:44:46+00:00",
+    "id": "82fbe011-3c3c-4fcb-9679-989294ad7fe8",
+    "label": "Work Order - Apr 9, 1:14 PM",
+    "signal": 15,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-05T07:33:59+00:00",
+    "id": "9ad3fc78-0327-44f7-8ef8-dad043e41d45",
+    "label": "Work Order - Mar 5, 1:03 PM",
+    "signal": 11,
+    "work_type": null
+   },
+   {
+    "date": "2026-07-29T06:28:16+00:00",
+    "id": "c6a76855-271a-4125-a266-bf9774dc6925",
+    "label": "Job - Jul 29, 11:58 am",
+    "signal": 10,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-03T13:59:16+00:00",
+    "id": "8d50de0e-3e6f-4f45-bbcd-fb2ede661fde",
+    "label": "ir photo",
+    "signal": 9,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-29T10:36:12+00:00",
+    "id": "3e42a63d-bfd0-4c54-9eec-3a1c815eab0d",
+    "label": "Job - Apr 29, 4:06 PM offline",
+    "signal": 7,
+    "work_type": null
+   },
+   {
+    "date": "2026-02-11T06:54:12.695000+00:00",
+    "id": "7f6fd9e5-746d-48f4-bf80-440036cd95e0",
+    "label": "criticllll",
+    "signal": 6,
+    "work_type": null
+   },
+   {
+    "date": "2026-02-11T05:34:18+00:00",
+    "id": "721e73dc-eec5-4e4d-8f75-7c5d4f77b5c6",
+    "label": "Job - Feb 11, 11:04 am",
+    "signal": 6,
+    "work_type": null
+   },
+   {
+    "date": "2026-07-02T10:51:31.453591+00:00",
+    "id": "8333cf4f-a722-4acb-8c41-aafa4b5afd4e",
+    "label": "NewMediumdefault",
+    "signal": 5,
+    "work_type": null
+   },
+   {
+    "date": "2026-05-06T09:28:53.249000+00:00",
+    "id": "36928aa2-2797-48fc-bb9d-1858e80740f3",
+    "label": "wo1",
+    "signal": 5,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-02T11:15:39+00:00",
+    "id": "ea9b261e-e5dd-48ba-bc45-99cb94995330",
+    "label": "Job - Apr 2, 4:45 PM",
+    "signal": 4,
+    "work_type": null
+   },
+   {
+    "date": "2026-09-07T14:36:39+00:00",
+    "id": "f0e047a7-0e2e-4739-95fe-8efd131cd41d",
+    "label": "Job - Sep 7, 8:06 PM",
+    "signal": 4,
+    "work_type": "PM Forms"
+   },
+   {
+    "date": "2026-09-07T16:08:17+00:00",
+    "id": "a44bac69-131a-455f-9c62-845b7e3ece9e",
+    "label": "Job - Sep 7, 9:38 PM",
+    "signal": 3,
+    "work_type": "PM Forms"
+   },
+   {
+    "date": "2026-09-08T11:48:45+00:00",
+    "id": "4847c697-1436-449e-b952-04104a96827c",
+    "label": "Job - Sep 8, 5:18 PM",
+    "signal": 3,
+    "work_type": "IR Checklist"
+   },
+   {
+    "date": "2026-07-16T10:12:17.513000+00:00",
+    "id": "756f2dc0-7041-4648-ac92-96cc7f2550d3",
+    "label": "time out ",
+    "signal": 2,
+    "work_type": "AF"
+   },
+   {
+    "date": "2026-08-14T07:55:15+00:00",
+    "id": "500882aa-72de-4679-9e06-3f7229dd658d",
+    "label": "Work Order - Aug 14, 1:25 PM",
+    "signal": 2,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-30T06:13:01+00:00",
+    "id": "32f0032a-e830-4f3d-b212-37f54ce70ef1",
+    "label": "Work Order - Apr 30, 11:42 AM offline",
+    "signal": 2,
+    "work_type": null
+   },
+   {
+    "date": "2026-08-06T14:23:33+00:00",
+    "id": "e99586ba-e52a-46d7-8d15-38c5d0646734",
+    "label": "abhiyant_6auguest_12",
+    "signal": 2,
+    "work_type": "COM"
+   },
+   {
+    "date": "2026-04-30T09:48:42+00:00",
+    "id": "9467a7e2-0577-428d-8734-f1585b9ac5ea",
+    "label": "Job - Apr 30, 3:18 PM",
+    "signal": 2,
+    "work_type": null
+   }
+  ],
+  "count": 25,
+  "entity_kind": "ir_session_id",
+  "name_contains": null,
+  "note": null,
+  "ranked_by": "tasks+issues",
+  "signal_meaning": "rows of 'tasks+issues' this entity has for the query to read; 0 means an empty render",
+  "success": true,
+  "work_type_preference": "IR",
+  "__http": 200
+ },
+ "A_default_limit_IR_Checklist": {
+  "candidates": [
+   {
+    "date": "2026-06-25T10:08:33.463143+00:00",
+    "id": "8ccd2aed-dc8a-4dca-ac57-b54fda41cf39",
+    "label": "test",
+    "signal": 412,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-02T08:26:32.717000+00:00",
+    "id": "292723d6-4939-47d2-8278-f2e2a5cb33d8",
+    "label": "test",
+    "signal": 84,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-09T07:44:46+00:00",
+    "id": "82fbe011-3c3c-4fcb-9679-989294ad7fe8",
+    "label": "Work Order - Apr 9, 1:14 PM",
+    "signal": 15,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-05T07:33:59+00:00",
+    "id": "9ad3fc78-0327-44f7-8ef8-dad043e41d45",
+    "label": "Work Order - Mar 5, 1:03 PM",
+    "signal": 11,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-03T13:59:16+00:00",
+    "id": "8d50de0e-3e6f-4f45-bbcd-fb2ede661fde",
+    "label": "ir photo",
+    "signal": 9,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-29T10:36:12+00:00",
+    "id": "3e42a63d-bfd0-4c54-9eec-3a1c815eab0d",
+    "label": "Job - Apr 29, 4:06 PM offline",
+    "signal": 7,
+    "work_type": null
+   },
+   {
+    "date": "2026-02-11T06:54:12.695000+00:00",
+    "id": "7f6fd9e5-746d-48f4-bf80-440036cd95e0",
+    "label": "criticllll",
+    "signal": 6,
+    "work_type": null
+   },
+   {
+    "date": "2026-02-11T05:34:18+00:00",
+    "id": "721e73dc-eec5-4e4d-8f75-7c5d4f77b5c6",
+    "label": "Job - Feb 11, 11:04 am",
+    "signal": 6,
+    "work_type": null
+   },
+   {
+    "date": "2026-07-02T10:51:31.453591+00:00",
+    "id": "8333cf4f-a722-4acb-8c41-aafa4b5afd4e",
+    "label": "NewMediumdefault",
+    "signal": 5,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-02T11:15:39+00:00",
+    "id": "ea9b261e-e5dd-48ba-bc45-99cb94995330",
+    "label": "Job - Apr 2, 4:45 PM",
+    "signal": 4,
+    "work_type": null
+   }
+  ],
+  "count": 10,
+  "entity_kind": "ir_session_id",
+  "name_contains": null,
+  "note": "None carry work type 'IR Checklist' \u2014 most entities have no work type set at all. Judge from the names instead, or re-query with name_contains.",
+  "ranked_by": "tasks+issues",
+  "signal_meaning": "rows of 'tasks+issues' this entity has for the query to read; 0 means an empty render",
+  "success": true,
+  "work_type_preference": "IR Checklist",
+  "__http": 200
+ },
+ "A_limit25_IR_Checklist": {
+  "candidates": [
+   {
+    "date": "2026-09-08T11:48:45+00:00",
+    "id": "4847c697-1436-449e-b952-04104a96827c",
+    "label": "Job - Sep 8, 5:18 PM",
+    "signal": 3,
+    "work_type": "IR Checklist"
+   },
+   {
+    "date": "2026-09-07T16:20:14+00:00",
+    "id": "5961578a-cf43-431e-9250-0d84c2b51059",
+    "label": "Job - Sep 7, 9:50 PM",
+    "signal": 0,
+    "work_type": "IR Checklist"
+   },
+   {
+    "date": "2026-09-07T15:43:28+00:00",
+    "id": "4caa13c5-d031-4d9c-a9c4-991bd7a97fd7",
+    "label": "Job - Sep 7, 9:13 PM",
+    "signal": 0,
+    "work_type": "IR Checklist"
+   },
+   {
+    "date": "2026-09-07T11:41:35+00:00",
+    "id": "b8c9be4d-44b1-4666-9c49-44b71a2da7b4",
+    "label": "Job - Sep 7, 5:11 PM",
+    "signal": 0,
+    "work_type": "IR Checklist"
+   },
+   {
+    "date": "2026-09-07T10:51:33+00:00",
+    "id": "b115792f-7ffe-4871-a820-1f58e662d01b",
+    "label": "Job - Sep 7, 4:21 PM",
+    "signal": 0,
+    "work_type": "IR Checklist"
+   },
+   {
+    "date": "2026-09-07T11:28:01+00:00",
+    "id": "084d9709-2a9c-496f-93e5-039ea43e24c9",
+    "label": "Job - Sep 7, 4:57 PM",
+    "signal": 0,
+    "work_type": "IR Checklist"
+   },
+   {
+    "date": "2026-08-27T10:27:24.497000+00:00",
+    "id": "e2345f8a-4bb1-414f-af6a-c2be8163f410",
+    "label": "IR CHecklist",
+    "signal": 0,
+    "work_type": "IR Checklist"
+   },
+   {
+    "date": "2026-08-26T06:44:40.317000+00:00",
+    "id": "879df55e-eec8-4c2b-9562-522f446d978f",
+    "label": "test with ab 2",
+    "signal": 0,
+    "work_type": "IR Checklist"
+   },
+   {
+    "date": "2026-09-03T11:17:31+00:00",
+    "id": "434aeab9-7064-44e5-b00a-b44218b98066",
+    "label": "Job - Sep 3, 4:47 PM",
+    "signal": 0,
+    "work_type": "IR Checklist"
+   },
+   {
+    "date": "2026-06-25T10:08:33.463143+00:00",
+    "id": "8ccd2aed-dc8a-4dca-ac57-b54fda41cf39",
+    "label": "test",
+    "signal": 412,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-02T08:26:32.717000+00:00",
+    "id": "292723d6-4939-47d2-8278-f2e2a5cb33d8",
+    "label": "test",
+    "signal": 84,
+    "work_type": null
+   },
+   {
+    "date": "2025-12-05T13:51:34+00:00",
+    "id": "3aa16996-e463-4d2b-a422-3abdebcd0f91",
+    "label": "Site Visit - Dec 5, QA1",
+    "signal": 17,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-09T07:44:46+00:00",
+    "id": "82fbe011-3c3c-4fcb-9679-989294ad7fe8",
+    "label": "Work Order - Apr 9, 1:14 PM",
+    "signal": 15,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-05T07:33:59+00:00",
+    "id": "9ad3fc78-0327-44f7-8ef8-dad043e41d45",
+    "label": "Work Order - Mar 5, 1:03 PM",
+    "signal": 11,
+    "work_type": null
+   },
+   {
+    "date": "2026-07-29T06:28:16+00:00",
+    "id": "c6a76855-271a-4125-a266-bf9774dc6925",
+    "label": "Job - Jul 29, 11:58 am",
+    "signal": 10,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-03T13:59:16+00:00",
+    "id": "8d50de0e-3e6f-4f45-bbcd-fb2ede661fde",
+    "label": "ir photo",
+    "signal": 9,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-29T10:36:12+00:00",
+    "id": "3e42a63d-bfd0-4c54-9eec-3a1c815eab0d",
+    "label": "Job - Apr 29, 4:06 PM offline",
+    "signal": 7,
+    "work_type": null
+   },
+   {
+    "date": "2026-02-11T06:54:12.695000+00:00",
+    "id": "7f6fd9e5-746d-48f4-bf80-440036cd95e0",
+    "label": "criticllll",
+    "signal": 6,
+    "work_type": null
+   },
+   {
+    "date": "2026-02-11T05:34:18+00:00",
+    "id": "721e73dc-eec5-4e4d-8f75-7c5d4f77b5c6",
+    "label": "Job - Feb 11, 11:04 am",
+    "signal": 6,
+    "work_type": null
+   },
+   {
+    "date": "2026-07-02T10:51:31.453591+00:00",
+    "id": "8333cf4f-a722-4acb-8c41-aafa4b5afd4e",
+    "label": "NewMediumdefault",
+    "signal": 5,
+    "work_type": null
+   },
+   {
+    "date": "2026-05-06T09:28:53.249000+00:00",
+    "id": "36928aa2-2797-48fc-bb9d-1858e80740f3",
+    "label": "wo1",
+    "signal": 5,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-02T11:15:39+00:00",
+    "id": "ea9b261e-e5dd-48ba-bc45-99cb94995330",
+    "label": "Job - Apr 2, 4:45 PM",
+    "signal": 4,
+    "work_type": null
+   },
+   {
+    "date": "2026-09-07T14:36:39+00:00",
+    "id": "f0e047a7-0e2e-4739-95fe-8efd131cd41d",
+    "label": "Job - Sep 7, 8:06 PM",
+    "signal": 4,
+    "work_type": "PM Forms"
+   },
+   {
+    "date": "2026-09-07T16:08:17+00:00",
+    "id": "a44bac69-131a-455f-9c62-845b7e3ece9e",
+    "label": "Job - Sep 7, 9:38 PM",
+    "signal": 3,
+    "work_type": "PM Forms"
+   },
+   {
+    "date": "2026-07-16T10:12:17.513000+00:00",
+    "id": "756f2dc0-7041-4648-ac92-96cc7f2550d3",
+    "label": "time out ",
+    "signal": 2,
+    "work_type": "AF"
+   }
+  ],
+  "count": 25,
+  "entity_kind": "ir_session_id",
+  "name_contains": null,
+  "note": null,
+  "ranked_by": "tasks+issues",
+  "signal_meaning": "rows of 'tasks+issues' this entity has for the query to read; 0 means an empty render",
+  "success": true,
+  "work_type_preference": "IR Checklist",
+  "__http": 200
+ },
+ "B_query_eg_get_session_ids_with_issues": {
+  "candidates": [
+   {
+    "date": "2026-04-09T07:44:46+00:00",
+    "id": "82fbe011-3c3c-4fcb-9679-989294ad7fe8",
+    "label": "Work Order - Apr 9, 1:14 PM",
+    "signal": 15,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-03T13:59:16+00:00",
+    "id": "8d50de0e-3e6f-4f45-bbcd-fb2ede661fde",
+    "label": "ir photo",
+    "signal": 3,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-29T10:36:12+00:00",
+    "id": "3e42a63d-bfd0-4c54-9eec-3a1c815eab0d",
+    "label": "Job - Apr 29, 4:06 PM offline",
+    "signal": 3,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-02T11:15:39+00:00",
+    "id": "ea9b261e-e5dd-48ba-bc45-99cb94995330",
+    "label": "Job - Apr 2, 4:45 PM",
+    "signal": 2,
+    "work_type": null
+   },
+   {
+    "date": "2026-07-16T10:12:17.513000+00:00",
+    "id": "756f2dc0-7041-4648-ac92-96cc7f2550d3",
+    "label": "time out ",
+    "signal": 1,
+    "work_type": "AF"
+   }
+  ],
+  "count": 5,
+  "entity_kind": "ir_session_id",
+  "name_contains": null,
+  "note": null,
+  "ranked_by": "issue",
+  "signal_meaning": "rows of 'issue' this entity has for the query to read; 0 means an empty render",
+  "success": true,
+  "work_type_preference": null,
+  "__http": 200
+ },
+ "B_query_eg_get_session_ids_with_tasks": {
+  "candidates": [
+   {
+    "date": "2026-03-03T13:59:16+00:00",
+    "id": "8d50de0e-3e6f-4f45-bbcd-fb2ede661fde",
+    "label": "ir photo",
+    "signal": 6,
+    "work_type": null
+   },
+   {
+    "date": "2026-02-11T06:54:12.695000+00:00",
+    "id": "7f6fd9e5-746d-48f4-bf80-440036cd95e0",
+    "label": "criticllll",
+    "signal": 6,
+    "work_type": null
+   },
+   {
+    "date": "2026-07-02T10:51:31.453591+00:00",
+    "id": "8333cf4f-a722-4acb-8c41-aafa4b5afd4e",
+    "label": "NewMediumdefault",
+    "signal": 5,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-29T10:36:12+00:00",
+    "id": "3e42a63d-bfd0-4c54-9eec-3a1c815eab0d",
+    "label": "Job - Apr 29, 4:06 PM offline",
+    "signal": 4,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-02T11:15:39+00:00",
+    "id": "ea9b261e-e5dd-48ba-bc45-99cb94995330",
+    "label": "Job - Apr 2, 4:45 PM",
+    "signal": 2,
+    "work_type": null
+   }
+  ],
+  "count": 5,
+  "entity_kind": "ir_session_id",
+  "name_contains": null,
+  "note": null,
+  "ranked_by": "task",
+  "signal_meaning": "rows of 'task' this entity has for the query to read; 0 means an empty render",
+  "success": true,
+  "work_type_preference": null,
+  "__http": 200
+ },
+ "B_query_eg_get_session_ids_with_nodes": {
+  "candidates": [
+   {
+    "date": "2026-04-09T07:44:46+00:00",
+    "id": "82fbe011-3c3c-4fcb-9679-989294ad7fe8",
+    "label": "Work Order - Apr 9, 1:14 PM",
+    "signal": 15,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-03T13:59:16+00:00",
+    "id": "8d50de0e-3e6f-4f45-bbcd-fb2ede661fde",
+    "label": "ir photo",
+    "signal": 9,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-29T10:36:12+00:00",
+    "id": "3e42a63d-bfd0-4c54-9eec-3a1c815eab0d",
+    "label": "Job - Apr 29, 4:06 PM offline",
+    "signal": 7,
+    "work_type": null
+   },
+   {
+    "date": "2026-02-11T06:54:12.695000+00:00",
+    "id": "7f6fd9e5-746d-48f4-bf80-440036cd95e0",
+    "label": "criticllll",
+    "signal": 6,
+    "work_type": null
+   },
+   {
+    "date": "2026-07-02T10:51:31.453591+00:00",
+    "id": "8333cf4f-a722-4acb-8c41-aafa4b5afd4e",
+    "label": "NewMediumdefault",
+    "signal": 5,
+    "work_type": null
+   }
+  ],
+  "count": 5,
+  "entity_kind": "ir_session_id",
+  "name_contains": null,
+  "note": null,
+  "ranked_by": "tasks+issues",
+  "signal_meaning": "rows of 'tasks+issues' this entity has for the query to read; 0 means an empty render",
+  "success": true,
+  "work_type_preference": null,
+  "__http": 200
+ },
+ "B_query_eg_get_session_ids_with_eg_forms": {
+  "candidates": [
+   {
+    "date": "2026-07-23T07:59:38.450000+00:00",
+    "id": "fcc7b623-4223-43a7-be9c-aa2044d358c1",
+    "label": "WTC_cleaning_1784793452710",
+    "signal": 980,
+    "work_type": "PM Forms"
+   },
+   {
+    "date": "2026-07-16T10:12:17.513000+00:00",
+    "id": "756f2dc0-7041-4648-ac92-96cc7f2550d3",
+    "label": "time out ",
+    "signal": 0,
+    "work_type": "AF"
+   },
+   {
+    "date": "2025-12-16T06:21:14+00:00",
+    "id": "5c27a440-0c26-4bcd-be2a-0998e523c8eb",
+    "label": "Job - Dec 16, 11:51 am",
+    "signal": 0,
+    "work_type": null
+   },
+   {
+    "date": "2026-07-24T04:55:06.204000+00:00",
+    "id": "9de85c9d-8059-416b-9972-0bd6d54afb78",
+    "label": "AutoTest_WO_99443",
+    "signal": 0,
+    "work_type": "AF"
+   },
+   {
+    "date": "2026-07-23T14:04:09.470000+00:00",
+    "id": "90a59769-5998-4847-94a2-af169ffad035",
+    "label": "AutoTest_WO_85105",
+    "signal": 0,
+    "work_type": "AF"
+   }
+  ],
+  "count": 5,
+  "entity_kind": "ir_session_id",
+  "name_contains": null,
+  "note": null,
+  "ranked_by": "eg_form",
+  "signal_meaning": "rows of 'eg_form' this entity has for the query to read; 0 means an empty render",
+  "success": true,
+  "work_type_preference": null,
+  "__http": 200
+ },
+ "B_query_eg_get_session_ids_with_forms": {
+  "candidates": [
+   {
+    "date": "2026-04-09T07:44:46+00:00",
+    "id": "82fbe011-3c3c-4fcb-9679-989294ad7fe8",
+    "label": "Work Order - Apr 9, 1:14 PM",
+    "signal": 15,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-03T13:59:16+00:00",
+    "id": "8d50de0e-3e6f-4f45-bbcd-fb2ede661fde",
+    "label": "ir photo",
+    "signal": 9,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-29T10:36:12+00:00",
+    "id": "3e42a63d-bfd0-4c54-9eec-3a1c815eab0d",
+    "label": "Job - Apr 29, 4:06 PM offline",
+    "signal": 7,
+    "work_type": null
+   },
+   {
+    "date": "2026-02-11T06:54:12.695000+00:00",
+    "id": "7f6fd9e5-746d-48f4-bf80-440036cd95e0",
+    "label": "criticllll",
+    "signal": 6,
+    "work_type": null
+   },
+   {
+    "date": "2026-07-02T10:51:31.453591+00:00",
+    "id": "8333cf4f-a722-4acb-8c41-aafa4b5afd4e",
+    "label": "NewMediumdefault",
+    "signal": 5,
+    "work_type": null
+   }
+  ],
+  "count": 5,
+  "entity_kind": "ir_session_id",
+  "name_contains": null,
+  "note": null,
+  "ranked_by": "tasks+issues",
+  "signal_meaning": "rows of 'tasks+issues' this entity has for the query to read; 0 means an empty render",
+  "success": true,
+  "work_type_preference": null,
+  "__http": 200
+ },
+ "B_query_eg_get_session_ids_with_neta_forms": {
+  "candidates": [
+   {
+    "date": "2026-04-09T07:44:46+00:00",
+    "id": "82fbe011-3c3c-4fcb-9679-989294ad7fe8",
+    "label": "Work Order - Apr 9, 1:14 PM",
+    "signal": 15,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-03T13:59:16+00:00",
+    "id": "8d50de0e-3e6f-4f45-bbcd-fb2ede661fde",
+    "label": "ir photo",
+    "signal": 9,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-29T10:36:12+00:00",
+    "id": "3e42a63d-bfd0-4c54-9eec-3a1c815eab0d",
+    "label": "Job - Apr 29, 4:06 PM offline",
+    "signal": 7,
+    "work_type": null
+   },
+   {
+    "date": "2026-02-11T06:54:12.695000+00:00",
+    "id": "7f6fd9e5-746d-48f4-bf80-440036cd95e0",
+    "label": "criticllll",
+    "signal": 6,
+    "work_type": null
+   },
+   {
+    "date": "2026-07-02T10:51:31.453591+00:00",
+    "id": "8333cf4f-a722-4acb-8c41-aafa4b5afd4e",
+    "label": "NewMediumdefault",
+    "signal": 5,
+    "work_type": null
+   }
+  ],
+  "count": 5,
+  "entity_kind": "ir_session_id",
+  "name_contains": null,
+  "note": null,
+  "ranked_by": "tasks+issues",
+  "signal_meaning": "rows of 'tasks+issues' this entity has for the query to read; 0 means an empty render",
+  "success": true,
+  "work_type_preference": null,
+  "__http": 200
+ },
+ "B_query_eg_get_session_ids_with_neta_forms_for_class": {
+  "candidates": [
+   {
+    "date": "2026-04-09T07:44:46+00:00",
+    "id": "82fbe011-3c3c-4fcb-9679-989294ad7fe8",
+    "label": "Work Order - Apr 9, 1:14 PM",
+    "signal": 15,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-03T13:59:16+00:00",
+    "id": "8d50de0e-3e6f-4f45-bbcd-fb2ede661fde",
+    "label": "ir photo",
+    "signal": 9,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-29T10:36:12+00:00",
+    "id": "3e42a63d-bfd0-4c54-9eec-3a1c815eab0d",
+    "label": "Job - Apr 29, 4:06 PM offline",
+    "signal": 7,
+    "work_type": null
+   },
+   {
+    "date": "2026-02-11T06:54:12.695000+00:00",
+    "id": "7f6fd9e5-746d-48f4-bf80-440036cd95e0",
+    "label": "criticllll",
+    "signal": 6,
+    "work_type": null
+   },
+   {
+    "date": "2026-07-02T10:51:31.453591+00:00",
+    "id": "8333cf4f-a722-4acb-8c41-aafa4b5afd4e",
+    "label": "NewMediumdefault",
+    "signal": 5,
+    "work_type": null
+   }
+  ],
+  "count": 5,
+  "entity_kind": "ir_session_id",
+  "name_contains": null,
+  "note": null,
+  "ranked_by": "tasks+issues",
+  "signal_meaning": "rows of 'tasks+issues' this entity has for the query to read; 0 means an empty render",
+  "success": true,
+  "work_type_preference": null,
+  "__http": 200
+ },
+ "B_query_totally_made_up_query_name_xyz": {
+  "candidates": [
+   {
+    "date": "2026-04-09T07:44:46+00:00",
+    "id": "82fbe011-3c3c-4fcb-9679-989294ad7fe8",
+    "label": "Work Order - Apr 9, 1:14 PM",
+    "signal": 15,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-03T13:59:16+00:00",
+    "id": "8d50de0e-3e6f-4f45-bbcd-fb2ede661fde",
+    "label": "ir photo",
+    "signal": 9,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-29T10:36:12+00:00",
+    "id": "3e42a63d-bfd0-4c54-9eec-3a1c815eab0d",
+    "label": "Job - Apr 29, 4:06 PM offline",
+    "signal": 7,
+    "work_type": null
+   },
+   {
+    "date": "2026-02-11T06:54:12.695000+00:00",
+    "id": "7f6fd9e5-746d-48f4-bf80-440036cd95e0",
+    "label": "criticllll",
+    "signal": 6,
+    "work_type": null
+   },
+   {
+    "date": "2026-07-02T10:51:31.453591+00:00",
+    "id": "8333cf4f-a722-4acb-8c41-aafa4b5afd4e",
+    "label": "NewMediumdefault",
+    "signal": 5,
+    "work_type": null
+   }
+  ],
+  "count": 5,
+  "entity_kind": "ir_session_id",
+  "name_contains": null,
+  "note": null,
+  "ranked_by": "tasks+issues",
+  "signal_meaning": "rows of 'tasks+issues' this entity has for the query to read; 0 means an empty render",
+  "success": true,
+  "work_type_preference": null,
+  "__http": 200
+ },
+ "item1_name_contains_IR": {
+  "candidates": [
+   {
+    "date": "2026-03-16T09:41:07.682000+00:00",
+    "id": "d0928bb5-e068-4118-a298-c13813792fc9",
+    "label": "ir photo 2",
+    "signal": 16,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-03T13:59:16+00:00",
+    "id": "8d50de0e-3e6f-4f45-bbcd-fb2ede661fde",
+    "label": "ir photo",
+    "signal": 9,
+    "work_type": null
+   },
+   {
+    "date": "2025-12-11T12:18:31.517000+00:00",
+    "id": "30c29bd8-283b-4e29-b836-d1eb920999c2",
+    "label": "12112025 - IR Scan",
+    "signal": 5,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-13T13:12:23+00:00",
+    "id": "158bef93-ebab-49db-9092-9b6fd764646d",
+    "label": "Work Order - ir phot",
+    "signal": 2,
+    "work_type": null
+   },
+   {
+    "date": "2026-07-20T11:04:34+00:00",
+    "id": "8c2b8640-6078-4b9e-8916-92a862421d85",
+    "label": "Job - Jul 20, 4:33 pm FLIR -Sep",
+    "signal": 1,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-30T07:29:46+00:00",
+    "id": "5e629cb8-46f8-4b60-b6a4-7f55ea49c753",
+    "label": "Work Order - Apr 30, 12:59 PM ir photo",
+    "signal": 0,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-20T06:03:56.643000+00:00",
+    "id": "109211e2-7cb8-4514-8369-674d83bc1caf",
+    "label": "200 ir photo",
+    "signal": 0,
+    "work_type": null
+   },
+   {
+    "date": "2026-08-27T10:27:24.497000+00:00",
+    "id": "e2345f8a-4bb1-414f-af6a-c2be8163f410",
+    "label": "IR CHecklist",
+    "signal": 0,
+    "work_type": "IR Checklist"
+   },
+   {
+    "date": "2026-07-21T09:53:35.699000+00:00",
+    "id": "2b217cd3-a05d-447f-979a-45f069331510",
+    "label": "IR_WO_QA_2026-07-21",
+    "signal": 0,
+    "work_type": "IR"
+   },
+   {
+    "date": "2026-04-22T11:22:15.788874+00:00",
+    "id": "0532b7a4-b994-449d-b9be-b785476d5ab6",
+    "label": "IR Attachment demo",
+    "signal": 0,
+    "work_type": null
+   }
+  ],
+  "count": 10,
+  "entity_kind": "ir_session_id",
+  "name_contains": "IR",
+  "note": null,
+  "ranked_by": "tasks+issues",
+  "signal_meaning": "rows of 'tasks+issues' this entity has for the query to read; 0 means an empty render",
+  "success": true,
+  "work_type_preference": null,
+  "__http": 200
+ },
+ "item6_bad_entity_type": {
+  "error": "bad_entity_type",
+  "known_config_types": [
+   "arc_flash_readiness",
+   "issue",
+   "plan_emp",
+   "plan_rfq",
+   "plan_standard",
+   "quote",
+   "quote_breaker_rfq",
+   "quote_emp",
+   "quote_issue_report",
+   "quote_standard",
+   "session",
+   "sld"
+  ],
+  "message": "Pass config_type (e.g. session, plan_standard, plan_emp) or entity_type (session, plan, quote, sld).",
+  "success": false,
+  "__http": 400
+ },
+ "item6_bad_config_type": {
+  "error": "bad_entity_type",
+  "known_config_types": [
+   "arc_flash_readiness",
+   "issue",
+   "plan_emp",
+   "plan_rfq",
+   "plan_standard",
+   "quote",
+   "quote_breaker_rfq",
+   "quote_emp",
+   "quote_issue_report",
+   "quote_standard",
+   "session",
+   "sld"
+  ],
+  "message": "Pass config_type (e.g. session, plan_standard, plan_emp) or entity_type (session, plan, quote, sld).",
+  "success": false,
+  "__http": 400
+ },
+ "item6_no_match": {
+  "candidates": [],
+  "count": 0,
+  "entity_kind": "ir_session_id",
+  "name_contains": "zzz-no-such-entity-zzz",
+  "note": "No session matched.",
+  "ranked_by": null,
+  "signal_meaning": null,
+  "success": true,
+  "work_type_preference": null,
+  "__http": 200
+ },
+ "item6_only_required": {
+  "candidates": [
+   {
+    "date": "2026-06-25T10:08:33.463143+00:00",
+    "id": "8ccd2aed-dc8a-4dca-ac57-b54fda41cf39",
+    "label": "test",
+    "signal": 412,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-02T08:26:32.717000+00:00",
+    "id": "292723d6-4939-47d2-8278-f2e2a5cb33d8",
+    "label": "test",
+    "signal": 84,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-09T07:44:46+00:00",
+    "id": "82fbe011-3c3c-4fcb-9679-989294ad7fe8",
+    "label": "Work Order - Apr 9, 1:14 PM",
+    "signal": 15,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-05T07:33:59+00:00",
+    "id": "9ad3fc78-0327-44f7-8ef8-dad043e41d45",
+    "label": "Work Order - Mar 5, 1:03 PM",
+    "signal": 11,
+    "work_type": null
+   },
+   {
+    "date": "2026-03-03T13:59:16+00:00",
+    "id": "8d50de0e-3e6f-4f45-bbcd-fb2ede661fde",
+    "label": "ir photo",
+    "signal": 9,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-29T10:36:12+00:00",
+    "id": "3e42a63d-bfd0-4c54-9eec-3a1c815eab0d",
+    "label": "Job - Apr 29, 4:06 PM offline",
+    "signal": 7,
+    "work_type": null
+   },
+   {
+    "date": "2026-02-11T06:54:12.695000+00:00",
+    "id": "7f6fd9e5-746d-48f4-bf80-440036cd95e0",
+    "label": "criticllll",
+    "signal": 6,
+    "work_type": null
+   },
+   {
+    "date": "2026-02-11T05:34:18+00:00",
+    "id": "721e73dc-eec5-4e4d-8f75-7c5d4f77b5c6",
+    "label": "Job - Feb 11, 11:04 am",
+    "signal": 6,
+    "work_type": null
+   },
+   {
+    "date": "2026-07-02T10:51:31.453591+00:00",
+    "id": "8333cf4f-a722-4acb-8c41-aafa4b5afd4e",
+    "label": "NewMediumdefault",
+    "signal": 5,
+    "work_type": null
+   },
+   {
+    "date": "2026-04-02T11:15:39+00:00",
+    "id": "ea9b261e-e5dd-48ba-bc45-99cb94995330",
+    "label": "Job - Apr 2, 4:45 PM",
+    "signal": 4,
+    "work_type": null
+   }
+  ],
+  "count": 10,
+  "entity_kind": "ir_session_id",
+  "name_contains": null,
+  "note": null,
+  "ranked_by": "tasks+issues",
+  "signal_meaning": "rows of 'tasks+issues' this entity has for the query to read; 0 means an empty render",
+  "success": true,
+  "work_type_preference": null,
+  "__http": 200
+ }
+}
