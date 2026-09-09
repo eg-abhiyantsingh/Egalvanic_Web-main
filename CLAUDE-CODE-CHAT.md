@@ -850,3 +850,27 @@ no page; 19 later August verdicts have pages but no cross-ref line (needs a titl
 11 `JIRA-TICKET-*.md` are dev-facing ticket drafts and never needed a page.
 Changelog `docs/changelogs/2026-09-09-artifact-gap-audit-and-two-missing-pages.md`; review board rebuilt
 (86 reports / 7,396 KB).
+
+## 2026-09-09 — "did you check this for all roles?" → no, and it changes two verdicts
+Owner challenged the ZP-4088 (WO detail summary card, #1391) and ZP-3978 (site account ownership) verdicts:
+both were single-seat (`+admin`, Super Admin). Re-ran across all 7 QA roles.
+**The gate:** both `Sot(Yli)` = `hasAnyPermission(["accounts.view","features.accounts.view"])` — found by
+grepping today's QA bundle `index-jYhUcFb4.js`. It hides the panel's **Account row** AND the WO-list
+**Account column + Account filter** (nobody had checked the latter).
+**Facility Manager (75 perms, no accounts.view): panel = 7 rows, no ACCOUNT; grid = no Account column** —
+verified with a real login-form sign-in. PM (94, has accounts.view) = 8 rows WITH Account. Client Portal =
+`422 permission_denied` on `/company/{id}/workorders/v2`. Technician = Web Access Restricted (by design).
+**FINDING (Medium):** `/ir_session/{id}/full` + `/team` + `/summary/v2` return **200 full payload (incl.
+account_name)** for a WO on a site OUTSIDE the caller's accessible_sld_ids — for every role incl. Client
+Portal — while the list endpoint scopes correctly (FM 5 / EE 71 / PM 996). Same tenant; may be by design,
+but the halves disagree. **FINDING (Low):** FM holds `locations.manage` but `POST /account/v2` → 422, and
+Account is required on Edit Site → ZP-3978's transfer flow is Admin/PM/AM only.
+**Near-miss false positive:** FM's grid shows "0–0 of 0" — NOT a bug: all 5 of FM's WOs are `active:false`
+and the grid defaults to Status=Open; switching to Closed → 1–5 of 5.
+**Also:** ZP-4088's `showDetailsInCompact` is STILL live on QA (promotion revert hasn't happened);
+EG-Admin contamination of role seats is gone (each `/auth/me` returns exactly one role); PM DOES have
+`accounts.view` on QA now (old drift note stale); MFA dialog still offers **"Set up later"** for the role
+seats, but `+admin` is truly enrolled (API login = 426, UI asks for authenticator/email OTP).
+**Session side effect:** swapping seats cleared the admin browser session — restoring it needs the Email OTP.
+Use PM as the working seat meanwhile. Artifact https://claude.ai/code/artifact/7aa2ccd7-13c2-4357-a4f1-0a2e3ecda48c
+· changelog `docs/changelogs/2026-09-09-role-coverage-recheck-zp4088-zp3978.md`.

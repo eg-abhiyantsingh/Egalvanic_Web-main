@@ -143,3 +143,50 @@ Accounts A (soft-deleted during edge test) & B, site, and 2 WOs all named `QA-DE
 - `docs/bug-evidence/zp-3978-site-ownership/04-wo3-asset-issue-intact-after-transfer.jpg`
 - `docs/bug-evidence/zp-3978-site-ownership/05-customers-site-under-acct-c.jpg`
 - `docs/bug-evidence/zp-3978-site-ownership/06-wo2-in-wo-asset-after-transfer.jpg`
+
+
+---
+
+## ROLE COVERAGE — added 2026-09-09 (the original run was single-seat)
+
+The verdict above was produced on ONE seat (the `+admin` multi-role seat with Super Admin active).
+Asked whether it holds for all roles, it does not, and the difference is a permission gate:
+
+    const Yli = ["accounts.view", "features.accounts.view"];   // bundle index-jYhUcFb4.js
+    const C = Sot(Yli);                                        // hasAnyPermission
+    ... C && detailRow(t("common.account"), session.account_name) ...
+
+The same gate hides the **Account column and Account filter** on the work-order list.
+
+| Role | perms | accounts.view | WO list | Account column | Details panel | Account row |
+|---|---|---|---|---|---|---|
+| Super Admin / Admin | is_admin | yes | all | shown | renders | **shown** (8 rows) |
+| Project Manager | 94 | yes | 996 | shown | renders | **shown** (8 rows) |
+| Account Manager | 77 | yes (+features) | 988 | shown | not reached in UI this run | — |
+| Electrical Engineer | 80 | yes | 71 | shown | not reached in UI this run | — |
+| Facility Manager | 75 | **no** | 5 (all closed) | **absent** | renders | **absent** (7 rows) |
+| Client Portal | 35 | no | `422 permission_denied` | n/a | n/a | n/a |
+| Technician | 95 | yes | no web access | n/a | n/a | n/a |
+
+So the checklist item "the Account row appears above Facility" needs the qualifier **"for roles with
+`accounts.view`"** — otherwise a Facility Manager retest will be filed as a regression that is
+actually the gate working as written.
+
+**Also found (beyond this ticket):** `GET /api/ir_session/{id}/full`, `/team` and `/summary/v2`
+return **200 with the full payload** — including `account_name` — for a work order on a site OUTSIDE
+the caller's `accessible_sld_ids`, for every role tested including Client Portal, while the list
+endpoint `POST /company/{id}/workorders/v2` scopes correctly (FM 5, EE 71, PM 996). Within one
+tenant, and all those roles do hold `sessions.view` globally, so it may be intended that site scope
+is a filter and not a boundary — but the two halves disagree and it is worth a decision.
+
+**Checked and dismissed:** FM's Work Orders grid opens "0–0 of 0" — not a scoping bug. All five of
+FM's work orders are `active: false` and the grid defaults to Status = Open; switching to Closed
+shows 1–5 of 5.
+
+**Role-coverage artifact:** https://claude.ai/code/artifact/7aa2ccd7-13c2-4357-a4f1-0a2e3ecda48c
+· evidence `docs/bug-evidence/roles-wo-panel-account-gate/`
+
+**ZP-3978 specific:** ownership transfer needs BOTH `locations.manage` and account read. Facility
+Manager holds `locations.manage` but `POST /api/account/v2` returns **422 permission_denied** for
+that seat, and Account is a *required* field on Edit Site — so the transfer flow verified above is
+effectively **Admin / PM / AM only**. Not proven by attempting a save (read-only recheck).
