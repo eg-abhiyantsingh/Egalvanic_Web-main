@@ -947,3 +947,23 @@ New audit page e13e2861-33d2-43ae-9c08-2ebde7d4fa5d · ZP-4123 verdict+page gene
 **5 different ways**, menu uses a 6th). Evidence `docs/bug-evidence/v136-nav-licence-audit/`.
 **Reusable:** extract the nav config from the bundle to build a coverage list that can't be short —
 search `subgroupOrder`, `portalFeature`, `permission:"features.`, `orRoles:[`, `path:"/`.
+
+## 2026-09-09 (late) — the board becomes customer-facing release notes
+Owner: "we don't need to show defect, just what is going to production. Remove everything else — just keep
+new in this release. bugs we don't care about in customer success team."
+Rewrote artifact **88483448…** in place (same URL) as **"V1.36 Release Notes" / "What customers get in
+V1.36"**. REMOVED: 11 decisions, defect language, the 84-entry nav map, not-testable list, 66-row ledger,
+how-tested notes, PASS/defect counts — verified by text scan: **zero** hits for defect/verdict/PASS/bug/
+blocker/ledger/promotion. KEPT + EXPANDED: 4 feature cards → **22 features / 7 areas**, each with a plain
+description, a numbered **"Where to find it"**, and a screenshot (20 images). Opens with a **DAY ONE**
+callout on 2FA (can be skipped with "Set up later"; someone must hold the code for shared/admin logins).
+Caveats CS actually needs survive as neutral "Worth knowing" lines (Save & Regenerate after editing a
+resolution; Account row only for account-capable roles; per-section pricing needs section counts; one
+owning account per site; engineering pages need the eng-lib option).
+**Removed material is not lost** — audit page e13e2861…, ZP-4123 page e90e971d…, the per-ticket pages, the
+66 verdict files, and the full board source kept at `scratchpad/release.board-full.src.html` so the
+promotion view can be republished separately if the release meeting wants it.
+**Lesson:** promotion board and release notes are two documents for two audiences, not one document with a
+filter — and "just keep new in this release" meant MORE content (the ticket-driven capability), not less.
+Design shifted too: Newsreader serif headings + Plex Sans, new palette, because notes get read rather than
+scanned. Changelog `docs/changelogs/2026-09-09-v136-release-notes-for-customer-success.md`.
