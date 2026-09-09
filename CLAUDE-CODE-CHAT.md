@@ -917,3 +917,33 @@ finder + zoom). 12 step blocks added across the two pages; both republished to t
 (board 88483448…, ZP-4123 e90e971d…). Evidence `docs/bug-evidence/v136-new-features/`.
 **Trap:** the 2FA enrollment prompt doesn't reappear on a seat that already dismissed it this session — use
 a never-prompted seat for that capture.
+
+## 2026-09-09 (evening) — "check everything, don't miss anything": nav/licence/route-guard audit
+Ran a 6-agent audit workflow that rebuilt the product from the OUTSIDE (nav + router extracted from the
+shipped bundle, verdict files, board source, changelogs). 3 of 6 agents finished before the session limit;
+did the reconcile by hand and **checked every claim live** — which killed two of them.
+**3 new HIGH findings:**
+1. **Free plan lock is menu-only.** LICENSE selector (Free/Premium) padlocks Condition Assessment /
+   Maintenance Program / Compliance correctly — then all three open by URL. Compliance showed **638
+   deviations, 0.6% score** on Free. **Answers the LICENSE question:** it writes
+   `eg.maintenancePortal.previewLicense` to localStorage (no_license=Free, read_only=Premium) = client-side
+   preview on this tenant; real plan comes from the account record. URL bypass applies either way.
+2. **Builder hidden from every role, editable by URL.** No role tested holds `company_data.manage`; PM has
+   no Builder section at all; `/issue-suggestions` opens with all 10 sets + Create/Import/Export/delete
+   working (route only needs `company_data.view`). Mirror cases: /services, /pm-plans.
+3. **21 routes have NO page guard** — incl. `/agent` (AI page, no menu entry anywhere). General case of
+   the WO site-scope gap.
+**+5 Medium/Low:** role switcher uses a DIFFERENT rulebook (its own per-role exclusion map, only after a
+switch); 3 more role-NAME gates (Arc Flash moves category for EEs; portal off-tier for 5 named roles;
+guards' own name lists) in the release that renamed Admin↔Super Admin; **titles change by permission**
+(Work Orders→"Assessments", Customers→"Sites" — explains the earlier multirole confusion);
+Pull-Through Work hard-coded English; Admin→Organization skips the settings permission.
+**REFUTED by clicking:** `/maintenance-portal/condition` "dead route" — it renders (274 assets, 29
+findings), served by the parent layout. Also /test-equipment divergence = latent not live.
+**Board** (same URL 88483448…): 11 decisions (was 8), new section **"Every page in the product — and who
+can actually reach it"** = all **84 menu entries / 7 sections** + 5 rules, LICENSE answered, **screenshots
+added to all 8 original decision cards**, counts re-derived (66 verdicts, 14 defect-led).
+New audit page e13e2861-33d2-43ae-9c08-2ebde7d4fa5d · ZP-4123 verdict+page generalised (router gates pages
+**5 different ways**, menu uses a 6th). Evidence `docs/bug-evidence/v136-nav-licence-audit/`.
+**Reusable:** extract the nav config from the bundle to build a coverage list that can't be short —
+search `subgroupOrder`, `portalFeature`, `permission:"features.`, `orRoles:[`, `path:"/`.

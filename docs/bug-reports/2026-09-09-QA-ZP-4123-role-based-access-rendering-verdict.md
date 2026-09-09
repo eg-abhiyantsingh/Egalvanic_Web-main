@@ -117,3 +117,40 @@ the role list. Worth confirming that is intended for a customer-facing role.
 - Evidence: `docs/bug-evidence/zp-4123-role-based-rendering/`
 
 **Test-data footprint: zero** — read-only navigation, no records created or changed.
+
+---
+
+## GENERALISED 2026-09-09 (later) — this is one of several, not a one-off
+
+A full read of the shipped nav + router (see
+`docs/bug-reports/2026-09-09-QA-nav-licence-and-route-guard-audit-verdict.md`) shows the menu-vs-route
+mismatch in this ticket is structural, not local:
+
+**The router uses five different gate mechanisms** — a permission gate, a permission wrapper, a pure
+role-NAME gate, a company-flag gate ("Feature Not Available"), and the `orPermission`+`orRoles` guard
+in this ticket. The nav uses a sixth rule of its own (`permission` / `portalFeature` per item). Nothing
+reconciles them.
+
+**Three more live instances of the same class:**
+
+| Page | Menu requires | Route requires | Effect |
+|---|---|---|---|
+| `/issue-suggestions` | `company_data.manage` — **no role holds it** | `company_data.view` — every role holds it | Builder is hidden from every tested role, yet the page opens by URL with Create Set / Import / Export / delete working |
+| `/services`, `/pm-plans` | `company_data.manage` | role ∈ [Admin, Super Admin] **and** `features.settings.view` | a link that can refuse |
+| Maintenance Portal pages | plan (Free / Premium) | **no licence check at all** | on a Free plan the padlocked pages open by URL — Compliance showed 638 deviations, 0.6% score |
+
+**And 21 routes have no guard at all**, so the "hidden but reachable" half of this ticket is the norm
+rather than the exception.
+
+**Two more role-NAME branches in the nav itself**, beyond `orRoles`: Arc Flash Readiness moves from
+Site Data to Engineering for a user holding the role "Electrical Engineer", and the Maintenance Portal
+appears off-tier for five named roles. With V1.36 having renamed Admin ↔ Super Admin on unchanged ids,
+each is one rename from changing access silently.
+
+**Why FM rendered the page** — partially explained, still not isolated. The guard short-circuits to
+allow before checking anything when a portal/tier condition holds; that is the likeliest path for the
+Facility Manager result recorded above, but the same short-circuit would also have admitted Account
+Manager and Electrical Engineer, and it did not. Reported as observed; the mechanism stays open.
+
+**Scope of the fix:** gating `/maintenance/*` on a permission fixes four routes. Reconciling the menu
+rule with the route rule fixes the class.
