@@ -20,7 +20,7 @@ is already deployed on QA.** That is exactly why the "ignore dev-only deploy not
 | **ZP-3904** | designations schedules | **live** | ⚠️ **PASS on function, FAILS on access control** |
 | **ZP-3905** | bulk-extraction confidence chip | code present | ✅ **PASS by code** (all 4 review points) |
 | **ZP-3906** | many-image 2000px cap | AI pipeline | ⛔ not web-testable |
-| **ZP-3908** | core/custom attr split + Open in SLD | **live** | ⚠️ **split PASS**; no lock icon; Open-in-SLD hidden from PM/AM |
+| **ZP-3908** | core/custom attr split + Open in SLD | **live** | ⚠️ **split PASS incl. lock**; Open-in-SLD hidden from PM/AM |
 | **ZP-3910** | resolution-agent lambda | AI pipeline | ⛔ not web-testable |
 | **ZP-3911** | Issues list perf | **live** | ✅ **PASS** |
 | **ZP-3912** | workbench crash on panel_type | fix present | ✅ **PASS by code** |
@@ -220,9 +220,7 @@ ZP-3887 verdict, now with the concrete reason.
   `pl.custom`, in a ternary whose else-branch renders one flat `pl.all` grid — matching "with eng-lib off
   the grid stays exactly as it was". `Open in SLD` shipped with the required accessible name
   (`openInSldAria: "Open {{label}} in single line diagram"`), a `notPlacedOnDiagram` string, and
-  `features.slds.view` (4 refs). **However** the described lock tooltip is **not** in the bundle —
-  no `platform-defined`, `LockOutlined`, `LockIcon`, `reservedProps` or `isReserved`. Either the tooltip
-  wording differs from the ticket or the lock affordance did not ship; **needs UI confirmation.** Note
+  `features.slds.view` (4 refs). The **lock icon is present** on the Core header (confirmed by screenshot); only the tooltip *wording* differs from the ticket, which is cosmetic. Note
   `"Core Attributes"` alone proves nothing here — it is a long-standing i18n key used in unrelated
   screens (Edit Core Attributes, copy-field, advanced search).
 - **ZP-3941** — `unit_attributes_available` is consumed (`unitAttrs: a.unit_attributes_available || []`)
@@ -325,10 +323,13 @@ The editor drawer renders **two separate groups with their own sub-headers**, Co
 
 That is the described split, and it matches the ticket. Two gaps:
 
-1. **No lock icon on Core Attributes.** The drawer's only icon-button labels are *"Extract nameplate data
-   from photos using AI"*, *"Copy Details"*, *"Clear"* and *"Open"*. No lock, and the tooltip wording the
-   ticket describes (platform-defined / readiness / SKM export / pricing / imports) is absent from the
-   bundle entirely.
+1. **CORRECTED — the lock icon IS present.** I first reported it missing. That was wrong: the lock sits
+   on the CORE ATTRIBUTES header and is visible in
+   `docs/bug-evidence/2026-09-09-sixteen-ticket-triage/zp3908-core-vs-custom-attributes.png`. My check
+   had enumerated only `button[aria-label]` elements and the lock is not a button, so the query missed
+   it. What remains unconfirmed is the tooltip *wording* — the ticket's phrasing (platform-defined /
+   readiness / SKM export / pricing / imports) is still absent from the bundle, so the icon shipped but
+   its explanatory text may differ from the spec.
 2. **Open in SLD is absent from the editor header — correctly, but for a reason worth raising.** The
    action is gated on `features.slds.view`, and **PM and AM do not hold it** while all six roles hold
    plain `slds.view`. So the shortcut is invisible to the two roles most likely to be doing this work.
@@ -369,3 +370,27 @@ Read-only. Every QA call was a GET or a list POST; no work order, asset, class, 
 or procedure was created, modified or deleted. No bulk-extraction job was submitted (those are billable
 and auto-submit). No LaunchDarkly flag was touched. The production staff MCP was read-only and is flagged
 above.
+
+## Per-ticket artifact pages (published 2026-09-10, with screenshots)
+
+- **ZP-3859** — https://claude.ai/code/artifact/37c1d11d-4f03-425b-b548-94e62076f77a
+- **ZP-3901** — https://claude.ai/code/artifact/1666cfa3-ed2f-4fb8-8b2c-bc9503d5e99a
+- **ZP-3902** — https://claude.ai/code/artifact/80383dfa-7121-4587-8c2f-c52eba366bf9
+- **ZP-3904** — https://claude.ai/code/artifact/9088dc6f-514a-4a11-b245-93f38f45b1ce
+- **ZP-3905** — https://claude.ai/code/artifact/8439b08b-045d-432e-94de-aa08a2831bab
+- **ZP-3908** — https://claude.ai/code/artifact/8652fed7-aaa2-4287-9dc1-598615d27841
+- **ZP-3911** — https://claude.ai/code/artifact/df6dc03f-e1aa-4d90-9db4-8e2c8ed9e500
+- **ZP-3912** — https://claude.ai/code/artifact/2eb73207-85d2-4f3c-b85d-f0f37b0cefd8
+- **ZP-3874** — https://claude.ai/code/artifact/6fcadb40-931a-438e-b5db-ae2936658639
+- **ZP-3887** — https://claude.ai/code/artifact/9dcbfac9-b2ea-44f3-8ef9-fe710c20e5fe
+- **ZP-3938** — https://claude.ai/code/artifact/07da2520-8c03-4991-97b8-8b38d341711f (2026-09-08)
+- **ZP-3941** — https://claude.ai/code/artifact/4acd4d82-ea97-45be-8331-f5385fb33e25 (2026-09-08)
+- **Site-scope leak** — https://claude.ai/code/artifact/06ad5f78-f47f-4875-bb22-588cc34ce68f
+
+`ZP-3906`, `ZP-3910`, `ZP-3913` and `ZP-3933` have no page of their own: they are
+`eg-pz-engineering-ai-pipeline` work with nothing web-testable to photograph. They stay in the batch page.
+
+**Screenshots** — 15 captures in `docs/bug-evidence/2026-09-09-sixteen-ticket-triage/`. The earlier
+"screenshots impossible" note is withdrawn: `page.screenshot` was timing out on "waiting for element to
+be stable" because those pages animate continuously. Freezing animation first via CDP
+(`Animation.enable` then `Animation.setPlaybackRate {playbackRate: 0}`) makes every capture succeed.
