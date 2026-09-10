@@ -28,6 +28,9 @@ adversarial verifier instructed to refute each one. 2.26 M subagent tokens, 32 a
 | Low | 35 |
 | severity-verified | 24 |
 | **refuted and dropped** | **5** |
+| findings with a full page to open | 73 |
+| findings with a screenshot folder | 8 |
+| findings with a written verdict only | 60 |
 | distinct tickets covered | 53 (45 with an artifact page) |
 
 ## Every finding is now enumerated in the artifact
@@ -40,6 +43,15 @@ page where one exists (**100 artifact links** on the page now).
 The counts reconcile: 163 extracted → 141 asserted open → **135 listed**, after removing 6 rows covering
 5 refuted claims. Several rows are the same defect described by two verdict files, which is why 135 rows
 represent fewer than 135 distinct problems — the curated table below collapses the majors to 24.
+
+## Correction 2026-09-10 — the Technician finding is now "symptom fixed, cause not"
+
+`platform.web` is **false** for Technician now: signing in as `+tec@` lands on *"Web Access Restricted —
+Current Role: Technician"*, so the reported symptom (a Technician browsing the sales pipeline) **no longer
+reproduces**. But `/auth/me` still returns **95 permissions — the same count as the PM seat** — including
+`quotes.approve`, `quotes.manage` and `opportunities.manage`. If web access is ever restored, or the
+iOS/API surface honours those grants, a Technician can approve quotes again. Recorded as partly fixed
+rather than closed.
 
 ## The majors in one list, in plain words
 
