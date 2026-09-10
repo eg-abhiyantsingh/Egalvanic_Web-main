@@ -25,6 +25,26 @@ adversarial verifier instructed to refute each one. 2.26 M subagent tokens, 32 a
 | **refuted and dropped** | **5** |
 | distinct tickets covered | 53 (45 with an artifact page) |
 
+## The majors in one list, in plain words
+
+The 49 major findings collapse into **24 distinct problems** once duplicates across verdict files are
+merged. The artifact carries the full table with a "full write-up" link per row; **18 of the 24 already
+have a page with steps and a screenshot.**
+
+**The six that do not** — worth writing up next, since they are also among the most serious:
+
+| Problem | Evidence today |
+|---|---|
+| Another customer's data comes back if you paste their id | verdict + `docs/bug-evidence/cross-tenant-*/` (incl. a frontend capture of a cross-tenant task) |
+| Creating an asset says it worked, then throws it away | verdict only |
+| A photo run that finds issues but no assets discards the findings | verdict only |
+| An infrared report arrives with no infrared photos | verdict only |
+| Fonts are 58% of a 19 MB report | verdict only |
+| A previous technician's photos and signature appear in a new form | `docs/bug-evidence/eg-forms-ghosts/` (blue-value capture) |
+
+These predate the one-page-per-ticket rule. The register now embeds the two captures that do exist (the
+cross-tenant task and the blue ghost), so the family is no longer text-only.
+
 ## 1 — Cross-tenant IDOR is only partially fixed (the headline)
 
 The tenant guard was applied to `/api/company/{id}/*` and nowhere else. **Ten routes still return
