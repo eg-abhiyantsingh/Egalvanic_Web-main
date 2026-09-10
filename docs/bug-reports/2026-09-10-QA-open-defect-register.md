@@ -1,6 +1,7 @@
 # QA open-defect register — every major defect live on `acme.qa.egalvanic.ai`
 
-**Artifact:** https://claude.ai/code/artifact/9b83e732-0072-40c8-8771-035f7d76617e
+**Artifact (register):** https://claude.ai/code/artifact/9b83e732-0072-40c8-8771-035f7d76617e
+**Artifact (plain-language bugs with steps + screenshots):** https://claude.ai/code/artifact/86992e10-f895-4c12-8940-da109bbbcdb1
 **Compiled:** 2026-09-10 · **Source:** all 109 verdict files in `docs/bug-reports/` (24 MB)
 **Method:** 8 parallel extractors read every file; the 24 most severe claims then went through an
 adversarial verifier instructed to refute each one. 2.26 M subagent tokens, 32 agents, 362 tool calls.
@@ -15,7 +16,7 @@ adversarial verifier instructed to refute each one. 2.26 M subagent tokens, 32 a
 | **major (P1 / Critical / High)** | **49** |
 | medium + low | 90 |
 | severity-verified | 24 |
-| **refuted and dropped** | **4** |
+| **refuted and dropped** | **5** |
 
 ## 1 — Cross-tenant IDOR is only partially fixed (the headline)
 
@@ -96,7 +97,6 @@ technician's photos and signature can materialise into a new submitted record �
   empty.
 - **ZP-3912** — crash fixed and placeholder works, but priority is still a chip; half the header trim.
 - A quote keeps its **stale price** after the accepted resolution is edited.
-- **`/goals` crashes** to the application error boundary with a TypeError.
 
 ## 7 — Four claims dropped after verification
 
@@ -106,6 +106,7 @@ technician's photos and signature can materialise into a new submitted record �
 | Report Builder preview 504s at 60 s | **No longer reproduces** — verifier re-ran every config in the file's own evidence table today |
 | Fill Forms poll spins 45 min | **Fixed** 21 Aug — content-type guard, runtime-confirmed in the live bundle |
 | Covered-services picker returns 0 | **Not a defect** — fix exists in backend; QA lacked the dev→qa lift |
+| `/goals` crashes to the error boundary | **No longer reproduces** — opened it 10 Sep, renders normally with two goals behind pace |
 
 ## How much to trust this
 
