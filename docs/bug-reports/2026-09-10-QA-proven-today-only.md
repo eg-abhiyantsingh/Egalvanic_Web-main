@@ -1,6 +1,7 @@
 # Bugs I can prove on QA today — re-tested live, nothing inherited
 
-**Count: 6** (was 9 — `/tasks/all`, asset-create and the padlocked-Compliance claim all retracted after testing from the UI)
+**Count: 3 clickable bugs + 1 security finding + 2 leads.** (Was 9. `/tasks/all`, asset-create and
+padlocked-Compliance retracted after testing from the UI; the site-scope gap reclassified as API-only.)
 
 **Artifact:** https://claude.ai/code/artifact/2d243a6e-f2cd-492c-b2b5-e9a34caeb8c8
 
@@ -12,12 +13,20 @@ This file contains **only findings reproduced live today** on the current bundle
 
 | # | Bug | Proof run today |
 |---|---|---|
-| 1 | **A site-restricted user reads any site's engineering data** | `/sld/{id}/library-designations`: FM (11 of 114 sites) and EE (4 sites) get **byte-identical rows to PM** for an unmapped site, on all four kinds. Control: `/reporting/sample-entities` refuses both with 422. |
-| 2 | **Four engineering pages open without the entitlement** | `features.equipment_designations.view` held only by EE, yet PM loads 162 / 40 / 111 / 2 assets. Re-verified on the new bundle. Contrast: the new `/asset-classes` and `/guest-portal-users` **do** refuse PM. |
-| 3 | **Sorting a list sorts only the rows on screen** | 274 assets. True alphabetical last across all 274 is **`yu`**; after Z→A the grid puts **`7N-H1-2`** first — the alphabetical last of the 25 loaded rows. |
-| 4 | **Report setup cannot find infrared work orders** | `work_type=IR` at the documented default `limit=10` → 0 IR rows + a note claiming none exist; `limit=25` → 4. Reproduces on **production** too. |
-| 5 | **One panelboard carries two Manufacturer fields** | New dropdown in Engineering plus the old free-text `Manufacturer`/`Type`/`Model` under Custom Attributes; Panel Type empty because `/eqp-lib/panel-manufacturers` returns `[]`. |
-| 6 | **No issue class defines `Recommendations`** | 50 issue classes, 22 distinct property names, zero named `Recommendations` and no near-miss — so a report template gating on that key can never render the field. |
+| 1 | **Four engineering pages open without the entitlement** | `features.equipment_designations.view` held only by EE, yet PM loads 162 / 40 / 111 / 2 assets. Re-verified on the new bundle. Contrast: the new `/asset-classes` and `/guest-portal-users` **do** refuse PM. |
+| 2 | **Sorting a list sorts only the rows on screen** | 274 assets. True alphabetical last across all 274 is **`yu`**; after Z→A the grid puts **`7N-H1-2`** first — the alphabetical last of the 25 loaded rows. |
+| 3 | **Report setup cannot find infrared work orders** | `work_type=IR` at the documented default `limit=10` → 0 IR rows + a note claiming none exist; `limit=25` → 4. Reproduces on **production** too. |
+| 4 | **One panelboard carries two Manufacturer fields** | New dropdown in Engineering plus the old free-text `Manufacturer`/`Type`/`Model` under Custom Attributes; Panel Type empty because `/eqp-lib/panel-manufacturers` returns `[]`. |
+| 5 | **No issue class defines `Recommendations`** | 50 issue classes, 22 distinct property names, zero named `Recommendations` and no near-miss — so a report template gating on that key can never render the field. |
+
+## Reclassified — real, but not a UI bug
+
+**The library-designations site-scope gap is API-only.** Tried to demo it as the FM and could not:
+their `/short-circuit-ratings` correctly shows **1–22 of 22** (PM sees 162), and pasting a foreign
+site's `/sld/{id}` renders a **blank page**. The site picker only offers their own 11 sites, so there is
+no click path. But `GET /api/sld/{sld_id}/library-designations` on the FM's own session, for unmapped
+site `Test fr`, still returns **10 rows** identical to PM's. **File as a security item** alongside the
+cross-tenant family — same shape, no screen to photograph.
 
 ## Dropped today after re-testing — do not re-file
 
