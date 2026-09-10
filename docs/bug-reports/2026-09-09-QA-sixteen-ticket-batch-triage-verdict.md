@@ -20,7 +20,7 @@ is already deployed on QA.** That is exactly why the "ignore dev-only deploy not
 | **ZP-3904** | designations schedules | **live** | ⚠️ **PASS on function, FAILS on access control** |
 | **ZP-3905** | bulk-extraction confidence chip | code present | ✅ **PASS by code** (all 4 review points) |
 | **ZP-3906** | many-image 2000px cap | AI pipeline | ⛔ not web-testable |
-| **ZP-3908** | core/custom attr split + Open in SLD | **live** | ⚠️ **split PASS incl. lock**; Open-in-SLD hidden from PM/AM |
+| **ZP-3908** | core/custom attr split + Open in SLD | **live** | ✅ **split + lock + tooltip PASS**; Open-in-SLD hidden from PM/AM by its gate |
 | **ZP-3910** | resolution-agent lambda | AI pipeline | ⛔ not web-testable |
 | **ZP-3911** | Issues list perf | **live** | ✅ **PASS** |
 | **ZP-3912** | workbench crash on panel_type | fix present | ✅ **PASS by code** |
@@ -323,13 +323,14 @@ The editor drawer renders **two separate groups with their own sub-headers**, Co
 
 That is the described split, and it matches the ticket. Two gaps:
 
-1. **CORRECTED — the lock icon IS present.** I first reported it missing. That was wrong: the lock sits
-   on the CORE ATTRIBUTES header and is visible in
-   `docs/bug-evidence/2026-09-09-sixteen-ticket-triage/zp3908-core-vs-custom-attributes.png`. My check
-   had enumerated only `button[aria-label]` elements and the lock is not a button, so the query missed
-   it. What remains unconfirmed is the tooltip *wording* — the ticket's phrasing (platform-defined /
-   readiness / SKM export / pricing / imports) is still absent from the bundle, so the icon shipped but
-   its explanatory text may differ from the spec.
+1. **CORRECTED TWICE — the lock AND its tooltip both shipped.** I first reported the lock missing, then
+   reported it present with different wording. Both wrong. The padlock is on the CORE ATTRIBUTES header
+   and its `aria-label` is verbatim the ticket's requirement: *"Reserved attributes defined by the
+   platform. They're the same on every company's classes and feed arc-flash readiness, the SKM export,
+   pricing, and imports."* The first error came from enumerating only `button[aria-label]` (the lock is
+   an `svg`); the second from grepping for "platform-defined" when the string reads "defined by the
+   platform". **This half of ZP-3908 is a clean PASS.**
+
 2. **Open in SLD is absent from the editor header — correctly, but for a reason worth raising.** The
    action is gated on `features.slds.view`, and **PM and AM do not hold it** while all six roles hold
    plain `slds.view`. So the shortcut is invisible to the two roles most likely to be doing this work.
