@@ -27,7 +27,10 @@ is already deployed on QA. The `feedback_ignore_dev_only_deploy_notes` rule paid
 | ZP-3941 Per-section pricing | **PARTIAL** — control shipped; option label is the attribute name |
 | ZP-3859 Extract from Photos | **CODE PRESENT** — placement needs UI |
 | ZP-3887 MCP connector gate | **NOT VERIFIABLE** — route resolves to the SPA on the QA tenant host |
-| ZP-3906/3910/3913/3933 | **NOT WEB-TESTABLE** — external Lambda / prompt-level |
+| ZP-3906 many-image 2000px cap | **NOT WEB-TESTABLE** — external Lambda |
+| ZP-3910 resolution-agent lambda | **NOT WEB-TESTABLE** — needs lambda + Step Function + DynamoDB |
+| ZP-3913 kA voltage rule | **NOT WEB-TESTABLE** — prompt-level, needs agent narrative |
+| ZP-3933 eligible-fix menus | **NOT WEB-TESTABLE** — prompt + validator in the pipeline repo |
 
 ## Findings worth carrying
 
