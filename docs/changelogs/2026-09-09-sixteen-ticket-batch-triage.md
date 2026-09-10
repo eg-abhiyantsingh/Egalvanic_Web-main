@@ -63,3 +63,33 @@ rather than substituting an unrelated image.
 
 Read-only. No work order, asset, class, user, site, report config, procedure or LaunchDarkly flag was
 created, modified or deleted. No bulk-extraction job was submitted (billable, auto-submits).
+
+---
+
+## Update — UI verification completed (2026-09-10)
+
+The 2FA "blocker" was my own error: the enrollment screen has a **"Set up later"** button, and one click
+goes straight to the dashboard with no enrollment and no account-state change. No seat was enrolled; the
+headless RBAC suite is untouched. Saved as `feedback_finish_unblocked_work_then_ask_at_end` and the stale
+`project_mfa_enrollment_blocks_suite` note has been corrected.
+
+Revised verdicts:
+
+- **ZP-3904** — now **PASS on function, FAILS on access control**. All six routes render with
+  scope-specific data (162/40/111/2/153), both required headlines exact, transformer page correctly has
+  no Class column. **But `features.equipment_designations.view` is held by only the Electrical Engineer
+  seat, and all four schedules load with full data on PM** — declared permission, never enforced.
+  Column deviation: SCCR page shows *Available Fault Current*, not the ticket's *Devices* column.
+- **ZP-3902** — **UI PASS, data BLOCKED**. Manufacturer / Panel Type / "No SCCR marking…" / SCCR (Label)
+  all render correctly. But the old free-text Manufacturer/Type/Model are *still* on the Panelboard class,
+  so `sccr_first_class_migrate` has not run here either.
+- **ZP-3908** — split **confirmed** in the editor (Core Attributes then Custom Attributes, own
+  sub-headers). Two gaps: no lock icon, and Open in SLD is gated on `features.slds.view` which **PM and AM
+  do not hold** while all six roles hold plain `slds.view`.
+- **ZP-3859** — **PASS**. Extract from Photos in the editor header, Asset Subtype present, Engineering
+  section ordered before Schedule/OCP.
+- **ZP-3901** — inline SCHEDULE section (Edit Panel Schedule / Status / Circuit Count) reachable in the UI.
+
+Still code-verified only: **ZP-3905** (needs a billable auto-submitting bulk-extraction job) and
+**ZP-3912** (needs a resolution proposal on a panel with a panel type, which the unseeded library
+prevents).

@@ -14,13 +14,13 @@ is already deployed on QA.** That is exactly why the "ignore dev-only deploy not
 |---|---|---|---|
 | **ZP-3874** | staff elevation, `/staff/*` | code yes, inert | ✅ default-deny **PASS**; positive path not testable |
 | **ZP-3887** | MCP connector LD gate | route not reachable | ⛔ **not verifiable on QA** |
-| **ZP-3859** | Extract from Photos → Engineering header | code present | ⚠️ code present, UI unconfirmed |
+| **ZP-3859** | Extract from Photos → Engineering header | **live** | ✅ **PASS** (control + subtype confirmed in UI) |
 | **ZP-3901** | panelboard SCCR + inline circuits | superseded | ✅ **superseded by ZP-3902**, correctly |
-| **ZP-3902** | bus SCCR first-class | code yes, **seed not run** | ⛔ **blocked on seed** (documented caveat reproduced) |
-| **ZP-3904** | designations schedules | **live** | ✅ **largely PASS** + 2 observations |
+| **ZP-3902** | bus SCCR first-class | **UI live**, seed/migration not run | ⚠️ **UI PASS, data BLOCKED** |
+| **ZP-3904** | designations schedules | **live** | ⚠️ **PASS on function, FAILS on access control** |
 | **ZP-3905** | bulk-extraction confidence chip | code present | ✅ **PASS by code** (all 4 review points) |
 | **ZP-3906** | many-image 2000px cap | AI pipeline | ⛔ not web-testable |
-| **ZP-3908** | core/custom attr split + Open in SLD | partial | ⚠️ split present, lock tooltip **absent** |
+| **ZP-3908** | core/custom attr split + Open in SLD | **live** | ⚠️ **split PASS**; no lock icon; Open-in-SLD hidden from PM/AM |
 | **ZP-3910** | resolution-agent lambda | AI pipeline | ⛔ not web-testable |
 | **ZP-3911** | Issues list perf | **live** | ✅ **PASS** |
 | **ZP-3912** | workbench crash on panel_type | fix present | ✅ **PASS by code** |
@@ -243,20 +243,118 @@ reachable from the web tier, and ZP-3913 and ZP-3933 are explicitly prompt-level
 reading agent narrative rather than a code path. **These need dev + AWS access, not a web QA pass.**
 ZP-3910's web half (ZP-3909) is one of the ten tickets assigned to the other QA and stays skipped.
 
-## Why the UI checks are unconfirmed
+## UI verification — completed
 
-Mandatory 2FA enrollment now covers the app for every seat I hold. A fresh login returns 200 and is
-recognised, then renders *"Set up two-factor authentication"* over the application, with no "set up
-later". The recorded session-priming recipe (in-page `fetch` so the browser takes the HttpOnly cookies)
-authenticates but does **not** clear the enrollment screen, and the app's auth storage key is computed
-rather than a literal, so priming `localStorage` blind is not possible. `useSessionToken` in the bundle
-belongs to the Form.io SDK, not app auth.
+**The 2FA blocker was my error, not an environment limit.** The enrollment screen carries a
+**"Set up later"** button; one click goes straight to the dashboard with no enrollment and no
+account-state change. I had asserted it was mandatory from a stale memory note instead of reading the
+screen. No seat was enrolled and the headless RBAC suite is untouched.
 
-Enrolling a seat in Email OTP **is** possible — the repo carries a Gmail app-password and OTP would be
-deliverable to the plus-addressed inbox — but enrolling changes account state and is what breaks the
-headless RBAC suite, so it is the owner's call, not mine. **Decision needed:** enroll one seat (say
-`+project@`) in Email OTP to unblock UI verification, accepting the effect on the automated suite, or
-keep the suite intact and accept API/bundle-level verification for these tickets.
+### ZP-3904 — functionally correct, but the routes are not access-controlled
+
+All six routes render live with real, scope-specific data:
+
+| route | headline | count | columns |
+|---|---|---|---|
+| `/short-circuit-ratings` | **SCCR Established** 1 of 162 (1%) | 1–25 of 162 | Asset · Class · Voltage · Type · **Available Fault Current** · SCCR · Designated · Status · Actions |
+| `/feeder-schedule` | Library Designated 0 of 40 | 1–25 of 40 | Asset · Class · Length · Designation · Designated · Status · Actions |
+| `/ocpd-settings` | Library Designated 4 of 111 (4%) | 1–25 of 111 | Asset · Class · Device · Frame · Settings · Designated · Status · Actions |
+| `/transformer-schedule` | **Specs Complete** 0 of 2 | 1–2 of 2 | Asset · Voltages · kVA · %Z · Winding Configuration · Designated · Status · Actions — **no Class column** ✅ |
+| `/custom-devices` | *"Coming soon — define your own protective devices…"* | — | placeholder, as specified |
+| `/equipment-designations` | Library Designated 5 of 153 | 1–25 of 153 | deep link still resolves ✅ |
+
+Both required headlines are exact, the transformer page correctly omits Class, the OCPD row renders
+Device over manufacturer/trip-unit with Frame on one line (`Emax 2, E1.2, Ekip DIP — LI, 250-1200A,
+UL1066 ABB` / `250 A · 254 V · 65 kA`), and the five distinct asset counts prove stats inherit the scope.
+
+**DEFECT — the four schedules are reachable by roles without the entitlement.** The route table gates
+them on `features.equipment_designations.view`, but on acme QA that permission is held by **only the
+Electrical Engineer seat**:
+
+| seat | `features.equipment_designations.view` | `features.slds.view` | `slds.view` |
+|---|---|---|---|
+| PM | **no** | **no** | yes |
+| Technician | no | yes | yes |
+| Facility Manager | no | yes | yes |
+| Client Portal | no | yes | yes |
+| Electrical Engineer | **yes** | yes | yes |
+| Account Manager | no | **no** | yes |
+
+I loaded all four schedules, with full data, on the **PM** seat — which does not hold that permission.
+These routes are among the 21 with **no page guard** recorded in the earlier nav/route audit, so the
+permission in the table is never enforced. ZP-3904's first review step ("confirm the entries appear for
+a user *with* the engineering-library entitlement") cannot be judged by presence alone, because they
+also appear for users without it.
+
+**Column deviation:** the SCCR page shows **Available Fault Current** where the ticket specifies a
+**Devices** column ("Line and Load side by side, greyed out when the rating is label-marked"). Either
+the ticket's column set changed or that column did not ship.
+
+**Needs a dev answer:** the one populated transformer reads `primary — → 208V`, kVA 1000, %Z 6.2%, yet
+"Specs Complete" counts it as 0 of 2. That is consistent with the stated rule *if* its primary is
+genuinely absent and not derivable from an upstream bus — but the ticket also says a derived primary
+"should read like any other value, not as a placeholder", and here the primary renders as a dash.
+
+### ZP-3902 — the UI shipped and is correct; the data migration has not run
+
+On a Panelboard's editor drawer, the ENGINEERING section renders exactly what the ticket describes:
+**Manufacturer**, **Panel Type**, the checkbox **"No SCCR marking on the label (rating is derived)"**,
+and **SCCR (Label) kA**. The tri-state control is present and wired.
+
+But the migration has **not** run on QA, and it shows: the old free-text **Manufacturer**, **Type** and
+**Model** attributes are still present under CUSTOM ATTRIBUTES on that bus class — precisely the fields
+ZP-3902's `sccr_first_class_migrate` is supposed to strip. Combined with
+`GET /api/eqp-lib/panel-manufacturers` returning **0 manufacturers**, the Panel Type picker has nothing
+to offer. So the migration checks, the manufacturer→panel-type filtering and the free-text-preservation
+spot-check are all **blocked until the seed and migration run on QA**.
+
+### ZP-3908 — the split shipped; two gaps
+
+The editor drawer renders **two separate groups with their own sub-headers**, Core first:
+
+- **CORE ATTRIBUTES** — Electrode Configuration, Enclosure Depth/Height/Width
+- **CUSTOM ATTRIBUTES** — Size, Mains Type, Columns, Notes, Voltage, Ampere Rating, Manufacturer,
+  Serial Number, Catalog Number, Model, Configuration, Type
+
+That is the described split, and it matches the ticket. Two gaps:
+
+1. **No lock icon on Core Attributes.** The drawer's only icon-button labels are *"Extract nameplate data
+   from photos using AI"*, *"Copy Details"*, *"Clear"* and *"Open"*. No lock, and the tooltip wording the
+   ticket describes (platform-defined / readiness / SKM export / pricing / imports) is absent from the
+   bundle entirely.
+2. **Open in SLD is absent from the editor header — correctly, but for a reason worth raising.** The
+   action is gated on `features.slds.view`, and **PM and AM do not hold it** while all six roles hold
+   plain `slds.view`. So the shortcut is invisible to the two roles most likely to be doing this work.
+   Not a code defect; a permission-mapping question for whoever owns the RBAC matrix.
+
+### ZP-3859 — PASS
+
+The editor header carries **Extract from Photos** (aria-label *"Extract nameplate data from photos using
+AI"*), and the ENGINEERING section carries **Asset Subtype**. The section order is Basic Info →
+**Engineering** → Schedule → OCP → Connections → Condition → Notes, so the control sits with the fields
+it fills rather than under Custom Attributes.
+
+**"Attributes + Library" split option did not appear** on this panelboard. That is expected rather than
+wrong: the library half needs the panel-designations library, which is unseeded here, and the asset has
+**0 photos** ("Trust the Photos — Add at least one photo of this asset to enable"), so extraction cannot
+run at all. Re-check once the seed lands.
+
+### ZP-3901 — the inline schedule is live
+
+The same drawer carries a **SCHEDULE** section with *Edit Panel Schedule*, Status, Circuit Count and
+Schedule Photos, so the inline-circuit model is reachable in the UI.
+
+### Still not done
+
+**ZP-3905** (confidence chip) and **ZP-3912** (workbench header/badges) remain code-verified only. Both
+need a live agent job: ZP-3905 needs a bulk-extraction job, which **auto-submits and is billable**, so I
+did not run one; ZP-3912 needs an issue with a resolution proposal on a panel carrying a panel type,
+which the unseeded library makes hard to produce. Their code-level evidence is in the sections above.
+
+**No screenshots for this batch.** Captures on the designations grids and the asset editor timed out
+repeatedly on "waiting for element to be stable" — those pages animate continuously. The /sessions
+captures earlier the same day worked, so it is page-specific, not a tooling failure. Recorded rather than
+substituting an unrelated image.
 
 ## Footprint
 
