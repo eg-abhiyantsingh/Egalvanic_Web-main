@@ -74,6 +74,16 @@ unmapped site — `2026-09-10-QA-library-designations-site-scope-leak.md`.
 | Pricing spec builder | reports `applied, error null` while silently dropping a reserved formula name |
 | WO check-offs | bulk Mark As posts synthetic row ids → 400 invalid id, no toast, console only |
 
+### 3b — Sorting a list only sorts the rows on screen (High)
+
+**Steps:** Site Data › Assets (footer reads **1–25 of 274**) → click **Asset Name** once (nothing moves,
+already A–Z) → click again for Z–A → read the first row.
+**What happens:** the top row becomes `7N-H1-2` — only the last name among the **25 rows on screen**.
+**What should happen:** the last asset out of all **274**, a letter-named one (letters sort after digits).
+**Proof:** the click fires **zero** network requests, and page 1 in A–Z order holds the alphabetically
+*first* 25, so a real Z–A sort cannot begin with one of them. Same on `/connections`.
+Screenshot: `docs/bug-evidence/2026-09-10-bug-screenshots/bug-sort-descending-page-local.png`
+
 ## 4 — The IR report a customer receives
 
 - **Fonts are 58% of the file** — a font subset per page, 5,397 programs for 10 typefaces, 11.08 MB of
