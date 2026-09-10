@@ -96,3 +96,35 @@ Revised verdicts:
 Still code-verified only: **ZP-3905** (needs a billable auto-submitting bulk-extraction job) and
 **ZP-3912** (needs a resolution proposal on a panel with a panel type, which the unseeded library
 prevents).
+
+---
+
+## Update 2 — coverage audit of the batch artifact (2026-09-10)
+
+Owner asked whether the single 16-ticket artifact covered everything. **It did not.** I read the
+published page back and found three gaps, all now fixed on the same URL:
+
+1. **The site-scope leak was missing entirely** — it was found *after* the page was first published.
+   `GET /sld/{id}/library-designations` returns byte-identical rows to FM (11 sites) and EE (4 sites) for
+   an unmapped SLD. Now a top-level section with the seat table.
+2. **ZP-3874's section predated the fuller 14-step pass** and did not mention the prod-allowlist
+   discrepancy. Now says 3 of 14 steps pass and carries the discrepancy.
+3. **Duplicate sections** — incremental edits had left two ZP-3902 headings and two overlapping ZP-3904
+   sections (one API-level, one UI-level). Rebuilt the page from scratch; each ticket now appears once.
+
+Also corrected: the headline counts were loose ("seven verify, three blocked"); it now reads six clean /
+four partial / two blocked / four not web-testable, which matches the table.
+
+**Discovered during the audit:** ZP-3938 and ZP-3941 **already had dedicated verdicts and artifacts from
+2026-09-08** — I re-tested tickets that were already done. The good news is the findings agree (the
+`resolution_processing` field-name discrepancy and the class-aware `unit_attributes_available` gating
+were both already recorded), and those earlier pages are substantially deeper than my batch rows. The
+batch page now links them and defers to them, rather than under-reporting them. Their bundle was
+`index-CSsDpG3c.js`; this pass ran on `index-jYhUcFb4.js`, so QA rebuilt in between.
+
+The page now also carries a **Companion pages** index linking the scope leak, ZP-3874, ZP-3887,
+ZP-3938/3941, ZP-3863, the nav/route-guard audit and ZP-4123, so it works as an entry point instead of a
+dead end.
+
+**Lesson recorded:** check the bug-reports directory for an existing verdict before testing a ticket —
+two of sixteen were already done.
