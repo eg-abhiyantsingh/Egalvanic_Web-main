@@ -19,11 +19,27 @@ adversarial verifier instructed to refute each one. 2.26 M subagent tokens, 32 a
 |---|---|
 | findings extracted | 163 |
 | asserted open | 141 |
-| **major (P1 / Critical / High)** | **49** |
-| medium + low | 90 |
+| **listed in the artifact appendix** | **135** (6 rows removed for 5 refuted claims) |
+| P1 | 7 |
+| Critical | 2 |
+| High | 36 |
+| Medium-High | 2 |
+| Medium | 53 |
+| Low | 35 |
 | severity-verified | 24 |
 | **refuted and dropped** | **5** |
 | distinct tickets covered | 53 (45 with an artifact page) |
+
+## Every finding is now enumerated in the artifact
+
+The artifact carries a full **Appendix — every finding, all 135**, grouped P1 → Critical → High →
+Medium-High → Medium → Low and sorted by area so near-duplicates sit together. Each row gives the
+finding, a plain line on what it costs a user, its area, its source verdict file, and a link to a full
+page where one exists (**100 artifact links** on the page now).
+
+The counts reconcile: 163 extracted → 141 asserted open → **135 listed**, after removing 6 rows covering
+5 refuted claims. Several rows are the same defect described by two verdict files, which is why 135 rows
+represent fewer than 135 distinct problems — the curated table below collapses the majors to 24.
 
 ## The majors in one list, in plain words
 
