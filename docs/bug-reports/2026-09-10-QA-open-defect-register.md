@@ -3,6 +3,12 @@
 **Artifact (register):** https://claude.ai/code/artifact/9b83e732-0072-40c8-8771-035f7d76617e
 **Artifact (plain-language bugs with steps + screenshots):** https://claude.ai/code/artifact/86992e10-f895-4c12-8940-da109bbbcdb1
 **Compiled:** 2026-09-10 · **Source:** all 109 verdict files in `docs/bug-reports/` (24 MB)
+**Bundle note:** QA rebuilt on 2026-09-10 to `index-Behk8HzS.js` (was `index-jYhUcFb4.js`, 15.6 MB → 14 MB).
+The entitlement-bypass defect in section 2 was **re-verified on the new build** — `/short-circuit-ratings`
+and `/transformer-schedule` (1–2 of 2) still load on a PM seat lacking
+`features.equipment_designations.view`. Note the contrast: the *new* admin pages shipped in that build
+(`/asset-classes`, `/guest-portal-users`) **do** return Access Denied on that same seat, so the gap is
+specific to the older designation routes, not to the new nav grants.
 **Method:** 8 parallel extractors read every file; the 24 most severe claims then went through an
 adversarial verifier instructed to refute each one. 2.26 M subagent tokens, 32 agents, 362 tool calls.
 **Raw data:** `docs/bug-evidence/2026-09-10-open-defect-register-source.json`
