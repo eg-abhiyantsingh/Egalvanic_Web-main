@@ -1,5 +1,7 @@
 # Bugs I can prove on QA today — re-tested live, nothing inherited
 
+**Artifact:** https://claude.ai/code/artifact/2d243a6e-f2cd-492c-b2b5-e9a34caeb8c8
+
 **Why this file exists.** The owner's verdict on my 135-row register: *"most of the bugs are invalid."*
 Correct. I had extracted claims from 109 older verdicts and published them having re-tested almost none.
 This file contains **only findings reproduced live today** on the current bundle `index-Behk8HzS.js`.
