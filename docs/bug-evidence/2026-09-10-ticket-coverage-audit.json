@@ -1,0 +1,277 @@
+{
+ "single": {
+  "ZP-3660": {
+   "file": "2026-08-11-markup-mode-renders-manifest-QA.md",
+   "defects": 1,
+   "majors": 0,
+   "artifact": ""
+  },
+  "ZP-3662": {
+   "file": "2026-08-14-fill-forms-from-photos-QA.md",
+   "defects": 3,
+   "majors": 2,
+   "artifact": ""
+  },
+  "ZP-3607": {
+   "file": "2026-08-17-site-walk-scoped-quotes-QA.md",
+   "defects": 1,
+   "majors": 0,
+   "artifact": ""
+  },
+  "ZP-3566": {
+   "file": "2026-08-17-site-walks-quote-from-field-count-QA.md",
+   "defects": 0,
+   "majors": 0,
+   "artifact": ""
+  },
+  "ZP-3563": {
+   "file": "2026-08-18-SECURITY-cross-tenant-offline-idor-CREATE-verdict.md",
+   "defects": 1,
+   "majors": 0,
+   "artifact": ""
+  },
+  "ZP-3747": {
+   "file": "2026-08-18-hand-built-services-QA.md",
+   "defects": 0,
+   "majors": 0,
+   "artifact": ""
+  },
+  "ZP-3654": {
+   "file": "2026-08-18-skm-xformer-nameplate-export-QA.md",
+   "defects": 0,
+   "majors": 0,
+   "artifact": ""
+  },
+  "ZP-3874": {
+   "file": "2026-09-01-QA-staff-write-surface-fork-helper-regression.md",
+   "defects": 2,
+   "majors": 1,
+   "artifact": "https://claude.ai/code/artifact/73b405c3-3eb4-4f20-adaf-28eab71ae675"
+  },
+  "ZP-3888": {
+   "file": "2026-09-02-QA-ghost-form-instances-wo-delete-VERIFIED.md",
+   "defects": 0,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/2c1a8a42-3843-4ded-92b7-06312f156b46"
+  },
+  "ZP-3855": {
+   "file": "2026-09-02-QA-nameplate-extract-from-photos-1058-1246.md",
+   "defects": 0,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/bd6a24fd-514e-4045-b398-6db7df1771dc"
+  },
+  "ZP-1242": {
+   "file": "2026-09-02-QA-pm-remove-service-1089-1267.md",
+   "defects": 0,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/bab6fcde-3447-4b20-9b45-e26581aa739a"
+  },
+  "ZP-3890": {
+   "file": "2026-09-02-QA-staff-refusal-messages-1096.md",
+   "defects": 0,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/4f4ea67c-834a-4893-9e43-b210ee93ad58"
+  },
+  "ZP-4018": {
+   "file": "2026-09-07-QA-ZP-4018-user-checked-checkoffs-verdict.md",
+   "defects": 2,
+   "majors": 1,
+   "artifact": "https://claude.ai/code/artifact/7f694e75-8a90-4523-94f6-fefbb0af4628"
+  },
+  "ZP-3978": {
+   "file": "2026-09-07-zp3978-site-account-ownership-verdict.md",
+   "defects": 5,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/7a4e0040-cbaf-48cb-a0b4-6ef05626c432"
+  },
+  "ZP-3937": {
+   "file": "2026-09-08-QA-ZP-3937-catalog-entry-is-the-identity-verdict.md",
+   "defects": 0,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/920bf269-332a-4ce4-b0ee-54cdfe2d3081"
+  },
+  "ZP-3938": {
+   "file": "2026-09-08-QA-ZP-3938-issues-list-500-verdict.md",
+   "defects": 0,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/07da2520-8c03-4991-97b8-8b38d341711f"
+  },
+  "ZP-3941": {
+   "file": "2026-09-08-QA-ZP-3941-per-section-pricing-verdict.md",
+   "defects": 0,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/4acd4d82-ea97-45be-8331-f5385fb33e25"
+  },
+  "ZP-3942": {
+   "file": "2026-09-08-QA-ZP-3942-disconnect-switch-bus-catalog-verdict.md",
+   "defects": 2,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/cfc44623-3592-4e7b-acf7-af6f12d60bf5"
+  },
+  "ZP-3943": {
+   "file": "2026-09-08-QA-ZP-3943-section-scaled-basic-fixes-verdict.md",
+   "defects": 1,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/ee8f908a-ec4c-4327-bc1b-6032cd545f43"
+  },
+  "ZP-3945": {
+   "file": "2026-09-08-QA-ZP-3945-issue-photos-drawer-lightbox-verdict.md",
+   "defects": 1,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/dc586391-7cae-4a23-a4d0-8249c04ff1d9"
+  },
+  "ZP-3948": {
+   "file": "2026-09-08-QA-ZP-3948-acceptance-to-quote-flow-verdict.md",
+   "defects": 2,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/33236b33-a8c8-4cf9-923c-bde7e8e17e73"
+  },
+  "ZP-4020": {
+   "file": "2026-09-08-QA-ZP-4020-asset-agent-runner-verdict.md",
+   "defects": 0,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/b62c9cfe-7c23-4c7c-baf7-2b7f0d3429ce"
+  },
+  "ZP-3934": {
+   "file": "2026-09-08-QA-automatic-background-resolution-evaluation-verdict.md",
+   "defects": 2,
+   "majors": 1,
+   "artifact": "https://claude.ai/code/artifact/9cbd273c-e546-468d-b176-cd2213e00fda"
+  },
+  "ZP-4024": {
+   "file": "2026-09-08-QA-blended-rate-reserved-formula-names-verdict.md",
+   "defects": 2,
+   "majors": 1,
+   "artifact": "https://claude.ai/code/artifact/bd050b37-a129-4cb7-9764-8650043677a9"
+  },
+  "ZP-3932": {
+   "file": "2026-09-08-QA-issue-resolution-pricing-pull-through-verdict.md",
+   "defects": 4,
+   "majors": 1,
+   "artifact": "https://claude.ai/code/artifact/cbdaeffb-6bb8-4cd5-8a5e-cb1bf5889ba4"
+  },
+  "ZP-3863": {
+   "file": "2026-09-09-QA-ZP-3863-sample-entities-verdict.md",
+   "defects": 2,
+   "majors": 1,
+   "artifact": "https://claude.ai/code/artifact/4406f190-0c4c-4183-abf3-eb50225d13a9"
+  },
+  "ZP-3887": {
+   "file": "2026-09-09-QA-ZP-3887-mcp-connector-gate-verdict.md",
+   "defects": 0,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/9dcbfac9-b2ea-44f3-8ef9-fe710c20e5fe"
+  },
+  "ZP-3898": {
+   "file": "2026-09-09-QA-ZP-3898-multiedit-copy-refresh-verdict.md",
+   "defects": 0,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/9bfb2949-a484-467f-a40d-7bb3e9937f5b"
+  },
+  "ZP-3904": {
+   "file": "2026-09-10-QA-library-designations-site-scope-leak.md",
+   "defects": 3,
+   "majors": 2,
+   "artifact": "https://claude.ai/code/artifact/06ad5f78-f47f-4875-bb22-588cc34ce68f"
+  },
+  "ZP-2025": {
+   "file": "JIRA-REPORT-parallel-suite-run-31233370537.md",
+   "defects": 2,
+   "majors": 1,
+   "artifact": ""
+  }
+ },
+ "multi": [
+  {
+   "keys": "ZP-4033, ZP-4036",
+   "file": "2026-09-02-PROD-customers-accounts-tab-missing-multirole.md",
+   "defects": 2,
+   "majors": 1,
+   "artifact": "https://claude.ai/code/artifact/4f22e133-5d2a-4671-8d35-3e39fa493f7b"
+  },
+  {
+   "keys": "ZP-2550, ZP-3856",
+   "file": "2026-09-02-QA-nameplate-enum-scoping-1059.md",
+   "defects": 1,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/dfb336cd-8484-4555-a4cc-f49f53f2deb6"
+  },
+  {
+   "keys": "ZP-3935, ZP-3936, ZP-3937, ZP-3942",
+   "file": "2026-09-08-QA-ZP-3935-materials-library-equipment-linkage-verdict.md",
+   "defects": 0,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/b242ff8a-fe6a-40cb-bac1-85676e04bb05"
+  },
+  {
+   "keys": "ZP-3935, ZP-3936",
+   "file": "2026-09-08-QA-ZP-3936-typed-equipment-linkage-verdict.md",
+   "defects": 0,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/9cf81bd5-c985-4174-ad3c-e7059c057296"
+  },
+  {
+   "keys": "ZP-3944, ZP-3948",
+   "file": "2026-09-08-QA-ZP-3944-accept-time-minting-de-energized-verdict.md",
+   "defects": 0,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/82876c81-f854-4770-8536-df517a8fb445"
+  },
+  {
+   "keys": "ZP-4018, ZP-4019",
+   "file": "2026-09-08-QA-asset-pm-programs-check-driven-completion-verdict.md",
+   "defects": 5,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/7f56422d-f1ad-45f7-869e-907c058ba8e4"
+  },
+  {
+   "keys": "ZP-3987, ZP-4018",
+   "file": "2026-09-08-QA-method-first-multi-service-work-orders-verdict.md",
+   "defects": 0,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/18b40ab9-f75e-4820-9995-6a8b98b58830"
+  },
+  {
+   "keys": "ZP-3782, ZP-3783",
+   "file": "2026-09-09-QA-ZP-3782-ZP-3783-fill-forms-retest-verdict.md",
+   "defects": 2,
+   "majors": 1,
+   "artifact": "https://claude.ai/code/artifact/e1577f11-92cb-49a1-865f-051e1f31fe48"
+  },
+  {
+   "keys": "ZP-4033, ZP-4036, ZP-4123",
+   "file": "2026-09-09-QA-ZP-4123-role-based-access-rendering-verdict.md",
+   "defects": 1,
+   "majors": 1,
+   "artifact": "https://claude.ai/code/artifact/e90e971d-49f8-4987-97dd-521f75cd4d44"
+  },
+  {
+   "keys": "ZP-4033, ZP-4036, ZP-4123",
+   "file": "2026-09-09-QA-nav-licence-and-route-guard-audit-verdict.md",
+   "defects": 7,
+   "majors": 4,
+   "artifact": "https://claude.ai/code/artifact/e13e2861-33d2-43ae-9c08-2ebde7d4fa5d"
+  },
+  {
+   "keys": "ZP-3859, ZP-3863, ZP-3874, ZP-3887, ZP-3901, ZP-3902, ZP-3904, ZP-3905, ZP-3906, ZP-3908, ZP-3910, ZP-3911, ZP-3912, ZP-3913, ZP-3933, ZP-3934, ZP-3938, ZP-3941",
+   "file": "2026-09-09-QA-sixteen-ticket-batch-triage-verdict.md",
+   "defects": 2,
+   "majors": 1,
+   "artifact": "https://claude.ai/code/artifact/a4b8d0da-50fa-4ccd-8b54-acf4632239fe"
+  },
+  {
+   "keys": "ZP-3863, ZP-3874",
+   "file": "2026-09-10-QA-ZP-3874-staff-elevation-verdict.md",
+   "defects": 0,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/6fcadb40-931a-438e-b5db-ae2936658639"
+  },
+  {
+   "keys": "ZP-3863, ZP-3902, ZP-3912",
+   "file": "2026-09-10-QA-open-defect-register.md",
+   "defects": 0,
+   "majors": 0,
+   "artifact": "https://claude.ai/code/artifact/9b83e732-0072-40c8-8771-035f7d76617e"
+  }
+ ]
+}

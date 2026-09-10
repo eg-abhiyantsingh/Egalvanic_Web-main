@@ -17,6 +17,7 @@ adversarial verifier instructed to refute each one. 2.26 M subagent tokens, 32 a
 | medium + low | 90 |
 | severity-verified | 24 |
 | **refuted and dropped** | **5** |
+| distinct tickets covered | 53 (45 with an artifact page) |
 
 ## 1 — Cross-tenant IDOR is only partially fixed (the headline)
 
@@ -107,6 +108,32 @@ technician's photos and signature can materialise into a new submitted record �
 | Fill Forms poll spins 45 min | **Fixed** 21 Aug — content-type guard, runtime-confirmed in the live bundle |
 | Covered-services picker returns 0 | **Not a defect** — fix exists in backend; QA lacked the dev→qa lift |
 | `/goals` crashes to the error boundary | **No longer reproduces** — opened it 10 Sep, renders normally with two goals behind pace |
+
+## Ticket coverage — did the tested tickets make it in?
+
+**Audited, not assumed.** 53 distinct tickets have a QA verdict on file; **45 have an artifact page**.
+Where a tested ticket is absent from the sections above, it is absent **because it passed**.
+
+Taking only the 30 tickets whose verdict file covers that one ticket (exact attribution):
+
+| Outcome | Count | Tickets |
+|---|---|---|
+| **Produced a major defect** — in the sections above | 9 | ZP-2025, ZP-3662, ZP-3863, ZP-3874, ZP-3904, ZP-3932, ZP-3934, ZP-4018, ZP-4024 |
+| Minor defects only | 8 | ZP-3563, ZP-3607, ZP-3660, ZP-3942, ZP-3943, ZP-3945, ZP-3948, ZP-3978 |
+| **No defect at all** — passed or not testable by design | 13 | ZP-1242, ZP-3566, ZP-3654, ZP-3747, ZP-3855, ZP-3887, ZP-3888, ZP-3890, ZP-3898, ZP-3937, ZP-3938, ZP-3941, ZP-4020 |
+
+**I checked the "no defect" group rather than trusting the extraction.** ZP-3936 has no findings at all;
+ZP-3935 and ZP-3937 carry only Low *documentation* notes; ZP-3944's core regression passes with
+documentation findings; **ZP-3987's one real finding was withdrawn after an adversarial pass**; ZP-4020 is
+gated behind an env var unset everywhere, so it cannot be exercised. None belong in a defect register —
+passes, documentation notes and coverage gaps are deliberately excluded.
+
+The remaining 23 tickets sit in **13 multi-ticket verdict files**, where a finding belongs to the file
+rather than one key. The heaviest is the **nav / licence / route-guard family** (ZP-4033 / ZP-4036 /
+ZP-4123) with **7 defects, 4 major** — that is where most of section 2 comes from. Next is
+**ZP-3782 / ZP-3783** (Fill Forms), the multiselect data loss in section 3.
+
+Raw audit: `docs/bug-evidence/2026-09-10-ticket-coverage-audit.json`.
 
 ## How much to trust this
 
