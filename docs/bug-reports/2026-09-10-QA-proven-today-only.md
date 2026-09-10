@@ -1,6 +1,6 @@
 # Bugs I can prove on QA today — re-tested live, nothing inherited
 
-**Count: 3 clickable bugs + 1 security finding + 2 leads.** (Was 9. `/tasks/all`, asset-create and
+**Count: 2 clickable bugs + 1 security finding + 1 staff-tooling bug + 1 lead.** (Was 9. `/tasks/all`, asset-create and
 padlocked-Compliance retracted after testing from the UI; the site-scope gap reclassified as API-only.)
 
 **Artifact:** https://claude.ai/code/artifact/2d243a6e-f2cd-492c-b2b5-e9a34caeb8c8
@@ -18,6 +18,16 @@ This file contains **only findings reproduced live today** on the current bundle
 | 3 | **Report setup cannot find infrared work orders** | `work_type=IR` at the documented default `limit=10` → 0 IR rows + a note claiming none exist; `limit=25` → 4. Reproduces on **production** too. |
 | 4 | **One panelboard carries two Manufacturer fields** | New dropdown in Engineering plus the old free-text `Manufacturer`/`Type`/`Model` under Custom Attributes; Panel Type empty because `/eqp-lib/panel-manufacturers` returns `[]`. |
 | 5 | **No issue class defines `Recommendations`** | 50 issue classes, 22 distinct property names, zero named `Recommendations` and no near-miss — so a report template gating on that key can never render the field. |
+
+## Reclassified — real, but not a customer bug
+
+**The infrared report-setup fault is a STAFF-TOOLING bug.** Asked to demo it in the browser I could not:
+the customer Reporting screen says **"Reports — Coming Soon"**, `/reporting/builder` returns **Access
+Denied**, and `sample-entities` appears **0 times** in the shipped frontend. The picker the browser would
+use (`preview-entities`) returns 50 recent jobs with **no work-type filter at all**, so it never claims
+none exist. The fault itself is real and reproduces on production — against the **staff tool**. Separate
+note worth raising: the ZP-3863 ranking improvement never reached the customer builder, whose picker is
+still an unranked recency list.
 
 ## Reclassified — real, but not a UI bug
 
@@ -52,6 +62,13 @@ cross-tenant family — same shape, no screen to photograph.
 - **EG Forms blue ghosts** — needs a form submission.
 - **Quote labor override lost on reload**, **Upload Anything discards findings**, **bulk Mark As 400**,
   **OCPD warning chip** — need writes or fixtures I have not driven today.
+
+## Owner-stated design intent — not bugs
+
+- **Condition Assessment is meant to render for every role.**
+- **The Project Manager is supposed to get Maintenance Program.** So the ZP-4123-family finding is only
+  about the *mismatches* (EE shown a link to Access Denied; FM shown no link but the page renders; Client
+  Portal reaching it via the portal bypass) — not about PM having access.
 
 ## Method change recorded
 
