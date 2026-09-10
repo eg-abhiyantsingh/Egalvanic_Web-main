@@ -286,6 +286,13 @@ permission in the table is never enforced. ZP-3904's first review step ("confirm
 a user *with* the engineering-library entitlement") cannot be judged by presence alone, because they
 also appear for users without it.
 
+**SECURITY DEFECT found by API-testing this endpoint — filed separately.**
+`GET /sld/{sld_id}/library-designations` never checks the caller's `accessible_sld_ids`: the Facility
+Manager (11 sites) and Electrical Engineer (4 sites) seats get **byte-identical rows to the PM** for an
+unmapped site, across all four kinds. Full write-up:
+`docs/bug-reports/2026-09-10-QA-library-designations-site-scope-leak.md` ·
+https://claude.ai/code/artifact/06ad5f78-f47f-4875-bb22-588cc34ce68f
+
 **Column deviation:** the SCCR page shows **Available Fault Current** where the ticket specifies a
 **Devices** column ("Line and Load side by side, greyed out when the rating is label-marked"). Either
 the ticket's column set changed or that column did not ship.
