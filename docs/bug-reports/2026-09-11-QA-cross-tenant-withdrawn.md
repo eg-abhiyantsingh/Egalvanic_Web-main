@@ -15,13 +15,26 @@ That qualifier was false. The seat used for the cross-tenant work — `abhiyant.
 — returns **`is_eg_admin: true`**. It is an Egalvanic staff account, which is entitled to read across
 companies by design.
 
-Same request, `GET /api/sld/24eb08b1-…` (a diagram owned by Demo Company), from three EG-ACME logins:
+Same request, `GET /api/sld/24eb08b1-…` (a diagram owned by Demo Company), from **all eight EG-ACME
+logins** — including the 7th seat the owner supplied on 2026-09-11:
 
-| Seat | `is_eg_admin` | Result |
-|---|---|---|
-| `+admin@` (used for the original proof) | **true** | **200 application/json**, name `test`, 4,107 bytes |
-| `+project@` Project Manager | false | **422** `permission_denied` — "You do not have permission to access this SLD" |
-| `+fm@` Facility Manager | false | **422**, identical |
+| Seat | Role | `is_eg_admin` | Perms | Result |
+|---|---|---|---|---|
+| `+admin@` (used for the original proof) | Super Admin (+4) | **true** | 132 | **200 json** — reads it |
+| `+adminqa@` **(new, 2026-09-11)** | Admin | **true** | 108 | **200 json** — reads it |
+| `+project@` | Project Manager | false | 95 | **422** permission_denied |
+| `+fm@` | Facility Manager | false | 75 | **422** |
+| `+clientportal@` | Client Portal | false | 35 | **422** |
+| `+accountm@` | Account Manager | false | 77 | **422** |
+| `+electric@` | Electrical Engineer | false | 81 | **422** |
+| `+tec@` | Technician | false | 95 | **422** |
+
+**Two staff seats read it. All six customer roles are refused.**
+
+**Product fact worth recording: the `Admin` role is itself an Egalvanic staff role on this platform**
+(`+adminqa@` holds only `Admin` and still reports `is_eg_admin: true`). That is why the original write-up
+could call its account a "customer admin" and be wrong without anyone noticing — on this tenant there is no
+such thing as a customer admin. The six roles a customer actually gets are the six refused above.
 
 **Positive control:** the same PM reading its *own* diagram → 200, 2,279,413 bytes, 291 nodes. So the 422 is
 a real refusal, not a broken call. **Negative control:** a random UUID → 422, same as the foreign id.
@@ -49,7 +62,8 @@ returned `applicable:false`. Not evidence either way.
    `ir_session/{id}/full` — because demo has **no work orders of its own** to aim at. (Reading *ACME's*
    session ids from the demo seat proves nothing: that seat is staff.)
 3. **The only demo login available is also staff** (`shubham.goswami@` → `is_eg_admin: true`), so the
-   reverse direction cannot be run at all.
+   reverse direction cannot be run at all. The 7th seat supplied on 2026-09-11 turned out to be staff too,
+   so it does not unblock this.
 
 **Status: withdrawn, not disproved.** I can show it does not happen to a customer on the routes I could
 reach. I cannot yet show it never happens.

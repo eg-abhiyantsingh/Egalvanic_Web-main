@@ -1094,3 +1094,17 @@ proves nothing. Same class as the masked-HTML trap — a 200 that isn't what it 
 Verdict `docs/bug-reports/2026-09-11-QA-cross-tenant-withdrawn.md`; evidence
 `docs/bug-evidence/2026-09-11-register-rebuild/xtenant-01-staff-reads-it-customers-refused.png`;
 artifact V16 leads with the withdrawal.
+
+## 2026-09-11 — the 7th seat (+adminqa@) is ALSO staff; full 8-seat map now in AppConstants
+Owner supplied `abhiyant.singh+adminqa@egalvanic.com` / `RP@egalvanic123` as "the admin". Tested it:
+**`is_eg_admin: true`, roles ["Admin"], 108 perms** — it is EG staff too, so it does NOT unblock the
+cross-tenant test. **Product fact: the `Admin` ROLE itself carries is_eg_admin on this platform**, which
+is why the old write-up's "non-staff customer admin" never existed.
+**Full map, measured against `GET /api/sld/{foreign}` and now committed in `AppConstants` as
+`CUSTOMER_SEATS_NON_STAFF` / `EG_STAFF_SEATS`:**
+STAFF (read it, 200): `+admin@` Super Admin 132 · `+adminqa@` Admin 108.
+CUSTOMER (refused, 422): `+project@` PM 95 · `+fm@` FM 75 · `+clientportal@` CP 35 · `+accountm@` AM 77 ·
+`+electric@` EE 81 · `+tec@` Tech 95 (no web).
+Control: PM reading its OWN sld → 200, 2.2 MB, 291 nodes. So six refusals are real.
+**Still blocked:** need a NON-staff login on a POPULATED second tenant to finish the family.
+Artifact V17 carries the 8-seat table + screenshot `xtenant-02-all-eight-seats.png`.

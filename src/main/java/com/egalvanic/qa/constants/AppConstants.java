@@ -83,6 +83,35 @@ public class AppConstants {
     public static final String AM_EMAIL = getEnv("AM_EMAIL", "abhiyant.singh+accountm@egalvanic.com");
     public static final String AM_PASSWORD = getEnv("AM_PASSWORD", "eOr2wZWpe1aE!");
 
+    // 7th seat, supplied by the repo owner 2026-09-11: the single-role "Admin" account.
+    // NOTE it is EG STAFF — /auth/v2/me returns is_eg_admin=true, 108 perms, roles ["Admin"].
+    public static final String ADMINQA_EMAIL = getEnv("ADMINQA_EMAIL", "abhiyant.singh+adminqa@egalvanic.com");
+    public static final String ADMINQA_PASSWORD = getEnv("ADMINQA_PASSWORD", "RP@egalvanic123");
+
+    // ============================================
+    // STAFF vs CUSTOMER — READ BEFORE ANY TENANCY TEST
+    // ============================================
+    // Measured live 2026-09-11 against GET /api/sld/{a-foreign-tenant-sld}:
+    //
+    //   seat                       role                 is_eg_admin  perms  foreign SLD
+    //   +admin@      ADMIN_EMAIL   Super Admin (+4)     TRUE         132    200 — READS IT
+    //   +adminqa@    ADMINQA_EMAIL Admin                TRUE         108    200 — READS IT
+    //   +project@    PM_EMAIL      Project Manager      false         95    422 refused
+    //   +fm@         FM_EMAIL      Facility Manager     false         75    422 refused
+    //   +clientportal@ CP_EMAIL    Client Portal        false         35    422 refused
+    //   +accountm@   AM_EMAIL      Account Manager      false         77    422 refused
+    //   +electric@   EE_EMAIL      Electrical Engineer  false         81    422 refused
+    //   +tec@        TECH_EMAIL    Technician           false         95    422 refused (no web)
+    //
+    // Both "admin" seats are Egalvanic INTERNAL staff, so cross-tenant reads from them are BY
+    // DESIGN and prove nothing. A cross-tenant / IDOR test is only valid from one of the six
+    // customer seats below, and the write-up must show the attacker's is_eg_admin=false.
+    // The whole cross-tenant P1 was withdrawn on 2026-09-11 for exactly this reason.
+    public static final String[] CUSTOMER_SEATS_NON_STAFF = {
+            PM_EMAIL, FM_EMAIL, CP_EMAIL, AM_EMAIL, EE_EMAIL, TECH_EMAIL
+    };
+    public static final String[] EG_STAFF_SEATS = { ADMIN_EMAIL, ADMINQA_EMAIL };
+
     // Path to the production RBAC permission matrix (source of truth for the
     // RoleBasedPermissionContractTest). Override with RBAC_CSV_PATH.
     public static final String RBAC_CSV_PATH =
