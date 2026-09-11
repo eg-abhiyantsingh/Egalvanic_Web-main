@@ -122,3 +122,31 @@ were not re-run this afternoon** — they carry the workflow's evidence and cont
 parameter, `data` wrapper assumed where the response is a bare array, `methods` assumed nested where the
 list only returns `method_count`). A wrong-shaped probe returns a confident-looking wrong answer — always
 land a **positive control** first, which is what caught all three.
+
+---
+
+## Test-data URLs (owner: *"also add url if you creating bugs or work order or asset link"*)
+
+**Created by this session — one record only:**
+- Asset `QA-VERIFY n41b delete me` (Circuit Breaker), created 11 Sep to reproduce the stale-picker bug:
+  https://acme.qa.egalvanic.ai/assets/aa24924b-1984-4b44-ac8b-71ece88c2aba
+
+**Records the findings use:**
+
+| What | Name | URL |
+|---|---|---|
+| WO, stale-picker repro | 11 sep abs · Android Site 2 · Test op | https://acme.qa.egalvanic.ai/sessions/b67a3c26-583d-4f59-997e-95327c26c3ae |
+| Quote, ×0 material | QA-DEMO SCCR upstream-fuse quote (delete me) | https://acme.qa.egalvanic.ai/plans/488ee745-53a2-4846-aa26-c3089f6b6ad1 |
+| WO, missing tick box | ZP-4018 QA session-scope + partial (delete me) · Addtioanl Site | https://acme.qa.egalvanic.ai/sessions/afea6fa4-e7a7-47e7-a0fd-9933afbc64a3 |
+| WO, site-scope leak | "test" · Android Site 2 · Test op | https://acme.qa.egalvanic.ai/sessions/8d9aad65-fd8c-4fb7-bbc2-05f2e76cc688 |
+| Issue, no back control | NFPA 70B Violation on 11N-H1-2 | https://acme.qa.egalvanic.ai/issues/b9492227-53d3-48d4-87c6-357691d27418 |
+| WO behind the failed photo-fill job | Infrared Thermography (I.R) · Chicago illinois | https://acme.qa.egalvanic.ai/sessions/fcc37c67-01fc-4940-87f3-8028fc86e97a |
+| Breaker falsely "Library Matched" | CB2 · Android Site 2 | https://acme.qa.egalvanic.ai/sld?focusNode=7ee495b9-7b81-4e59-a58c-26e5ccb01ba9&sldId=aadcee4c-7dd0-45b3-81b9-309c5c166084 |
+| Panelboards, trimmed PM plan | 11N-H1-1 / 12N-H1-1 | https://acme.qa.egalvanic.ai/assets/532b10d9-fba9-4a76-8f18-1f86638f7195 · https://acme.qa.egalvanic.ai/assets/9af47d76-a69d-4bdd-8739-695fa4cd1daf |
+| Quote that zeroes on save | QA-VERIFY n32 orphan-walk delete me | https://acme.qa.egalvanic.ai/plans/3e5d3340-3754-4716-bd67-efd79c75daa7 |
+| Quote, save-validation probes | QA-VERIFY n7 generate-validation delete me | https://acme.qa.egalvanic.ai/plans/fdec1116-2ab9-4e6c-8940-c171355e50b7 |
+| Grids with the dead Created column | Work Orders · EMPs | https://acme.qa.egalvanic.ai/sessions · https://acme.qa.egalvanic.ai/emps |
+| Page the menu offers and the app refuses | Maintenance Program | https://acme.qa.egalvanic.ai/maintenance/program · https://acme.qa.egalvanic.ai/maintenance-portal/program |
+
+Also on the artifact as an **Open it here** line inside each screen bug, plus a closing
+*Every record these findings use* table. Artifact now at Version 15.
