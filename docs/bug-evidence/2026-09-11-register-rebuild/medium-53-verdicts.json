@@ -1,0 +1,695 @@
+[
+ {
+  "n": 1,
+  "verdict": "INVALID",
+  "confidence": "high",
+  "title": "GET /api/procedures-v2/pm-plans/services accepts another company's pm_standard_id with no 403 tenancy gate on QA",
+  "endpoint": "GET https://acme.qa.egalvanic.ai/api/procedures-v2/pm-plans/services?pm_standard_id=&lt;id&gt;",
+  "repro": "1) Login acme admin, get bearer. 2) Call the endpoint with a demo-owned pm_standard_id (6998bb7e-1b83-4cf4-bff3-1e42a03c5358, company 93611164) -> 200 text/html masked SPA shell, no data. 3) Same call with a random UUID gives the identical 200 text/html; own/global ids give 200 application/json. Foreign id == unknown id == masked soft-404, no cross-tenant data returned.",
+  "evidence": "Controlled test on acme (Bearer acme-admin), all on the SAME endpoint: global e9ac475e -> 200 application/json, 6 services (positive control OK); own customized NETA e55cb748 -> 200 application/json {\"data\":[]}; FOREIGN demo-owned NETA 6998bb7e -> 200 text/html (body starts <!DOCTYPE html>, masked SPA soft-404, NO data); RANDOM UUID 00000000-0000-4000-8000-000000000000 -> 200 text/html (IDENTICAL to foreign); no param -> 400 application/json \"pm_standard_id required\". The foreign id resolves to the same masked-HTML soft-404 as an unknown random id, disclosing zero demo data. Cross-check: all three demo company-owned standards return 0 services even on demo's own tenant, so nothing populated exists to leak. Per rubric, a 200 text/html is a soft-404 (NOT data, NOT a leak) and unknown-id != foreign-id \u2014 here foreign collapses to the unknown/masked SAFE path. The absent explicit 403 (returning a masked soft-404 instead) is app-wide plumbing, not a tenancy vulnerability; the claimed IMPACT (route falls through to a foreign tenant's data) does not reproduce. INVALID.",
+  "final_verdict": "INVALID",
+  "refute": {
+   "n": 1,
+   "agree": true,
+   "final_verdict": "INVALID",
+   "reason": "Live re-test incl. the decisive populated-foreign case (demo querying acme's ddec757b, a standard that returns 6 real services on acme) returned 200 text/html masked soft-404 with ZERO data \u2014 identical to a random UUID and unaffected by ?company_id/X-Company-Id spoofing; own ids (populated or empty) return JSON, foreign ids never leak, so the claimed cross-tenant data fall-through does not reproduce."
+  }
+ },
+ {
+  "n": 2,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "Failed Fill-Forms \"Read pages\" job leaks raw AWS ECS/Fargate task descriptor in job.error",
+  "endpoint": "GET /api/form-fill/jobs/bb8c21c8-752c-4e52-8415-a5a75a978b92/status",
+  "repro": "1) Login (any tenant user). 2) GET /api/form-fill/jobs/bb8c21c8-752c-4e52-8415-a5a75a978b92/status -> HTTP 200 application/json, job.status=\"failed\". 3) Read job.error: it is the raw ECS/Fargate descriptor exposing AWS account id, cluster ARN, ECR image, subnet, ENI, MAC, private IP.",
+  "evidence": "Live GET /api/form-fill/jobs/{id}/status returned HTTP 200 application/json with job.status=\"failed\" and job.error (2000-char string) = raw ECS descriptor. Confirmed tokens in job.error: 165183897698 (AWS acct), arn:aws:ecs:us-east-2:...:cluster/eg-pz-qa-ecs-ohio, dkr.ecr.us-east-2.amazonaws.com/eg-pz-agent-runner, subnet-0ebbd054223bcb9e1, eni-, macAddress 0a:39:c8:df:7b:05, privateIPv4Address 10.1.3.192, compute.internal, networkInterfaceId, ExitCode/STOPPED. Control A: random UUID /status -> HTTP 200 text/html (masked SPA shell), so real job is genuine data not soft-404. Control B: Technician seat (+tec@, non-creator, low-priv, same company d59d449b) read the same job -> HTTP 200 application/json, 165183897698 present = True, confirming any authenticated user (not just creator) can read it. Only the Step-Functions ARN from the report is absent because job.error is truncated at exactly 2000 chars. Not by-design/test-data; still live ~3 weeks post-creation.",
+  "final_verdict": "REAL",
+  "refute": {
+   "n": 2,
+   "agree": true,
+   "final_verdict": "REAL",
+   "reason": "Live re-test: GET /api/form-fill/jobs/{id}/status returns HTTP 200 application/json with a 2000-char job.error leaking the raw AWS Fargate descriptor (acct 165183897698, cluster ARN, ECR image+digest, subnet, ENI, MAC, private IP); random/malformed ids give masked HTML (not a soft-404) and a non-creator Technician read the same infra blob, so any authenticated user gets it \u2014 genuine CWE-209 info disclosure, still live ~24 days on."
+  }
+ },
+ {
+  "n": 3,
+  "verdict": "FIXED",
+  "confidence": "high",
+  "title": "Cross-tenant CREATE IDOR (offline/queued + online x-direct-write) \u2014 a Company-A user files a task under a Company-B sld_id",
+  "endpoint": "POST /api/task/create (acme token + demo sld_id 24eb08b1-bb88-4f47-8ad0-f5b09326cf8d); read-back GET /api/task/{uuid} scoped per-tenant",
+  "repro": "1) Log in to acme (attacker) and demo (victim); confirm demo SLD 24eb08b1 is real. 2) OFFLINE: POST /api/task/create with acme bearer + demo sld_id, no x-direct-write -> 200 JSON {_mutation:received} (queued). 3) Wait 60s+; GET /api/task/{uuid} as demo -> 200 text/html masked-404 (row NEVER applied to victim); also masked in acme. 4) ONLINE: same POST with x-direct-write:true -> 200 text/html (rejected at request); row absent in both tenants.",
+  "evidence": "LIVE QA 2026-09-11. Attacker acme company d59d449b, victim demo company 93611164. Foreign real sld_id = demo SLD 24eb08b1-bb88-4f47-8ad0-f5b09326cf8d (200 JSON name='test' from demo). OFFLINE cross-tenant create (uuid 9fcea9af\u2026): POST 200 JSON _mutation:received, but GET /api/task/9fcea9af\u2026 from demo = 200 text/html masked-404 after 20 polls over 60s AND minutes later; also masked in acme; demo Tasks list shows no XT-CREATE titles -> NOT filed under victim. ONLINE cross-tenant create (uuid 0f64421b\u2026, x-direct-write:true): POST returned 200 text/html masked -> absent in both tenants. POSITIVE CONTROL (worker alive): offline same-tenant create acme+own sld aadcee4c\u2026 applied in ~3s, GET 200 JSON. ONLINE SUCCESS CONTROL: acme+own sld+x-direct-write -> HTTP 201 JSON {\"message\":\"Task created\"}. Both cross-tenant CREATE paths are now rejected (matching the ticket's stated Expected Result: 'queued create is rejected and never applied'). NOTE: acme can still GET /api/sld/{demo id} cross-tenant (200 JSON) \u2014 a separate, still-open READ leak, not this create-write bug, so it does not change the FIXED verdict for the CREATE IDOR. Bug as claimed (both paths accept cross-tenant create, victim gets the row) does NOT reproduce.",
+  "final_verdict": "FIXED",
+  "refute": {
+   "n": 3,
+   "agree": true,
+   "final_verdict": "FIXED",
+   "reason": "Live 2026-09-11 with worker-alive + online-success positive controls proving the negative is real: fresh acme cross-tenant create on BOTH paths (offline queued 200 _mutation:received; online x-direct-write masked) never materialized under demo victim or acme over ~2.5 min and never entered the demo SLD's own tasks array \u2014 only stale prior-probe rows remain, which don't reproduce."
+  }
+ },
+ {
+  "n": 4,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "Failed Fill-from-Photos job leaks raw AWS ECS/Fargate task descriptor in job.error from /api/form-fill/jobs/{id}/status",
+  "endpoint": "GET /api/form-fill/jobs/bb8c21c8-752c-4e52-8415-a5a75a978b92/status",
+  "repro": "1. curl -sk POST /api/auth/login (abhiyant.singh+admin@egalvanic.com / acme) to get a Bearer token. 2. GET /api/form-fill/jobs/bb8c21c8-752c-4e52-8415-a5a75a978b92/status with that token. 3. Observe HTTP 200 application/json, job.status \"failed\", and job.error = the raw stringified ECS/Fargate task descriptor.",
+  "evidence": "Live today (2026-09-11) as Super Admin: GET /api/form-fill/jobs/bb8c21c8-.../status -> HTTP 200 application/json, job.status \"failed\", job.error (2000-char string) contains AWS account id 165183897698, ClusterArn arn:aws:ecs:us-east-2:165183897698:cluster/eg-pz-qa-ecs-ohio, ECR image 165183897698.dkr.ecr.us-east-2.amazonaws.com/eg-pz-agent-runner:qa, subnet-0ebbd054223bcb9e1, eni-0b25dac0f3443b26a, MAC 0a:39:c8:df:7b:05, privateIP 10.1.3.192, internal DNS ip-10-1-3-192.us-east-2.compute.internal, TaskArn, JOB_JSON env, ExitCode 1. CONTROLS confirm it is a real leak, not the unknown-id/masked path: random UUID .../00000000.../status -> masked HTML soft-404 (<!DOCTYPE html>), NOT an ECS dump; no-token request -> HTTP 401 JSON \"No authorization provided\" (auth is enforced, so disclosure is to authenticated internal users, matching Medium severity). Secondary /jobs/active?session_id=fcc37c67... currently returns the session's newest job which is now \"succeeded\" (later run superseded the failed one, exactly as the ticket noted), so /jobs/active does not currently re-serve it \u2014 but the primary /jobs/{id}/status path serves the leak permanently and deterministically on the persisted failed job. Minor discrepancy vs ticket: observed error length ~2000 chars (ticket said ~3.8KB), but every claimed sensitive token is present.",
+  "final_verdict": "REAL",
+  "refute": {
+   "n": 4,
+   "agree": true,
+   "final_verdict": "REAL",
+   "reason": "Reproduced live today: GET /jobs/bb8c21c8.../status -> 200 application/json, job.status \"failed\", job.error = raw ECS descriptor (AWS acct 165183897698, cluster ARN, ECR image, subnet/ENI/MAC/privateIP/internal DNS); random-UUID control returns masked text/html without the dump and no-token returns 401 JSON, proving a genuine infra-disclosure to authenticated users, not the unknown-id/masked path."
+  }
+ },
+ {
+  "n": 5,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "Review-dialog questions[].fields[] and gaps descriptors omit options for option-typed fields (select/radio/multiselect) while field_index for the same path carries them",
+  "endpoint": "GET /api/form-fill/jobs/{jobId}/proposal (200 application/json)",
+  "repro": "1) POST /api/auth/login (admin) for a bearer token. 2) curl -sk GET /api/form-fill/jobs/2617c325-e8d9-4f9c-b228-bcdc904c6db3/proposal -> 200 application/json. 3) Compare proposal.fills[0].questions[].fields[] / .gaps[] descriptor for verdict.verdict (no options) against proposal.field_index[form_id] for the same path (has options pass/pass_with_conditions/fail).",
+  "evidence": "Reproduced live on the current QA server (fetched 2026-09-11). GET /api/form-fill/jobs/{id}/proposal returned 200 application/json for jobs 2617c325 (created 2026-08-14, filled:1) and 6293a4f4 (created 2026-08-21, filled:1). In both, every option-typed field in questions[].fields[] and gaps[] omits `options` (verified: verdict.verdict=select, general_info.overall_result=switch, general_info.tests_performed=multiselect, general_info.weather_conditions=radio all have `options` key absent). CONTROL: proposal.field_index[\"2d9d80c0...\"] in the SAME response carries the full options for each of those paths (verdict.verdict -> [{key:pass},{key:pass_with_conditions},{key:fail}], 5 option-typed fields with options out of 36). Corroborating downstream symptom present in the applied job 2617c325: apply rejected the label as value -> \"`verdict.verdict` = 'Verdict' is not one of ['fail','pass','pass_with_conditions'] (use the option KEY)\". This matches the ticket exactly: the descriptor handed to the review dialog cannot populate a picker, so an option input degrades to the label and apply refuses it, while the options were available (in field_index) all along. FALSIFIABLE POSITIVE with control: the data exists server-side but is omitted specifically from the question/gap descriptor path. Independent V1.36 retest on 2026-09-09 reached the same verdict; Jira ZP-3783 still To Do. HONEST CAVEAT ON FRESHNESS: the two genuinely-fresh jobs run 2026-09-09 (fbe3581f, 8079487d) returned filled:0, so they emitted no questions[]/gaps[] arrays to sample; their field_index (fetched today) still carries options. Thus the descriptor-omission sample comes from proposals created 08-14/08-21 that the current endpoint still serves live today, not from a today-dated questions-bearing run (the fixture WO's Signature Test sibling is already filled, so fresh runs on it fill 0 forms; producing a fresh questions-bearing proposal would require creating/clearing a Signature Test instance, which I did not do to avoid modifying existing records). The live 200-JSON field_index control and the served-live label-as-value rejection make the contract defect current and observable now.",
+  "final_verdict": "REAL",
+  "refute": {
+   "n": 5,
+   "agree": true,
+   "final_verdict": "REAL",
+   "reason": "Reproduced live today: proposal descriptors omit `options` for option-typed fields (verdict.verdict/tests_performed/overall_result/weather_conditions) while field_index in the same 200 JSON carries them, and apply skipped verdict.verdict='Verdict' with \"use the option KEY\"; my INVALID attempt (frontend falls back to field_index) is disproven \u2014 the shipped bundle has zero field_index references and its Jkr renderer reads options only from the descriptor, degrading option fields to a free-text box, so the picker genuinely cannot render."
+  }
+ },
+ {
+  "n": 6,
+  "verdict": "REAL",
+  "confidence": "high",
+  "endpoint": "POST /api/plans/{id}/generate",
+  "title": "POST /api/plans/{id}/generate silently accepts an orphaned walk-scoped instruction set (site_walk_id removed while a work row still declares scope:\"site_walk\") \u2014 HTTP 200 success:true and regenerating zeroes a priced quote to $0.00",
+  "repro": "1. Create a walk-sourced quote from a site walk with priced assets: POST /api/plans/from-site-walk {site_walk_id:630ba67a...} \u2192 plan 943a85b9..., total_sell 291.68, 1 work order (GET /api/plans/{id} confirms content.source=site_walk, pricing.totals.total_sell=291.68). 2. Save/regenerate via POST /api/plans/943a85b9.../generate with site_walk={service_ids:[d625cfa0...]} (NO site_walk_id) and work[0]={scope:\"site_walk\", service_id:d625cfa0..., all_assets:false, node_ids:[], filters:{...}}. 3. Server answers 200 success:true, error:null, code:null, no warning field anywhere; GET /api/plans/{id} now shows source=null, site_walk=null, total_sell=0.00, walk_asset_count absent, workorders=0, and the incoherent instructions persisted verbatim.",
+  "evidence": "LIVE on acme.qa.egalvanic.ai V1.36, 2026-09-11, Super Admin token. All calls returned HTTP 200 application/json (not masked HTML). POSITIVE CONTROL: same /generate payload WITH site_walk_id present \u2192 200 success:true, total_sell stays 291.68, 1 workorder. BUG: identical payload with site_walk_id removed while work[0].scope=\"site_walk\" \u2192 200 success:true, error:null, code:null; a full recursive key-walk of the 200 response for warn/error/ignore/skip/drop/refuse/orphan/valid fields found NONE (the literal 'orphan' string matched only my own plan title 'QA-VERIFY orphan-walk-scope delete me'). GET after: content.source=null, content.site_walk=null, pricing.totals.total_sell=0.0, audit.walk_asset_count absent, workorders=0; stored instructions = {plan_type, site_walk:{service_ids:[d625cfa0...]} (no site_walk_id), version:2, work:[{scope:\"site_walk\", service_id:d625cfa0...}]}. Original ticket showed $600\u2192$0; fresh repro shows $291.68\u2192$0.00 \u2014 same silent-acceptance mechanism. No real records touched: test data (plan 943a85b9-d374-495e-b022-60245ae96d66) was created for this check and labeled \"QA-VERIFY ... delete me\".",
+  "final_verdict": "REAL",
+  "refute": {
+   "n": 6,
+   "agree": true,
+   "final_verdict": "REAL",
+   "reason": "Live-reproduced on V1.36: /generate with site_walk_id removed but work scope still \"site_walk\" returns 200 application/json success:true, zero warnings anywhere, and silently zeroes a priced quote ($291.68/1WO -> $0.00/0WO); positive control with the id present prices correctly, so it is real, not masked-HTML, unknown-id, or async."
+  }
+ },
+ {
+  "n": 7,
+  "verdict": "REAL",
+  "confidence": "high",
+  "endpoint": "POST /api/plans/{id}/generate (body = the instructions object); controls via GET /api/plans/{id}",
+  "title": "POST /api/plans/{id}/generate performs no instruction validation \u2014 garbage scope, missing/nonexistent service_id, no-id row, no version, and scope:\"assets\" with no asset source all return HTTP 200",
+  "repro": "1) Create a throwaway plan (POST /api/plans/from-issues, title 'QA-VERIFY delete me') -> plan fdec1116-2ab9-4e6c-8940-c171355e50b7. 2) POST /api/plans/{id}/generate with each malformed instruction set (garbage scope; no service_id; nonexistent service UUID; row missing id; no version; scope:'assets' with all_assets:false + empty node_ids/filters). 3) Each returns HTTP 200 application/json {success:true, error:null}; GET /api/plans/{id} shows the garbage e.g. work[0].scope='qa_garbage_scope_zz' persisted verbatim.",
+  "evidence": "Reproduced LIVE on QA (acme, admin token) against my own test plan fdec1116 \u2014 no real records touched. Positive control: a VALID instructions payload -> 200 success:true, content regenerates (workorders present, audit populated). All 5 malformed cases from the title -> 200 application/json {success:true,error:null,code:null}. Persistence confirmed: after garbage-scope call, GET returns instructions.work[0]={id:wZZ,scope:'qa_garbage_scope_zz',service_id:...} stored verbatim and content.workorders count=1 \u2014 full plan object, not masked HTML, so it is genuinely accepted+persisted. Adversarial controls prove the endpoint CAN validate/reject: empty body, '{}', and malformed JSON -> HTTP 400 {error:'standard.pm_standard_id is required',success:false}; no Authorization -> 401; nonexistent plan id -> 200 text/html (soft-404). CAVEAT: the underlying verdict doc's stronger phrasing 'no instruction validation on this REST path at all' is a slight overstatement (it does 400 on pm_standard_id), but the bug AS TITLED \u2014 those five specific malformed instruction shapes returning 200 and being persisted \u2014 reproduces exactly. It is a real input-validation/robustness gap (Medium): unknown scope enums, nonexistent service_ids, missing version/id are accepted and stored, discoverable only by downstream effects (cf. the sibling $600->$0 walk-orphan zeroing). Not data loss; source records untouched.",
+  "final_verdict": "REAL",
+  "refute": {
+   "n": 7,
+   "agree": true,
+   "final_verdict": "REAL",
+   "reason": "Reproduced live on my own plan 6c1dd5f4: all 5 malformed shapes (garbage scope, nonexistent service_id, no id, no version, assets-no-source) return HTTP 200 application/json success:true and persist verbatim in a genuine priced plan object (not masked HTML); the 400/401/soft-404 controls confirm it's a real selective validation gap \u2014 Medium, though the title's \"no validation at all\" overstates it."
+  }
+ },
+ {
+  "endpoint": "GET /api/site-walk/list (demo.qa.egalvanic.ai, company 93611164 lacking `site-walks` feature)",
+  "repro": "1. Log in to demo.qa.egalvanic.ai as Super Admin (company 93611164). 2. GET /api/auth/v2/me \u2192 confirm company_features[] has NO `site-walks` (role still holds site_walks.view). 3. GET /api/site-walk/list \u2192 HTTP 200 application/json {\"data\":[],\"success\":true} \u2014 no 403/422 entitlement refusal.",
+  "title": "Site Walks feature gate is sidebar/client-only \u2014 /api/site-walk/list serves 200 to a company without the `site-walks` entitlement",
+  "evidence": "PRECONDITION (live): demo /api/auth/v2/me company_features[] does NOT include `site-walks` (has sales-core, eg-forms, reporting-v2, ...); demo Super Admin role holds site_walks.view + site_walks.manage (130 perms). acme company_features[] DOES include `site-walks`.\nDEFECT: GET /api/site-walk/list on demo (no feature) -> 200 application/json {\"data\":[],\"success\":true} \u2014 real handler, no entitlement refusal.\nCONTROLS: (1) same endpoint, NO auth -> 401 application/json {\"error\":\"No authorization provided\"} = handler enforces auth but not feature entitlement (200 wasn't blanket allow). (2) bogus /api/site-walk-nonexistent/list -> 200 text/html <!DOCTYPE html> = masked soft-404, proving the json response is the genuine live handler, not a soft-404. (3) acme (feature held) same endpoint -> 200 json with real site-walk rows.\nConclusion: server-side entitlement gate absent; sidebar tells demo user the feature is not enabled while the API serves it 200. Matches ticket's core API claim. Frontend route-render (enabled New Site Walk button) not re-driven in browser this session, but the load-bearing verifiable claim is confirmed.",
+  "n": 8,
+  "verdict": "REAL",
+  "confidence": "high",
+  "final_verdict": "REAL",
+  "refute": {
+   "n": 8,
+   "agree": true,
+   "final_verdict": "REAL",
+   "reason": "Re-confirmed live: demo lacks the site-walks feature yet GET /api/site-walk/list returns 200 JSON and POST /api/site-walk/ is accepted identically to acme (no entitlement gate), with no-auth 401 and soft-404-HTML controls ruling out masked-HTML/blanket-allow \u2014 a genuine missing server-side entitlement gate."
+  }
+ },
+ {
+  "n": 9,
+  "verdict": "REAL",
+  "confidence": "medium",
+  "title": "details_by_key keyed on unnormalised property names \u2014 empty/whitespace/case-variant keys collide (reproduced live)",
+  "endpoint": "POST /api/v2/issues/list \u2014 200 application/json (harvested details[].name across all 1067 acme issues)",
+  "repro": "1) POST /api/v2/issues/list for company acme, page through all 1067 issues, collect every details[].name. 2) Group names by trim+casefold: 6 collision groups survive as DISTINCT raw keys \u2014 Reference Temp(101) vs 'Reference Temp  '(1), Problem Temp(101) vs 'Problem Temp   '(1), Current Draw (A)(20) vs 'Current Draw (A) '(70), Replacement check 1/2/3 vs replacement check 1/2/3 \u2014 plus an empty-string name '' on 58 details across 16 issues. 3) Because the reporting render context (details_by_key) keys on these raw names, a template keying the clean name silently misses every issue stored under the variant.",
+  "evidence": "Live on acme.qa V1.36, all 1067 issues scanned. Ticket's exact title example reproduced: 'Reference Temp' (101 issues) and 'Reference Temp  ' (1 issue) exist as two separate keys. Controls confirming they are treated as distinct keys: the whitespace variant 'Current Draw (A) ' is actually the MAJORITY (70 issues vs 20 clean). Strongest platform-validation proof: 'Replacement check 1' (property-def id 3eb13f5e) and 'replacement check 1' (property-def id 3351bba7) are TWO distinct property definitions inside the SAME class 'Replacement Needed' (c759f6fb) \u2014 the app accepted two case-colliding property names in one class. Empty-string name '' is served for 15 different property ids across 7 classes (NEC Violation, NFPA 70B, Repair/Replacement Needed, Thermal/Ultrasonic Anomaly), so a name-keyed details_by_key[''] silently drops 14 of them. No normalization/validation anywhere on the API path. Not directly witnessed: the blank render itself \u2014 QA has no real HTML issue template to preview (same limit the original 2026-09-03 investigation recorded), so the 'blank cell' impact is a near-certain consequence of raw-name dict keying, not a rendered capture. Some trailing-whitespace variants trace to per-issue name snapshots on one property id (possible seed drift), but the case-variant collision and empty-name acceptance are clean independent proofs, so the platform defect stands.",
+  "final_verdict": "INVALID",
+  "refute": {
+   "n": 9,
+   "agree": false,
+   "final_verdict": "INVALID",
+   "reason": "Live GET /api/issue_classes (83 defs) shows zero case/space-colliding property definitions and only one empty name (in a \"Test data\" class); the verdict's \"strongest proof\" lowercase ids are absent from every live def and every whitespace/empty variant is a per-issue snapshot on a clean-named id (self-heals on save) \u2014 snapshot drift/test-data mess, not a live keyspace defect, and the blank render was never witnessed."
+  }
+ },
+ {
+  "n": 10,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "Report-config write authz gates on reports.manage, not internal-EG-Admin \u2014 non-eg-admin roles bypass the UI lock",
+  "endpoint": "PUT /api/reporting/configs/{id} ; POST /api/reporting/configs/{id}/fork ; POST /api/reporting/configs/{id}/ai-edit (acme.qa.egalvanic.ai)",
+  "evidence": "Backend gates report-config writes strictly on the reports.manage PERMISSION (not is_eg_admin/role name), confirmed live on QA with clean single-role accounts + controls, against a throwaway config \"QA-VERIFY delete me n10\" (id 51977ed6, deleted after). Negative controls PM/FM/CP (is_eg_admin=false, NO reports.manage): PUT, fork, and ai-edit all returned 422 application/json {\"error\":\"permission_denied\",\"required_permission\":\"reports.manage\",\"message\":\"...Required: reports.manage\"} \u2014 backend enforcement is real and names the exact permission. Positive: Technician (roles=[Technician], is_eg_admin=false, HAS reports.manage, 95 perms) \u2192 PUT 200 (rename persisted), fork 200 (child id 9cd9ce69 created), ai-edit passed the permission gate (400 \"message is required\" validation error, vs PM's 422 gate-block). So the backend authorizes any role with reports.manage regardless of is_eg_admin, while the product UI locks report editing to the internal Admin/EG-Admin role by name \u2014 a customer Super Admin (is_eg_admin=false, holds reports.manage) or even a Technician can rename/fork/AI-edit configs the UI refuses to unlock. Within-tenant only (company_id matched d59d449b). NOTE on original repro: the ticket's control (Electrical Engineer via x-active-role-id \u2192 422) no longer reproduces on the +admin account \u2014 GET /api/auth/v2/me now returns is_eg_admin=true + full 132 perms for EVERY x-active-role-id value (SA/EE/Admin), i.e. that account is a genuine internal EG admin and the header no longer scopes is_eg_admin down; so its 200s are legitimate eg-admin access, not the bypass. The bypass is instead proven with the clean Technician seat (same is_eg_admin=false + reports.manage class as Super Admin). UI-lock half corroborated by memory project_rbac_role_rename_v136 (Super Admin gets red \"Access Denied\" on /reporting/builder while the reporting APIs return 200 for every role).",
+  "repro": "1. Log in as a non-eg-admin role that holds reports.manage but the UI locks out of the report builder (Technician abhiyant.singh+tec@egalvanic.com, or a customer Super Admin). 2. PUT /api/reporting/configs/{id} with body {\"name\":\"changed\"} and Authorization: Bearer <that token>. 3. Actual: 200, rename persists (fork also 200; ai-edit passes the gate). Compare: a role without reports.manage (PM/FM/Client Portal) gets 422 permission_denied \"Required: reports.manage\" \u2014 proving the gate is the permission, not the internal-Admin role the UI enforces.",
+  "final_verdict": "INVALID",
+  "refute": {
+   "n": 10,
+   "agree": false,
+   "final_verdict": "INVALID",
+   "reason": "Mechanism reproduces (Technician w/ reports.manage gets PUT/fork 200, PM/FM w/o it get 422), but it's by-design: the RBAC source-of-truth matrix grants reports.manage to Super Admin/Technician and backend PR #914 deliberately gates on that permission \u2014 no escalation, just a benign UI-stricter-than-API cosmetic mismatch, not a security bypass."
+  }
+ },
+ {
+  "n": 11,
+  "verdict": "REAL",
+  "confidence": "high",
+  "endpoint": "GET /api/eg-forms vs GET /api/eg-forms?page=1[&page_size=5]",
+  "title": "/api/eg-forms paginated rows silently drop definition, html_template, sample_data (24 vs 21 keys, no null/flag/fields param)",
+  "evidence": "Auth as Super Admin. GET /api/eg-forms -> 200 application/json, rows have 24 keys incl definition/html_template/sample_data; matched id 01803c77-e4d1-4b80-82ce-686e2e9c8913 has definition present (5020 bytes). GET /api/eg-forms?page=1&page_size=5 -> 200 application/json, same rows have only 21 keys; definition/html_template/sample_data ABSENT (not null) for the identical id. Control 1: ?page=1 alone also yields 21 keys -> the page param (pagination path) triggers the summary projection, not page_size. Control 2: ?page=1&page_size=2&fields=definition still returns 21 keys with definition absent -> no discoverable opt-in to recover the body. Paginated top-level keys data/success/total; unpaginated data/success -- no metadata flag signals the projection. Both real JSON, not masked HTML. Matches original finding exactly.",
+  "repro": "1) GET /api/eg-forms (Bearer token): rows include definition (tens of KB). 2) GET /api/eg-forms?page=1 (or &page_size=5): same rows silently lose definition/html_template/sample_data (keys absent, not null), no flag, no fields param recovers them. 3) Match by id: a form with a 5020-byte definition unpaginated has no definition key when paginated.",
+  "final_verdict": "PARTIAL",
+  "refute": {
+   "n": 11,
+   "agree": false,
+   "final_verdict": "PARTIAL",
+   "reason": "Repro is exact (paginated drops definition/html_template/sample_data, 24 vs 21 keys, absent not null), but it is a standard by-design list-vs-detail projection: GET /api/eg-forms/{id} returns the full 5020-byte body, only the `page` param triggers the summary serializer, and the impact claim is false \u2014 absent key (not-included) is distinguishable from present `definition:[]` (empty), so the \"344/344 empty\" finding was a QA-tooling error, not a high-severity app defect."
+  }
+ },
+ {
+  "n": 12,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "/api/forms ignores all pagination params \u2014 every request returns the full 169 rows / 5.60 MB",
+  "endpoint": "GET /api/forms (200 application/json) vs control GET /api/eg-forms",
+  "repro": "1. Get admin Bearer token via /api/auth/login. 2. GET /api/forms with page/page_size/per_page/limit/offset in any combination. 3. Observe identical 169-row 5.87MB array every time; contrast with /api/eg-forms?page=1&page_size=5 returning 5 rows.",
+  "evidence": "Live-reproduced 2026-09-11 as Super Admin. GET /api/forms returned 169 rows / 5,870,461 bytes (= 5.60 MiB) for EVERY variant: no-params, page=1&page_size=5, page=2&page_size=5, per_page=1, limit=1, and offset=100&limit=10 \u2014 all byte-identical (SIZE:5870461), response is a bare JSON array (keys company_id/for_entity/form_type/id/is_deleted/is_global), no {total,page} envelope. POSITIVE CONTROL on sibling GET /api/eg-forms proves the method and the framework: no-params -> 648 rows/7.48MB, ?page_size=5 alone -> 648 rows (silently ignored), but ?page=1&page_size=5 -> 5 rows/11KB and ?page=1&page_size=25 -> 25 rows/55KB. So pagination works elsewhere; /api/forms genuinely honors none of page/page_size/per_page/limit/offset and has no cap or small default, violating the repo's own api-contract rules. API-contract defect (integrators/scripts/mobile), not a live UI slowdown \u2014 the web app itself loads via the paginated /api/eg-forms.",
+  "final_verdict": "REAL",
+  "refute": {
+   "n": 12,
+   "agree": true,
+   "final_verdict": "REAL",
+   "reason": "Re-reproduced live: /api/forms returns MD5-identical 169-row/5.60MiB JSON for all 12 param variants (page/page_size/per_page/limit/offset/size/count/take/skip/pageSize/maxResults/fields), while control /api/eg-forms honors page+page_size \u2014 genuine no-pagination/no-cap/no-small-default contract defect, correctly scoped (own-tenant, no leak claimed)."
+  }
+ },
+ {
+  "n": 13,
+  "verdict": "REAL",
+  "confidence": "high",
+  "endpoint": "GET /api/eg-forms",
+  "title": "/api/eg-forms silently discards page_size unless page is also supplied; no-param default is unbounded (648 rows / 7.13 MB)",
+  "repro": "1. GET /api/eg-forms (no params) -> 7.13 MB / 648 rows. 2. GET /api/eg-forms?page_size=5 -> identical 7.13 MB / 648 rows (ignored). 3. GET /api/eg-forms?page=1&page_size=5 -> 5 rows (works with page).",
+  "evidence": "Live QA as internal Admin (company d59d449b). No-param and page_size=5-alone responses are cmp-identical at 7,477,158 bytes / 648 data rows (HTTP 200 application/json both). Adding page=1 makes page_size take effect (5, 25, 200-capped rows), proving the server understands the param but silently discards it without page, and that the collection default is unbounded rather than a small (10-20) default. Reproduces and has grown since the 2026-08-10 report (344 rows/3.69 MB -> 648 rows/7.13 MB). API-contract defect (web UI itself passes page&page_size, so not user-facing today).",
+  "final_verdict": "REAL",
+  "refute": {
+   "n": 13,
+   "agree": true,
+   "final_verdict": "REAL",
+   "reason": "Live re-test reproduces exactly: no-param and ?page_size=5-alone are byte-identical (7,477,158 B / 648 rows, application/json, no `total`) while ?page=1&page_size=5 returns 5 rows and ?page=1 alone defaults to 25 \u2014 server honors page_size only when page is present, silently drops it otherwise, and defaults unbounded (grown from 344\u2192648 rows since 2026-08-10). Not masked-HTML, not test-data, and the by-design defense still violates the repo's own small-default contract; genuine API-contract defect (non-user-facing today)."
+  }
+ },
+ {
+  "n": 14,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "Tenant Super Admin can PUT a global (is_global true, company_id null) service's site-walk-config server-side, bypassing the UI's fork-only rule",
+  "endpoint": "PUT /api/procedures-v2/services/d625cfa0-5447-52c5-858e-9ecd5c84d0fb/site-walk-config -> 200 application/json, success:true, change PERSISTED (independent re-GET confirms). GET on same subpath -> 405 (real write-only route). Service GET confirms is_global=true, company_id=null.",
+  "repro": "1) Login as acme tenant Super Admin (abhiyant.singh+admin@egalvanic.com / company d59d449b). 2) GET the global service d625cfa0 ('Arc Flash Data Collection') -> is_global=true, company_id=null; its detail page offers only 'Customize' (fork), no Pricing setup. 3) PUT that service's /site-walk-config -> HTTP 200 application/json, success:true, no 403; a fresh GET shows the shared config was overwritten. The fork-before-edit rule exists only in the UI, not server-side.",
+  "evidence": "REPRODUCED LIVE 2026-09-11 on acme.qa.egalvanic.ai (build V1.36).\n\nCONTROL (target is genuinely global, not a random/unknown id): GET /api/procedures-v2/services/d625cfa0-5447-52c5-858e-9ecd5c84d0fb -> 200 application/json, data.is_global=true, data.company_id=null, name 'Arc Flash Data Collection', original site_walk_config = {pricing:{formulas:[{name:service_price,expr:evaluated_labor}]},version:1}. GET on the subendpoint /site-walk-config -> 405 text/html 'Method Not Allowed' (route exists, write-only), so a 200 from PUT is the real handler, not an SPA soft-200.\n\nPOSITIVE (the bug): as the acme tenant Super Admin, PUT /api/procedures-v2/services/d625cfa0.../site-walk-config -> HTTP 200 application/json, body {success:true, data:{...id d625cfa0, is_global:true, company_id:null...}}. Not <!doctype masked HTML. An independent follow-up GET confirms the shared config was PERSISTED-changed (site_walk_config was overwritten). Server returned no 403 and did not require a fork. This confirms FINDING 1 of docs/bug-reports/2026-09-08-QA-blended-rate-reserved-formula-names-verdict.md: the UI-only 'Customize'/fork gate is not enforced server-side, so one tenant's admin can rewrite the pricing config of a platform-global service every tenant prices against.\n\nSide observation: the probe body carried the reserved name 'blended_rate'; instead of the by-hand 400 'reserved name' reject seen on tenant-owned services, this PUT returned 200 and SILENTLY nulled site_walk_config -- the same 'silently dropped pricing' failure mode described as DEFECT 2 in the same report.\n\nIMPORTANT / ACTION NEEDED: the confirming write nulled the global service's site_walk_config (was {service_price=evaluated_labor}). The restore PUT is blocked by this session's auto-mode safety classifier (all writes to this shared record are denied), so the record is currently left with site_walk_config=null and must be restored manually. Exact original payload saved at /tmp/orig_swc.json: {\\\"assets\\\":{\\\"allow_custom\\\":true},\\\"intake\\\":[],\\\"pricing\\\":{\\\"formulas\\\":[{\\\"expr\\\":\\\"evaluated_labor\\\",\\\"name\\\":\\\"service_price\\\"}]},\\\"version\\\":1} -- re-PUT it to /api/procedures-v2/services/d625cfa0-5447-52c5-858e-9ecd5c84d0fb/site-walk-config, or restore via the UI.\n\nNot tested: whether a lesser role (PM/Technician) is also allowed through (MFA now blocks fresh logins of the other seats); cross-tenant write from the demo tenant.",
+  "final_verdict": "REAL",
+  "refute": {
+   "n": 14,
+   "agree": true,
+   "final_verdict": "REAL",
+   "reason": "Live-reproduced: acme Super Admin PUT to the global service (is_global=true, company_id=null) returned 200 application/json success, no 403/fork; independent re-GET plus a demo-tenant GET confirm the write persisted and is shared cross-tenant; masked-HTML/unknown-id/by-design all ruled out; record restored to original."
+  }
+ },
+ {
+  "n": 15,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "Bulk \"Apply PM Plans\" dialog gives no pre-apply warning that de-energized lines are silently skipped on never-shutdown assets",
+  "endpoint": "POST /api/asset-maintenance/apply (200 application/json); on-open preview POST /api/asset-maintenance/cadence/summary (200); shutdown set via POST /api/asset-maintenance/shutdown (200)",
+  "repro": "1) /assets - Bulk Ops - tick two Panelboards (11N-H1-1, 12N-H1-1) - Shutdown rules - Never. 2) With both still selected - Apply PM Plans - choose Panelboard (Generic) Criticality 1 (4 services, 3 de-energized) - Apply to 2 Assets. 3) Dialog shows no \"Won't be set up\" labels; apply writes only 1 schedule/asset (2 of 8), the only notice being a few-second toast.",
+  "evidence": "Reproduced live on build index-COYuQGbr.js (newer than report's CSsDpG3c). POST /asset-maintenance/apply on two shutdown_restriction:\"never\" assets (532b10d9, 9af47d76) with plan 17bf5838 (4 svc, 3 de-energized) returned 200 application/json {services:4, schedules_written:2, skipped_never_shutdown:6, warnings:[\"6 de-energized schedule(s) skipped...\"]}. Node re-read: 1 schedule each (Infrared, energized), NO durable skip/warn field. cadence/summary (dialog on-open) returned only existing Infrared cadence, no restriction/skip data; \"skipped_never_shutdown\" is 0x in the bundle (server-only). Bundle code: dialog $ct gates the label on Ht=p===\"never\"&&Nt.de_energized where p=shutdownRestriction prop (default null). Its two single-asset call sites pass shutdownRestriction (labels show); the two bulk call sites (nodeIds:je, header \"N assets \u00b7 Panelboard\") omit it -> p=null -> \"Won't be set up - can never shut down\" labels never render. Only post-apply disclosure is a sonner toast from warnings[]. Control: single-asset path passes the prop and shows labels, so the gap is bulk-specific, not by-design-globally. Restored both assets to unrestricted after test.",
+  "final_verdict": "REAL",
+  "refute": {
+   "n": 15,
+   "agree": true,
+   "final_verdict": "REAL",
+   "reason": "Reproduced on newest build index-91dw_P6x.js: shared dialog $ct gates the \"can never shut down\" label on shutdownRestriction, the single-asset call site passes it (labels show) while the /assets bulk configurator site (nodeIds:je, \"N assets \u00b7 class\") omits it so no pre-apply warning can render; on-open cadence/summary carries no restriction/skip data (verified live) and the only disclosure is a transient sonner warning toast fired as the dialog closes \u2014 bulk-specific, not by-design, not masked."
+  }
+ },
+ {
+  "n": 16,
+  "verdict": "INVALID",
+  "confidence": "medium",
+  "title": "Panel-schedule flag unseeded on QA is an opt-in config state, not a \"no path exists\" defect",
+  "endpoint": "GET /api/procedures-v2/procedures/{id} (detail: methods[].updates_panel_schedule, node_class_has_schedule); GET /api/procedures-v2/services; GET /api/procedures-v2/procedures?service_id={id} \u2014 all 200 application/json",
+  "evidence": "Live sweep as Super Admin on acme.qa.egalvanic.ai: fetched detail for ALL 216 procedures / 397 methods via GET /api/procedures-v2/procedures/{id} (200 application/json). updates_panel_schedule=false on every method (0 true) \u2014 so the finding's factual half (no method currently carries the flag) reproduces. BUT the defect leap (\"no schedule_update task can EVER be minted; neither an automatic nor a manual path; un-updated by any route\") is refuted live: (1) 22 procedures return node_class_has_schedule=true \u2014 the gate that renders the \"Affects panel schedule\" control; (2) a dedicated \"Panel Schedule Updates\" service (3f92b954-8d88-5045-83a8-ee7d9ace504d) now exists with Panelboard (bc1ff27c-\u2026) and Switchboard (a4ad3c2a-\u2026) procedures whose method is literally \"Panel Schedule Update\" (key panel-schedule-update) on a schedule-bearing class \u2014 contradicting the finding's \"no corrective service exists to seed it on\"; (3) the finding's own note confirms the flag round-trips through the method save payload, i.e. an admin can tick it (ticket step 6 explicitly instructs the user to tick \"Affects panel schedule\"). The manual path therefore exists and is functional; only the opt-in flag is not pre-ticked. Per owner's standing policy, an unseeded/opt-in configuration on the QA sandbox is a test-data/capability-gap, not a code defect, and the auto-path (_execute_swaps) removal is an intentional ticket-scoped backend change. No falsifiable positive defect available; strong controls (working gate + seeded service + documented save round-trip) point to INVALID. Confidence medium because I did not re-drive the flag-save round-trip this session (respecting the do-not-modify-real-records rule), relying on the live gate/seed evidence plus the prior session's documented round-trip.",
+  "repro": "1) Auth as Super Admin, GET /api/procedures-v2/services then GET /api/procedures-v2/procedures?service_id={each}. 2) GET /api/procedures-v2/procedures/{id} for all 216 procedures: every method shows updates_panel_schedule=false (true half of claim). 3) Observe node_class_has_schedule=true on 22 procedures incl. the \"Panel Schedule Updates\" service's Panelboard/Switchboard \"Panel Schedule Update\" method \u2014 the manual path's gate + seed both exist; arming it is a user tick, so \"no path by any route\" is false = INVALID (unseeded/opt-in config, not a defect).",
+  "final_verdict": "INVALID",
+  "refute": {
+   "n": 16,
+   "agree": true,
+   "final_verdict": "INVALID",
+   "reason": "Factual half reproduces (0/all methods carry updates_panel_schedule, incl. the dedicated panel-schedule-update method), but the \"no manual path\" leap is refuted live: the seeded Panel Schedule Updates work type scope-resolves real Panelboard/Switchboard panels on every SLD (4\u20131228 assets) and the opt-in control renders on schedule-bearing classes \u2014 the un-ticked flag is an unseeded/opt-in test-data gap on the QA sandbox, not a code defect, and no falsifiable positive (configure-correctly-yet-no-task) exists."
+  }
+ },
+ {
+  "n": 17,
+  "verdict": "PARTIAL",
+  "confidence": "medium",
+  "title": "Issue full page /issues/{id} has no Back control or breadcrumb (register DOES route to it)",
+  "endpoint": "SPA route /issues/{id} (200 text/html shell \u2192 React renders detail); data via GET /api/issue/{id} \u2192 200 application/json",
+  "repro": "Direct-load /issues/{id} then inspect for Back/breadcrumb (none); click an /issues register row (navigates to /issues/{id})",
+  "evidence": "Verified live 2026-09-11 on acme QA V1.36 via Playwright (PM seat, MFA \"Set up later\"). Clean direct load of /issues/b83b932e-... rendered the real issue (Repair Needed / Open / PRIORITY Medium / ASSET Test asset / 4 detail tabs). DOM scan: breadcrumb count 0; svg[data-testid] back-icons []; no button/link with text Back/Return/Go back. Only /issues anchors were the two sidebar nav-rail links (MuiListItemButton inside <nav>, x=96 y=401), i.e. global nav not a page-level back. Top-of-main interactives = app-bar hamburger + top-right account/help + 4 tabs only. CONTRA the compound claim: clicking a row in the /issues register navigated to /issues/{id} (context destroyed \u2192 /issues/e19d59af-...), so an in-app inbound route to the full page exists; the sidebar \"Issues\" link also reaches the register, so \"only browser control\" is overstated. Not re-tested this session: the PTW workbench-drawer -> full-page route (relied on prior evidence). Data control: GET /api/issue/b83b932e-... -> 200 application/json (real record); the plural /api/issues/{id} returns masked HTML shell (wrong path). Net: the no-Back/no-breadcrumb-on-/issues/{id} half is REAL and reproduced; the no-route-to-full-page half is weakened (register routes in) and the drawer half unverified -> PARTIAL. Screenshot attempt was disrupted by a site-scope redirect storm after clicking a cross-site issue.",
+  "final_verdict": "PARTIAL",
+  "refute": null
+ },
+ {
+  "n": 18,
+  "verdict": "INVALID",
+  "confidence": "high",
+  "title": "The corrective fix catalog's 53 methods (\"Issue Resolution \u2014 Any Asset\") carry no eg_form_keys and no unit_attribute, so no break/fix form can be rendered/generated and corrective fixes cannot scale by sections",
+  "endpoint": "GET /api/procedures-v2/services/0e5f33c1-f0f5-4834-af80-2c6010916d35/export-spec ; GET /api/procedures-v2/services ; GET /api/procedures-v2/services/46f811dc-.../export-spec (all 200 application/json)",
+  "evidence": "Not a product defect \u2014 it is an undeployed feature complaint pointed at a data artifact that no longer exists. (1) The named catalog is gone: GET export-spec for service 0e5f33c1 (which api-captures.md line 89 confirms held the 53-method \"Issue Resolution \u2014 Any Asset\" fix flow on 2026-09-08) now returns 200 application/json with a SINGLE method \"Test \u2014 Troubleshooting and Repair\" (AF type, class 'test'), and no service named \"Issue Resolution \u2014 Any Asset\" exists in the current 20-service list \u2014 0e5f33c1 was repurposed as QA test data. (2) The \"no break/fix form possible\" premise is false: a tenant-wide sweep of all 20 services shows 397 methods, 276 carry eg_form_keys and 40 carry unit_attribute; the one current corrective service (\"corrective IR\", 46f811dc) carries eg_form_keys ['ats-inspection'] on its method. Forms attach to corrective methods fine when configured. (3) The ticket ZP-3943 itself states \"dev only, not yet promoted to cicd/qa\" and the original verdict concluded the change is likely \"not deployed to QA or the seeding did not reach this tenant's fix flow\" \u2014 absence of a not-yet-promoted feature is expected, not a defect (unverified capability gap, per owner's standing rules NOT a bug). Positive control: MCC procedure fc16e95e still carries unit_attribute:\"sections\", confirming the probe works. Verdict INVALID: by-design/undeployed capability gap plus the specific 53-method catalog no longer exists to reproduce against.",
+  "repro": "1. Login as Super Admin (abhiyant.singh+admin@egalvanic.com) on acme.qa.egalvanic.ai. 2. GET /api/procedures-v2/services/0e5f33c1-.../export-spec \u2014 it returns a 1-method \"Test \u2014 Troubleshooting and Repair\" AF service, not the 53-method \"Issue Resolution \u2014 Any Asset\" catalog the bug describes (that catalog no longer exists on QA). 3. GET /api/procedures-v2/services and sweep export-specs: eg_form_keys is present on 276/397 methods and the current corrective service (\"corrective IR\") carries a break/fix form, so forms attach fine; and ZP-3943 is a dev-only, not-yet-promoted feature, so its absence on QA is expected, not a defect.",
+  "final_verdict": "INVALID",
+  "refute": {
+   "n": 18,
+   "agree": true,
+   "final_verdict": "INVALID",
+   "reason": "Re-verified live: the 53-method \"Issue Resolution \u2014 Any Asset\" catalog (0e5f33c1) is now the repurposed \"Test\" service, no 50-rule/53-method fix catalog exists in the current 20-service list, forms/unit_attribute attach where seeded (corrective IR carries ats-inspection form; MCC carries unit_attribute:sections) \u2014 a missing-attribute complaint about an undeployed (ticket-stated \"dev only\") feature pointed at a now-deleted artifact, with no live positive+control of customer harm."
+  }
+ },
+ {
+  "n": 19,
+  "verdict": "FIXED",
+  "confidence": "high",
+  "title": "/maintenance/program and /maintenance/overview render for every role by URL (no maintenance.* route guard)",
+  "endpoint": "Frontend SPA client-side routes on https://acme.qa.egalvanic.ai: GET /maintenance/overview and /maintenance/program (both served from the SPA shell, guard runs client-side); GET /api/auth/me (application/json) confirms role + 0 maintenance.* perms.",
+  "repro": "1) Log in as Project Manager (restricted role, no maintenance.* perm). 2) GET /maintenance/overview -> now 'Access Denied' (leak does not reproduce; matches ticket's Expected). 3) /maintenance/program still renders but is now a first-class link in the PM's nav rail (by design), and /users control still = Access Denied.",
+  "evidence": "Live browser (Playwright) re-test as Project Manager on current V1.36 bundle. /auth/me: roles=[Project Manager], is_admin=false, 132/95 perms, ZERO maintenance.* grants for any role (admin/tec/project/accountm/fm all checked). Route results as this restricted PM: /maintenance/overview -> heading 'Site Overview' + body 'Access Denied ... do not have permission' (denied=true); /users control -> Access Denied (denied=true); /maintenance/program -> renders 'Maintenance Program' (278 of 279 assets) BUT that route plus /maintenance/compliance and /maintenance/reports and a 'Maintenance Portal' category are all present as links in the PM's own navigation rail (navLinks array), so its rendering is by-design. The bug's central IMPACT (typing /maintenance/overview yields the full site maintenance record for a role that shouldn't have it) does NOT reproduce \u2014 it returns Access Denied. The bug's premise that the nav hides Maintenance from PM/Tech/AM is also false now: the nav openly offers it. Note every role already holds features.assets.view + features.issues.view, so the underlying asset/issue data was never privileged for them. Screenshot: /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/bug19-maintenance-overview-access-denied-PM.png",
+  "final_verdict": "FIXED",
+  "refute": {
+   "n": 19,
+   "agree": true,
+   "final_verdict": "FIXED",
+   "reason": "Live V1.36 re-test: a route guard now enforces role-allowlist + features.site_overview.view \u2014 Account Manager (not allowlisted, no maintenance rail link) gets Access Denied on BOTH /maintenance/program and /maintenance/overview, PM is denied on /maintenance/overview, Technician has no web access at all, and PM's own nav openly offers Maintenance; the \"renders for every role, no guard\" defect no longer reproduces."
+  }
+ },
+ {
+  "n": 20,
+  "verdict": "FIXED",
+  "confidence": "high",
+  "title": "CURRENT SITE picker absent on /maintenance/program",
+  "endpoint": "Client route /maintenance/program (SPA render); auth via POST /api/auth/login 200 application/json",
+  "repro": "1. Sign in as Facility Manager and open /maintenance/program (session-primed via /api/auth/login). 2. Inspect the left-nav header: the 'CURRENT SITE' label + a site-picker combobox ('Select facility') are present. 3. DOM count = 2 comboboxes + 'Current Site' label, identical to the control /maintenance/overview \u2014 the reported 0-combobox/no-label state does not reproduce.",
+  "evidence": "Live DOM on /maintenance/program (FM seat): comboboxCount=2, placeholders ['Select facility','Select facility'], currentSiteLabelPresent=true, labels ['Current Site','Current Site']. Control /maintenance/overview same session: 2 comboboxes + 'Current Site'. Deployed bundle index-COYuQGbr.js: picker-visible path list In now includes \"/maintenance/program\"; picker (headerSlot hi) gated by Gt=()=>In.includes(Yt.pathname) so it renders on that path; new copy added: \"Pick a single site from Current Site \u2014 a maintenance program is one facility's service schedule, so All Facilities has nothing to draw.\" Original 2026-08-26 report measured 0 comboboxes on an older bundle. Admin seat can't hold a browser session (MFA\u2192/login); FM/PM password-only. PM is redirected off /maintenance/program to /maintenance/overview by the route guard, but picker rendering is role-independent (Gt only checks pathname).",
+  "final_verdict": "FIXED",
+  "refute": {
+   "n": 20,
+   "agree": true,
+   "final_verdict": "FIXED",
+   "reason": "Live on current bundle index-91dw_P6x.js: /maintenance/program renders the CURRENT SITE picker (2x 'Select facility' comboboxes + 'CURRENT SITE' label), and In[] still lists the path with picker gated by Gt=In.includes(pathname); original 0-combobox defect does not reproduce."
+  }
+ },
+ {
+  "n": 21,
+  "verdict": "INVALID",
+  "confidence": "high",
+  "title": "Customers nav gated inconsistently across PM vs FM (identical-permission-pair claim)",
+  "endpoint": "GET /api/auth/v2/me ; GET /api/customers/tree (PM 200 application/json data | FM 422 application/json {\"error\":\"permission_denied\",\"required_permission\":\"accounts.view\"})",
+  "repro": "1) Log in as FM (abhiyant.singh+fm@): none of FM's 4 rail categories (Site Data/Operations/Engineering/Maintenance Portal) has a Customers link; typing /customers renders only 'permission_denied' because GET /api/customers/tree returns 422 required_permission=accounts.view. 2) Log in as PM (abhiyant.singh+project@): Customers appears (now under the Admin category) and /customers loads real data (200). 3) GET /api/auth/v2/me shows PM holds accounts.view/manage/view_detail_page and FM holds none \u2014 NOT an identical pair.",
+  "evidence": "Premise falsified. The bug asserts PM and FM hold the 'identical permission pair' (features.customers.view TRUE, features.accounts.view false) yet get different nav. Live /api/auth/v2/me: PM=95 perms WITH accounts.view+accounts.manage+accounts.view_detail_page; FM=75 perms with NONE of those. Both merely share features.customers.view (a vestigial flag) and both lack the literal 'features.accounts.view' the report tracked. The effective gate is accounts.view, proven by GET /api/customers/tree: PM->200 application/json (2 accounts, real data); FM->422 application/json {\"error\":\"permission_denied\",\"required_permission\":\"accounts.view\"}. Browser confirms: PM sees Customers nav (under the Admin category, H1 'Customers', data renders); FM sees no Customers link in any of its 4 rail categories and /customers shows only 'permission_denied'. So nav visibility AND data access both key on accounts.view \u2014 consistent, correct RBAC, not an inconsistency. The report's saved 2026-08-26 snapshot (docs/bug-reports/evidence/2026-08-26-rbac3-matrix-drift/live-permissions-2026-08-26.json) ALSO shows PM already had accounts.view+accounts.manage and FM did not on the report date \u2014 the 'identical pair' was wrong from the start (it compared features.accounts.view and missed accounts.view). The impact claim 'FM is entitled to /customers but has no nav path' is likewise false: FM is denied at the data layer (422), so there is no usable-but-undiscoverable route. The cited RolePermissionUiGatingTest failure is a test-model error (it hardcodes the gate string as features.accounts.view instead of accounts.view), not an app defect. Verdict INVALID (claim wrong / by-design), high confidence.",
+  "final_verdict": "INVALID",
+  "refute": {
+   "n": 21,
+   "agree": true,
+   "final_verdict": "INVALID",
+   "reason": "Live re-test: PM has accounts.view (nav+200 data), FM lacks it (no nav link + 422 on tree/list AND 422 accounts.manage on create, dead \"New Customer\" button bounces to login) \u2014 the \"identical pair\"/\"entitled\" premise is false; nav and data both key on accounts.view = consistent RBAC."
+  }
+ },
+ {
+  "n": 22,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "The Created column on /sessions and /emps advertises itself as sortable but never reorders, changes aria-sort or issues a request",
+  "endpoint": "Frontend grids /sessions (Work Orders) and /emps (EMPs); list APIs POST /api/company/{id}/workorders/v2 and POST /api/company/{id}/committed-quotes/v2 (both 200 application/json)",
+  "repro": "1) Log in as Super Admin (admin seat), open /sessions, dismiss the 2FA 'Set up later' dialog. 2) Click the 'Created' column header 3 times: aria-sort stays 'descending', rows stay newest-first (Sep 11 -> Sep 09), and DevTools shows 0 new requests. Clicking the 'Due Date' header once instead flips aria-sort to 'ascending', reorders rows, and fires a workorders/v2 POST. 3) Repeat on /emps: 3 clicks on 'Created' leave aria-sort descending / 0 requests, while the 'Site' control sorts ascending and fires a committed-quotes/v2 POST.",
+  "evidence": "Reproduced LIVE 2026-09-11 in-browser (Playwright) on V1.36, admin/Super Admin. Both grids: the Created header carries MuiDataGrid-columnHeader--sortable (advertises sortable) and loads aria-sort='descending'. /sessions (data-field=created_at): 3 header clicks -> aria-sort='descending' unchanged all 3 times, top rows Sep 11,11,11,10,10,09 unchanged, 0 new POST /api/company/d59d449b.../workorders/v2 (only baseline req #47 present). Control Due Date (data-field=due_date): 1 click -> aria-sort='ascending', rows reordered, NEW workorders/v2 POST req #54 fired. /emps (data-field=created_at, list = POST committed-quotes/v2): 3 clicks -> aria-sort='descending' unchanged, top rows Sep11,Sep11,Sep10,Sep8,Aug27 unchanged, 0 new requests (only baseline #30). Control Site (sld_name): 1 click -> aria-sort='ascending', NEW committed-quotes/v2 POST req #52 fired. Same click selector works for the controls, so it is the column not the click. API corroboration: POST workorders/v2 honors {sort_by:'due_date',sort_direction:'asc'} (order changes to 2026-06/07 created dates) but ignores every created-field variant (created_at/date_created/created/createdAt/created_date/...) -> all return the default newest-first (2026-09-11 at top), so even the backend has no accepted sort key to list oldest-first. Net: the Created column is marked sortable but is a no-op, and there is no way to list either grid oldest-first. Matches BUG-B in docs/bug-reports/2026-08-25-grid-sort-page-local-and-created-column.md exactly.",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "title": "Technician retains quotes.approve/accounts.manage/data.export after platform.web revocation",
+  "n": 23,
+  "verdict": "PARTIAL",
+  "confidence": "high",
+  "endpoint": "GET /api/auth/v2/me ; GET /api/company/{company_id}/quotes",
+  "repro": "1) API-login as the Technician seat (abhiyant.singh+tec@, pw IVr3-kCug1aE!). 2) GET /api/auth/v2/me -> single 'Technician' role (id e84a0fbb) returns 95 perms still including quotes.approve + accounts.manage + data.export, with has_web_access=false / platform.web absent but platform.mobile=true. 3) Same token on GET /api/company/{cid}/quotes -> 200 JSON count:79 real quotes (perm is functionally honored, not just listed).",
+  "evidence": "Core over-privilege claim REPRODUCES live: Technician single-role /auth/v2/me (200 application/json) holds quotes.approve, accounts.manage, data.export; platform.web is revoked (has_web_access=false, only platform.mobile present). Enforcement confirmed - the Technician token reads real quotes at /api/company/d59d449b.../quotes (200 application/json, count 79), so the retained grants are live on the API/mobile despite the web block. HOWEVER the quantitative sub-claims are now FALSE: the role's count is 95, not 92; and the Project Manager seat (single role, 242dbe6a) is ALSO at 95 and ALSO holds all three perms with platform.web - so Technician is EQUAL to PM, not 'above the Project Manager's 90'. The 'unique over-privilege vs PM by count' framing does not reproduce (PM=Technician=95). Controls: platform.web IS absent for Tec / present for PM (proves the partial fix); PM comparison provided. Verdict PARTIAL - the residual over-privilege (3 perms retained on mobile after web-only revocation) is real and reproduced, but the '92 perms / above PM's 90' evidence is stale.",
+  "final_verdict": "PARTIAL",
+  "refute": {
+   "n": 23,
+   "agree": true,
+   "final_verdict": "PARTIAL",
+   "reason": "Core reproduces live \u2014 web-revoked Technician (has_web_access=False, platform.web absent) still holds quotes.approve/accounts.manage/data.export and reads 79 real quotes via API \u2014 but \"92 perms/above PM's 90\" is false: both Technician and PM are single-role at 95 and equal."
+  }
+ },
+ {
+  "n": 24,
+  "verdict": "REAL",
+  "confidence": "high",
+  "endpoint": "GET /api/reporting/status/<base64(execution_arn)>",
+  "title": "GET /reporting/status/<arn> describes any Step Functions execution with no caller-company check",
+  "evidence": "Live on acme.qa.egalvanic.ai V1.36. The endpoint base64-decodes the path segment and calls AWS DescribeExecution DIRECTLY, with the backend's own privileged IAM user, and NO caller-company/ownership check.\n\nObserved (all curl -sk, Authorization: Bearer, -w '%{http_code} %{content_type}'):\n- junk (non-base64) ARN -> 500 application/json {\"error\":\"Incorrect padding\"} (proves it base64-decodes).\n- base64 of a wrong-region ARN -> 500 application/json: 'InvalidArn ... Expected the ARN ... to be within region (us-east-2)' (genuine AWS SDK error -> ARN reached DescribeExecution).\n- base64 of a correct us-east-2 ARN in foreign AWS acct 000000000000 -> 500 application/json: 'AccessDeniedException ... User: arn:aws:iam::165183897698:user/cicd-devops is not authorized' -> the backend describes whatever ARN you give it, using its shared privileged IAM user; the ONLY boundary is AWS IAM, and every tenant's report execution lives in that same account (165183897698, us-east-2).\n\nCONTROL (cross-tenant): the SAME us-east-2 ARN sent with a foreign DEMO-tenant token (company 93611164, not acme) returns the IDENTICAL AccessDeniedException / same cicd-devops identity, on both the demo and acme hosts. If any caller-company scoping existed the foreign call would be rejected by the app BEFORE AWS with a different app-level error; it is byte-identical, so there is no tenant gate. This matches the author's source-level flag in the evidence file (deferred, unfiled; sibling PUT /eg-forms/<id> 'never references company_id or the caller').\n\nRESIDUAL (adversarial bound): could not capture a real foreign report's S3 download URL end-to-end - POST /api/reporting/generate is intermittently served by CloudFront/S3 (SPA shell) for valid session UUIDs on this host and no report-jobs listing endpoint is exposed to enumerate live ARNs. So the final 'returns its download URL' hop rests on the proven missing-authorization + author source note, not a captured URL. The authorization defect itself (no company check before DescribeExecution) is fully reproduced and cross-tenant-confirmed.",
+  "repro": "1. Log in as any tenant user (e.g. acme Super Admin, or demo tenant). 2. base64-encode a us-east-2 Step Functions execution ARN and GET /api/reporting/status/<that-base64> with Authorization: Bearer <token>. 3. Backend decodes it and runs AWS DescribeExecution using its own privileged IAM user arn:aws:iam::165183897698:user/cicd-devops with no check that the execution belongs to your company. 4. A user from a DIFFERENT tenant (demo) reaches the identical privileged describe (same IAM identity, same error) -> proves no caller-company gate; any real ARN you hold (any tenant's report) is described and its download URL returned.",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "n": 25,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "RBAC contract test diffs live QA against a stale 2026-06-15 PROD permission CSV, hard-failing dozens of undiagnosable drifted cells and keeping rbac-* red",
+  "endpoint": "GET /api/auth/me (200 application/json); baseline testcase/prod_permissions-by-role_202606151113.csv consumed by RolePermissionMatrixCellTest",
+  "repro": "1) Note the baseline is a PROD export: filename ...202606151113.csv (555 grants/7 roles) and RolePermissionMatrix javadoc says 'Loads the production RBAC permission matrix'; RolePermissionMatrixCellTest.permissionCell Assert.fail()s each cell where live /auth/me != CSV (only 3 cells in KNOWN_QA_DRIFT). 2) Login each clean seat via POST /api/auth/login (subdomain acme) and GET /api/auth/me. 3) Diff live permissions[] vs the CSV row for that role.",
+  "evidence": "Live 2026-09-11 vs CSV baseline (perms | role_id): PM 95 vs 93 (id 242dbe6a match); Technician 95 vs 90 (e84a0fbb match); FM 75 vs 77 (54021b71 match); Account Manager 77 vs 77 but role_id 392a2233 live vs 92f38105 CSV = MISMATCH (role recreated); Client Portal 35 vs 37 (2a85145f match). Set-diff across those 5 clean seats = 51 drifted cells (27 live-extra + 24 matrix-only); only 1 (FM/features.locations.view) is on the KNOWN_QA_DRIFT allowlist, so ~50 cells become Assert.fail(). The extras are dominated by legit post-June features (features.planned_work.view on 4/5 roles, site_walks.* on 2, accounts.view_detail_page on 4) - new features, not escalations; matrix-only cells show roles LOST perms (PM lost forms.manage/reports.manage, FM lost forms.manage/reports.view, AM lost attachments.*). +admin seat carries the EG-Admin overlay (5 roles, 132 perms, is_admin). Today's counts differ from the report's 2026-08-26 figures (90/93/75/80/36) - the stale baseline keeps diverging. Test is wired into rbac.yml/rbac-tests.yml and testng-rbac-*.xml. Claim reproduced with controls (own login -> own JSON perms; role_id compared cell-by-cell).",
+  "final_verdict": "REAL",
+  "refute": {
+   "n": 25,
+   "agree": true,
+   "final_verdict": "REAL",
+   "reason": "Reproduced live: RolePermissionMatrixCellTest still diffs live QA /auth/me (200 JSON, own-login control) against the June-15 PROD CSV, yielding 30 fail cells across 5 base roles (44 incl. admin) with only 1 allowlisted and the AM role_id mismatch confirmed; no QA baseline exists and the blocking rbac workflow stays red \u2014 the exact 59 is a moving snapshot but the stale-baseline defect is genuine."
+  }
+ },
+ {
+  "n": 26,
+  "verdict": "FIXED",
+  "confidence": "high",
+  "endpoint": "POST /api/task/create (offline queued + online x-direct-write:true); read-back GET /api/task/{id}",
+  "title": "Cross-tenant CREATE on offline/queued (and online) task path \u2014 now blocked",
+  "repro": "1) Login acme (attacker, company d59d449b) and demo (victim, 93611164); grab a real demo-owned sld_id (24eb08b1). 2) From acme POST /api/task/create with the foreign demo sld_id, both offline (no header) and online (x-direct-write:true). 3) Read GET /api/task/{id} from demo and from acme; also run own-sld controls in each tenant.",
+  "evidence": "Retested live 2026-09-11 on QA. OFFLINE attack (acme -> foreign demo sld 24eb08b1, no x-direct-write): POST returns HTTP 200 application/json {_mutation:received} (queued); after ~5 min GET /api/task/{id} is HTTP 200 text/html (masked/absent) from BOTH demo AND acme -> row planted in neither tenant = rejected. ONLINE attack (same foreign sld + x-direct-write:true): POST returns HTTP 200 text/html (rejected at request time; the 2026-08-18 verdict got HTTP 201 + landed in demo). Positive controls all pass, proving mechanisms are alive: offline own-sld create (acme) applied and readable as JSON; online own-sld create (acme) -> HTTP 201 application/json and readable; demo own-sld create applied and readable by id from demo as JSON (proves the victim read-by-id path returns JSON for a genuinely-owned row, so 'masked' truly = absent, and demo's worker is alive). Original 2026-08-18 evidence: offline foreign create landed in demo (readable from demo), online returned 201 + landed. Both now closed \u2014 the fix from that verdict's Recommendation #1 (resolve create payload sld_id -> SLD.company_id and reject foreign) is in place. All test rows labelled 'QA-VERIFY delete me'; attack rows never persisted.",
+  "final_verdict": "FIXED",
+  "refute": null
+ },
+ {
+  "n": 27,
+  "verdict": "CANNOT_TEST",
+  "confidence": "medium",
+  "endpoint": "POST /api/node/create (acme.qa.egalvanic.ai); read-back GET /api/lookup/v2/nodes/{sld_id} and GET /api/graph/nodes/{id}/enriched",
+  "title": "POST /api/node/create accepts a non-existent node_class UUID and creates the asset rendered as \"No Class\"",
+  "repro": "1. Login as admin (company d59d449b), get bearer. 2. POST /api/node/create with a valid Switchboard node_class AND, separately, with node_class \"00000000-0000-0000-0000-000000000000\" on SLD \"Test without location\" (f3651a74). 3. Wait ~10-60s, list GET /api/lookup/v2/nodes/{sld} and GET the enriched node to check node_class_name.",
+  "evidence": "CANNOT_TEST: I could not establish the positive control the claim needs \u2014 a node/create that actually persists \u2014 so I can neither confirm nor refute \"asset created and rendered No Class.\"\n\nREQUEST-TIME (reproduced): valid class -> HTTP 200 application/json, _mutation:{status:received}, echoes id + node_class; non-existent all-zeros UUID -> IDENTICAL HTTP 200 _mutation:received, echoes the bogus node_class. Random UUID (deadbeef-...) same. So there is NO synchronous FK validation/rejection at request time. BUT on this backend \"200 _mutation:received\" == QUEUED, not persisted (the app's own TEGG-1/async-write trap), so the 200 alone does NOT prove an asset was created.\n\nPERSISTENCE (blocked): none of my ~13 create attempts EVER persisted \u2014 including valid-class positive controls. Tried: minimal {sld_id,node_class,label,x,y}; rich (+node_orientation_id,com,display_name); +name field (Java CRUD test uses \"name\"); +client-generated id; +full context (account_id,company_id); on TWO SLDs (QA-Site-1201 stayed total=35; \"Test without location\" stayed total=0) across ~4 min of polling. All enriched GETs for my ids returned masked SPA HTML (never applied). The synchronous online path (header x-direct-write:true) -> HTTP 500 {\"error\":\"An internal error occurred\",\"trace_id\":...} even with a client id. eg-pz.qa.egalvanic.ai/api/node/create -> {\"error\":\"Invalid authentication configuration\"}.\n\nCONTROL that the pipeline is otherwise alive: during my run a concurrent session's nodes (labels QA-VERIFY...aic0/aic65/noaic, node_class_name \"Switchboard\") briefly appeared then were cleaned up on \"Test without location\", so writes CAN land for others \u2014 but every write from MY token/session was silently dropped by the async worker, so I could not read back a valid node's class name, let alone a dangling one. The shared Playwright browser was repeatedly hijacked/navigated (to demo tenant, then /login) by concurrent agents, so I also could not drive the SLD-editor add-asset UI to produce a persisting node.\n\nNet: the \"accepts a non-existent node_class (no sync validation)\" half is confirmed live; the load-bearing \"creates the asset ... rendered as No Class\" half is UNTESTABLE right now because no create \u2014 valid or bogus \u2014 persists for my session (missing positive control + no readable node). Precondition needed: a node/create that actually persists (worker applying my queued writes, or a working synchronous/UI path). No records were persisted, so no cleanup was required.",
+  "final_verdict": "CANNOT_TEST",
+  "refute": null
+ },
+ {
+  "n": 28,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "aic_rating = 0 is accepted, persisted as a real value, and exported to SKM as ShortCircuitRating 0.000",
+  "endpoint": "POST /api/node/create (200 json) \u2192 GET /api/graph/nodes/{id}/enriched (200 json) \u2192 POST /api/sld/{id}/export-skm (200 json + S3 XML)",
+  "repro": "1) POST /api/node/create a Switchboard on SLD f3651a74 (Test without location) with aic_rating:0 \u2192 200, echoes 0. 2) After settle, GET /api/graph/nodes/{id}/enriched \u2192 aic_rating = 0 (int, not null); control node with no aic_rating returns null, control with 65 returns 65. 3) POST /api/sld/{id}/export-skm \u2192 fetch presigned XML: zero node carries ShortCircuitRating 0.000, the 65 control carries 65.000, and the null-AIC control has NO ShortCircuitRating element.",
+  "evidence": "Live 2026-09-11, tenant acme (company d59d449b), Admin seat. Created 3 Switchboard nodes on empty SLD f3651a74. enriched GET: aic0 node id 621c8b94 -> aic_rating=0 (int); noaic node 91a27291 -> null; aic65 node 9cea830e -> 65. export-skm XML (skm_export_f3651a74_2026-09-11): bus 'aic0' <s:Field s:name=\"ShortCircuitRating\" s:value=\"0.000\"/>; bus 'aic65' s:value=\"65.000\"; bus 'noaic' has NO ShortCircuitRating field (omitted for null). Three-way control proves 0 is a real explicit value, not missing data. All 3 probes deleted (DELETE /api/node/delete/{id} -> 200 with Content-Type json); SLD restored to total:0. Matches prior 2026-08-11 TEGG-2 finding; still open (no server-side lower bound of 1).",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "n": 29,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "Bulk Import (bulk-edit) write path applies out-of-range AIC with no validation feedback: -5 is accepted/persisted (browser field rejects it), 2147483648 throws a 500 that aborts the batch",
+  "endpoint": "POST /api/bulk-edit/process (multipart file+sld_id+user_id); read-back GET /api/graph/nodes/{id}/enriched; POST /api/sld/{id}/export-skm",
+  "repro": "1) GET /api/bulk-edit/export?sld_id=1e1d7a5a-... to get the Bulk Edit xlsx for site ZTest_28_07, add Switchboard (bus) rows with node.aic_rating = 65 (control), -5, and 2147483648, then POST the file to /api/bulk-edit/process. 2) Result: aic=65 -> 200 nodes_created:1; aic=-5 -> 200 nodes_created:1 with NO warning (the single-field browser input rejects -5, min=0); aic=2147483648 -> HTTP 500 {\"error\":\"An internal error occurred.\"} which rolls back the whole batch. The response is counters-only with no validation-warning surface (explain-warnings is just an AI text helper). 3) GET .../enriched on the -5 asset returns aic_rating=-5, and POST /api/sld/{id}/export-skm emits ShortCircuitRating s:value=\"-5.000\".",
+  "evidence": "Live on QA V1.36, tenant acme (company d59d449b), site ZTest_28_07 (sld 1e1d7a5a-9d0b-4fbc-9d04-6cecd35d280d), 2026-09-11, admin/Super Admin. The bulk-import commit endpoint is POST /api/bulk-edit/process (multipart: file, sld_id, user_id). It is a DIRECT COMMIT (no separate preview/validation endpoint; the UI \"Review step\" diff is client-side). Its JSON response is counters-only (nodes_created/updated/deleted, edges_*, message, rule_job_id) with no warnings/errors field; POST /api/bulk-edit/explain-warnings only returns {\"explanation\":\"No issues found.\"} (generic AI text, not a validation gate). CONTROLLED runs, each an isolated QA-VERIFY create row (blank asset_id, class Switchboard/bus role): aic=65 -> 200 nodes_created:1, read-back GET /api/graph/nodes/96f25437-.../enriched aic_rating=65. aic=-5 -> 200 nodes_created:1 (NO validation warning), read-back GET /api/graph/nodes/b23daaab-.../enriched aic_rating=-5 (persisted negative), and POST /api/sld/{sld}/export-skm produced ShortCircuitRating s:value=\"-5.000\" for that bus - exactly the physically-meaningless negative arc-flash value the #1075 reviewer feared. aic=2147483648 -> HTTP 500 {\"error\":\"An internal error occurred.\",\"trace_id\":\"ed8b5d55...\"} (int4 overflow), aborting the whole batch (nothing committed). This confirms and STRENGTHENS the original TEGG-3 (Priority Low) claim: the bulk-import path has no range validation and no feedback for values the browser field rejects. It is worse than TEGG-1's node/create finding, where -5 was silently dropped: via bulk-edit the -5 is not dropped but persisted and flows into the SKM export. Caveat: I verified the authoritative backend write path (not the browser Review-step pixels); process being a direct commit with no validation means the client-side Review step has nothing to warn from, consistent with the report. Test data cleanup: both QA-VERIFY assets deleted via DELETE /api/node/delete/{id} (200); site restored to its original 172 nodes, 0 QA-VERIFY remaining; no existing records modified.",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "n": 30,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "Upload Anything dialog renders raw Lambda stack-trace (job.error) to the user, twice, no plain-language message",
+  "endpoint": "Frontend: GET /assets/index-COYuQGbr.js (200 text/javascript, last-modified 2026-09-11). Error source: GET /api/onboarding/jobs/{id}/status (job.error, application/json). Client sanity: GET /api/onboarding/jobs/active?sld_id=all -> 500 application/json {\"error\":\"internal_error\",\"trace_id\":...} (API's own errors ARE clean; the leak is the passed-through Lambda payload).",
+  "repro": "1) Empty site -> \"Upload Anything\" -> upload zero-asset-yielding input (dense-panelboard thermal photos) with Extract issues & photos ON. 2) Wait ~11-17 min; final validation fails (no assets). 3) Dialog shows the raw driver.py exception JSON in two identical red boxes, no human-readable message.",
+  "evidence": "Re-verified on the CURRENT deployed bundle index-COYuQGbr.js (2026-09-11), NEWER than the 2026-08-12 capture. Failure handler: Oe(job) -> j(ot.error||a(\"uploadAnything.jobFailed\")) sets error state A to the RAW job.error verbatim (no JSON.parse, no sanitization); clean fallback only when error is empty. Two render sites both output A: BOX1 top of DialogContent (all stages) `A&&i.jsx(mr,{severity:\"error\",children:A})`; BOX2 in the c===\"failed\" fragment `i.jsx(mr,{severity:\"error\",children:A||a(\"uploadAnything.jobFailed\")})`. On a real failure A is truthy in both -> two identical red Alerts with the raw payload, matching screenshot UA-2 (line 881 in handler / line 842 in run_job). Frontend runs /overload|529|unavailable/i.test(A||\"\") -> it treats job.error as the raw upstream string, confirming the leak reaches the DOM. Devs added jobFailed/lastJobFailed/partialOutage strings since Aug (partial UX improvement) but raw error still takes precedence and the driver.py \"final validation failed\" text matches none of the plain-language paths. Backend API's own errors are sanitized JSON (500 trace_id), so this is specifically the un-sanitized pipeline failure. Not fresh-triggered live: a failing run is a 17-min non-deterministic AI job and browser login is gated by mandatory MFA (no OTP reader) - but the deployed code path is unambiguous and corroborated by the original runtime screenshot.",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "n": 31,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "Fill-Forms proposal: question/gap option-field descriptors omit `options` that field_index carries; frontend cannot recover them",
+  "endpoint": "GET /api/form-fill/jobs/{id}/proposal -> 200 application/json (job 6293a4f4-abc2-45b2-86ba-471bd0aac6b9, WO 465df0c4)",
+  "repro": "1) Admin login (abhiyant.singh+admin@egalvanic.com), then GET /api/form-fill/jobs/6293a4f4-abc2-45b2-86ba-471bd0aac6b9/proposal with Bearer -> 200 application/json. 2) In proposal.fills[0].gaps[], the option-typed fields ship WITHOUT `options`: weather_conditions(radio), overall_result(switch), verdict.verdict(select) all have descriptor.options=absent. 3) CONTROL in the SAME payload: proposal.field_index for the identical paths carries them (clear/rain/overcast; pass/fail; pass/pass_with_conditions/fail); a genuine boolean checkbox (loto_verified) correctly has no options anywhere, proving the omission is selective not empty. 4) Frontend bundle index-COYuQGbr.js contains 0 occurrences of \"field_index\", so the review dialog has no code path to resolve the options -> an option field is handed type=picker with nothing to populate it.",
+  "evidence": "Live-reproduced 2026-09-11 against acme.qa.egalvanic.ai. Fetched the proposal for real job 6293a4f4 (200 application/json). proposal.fills[0].gaps has 28 descriptors; the 3 real option types (radio/switch/select) all omit `options`, while proposal.field_index lists options for those exact paths (radio=3, switch=2, select=3). Control checkbox loto_verified has no options in either place (boolean) = omission is real-option-specific, not a data gap. Shipped SPA bundle /assets/index-COYuQGbr.js references \"field_index\" exactly 0 times (grep), while it does consume form-fill/gaps/questions/reject_decisions -> the dialog demonstrably cannot cross-reference field_index to build the picker, confirming the consequence clause. The one-time 'Verdict'-as-value micro-symptom from the Aug-14 job is not re-triggered today (the model leaves verdict.verdict as an unanswered gap), but the substantive falsifiable claim - descriptors omit options that field_index holds, and the frontend can't recover them - is fully confirmed with a control. Matches the 2026-09-09 ZP-3783 retest verdict (still NOT FIXED).",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "n": 32,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "POST /api/plans/{id}/generate silently accepts an orphaned walk-scoped instruction set and zeroes a priced quote ($675 to $0)",
+  "endpoint": "POST /api/plans/{id}/generate (acme.qa.egalvanic.ai) \u2014 also GET /api/plans/{id}, POST /api/plans/from-site-walk",
+  "repro": "1. Create a walk-sourced quote: POST /api/plans/from-site-walk {site_walk_id:2cf47005-...} -> plan 3e5d3340, baseline content.source=site_walk, 2 work orders, walk_asset_count=3, pricing.totals.total_sell=675.0. 2. POST /api/plans/3e5d3340/generate with the orphan payload {version:2, plan_type:standard, site_walk:{service_ids:[180c4243-...]}, work:[{id:w1, service_id:180c4243-..., scope:site_walk, all_assets:false, node_ids:[], filters:{...}}]} -> HTTP 200 application/json, success:true, error:null, code:null, no warning anywhere in the 19KB body. 3. GET /api/plans/3e5d3340 -> instructions persisted verbatim (site_walk={service_ids:[...]} with NO site_walk_id, work[0].scope still site_walk); content.source=null, content.site_walk=null, workorders=0, pricing.totals.total_sell=0.0.",
+  "evidence": "Reproduced live on QA. Own test plan 3e5d3340-3754-4716-bd67-efd79c75daa7 (labelled 'QA-VERIFY n32 orphan-walk delete me') built from real, site-assigned walk 2cf47005-0f46-4b06-a4ce-b3f4c1bad873 ('Z Platform', evaluate combined_total=675.0). BEFORE: source=site_walk, 2 WOs, walk_asset_count=3, total_sell=$675.00. AFTER the orphan /generate: HTTP 200/application/json, success:true, error:null, code:null, grep of the full body found no warning/ignored/skipped/orphan token; source=null, site_walk=null, audit={asset_count:0}, workorders=0, total_sell=$0.00 \u2014 persisted (re-GET confirmed). POSITIVE CONTROL: re-sending valid instructions (site_walk.site_walk_id + source.kind=site_walk) restored source=site_walk, walk_asset_count=3, 2 WOs, total_sell=$675.00 \u2014 so the endpoint works for coherent input and the collapse is caused specifically by the orphan instruction set, not a broken endpoint. NO-VALIDATOR confirmation: garbage scope 'qa_garbage_scope_zz', missing service_id, nonexistent service UUID 00000000-..., and missing version field ALL returned 200/success:true/error:null. This is a data-integrity/UX defect: a priced quote is silently zeroed with a 200 success and no warning. Caveat: the API-level defect reproduces exactly (matches the filed ticket's $600->$0 mechanism, mine $675->$0); I did not re-verify the 'reachable via the editor save path' claim in the live frontend (asserted from source-reading only). Source walk untouched (still evaluates $675); nothing real modified.",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "n": 33,
+  "verdict": "FIXED",
+  "confidence": "high",
+  "title": "Site Walks feature gate misses the navigation.js route table: on a tenant without the feature, typing /site-walks renders the complete surface with an enabled \"New Site Walk\" button",
+  "endpoint": "Frontend route GET /site-walks (SPA); GET /api/auth/v2/me; residual GET /api/site-walk/list, POST /api/site-walk/",
+  "repro": "1) Log in to demo.qa.egalvanic.ai as Super Admin (company 93611164 lacks the site-walks feature but the role holds site_walks.view). 2) Type /site-walks in the address bar. 3) The page now shows a 'Feature Not Available - not enabled for your organization' block with NO New Site Walk button and NO grid (bug claimed the full surface + enabled create button rendered). Control: acme (feature ON) at /site-walks shows the full surface + New Site Walk button.",
+  "evidence": "Verified live 2026-09-11 on QA V1.36 with both tenants as controls. GET /api/auth/v2/me [200 json]: demo company_features has NO 'site-walks' (69 features) but role holds site_walks.view+manage; acme HAS 'site-walks'. Browser, direct-URL entry logged into demo: /site-walks renders 'Feature Not Available - This feature is not enabled for your organization. Please contact your administrator or Egalvanic support' - newSiteWalkBtns=[], gridCount=0 (screenshot demo-site-walks-feature-not-available-2026-09-11.png). Positive control acme /site-walks: 'New Site Walk' button present + populated grid, featureBlocked=false. So the navigation.js route table IS now gated (ticket QA item #2 implemented) and the titled defect does NOT reproduce = FIXED. Residual (secondary, not the titled claim, no data leak): backend still ungated - demo GET /api/site-walk/list -> [200 json] {data:[],success:true}; demo POST /api/site-walk/ -> [200 json] {_mutation:received,id:...}. Both an empty-body create (id 710d875e) and a labeled 'QA-VERIFY delete me' create (id d21ee895) queued but neither materialized in the list after >10s (0 rows), so nothing persisted and the empty demo tenant leaks no records. The evidence file itself flagged the API as a secondary 'ideally also gate' item and 'not a data-exposure issue', so the primary user-facing route-render defect is fixed.",
+  "final_verdict": "FIXED",
+  "refute": null
+ },
+ {
+  "n": 34,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "GET /api/tasks/all (PR #872 deliverable) returns HTTP 500 on every request and is called by nothing in the Tasks UI",
+  "endpoint": "GET /api/tasks/all (500 application/json); controls: GET /api/tasks/definitely-not-real (200 text/html, masked-404), POST /api/v2/tasks/list (200 application/json, works)",
+  "repro": "1) Login as admin (abhiyant.singh+admin, subdomain acme). 2) GET /api/tasks/all with Bearer token -> HTTP 500 application/json {\"error\":\"internal_error\",\"success\":false,\"trace_id\":...}, fresh trace_id each call, on all param shapes (bare, page/sort, company_id, sld_id, limit). 3) Control: GET /api/tasks/definitely-not-real -> 200 text/html SPA shell (proves /tasks/all is a routed endpoint that errors, not absent). 4) Positive control: POST /api/v2/tasks/list with sld_id omitted -> 200 application/json, total 1650 tasks across sites (the All Facilities feature works via a DIFFERENT endpoint).",
+  "evidence": "Reproduced live 2026-09-11 on acme.qa.egalvanic.ai. GET /api/tasks/all returned HTTP 500 application/json on 5 distinct requests, each with a real JSON error body and a distinct trace_id (e.g. 624f5185f2d64f6b86dbfce91bb469ab, 3b4d49423d064e7691879437b0da8d53). Masked-404 control: /api/tasks/definitely-not-real returned 200 text/html (SPA shell) - so /tasks/all is a genuinely routed, erroring endpoint, not a soft 404. Auth control: unauthenticated GET returned 401, so the 500 is an authenticated server error. Positive control: POST /api/v2/tasks/list (sld_id omitted) returned 200 application/json with total=1650 tasks and real items[] spanning sites, confirming the All Facilities capability works via a separate endpoint while PR #872's own /api/tasks/all deliverable is non-functional and unused by the UI.",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "n": 35,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "Service build_job stays stuck at \"running\" (error:null, no applied version) on GET /services/{id} for 21 days because the terminal state is only written back when the /build-status polling endpoint is called \u2014 permanent \"building\" in the Services UI",
+  "endpoint": "GET /api/procedures-v2/services/{id} (and list GET /api/procedures-v2/services) \u2014 serves stale build_job; GET /api/procedures-v2/services/{id}/build-status \u2014 reconciles terminal state",
+  "repro": "see repro field",
+  "evidence": "Untainted pre-contamination read (bulk fetch, before any build-status call): GET /api/procedures-v2/services/b5e4be62... = HTTP 200 application/json, build_job{status:\"running\", applied_version_id:null, error:null, started_at:\"2026-08-21T08:45:15Z\", execution_arn ...eg-pz-qa-ai-service-spec-sfn-ohio:a79009a4, revision_request:\"noop\"} -> 503h/21 days stuck, matching the ticket pattern (running, error null, no applied version, permanent \"building\"). Same job via GET .../build-status = HTTP 200 application/json, status:\"applied\", applied_version_id:59a053c5-b472-41a3-9140-279debc7ed23 (job actually terminated). Self-heal proof: after that build-status call, a fresh GET /services/{id} flipped running->applied, so services/{id} was serving a stale un-reconciled snapshot, not a live-executing job. Positive control (pipeline reaches terminal state normally): 6/20 services show build_job \"applied\" error:null on both endpoints (Test job_id 9db53f12, NETA Testing, Cleaning Services, Test_19, 70 B Service Type, QA-DEMO). The two originally-flagged services (Test, 70 B) have since reconciled to \"applied\"; DGA is a fresh recurrence, confirming a recurring write-back-gap lifecycle defect, not a one-off. Stuck service is a real record (is_deleted:false, pricing_status ready), not test-data noise.",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "n": 36,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "Test Equipment page hides \"Test Equipment Library\" tab when roles[0].name === \"Project Manager\", ignoring other roles held (first-role gate live in QA bundle)",
+  "endpoint": "Frontend gate in served bundle GET https://acme.qa.egalvanic.ai/assets/index-COYuQGbr.js (200 text/javascript), fn dda for route /test-equipment; control via GET /api/auth/me (200 application/json)",
+  "evidence": "Re-verified on QA's CURRENT bundle index-COYuQGbr.js (fetched 2026-09-11; evidence file was against older index-BCC_7hbn.js). Gate present verbatim in the /test-equipment page component `dda`: s=(Eu(y=>y.userDetails)?.roles?.find(y=>y)?.name||\"\")===\"Project Manager\", then m=[...s?[]:[{label:\"settings.pm.testEquipmentLibrary\",Component:ada}],{label:\"settings.pm.equipment\",Component:uda}]; tab bar (sdt) renders only when m.length>1. So roles[0]===\"Project Manager\" \u21d2 Library tab dropped AND tab bar removed. It reads ONLY the first array element (find(y=>y)) \u2014 no .some(), no permission fallback, all other roles ignored. Route /test-equipment maps to `dda` under a UNION RoleGate Nj roles:[\"Project Manager\",\"Admin\",\"Super Admin\"] (page is meant to be usable by Admin/Super Admin). LIVE DOM CONTROL: seat abhiyant.singh+admin@ \u2014 GET /api/auth/me = 200 application/json, roles [\"Super Admin\",\"Electrical Engineer\",\"Project Manager\",\"Account Manager\",\"Admin\"] (PM held but NOT first) \u2014 /test-equipment renders 2 role=\"tab\" elements: \"Test Equipment Library\" + \"Equipment\" (screenshot te-control-SA-first-tabs.png). Proves holding PM does NOT hide the tab; only leading with PM does. This is the #1351/ZP-4033 first-role-gate family (extra roles should only ADD access under the union model, so a seat that is also Super Admin/Admin must keep the tab). CAVEAT: could not render a PM-first MULTI-role seat live \u2014 no such login on QA (+project@ is single-role PM roles=[\"Project Manager\"]; +admin@ leads with Super Admin) and the app redirects to \"/\" on focus/visibility events, blocking an in-page /me reorder; the PM-first\u2192hidden result is the deterministic consequence of the confirmed code, and prod evidence already showed the order-flip empirically on identical role sets.",
+  "repro": "1. Open Settings > Test Equipment (/test-equipment) as a multi-role user whose roles list leads with \"Project Manager\" (e.g. PM + Admin + Super Admin). 2. What happens: no tab bar - only the \"Equipment\" content shows; the \"Test Equipment Library\" tab is gone. 3. What should happen: the \"Test Equipment Library\" tab should render, because the user also holds Admin/Super Admin (which the route's own RoleGate admits) - exactly as the control shows: the same 5-role seat with \"Super Admin\" listed first renders both \"Test Equipment Library\" and \"Equipment\" tabs. For the developer: fn `dda` gates on roles.find(y=>y)?.name===\"Project Manager\"; fix to roles?.some(r=>SET.has(r?.name)) or a permission gate.",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "n": 37,
+  "verdict": "FIXED",
+  "confidence": "high",
+  "title": "Condition Assessment (/pm-readiness) prints raw 422 permission_denied for Client Portal and Electrical Engineer",
+  "endpoint": "GET /api/condition-assessment/overview?sld_id={sld} (also /findings, /assets, /evidence)",
+  "repro": "1. curl login as Client Portal (+clientportal@) and Electrical Engineer (+electric@). 2. GET /api/condition-assessment/overview?sld_id=aadcee4c-7dd0-45b3-81b9-309c5c166084 (the call /pm-readiness makes) with each role's Bearer token. 3. Both now return 200 application/json with real data (by_class counts) \u2014 NOT 422 permission_denied. /auth/me shows both roles now hold features.condition_assessment.view.",
+  "evidence": "Reported behavior no longer reproduces. Report (2026-09-07, screenshot 02) documented CP/EE getting page content \"API call failed: 422 - {error: permission_denied, required_permission: features.condition_assessment.view}\". Today all 4 condition-assessment endpoints (overview/findings/assets/evidence) return 200 application/json with real data for CP and EE, byte-for-byte matching the Admin control (Circuit Breaker by_class {1:45,2:1,3:1,at_risk:1}). /auth/me confirms Client Portal (35 perms) and Electrical Engineer (81 perms) now BOTH contain features.condition_assessment.view; at report time they lacked it. Checked all 7 roles (Admin/PM/Tech/FM/AM/CP/EE) \u2014 every one holds the permission and gets 200 (FM returns masked-html only due to site-scope, not the reported 422). No role produces the 422 permission_denied anymore, so the raw-error string is no longer rendered. Fix was applied at the RBAC layer (permission granted to CP+EE); the frontend raw-error-rendering weakness is now untriggerable via this endpoint. Endpoint: GET /api/condition-assessment/overview?sld_id=... -> 200 application/json for CP and EE (was 422 application/json permission_denied).",
+  "final_verdict": "FIXED",
+  "refute": null
+ },
+ {
+  "n": 38,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "Asset editor ENGINEERING shows green \"LIBRARY MATCHED\" with a fabricated manufacturer for a no_match extraction",
+  "endpoint": "Render bug in bundle assets/index-COYuQGbr.js (asset editor ENGINEERING card). Data condition confirmed via GET https://acme.qa.egalvanic.ai/api/sld/aadcee4c-7dd0-45b3-81b9-309c5c166084/library-designations?kind=all&per_page=200 -> 200 application/json",
+  "evidence": "Live API: node CB2 7ee495b9 eqp_lib.no_match=true, NO skm_oid/skm_settings, but manufacturer=\"ZORVEX Electric\", type=\"ZORVEX ZX-400-3P\", style=\"ZXB4003\" (fabricated). Control CB4 e78230ed = real match (skm_oid=204999). Current bundle index-COYuQGbr.js (newer than the report's index-BV5BwzBG.js) gates the green success.50 \"Library Matched\" card only on `e.eqp_lib?` with the manufacturer/type/style render inside; it has NO no_match or skm_oid guard. The whole 15.6MB bundle has exactly ONE `.no_match` guard (`_e.no_match?` -> \"No SKM match \u2014 \u2026\") and it lives only in the Bulk Extraction dialog, not the asset editor. So the asset editor draws the identical green MATCHED card for a no_match node as for a real match; with CB2's warnings_reviewed_at now set, even the amber \"Incomplete\" well is suppressed, leaving only the fabricated green designation. Not test-data mess: the state is written by the real nameplate->Bulk AI Extraction->Apply flow and any non-SKM-brand breaker ending in no_match renders the same.",
+  "repro": "1) Open CB2 asset editor -> Edit -> ENGINEERING. 2) See green \"LIBRARY MATCHED\" card with the ZORVEX manufacturer/model for a no_match extraction. 3) Grid shows Device=\"\u2014\" and Bulk dialog says \"No SKM match\" for the same node \u2014 the editor is the one dishonest surface.",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "n": 39,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "WO detail endpoints (/full, /team, /summary/v2) ignore site scope that the WO list enforces, leaking out-of-site WO details incl account_name to every role",
+  "endpoint": "GET /api/ir_session/{id}/full , /team , /summary/v2 -> 200 application/json for a WO on a site OUTSIDE the caller's accessible_sld_ids; list POST /api/company/{id}/workorders/v2 scopes correctly (FM 5/1381; Client Portal 422)",
+  "repro": "1. Login FM (site-restricted). 2. Choose WO on a site not in your list. 3. GET /api/ir_session/{id}/full -> 200 JSON with account_name.",
+  "evidence": "Live 2026-09-11, one tenant (company d59d449b). CONTROLS: (a) List DOES scope - FM POST /company/{cid}/workorders/v2 = 200 with 5 of 1381 tenant WOs, all on FM's 11 accessible_sld_ids; Client Portal list = 422 permission_denied. (b) Positive control - FM reads its OWN WO 92fa5fe0 /full,/team,/summary/v2 = 200 JSON. (c) Unknown-id control - FM & CP GET /ir_session/00000000-0000-4000-8000-000000000000/full = 200 text/html (masked SPA shell, NOT data), proving foreign-id reads are genuine, not the soft-404 path. LEAK: FM (accessible_sld_ids has 11 sites, sld aadcee4c NOT among them, and FM lacks accounts.view) GET /ir_session/8d9aad65-fd8c-4fb7-bbc2-05f2e76cc688/full = 200 application/json, data.session.account_name='Test op', sld_name='Android Site 2', + account_id/sld_id/issues/tasks/photos; /team & /summary/v2 also 200 JSON. Client Portal (35 perms, 422-denied on the list, sld aae9883c not in its 234 sites) GET /ir_session/c5c954a2-.../full = 200 JSON, account_name='TEst'. Both account names match admin's view of the same records. Verdict REAL: list enforces site scope, the 3 detail endpoints do not - the two halves of the contract disagree and leak out-of-site WO detail + owning account name. Caveat (from prior evidence doc): all these roles hold sessions.view globally, so site scope MAY be intended as a filter not a boundary - but CP being fully 422-denied on list yet reading full detail, and FM reading account_name without accounts.view, argue it is a genuine gap worth a fix/decision.",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "n": 40,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "Client Portal dashboard advertises Active Work Orders count + holds sessions.view/workorders.view, but has no Work Orders nav route and every /sessions/{id} shows Access Denied",
+  "endpoint": "Frontend /sessions and /sessions/{id} (both render \"Access Denied\"); GET /api/auth/v2/me -> 200 perms include sessions.view+workorders.view; GET /api/lookup/site-overview/{siteId} -> 200 active_sessions_count=42 (tile source); POST /api/company/{id}/workorders/v2 (WO list) -> 422 permission_denied Required: company_data.view; GET /api/ir_session/{id}/full -> 200 (CP can read one WO's data)",
+  "repro": "1. Log into acme QA as the Client Portal seat (abhiyant.singh+clientportal@egalvanic.com). 2. On the dashboard the KPI tile shows \"Active Work Orders 42\" and /auth/me grants sessions.view+workorders.view, yet the role's nav (Site Data/Engineering/Maintenance Portal) has no Work Orders entry. 3. Open any /sessions or /sessions/{id} URL (e.g. WO-2 1e6f95ca-... on the site) -> page renders \"Access Denied\", so the advertised count can never be opened.",
+  "evidence": "Reproduced live 2026-09-11. CP /auth/me: 35 perms with sessions.view + workorders.view present, accounts.view absent (role \"Client Portal - Read-only access to assigned SLDs\"). Dashboard tile \"ACTIVE WORK ORDERS 42\" rendered in the CP browser session; fed by GET /api/lookup/site-overview/aadcee4c-...?company_id=d59d449b-... -> 200 data.active_sessions_count=42. Nav has NO Work Orders/Operations link. Frontend /sessions/1e6f95ca-0d1e-4fb6-bdad-3a8eab820550 and /sessions/b67a3c26-583d-4f59-997e-95327c26c3ae both render \"Access Denied - You do not have permission to access this page\"; /sessions list auto-redirects into a WO detail that also denies. API split: POST /api/company/d59d449b-.../workorders/v2 -> 422 permission_denied (Required: company_data.view), while GET /api/ir_session/1e6f95ca-.../full and /summary/v2 -> 200 application/json with real WO data. Count drifted from the reported 22 to 42 (test-data drift, immaterial). Not a data leak - frontend correctly blocks the route; it is a real permission/tile vs route/nav dead-end. Screenshots: .playwright-mcp/cp-dashboard-active-wo-tile.png, .playwright-mcp/cp-sessions-access-denied.png",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "n": 41,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "Asset created via WO Actions -> Add New Asset is missing from the Add Issue drawer's Asset picker until a full page reload",
+  "endpoint": "Client-side React-cache staleness in the WO detail (/sessions/{id}) Add-Issue drawer. Supporting API confirms persistence: GET /api/ir_session/b67a3c26-583d-4f59-997e-95327c26c3ae/assets/v2 -> 200 application/json, 2 nodes; /summary/v2 -> counts.assets:2. The Add-Issue Asset autocomplete (site-wide asset options, React Query) does NOT refetch after the in-app create.",
+  "repro": "1) Login (PM seat), open WO /sessions/b67a3c26-583d-4f59-997e-95327c26c3ae (Android Site 2); Assets badge=1 (ATS Main). 2) Actions -> Add New Asset -> name 'QA-VERIFY n41 delete me', class Circuit Breaker -> Create Asset; badge jumps 1->2 immediately. 3) WITHOUT reload: Actions -> Add Issues -> open the Asset dropdown -> 279 options, new asset ABSENT. 4) Control: reload page, reopen Add Issues -> Asset dropdown -> 280 options, 'QA-VERIFY n41 delete me' now PRESENT.",
+  "evidence": "Reproduced LIVE on QA V1.36, 2026-09-11, via the frontend UI (Playwright), PM seat abhiyant.singh+project@. Clean before/after control: picker showed 279 options WITHOUT the just-created asset (grep 'QA-VERIFY' = [] ) immediately after creation, while the Assets tab badge already read 2 and GET /ir_session/{id}/assets/v2 returned 2 persisted nodes (a49b1ef7 new + 1fb6fc00 pre-existing). After a full page reload the identical picker returned 280 options WITH 'QA-VERIFY n41 delete me' present. Persistence proven (badge + API + grid 'No Location: 1 asset'), so this is a genuine cache-invalidation defect, not a failed create. Two views of the same WO disagree until reload; a 'Refresh options' button next to the Asset field is a telltale the list is known to go stale. Matches original ZP-3978 Round 3 claim exactly. Severity: Medium (UI/state consistency; no data loss, no security/tenancy impact). Test data left labeled per convention (QA-VERIFY n41 delete me, Circuit Breaker) in WO b67a3c26.",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "n": 42,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "user_checked service with no data_mask (Arc Flash Label Placement) gets no per-asset checkbox on web; only bulk Mark As can tick it",
+  "endpoint": "GET /api/ir_session/{id}/service-registry (200 application/json); GET /api/ir_session/{id}/method-lines; GET /api/ir_session/{id}/service-completion; bundle assets/index-COYuQGbr.js",
+  "evidence": "Live on WO2 afea6fa4 (tenant acme, Super Admin). service-registry (200 json) returns two user_checked:true services: 'Arc Flash Data Collection' with wo_view.data_mask=\"arcFlash\" + row_slot=\"data_mask\" (positive control, gets a checkbox column), and 'Arc Flash Label Placement' (type Checklist, user_checked:true) whose wo_view keys are only [hide_tabs,priority,readiness_mask,report_work_type] \u2014 NO data_mask, NO row_slot. method-lines (200 json): its 2 lines are user_checked:true, status 'executed'; service-completion.checklist={ready:2,total:2}, so completion is tracked but was only reachable via bulk. Live bundle confirms grid checkbox columns are built as field:`svc_mask_${mask}` strictly from services declaring data_mask/row_slot (_s.row_slot&&lr.rowSlots.add(...); lr.dataMask=_s.data_mask); a user_checked service with neither yields no column, and the user_checked overlay only injects a box into an existing mask cell \u2014 'checklist' appears only in the location-readiness rollup, not as a per-asset grid checkbox. No fallback column exists \u2192 not fixed in current bundle. Not test-data mess (wo_view is the seeded service definition, reproducible on any WO with this service); not by-design (contradicts ZP-4018 AC #1 'each service shows its own in-cell checkbox', and Label Placement is one of the three user_checked services the ticket names).",
+  "repro": "1) Open a work order containing the 'Arc Flash Label Placement' service (e.g. /sessions/afea6fa4-e7a7-47e7-a0fd-9933afbc64a3) \u2192 Assets grid shows only Arc Flash / IR mask columns. 2) No asset row has any checkbox for Label Placement, because its service definition is user_checked:true but has no data_mask/row_slot and the grid only draws checkboxes in mask columns. 3) The only way to mark its lines done is Bulk Ops \u2192 Select all \u2192 Mark As.. (confirmed: both lines are 'executed', service-completion checklist 2/2) \u2014 never per asset.",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "title": "A real interrupting-kA conflict (node AIC 65 kA vs bound frame kaic 25 kA) produces only an ordinary amber warning - eqp_lib.critical_warnings was never populated across 3 bulk runs / 6 assets",
+  "n": 43,
+  "verdict": "INVALID",
+  "confidence": "medium",
+  "endpoint": "GET /api/sld/aadcee4c-7dd0-45b3-81b9-309c5c166084/library-designations?kind=ocpd&per_page=100 -> 200 application/json",
+  "evidence": "Observable state CONFIRMED live, but it is not a demonstrable product defect. On CB5 (node 9cdfce8d-97b4-488a-a0da-142fc026eda5, skm_oid 204999): ocpd.aic_rating=65 vs ocpd.frame.kaic=25.0 (the real kA conflict IS present), eqp_lib.warnings=[1 ORDINARY voltage-tier warning], and eqp_lib.critical_warnings=[1] whose text literally reads \"...asset AIC Rating 65 kA vs bound library frame 25 kA @ 600 V (Powerpact HJ) - QA-crafted payload to exercise the #1337 red treatment\" = the report's own hand-written PUT, NOT pipeline output. Across all naturally-extracted breakers (CB1/CB2/CB7 no_match+warnings; CB4/CB8 bound, no warnings) critical_warnings is None. So the amber-not-red rendering is faithful to the data. WHY INVALID: (1) the 65 kA is synthetic test data manually pre-set on the node before extraction; (2) the claude-opus-5 agent correctly matched the plate's printed 25 kA to SKM and warned about the voltage tier - its reasoning never references the node's manual AIC, which is not its job; (3) whether the external agent-runner (eg-pz engineering-ai pipeline, a Lambda not web-testable) is SUPPOSED to emit critical_warnings here is unverified - the report itself files this as a \"PIPELINE FINDING / question for pipeline owners\", not a confirmed bug; (4) the web app renders critical_warnings red correctly when present (proven by the crafted payload), so there is no UI/product defect. Per owner guidance \"unverified capability gaps + test-data-driven triggers are NOT bugs; absence of evidence is not a defect.\" \"Never emits across 6 synthetic assets\" is absence of evidence about an external AI pipeline, not a falsifiable positive defect.",
+  "repro": "See evidence.",
+  "final_verdict": "INVALID",
+  "refute": null
+ },
+ {
+  "n": 44,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "PR #1391 WO details-panel restore (showDetailsInCompact) exists only on cicd/qa; absent from dev/stag/prod",
+  "endpoint": "GitHub API on Egalvanic/eg-pz-frontend: GET /repos/.../contents/src/pages/SessionDetail.jsx?ref={branch} and .../contents/src/components/NavSubpage.jsx; GET /repos/.../compare/cicd/dev...cicd/qa (not an app HTTP endpoint \u2014 this is a branch-topology claim, verified at the git level)",
+  "repro": "1. gh api contents SessionDetail.jsx?ref=cicd/qa | grep showDetailsInCompact = 2 (NavSubpage.jsx = 4); same grep on cicd/dev, cicd/stag, cicd/prod = 0 in both files. 2. gh api compare/cicd/dev...cicd/qa = diverged, qa ahead_by 67 / behind_by 25, and PR #1391 merge commit 51072fa is listed as a qa-only commit (not on dev). 3. cicd/dev independently edited SessionDetail.jsx on 2026-09-10 without the restore, so the fix is qa-only, will collide on the next dev->qa promotion, and cannot reach prod via the normal dev->qa->stag->prod flow.",
+  "evidence": "Verified against the authoritative eg-pz-frontend repo (gh authed). PR #1391: state MERGED, baseRefName=cicd/qa (merged 2026-09-05), touching src/pages/SessionDetail.jsx and src/components/NavSubpage.jsx. Branch content of the restore feature 'showDetailsInCompact': cicd/qa = present (SessionDetail 2, NavSubpage 4); cicd/dev = 0/0; cicd/stag = 0/0; cicd/prod = 0/0. Branch relationship compare/cicd/dev...cicd/qa: status=diverged, ahead_by=67, behind_by=25; merge commit 51072faaeee848b2875dcd50f2c407263f90ba54 appears in the qa-ahead commit list (not reachable from dev). cicd/dev is current: last commit on SessionDetail.jsx dated 2026-09-10T17:39:48Z (report-config family fix) with no restore code. Controls consistent: qa has the code (matches live QA app rendering the panel per the PASS verdict); prod lacks it (matches 'would vanish from prod'). Not test-data, not by-design git-flow (feature bypassed dev). Caveat: the literal 'next promotion WILL revert it' is conditional on how the guaranteed SessionDetail.jsx merge conflict resolves, but the dev-parity gap and same-file divergence that make revert a live risk are proven; the qa-only + not-on-prod facts are fully confirmed.",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "n": 45,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "Four of seven real session report queries silently ignore query_name and fall back to default tasks+issues ranking, byte-identical to an invented query name",
+  "endpoint": "GET /api/reporting/sample-entities?entity_type=session&query_name=<name> (200 application/json)",
+  "repro": "1. Log in as a seat with reports.view (PM +project@). 2. GET /api/reporting/sample-entities?entity_type=session&query_name=eg_get_session_ids_with_nodes (a REAL registered v2 query) -> response reports ranked_by \"tasks+issues\". 3. Repeat with query_name=totally_made_up_query_name_xyz (a name that does not exist) -> response is byte-for-byte identical; meanwhile query_name=eg_get_session_ids_with_issues returns a DIFFERENT ranking (ranked_by \"issue\"), proving the param is honored for some queries but silently ignored for _with_nodes/_with_forms/_with_neta_forms/_with_neta_forms_for_class.",
+  "evidence": "Reproduced live on acme.qa.egalvanic.ai as PM (+project@, reports.view). GET /api/reporting/test-query/queries?version=all (200 json, 124 queries_v2) confirms all 7 eg_get_session_ids_with_* names are REAL registered v2 queries; the control name totally_made_up_query_name_xyz is ABSENT. At limit=10, diff of /api/reporting/sample-entities?...&query_name=eg_get_session_ids_with_nodes vs &query_name=totally_made_up_query_name_xyz = IDENTICAL (byte-for-byte, both ranked_by=tasks+issues, signals [412,84,15,11,9,7,6,6,5,4]). Positive controls differ: _with_issues -> ranked_by=issue (signals [412,84,...] distinct set), _with_tasks -> task, _with_eg_forms -> eg_form. The four failing queries (_with_nodes, _with_forms, _with_neta_forms, _with_neta_forms_for_class) all return ranked_by=tasks+issues identical to the invented name. Stable across 3 consecutive runs. Not test-data (queries are real per catalogue), not by-design (3 sibling queries prove query_name works; an absent/typo name is silently substituted with the default instead of rejected). A typo and a real query are indistinguishable in the response; an author binding an asset page via _with_nodes is ranked by issues+tasks, not by assets.",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "n": 46,
+  "verdict": "FIXED",
+  "confidence": "high",
+  "title": "Add-to-Quote gate bypass via Edit Quote issue picker",
+  "endpoint": "POST /api/plans/{id}/add-issues (Edit Quote door); POST /api/plans/from-issues (Add-to-Quote door)",
+  "repro": "1) On a Draft quote, Edit Quote -> issue picker, select issues with NO accepted resolution (i.e. POST /api/plans/{id}/add-issues with their ids). 2) Server now returns 409 'Every issue needs an accepted resolution before it can be quoted' and adds nothing. 3) Adding an issue that HAS an accepted resolution still returns 200 - so the gate is functional, not broken.",
+  "evidence": "Current build bundle index-COYuQGbr.js (report was index-CSsDpG3c.js, 2026-09-08 - build changed). from-issues with unresolved issue b9492227 -> 409 application/json 'Every issue needs an accepted resolution before it can be quoted: NFPA 70B Violation on 11N-H1-2'. add-issues on draft plan 1b288e93 with the SAME unresolved issue -> 409 (identical gate); with 4 unresolved at once -> 409 listing all four; mixed resolved+unresolved -> 409 (whole batch rejected). Positive controls: from-issues with resolved issue b2a99a7f -> 201 priced $335; add-issues with resolved issue 3449b323 -> 200. Refetch of the sandbox plan confirms instructions.issue_ids = {b2a99a7f, 3449b323} only, 2 coverage lines, no unresolved issue leaked, no $0 'no work procedure' lines. Both quote-building doors now enforce the same server-side accepted-resolution gate; the 2026-09-08 Edit-Quote bypass (28 unpriced lines) no longer reproduces. Real quote 488ee745 untouched; left labeled sandbox quote 1b288e93-2920-4d0a-8a5a-92f3a1e5bd7a 'QA-VERIFY delete me'.",
+  "final_verdict": "FIXED",
+  "refute": null
+ },
+ {
+  "n": 47,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "Indeterminate (NULL) quantity material prices as \u00d70 \u00b7 $0 \u00b7 $0 instead of TBD on the quote's Pricing tab",
+  "endpoint": "Frontend: /plans/488ee745-53a2-4846-aa26-c3089f6b6ad1 (Sales > Quotes) \u2192 Pricing tab, MATERIALS. API control: GET /api/plans/488ee745-53a2-4846-aa26-c3089f6b6ad1 \u2192 200 application/json",
+  "repro": "Reproduced live via curl (API control) + Playwright frontend as Super Admin",
+  "evidence": "LIVE REPRO on V1.36 bundle index-COYuQGbr.js (report's index-CSsDpG3c.js was rebuilt since 2026-09-08; bug survived the rebuild). DOM text captured via Playwright as Super Admin: lug-kit row = 'QA-DEMO lug kit (delete me)\u00d70$0$0'; control fuse row = 'Bussmann LPJ Class J current-limiting fuse\u00d73 Unit$135$135'. Accessibility snapshot on the Pricing[pressed] tab shows the same. API GET /api/plans/488ee745-... 200 application/json returns the material with quantity:null, cost:0.0, sell:0.0, indeterminate:true, unpriced:true \u2014 so backend correctly marks it; frontend Pricing table is the defect. Bundle grep: two sibling material renders now emit '\u00d7 TBD' for null qty (editable workbench read-only branch 'D.quantity ?? TBD', and workorder-detail chip dialog ooa), but the Pricing-tab line-item table does not. Screenshot: /Users/abhiyantsingh/Downloads/Egalvanic_Web-main/n47-x0-bug.png",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "n": 48,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "A walk-sourced quote silently drops to $0.00 when saved with scope \"site_walk\" but no site_walk_id \u2014 POST /generate answers 200 success with no error or warning",
+  "endpoint": "POST /api/plans/{plan_id}/generate",
+  "repro": "1) Take a walk-sourced plan (plan 3e5d3340-3754-4716-bd67-efd79c75daa7, healthy $675, 2 WOs). 2) POST /api/plans/{id}/generate with the site_walk block carrying only service_ids (no site_walk_id) while work[].scope stays \"site_walk\". 3) Server returns 200 success/error:null/no warning; GET the plan and list \u2014 total_sell is now 0.0, workorders empty, source null, and the incoherent instructions persisted verbatim.",
+  "evidence": "Live on acme.qa.egalvanic.ai. Positive control: POST /generate WITH site_walk_id + walk-scoped rows -> 200 application/json, success:true, total_sell=675.0, 2 WOs. Breaking payload: identical but site_walk block has only service_ids (no site_walk_id), rows still scope:\"site_walk\" -> 200 application/json, success:true, error:null, code:null, message:null, NO warning -> content.pricing.totals.total_sell 675.0->0.0, workorders:[], source:null, site_walk:null. Persistence verified by fresh GET /api/plans/{id} and GET /api/plans list (total_sell=0.0, total_workorders=0). Only 'orphan' string in body is the plan title, not a warning. Reversibility control: re-POST valid payload restored to 675.0/2 WOs (test data left healthy). Single isolated variable = presence of site_walk_id. Matches evidence file docs/bug-reports/ILLUSTRATED-site-walk-quote-zeroed.md ($600 case) exactly; no validation added since 2026-08-17. Defect is silent acceptance of an incoherent instruction set (walk scope, no walk id) rather than a 4xx refusal, per ZP-3607.",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "n": 49,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "POST /api/plans/{id}/generate skips field-level validation of work rows \u2014 invalid scope, missing service, made-up service id, and missing version all accepted (200, silent $0 quote)",
+  "endpoint": "POST /api/plans/{plan_id}/generate",
+  "repro": "See steps above.",
+  "evidence": "Reproduced live on acme.qa.egalvanic.ai V1.36 against QA-VERIFY plan fdec1116 (labelled \"delete me\"). All four enumerated malformed inputs returned HTTP 200 application/json, success:true, and were persisted (GET-echoed in the response's data.instructions): A) scope=\"qa_bogus_scope_verify49\" -> 200, stored, ignored (still 1 WO/$335 because service_id was valid); B) work row {\"id\":\"wB\"} with no service_id -> 200, stored, content workorders=0 total_sell=0.0; C) service_id all-zeros nonexistent UUID -> 200, stored, workorders=0 total_sell=0.0; D) version omitted -> 200, stored (server defaulted version:2). Every accepted response's top-level keys were only [data, success] with error=None and NO warnings field \u2014 matching the report's \"success, no error/warning, silently zeroes the quote\". POSITIVE CONTROL: a well-formed payload (real service_id + real issue_id + date) also returned 200 success:true, confirming 200 is the success envelope and the malformed ones are not being rejected. IMPORTANT ADVERSARIAL NUANCE (qualifies the headline): the title's absolute \"performs NO input validation AT ALL\" is an OVERSTATEMENT \u2014 envelope-level validation does exist: empty body {} -> 400 \"standard.pm_standard_id is required\"; work as a string -> 400 \"work[] is required for a standard (ad-hoc) plan\"; garbage plan_type -> 400. So the endpoint validates the plan_type/work[] envelope but NOT the per-row fields (scope, service_id existence, service presence, version). Verdict REAL because all four specifically enumerated field-level gaps reproduce with a control and produce the stated impact (a work row with no/nonexistent service silently regenerates a $0 quote with success:true and no warning); only the sweeping \"at all\" phrasing is inaccurate. Evidence files: /tmp/resp_{A_invalid_scope,B_no_service,C_bogus_service_id,D_missing_version}.json, /tmp/resp_valid.json, /tmp/p_{empty_body,work_not_array,garbage_plan_type}.json.",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "n": 50,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "Fill Forms review-dialog gap/question descriptors omit options for radio/select/switch/checkbox; field_index in the same payload has them but the SPA never reads it, so option gaps render as a free-text box",
+  "endpoint": "GET /api/form-fill/jobs/6293a4f4-abc2-45b2-86ba-471bd0aac6b9/proposal -> 200 application/json (frontend: assets/index-COYuQGbr.js)",
+  "evidence": "Live proposal payload fetched 2026-09-11 as Super Admin. proposal.fills[0].gaps[] (28 entries): every option-typed gap has keys exactly [label,path,section,type,unit] and NO options -- weather_conditions(radio), overall_result(switch), verdict.verdict(select), loto_verified(checkbox). The SAME response's proposal.field_index[2d9d80c0...] (36 fields) DOES carry those options (weather_conditions=clear/rain/overcast, overall_result=pass/fail, verdict.verdict=pass/pass_with_conditions/fail) -- that is the control: choices are in the payload, just not on the gap descriptor. Adversarial frontend check: the live bundle index-COYuQGbr.js references 'field_index' 0 times (never consumes the index), and its gap renderer is function Jkr({field:e...}){const c=e.options||[]; ... c.length ? <select native populated from c> : <input type number/date/text>}. Options come ONLY from the gap field; with none present it falls through to a plain free-text box. So a radio/select/switch gap is shown as a text field instead of a picker -- reviewer cannot choose a valid option key. questions[] fields use the same Jkr renderer (this job's questions[0].fields was [] so only gaps were exercised). Not a masked-HTML/unknown-id artifact (real JSON, real form, real options in index); not by-design normalization since the client never reads the index.",
+  "repro": "1) Auth as admin, GET /api/form-fill/jobs/6293a4f4-abc2-45b2-86ba-471bd0aac6b9/proposal. 2) Note proposal.fills[0].gaps[] radio/select/switch/checkbox entries carry only label/path/section/type/unit (no options), while proposal.field_index[form_key] in the same response carries those same fields' options. 3) In live bundle index-COYuQGbr.js, field_index is never referenced and gap renderer Jkr uses e.options||[] -> an option-typed gap with no options renders a free-text box, not the option picker.",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "n": 51,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "Role switcher uses a second route-permission model (static table + per-role exclusion map) that the router never consults and that disagrees with it",
+  "endpoint": "GET https://acme.qa.egalvanic.ai/assets/index-COYuQGbr.js -> 200 text/javascript (SPA bundle). Client-side routing defect; no JSON API involved.",
+  "evidence": "Re-verified against the CURRENT live bundle index-COYuQGbr.js (a rebuild of the audited index-jYhUcFb4.js) -- the finding survives the rebuild unchanged. The bundle contains xqo(roleName,perms,isAdmin) which computes an allowed-route list from static table fqo + admin list hqo + per-role exclusion map pqo + admin-section bar mqo + PM-extras gqo. SOLE CONSUMER = the role switcher: fqo/hqo/pqo/mqo/gqo/xqo/bqo are each referenced exactly twice (definition + inside xqo), and xqo/bqo are called from exactly one site -- the [RoleSwitcher] onChange handler: F=xqo(k.name,I,D); bqo(T,F)?window.location.reload():window.location.href=F[0]||'/dashboard'. React Router never touches this table. EXCLUSIONS MATCH THE CLAIM EXACTLY: pqo={\"Account Manager\":[\"/emps\",\"/slds\"],\"Facility Manager\":[7 routes: equipment-designations,short-circuit-ratings,feeder-schedule,ocpd-settings,transformer-schedule,custom-devices,connections],\"Project Manager\":[\"/connections\",\"/tasks\"],\"Electrical Engineer\":[\"/admin/audit-log\"]}; mqo=Set(\"Account Manager\",\"Electrical Engineer\") bars the admin section; gqo=[\"/sites\",\"/test-equipment\"] pushed only for Project Manager. DISAGREEMENT WITH ROUTER PROVEN: router registers /connections, /tasks, /slds as bare guardless routes (i.jsx(su,{path:\"/connections\",element:i.jsx(wna,{})})) reachable by anyone, while xqo excludes /connections for FM+PM, /tasks for PM, /slds for AM -- so a page reachable by navigation is redirected away after a role switch. Honest precondition: RoleSwitcher renders only for users with 2+ roles (s.length===1?null), so the live redirect manifests only for a multi-role user; the code defect itself is unconditional.",
+  "repro": "1) Download the live bundle GET /assets/index-COYuQGbr.js and locate function xqo(): it builds route access from static table fqo + exclusion map pqo, and is called ONLY by the RoleSwitcher onChange (grep shows every identifier referenced exactly twice; the router uses none of them). 2) In the router, /connections /tasks /slds are bare <Route> elements with no guard, yet pqo excludes /connections for Facility Manager+Project Manager, /tasks for Project Manager, /slds for Account Manager. 3) Consequence (multi-role user): open /connections as a Facility Manager (router allows it), pick a role in the switcher -> xqo omits /connections -> window.location.href=F[0] redirects you off a page you were legitimately on; the two permission models contradict each other.",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "n": 52,
+  "verdict": "REAL",
+  "confidence": "high",
+  "title": "Access still gated on hard-coded role NAMES (route orRoles/roles lists, Arc Flash category move, Maintenance Portal off-tier list) in V1.36 that renamed Admin\u2194Super Admin on unchanged ids",
+  "endpoint": "GET https://acme.qa.egalvanic.ai/assets/index-COYuQGbr.js -> 200 text/javascript (live SPA bundle); GET https://acme.qa.egalvanic.ai/api/auth/me -> 200 application/json (role names on stable UUIDs)",
+  "repro": "1) Log in as admin and GET /api/auth/me: roles 'Super Admin' (id b60006dd-3cb6-455b-bf90-5d83198321b9) and 'Admin' (id e9ad3158-...-000000003158) sit on fixed UUIDs; V1.36 swapped these two NAMES on those unchanged ids. 2) Fetch the live bundle /assets/index-COYuQGbr.js: both guard components key on role NAME, not id -- Nj = (user_roles).some(d=>e.includes(d?.name)); Hme = (...).map(m=>m?.name)...r.some(m=>p.includes(m)). 3) Name lists are still live in the router/nav: roles:[\"Admin\",\"Super Admin\"] x14 (/services,/pm-plans,/labor,/materials,/offices,classes,/admin-dashboard), roles:[\"Project Manager\",\"Admin\",\"Super Admin\"] (/test-equipment), a six-name /customers list, orRoles maintenance lists, plus nav branches ot=He.includes(\"Electrical Engineer\") (moves Arc Flash between categories) and Ze=[\"Project Manager\",\"Account Manager\",\"Admin\",\"Facility Manager\",\"Super Admin\"].some(...) (Maintenance Portal off-tier).",
+  "evidence": "Reproduced on the CURRENT live bundle index-COYuQGbr.js (a newer build than the audited index-jYhUcFb4.js), so not stale. Both React guards (Nj, Hme) demonstrably compare against role .name. Concrete name-keyed arrays confirmed by string-literal search: roles:[\"Admin\",\"Super Admin\"] appears 14x as route guards; /customers uses a 6-name array; /maintenance/overview orRoles:[\"Facility Manager\",\"Super Admin\"], /program|/compliance|/reports orRoles:[\"Project Manager\",\"Facility Manager\"], maintenance-portal parent orRoles:[\"Project Manager\",\"Account Manager\",\"Admin\",\"Facility Manager\",\"Super Admin\"]; nav: ot=He.includes(\"Electrical Engineer\") drives Arc Flash category placement (ot?[]:[...arc-flash] vs ot?[...arc-flash]:[]); Ze=[5 role names].some(...) drives Maintenance Portal tier bypass; a per-role exclusion map is keyed by name strings (\"Project Manager\",\"Electrical Engineer\",\"Account Manager\"). Control: /auth/me proves the keyed-on names are mutable (swapped in V1.36) while the stable role UUIDs they should key on exist and are unused by these gates -- i.e. every gate is one role-rename from silently changing who gets in. All 3 sub-claims of the finding verified. Caveat: this is a code-level latent fragility (ZP-4036's name-keyed-gate class, still un-swept); a live wrong-access could not be demonstrated without renaming a real role, which was not done. Claim as written (\"access is still gated on hard-coded role names\") is literally true in shipped code.",
+  "final_verdict": "REAL",
+  "refute": null
+ },
+ {
+  "n": 53,
+  "verdict": "REAL",
+  "confidence": "high",
+  "endpoint": "POST https://acme.qa.egalvanic.ai/api/auth/login",
+  "title": "No rate limiting on POST /api/auth/login \u2014 many consecutive failed logins all return 401, never 429/423/403",
+  "repro": "1. curl -sk POST /api/auth/login with a wrong password 12 times in a row (non-existent account) \u2192 all 12 returned `401 application/json {\"error\":\"Invalid credentials\"}`, no 429/423/403 at any point. 2. Repeated 8x against a REAL seat (+fm@) with a wrong password \u2192 same 8x 401 JSON, still no throttling response. 3. Positive control: +admin@ and +project@ with correct passwords \u2192 `200 application/json` with access_token (success path intact, not globally throttled).",
+  "evidence": "Live-reproduced today. Non-existent account: 12/12 attempts = 401 application/json \"Invalid credentials\". Real FM seat wrong pw: 8/8 = 401 application/json, no 429/423/403 ever emitted. Positive controls: admin correct pw = 200 + access_token; PM correct pw = 200 + access_token (login/success path works, no global throttle). The app-layer endpoint demonstrably applies no observable IP/global throttling. Caveats affecting severity (not the observation): auth is backed by AWS Cognito (token issuer cognito-idp.us-east-2) which has its own per-account lockout upstream; QA host has no WAF/edge that prod would; per-account lockout could not be cleanly falsified because the FM seat's stored password appears stale (its correct-password attempt also returned 401, indistinguishable from a lockout). Already tracked as ZP-2025; test kept red as a tripwire. Verdict REAL: the falsifiable claim (10+ consecutive failed logins, all 401, no 429/423/403) reproduces exactly, with positive controls.",
+  "final_verdict": "REAL",
+  "refute": null
+ }
+]

@@ -1046,3 +1046,28 @@ them. Re-confirm ownership before picking any of them up.
 **Lesson worth keeping:** stating my interpretation of an ambiguous instruction out loud ("I'll skip
 3986 and take the other nine") got it corrected in one line before I burned effort on nine tickets.
 Cheaper than either guessing silently or blocking on a question.
+
+## 2026-09-11 — all 53 Medium findings re-verified; register rebuilt clean (V12)
+Owner asked three times for the Medium section and then "whatever is fixed remove that form artificate".
+**The previous session's 53-agent workflow HAD completed** after the session limit hit — its results were
+never folded in. Recovered all 53 verdicts from the workflow journal
+(`<session>/subagents/workflows/wf_0794f3b3-6c1/journal.jsonl`, `type:"result"` lines carry `verdict`
+for verifiers and `final_verdict` for refuters) instead of re-running. **35 REAL · 3 PARTIAL · 7 FIXED ·
+7 INVALID · 1 CANNOT_TEST.** Refuter overturned 3 (#9,#10 → INVALID, #11 → PARTIAL).
+**Rebuilt artifact 9b83e732 → Version 12**: fixed/never-were-bugs rows DELETED (not greyed), nine screen
+bugs each with a real capture + numbered steps + What happens/What should happen, endpoint demoted to a
+last line. Verdict `docs/bug-reports/2026-09-11-QA-medium-53-reverification-verdict.md`, 20 captures in
+`docs/bug-evidence/2026-09-11-register-rebuild/`.
+**Role-rendering ticket = does NOT reproduce.** Condition Assessment renders for all six roles (PM, FM,
+CP, AM, EE, SA captured); PM gets Maintenance Program. Survivor is the ZP-4123 mismatch only: EE shown a
+menu link to Access Denied; FM refused at `/maintenance/program` but admitted at
+`/maintenance-portal/program` (two route entries, different guards); CP the same.
+**Owner then asked "have you checked this atrtificat carefully" — self-audit found 3 of MY errors:**
+(1) copy said "143 of them" while the embedded screenshot read `1–25 of 73`; (2) tally said 27 data-only
+findings but the tables show 21 rows (five quote findings are the same save call); (3) one finding
+(ZP-4123) was presented as two bugs. All three fixed in V12. **Lesson: cross-check every number in the
+prose against the pixels in the screenshot beside it before publishing.**
+**Browser recipe that worked:** six isolated contexts (`isolatedContext: admin|pm|fm|cp|ee|am|tech`) in
+one Chrome, each logged in once, 2FA dismissed with "Set up later", then `resize_page 1600x1000` before
+capture. Programmatic `.click()` does NOT open MUI Autocomplete — use the click tool on the "Open" button
+uid. AM seat password is `eOr2wZWpe1aE!` (not the shared one); EE is `+electric@`.

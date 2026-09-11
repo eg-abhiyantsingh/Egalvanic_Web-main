@@ -1,0 +1,91 @@
+# All 53 Medium findings re-tested live — 39 open, 14 dropped
+
+**Date:** 2026-09-11 · **Environment:** acme.qa.egalvanic.ai, V1.36 · **Artifact:**
+https://claude.ai/code/artifact/9b83e732-0072-40c8-8771-035f7d76617e (Version 11)
+
+## Why
+
+Owner, across three messages: *"check medium priority too"*, *"have you update medium priority too in
+artificate"*, *"whatever is fixed remove that form artificate so that artificate looks more clean"*.
+The register carried 53 Medium claims of which only 13 had been re-tested; the section was a
+half-finished "re-verification" box rather than one readable list.
+
+## Method
+
+One verifier agent per claim against the live app, then a second agent per verdict told to disprove it
+(53 verify + 22 refute completed; the refuter hit a session limit on the rest, but every verify verdict
+landed). Primer forced: a working example beside every claim, the masked-HTML soft-404 trap called out
+explicitly, and unknown-id distinguished from foreign-id.
+
+**The refuter overturned three of its colleague's verdicts** — #9 and #10 from REAL to INVALID, #11 from
+REAL to PARTIAL. That is the pass working as intended.
+
+## Tally
+
+| Verdict | Count |
+|---|---|
+| REAL | 35 |
+| PARTIAL | 3 |
+| FIXED | 7 |
+| INVALID | 7 |
+| CANNOT_TEST | 1 |
+
+Raw verdicts: `docs/bug-evidence/2026-09-11-register-rebuild/medium-53-verdicts.json`
+(claims as they stood: `medium-53-claims.json`).
+
+## Fixed since written — removed from the register
+
+#3/#26 cross-tenant create (no longer lands; victim's own create on the same site does — positive
+control), #19 maintenance routes now guarded (Account Manager refused on both), #20 site picker present,
+#33 Site Walks direct-URL now shows Feature Not Available, #37 Condition Assessment no longer prints a
+raw permission error, #46 add-to-quote gate closed on both routes.
+
+## Never bugs — removed from the register
+
+#1 foreign plan id returns the SPA shell, byte-identical to a random id (the 200-means-success trap);
+#9 live property definitions have no colliding names; #10 report-config writes gate on a permission by
+design; #16 the "no manual path" leap is false — the seeded work type resolves real panels; #18 the
+catalog described no longer exists; #21 the two roles do not hold the same permissions, so the premise
+fails; #43 the critical warning IS present and names the conflict.
+
+## Re-classified, not product bugs
+
+- **#34 `/api/tasks/all` 500** — stays out. The owner already ruled it dead code on 10 Sep; the workflow
+  re-confirmed the 500 but also that nothing in the bundle calls it.
+- **#25 stale RBAC baseline** — our own contract test diffs live QA against a 15 Jun PROD export. Our
+  test suite, not the product.
+- **#44 PR #1391 only on `cicd/qa`** — release-management question (qa is 67 ahead / 25 behind dev).
+
+## Nine reproduced by hand in the browser today, with screenshots
+
+`docs/bug-evidence/2026-09-11-register-rebuild/` — #22 dead Created column (with the Due Date control in
+the same frame), #41 new asset missing from the Add-Issue picker (fresh repro: badge 2→3 while the picker
+stays at 280), #47 unknown quantity prices as ×0·$0·$0, #42 Label Placement has no tick-box column,
+#40 Client Portal tile → Access Denied (two frames), #39 FM opens an unmapped site's work order,
+ZP-4123 EE menu → Access Denied / FM refused at `/maintenance/program` but admitted at
+`/maintenance-portal/program` / CP likewise, #17 issue page has no back control, #23 Technician web-blocked
+but still holds `quotes.approve`.
+
+## The role-rendering ticket (Web: Role-Based Access Rendering Issue) — does not reproduce
+
+Condition Assessment renders for **all six roles** checked live today (Super Admin, PM, FM, Client Portal,
+Account Manager, Electrical Engineer) — screenshots for five of them in the evidence folder. Project
+Manager gets Maintenance Program and it renders. Both acceptance criteria are met.
+
+**What is still wrong is the mismatch set, which is ZP-4123, not this ticket:** EE is shown a menu link to
+a page that refuses them; FM is refused at `/maintenance/program` yet admitted to the same content at
+`/maintenance-portal/program`; Client Portal reaches it the same way. Owner-stated intent recorded: CA for
+every role and PM having Maintenance Program are both *by design*, so only the mismatches are defects.
+
+## Not settled
+
+- **#27** asset created against a non-existent equipment class — confirmed 10 Sep, read-back never
+  resolved today (async write path). Open but unproven.
+- **#30** raw cloud error printed in the dialog — the stored error is confirmed live (2,000-char AWS
+  descriptor, still readable ~3 weeks on, readable by a non-creator Technician) and the render path is
+  unambiguous in the current bundle, but a failing job takes ~17 min and cannot be forced.
+
+## Footprint
+
+Read-only except one labelled asset, `QA-VERIFY n41b delete me` (Circuit Breaker) on work order
+`b67a3c26-583d-4f59-997e-95327c26c3ae`, created to reproduce #41. Left in place per the sandbox rule.

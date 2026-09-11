@@ -72,3 +72,6 @@ docs/report-artifacts/
 testcase/service_workorder_video/
 testcase/IR_video/
 *.mp4
+
+# derived web-sized copies of evidence screenshots (inlined into the artifact)
+docs/bug-evidence/*/web/
