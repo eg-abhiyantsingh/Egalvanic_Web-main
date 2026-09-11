@@ -73,10 +73,12 @@ public class AppConstants {
     public static final String FM_PASSWORD = getEnv("FM_PASSWORD", "JngowqLgr1aE!");
     public static final String CP_EMAIL = getEnv("CP_EMAIL", "abhiyant.singh+clientportal@egalvanic.com");
     public static final String CP_PASSWORD = getEnv("CP_PASSWORD", "RP@egalvanic123");
-    // Account Manager provisioned 2026-06-15 (+accountm, unique pw). Electrical Engineer
-    // still has no QA test account (login → 401); the RBAC tests SKIP it until it exists.
-    // EE email below is a best guess on the +role alias pattern; override via env once created.
-    public static final String EE_EMAIL = getEnv("EE_EMAIL", "abhiyant.singh+electric@egalvanic.com")  // +electricalengineer@ does not exist on QA (verified 2026-09-07: Invalid credentials); +electric@ is the live EE seat;
+    // Account Manager provisioned 2026-06-15 (+accountm) — it has its OWN password, not the
+    // shared one; using RP@egalvanic123 for it returns "Invalid credentials" and looks like a
+    // dead seat. Electrical Engineer is +electric@ — +electricalengineer@ does not exist on QA
+    // (verified 2026-09-07). Both seats signed in successfully on 2026-09-11, so the older
+    // "EE has no account / tests skip it" note above no longer applies.
+    public static final String EE_EMAIL = getEnv("EE_EMAIL", "abhiyant.singh+electric@egalvanic.com");
     public static final String EE_PASSWORD = getEnv("EE_PASSWORD", "RP@egalvanic123");
     public static final String AM_EMAIL = getEnv("AM_EMAIL", "abhiyant.singh+accountm@egalvanic.com");
     public static final String AM_PASSWORD = getEnv("AM_PASSWORD", "eOr2wZWpe1aE!");

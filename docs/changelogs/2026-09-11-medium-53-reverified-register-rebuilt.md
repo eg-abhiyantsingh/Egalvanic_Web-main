@@ -50,3 +50,29 @@ random-id control decide it. That single trap accounts for most of the invalid f
 
 One labelled asset `QA-VERIFY n41b delete me` on WO `b67a3c26-583d-4f59-997e-95327c26c3ae`, created to
 reproduce the stale-picker bug. Everything else read-only.
+
+## Follow-up — the credentials question uncovered a build break
+
+Owner asked: *"do you mean to say any id and password is incorrect?"* Answer: no, nothing in the repo is
+wrong. One of **my** login attempts was — I typed the shared password for the Account Manager seat instead
+of reading `AppConstants`, which has its own (`AM_PASSWORD = eOr2wZWpe1aE!`). All seven seats signed in on
+the correct values.
+
+**But checking that turned up a real defect in our own suite.** `AppConstants.java:79` had a note appended
+after `getEnv(...)` that swallowed the statement's semicolon:
+
+```java
+public static final String EE_EMAIL = getEnv("EE_EMAIL", "…")  // …; +electric@ is the live EE seat;
+```
+
+`mvn compile` reported BUILD SUCCESS because the compiler skipped the unchanged file and reused the stale
+`target/classes/…/AppConstants.class`. Touching the file exposed it: `AppConstants.java:[79,102] ';'
+expected`. **A clean checkout or CI run could not have built the project.**
+
+Fixed: note moved above the declaration, semicolon restored, and the now-false "EE has no QA account /
+tests skip it" comment corrected. `mvn -o clean test-compile` → BUILD SUCCESS.
+
+**Method note worth keeping:** `mvn … | tail` then `echo $?` reports *tail's* exit status, not Maven's, so
+the first check said exit=0 on a broken build. Redirect to a file and read `$?` immediately.
+
+Artifact updated to Version 13 with this recorded under "not product bugs".
