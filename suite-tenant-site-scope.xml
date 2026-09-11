@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+  Tenant-scope and site-scope security contract, run against EVERY role.
+  Added 2026-09-11 after the all-roles sweep. These cases are expected to FAIL on the
+  current QA build: that is the point - they encode the four confirmed leaks so the fix
+  can be verified and the regression caught.
+
+    mvn test -DsuiteXmlFile=suite-tenant-site-scope.xml
+-->
+<suite name="Tenant and Site Scope Contract" verbose="1">
+  <test name="All roles - tenant and site scope">
+    <classes>
+      <class name="com.egalvanic.qa.testcase.TenantAndSiteScopeContractTest"/>
+    </classes>
+  </test>
+</suite>
