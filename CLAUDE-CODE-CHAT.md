@@ -1108,3 +1108,22 @@ CUSTOMER (refused, 422): `+project@` PM 95 · `+fm@` FM 75 · `+clientportal@` C
 Control: PM reading its OWN sld → 200, 2.2 MB, 291 nodes. So six refusals are real.
 **Still blocked:** need a NON-staff login on a POPULATED second tenant to finish the family.
 Artifact V17 carries the 8-seat table + screenshot `xtenant-02-all-eight-seats.png`.
+
+## 2026-09-11 (evening) — ALL-ROLES SWEEP: 3 new High leaks + a regression suite
+Owner: *"check for all role… we have tested 50 ticket so can be possible we might miss something."* Right.
+Workflow: 73 routes × 8 seats (6 customer + 2 staff controls), cross-role diff, 3 adversarial lenses.
+**169 agents, 48 done, 121 killed by the session limit** (verifies #13–53 + the critic never ran) — so I
+**re-verified all 8 survivors by hand**. 4 confirmed, 2 did not reproduce, 1 Medium, 1 untestable.
+**CONFIRMED (now in `TenantAndSiteScopeContractTest`, `suite-tenant-site-scope.xml`):**
+(1) `GET /api/users/` from a PM refused the /users page → **265 users / 8 companies / 43 foreign** w/ email
++ MFA state. (2) `node_classes` 637 rows **527 foreign**/11 companies; edge 39; issue 21. (3) node-lookup
+family ignores `accessible_sld_ids` for **all 6 customer roles** — `/api/sld/{id}` and
+`/connections/v2/sld/{id}` both **422** for the same site whose **282 assets** `/nodes/sld/{id}` hands over;
+staff ground truth identical (282). **Controls:** materials-library/labor-rates/test-equipment = 0 foreign.
+**Live suite result: 21 run, 12 FAIL, 4 skip** (skips = staff seats, with reason printed).
+**KEY NUANCE — do not let this read as a flip-flop:** the morning's cross-tenant withdrawal STANDS (by-id
+routes ARE scoped; that proof used a staff seat). This is a *different mechanism* — **list** endpoints with
+no id and no filter. "Not a leak by pasting an id. A leak by asking for the list."
+**NOT reproduced, excluded on purpose:** CP→opportunities (200 text/html masked; /plans 422) and
+`/account/{id}/access-list` (CP sees 0 accounts, no id obtainable). Verdict
+`docs/bug-reports/2026-09-11-QA-all-roles-sweep-verdict.md`; artifact V19.
