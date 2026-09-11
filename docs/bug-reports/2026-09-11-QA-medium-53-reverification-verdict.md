@@ -89,3 +89,36 @@ every role and PM having Maintenance Program are both *by design*, so only the m
 
 Read-only except one labelled asset, `QA-VERIFY n41b delete me` (Circuit Breaker) on work order
 `b67a3c26-583d-4f59-997e-95327c26c3ae`, created to reproduce #41. Left in place per the sandbox rule.
+
+---
+
+## Re-check of the removals (asked: *"are you sure they are invalid you have removed all of them?"*)
+
+**First, the count.** The register holds **53 Medium** findings, not 59 (full severity split: P1 8,
+Critical 2, High 41, Medium-High 2, Medium 53, Low 35 = 141). **I removed 13, not all of them. 40 remain
+on the page.**
+
+Re-ran the decisive check for the seven INVALID rulings on 2026-09-11 afternoon, live as Super Admin:
+
+| # | Ruling | Re-check today | Holds? |
+|---|---|---|---|
+| 1 | foreign `pm_standard_id` accepted | Real standard `NFPA 70B 2026` → **200 application/json, 6 services**; unknown id → **200 text/html**, the SPA shell, 0 rows. A non-own id returns no data at all. | ✅ invalid |
+| 9 | issue property names collide | **WRONG — put back.** 50 classes, 84 property names, **23** distinct once trimmed/lowercased. One genuine collision: `Current Draw (A)` vs `Current Draw (A) `. Plus one blank name. | ❌ **reinstated** |
+| 10 | report-config write authz | `reports.manage`: Technician **true**, PM **false**, FM **false**. Permission-gated exactly as the matrix grants it. | ✅ invalid |
+| 16 | panel-schedule flag unseeded | `Panel Schedule Updates` service exists on the tenant (manual path available). *Did not re-fetch all 216 procedure details today* — resting on the workflow's sweep for the 0-flag half. | ✅ invalid (partly carried) |
+| 18 | 53-method fix catalog has no forms | 20 services live; **no "Issue Resolution — Any Asset" among them.** The catalog described is gone. | ✅ invalid |
+| 21 | PM and FM hold an identical permission pair | PM 95 perms **with** `accounts.view` + `accounts.manage`; FM 75 perms **with neither**. Premise false. | ✅ invalid |
+| 43 | real kA conflict gives only an ordinary warning | CB5: `aic_rating 65`, `warnings 1`, **`critical_warnings 1`** reading *"Interrupting rating mismatch: asset AIC Rating 65 kA vs bound library frame 25 kA @ 600 V (Powerpact HJ)"*. | ✅ invalid |
+
+**Six of seven held. One did not, and is back on the page** in the reports/services table with its true
+scale stated (one pair, plus one blank name) so it is not over-read.
+
+**The seven FIXED rulings.** #19, #20 and #37 were re-confirmed by me in the browser this morning across
+PM/FM/CP/AM/EE seats (screenshots in the evidence folder). **#3/#26 and #33 rest on the second tenant and
+were not re-run this afternoon** — they carry the workflow's evidence and controls, and are marked as such.
+#46 rests on the workflow's 409-with-controls result.
+
+**Method note:** three of my first probes used the wrong call shape (query-string instead of the real
+parameter, `data` wrapper assumed where the response is a bare array, `methods` assumed nested where the
+list only returns `method_count`). A wrong-shaped probe returns a confident-looking wrong answer — always
+land a **positive control** first, which is what caught all three.
