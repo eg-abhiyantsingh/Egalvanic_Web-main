@@ -1071,3 +1071,26 @@ prose against the pixels in the screenshot beside it before publishing.**
 one Chrome, each logged in once, 2FA dismissed with "Set up later", then `resize_page 1600x1000` before
 capture. Programmatic `.click()` does NOT open MUI Autocomplete — use the click tool on the "Open" button
 uid. AM seat password is `eOr2wZWpe1aE!` (not the shared one); EE is `+electric@`.
+
+## 2026-09-11 (late) — CROSS-TENANT P1 WITHDRAWN: the proof had used a staff account
+Owner: *"are you sure have you check cross teneent issue too?"* — I had NOT re-run it today, and said so.
+Re-ran it properly. **`abhiyant.singh+admin@egalvanic.com` has `is_eg_admin: true`** — it is an Egalvanic
+STAFF account. Every cross-tenant "proof" since August was run from it. Staff reading across companies is
+BY DESIGN.
+**Decisive control set** (`GET /api/sld/24eb08b1-…`, a Demo-Company diagram, from three EG-ACME logins):
+`+admin@` (staff) → **200 json, "test"**; `+project@` PM → **422 permission_denied**; `+fm@` → **422**.
+Positive control: PM reading its OWN sld → 200, 2.2 MB, 291 nodes. Random UUID → 422. So the refusal is
+real and the route is scoped for customers.
+Other routes from the PM seat: contact/by-sld → `{contacts:[]}`; lookup/v2/nodes → `total:0`;
+library-designations → empty; `issues/open-by-site?company_id=` → **422** (the register called this an
+unguarded query-string bypass — it is guarded now); `ir_session?limit=500` → 1,569 rows, all own tenant.
+**HONEST GAPS (why it is *withdrawn*, not *disproved*):** demo is a near-empty tenant so "empty" is
+ambiguous on every route except /api/sld/{id}; session-keyed routes (eg-form-instance/by-session,
+mapping/node-session/by-session, ir_session/{id}/full) are UNTESTABLE because demo has no work orders of
+its own; and the only demo login (`shubham.goswami@`) is **also `is_eg_admin: true`**, so the reverse
+direction can't be run. **BLOCKER: a non-staff login on a populated second tenant.**
+**RULE NOW:** any cross-tenant test must print the attacker's `is_eg_admin` next to the result, or it
+proves nothing. Same class as the masked-HTML trap — a 200 that isn't what it looks like.
+Verdict `docs/bug-reports/2026-09-11-QA-cross-tenant-withdrawn.md`; evidence
+`docs/bug-evidence/2026-09-11-register-rebuild/xtenant-01-staff-reads-it-customers-refused.png`;
+artifact V16 leads with the withdrawal.
