@@ -79,3 +79,49 @@ whole family is settled in an afternoon.
 every tenancy test pass trivially and silently. **Any cross-tenant test must print the attacker's
 `is_eg_admin` alongside the result, or it proves nothing.** This is the same class of error as the
 masked-HTML trap: a 200 that means something other than what it looks like.
+
+---
+
+## Audit of the rest of the page (owner: *"check that our updated artificate is correct or not"*)
+
+The counters quoted — *10 cross-tenant routes open · 45 major · 90 medium & low · 109 verdicts mined ·
+53 tickets covered · 5 claims refuted* — are from **Version 10** and are no longer on the page. The live
+page carries a four-tile tally covering only the Medium set: **9 on screen · 22 in the data · 16 removed ·
+2 not testable.** Those four numbers were re-counted against the rendered page and are correct.
+
+**But the audit found a real over-claim,** now fixed: the lede said *"every row on this page was re-tested
+live today"*, while the four non-Medium majors had **not** been re-tested. Two of them are testable and I
+re-ran both this evening from **non-staff** seats:
+
+### Entitlement bypass (ZP-3904) — REAL, re-confirmed
+
+`features.equipment_designations.view` is held by the **Electrical Engineer** (`true`) and **not** by the
+**Project Manager** (`false`), confirmed in both accounts' own `/auth/v2/me`. The PM nonetheless loads the
+data: totals **154 / 112 / 163 / 40 / 2** across the default, `ocpd`, `sccr`, `feeder` and `transformer`
+views of `/api/sld/{id}/library-designations`. Declared and never enforced.
+
+### Site-scope leak — REAL, re-confirmed, with the decisive contrast
+
+Facility Manager, **11 accessible sites**, target site **not among them**:
+
+| Call, same FM token, same unmapped site | Result |
+|---|---|
+| `GET /api/sld/{id}` (the diagram) | **422 permission_denied** |
+| `GET /api/sld/{id}/library-designations` | **200, 154 rows** — named equipment (*29 july abhiyant asset*, *397 Transformer TF-Add*, *ats*) |
+| Control: same call on the FM's **own** site | 200, 260 rows — the route works normally |
+
+The app refuses this seat the diagram and then serves the equipment list built from that same diagram.
+That contrast is what makes it a defect rather than a design choice, and it is **within one tenant**, so
+the staff-account problem that killed the cross-tenant finding does not apply here.
+
+### Not re-run
+
+*"21 pages have no permission check at all"* is carried from the earlier nav sweep and is now **labelled
+as not re-tested** on the page rather than sitting there implying it was.
+
+### Corrections applied to the artifact (Version 18)
+
+1. The withdrawn cross-tenant row is **out of the "still open" table** — 5 majors became 4.
+2. Both re-verified majors now carry today's figures and a "re-tested 11 Sep, non-staff seat" stamp.
+3. The nav-audit row is marked not re-run.
+4. The lede no longer claims *every* row was re-tested today.
