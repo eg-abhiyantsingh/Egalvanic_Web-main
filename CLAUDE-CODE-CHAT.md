@@ -1127,3 +1127,22 @@ no id and no filter. "Not a leak by pasting an id. A leak by asking for the list
 **NOT reproduced, excluded on purpose:** CP→opportunities (200 text/html masked; /plans 422) and
 `/account/{id}/access-list` (CP sees 0 accounts, no id obtainable). Verdict
 `docs/bug-reports/2026-09-11-QA-all-roles-sweep-verdict.md`; artifact V19.
+
+## 2026-09-14 (release day) — Web v2.2 check: 1 fixed, 1 "Done" that isn't, 1 half-fix
+Owner pointed at the Jira release report (version 14156 = **Web v2.2**, 37 issues, all Medium, 33
+Resolved-migrated / 3 To Do / 1 In Progress; Eric 36, Krunal 1). Re-tested the overlapping ones on the
+**release build `index-BTBN1KL5.js`** (rebuilt since 11 Sep, so not stale).
+**ZP-4159 (mine, In Progress) — work-order half FIXED.** `/ir_session/{id}/full|team|summary/v2` now return
+200 **text/html** for the FM where on 11 Sep they gave JSON with `account_name`. **But the rest of the
+family still leaks on the same unassigned site:** `/nodes/sld/{id}` **292 assets**, `/lookup/issues/{id}`
+**80 issues**, `/lookup/v2/nodes` 50, `/lookup/node-class-counts` 30, `/library-designations` 25 — while
+`/sld/{id}` and `/connections/v2/sld/{id}` still 422. Classic fix-the-named-endpoints-not-the-rule.
+**ZP-4145 marked DONE is NOT FIXED** (High): PM `is_eg_admin:false`, 95 perms, no
+`features.equipment_designations.view`, still gets **156/114/167/40/2** rows across the five engineering
+schedule pages and the page renders. **Recommend reopening.** Evidence
+`docs/bug-evidence/2026-09-14-release-check/zp4145-done-but-still-open.png`.
+**The 2 list leaks (users 265/43-foreign, node_classes 637/527-foreign) are unchanged and have NO ticket.**
+Verdict `docs/bug-reports/2026-09-14-QA-web-v2.2-release-check.md`; artifact V20.
+**Jira: nothing changed** — ZP-4145 reopen + ZP-4159 scope widening raised for the owner to decide, per
+[[feedback_ask_before_every_extra_jira_change]]. Also ZP-4159's priority field says Medium while its own
+description says High (same mismatch ZP-4160 had).
