@@ -36,3 +36,16 @@ The gate matches on the literal string `"Portal Sales"`. Given the V1.36 rename 
 Maintenance Portal with no error anywhere. A permission would not have that failure mode.
 
 Evidence: `docs/bug-evidence/2026-09-21-portal-sales-role/`
+
+## Resolution — Eric Ehlert, 21 Sep
+
+> "No, just direct DB add"
+
+Confirms the finding: roles are not creatable in the product on any environment; Portal Sales is added
+straight to the database. The doubt is therefore closed as *works as designed* on the creation point, and
+what remains is a seeding request for QA.
+
+**Still open for QA:** `Portal Sales` has not been inserted on QA, so ZP-4138 can only be verified on the
+negative path. The positive path (assign the role → the portal section appears) needs the row added on QA
+and attached to a test seat. The insert must use the exact name string `Portal Sales`, because the gate is
+a literal name match rather than a permission.
