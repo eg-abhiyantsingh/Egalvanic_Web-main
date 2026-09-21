@@ -88,6 +88,21 @@ public class AppConstants {
     public static final String ADMINQA_EMAIL = getEnv("ADMINQA_EMAIL", "abhiyant.singh+adminqa@egalvanic.com");
     public static final String ADMINQA_PASSWORD = getEnv("ADMINQA_PASSWORD", "RP@egalvanic123");
 
+    // 8th seat, supplied by the repo owner 2026-09-21: the "Portal Sales" role (ZP-4138).
+    // Portal Sales gates the customer-facing Maintenance Portal (/maintenance-portal/*) and is the
+    // ONLY way to test that gate's POSITIVE case — every other seat can only prove the negative
+    // (rail hides the section, direct URL renders Access Denied).
+    // The role is NOT creatable from the product: there is no Roles UI in Admin and no role CRUD
+    // endpoint in the frontend. Eric Ehlert, 2026-09-21: "No, just direct DB add" — so this seat
+    // exists because the row was inserted server-side.
+    // The gate is a literal role-NAME match in the bundle (`Ocs = "Portal Sales"`, used as
+    // `roles.map(r => r.name).includes(Ocs)` and as the route guard `orRoles:[Ocs]`), NOT a
+    // permission — so renaming the role silently un-gates or over-gates the portal.
+    public static final String PORTAL_SALES_EMAIL =
+            getEnv("PORTAL_SALES_EMAIL", "abhiyant.singh+portalsales@egalvanic.com");
+    public static final String PORTAL_SALES_PASSWORD =
+            getEnv("PORTAL_SALES_PASSWORD", "RP@egalvanic123");
+
     // ============================================
     // STAFF vs CUSTOMER — READ BEFORE ANY TENANCY TEST
     // ============================================
