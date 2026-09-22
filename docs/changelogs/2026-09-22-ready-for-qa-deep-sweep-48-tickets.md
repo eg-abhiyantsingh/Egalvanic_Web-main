@@ -108,3 +108,23 @@ not want it.
 Only on records created for QA and labelled as such: the AI edit on `QA-DEMO fork regression ZP-staff-write
 (delete me)`, and three Convert attempts on `QA-DEMO ZP4220 v2 EMP priced (delete me)` which the server did
 not persist. The Add Assets dialog was cancelled. The bulk Mark As confirm was deliberately not run.
+
+## Update — traceability added to the artifact (same day)
+
+**Owner:** "you have not added link of the data that you are testing and also add ticket link that you
+are testing and bugs that you are testing or created so that it would be easy to track"
+
+Artifact v2 at the same URL <https://claude.ai/artifact/1co6Lj66t8uzZbCNqAaEcb>:
+
+* **Every ticket number is now a Jira link** — 139 links, covering the record headings and all 48 rows of
+  the ledger.
+* **Every record is now a QA link** — 56 links. A new section, *Every record this run touched*, lists the
+  17 records a verdict was taken on (work orders, quote, panel schedules, journal walks, report configs,
+  assets, issue, connection) with the ticket each belongs to and a direct URL, plus the 18 pages walked
+  with the tickets checked on each.
+* **A new section, *What changed in Jira today***: the five tickets moved to READY TO RELEASE with their
+  comment ids, and a plain statement that **no new bug was filed**, naming the three findings that still
+  need a ticket and need the owner's go-ahead first — the Asset Classes regression, the missing Interpret
+  control on a completed journal walk, and the AWS account number returned on success paths.
+* The records themselves now link the data inline, so a reader can open the exact work order, walk or
+  config a step refers to.
