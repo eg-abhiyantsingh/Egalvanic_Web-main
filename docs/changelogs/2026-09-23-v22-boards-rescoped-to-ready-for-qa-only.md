@@ -15,8 +15,8 @@ Artifacts republished at the SAME URLs:
   1 Resolved). The other 33 appear only in an "Out of scope" list by key, grouped by status, untested.
   Two To Do tickets (ZP-4346, ZP-4347) joined the release since the morning read; ZP-4315 moved To Do →
   In Progress. The Ready-for-QA set itself did not change.
-- **Tiles** are computed from the same 41-row ledger: 12 passing-held · 7 partial/not located (6 + 1) ·
-  8 open defects · 6 blocked on data or seat · 8 no web surface. Coverage strip = 41 cells.
+- **Tiles** are computed from the same 41-row ledger (after the refuter fixes below): 10 working-held ·
+  7 partial/not located (6 + 1) · 9 open defects · 7 cannot be exercised · 7 no web surface. Coverage strip = 41 cells.
 - **Dropped from the boards** (out of scope by instruction): the eight READY TO RELEASE re-confirmations,
   the "promoted without QA evidence" band (ZP-4208 / ZP-4266), ZP-4338 and ZP-4292 blocks, the "what the
   old boards got wrong" bullets about RTR tickets. Their evidence stays in the 23 Sep NOTES.md, the
@@ -29,7 +29,7 @@ Artifacts republished at the SAME URLs:
   groups, with ten 22 Sep captures uploaded as `img22/`.
 - **Decisions band** is RFQ-only: ZP-4042 blocker; a Portal Sales seat (ZP-4061 + portal halves of
   4042/4043); ZP-4150 needs the developer to name the screen; go-ahead to file the defects found on RFQ
-  tickets that have no ticket of their own; hold comments on the five RFQ tickets that did not pass today.
+  tickets that have no ticket of their own; hold comments on the six RFQ tickets walked today, none of which passed (ZP-3919, 4030, 4151, 4181, 4326, 4344).
 
 ## Verification before publishing
 
@@ -62,11 +62,24 @@ item (the publish skeleton adds them). The material ones:
   all at ~14:00 IST on **`index-CH4p1H5S.js`** (QA rebuilt again this afternoon; both pages say so).
   ZP-4189 uses the 14 Sep capture filed with the ticket, captioned as such (copied server-side from the old board).
 
-**Round 2 (2 agents):** ROUND2_PLACEHOLDER
+**Round 2 (2 agents, ~13 min): 3 must-fix, 7 should-fix, 10 nits — all applied; 15 round-1 fixes confirmed per page.**
+
+- **ZP-4042 dating was mine, not the evidence's.** The boards said "since 19 Sep / every day 19–23 Sep / day five";
+  nothing in the repo dates a probe to 19 or 20 Sep. Provable: first recorded **14 Sep**, probed 14, 21, 22, 23 Sep,
+  **six bundles** (DDSq5pRr → BV-phiFE → BOaMecwk → C9NJAR1x → CPjC9Hwo → CH4p1H5S). Pill now "Blocker · six
+  bundles". The same "day five" label sits in this morning's NOTES.md and changelog — corrected by an addendum, not
+  rewritten.
+- "four captures" after the rebuild → **five** (25–29).
+- Build cells split where the basis mixed builds: ZP-4171 (Subtypes column 21 Sep / Engineering block 22 Sep),
+  ZP-4109 (toggle 22 Sep / flat grid 21 Sep), ZP-4068 (Count vs Journal 22 Sep / live interpretation today);
+  ZP-4261 gets its 22 Sep build. `/sitemap.xml` caption says what the pixels show (the two-factor set-up prompt).
+- Duplicate row ids between the "walked today" table and the ledger removed; footer lists the grid-sort evidence folder.
+
+Republished both pages after the fixes (Deep Pass v4, Readiness v7).
 
 ## No Jira changes in this step
 
-Nothing transitioned, no comments added. The five hold comments and the new bugs still need the owner's yes.
+Nothing transitioned, no comments added. The six hold comments and the new bugs still need the owner's yes.
 
 ## Memory
 
