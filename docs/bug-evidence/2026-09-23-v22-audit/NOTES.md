@@ -72,3 +72,9 @@ Also re-tested because their code landed AFTER the 22 Sep evidence: ZP-3919 (PR 
 - Journal walk ac758601-… "14 augest abhiyant": one 314-character note "QA-DEMO ZP-4208 delete me…" left in place (triggered a live interpretation run).
 - Maintenance Program Defer: POST returned 400, nothing written. bulk-create probes: 500/400, nothing written. Email OTP: one code mailed to +fm@.
 - Chrome active site restored to Android Site 2 at the end.
+
+## 14:00 IST — bundle moved again: `index-CH4p1H5S.js`
+- Noticed while re-capturing for the Ready-for-QA-only boards. Everything above dated 23 Sep was taken on `index-CPjC9Hwo.js` (12:30–13:30 IST). Captures 25–29 are on CH4p1H5S.
+- ZP-4344: /robots.txt head (25) and tail (29) — tail is `User-agent: * / Disallow:`, no `Sitemap:` line (innerText regex /^Sitemap:/m → false); /sitemap.xml renders the SPA shell (the 2FA prompt) → 26.
+- ZP-4042: browser GET /api/reporting/history?limit=5 → 500 `{"error":"internal_error","trace_id":"8ebb82e9b2374d6db8c0db960f5c66f0"}` → 27 (real pixels of the failing call); /maintenance-portal/reports → Access Denied on CH4p1H5S → 28 (also ZP-4061 / ZP-4138 route half).
+- Corrections from the refuter pass on the draft boards: ZP-3919 was NOT "never tested" — it was tested 22 Sep (email+password only, capture 04 of the recheck) and re-run today because PR #1513 merged 01:45; never-tested = FOUR (4151, 4181, 4326, 4344). ZP-4030 relabelled Defect (two acceptance lines fail: raw parse error for invalid ids; AASA lists a personal tutorial app id). ZP-4045/4060 relabelled Partial (bars render with zeros; behaviour unexercised). ZP-4082 relabelled "not run" (ticket says prod-only; Planned Work → Release not attempted). ZP-4062's positive evidence is 21 Sep (BOaMecwk). ZP-4039/4112/4167 bases split by build.
