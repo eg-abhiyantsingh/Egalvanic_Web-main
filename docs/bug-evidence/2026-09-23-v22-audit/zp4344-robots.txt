@@ -1,0 +1,86 @@
+# robots.txt for the Project Z application host.
+#
+# SCOPE / INTENT
+# This is a declaration of intent for compliant crawlers only. It is NOT an
+# access control and must not be represented as one. Compliant declared
+# crawlers honour it; undeclared or spoofed crawlers ignore it. Agentic
+# browsers operating inside a logged-in session are out of scope entirely.
+#
+# Tokenised report and share-link responses are deliberately NOT listed as
+# Disallow entries below: a Disallow line would publish the very paths we
+# want kept out of indexes. Those responses carry
+#   X-Robots-Tag: noindex, nofollow, noarchive
+# instead, which is applied at the response layer, not here.
+#
+# Every token below was verified against current vendor documentation.
+# Source URLs and verification dates are recorded in docs/robots-txt.md.
+# Verified: 2026-09-23
+
+# --- OpenAI -----------------------------------------------------------
+# Source: https://developers.openai.com/api/docs/bots (verified 2026-09-23)
+User-agent: GPTBot
+Disallow: /
+
+User-agent: OAI-SearchBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: OAI-AdsBot
+Disallow: /
+
+# --- Anthropic --------------------------------------------------------
+# Source: https://support.claude.com/en/articles/8896518 (verified 2026-09-23)
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Claude-User
+Disallow: /
+
+User-agent: Claude-SearchBot
+Disallow: /
+
+# --- Google -----------------------------------------------------------
+# Google-Extended is a control token only: it governs Gemini training and
+# grounding, and does not affect Google Search inclusion or ranking.
+# Source: https://developers.google.com/search/docs/crawling-indexing/google-common-crawlers
+# (verified 2026-09-23)
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: Google-CloudVertexBot
+Disallow: /
+
+# --- Bing / Microsoft -------------------------------------------------
+# Microsoft publishes NO robots.txt product token for AI training or
+# Copilot use. That control surface is the NOARCHIVE / NOCACHE robots meta
+# tag (or X-Robots-Tag), not robots.txt. Listing an invented token here
+# would be a fabricated control, so none is listed.
+# Source: https://blogs.bing.com/webmaster/september-2023/Announcing-new-options-for-webmasters-to-control-usage-of-their-content-in-Bing-Chat
+# (verified 2026-09-23)
+# bingbot itself is left to the wildcard group below.
+
+# --- Perplexity -------------------------------------------------------
+# Perplexity documents that Perplexity-User generally ignores robots.txt,
+# because the fetch is user-initiated. It is declared here as intent; do
+# not rely on it being honoured.
+# Source: https://docs.perplexity.ai/guides/bots (verified 2026-09-23)
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: Perplexity-User
+Disallow: /
+
+# --- DuckDuckGo / DuckAssist -----------------------------------------
+# DuckDuckGo states opt-out takes effect ~72 hours after publication, and
+# does not affect organic search ranking or inclusion.
+# Source: https://duckduckgo.com/duckduckgo-help-pages/results/duckassistbot
+# (verified 2026-09-23)
+User-agent: DuckAssistBot
+Disallow: /
+
+# --- All other crawlers ----------------------------------------------
+# Empty Disallow = nothing is disallowed for everyone else.
+User-agent: *
+Disallow:

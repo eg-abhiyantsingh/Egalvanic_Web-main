@@ -1,0 +1,33 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "B7W4Z5Q6U8.com.egalvanic.zplatform-Dev",
+          "B7W4Z5Q6U8.com.egalvanic.zplatform-QA",
+          "B7W4Z5Q6U8.com.egalvanic.zplatform-Stag",
+          "B7W4Z5Q6U8.com.ericehlert.SwiftDataTutorial"
+        ],
+        "components": [
+          {
+            "/": "/sessions/*/quick-count",
+            "exclude": true,
+            "comment": "Quick Count stays on the web"
+          },
+          {
+            "/": "/sessions/*",
+            "comment": "Work order detail opens in the app"
+          }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "B7W4Z5Q6U8.com.egalvanic.zplatform-Dev",
+      "B7W4Z5Q6U8.com.egalvanic.zplatform-QA",
+      "B7W4Z5Q6U8.com.egalvanic.zplatform-Stag",
+      "B7W4Z5Q6U8.com.ericehlert.SwiftDataTutorial"
+    ]
+  }
+}

@@ -1,0 +1,61 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.egalvanic.pz.dev",
+      "sha256_cert_fingerprints": [
+        "9F:8C:52:3D:C3:7F:0A:0D:F5:07:A3:9F:71:6F:55:E3:F7:02:7D:B3:0F:9E:55:40:7F:7D:EB:9D:4D:73:1E:62",
+        "62:4F:B6:40:E4:3F:9A:69:60:14:43:02:D9:97:B1:98:3C:40:D2:E1:5D:A9:19:02:19:DC:CF:00:7D:40:37:74",
+        "C8:AA:F7:4B:6B:60:70:96:92:2C:AA:EF:22:C5:5F:FA:47:0F:5D:81:6A:EC:7B:A1:D2:89:1C:07:D8:70:8A:42"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.egalvanic.pz.qa",
+      "sha256_cert_fingerprints": [
+        "9F:8C:52:3D:C3:7F:0A:0D:F5:07:A3:9F:71:6F:55:E3:F7:02:7D:B3:0F:9E:55:40:7F:7D:EB:9D:4D:73:1E:62",
+        "62:4F:B6:40:E4:3F:9A:69:60:14:43:02:D9:97:B1:98:3C:40:D2:E1:5D:A9:19:02:19:DC:CF:00:7D:40:37:74",
+        "C8:AA:F7:4B:6B:60:70:96:92:2C:AA:EF:22:C5:5F:FA:47:0F:5D:81:6A:EC:7B:A1:D2:89:1C:07:D8:70:8A:42"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.egalvanic.pz.staging",
+      "sha256_cert_fingerprints": [
+        "9F:8C:52:3D:C3:7F:0A:0D:F5:07:A3:9F:71:6F:55:E3:F7:02:7D:B3:0F:9E:55:40:7F:7D:EB:9D:4D:73:1E:62",
+        "62:4F:B6:40:E4:3F:9A:69:60:14:43:02:D9:97:B1:98:3C:40:D2:E1:5D:A9:19:02:19:DC:CF:00:7D:40:37:74",
+        "C8:AA:F7:4B:6B:60:70:96:92:2C:AA:EF:22:C5:5F:FA:47:0F:5D:81:6A:EC:7B:A1:D2:89:1C:07:D8:70:8A:42"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.egalvanic.pz",
+      "sha256_cert_fingerprints": [
+        "C8:AA:F7:4B:6B:60:70:96:92:2C:AA:EF:22:C5:5F:FA:47:0F:5D:81:6A:EC:7B:A1:D2:89:1C:07:D8:70:8A:42",
+        "DE:04:2F:BD:47:6B:44:04:CA:2C:BE:71:B5:FF:52:56:51:C1:BA:D8:D1:75:D4:44:3D:C1:AF:2E:10:B8:22:0F"
+      ]
+    }
+  }
+]
