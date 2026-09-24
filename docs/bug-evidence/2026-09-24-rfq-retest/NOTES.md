@@ -76,3 +76,12 @@ Moves: ZP-4346 (comment 44498), ZP-4360 (comment 44499). ZP-4315: Krunal's 24 Se
 Shutdown-rule pre-ack (API): deviations for node 8b54aac9… carry `ack:{by_name:"Shutdown rule", system:true, justification:"This asset can never be taken out of service, so a de-energized procedure cannot be performed on it. Acknowledged automatically from its shutdown rule."}` on the three de-energized services; IR stays `acknowledged:false`.
 Human ack on the same pair: `POST /api/program-compliance/{site}/acks {dev_keys:[88979daf…], justification}` → 400 "1 key(s) do not match a current deviation" — three shapes tried (body only, body + pm_standard_id, ?pm_standard_id=) — key taken from the current list seconds earlier. Same defect as this morning; not a picker-path artefact.
 Withdraw the automatic ack (row icon "Withdraw acknowledgment"): `POST /api/program-compliance/{site}/acks/remove {dev_keys:[88979daf…]}` → **500** internal_error trace f418ae516fbc18a7d5ba4a70baf7b2dd; no toast shown; row still "Acked". Acknowledgements tab reads "0 justifications cover 3 deviations · No acknowledgments yet" (system acks are not listed there).
+
+## Comments + screenshots on the 20 remaining Ready-for-QA tickets (owner: "add comment and screenshot in 20 remainings ticket")
+| 36 | zp4315-ring-tooltip-overall-3-of-10 | ZP-4315 | WO 1a9c5d13 ring tooltip "Overall: 3 of 10 (30%)" on CC4S9HsJ |
+| 37 | zp4040-pm-forms-wo-forms-tab-column-ring | ZP-4040 | QA-DEMO PM Forms wheel check-offs: Forms tab (4), Forms column, ring 13% |
+| 38 | zp4086-circuit-breaker-class-editor-no-condition-flags | ZP-4086 | Admin → Asset Classes → Circuit Breaker editor, no Listed/Required condition controls |
+| 39 | zp4261-admin-activity-logs-request-log-with-acks-500-and-400s | ZP-4261 | Admin → Activity Logs: request log only (also shows today's acks/remove 500 f418ae51… and two ack 400s; tiles say BLOCKED·5XX 0 beside a 500 row) |
+| 40 | zp4176-updates-whats-new-panel-on-qa-build-v136 | ZP-4176 | In-app Updates ("What's new on Z platform") panel on the QA build V1.36 |
+| 41 | zp4127-cb4-powerpact-hj-engineering-tab-thermal-magnetic-no-dial | ZP-4127 | CB4 (Square D PowerPact HJ HJL36150, thermal magnetic) Engineering tab — library-matched, no continuous setting |
+Comments 44501–44520 (one per ticket; ZP-4042's first attempt timed out in the connector and was re-posted as 44520). Screenshots attached via the Jira page on 14 tickets; none possible for ZP-4185, 4363, 4128, 4183, 4190, 4216 (no web screen) — said so in each comment.
