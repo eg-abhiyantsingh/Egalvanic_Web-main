@@ -59,3 +59,20 @@ Owner: "instead of lock just hide the tab that is not accessible to user … for
 ## ZP-4391 (filed 24 Sep, owner's request)
 | 30 | zp4391-password-form-back-is-a-text-link | ZP-4391 | Password form: Sign In, terms, "Forgot your password?", then the small "Back to faster options" text link — owner wants a visible Back button directly below Sign In |
 Assigned to Avani, Medium, sprint 1222, fixVersion Web v2.2, To Do. Capture 30 attached (id 37560).
+
+## Afternoon pass (owner: "if ticket are passed then move ready to qa to ready to release") — same build index-CC4S9HsJ.js
+| 31 | zp4360-assets-374-rows-android-site-2 | ZP-4360 | Site Data → Assets, 374 rows page 1 (node listing correct); timing set in the ZP-4360 comment |
+| 32 | zp4045-portal-add-service-history-future-date-picker-unbounded-server-400 | ZP-4045 | Portal asset → Maintenance → Add record: "Last serviced" picker has NO max, 15/01/2027 accepted by the picker, server refuses: PUT /api/asset-maintenance/node/{id}/history → 400 "last_serviced_on cannot be in the future" (raw toast) |
+| 33 | zp4045-pm-plan-apply-future-last-performed-server-400 | ZP-4045 | Staff asset → Set Up PM Plan → Custom → Clean, Tighten, Torque, Last performed forced to 15/01/2027 (picker max = today): POST /api/asset-maintenance/apply → 400 "service_dates[…] cannot be in the future" |
+
+Timings (end-to-end from India, 3 runs, best/worst): work-order list POST workorders/v2 310/376 ms; asset list lookup/v2/nodes 285/735 ms; site dashboard lookup/site-overview/{site} 470/944 ms; empty-site asset list (network floor) 272/689 ms.
+Nav: secondary panel 264 px wide (rail 88 px); "Maintenance Program" text 164 px, scrollWidth = clientWidth → no ellipsis.
+Pickers: Record completion "Performed on" max=2026-09-24 ✔; PM-plan "Last performed" max=2026-09-24 ✔; Add Service History "Last serviced" max="" (portal AND staff) — not in the ticket's list, server refuses anyway.
+Test data: asset `QA-DEMO ZP-4045 shutdown rule - delete me` (Panelboard, id 8b54aac9-2655-40ac-857d-d937dbffd8d2) created on Android Site 2; shutdown restriction set to "never" (PUT …/shutdown → 200). No PM program applied (both applies refused).
+Moves: ZP-4346 (comment 44498), ZP-4360 (comment 44499). ZP-4315: Krunal's 24 Sep image is a WEB capture (ring 56%), not iOS.
+| 34 | zp4045-zp4060-compliance-acknowledged-3-shutdown-rule-segment | ZP-4045/4060 | Compliance overview after the shutdown rule: score 0.3% (3 of 865), legend "Acknowledged 3 deviations with written justification", bar shows the acknowledged sliver next to 862 red |
+| 35 | zp4045-deviations-acknowledged-filter-qa-demo-asset-three-acked-rows | ZP-4045 | Deviations → Acknowledged filter: Clean, Tighten, Torque / De-Energized Visual Inspection / NETA Testing on the QA-DEMO asset read "Never serviced · Acked"; Infrared Thermography (energized) stays open; each row has a "Withdraw acknowledgment" icon |
+
+Shutdown-rule pre-ack (API): deviations for node 8b54aac9… carry `ack:{by_name:"Shutdown rule", system:true, justification:"This asset can never be taken out of service, so a de-energized procedure cannot be performed on it. Acknowledged automatically from its shutdown rule."}` on the three de-energized services; IR stays `acknowledged:false`.
+Human ack on the same pair: `POST /api/program-compliance/{site}/acks {dev_keys:[88979daf…], justification}` → 400 "1 key(s) do not match a current deviation" — three shapes tried (body only, body + pm_standard_id, ?pm_standard_id=) — key taken from the current list seconds earlier. Same defect as this morning; not a picker-path artefact.
+Withdraw the automatic ack (row icon "Withdraw acknowledgment"): `POST /api/program-compliance/{site}/acks/remove {dev_keys:[88979daf…]}` → **500** internal_error trace f418ae516fbc18a7d5ba4a70baf7b2dd; no toast shown; row still "Acked". Acknowledgements tab reads "0 justifications cover 3 deviations · No acknowledgments yet" (system acks are not listed there).
