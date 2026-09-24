@@ -1,0 +1,506 @@
+<div class="wrap">
+
+  <header class="mast">
+    <div class="eyebrow">Egalvanic Web · V2.2 · for customer success</div>
+    <h1>What customers get in V2.2</h1>
+    <p class="standfirst">
+      Twenty new things, grouped by where they live in the product, each with the clicks to find it
+      and a picture of what it looks like. Everything in the main sections was checked working on QA
+      on 23–24 September. The end of the page lists what was fixed, and what is not ready yet — so
+      nobody promises it.
+    </p>
+    <div class="meta">
+      <span><b>Release</b> Web V2.2 · <a href="https://egalvanic.atlassian.net/projects/ZP/versions/14156/tab/release-report-all-issues">Jira release 14156</a></span>
+      <span><b>Ships</b> Fri 25 Sep 2026</span>
+      <span><b>Checked on</b> acme.qa.egalvanic.ai</span>
+      <span><b>Compiled</b> 24 Sep 2026</span>
+    </div>
+  </header>
+
+  <nav class="toc">
+    <a href="#links">Links from emails <span>1</span></a>
+    <a href="#walks">Site walks <span>1</span></a>
+    <a href="#maintenance">Maintenance <span>4</span></a>
+    <a href="#condition">Condition assessment <span>3</span></a>
+    <a href="#workorders">Work orders <span>3</span></a>
+    <a href="#services">Services &amp; devices <span>3</span></a>
+    <a href="#engineering">Assets &amp; engineering <span>4</span></a>
+    <a href="#customers">Customers <span>1</span></a>
+  </nav>
+
+  <section class="area" id="links">
+    <h2>Links from emails</h2>
+    <div class="feat">
+      <div class="txt">
+        <h3>A work-order link opens the right work order, on the right site</h3>
+        <p>
+          A link to a work order — the kind a notification email carries, or one a colleague pastes —
+          now opens that work order directly. If it belongs to a <strong>different site</strong> from
+          the one on screen, the app switches to that site by itself, so the work order is never shown
+          against the wrong site.
+        </p>
+        <div class="where"><span class="lab">Where to find it</span><ol class="steps">
+          <li>Click a work-order link in a notification email</li>
+          <li>The work order opens straight away</li>
+          <li>If it belongs to another site, the site at the top changes to match</li>
+        </ol></div>
+        <p class="tk">ZP-4030</p>
+      </div>
+      <figure>
+        <img src="IMG:20-deep-link-opens-wo-site-switched" alt="A work order opened from its link, with site 17 July 2026 shown in the header">
+        <figcaption>A work order opened from its link — the app switched to its site, 17 July 2026.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="area" id="walks">
+    <h2>Site walks</h2>
+    <div class="feat">
+      <div class="txt">
+        <h3>Journal walks — talk and shoot, then review on the web</h3>
+        <p>
+          A new kind of site walk alongside <strong>Count</strong>. With <strong>Journal</strong>, the
+          technician simply talks and takes photos while walking the site; the notes and photos are kept
+          in the walk, grouped by location, and read back on the web in <strong>Journal Review</strong>.
+          Long notes now save in full.
+        </p>
+        <div class="where"><span class="lab">Where to find it</span><ol class="steps">
+          <li>Click <b>Sales</b> in the left rail, then <b>Site Walks</b></li>
+          <li>Click <b>New Site Walk</b> and choose <b>Journal</b> instead of Count</li>
+          <li>Journal walks carry a <b>JOURNAL</b> tag in the Site Walks list</li>
+          <li>Open one to read its entries, location by location, in Journal Review</li>
+        </ol></div>
+        <p class="note">
+          <b>Worth knowing:</b> journal walks are recorded on the mobile app; the web is where they are
+          reviewed. Reading assets and condition out of a journal automatically is still being finished —
+          on QA the review panel still says “Nothing interpreted yet”.
+        </p>
+        <p class="tk">ZP-4068 · ZP-4208</p>
+      </div>
+      <figure>
+        <img src="IMG:01-site-walks-new-walk-journal-option" alt="New Site Walk dialog offering Count or Journal">
+        <figcaption>New Site Walk: Count, or Journal — “Talk and shoot as you go”.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="area" id="maintenance">
+    <h2>Maintenance</h2>
+    <p class="arealede">Clearer answers on the maintenance pages: what is open, what is due, and what the standard asks for years ahead.</p>
+    <div class="feat">
+      <div class="txt">
+        <h3>Open issues by type, on the Site Overview</h3>
+        <p>
+          The Site Overview has a new <strong>Open Issues by Type</strong> card beside Assets by Type:
+          the site's open issues in one number, with the issue types listed next to it. The left-hand menu
+          now gathers Maintenance Program, Compliance and Reports under their own
+          <strong>MAINTENANCE</strong> heading.
+        </p>
+        <div class="where"><span class="lab">Where to find it</span><ol class="steps">
+          <li>Click <b>Site Data</b>, then <b>Site Overview</b></li>
+          <li>The card sits to the right of Assets by Type</li>
+          <li>Maintenance Program, Compliance and Reports are under <b>MAINTENANCE</b> in the menu</li>
+        </ol></div>
+        <p class="tk">ZP-4038</p>
+      </div>
+      <figure>
+        <img src="IMG:03-site-overview-open-issues-by-type" alt="Site Overview with Assets by Type and Open Issues by Type cards">
+        <figcaption>Open Issues by Type on the Site Overview.</figcaption>
+      </figure>
+    </div>
+    <div class="feat">
+      <div class="txt">
+        <h3>Find an asset in the maintenance programme</h3>
+        <p>
+          The programme timeline has a <strong>search box</strong>. Type part of an asset's name and the
+          timeline narrows to the matches — searched across the whole site, not just the rows already on
+          screen. The footer says how many are shown.
+        </p>
+        <div class="where"><span class="lab">Where to find it</span><ol class="steps">
+          <li>Click <b>Site Data</b>, then <b>Maintenance Program</b></li>
+          <li>Type in <b>Search assets…</b></li>
+          <li>The footer reads, for example, “Showing 2 of 3 assets”</li>
+        </ol></div>
+        <p class="tk">ZP-4044</p>
+      </div>
+      <figure>
+        <img src="IMG:04-maintenance-program-search" alt="Maintenance Program timeline filtered by the search transformer, showing 2 of 3 assets">
+        <figcaption>Searching “transformer”: 2 of 3 assets shown — the third has no programme in this window.</figcaption>
+      </figure>
+    </div>
+    <div class="feat">
+      <div class="txt">
+        <h3>A plain answer when a deferral date is in the past</h3>
+        <p>
+          Deferring a scheduled service to a date that has already passed used to show a raw system error.
+          It now says, in plain words, <strong>“The new due date must be in the future — pick tomorrow or
+          later.”</strong> The form stays open so the date can be corrected, and nothing changes until a
+          valid date is chosen.
+        </p>
+        <div class="where"><span class="lab">Where to find it</span><ol class="steps">
+          <li>Click <b>Site Data</b>, then <b>Maintenance Program</b></li>
+          <li>Click <b>Defer</b></li>
+          <li>Pick an asset, a service and a new due date, then click <b>Defer</b></li>
+          <li>A past date is refused with the message above</li>
+        </ol></div>
+        <p class="tk">ZP-4212</p>
+      </div>
+      <figure>
+        <img src="IMG:05-defer-past-date-message" alt="Defer scheduled service dialog with a 2020 date and the message The new due date must be in the future">
+        <figcaption>A past date, refused in plain words.</figcaption>
+      </figure>
+    </div>
+    <div class="feat">
+      <div class="txt">
+        <h3>See what the standard asks for, years ahead — the Compliance Visualizer</h3>
+        <p>
+          A new <strong>Visualizer</strong> tab on Compliance lays out what the chosen maintenance standard
+          prescribes for every asset, <strong>year by year and service by service</strong> — a dot for each
+          service due. Group by, Filters, Export and full screen sit on its toolbar.
+        </p>
+        <div class="where"><span class="lab">Where to find it</span><ol class="steps">
+          <li>Click <b>Site Data</b>, then <b>Compliance</b></li>
+          <li>Choose the standard at the top right — for example <b>NFPA 70B 2026</b></li>
+          <li>Click the <b>Visualizer</b> tab</li>
+          <li>Use <b>Group by</b> and <b>Filters</b> to narrow it, and <b>Export</b> to take it away</li>
+        </ol></div>
+        <p class="note">
+          <b>Worth knowing:</b> nothing shows until a standard is chosen — until then the tab reads “The
+          standard prescribes nothing for this site's assets yet.”
+        </p>
+        <p class="tk">ZP-4112</p>
+      </div>
+      <figure>
+        <img src="IMG:06-compliance-visualizer" alt="Compliance Visualizer for NFPA 70B 2026 with services per year for each asset">
+        <figcaption>NFPA 70B 2026 on a site: what is due, per service, per year.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="area" id="condition">
+    <h2>Condition assessment</h2>
+    <div class="feat">
+      <div class="txt">
+        <h3>Condition Assessment, reorganised</h3>
+        <p>
+          The Condition Assessment page opens on an <strong>Overview</strong>: assets assessed, open
+          findings, assets at risk and the replacement cost of what is at risk, then Equipment Health split
+          into Healthy, <strong>Assessment expired</strong>, At risk and Not assessed — assets whose
+          assessment has lapsed now get their own bucket instead of counting as healthy. Conditions use one
+          scale throughout (Condition 1, 2, 3 and Non-Serviceable), and the page says how many assets had
+          their condition <strong>revised automatically</strong> in the last 30 days.
+        </p>
+        <div class="where"><span class="lab">Where to find it</span><ol class="steps">
+          <li>Click <b>Site Data</b>, then <b>Condition Assessment</b></li>
+          <li><b>Overview</b> is the first tab</li>
+          <li>Under Condition Distribution, click <b>See what changed</b> to list the automatic revisions</li>
+        </ol></div>
+        <p class="tk">ZP-4043 · ZP-4041 · ZP-4084</p>
+      </div>
+      <figure>
+        <img src="IMG:07-condition-assessment-overview" alt="Condition Assessment Overview with tiles, Equipment Health bar and Condition Distribution">
+        <figcaption>The Overview, with the new “Assessment expired” bucket in Equipment Health.</figcaption>
+      </figure>
+    </div>
+    <div class="feat">
+      <div class="txt">
+        <h3>Work through findings and assets in one place</h3>
+        <p>
+          <strong>Findings</strong> lists the at-risk assets first, then every open finding with its type,
+          condition and recommended action — and a pencil to edit it where it stands.
+          <strong>Asset Details</strong> lists every asset with filters for location, class, shutdown rule,
+          condition and assessment, and <strong>Bulk Ops</strong> for acting on several at once.
+        </p>
+        <div class="where"><span class="lab">Where to find it</span><ol class="steps">
+          <li>Click <b>Site Data</b>, then <b>Condition Assessment</b></li>
+          <li><b>Findings</b> tab: click the pencil on a finding to edit it</li>
+          <li><b>Asset Details</b> tab: filter the list, then use <b>Bulk Ops</b> to select several</li>
+        </ol></div>
+        <p class="tk">ZP-4039</p>
+      </div>
+      <figure>
+        <img src="IMG:09-condition-assessment-findings" alt="Findings tab listing at-risk assets and then findings with edit pencils">
+        <figcaption>Findings: at-risk assets first, then each finding with its pencil.</figcaption>
+      </figure>
+    </div>
+    <div class="feat">
+      <div class="txt">
+        <h3>The issue report and the assessment report, separately</h3>
+        <p>
+          The issue report is now a report of its own, with its own card in Reports: every issue at the site
+          on its own page — priority, findings, thermal analysis and photos where they exist — behind a
+          one-table summary. The Condition Assessment page has two buttons, <strong>Export issue
+          report</strong> and <strong>Export assessment report</strong>.
+        </p>
+        <div class="where"><span class="lab">Where to find it</span><ol class="steps">
+          <li>Click <b>Site Data</b>, then <b>Reports</b> — the <b>Issue Report</b> card</li>
+          <li>Or on <b>Condition Assessment</b>, use the two export buttons at the top right</li>
+        </ol></div>
+        <p class="tk">ZP-4113</p>
+      </div>
+      <figure>
+        <img src="IMG:10-reports-issue-report-card" alt="Reports page with the Issue Report card">
+        <figcaption>The Issue Report card, and work-order reports beneath it.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="area" id="workorders">
+    <h2>Work orders</h2>
+    <div class="feat">
+      <div class="txt">
+        <h3>General comes first when creating a work order</h3>
+        <p>
+          In the Create Work Order wizard, the <strong>First service to perform</strong> list now starts with
+          <strong>General</strong>, the most common choice, instead of burying it at the bottom.
+        </p>
+        <div class="where"><span class="lab">Where to find it</span><ol class="steps">
+          <li>Click <b>Operations</b>, then <b>Work Orders</b>, then <b>Create Work Order</b></li>
+          <li>Fill in the first step and click <b>Continue</b></li>
+          <li>Open <b>First service to perform</b> — General is at the top</li>
+        </ol></div>
+        <p class="tk">ZP-4347</p>
+      </div>
+      <figure>
+        <img src="IMG:19-create-wo-general-first" alt="Create New Work Order scope step with General first in the service list">
+        <figcaption>General at the top of the list.</figcaption>
+      </figure>
+    </div>
+    <div class="feat">
+      <div class="txt">
+        <h3>The IR tick box shows on child assets before any photo exists</h3>
+        <p>
+          On an infrared work order, a child asset that is in scope for infrared — a panelboard, or a
+          breaker at condition 2 or 3 with three or more poles — now shows its IR tick box straight away, at
+          <strong>0 photos</strong>, instead of only after the first IR photo is added. A child that is out
+          of scope (for example a breaker with no pole count or condition recorded) shows none, the same as it
+          would at the top level.
+        </p>
+        <div class="where"><span class="lab">Where to find it</span><ol class="steps">
+          <li>Open an <b>Infrared Thermography</b> work order</li>
+          <li>Expand a panelboard to see the assets under it</li>
+          <li>In-scope children show the <b>IR Photos</b> tick box at 0</li>
+        </ol></div>
+        <p class="tk">ZP-4309</p>
+      </div>
+      <figure>
+        <img src="IMG:18-ir-checkbox-child-assets" alt="IR work order with PNL expanded: Circuit Breaker 2 and PNL MCB show IR boxes at 0, Circuit Breaker 1 shows none">
+        <figcaption>Circuit Breaker 2 (3-pole, condition 3) shows its box; Circuit Breaker 1 (no poles or condition recorded) does not.</figcaption>
+      </figure>
+    </div>
+    <div class="feat">
+      <div class="txt">
+        <h3>Mark As works on the location view</h3>
+        <p>
+          Marking several assets done for a service at once — <strong>Bulk Ops → Mark As..</strong> — now
+          works when the assets list is grouped by location. The menu offers only the services the selected
+          assets actually carry, and the ticks are still there after a reload.
+        </p>
+        <div class="where"><span class="lab">Where to find it</span><ol class="steps">
+          <li>Open a work order and stay on <b>Assets</b></li>
+          <li>Click <b>Bulk Ops</b> and tick the assets</li>
+          <li>Click <b>Mark As..</b> and choose a service, done or not done</li>
+        </ol></div>
+        <p class="tk">ZP-4062</p>
+      </div>
+      <figure>
+        <img src="IMG:21-mark-as-lists-assets-services" alt="Mark As menu listing five services, done and not done">
+        <figcaption>Mark As.. on one asset: only its five services are offered (23 Sep).</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="area" id="services">
+    <h2>Services &amp; devices</h2>
+    <div class="feat">
+      <div class="txt">
+        <h3>Edit many service methods at once</h3>
+        <p>
+          A service's methods can be seen in one flat table with <strong>All methods</strong> — each asset
+          class's method, labour, estimate, forms and equipment side by side — and several can be ticked and
+          edited together with <strong>Edit N selected</strong>.
+        </p>
+        <div class="where"><span class="lab">Where to find it</span><ol class="steps">
+          <li>Click <b>Builder</b>, then <b>Services</b>, and open a service</li>
+          <li>Switch from <b>By class</b> to <b>All methods</b></li>
+          <li>Tick the methods to change</li>
+          <li>Click <b>Edit N selected</b></li>
+        </ol></div>
+        <p class="tk">ZP-4109</p>
+      </div>
+      <figure>
+        <img src="IMG:11-services-all-methods-edit-selected" alt="Infrared Thermography All methods table with two rows ticked and Edit 2 selected">
+        <figcaption>Two of Infrared Thermography's methods ticked for editing.</figcaption>
+      </figure>
+    </div>
+    <div class="feat">
+      <div class="txt">
+        <h3>Rename a service in one step</h3>
+        <p>
+          A service can be renamed straight from its menu, without going through Update service.
+        </p>
+        <div class="where"><span class="lab">Where to find it</span><ol class="steps">
+          <li>Click <b>Builder</b>, then <b>Services</b>, and open the service</li>
+          <li>Click <b>⋯</b> at the top right</li>
+          <li>Choose <b>Rename</b></li>
+        </ol></div>
+        <p class="tk">ZP-4152</p>
+      </div>
+      <figure>
+        <img src="IMG:12-service-menu-rename" alt="Service menu with Rename, Edit description, Change to IR and Version history">
+        <figcaption>The service menu: Rename, Edit description, Change to IR, Version history.</figcaption>
+      </figure>
+    </div>
+    <div class="feat">
+      <div class="txt">
+        <h3>Rules for one particular device</h3>
+        <p>
+          Service rules can now be set for a <strong>specific device</strong> from the equipment library —
+          one breaker model, say — not only for a whole asset class, and they have their own page under
+          <strong>Admin → Devices</strong>. Adding one goes service first, then asset class, then device, so
+          the search only looks in the right part of the library.
+        </p>
+        <div class="where"><span class="lab">Where to find it</span><ol class="steps">
+          <li>Click <b>Admin</b>, then <b>Devices</b></li>
+          <li>Click <b>Add device</b></li>
+          <li>Choose the service, then the asset class, then find the device</li>
+          <li>Click <b>Continue to rules</b></li>
+        </ol></div>
+        <p class="note"><b>Worth knowing:</b> the Devices list is empty until the first device rule is added.</p>
+        <p class="tk">ZP-4110 · ZP-4111</p>
+      </div>
+      <figure>
+        <img src="IMG:13-devices-add-device" alt="Add a device dialog with Service, Asset class and Device fields">
+        <figcaption>Add a device: service first, then class, then the device.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="area" id="engineering">
+    <h2>Assets &amp; engineering</h2>
+    <div class="feat">
+      <div class="txt">
+        <h3>Junction boxes stop asking for panel details</h3>
+        <p>
+          Creating or editing a <strong>Junction Box</strong> no longer asks for panel-only details such as
+          mains type, panel type or phase configuration. Its Engineering section asks for System Voltage and
+          the attributes that apply to a junction box. A Panelboard still asks for all of them.
+        </p>
+        <div class="where"><span class="lab">Where to find it</span><ol class="steps">
+          <li>Click <b>Site Data</b>, then <b>Assets</b>, then <b>Create Asset</b></li>
+          <li>Choose the class <b>Junction Box</b></li>
+          <li>Scroll to <b>Engineering</b>: System Voltage and its own attributes only</li>
+        </ol></div>
+        <p class="tk">ZP-4167</p>
+      </div>
+      <figure>
+        <img src="IMG:15-junction-box-engineering-fields" alt="Add Asset drawer for a Junction Box: Engineering shows System Voltage and enclosure attributes">
+        <figcaption>A Junction Box: System Voltage and enclosure details, nothing panel-specific.</figcaption>
+      </figure>
+    </div>
+    <div class="feat">
+      <div class="txt">
+        <h3>A real manufacturer list for breakers</h3>
+        <p>
+          The <strong>Manufacturer</strong> field on a circuit breaker now offers names to pick from —
+          52 of them on QA, from ABB and Allen-Bradley onwards — instead of starting empty.
+        </p>
+        <div class="where"><span class="lab">Where to find it</span><ol class="steps">
+          <li>Create or edit a <b>Circuit Breaker</b></li>
+          <li>In <b>Engineering</b>, open <b>Manufacturer</b></li>
+        </ol></div>
+        <p class="tk">ZP-4170</p>
+      </div>
+      <figure>
+        <img src="IMG:16-breaker-manufacturer-list" alt="Manufacturer dropdown on a new circuit breaker listing ABB, ABL Sursum, Allen-Bradley and more">
+        <figcaption>The manufacturer list on a new circuit breaker.</figcaption>
+      </figure>
+    </div>
+    <div class="feat noimg">
+      <div class="txt">
+        <h3>Core attributes can apply to some subtypes only</h3>
+        <p>
+          When setting up an asset class, each core attribute can be limited to certain subtypes — the column
+          reads <strong>Subtypes (empty = all)</strong> — so, for example, a field that only makes sense for
+          one kind of switch is not asked of every switch.
+        </p>
+        <div class="where"><span class="lab">Where to find it</span><ol class="steps">
+          <li>Click <b>Admin</b>, then <b>Asset Classes</b>, and open a class</li>
+          <li>Under <b>Core Attributes</b>, click <b>Add</b></li>
+          <li>Pick subtypes in <b>Subtypes</b>, or leave it empty for all</li>
+        </ol></div>
+        <p class="tk">ZP-4171</p>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="txt">
+        <h3>Settings Verifier, from the export menu</h3>
+        <p>
+          The single-line diagram's <strong>Export</strong> menu has a new <strong>Settings Verifier</strong>
+          entry. It opens the steps for auditing protective-device settings and provides the EG Utils
+          installer that runs them.
+        </p>
+        <div class="where"><span class="lab">Where to find it</span><ol class="steps">
+          <li>Click <b>Engineering</b>, then <b>SLD</b></li>
+          <li>Click <b>Export</b> at the bottom of the diagram</li>
+          <li>Choose <b>Settings Verifier</b></li>
+        </ol></div>
+        <p class="tk">ZP-4131</p>
+      </div>
+      <figure>
+        <img src="IMG:17-sld-export-settings-verifier" alt="SLD Export menu listing Export PDF, DXF, Engineering XML, Settings Verifier, JSON and Ground Fault JSON">
+        <figcaption>Settings Verifier in the SLD Export menu.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="area" id="customers">
+    <h2>Customers</h2>
+    <div class="feat">
+      <div class="txt">
+        <h3>Customer search that also finds sites</h3>
+        <p>
+          The Customers list now loads a page at a time and searches on the server, so it stays quick on
+          tenants with hundreds of customers — and the search matches <strong>site names</strong> too,
+          showing each site under the customer that owns it.
+        </p>
+        <div class="where"><span class="lab">Where to find it</span><ol class="steps">
+          <li>Click <b>Admin</b>, then <b>Customers</b></li>
+          <li>Type a customer or a site name in the search box</li>
+          <li>Matching sites appear under their customer</li>
+        </ol></div>
+        <p class="tk">ZP-4165</p>
+      </div>
+      <figure>
+        <img src="IMG:14-customers-search-finds-sites" alt="Customers search for Android Site showing both sites under the customer Test op">
+        <figcaption>Searching “Android Site” finds both sites under their customer.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="area" id="fixed">
+    <h2>Also fixed in V2.2</h2>
+    <ul class="plainlist">
+      <li>Closing a connection's details with <b>X</b> no longer blanks the Connections page — the list comes back. <span class="tk">ZP-4059</span></li>
+      <li>A facility-manager login can no longer open work orders at sites it is not assigned to by following a direct link. <span class="tk">ZP-4159</span></li>
+      <li>The <b>Reactivate Work Order</b> menu item has its icon again. <span class="tk">ZP-3990</span></li>
+      <li>The SLD's issues panel no longer reports false “upstream can't deliver” phase errors. <span class="tk">ZP-4066</span></li>
+    </ul>
+  </section>
+
+  <section class="area" id="notyet">
+    <h2>Not ready yet — please don't promise these</h2>
+    <p class="arealede">Part of the V2.2 release in Jira, but not working on QA as of 24 September. Check again before mentioning them to a customer.</p>
+    <ul class="plainlist notyet">
+      <li><b>Signing in with an emailed code</b> instead of a password — still in testing, and signing in by email has an open problem. <span class="tk">ZP-3919 · ZP-4353</span></li>
+      <li><b>The customer-facing Maintenance Portal</b> with licence tiers and report history — cannot be opened on QA yet, and its report history does not load. <span class="tk">ZP-4042 · ZP-4061</span></li>
+      <li><b>One site belonging to several accounts</b> at the same time — still in testing. <span class="tk">ZP-4151</span></li>
+      <li><b>Grids remembering hidden or moved columns</b> — works on Site Data → Assets, not yet on a work order's Assets tab. <span class="tk">ZP-4272</span></li>
+      <li><b>Choosing which services a new asset gets</b>, and a tick box for every service on an asset. <span class="tk">ZP-4292 · ZP-4291</span></li>
+      <li><b>Requesting a subcontractor quote (RFQ)</b> from a quote's labour line. <span class="tk">ZP-4218</span></li>
+      <li><b>Sorting a column across all pages</b> of a long list — the fix is still being tested. <span class="tk">ZP-4338</span></li>
+      <li><b>Reading assets and condition out of a journal walk</b> automatically. <span class="tk">ZP-4153 · ZP-4207</span></li>
+    </ul>
+  </section>
+
+</div>
