@@ -51,3 +51,11 @@ through the app's own navigation. Browser zoom was 80% / 66%, so staff captures 
 ## Seat / environment notes
 - +admin roles changed today → Site Data → Compliance and Maintenance Program show Access Denied for it (menu still offers them). Compliance/Program checks were run through the portal on Interactive tier.
 - Android Site 2 grew from 367 to 373 assets during the day; deviations 852 → 858 by the end.
+
+## ZP-4390 (filed 24 Sep, owner's request)
+| 29 | zp4390-site-data-reports-access-denied-admin-seat-roles | ZP-4390 | Site Data → Reports = Access Denied for +admin (profile popover shows roles Super Admin · Admin · Portal Sales) while the menu lists Maintenance Program / Compliance / Reports |
+Owner: "instead of lock just hide the tab that is not accessible to user … for all pages". Assigned to Avani, Medium, sprint 1222, fixVersion Web v2.2, To Do.
+
+## ZP-4391 (filed 24 Sep, owner's request)
+| 30 | zp4391-password-form-back-is-a-text-link | ZP-4391 | Password form: Sign In, terms, "Forgot your password?", then the small "Back to faster options" text link — owner wants a visible Back button directly below Sign In |
+Assigned to Avani, Medium, sprint 1222, fixVersion Web v2.2, To Do.
