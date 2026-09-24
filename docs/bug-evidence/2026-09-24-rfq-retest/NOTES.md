@@ -54,8 +54,8 @@ through the app's own navigation. Browser zoom was 80% / 66%, so staff captures 
 
 ## ZP-4390 (filed 24 Sep, owner's request)
 | 29 | zp4390-site-data-reports-access-denied-admin-seat-roles | ZP-4390 | Site Data → Reports = Access Denied for +admin (profile popover shows roles Super Admin · Admin · Portal Sales) while the menu lists Maintenance Program / Compliance / Reports |
-Owner: "instead of lock just hide the tab that is not accessible to user … for all pages". Assigned to Avani, Medium, sprint 1222, fixVersion Web v2.2, To Do.
+Owner: "instead of lock just hide the tab that is not accessible to user … for all pages". Assigned to Avani, Medium, sprint 1222, fixVersion Web v2.2, To Do. Capture 29 attached (id 37559).
 
 ## ZP-4391 (filed 24 Sep, owner's request)
 | 30 | zp4391-password-form-back-is-a-text-link | ZP-4391 | Password form: Sign In, terms, "Forgot your password?", then the small "Back to faster options" text link — owner wants a visible Back button directly below Sign In |
-Assigned to Avani, Medium, sprint 1222, fixVersion Web v2.2, To Do.
+Assigned to Avani, Medium, sprint 1222, fixVersion Web v2.2, To Do. Capture 30 attached (id 37560).

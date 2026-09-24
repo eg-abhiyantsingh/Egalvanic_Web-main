@@ -14,8 +14,9 @@ sees Maintenance Program / Compliance / Reports under Site Data and every one op
 menu entries to be hidden wherever the route would refuse, across all sections (ZP-4138 covers the portal tile).
 ZP-4391: "Back to faster options" is a footnote-sized text link under "Forgot your password?".
 
-Evidence: `docs/bug-evidence/2026-09-24-rfq-retest/29-…` and `30-…`. Attachments could not be uploaded through the
-Jira connector; the owner's own screenshots are the primary captures.
+Evidence: `docs/bug-evidence/2026-09-24-rfq-retest/29-…` and `30-…`, attached to the tickets (attachments 37559 /
+37560). The Jira connector cannot upload files, so the upload went through the issue page: the view keeps a hidden
+`input[type=file]`; unhide it with JS, then `file_upload` on its ref; confirm with `GET /rest/api/3/issue/{key}?fields=attachment`.
 
 Side effect to note: while dismissing the profile popover on QA, the click landed on **Sign Out** — the shared Chrome
 session is now on the login page and needs a fresh sign-in by the owner.
