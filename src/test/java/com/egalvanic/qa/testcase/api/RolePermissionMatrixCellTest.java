@@ -13,6 +13,7 @@ import org.testng.Assert;
 import org.testng.ITest;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -59,6 +60,27 @@ public class RolePermissionMatrixCellTest extends BaseAPITest implements ITest {
         return n != null ? n : "permissionCell";
     }
 
+    /** The per-cell display name, e.g. "Technician — should NOT have 'accounts.view'". */
+    static String cellName(String roleName, String permission, boolean expectedGranted) {
+        return roleName + " — " + (expectedGranted ? "should have '" : "should NOT have '") + permission + "'";
+    }
+
+    /**
+     * Name the cell BEFORE TestNG records it. TestNG (and surefire's JUnit XML) read
+     * {@link #getTestName()} when the invocation starts, before the test body runs, so a name set
+     * inside the body labels every result with the PREVIOUS cell's name. Seen in CI on 25 Sep 2026:
+     * "MISSING permission: matrix grants 'features.audit_log.view' to 'Project Manager'" was
+     * reported as the test "Project Manager — should have 'features.attachments.view'", and the
+     * dated failed-tests suite listed 30 wrong cells.
+     */
+    @BeforeMethod(alwaysRun = true)
+    public void nameCell(Object[] params) {
+        if (params != null && params.length == 3 && params[0] instanceof String
+                && params[1] instanceof String && params[2] instanceof Boolean) {
+            currentCellName.set(cellName((String) params[0], (String) params[1], (Boolean) params[2]));
+        }
+    }
+
     @BeforeClass(alwaysRun = true)
     public void loginAllRoles() {
         RestAssured.baseURI = API_BASE_URL;
@@ -97,7 +119,7 @@ public class RolePermissionMatrixCellTest extends BaseAPITest implements ITest {
           description = "Each role has exactly the access it should — and nothing it shouldn't")
     public void permissionCell(String roleName, String permission, boolean expectedGranted) {
         String label = (expectedGranted ? "should have '" : "should NOT have '") + permission + "'";
-        currentCellName.set(roleName + " — " + label);
+        currentCellName.set(cellName(roleName, permission, expectedGranted));   // already set by nameCell(); kept for direct calls
         ExtentReportManager.createTest(
                 AppConstants.MODULE_AUTHENTICATION, "RBAC: " + roleName, label);
 
