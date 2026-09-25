@@ -86,7 +86,9 @@ public class RolePermissionUiGatingTest {
             new NavModule("Setup",         "features.settings.view",      "/admin-dashboard",  false),
             new NavModule("Audit Log",     "features.audit_log.view",     "/admin/audit-log",  false),
             new NavModule("Quotes",        "features.opportunities.view", "/opportunities",    true),
-            new NavModule("Customers",     "features.accounts.view",      "/customers",        true)
+            // Layout: `Y("accounts.view") || Y("features.accounts.view")` (bundle index-B8jzC7QC, 25 Sep
+            // 2026). Either permission shows the entry; "a|b" = any-of.
+            new NavModule("Customers",     "accounts.view|features.accounts.view", "/customers", true)
             // Goals dropped from this list on 2026-08-24: it is no longer a sidebar module at
             // all (neither /goals nor /accounts/goals appears in any rail category), so a
             // nav-VISIBILITY assertion for it can only ever report "hidden" and proves nothing
@@ -190,7 +192,8 @@ public class RolePermissionUiGatingTest {
         StringBuilder mismatches = new StringBuilder();
         int checked = 0;
         for (NavModule m : NAV_MODULES) {
-            boolean expected = isAdmin || live.permissions.contains(m.permission);
+            boolean expected = isAdmin || Arrays.stream(m.permission.split("\\|"))
+                    .anyMatch(live.permissions::contains);
             boolean actual = navHasRoute(navHrefs, m.route);   // exact path match (so /admin ≠ /admin/audit-log)
             checked++;
             if (m.flagCoupled) {
@@ -258,10 +261,35 @@ public class RolePermissionUiGatingTest {
     }
 
     private void waitForPostLogin() {
+        long t0 = System.currentTimeMillis();
         try {
             new WebDriverWait(driver, Duration.ofSeconds(40)).until(d -> !onLoginPage() || isWebAccessRestricted());
         } catch (Exception ignored) { /* timeout handled by caller checks */ }
-        sleep(2500); // let the SPA hydrate the nav after /auth/me
+        long t1 = System.currentTimeMillis();
+        // After sign-in the app shows a full-page "Loading..." screen while it boots. Reading the
+        // sidebar during it returns no links and reports every module as missing (seen 25 Sep 2026,
+        // while QA was under CI load). Wait for the boot screen to clear, and record how long it took.
+        boolean booted = true;
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(90)).until(d -> isWebAccessRestricted()
+                    || (!isBootScreen() && !d.findElements(By.cssSelector("nav a[href], a[href='/dashboard']")).isEmpty()));
+        } catch (Exception e) { booted = false; }
+        long t2 = System.currentTimeMillis();
+        String timing = "sign-in accepted after " + (t1 - t0) + " ms; app boot screen lasted " + (t2 - t1)
+                + " ms" + (booted ? "" : " (still booting after 90 s)");
+        System.out.println("[Gating] " + timing);
+        ExtentReportManager.logInfo(timing);
+        sleep(1500); // let the nav finish hydrating after /auth/me
+    }
+
+    /** The app's full-page boot screen: a spinner with the single word "Loading..." and no nav. */
+    private boolean isBootScreen() {
+        try {
+            Object t = ((org.openqa.selenium.JavascriptExecutor) driver)
+                    .executeScript("return (document.body && document.body.innerText || '').trim();");
+            String text = t == null ? "" : t.toString();
+            return text.startsWith("Loading") && text.length() < 40;
+        } catch (Exception e) { return false; }
     }
 
     private boolean onLoginPage() {

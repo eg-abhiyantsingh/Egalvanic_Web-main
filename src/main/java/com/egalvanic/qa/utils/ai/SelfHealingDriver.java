@@ -40,9 +40,11 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class SelfHealingDriver implements WebDriver, JavascriptExecutor, TakesScreenshot, WrapsDriver {
 
-    private final WebDriver delegate;
-    private final JavascriptExecutor jsDelegate;
-    private final TakesScreenshot screenshotDelegate;
+    // Not final: replaceDelegate() swaps in a new browser when the old one dies, so page objects,
+    // helpers and JavascriptExecutor references that hold this wrapper keep working.
+    private volatile WebDriver delegate;
+    private volatile JavascriptExecutor jsDelegate;
+    private volatile TakesScreenshot screenshotDelegate;
 
     // Configuration
     private int maxRetries = 3;
@@ -76,6 +78,19 @@ public class SelfHealingDriver implements WebDriver, JavascriptExecutor, TakesSc
             return (SelfHealingDriver) driver; // Don't double-wrap
         }
         return new SelfHealingDriver(driver);
+    }
+
+    /**
+     * Point this wrapper at a new browser after the old one was lost ("invalid session id",
+     * "no such window"). The caller quits the old browser and signs in again.
+     */
+    public synchronized void replaceDelegate(WebDriver newDriver) {
+        if (newDriver instanceof SelfHealingDriver) {
+            newDriver = ((SelfHealingDriver) newDriver).getWrappedDriver();
+        }
+        this.delegate = newDriver;
+        this.jsDelegate = (newDriver instanceof JavascriptExecutor) ? (JavascriptExecutor) newDriver : null;
+        this.screenshotDelegate = (newDriver instanceof TakesScreenshot) ? (TakesScreenshot) newDriver : null;
     }
 
     /**

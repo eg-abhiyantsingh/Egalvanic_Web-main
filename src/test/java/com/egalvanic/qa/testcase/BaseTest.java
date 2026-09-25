@@ -173,6 +173,12 @@ public class BaseTest {
 
     @BeforeClass
     public void classSetup() {
+        driver = SelfHealingDriver.wrap(startChrome());
+        startSessionOnCurrentDriver();
+    }
+
+    /** A new Chrome with this suite's options (headed unless -Dheadless=true). */
+    private WebDriver startChrome() {
         // Create ChromeDriver (Selenium 4.29+ manages driver automatically)
         ChromeOptions opts = new ChromeOptions();
         opts.addArguments("--start-maximized", "--remote-allow-origins=*",
@@ -219,10 +225,13 @@ public class BaseTest {
             opts.addArguments("--headless=new", "--window-size=1920,1080");
         }
 
-        // Wrap ChromeDriver with self-healing capabilities — ALL findElement/findElements
-        // calls now auto-retry, recover from stale elements, and try alternative locators.
-        // Existing test code requires ZERO changes.
-        driver = SelfHealingDriver.wrap(new ChromeDriver(opts));
+        // Wrapped with self-healing capabilities by the caller — ALL findElement/findElements
+        // calls auto-retry, recover from stale elements, and try alternative locators.
+        return new ChromeDriver(opts);
+    }
+
+    /** Window size, interceptors, page objects, sign-in and site selection on {@link #driver}. */
+    private void startSessionOnCurrentDriver() {
         driver.manage().window().maximize();
         if ("true".equals(System.getProperty("headless"))) {
             // maximize() is a no-op in headless; pin the size explicitly as well.
@@ -402,6 +411,7 @@ public class BaseTest {
     @BeforeMethod
     public void testSetup() {
         testStartTime = System.currentTimeMillis();
+        replaceBrowserIfLost();
         recoverFromErrorPage();
         dismissBackdrops();
         // Auto-capture the starting page state on every test so the Detailed Report
@@ -409,6 +419,45 @@ public class BaseTest {
         try {
             ExtentReportManager.captureScreenshot("Initial page state");
         } catch (Exception ignored) {}
+    }
+
+    /**
+     * If the browser behind {@link #driver} is gone ("invalid session id", "no such window",
+     * Chrome crashed or was closed), start a new one, sign in and select the site again.
+     *
+     * <p>Without this, one lost browser fails every remaining test in the class in 0 s with
+     * "invalid session id" (seen 25 Sep 2026: 20 CriticalPath tests, three browsers in parallel).
+     * The loss itself is logged loudly and the test that hit it still fails on its own.
+     */
+    private void replaceBrowserIfLost() {
+        if (driver == null) return;
+        String reason = null;
+        try {
+            driver.getWindowHandle();
+        } catch (org.openqa.selenium.NoSuchSessionException | org.openqa.selenium.NoSuchWindowException e) {
+            reason = e.getClass().getSimpleName();
+        } catch (org.openqa.selenium.WebDriverException e) {
+            String m = String.valueOf(e.getMessage()).toLowerCase();
+            if (m.contains("invalid session id") || m.contains("session deleted") || m.contains("no such window")
+                    || m.contains("disconnected") || m.contains("chrome not reachable")) {
+                reason = m.split("\n")[0];
+            }
+        }
+        if (reason == null) return;
+        if (!(driver instanceof SelfHealingDriver)) {
+            System.out.println("[BaseTest] Browser lost (" + reason + ") and the driver cannot be replaced in place.");
+            return;
+        }
+        System.out.println("[BaseTest] Browser lost (" + reason + "): starting a new browser and signing in again.");
+        try {
+            try { ((SelfHealingDriver) driver).getWrappedDriver().quit(); } catch (Exception ignored) { }
+            ((SelfHealingDriver) driver).replaceDelegate(startChrome());
+            startSessionOnCurrentDriver();
+            try { ExtentReportManager.logInfo("Browser was lost (" + reason + "); a new browser was started and signed in."); }
+            catch (Exception ignored) { }
+        } catch (Exception e) {
+            System.out.println("[BaseTest] Could not replace the lost browser: " + e.getMessage());
+        }
     }
 
     /**

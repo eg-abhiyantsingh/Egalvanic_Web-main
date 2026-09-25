@@ -565,7 +565,10 @@ public class LoginPage {
      */
     public void clearAllFields() {
         clearEmail();
-        clearPassword();
+        // v2.2 first step has no password box until "Use my password" is pressed.
+        if (!driver.findElements(PASSWORD_INPUT).isEmpty()) {
+            clearPassword();
+        }
     }
 
     // ================================================================

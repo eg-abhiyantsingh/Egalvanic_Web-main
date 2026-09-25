@@ -768,11 +768,9 @@ public class CriticalPathTestNG extends BaseTest {
 
         try {
             // Get initial pagination count
-            String fullText = getPageText();
-            java.util.regex.Matcher mBefore = java.util.regex.Pattern.compile("of\\s+([\\d,]+)")
-                    .matcher(fullText);
-            int totalBefore = 0;
-            if (mBefore.find()) totalBefore = extractNumber(mBefore.group(1));
+            // Read the grid's own pagination ("1–25 of N"). The first "of N" in the page text is
+            // now the Arc Flash Readiness card ("481 of 10134 fields"), not the grid.
+            int totalBefore = readGridPaginationTotal();
             logStep("Total before search: " + totalBefore);
 
             // Search for something
@@ -783,11 +781,9 @@ public class CriticalPathTestNG extends BaseTest {
             pause(3000);
 
             // Get filtered count
-            String filteredText = getPageText();
-            java.util.regex.Matcher mFiltered = java.util.regex.Pattern.compile("of\\s+([\\d,]+)")
-                    .matcher(filteredText);
-            int totalFiltered = 0;
-            if (mFiltered.find()) totalFiltered = extractNumber(mFiltered.group(1));
+            // Read the grid's own pagination ("1–25 of N"). The first "of N" in the page text is
+            // now the Arc Flash Readiness card ("481 of 10134 fields"), not the grid.
+            int totalFiltered = readGridPaginationTotal();
             logStep("Total after search: " + totalFiltered);
 
             // Clear search
@@ -800,11 +796,9 @@ public class CriticalPathTestNG extends BaseTest {
             pause(3000);
 
             // Get restored count
-            String restoredText = getPageText();
-            java.util.regex.Matcher mRestored = java.util.regex.Pattern.compile("of\\s+([\\d,]+)")
-                    .matcher(restoredText);
-            int totalRestored = 0;
-            if (mRestored.find()) totalRestored = extractNumber(mRestored.group(1));
+            // Read the grid's own pagination ("1–25 of N"). The first "of N" in the page text is
+            // now the Arc Flash Readiness card ("481 of 10134 fields"), not the grid.
+            int totalRestored = readGridPaginationTotal();
             logStep("Total after clear: " + totalRestored);
 
             Assert.assertEquals(totalRestored, totalBefore,

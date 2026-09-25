@@ -50,6 +50,8 @@ import java.util.List;
  */
 public class RoleLoginE2ETest {
 
+    private static final By USE_MY_PASSWORD = By.xpath("//button[normalize-space(.)='Use my password']");
+
     private WebDriver driver;
     private LoginPage loginPage;
 
@@ -94,8 +96,19 @@ public class RoleLoginE2ETest {
         startBrowser();
         navigateToLogin();
 
+        // Step 1 (Web v2.2, passwordless sign-in): only the email box and the sign-in method picker.
         Assert.assertTrue(loginPage.isEmailFieldDisplayed(), "Email field should be visible on the login page");
-        Assert.assertTrue(loginPage.isPasswordFieldDisplayed(), "Password field should be visible on the login page");
+        List<WebElement> usePassword = driver.findElements(USE_MY_PASSWORD);
+        Assert.assertFalse(usePassword.isEmpty(),
+                "Step 1 must offer \"Use my password\" (the only path to the password box)");
+        ExtentReportManager.logInfo("Step 1: email box + \"Use my password\" present (enabled before an email is typed: "
+                + usePassword.get(0).isEnabled() + ")");
+
+        // Step 2: type an email, press "Use my password" → password box, Sign In, Forgot password.
+        loginPage.enterEmail(AppConstants.ADMIN_EMAIL);
+        loginPage.revealPasswordFieldIfNeeded();
+        Assert.assertTrue(loginPage.isPasswordFieldDisplayed(),
+                "Password field should be visible after \"Use my password\"");
         Assert.assertTrue(loginPage.isSignInButtonDisplayed(), "Sign In button should be visible");
         Assert.assertEquals(loginPage.getPasswordFieldType(), "password",
                 "Password field must be masked (type=password)");
@@ -149,6 +162,10 @@ public class RoleLoginE2ETest {
         navigateToLogin();
 
         loginPage.clearAllFields();
+        // Step 1 with an empty email: if "Use my password" is pressable, press it and try to submit.
+        for (WebElement b : driver.findElements(USE_MY_PASSWORD)) {
+            if (shown(b) && b.isEnabled()) { b.click(); sleep(1000); break; }
+        }
         if (loginPage.isSignInButtonEnabled()) {
             loginPage.clickLoginButton();
             sleep(2500);
@@ -185,7 +202,8 @@ public class RoleLoginE2ETest {
 
         startBrowser();
         navigateToLogin();
-        Assert.assertTrue(loginPage.isEmailFieldDisplayed() && loginPage.isSignInButtonDisplayed(),
+        // v2.2 step 1 shows the email box only; Sign In appears after "Use my password".
+        Assert.assertTrue(loginPage.isEmailFieldDisplayed(),
                 "Login form must be present before logging in as " + role.name);
 
         loginPage.login(role.email, role.password);
