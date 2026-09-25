@@ -216,9 +216,20 @@ public class RoleLoginE2ETest {
         Assert.assertTrue(reachedApp(),
                 "'" + role.name + "' should land in the app (dashboard + nav) after login. URL: "
                         + driver.getCurrentUrl());
-        // Role-meaningful landing: every web-access role lands on the Site Overview dashboard (/dashboard).
-        Assert.assertTrue(driver.getCurrentUrl().toLowerCase().contains("/dashboard"),
-                "'" + role.name + "' should land on /dashboard after login. URL: " + driver.getCurrentUrl());
+        // Role-meaningful landing. /dashboard (Site Overview) needs features.site_overview.view; a role
+        // without it lands on its first permitted dashboard instead (Facility Manager and Account
+        // Manager land on /pm-readiness on QA, 25 Sep 2026 — the nav item's permission gate).
+        boolean seesOverview = Boolean.TRUE.equals(live.isAdmin)
+                || live.permissions.contains("features.site_overview.view");
+        String landed = driver.getCurrentUrl().toLowerCase();
+        if (seesOverview) {
+            Assert.assertTrue(landed.contains("/dashboard"),
+                    "'" + role.name + "' has features.site_overview.view and should land on /dashboard. URL: " + landed);
+        } else {
+            Assert.assertFalse(landed.contains("/dashboard"),
+                    "'" + role.name + "' lacks features.site_overview.view but landed on /dashboard. URL: " + landed);
+            ExtentReportManager.logInfo("'" + role.name + "' has no Site Overview permission and landed on " + landed);
+        }
         // Identity — verified via the live /auth/me oracle (reliable; the UI accepted exactly these
         // credentials and reached the dashboard, and the API confirms the account's role). This avoids
         // depending on the flaky MUI avatar dropdown for a hard assertion.

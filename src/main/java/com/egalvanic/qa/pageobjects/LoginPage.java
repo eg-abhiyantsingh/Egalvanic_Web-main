@@ -232,6 +232,22 @@ public class LoginPage {
     }
 
     /**
+     * True once the browser has left every step of the sign-in page (no email box, no password
+     * box) within the timeout. Callers use it to retry instead of carrying on signed out.
+     */
+    public boolean waitUntilSignedIn(int timeoutSeconds) {
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(timeoutSeconds)).until(d -> {
+                dismissMfaPromptIfShowing();
+                return !isLoginScreen(d);
+            });
+            return true;
+        } catch (org.openqa.selenium.TimeoutException e) {
+            return false;
+        }
+    }
+
+    /**
      * Step past the email-first sign-in picker (passwordless sign-in, ZP-3919/3920/4353).
      *
      * <p>Since Web v2.2 the login page asks for the email only, then offers device sign-in,
@@ -247,7 +263,9 @@ public class LoginPage {
         By usePassword = By.xpath("//button[normalize-space(.)='Use my password'"
                 + " or normalize-space(.)='Utiliser mon mot de passe']");
         try {
-            WebElement button = new WebDriverWait(driver, Duration.ofSeconds(10))
+            // The method buttons stay disabled until the sign-in-methods lookup returns; under load
+            // that lookup took 8.7 s (25 Sep 2026), so 10 s was too tight.
+            WebElement button = new WebDriverWait(driver, Duration.ofSeconds(45))
                     .until(ExpectedConditions.elementToBeClickable(usePassword));
             try {
                 button.click();
@@ -284,6 +302,24 @@ public class LoginPage {
      * mounted, so a login that never sees the prompt pays a few hundred milliseconds rather
      * than the full timeout.
      */
+    /**
+     * No-wait check for the two-factor enrollment prompt, for use between tests: the prompt can
+     * reappear after a reload ("You'll be asked again next time you sign in").
+     * @return true if a prompt was dismissed
+     */
+    public boolean dismissMfaPromptIfShowing() {
+        try {
+            for (WebElement b : driver.findElements(By.xpath("//button[normalize-space(.)='Set up later']"))) {
+                if (b.isDisplayed()) {
+                    ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("arguments[0].click();", b);
+                    System.out.println("[LoginPage] Dismissed the two-factor setup prompt ('Set up later')");
+                    return true;
+                }
+            }
+        } catch (Exception ignored) { }
+        return false;
+    }
+
     public void dismissMfaEnrollmentIfPresent() {
         By setUpLater = By.xpath(
                 "//button[normalize-space(.)='Set up later'"
@@ -292,11 +328,17 @@ public class LoginPage {
                 + " or normalize-space(.)='Remind me later']");
         By enrollmentHeading = By.xpath(
                 "//*[contains(normalize-space(.),'Set up your authenticator app')"
-                + " or contains(normalize-space(.),'Scan this code with an authenticator app')]");
+                + " or contains(normalize-space(.),'Scan this code with an authenticator app')"
+                // v2.2 chooser (25 Sep 2026): "Authenticator app" vs "Email OTP", then Continue / Set up later.
+                + " or contains(normalize-space(.),'Set up two-factor authentication')"
+                + " or contains(normalize-space(.),'Choose how you want to verify your identity')]");
         // The mounted app shell — the signal that no prompt is in the way.
         By appShell = By.cssSelector("nav[aria-label='navigation'], main");
 
         long deadline = System.currentTimeMillis() + 15000L;
+        // The v2.2 two-factor chooser opens a moment AFTER the app shell mounts, so "shell is up"
+        // alone is not proof that no prompt is coming. Require the shell to stay clear for 3 s.
+        long clearSince = -1;
         while (System.currentTimeMillis() < deadline) {
             try {
                 java.util.List<WebElement> later = driver.findElements(setUpLater);
@@ -319,7 +361,11 @@ public class LoginPage {
 
                 boolean promptShowing = !driver.findElements(enrollmentHeading).isEmpty();
                 if (!promptShowing && !driver.findElements(appShell).isEmpty()) {
-                    return;   // no prompt, shell is up — nothing to do
+                    long now = System.currentTimeMillis();
+                    if (clearSince < 0) clearSince = now;
+                    if (now - clearSince >= 3000L) return;   // shell up, no prompt for 3 s
+                } else {
+                    clearSince = -1;
                 }
                 if (promptShowing) {
                     System.out.println("[LoginPage] Authenticator enrollment screen visible; "

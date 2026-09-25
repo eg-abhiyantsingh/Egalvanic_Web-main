@@ -412,6 +412,10 @@ public class BaseTest {
     public void testSetup() {
         testStartTime = System.currentTimeMillis();
         replaceBrowserIfLost();
+        // The two-factor setup chooser can pop over the app after a reload; it hides every locator.
+        if (loginPage != null && loginPage.dismissMfaPromptIfShowing()) {
+            try { Thread.sleep(1500); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+        }
         recoverFromErrorPage();
         dismissBackdrops();
         // Auto-capture the starting page state on every test so the Detailed Report
@@ -711,6 +715,15 @@ public class BaseTest {
 
                 loginPage.login(AppConstants.VALID_EMAIL, AppConstants.VALID_PASSWORD);
                 pause(2000);
+                // Do not carry on signed out: every later locator would fail with a misleading
+                // message. Retry the whole sign-in instead (seen 25 Sep 2026 under QA load).
+                if (!loginPage.waitUntilSignedIn(60)) {
+                    System.out.println("[BaseTest] Still on the sign-in page 60 s after submitting (attempt "
+                            + attempt + "/" + maxRetries + "). URL: " + driver.getCurrentUrl());
+                    if (attempt < maxRetries) continue;
+                    throw new RuntimeException("Login failed after " + maxRetries
+                            + " attempts: still on the sign-in page. URL: " + driver.getCurrentUrl());
+                }
 
                 // Check for error after login
                 if (isApplicationErrorPage()) {
