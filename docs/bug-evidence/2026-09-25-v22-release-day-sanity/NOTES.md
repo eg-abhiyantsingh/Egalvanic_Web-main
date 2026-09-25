@@ -50,3 +50,9 @@ on the sign-in page to reach the password form.
 ## ZP-4407 (filed 25 Sep, owner's request)
 "create a jira ticket that client portal user should not have option to create work order assign to krunal current sprint".
 Bug · Medium · Krunal lunagariya · sprint 1222 Z-26-09-S2 (active) · fixVersion Web v2.2 · To Do · screenshot attached.
+
+## ZP-4402 (arrived RFQ 03:15 CDT) — not on QA
+- S8OG5dN0: 287 code files searched — no `/attention/(counts|sales|ops|admin)`, no "Show more"/"Afficher plus"; old sales-attention/ops-attention still referenced.
+- `/api/company/{acme}/attention/*` → 200 text/html app shell, identical to a made-up `/attention/nonexistent-qa-probe`; control `/sales-attention`, `/ops-attention` → application/json 422 (seat = Client Portal). New routes not registered on QA.
+- Comment 44540. All 17 Ready-for-QA tickets now carry a QA comment (16 from 24–25 Sep, ZP-4402 today).
+- Note: the shared QA browser is now signed in as the **Client Portal** seat (owner signed in for the ZP-4407 screenshot).
