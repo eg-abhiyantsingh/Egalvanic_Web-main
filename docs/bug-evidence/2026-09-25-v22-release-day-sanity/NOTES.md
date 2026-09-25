@@ -56,3 +56,9 @@ Bug · Medium · Krunal lunagariya · sprint 1222 Z-26-09-S2 (active) · fixVers
 - `/api/company/{acme}/attention/*` → 200 text/html app shell, identical to a made-up `/attention/nonexistent-qa-probe`; control `/sales-attention`, `/ops-attention` → application/json 422 (seat = Client Portal). New routes not registered on QA.
 - Comment 44540. All 17 Ready-for-QA tickets now carry a QA comment (16 from 24–25 Sep, ZP-4402 today).
 - Note: the shared QA browser is now signed in as the **Client Portal** seat (owner signed in for the ZP-4407 screenshot).
+| 12 | zp4411-compliance-acknowledge-61-deviations-500 | ZP-4411 | Owner's screenshot: Acknowledge 61 deviations ("test 25 sep", revisit 25/09/2026) → toast 500 trace 0ac59e72ab7e8ab51496770a1521c5d0 |
+| 13 | zp4410-admin-activity-logs-page | ZP-4410 | Admin → Activity Logs page (24 Sep capture) |
+
+## ZP-4410 + ZP-4411 (filed 25 Sep, owner's request, both Krunal · sprint 1222 · Web v2.2 · To Do)
+- ZP-4410 (Medium): "activity log are showing permission sab ma sa nikal da" → remove the Activity Logs permission from all roles.
+- ZP-4411 (High): Compliance Acknowledge → 500 (61 deviations); description also records the single-ack 400 and withdraw 500.
