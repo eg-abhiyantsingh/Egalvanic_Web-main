@@ -17,6 +17,14 @@
         </classes>
     </test>
 
+    <!-- 25 Sep 2026: a failed company lookup shows "Organization Not Found" on the real address.
+         Two controls pass; the two failure cases fail until the product is fixed. -->
+    <test name="Sign-in page company lookup resilience (4 TCs)">
+        <classes>
+            <class name="com.egalvanic.qa.testcase.OrgLookupResilienceTest"/>
+        </classes>
+    </test>
+
     <test name="Full Site Selection Tests (30 TCs)">
         <classes>
             <class name="com.egalvanic.qa.testcase.SiteSelectionTestNG"/>

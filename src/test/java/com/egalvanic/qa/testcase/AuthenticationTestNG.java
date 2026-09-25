@@ -169,7 +169,11 @@ public class AuthenticationTestNG {
 
             // Verify all UI elements present (web equivalent of Welcome screen)
             Assert.assertTrue(loginPage.isEmailFieldDisplayed(), "Email field not displayed");
-            Assert.assertTrue(loginPage.isPasswordFieldDisplayed(), "Password field not displayed");
+            // v2.2: step 1 offers "Use my password"; the password box and Sign In are on step 2.
+            Assert.assertTrue(loginPage.isPasswordFieldDisplayed() || !driver.findElements(USE_MY_PASSWORD).isEmpty(),
+                    "Neither the password box nor \"Use my password\" is offered on the sign-in page");
+            goToPasswordStep();
+            Assert.assertTrue(loginPage.isPasswordFieldDisplayed(), "Password field not displayed after \"Use my password\"");
             Assert.assertTrue(loginPage.isSignInButtonDisplayed(), "Sign In button not displayed");
 
             // Check for company branding / logo
@@ -244,7 +248,11 @@ public class AuthenticationTestNG {
 
             // Verify all login elements visible (successful navigation to Login screen)
             Assert.assertTrue(loginPage.isEmailFieldDisplayed(), "Email field not displayed");
-            Assert.assertTrue(loginPage.isPasswordFieldDisplayed(), "Password field not displayed");
+            // v2.2: step 1 offers "Use my password"; the password box and Sign In are on step 2.
+            Assert.assertTrue(loginPage.isPasswordFieldDisplayed() || !driver.findElements(USE_MY_PASSWORD).isEmpty(),
+                    "Neither the password box nor \"Use my password\" is offered on the sign-in page");
+            goToPasswordStep();
+            Assert.assertTrue(loginPage.isPasswordFieldDisplayed(), "Password field not displayed after \"Use my password\"");
             Assert.assertTrue(loginPage.isSignInButtonDisplayed(), "Sign In button not displayed");
             logStep("Successfully navigated to Login screen with all fields");
 
@@ -587,10 +595,15 @@ public class AuthenticationTestNG {
             boolean focusOnPasswordType = "password".equals(activeElement.getAttribute("type"));
             boolean focusOnToggle = activeElement.getAttribute("aria-label") != null
                     && activeElement.getAttribute("aria-label").contains("password");
-            boolean focusMoved = focusOnPassword || focusOnPasswordType || focusOnToggle;
+            // v2.2 two-step page: the control after the email box is a sign-in method button.
+            String activeText = String.valueOf(activeElement.getText()).toLowerCase();
+            boolean focusOnMethodButton = "button".equalsIgnoreCase(activeElement.getTagName())
+                    && (activeText.contains("sign in") || activeText.contains("google")
+                        || activeText.contains("code") || activeText.contains("password"));
+            boolean focusMoved = focusOnPassword || focusOnPasswordType || focusOnToggle || focusOnMethodButton;
             logStep("Focus check: onPasswordById=" + focusOnPassword
                     + ", onPasswordByType=" + focusOnPasswordType + ", onToggle=" + focusOnToggle);
-            Assert.assertTrue(focusMoved, "Tab should move focus from email to password field or toggle. "
+            Assert.assertTrue(focusMoved, "Tab should move focus from email to the next sign-in control. "
                     + "Active element id='" + activeId + "', tag='" + activeElement.getTagName() + "'");
 
             logStepWithScreenshot("After Tab key navigation");
@@ -620,7 +633,11 @@ public class AuthenticationTestNG {
 
             Assert.assertTrue(loginPage.isPageLoaded(), "Login page not loaded");
             Assert.assertTrue(loginPage.isEmailFieldDisplayed(), "Email field not displayed");
-            Assert.assertTrue(loginPage.isPasswordFieldDisplayed(), "Password field not displayed");
+            // v2.2: step 1 offers "Use my password"; the password box and Sign In are on step 2.
+            Assert.assertTrue(loginPage.isPasswordFieldDisplayed() || !driver.findElements(USE_MY_PASSWORD).isEmpty(),
+                    "Neither the password box nor \"Use my password\" is offered on the sign-in page");
+            goToPasswordStep();
+            Assert.assertTrue(loginPage.isPasswordFieldDisplayed(), "Password field not displayed after \"Use my password\"");
             Assert.assertTrue(loginPage.isSignInButtonDisplayed(), "Sign In button not displayed");
 
             // Check for eye icon (password visibility toggle)
@@ -690,13 +707,21 @@ public class AuthenticationTestNG {
             navigateToLoginPage();
 
             loginPage.enterEmail("user@");
-            loginPage.enterPassword("somepassword");
-            loginPage.acceptTermsIfPresent();
-            pause(500);
-
-            // Try to sign in
-            loginPage.tapSignIn();
-            pause(3000);
+            pause(1000);
+            List<WebElement> usePassword = driver.findElements(USE_MY_PASSWORD);
+            boolean canContinue = !usePassword.isEmpty() && usePassword.get(0).isEnabled();
+            logStep("\"Use my password\" enabled for 'user@': " + canContinue);
+            if (canContinue) {
+                usePassword.get(0).click();
+                pause(1500);
+                if (loginPage.isPasswordFieldDisplayed()) {
+                    loginPage.enterPassword("somepassword");
+                    loginPage.acceptTermsIfPresent();
+                    pause(500);
+                    if (loginPage.isSignInButtonDisplayed()) loginPage.tapSignIn();
+                    pause(3000);
+                }
+            }
 
             // Should still be on login page
             Assert.assertTrue(loginPage.isPageLoaded(),
@@ -723,6 +748,7 @@ public class AuthenticationTestNG {
         try {
             navigateToLoginPage();
 
+            goToPasswordStep();
             loginPage.enterPassword("TestPassword123");
             pause(500);
 
@@ -754,6 +780,7 @@ public class AuthenticationTestNG {
         try {
             navigateToLoginPage();
 
+            goToPasswordStep();
             loginPage.enterPassword("TestPassword123");
             pause(500);
 
@@ -946,7 +973,7 @@ public class AuthenticationTestNG {
         try {
             navigateToLoginPage();
 
-            loginPage.enterEmail(AppConstants.VALID_EMAIL);
+            goToPasswordStep();
             loginPage.clearPassword();
             loginPage.acceptTermsIfPresent();
             pause(500);
@@ -984,7 +1011,15 @@ public class AuthenticationTestNG {
             navigateToLoginPage();
 
             loginPage.clearEmail();
-            loginPage.enterPassword(AppConstants.VALID_PASSWORD);
+            pause(800);
+            List<WebElement> usePassword = driver.findElements(USE_MY_PASSWORD);
+            boolean reachable = !usePassword.isEmpty() && usePassword.get(0).isEnabled();
+            logStep("With no email, \"Use my password\" enabled: " + reachable);
+            if (reachable) {
+                usePassword.get(0).click();
+                pause(1500);
+                if (loginPage.isPasswordFieldDisplayed()) loginPage.enterPassword(AppConstants.VALID_PASSWORD);
+            }
             loginPage.acceptTermsIfPresent();
             pause(500);
 
@@ -1176,6 +1211,16 @@ public class AuthenticationTestNG {
     // ================================================================
     // HELPER METHODS
     // ================================================================
+
+    /** v2.2 sign-in page: step 1 is the email box plus sign-in method buttons. */
+    private static final By USE_MY_PASSWORD = By.xpath("//button[normalize-space(.)='Use my password']");
+
+    /** Type an email and press "Use my password" so the password step (box, eye icon, Sign In) is on screen. */
+    private void goToPasswordStep() {
+        loginPage.enterEmail(AppConstants.VALID_EMAIL);
+        loginPage.revealPasswordFieldIfNeeded();
+    }
+
 
     private void navigateToLoginPage() {
         int maxRetries = 3;

@@ -557,11 +557,20 @@ public class SiteSelectionTestNG {
         }
 
         // Verify all filtered results contain "Test" (re-read from DOM after the stable wait)
+        // v2.2 (site-account ownership, ZP-3978): the picker matches the site name OR its account name
+        // (`${name} ${account_name}`) and groups options under an account header. A site whose own name
+        // lacks "test" is a correct match when its account header contains it.
         List<WebElement> filteredOptions = driver.findElements(OPTIONS);
         for (WebElement opt : filteredOptions) {
             String text = getElementText(opt).toLowerCase();
-            Assert.assertTrue(text.contains("test"),
-                    "Filtered option does not contain 'Test': '" + text + "'");
+            String account = "";
+            try {
+                account = String.valueOf(((org.openqa.selenium.JavascriptExecutor) driver).executeScript(
+                        "var g=arguments[0].closest('ul'); g=g&&g.parentElement; var h=g&&g.firstElementChild;"
+                        + " return h&&h.tagName!=='UL'?(h.innerText||''):'';", opt)).toLowerCase();
+            } catch (Exception ignored) { }
+            Assert.assertTrue(text.contains("test") || account.contains("test"),
+                    "Filtered option matches neither by site nor by account: site='" + text + "', account='" + account + "'");
         }
         logStep("All " + filteredOptions.size() + " filtered results contain 'Test'");
 

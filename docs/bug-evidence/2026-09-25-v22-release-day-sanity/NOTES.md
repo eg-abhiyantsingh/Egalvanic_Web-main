@@ -62,3 +62,15 @@ Bug · Medium · Krunal lunagariya · sprint 1222 Z-26-09-S2 (active) · fixVers
 ## ZP-4410 + ZP-4411 (filed 25 Sep, owner's request, both Krunal · sprint 1222 · Web v2.2 · To Do)
 - ZP-4410 (Medium): "activity log are showing permission sab ma sa nikal da" → remove the Activity Logs permission from all roles.
 - ZP-4411 (High): Compliance Acknowledge → 500 (61 deviations); description also records the single-ack 400 and withdraw 500.
+
+## Full-website regression (evening, "test full website too")
+| # | file | what |
+|---|---|---|
+| 14 | 14-org-lookup-normal-sign-in-page | Control: acme.qa.egalvanic.ai loads the sign-in page when the company lookup works |
+| 15 | 15-org-lookup-503-shows-organization-not-found | Same address, `/api/company/alliance-config/acme.egalvanic` answered 503 → "Organization Not Found" |
+| 16 | 16-org-lookup-network-error-shows-organization-not-found | Same address, that request blocked (network error) → "Organization Not Found" |
+| 17 | 17-ci-2026-09-25-1006utc-organization-not-found-on-acme | It happened on its own on QA at 10:06 UTC (AuthenticationTestNG TC22 on CI run 36121530798) |
+
+- Code (bundle index-B8jzC7QC.js): `QEe()` returns `{success:false,error:body.error}` for any non-OK status and `null` on a network error; `uj()` then sets `companyError: o?.error || "COMPANY_NOT_FOUND"`. Only a real 404 carries `error:"COMPANY_NOT_FOUND"` (unknown subdomain checked with curl). No retry control on the card.
+- Regression test: `OrgLookupResilienceTest` (suite-auth-site.xml): 2 controls pass, 2 failure cases fail until fixed.
+- Register v26 (https://claude.ai/artifact/LCpCWgsgYTaYzVQ4XpfdjB), section `#v22regression`. Not ticketed yet: awaiting the owner's go-ahead.

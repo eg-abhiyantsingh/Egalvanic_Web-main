@@ -395,10 +395,13 @@ public class LoginPage {
      */
     public boolean isPageLoaded() {
         try {
-            return emailField.isDisplayed();
-        } catch (Exception e) {
-            return false;
+            if (emailField.isDisplayed()) return true;
+        } catch (Exception ignored) { }
+        // v2.2 password step: the email box is replaced by the chosen email and a password box.
+        for (WebElement el : driver.findElements(PASSWORD_INPUT)) {
+            try { if (el.isDisplayed()) return true; } catch (Exception ignored) { }
         }
+        return false;
     }
 
     /**
