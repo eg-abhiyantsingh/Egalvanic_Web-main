@@ -266,6 +266,15 @@ public class RbacUiPermissionMatrixTest {
             return;
         }
         navigateToModule(module);
+        if (twoFactorPromptCovering() && !clearTwoFactorPrompt()) {
+            // The chooser hides the whole app: "no control found" here would PASS a security cell
+            // without looking at the module. Report it as not verified instead.
+            shot(role.name + " · " + module.label + " · " + action + " — page covered by the two-factor chooser");
+            String msg = role.name + " · " + module.label + " · " + action + " — NOT VERIFIED: the two-factor "
+                    + "setup chooser covers the page and has no 'Set up later' to press.";
+            ExtentReportManager.logSkip(msg);
+            throw new SkipException(msg);
+        }
         lastMatchedControl = null;
         boolean control = affordancePresent(action, module);
         // Evidence screenshot of the module page this assertion observed (attaches to the detailed report).
@@ -353,6 +362,8 @@ public class RbacUiPermissionMatrixTest {
                     + "— likely transient auth throttling.";
             ExtentReportManager.logSkip(msg); throw new SkipException(msg);
         }
+        // The v2.2 two-factor chooser can still be opening here; while it is up there is no rail to read.
+        if (clearTwoFactorPrompt()) waitForShellOrPrompt(20);
         sessionNavHrefs = readSidebarHrefs();
     }
 
@@ -361,9 +372,86 @@ public class RbacUiPermissionMatrixTest {
         try {
             driver.get(AppConstants.BASE_URL + m.route);
             new WebDriverWait(driver, Duration.ofSeconds(20)).until(d -> !onLoginPage());
-            sleep(2200); // SPA hydrate + data
+            waitForModulePageSettled();
             currentRoute = m.route;
         } catch (Exception e) { currentRoute = m.route; }
+    }
+
+    /**
+     * {@code driver.get()} reloads the whole SPA, so for a few seconds (longer under CI load) the
+     * page is a bare centred spinner: no sidebar, no module content. A Create/Edit/Delete probe in
+     * that window finds no control and PASSES a security cell without having seen the page. Seen
+     * 25 Sep 2026: "Client Portal · Quotes · Create" passed at 10:48 on a spinner-only screenshot
+     * and failed at 12:46 on the rendered Quotes page with an enabled "New Quote" button.
+     *
+     * <p>So wait for the app shell (the rail {@code nav}), clear the v2.2 two-factor chooser if it
+     * opened, and wait for the module's loading indicators to clear before probing. Every wait is
+     * bounded, so a page with a spinner that never stops cannot hang the run; the probe then runs
+     * on whatever rendered, and {@link #twoFactorPromptCovering()} stops a covered page from
+     * passing.</p>
+     */
+    private void waitForModulePageSettled() {
+        waitForShellOrPrompt(30);
+        if (clearTwoFactorPrompt()) waitForShellOrPrompt(20);
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(10)).until(d -> {
+                for (WebElement s : d.findElements(By.cssSelector("main [role='progressbar'], main .MuiCircularProgress-root"))) {
+                    try { if (s.isDisplayed()) return false; } catch (Exception ignored) { /* went stale = gone */ }
+                }
+                return true;
+            });
+        } catch (Exception ignored) { /* a perpetual spinner: probe what has rendered so far */ }
+        sleep(1200); // buttons that depend on the loaded rows (row kebabs) render right after the grid
+    }
+
+    private void waitForShellOrPrompt(int seconds) {
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(seconds)).until(d -> isWebAccessRestricted()
+                    || twoFactorPromptCovering()
+                    || !d.findElements(By.cssSelector("nav[aria-label='navigation'], nav a[href]")).isEmpty());
+        } catch (Exception ignored) { /* probe anyway; the screenshot records what was on screen */ }
+    }
+
+    /** Heading/intro of the v2.2 "Set up two-factor authentication" chooser. */
+    private static final By TWO_FACTOR_PROMPT = By.xpath(
+            "//*[normalize-space(.)='Set up two-factor authentication'"
+            + " or normalize-space(.)='Choose how you want to verify your identity when you sign in.']");
+
+    /**
+     * The v2.2 two-factor chooser replaces the whole app (no rail, no module) until "Set up later"
+     * is pressed once in the tab; the bundle then stores {@code sessionStorage.mfa_prompt_skipped=1}
+     * and stops showing it. It opens a moment AFTER the shell mounts, so until that flag is set,
+     * watch for it for a few seconds. Pressing "Set up later" is what a user who declines does
+     * (the screen says "You'll be asked again next time you sign in").
+     *
+     * @return true if the chooser was dismissed
+     */
+    private boolean clearTwoFactorPrompt() {
+        if (driver == null || loginPage == null) return false;
+        long end = System.currentTimeMillis() + (twoFactorPromptSkipped() ? 0 : 4000);
+        do {
+            if (loginPage.dismissMfaPromptIfShowing()) { sleep(1500); return true; }
+            if (System.currentTimeMillis() >= end) break;
+            sleep(400);
+        } while (true);
+        return false;
+    }
+
+    private boolean twoFactorPromptSkipped() {
+        try {
+            return "1".equals(((org.openqa.selenium.JavascriptExecutor) driver)
+                    .executeScript("return window.sessionStorage.getItem('mfa_prompt_skipped');"));
+        } catch (Exception e) { return false; }
+    }
+
+    /** True while the two-factor chooser covers the app, i.e. nothing on the module page can be judged. */
+    private boolean twoFactorPromptCovering() {
+        try {
+            for (WebElement e : driver.findElements(TWO_FACTOR_PROMPT)) {
+                try { if (e.isDisplayed()) return true; } catch (Exception ignored) { }
+            }
+        } catch (Exception ignored) { }
+        return false;
     }
 
     /** Detect whether the module page currently offers the given action's control (best-effort, generic). */
