@@ -671,11 +671,8 @@ public class BaseTest {
                 // Check if already logged in (nav present, no login form) — can happen
                 // when multiple test classes run sequentially sharing a browser session
                 boolean hasNav = !driver.findElements(By.cssSelector("nav")).isEmpty();
-                boolean hasLoginForm = !driver.findElements(By.xpath(
-                    "//input[@id='email'] | //input[@type='email']"
-                    + " | //input[@name='email']"
-                    + " | //input[@placeholder='Email Address' or @placeholder='Email']"
-                    + " | //input[@aria-label='Email Address' or @aria-label='Email']")).isEmpty();
+                // Visible login boxes only: the signed-in app can hold a hidden email input.
+                boolean hasLoginForm = LoginPage.isLoginScreen(driver);
                 if (hasNav && !hasLoginForm) {
                     System.out.println("[BaseTest] Already logged in (nav present, no login form). URL: " + driver.getCurrentUrl());
                     waitAndDismissAppAlert();

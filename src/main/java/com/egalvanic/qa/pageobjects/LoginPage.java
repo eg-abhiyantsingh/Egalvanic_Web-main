@@ -40,7 +40,14 @@ public class LoginPage {
      * there even though the user is plainly on the login page.
      */
     public static boolean isLoginScreen(WebDriver driver) {
-        return !driver.findElements(EMAIL_INPUT).isEmpty() || !driver.findElements(PASSWORD_INPUT).isEmpty();
+        // Visible boxes only: a signed-in page can carry a hidden email/password input (a pre-rendered
+        // dialog or a third-party widget), which must not read as "still on the login page".
+        for (By by : new By[]{EMAIL_INPUT, PASSWORD_INPUT}) {
+            for (WebElement el : driver.findElements(by)) {
+                try { if (el.isDisplayed()) return true; } catch (Exception ignored) { }
+            }
+        }
+        return false;
     }
 
     // PageFactory elements — locator chain tolerates the May 2026 login page
