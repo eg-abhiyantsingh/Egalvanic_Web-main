@@ -508,7 +508,12 @@ public class AssetEngineeringTestNG extends BaseTest {
                         + "set.call(inp, tx); inp.dispatchEvent(new Event('input',{bubbles:true}));"
                         + "return true;", placeholder, typeText);
                 if (!Boolean.TRUE.equals(filled)) { pause(700); continue; }
-                pause(1300);
+                // Wait for the filtered options instead of a fixed 1.3 s: library lists took up to 7 s on QA (25 Sep 2026).
+                for (int w = 0; w < 25; w++) {
+                    pause(400);
+                    Object n = js("return document.querySelectorAll(\"li[role='option']\").length;");
+                    if (n instanceof Long && (Long) n > 0) break;
+                }
                 Object txt = js(
                         "var want=arguments[0].toLowerCase();"
                         + "var opts=[].slice.call(document.querySelectorAll(\"li[role='option']\"));"
@@ -531,11 +536,15 @@ public class AssetEngineeringTestNG extends BaseTest {
                 "var ph=arguments[0];"
                 + "var inp=[].slice.call(document.querySelectorAll('input')).find(function(i){return new RegExp(ph,'i').test(i.placeholder||'');});"
                 + "if(!inp) return -1;"
-                + "inp.scrollIntoView({block:'center'}); inp.focus(); inp.click();"
-                + "var w=inp.closest('.MuiAutocomplete-root'); if(w){var b=w.querySelector('.MuiAutocomplete-popupIndicator'); if(b) b.click();}"
+                + "inp.scrollIntoView({block:'center'}); inp.focus();"
+                + " var w=inp.closest('.MuiAutocomplete-root'); if(inp.getAttribute('aria-expanded')!=='true'){var b=w&&w.querySelector('.MuiAutocomplete-popupIndicator'); if(b) b.click(); else inp.click();}"
                 + "return -2;", placeholder);
-        pause(1200);
-        Object c = js("return document.querySelectorAll(\"li[role='option']\").length;");
+        Object c = 0L;
+        for (int w = 0; w < 30; w++) {   // up to 12 s: the manufacturer list took 7 s on QA
+            pause(400);
+            c = js("return document.querySelectorAll(\"li[role='option']\").length;");
+            if (c instanceof Long && (Long) c > 0) break;
+        }
         // close the popup so it doesn't block later steps
         js("document.body.click();");
         return c instanceof Long ? (Long) c : -1;

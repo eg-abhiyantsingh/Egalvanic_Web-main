@@ -350,8 +350,8 @@ public class MainsConfigEngineeringTestNG extends BaseTest {
         for (int attempt = 0; attempt < 3; attempt++) {
             js("var ph=arguments[0];"
                     + "var i=[].slice.call(document.querySelectorAll('input')).find(function(x){return new RegExp(ph,'i').test(x.placeholder||'');});"
-                    + "if(i){i.scrollIntoView({block:'center'}); i.focus(); i.click(); var w=i.closest('.MuiAutocomplete-root'); if(w){var b=w.querySelector('.MuiAutocomplete-popupIndicator'); if(b) b.click();}}", placeholder);
-            for (int i = 0; i < 8; i++) {
+                    + "if(i){i.scrollIntoView({block:'center'}); i.focus(); var w=i.closest('.MuiAutocomplete-root'); if(i.getAttribute('aria-expanded')!=='true'){var b=w&&w.querySelector('.MuiAutocomplete-popupIndicator'); if(b) b.click(); else i.click();}}", placeholder);
+            for (int i = 0; i < 30; i++) {
                 pause(400);
                 Object n = js("return document.querySelectorAll(\"li[role='option']\").length;");
                 if (n instanceof Long && (Long) n > 0) break;
@@ -370,8 +370,8 @@ public class MainsConfigEngineeringTestNG extends BaseTest {
         for (int attempt = 0; attempt < 3; attempt++) {
             js("var d=[].slice.call(document.querySelectorAll(\"[role='dialog'], .MuiDialog-paper\")).find(function(e){return e.getBoundingClientRect().width>150;});"
                     + "if(d){var inp=[].slice.call(d.querySelectorAll('input')).find(function(i){return /subtype/i.test(i.placeholder||'');});"
-                    + "if(inp){inp.scrollIntoView({block:'center'}); inp.focus(); inp.click(); var w=inp.closest('.MuiAutocomplete-root'); if(w){var b=w.querySelector('.MuiAutocomplete-popupIndicator'); if(b) b.click();}}}");
-            for (int i = 0; i < 8; i++) {
+                    + "if(inp){inp.scrollIntoView({block:'center'}); inp.focus(); var w=inp.closest('.MuiAutocomplete-root'); if(inp.getAttribute('aria-expanded')!=='true'){var b=w&&w.querySelector('.MuiAutocomplete-popupIndicator'); if(b) b.click(); else inp.click();}}}");
+            for (int i = 0; i < 30; i++) {
                 pause(400);
                 Object n = js("return document.querySelectorAll(\"li[role='option']\").length;");
                 if (n instanceof Long && (Long) n > 0) break;
@@ -518,7 +518,12 @@ public class MainsConfigEngineeringTestNG extends BaseTest {
                         + "set.call(inp, tx); inp.dispatchEvent(new Event('input',{bubbles:true}));"
                         + "return true;", placeholder, typeText);
                 if (!Boolean.TRUE.equals(filled)) { pause(700); continue; }
-                pause(1300);
+                // Wait for the filtered options instead of a fixed 1.3 s: library lists took up to 7 s on QA (25 Sep 2026).
+                for (int w = 0; w < 25; w++) {
+                    pause(400);
+                    Object n = js("return document.querySelectorAll(\"li[role='option']\").length;");
+                    if (n instanceof Long && (Long) n > 0) break;
+                }
                 Object txt = js(
                         "var want=arguments[0].toLowerCase();"
                         + "var opts=[].slice.call(document.querySelectorAll(\"li[role='option']\"));"

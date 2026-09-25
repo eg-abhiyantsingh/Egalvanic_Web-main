@@ -360,10 +360,10 @@ public class AssetEngineeringExhaustiveTestNG extends BaseTest {
             // (e.g. Battery/Capacitor with one subtype) only open their listbox on ArrowDown.
             js("var ph=arguments[0];"
                     + "var i=[].slice.call(document.querySelectorAll('input')).find(function(x){return new RegExp(ph,'i').test(x.placeholder||'');});"
-                    + "if(i){i.scrollIntoView({block:'center'}); i.focus(); i.click();"
-                    + " var w=i.closest('.MuiAutocomplete-root'); if(w){var b=w.querySelector('.MuiAutocomplete-popupIndicator'); if(b) b.click();}"
+                    + "if(i){i.scrollIntoView({block:'center'}); i.focus();"
+                    + " var w=i.closest('.MuiAutocomplete-root'); if(i.getAttribute('aria-expanded')!=='true'){var b=w&&w.querySelector('.MuiAutocomplete-popupIndicator'); if(b) b.click(); else i.click();}"
                     + " i.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',code:'ArrowDown',keyCode:40,which:40,bubbles:true}));}", placeholder);
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < 30; i++) {
                 pause(400);
                 Object n = js("return document.querySelectorAll(\"li[role='option']\").length;");
                 if (n instanceof Long && (Long) n > 0) break;
@@ -464,7 +464,12 @@ public class AssetEngineeringExhaustiveTestNG extends BaseTest {
                         + "set.call(inp, tx); inp.dispatchEvent(new Event('input',{bubbles:true}));"
                         + "return true;", placeholder, typeText);
                 if (!Boolean.TRUE.equals(filled)) { pause(700); continue; }
-                pause(1300);
+                // Wait for the filtered options instead of a fixed 1.3 s: library lists took up to 7 s on QA (25 Sep 2026).
+                for (int w = 0; w < 25; w++) {
+                    pause(400);
+                    Object n = js("return document.querySelectorAll(\"li[role='option']\").length;");
+                    if (n instanceof Long && (Long) n > 0) break;
+                }
                 Object txt = js(
                         "var want=arguments[0].toLowerCase();"
                         + "var opts=[].slice.call(document.querySelectorAll(\"li[role='option']\"));"

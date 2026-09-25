@@ -309,7 +309,7 @@ public class TransformerEngineeringTestNG extends BaseTest {
         js("var lbl=[].slice.call(document.querySelectorAll('*')).find(function(e){return /Primary Connection/i.test((e.textContent||'')) && e.children.length<6;});"
                 + "if(lbl){var box=lbl.closest('div'); var inp=box?box.querySelector('input'):null;"
                 + "if(!inp){var nxt=lbl.parentElement; inp=nxt?nxt.querySelector('input'):null;}"
-                + "if(inp){inp.focus(); inp.click(); var w=inp.closest('.MuiAutocomplete-root'); if(w){var b=w.querySelector('.MuiAutocomplete-popupIndicator'); if(b) b.click();}}}");
+                + "if(inp){inp.focus(); var w=inp.closest('.MuiAutocomplete-root'); if(inp.getAttribute('aria-expanded')!=='true'){var b=w&&w.querySelector('.MuiAutocomplete-popupIndicator'); if(b) b.click(); else inp.click();}}}");
         pause(1000);
         Object t = js("var r=[].slice.call(document.querySelectorAll(\"li[role='option']\")).map(function(o){return o.textContent.trim();}).join(' | '); document.body.click(); return r;");
         return t == null ? "" : t.toString();
@@ -319,9 +319,9 @@ public class TransformerEngineeringTestNG extends BaseTest {
         for (int attempt = 0; attempt < 3; attempt++) {
             js("var ph=arguments[0];"
                     + "var i=[].slice.call(document.querySelectorAll('input')).find(function(x){return new RegExp(ph,'i').test(x.placeholder||'');});"
-                    + "if(i){i.scrollIntoView({block:'center'}); i.focus(); i.click(); var w=i.closest('.MuiAutocomplete-root'); if(w){var b=w.querySelector('.MuiAutocomplete-popupIndicator'); if(b) b.click();}}", placeholder);
+                    + "if(i){i.scrollIntoView({block:'center'}); i.focus(); var w=i.closest('.MuiAutocomplete-root'); if(i.getAttribute('aria-expanded')!=='true'){var b=w&&w.querySelector('.MuiAutocomplete-popupIndicator'); if(b) b.click(); else i.click();}}", placeholder);
             // poll for the option list to render
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < 30; i++) {
                 pause(400);
                 Object n = js("return document.querySelectorAll(\"li[role='option']\").length;");
                 if (n instanceof Long && (Long) n > 0) break;
@@ -422,7 +422,12 @@ public class TransformerEngineeringTestNG extends BaseTest {
                         + "set.call(inp, tx); inp.dispatchEvent(new Event('input',{bubbles:true}));"
                         + "return true;", placeholder, typeText);
                 if (!Boolean.TRUE.equals(filled)) { pause(700); continue; }
-                pause(1300);
+                // Wait for the filtered options instead of a fixed 1.3 s: library lists took up to 7 s on QA (25 Sep 2026).
+                for (int w = 0; w < 25; w++) {
+                    pause(400);
+                    Object n = js("return document.querySelectorAll(\"li[role='option']\").length;");
+                    if (n instanceof Long && (Long) n > 0) break;
+                }
                 Object txt = js(
                         "var want=arguments[0].toLowerCase();"
                         + "var opts=[].slice.call(document.querySelectorAll(\"li[role='option']\"));"

@@ -317,7 +317,12 @@ public class AssetEngineeringMatrixTestNG extends BaseTest {
                         + "set.call(inp, tx); inp.dispatchEvent(new Event('input',{bubbles:true}));"
                         + "return true;", placeholder, typeText);
                 if (!Boolean.TRUE.equals(filled)) { pause(700); continue; }
-                pause(1300);
+                // Wait for the filtered options instead of a fixed 1.3 s: library lists took up to 7 s on QA (25 Sep 2026).
+                for (int w = 0; w < 25; w++) {
+                    pause(400);
+                    Object n = js("return document.querySelectorAll(\"li[role='option']\").length;");
+                    if (n instanceof Long && (Long) n > 0) break;
+                }
                 Object txt = js(
                         "var want=arguments[0].toLowerCase();"
                         + "var opts=[].slice.call(document.querySelectorAll(\"li[role='option']\"));"
