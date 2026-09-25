@@ -45,3 +45,8 @@ on the sign-in page to reach the password form.
 - The +admin seat's roles changed again during the morning: now **Super Admin · Admin · Portal Sales · Electrical Engineer · Project Manager · Account Manager**. After a reload the nav gains Engineering (6 pages), Ops Overview, Sales Overview, and Site Data → Maintenance Program / Compliance / Reports now OPEN. So the ZP-4390 Access-Denied repro no longer exists on this seat.
 - S8OG5dN0 wraps HTMLInputElement value setter → scripted `set.call(input, v)` throws "Illegal invocation"; `document.execCommand('insertText')` works.
 - Jira: ZP-4390 → Ready for QA (PR #1539, 02:45 CDT). Others moved ZP-4291, 4292, 4351, 4352, 4207 to READY TO RELEASE today (QA's last verdicts on 4291/4292 were fails).
+| 11 | zp4407-client-portal-work-orders-create-button | ZP-4407 | Owner's screenshot: Client Portal user, Maintenance Portal → Work Orders (site test kd 1111) shows "Create Work Order" + "No rows" |
+
+## ZP-4407 (filed 25 Sep, owner's request)
+"create a jira ticket that client portal user should not have option to create work order assign to krunal current sprint".
+Bug · Medium · Krunal lunagariya · sprint 1222 Z-26-09-S2 (active) · fixVersion Web v2.2 · To Do · screenshot attached.
