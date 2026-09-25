@@ -1,5 +1,7 @@
 package com.egalvanic.qa.testcase;
 
+import com.egalvanic.qa.pageobjects.LoginPage;
+
 import com.egalvanic.qa.constants.AppConstants;
 import com.egalvanic.qa.utils.ExtentReportManager;
 import com.egalvanic.qa.utils.ScreenshotUtil;
@@ -75,8 +77,8 @@ public class ReportingEngineV2TestNG {
     // ═══════════════════════════════════════════════════
     // LOCATORS — Login
     // ═══════════════════════════════════════════════════
-    private static final By EMAIL_INPUT = By.id("email");
-    private static final By PASSWORD_INPUT = By.id("password");
+    private static final By EMAIL_INPUT = LoginPage.EMAIL_INPUT;
+    private static final By PASSWORD_INPUT = LoginPage.PASSWORD_INPUT;
     private static final By TERMS_CHECKBOX = By.cssSelector("input[type='checkbox']");
     private static final By SIGN_IN_BUTTON = By.xpath("//button[normalize-space()='Sign In']");
     private static final By DISMISS_BANNER = By.xpath("//button[contains(text(),'DISMISS')]");
@@ -1039,19 +1041,10 @@ public class ReportingEngineV2TestNG {
         sleep(3000);
 
         try {
-            WebElement email = driver.findElement(EMAIL_INPUT);
-            email.clear();
-            email.sendKeys(AppConstants.VALID_EMAIL);
-            WebElement pwd = driver.findElement(PASSWORD_INPUT);
-            pwd.clear();
-            pwd.sendKeys(AppConstants.VALID_PASSWORD);
-
-            try {
-                WebElement cb = driver.findElement(TERMS_CHECKBOX);
-                if (!cb.isSelected()) cb.click();
-            } catch (Exception e) { /* no checkbox */ }
-
-            driver.findElement(SIGN_IN_BUTTON).click();
+            if (!LoginPage.isLoginScreen(driver)) throw new IllegalStateException("no login form");
+            // Shared steps handle the v2.2 email-first page ("Use my password"), the terms
+            // checkbox and the optional authenticator-enrollment screen.
+            new LoginPage(driver).login(AppConstants.VALID_EMAIL, AppConstants.VALID_PASSWORD);
             sleep(5000);
 
             // Dismiss any app alerts
@@ -1127,8 +1120,7 @@ public class ReportingEngineV2TestNG {
 
     private boolean isLoginPage() {
         try {
-            return driver.findElements(EMAIL_INPUT).size() > 0
-                && driver.findElements(PASSWORD_INPUT).size() > 0;
+            return LoginPage.isLoginScreen(driver);
         } catch (Exception e) {
             return false;
         }

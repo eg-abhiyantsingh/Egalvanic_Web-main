@@ -169,12 +169,12 @@ public class BcesIqSmokeTestNG {
 
             // Wait for email input to appear (signals login form rendered)
             new WebDriverWait(driver, Duration.ofSeconds(LOGIN_TIMEOUT))
-                    .until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
+                    .until(ExpectedConditions.visibilityOfElementLocated(LoginPage.EMAIL_INPUT));
             logStep("Login form rendered");
             ScreenshotUtil.captureScreenshot("bcesiq_site_loaded");
 
             // Sanity: email + password fields present, submit button clickable
-            List<WebElement> emailFields = driver.findElements(By.id("email"));
+            List<WebElement> emailFields = driver.findElements(LoginPage.EMAIL_INPUT);
             List<WebElement> pwFields = driver.findElements(By.cssSelector("input[type='password'], input[name='password']"));
             List<WebElement> submitBtns = driver.findElements(By.cssSelector("button[type='submit']"));
 
@@ -203,7 +203,7 @@ public class BcesIqSmokeTestNG {
             logStep("Navigating to " + AppConstants.BASE_URL);
             driver.get(AppConstants.BASE_URL);
             new WebDriverWait(driver, Duration.ofSeconds(LOGIN_TIMEOUT))
-                    .until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
+                    .until(ExpectedConditions.visibilityOfElementLocated(LoginPage.EMAIL_INPUT));
 
             logStep("Submitting configured credentials"); // username/password intentionally NOT logged
             loginPage.login(AppConstants.VALID_EMAIL, AppConstants.VALID_PASSWORD);
@@ -258,7 +258,7 @@ public class BcesIqSmokeTestNG {
         try {
             driver.get(AppConstants.BASE_URL);
             new WebDriverWait(driver, Duration.ofSeconds(LOGIN_TIMEOUT))
-                    .until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
+                    .until(ExpectedConditions.visibilityOfElementLocated(LoginPage.EMAIL_INPUT));
             loginPage.login(AppConstants.VALID_EMAIL, AppConstants.VALID_PASSWORD);
 
             // Wait up to 30s for nav container to render — accept nav/aside/sidebar/drawer.

@@ -20,6 +20,29 @@ public class LoginPage {
 
     WebDriver driver;
 
+    /**
+     * Shared locators for tests that drive the login page without this class.
+     * The May 2026 page dropped id="email"/"password", and the v2.2 page (Sep 2026) asks for the
+     * email first: the password box only exists after "Use my password" is clicked. Tests must
+     * not treat "no password box yet" as "not on the login page".
+     */
+    public static final By EMAIL_INPUT = By.xpath(
+            "//input[@id='email'] | //input[@type='email'] | //input[@name='email']"
+            + " | //input[@placeholder='Email Address' or @placeholder='Email']"
+            + " | //input[@aria-label='Email Address' or @aria-label='Email']");
+    public static final By PASSWORD_INPUT = By.xpath(
+            "//input[@id='password'] | //input[@type='password'] | //input[@name='password']"
+            + " | //input[@placeholder='Password'] | //input[@aria-label='Password']");
+
+    /**
+     * True while the browser shows any step of the sign-in page. On v2.2 the first step has only
+     * the email box plus sign-in method buttons, so "email and password both present" is false
+     * there even though the user is plainly on the login page.
+     */
+    public static boolean isLoginScreen(WebDriver driver) {
+        return !driver.findElements(EMAIL_INPUT).isEmpty() || !driver.findElements(PASSWORD_INPUT).isEmpty();
+    }
+
     // PageFactory elements — locator chain tolerates the May 2026 login page
     // which dropped the id="email"/"password" attributes in favor of MUI
     // accessibility (aria-label / placeholder / type-based selectors).
@@ -92,6 +115,7 @@ public class LoginPage {
      * Uses React-compatible native value setter to update React state.
      */
     public void enterPassword(String password) {
+        revealPasswordFieldIfNeeded();
         try {
             setReactInputValue(passwordField, password);
         } catch (Exception e) {
@@ -192,6 +216,7 @@ public class LoginPage {
      */
     public void login(String email, String password) {
         enterEmail(email);
+        revealPasswordFieldIfNeeded();
         enterPassword(password);
         acceptTermsIfPresent();
         // Wait for Sign In button to become enabled
@@ -204,6 +229,37 @@ public class LoginPage {
         }
         clickLoginButton();
         dismissMfaEnrollmentIfPresent();
+    }
+
+    /**
+     * Step past the email-first sign-in picker (passwordless sign-in, ZP-3919/3920/4353).
+     *
+     * <p>Since Web v2.2 the login page asks for the email only, then offers device sign-in,
+     * Google, "Email me a code" and "Use my password". The password box does not exist until
+     * "Use my password" is pressed, so {@link #enterPassword(String)} would find nothing and every
+     * suite would fail at login. No-op on a page that already shows the password box.
+     */
+    public void revealPasswordFieldIfNeeded() {
+        By passwordBox = By.cssSelector("input[type='password']");
+        for (WebElement el : driver.findElements(passwordBox)) {
+            if (el.isDisplayed()) return;
+        }
+        By usePassword = By.xpath("//button[normalize-space(.)='Use my password'"
+                + " or normalize-space(.)='Utiliser mon mot de passe']");
+        try {
+            WebElement button = new WebDriverWait(driver, Duration.ofSeconds(10))
+                    .until(ExpectedConditions.elementToBeClickable(usePassword));
+            try {
+                button.click();
+            } catch (org.openqa.selenium.ElementNotInteractableException e) {
+                ((JavascriptExecutor) driver).executeScript("arguments[0].click();", button);
+            }
+            new WebDriverWait(driver, Duration.ofSeconds(10))
+                    .until(ExpectedConditions.visibilityOfElementLocated(passwordBox));
+        } catch (org.openqa.selenium.TimeoutException e) {
+            // Older build (password box on the first screen) or a page this method does not know:
+            // let enterPassword() report the real problem.
+        }
     }
 
     /**

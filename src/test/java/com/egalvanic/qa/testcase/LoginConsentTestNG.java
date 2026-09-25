@@ -1,5 +1,7 @@
 package com.egalvanic.qa.testcase;
 
+import com.egalvanic.qa.pageobjects.LoginPage;
+
 import com.egalvanic.qa.constants.AppConstants;
 import com.egalvanic.qa.utils.ExtentReportManager;
 import com.egalvanic.qa.utils.ScreenshotUtil;
@@ -67,8 +69,8 @@ public class LoginConsentTestNG {
     private long testStartTime;
 
     // Locators
-    private static final By EMAIL_INPUT = By.id("email");
-    private static final By PASSWORD_INPUT = By.id("password");
+    private static final By EMAIL_INPUT = LoginPage.EMAIL_INPUT;
+    private static final By PASSWORD_INPUT = LoginPage.PASSWORD_INPUT;
     private static final By SIGN_IN_BUTTON = By.xpath("//button[normalize-space()='Sign In']");
 
     @BeforeClass

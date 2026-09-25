@@ -498,7 +498,7 @@ public class RbacUiPermissionMatrixTest {
             sleep(2000);
             try {
                 new WebDriverWait(driver, Duration.ofSeconds(30))
-                        .until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
+                        .until(ExpectedConditions.visibilityOfElementLocated(LoginPage.EMAIL_INPUT));
                 return;
             } catch (Exception e) {
                 if (attempt < 3) { try { driver.navigate().refresh(); } catch (Exception ignored) {} sleep(3000); }
@@ -515,7 +515,7 @@ public class RbacUiPermissionMatrixTest {
 
     private boolean onLoginPage() {
         try {
-            List<WebElement> email = driver.findElements(By.id("email"));
+            List<WebElement> email = driver.findElements(LoginPage.EMAIL_INPUT);
             return !email.isEmpty() && email.get(0).isDisplayed();
         } catch (Exception e) { return false; }
     }

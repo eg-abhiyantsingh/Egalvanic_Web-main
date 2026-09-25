@@ -52,6 +52,17 @@ public class AuthSmokeTestNG {
     private static final int LOGIN_TIMEOUT = 60;
     private static final int POST_LOGIN_TIMEOUT = 30;
 
+    // The login page dropped id="email"/"password" in May 2026, and the v2.2 page asks for the
+    // email first and only shows the password box after "Use my password". Match the inputs by
+    // type / name / placeholder / aria-label, the same chain LoginPage uses.
+    private static final By EMAIL_INPUT = By.xpath(
+            "//input[@id='email'] | //input[@type='email'] | //input[@name='email']"
+            + " | //input[@placeholder='Email Address' or @placeholder='Email']"
+            + " | //input[@aria-label='Email Address' or @aria-label='Email']");
+    private static final By PASSWORD_INPUT = By.xpath(
+            "//input[@id='password'] | //input[@type='password'] | //input[@name='password']"
+            + " | //input[@placeholder='Password'] | //input[@aria-label='Password']");
+
     private static final DateTimeFormatter TIMESTAMP_FMT =
             DateTimeFormatter.ofPattern("h:mm a - dd MMM");
 
@@ -99,6 +110,8 @@ public class AuthSmokeTestNG {
                 "--disable-blink-features=AutomationControlled", "--no-sandbox", "--disable-dev-shm-usage");
         opts.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
         opts.setExperimentalOption("useAutomationExtension", false);
+        // The QA host uses an internal-CA certificate; same setting as BaseTest.
+        opts.setAcceptInsecureCerts(true);
 
         java.util.Map<String, Object> prefs = new java.util.HashMap<>();
         prefs.put("credentials_enable_service", false);
@@ -653,7 +666,7 @@ public class AuthSmokeTestNG {
             // Wait for login page to load
             try {
                 new WebDriverWait(driver, Duration.ofSeconds(LOGIN_TIMEOUT))
-                        .until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
+                        .until(ExpectedConditions.visibilityOfElementLocated(EMAIL_INPUT));
                 System.out.println("[Auth] Login page loaded. URL: " + driver.getCurrentUrl());
                 return;
             } catch (Exception e) {
@@ -728,8 +741,10 @@ public class AuthSmokeTestNG {
             String url = driver.getCurrentUrl();
             if (url != null && url.contains("/login")) return true;
 
-            boolean hasEmailField = driver.findElements(By.id("email")).size() > 0;
-            boolean hasPasswordField = driver.findElements(By.id("password")).size() > 0;
+            // v2.2 first step shows the email box and method buttons, no password box yet.
+            boolean hasEmailField = driver.findElements(EMAIL_INPUT).size() > 0;
+            boolean hasPasswordField = driver.findElements(PASSWORD_INPUT).size() > 0
+                    || !driver.findElements(By.xpath("//button[normalize-space(.)='Use my password']")).isEmpty();
             boolean hasSubmitBtn = driver.findElements(
                     By.xpath("//button[@type='submit' or contains(.,'Sign in') or contains(.,'Login')]")).size() > 0;
 

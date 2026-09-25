@@ -1,5 +1,7 @@
 package com.egalvanic.qa.testcase;
 
+import com.egalvanic.qa.pageobjects.LoginPage;
+
 import com.egalvanic.qa.constants.AppConstants;
 import com.egalvanic.qa.utils.ExtentReportManager;
 import com.egalvanic.qa.utils.ScreenshotUtil;
@@ -94,8 +96,7 @@ public class MiscFeaturesTestNG extends BaseTest {
             // content. We verify by checking for login-form fields (email + password) — which
             // are the unambiguous signal we hit the actual login screen.
             String currentUrl = driver.getCurrentUrl();
-            boolean hasLoginForm = !driver.findElements(By.id("email")).isEmpty()
-                    && !driver.findElements(By.id("password")).isEmpty();
+            boolean hasLoginForm = LoginPage.isLoginScreen(driver);
             if (!hasLoginForm) {
                 throw new org.testng.SkipException(
                     "TC_Misc_01: could not render login form from authenticated session "

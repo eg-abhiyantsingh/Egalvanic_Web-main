@@ -617,7 +617,7 @@ public class MonkeyTestNG {
                 driver.get(AppConstants.BASE_URL);
                 pause(3000);
                 // Re-login if needed
-                if (driver.findElements(By.id("email")).size() > 0) {
+                if (driver.findElements(LoginPage.EMAIL_INPUT).size() > 0) {
                     loginPage.login(AppConstants.VALID_EMAIL, AppConstants.VALID_PASSWORD);
                     pause(2000);
                 }
@@ -642,7 +642,7 @@ public class MonkeyTestNG {
                 pause(2000);
 
                 new WebDriverWait(driver, Duration.ofSeconds(AppConstants.DEFAULT_TIMEOUT))
-                        .until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
+                        .until(ExpectedConditions.visibilityOfElementLocated(LoginPage.EMAIL_INPUT));
 
                 loginPage.login(AppConstants.VALID_EMAIL, AppConstants.VALID_PASSWORD);
                 pause(2000);

@@ -567,7 +567,7 @@ public class AuthenticationTestNG {
             navigateToLoginPage();
 
             // Tab from email to password field
-            WebElement emailField = driver.findElement(By.id("email"));
+            WebElement emailField = driver.findElement(LoginPage.EMAIL_INPUT);
             emailField.click();
             emailField.sendKeys("test@example.com");
             logStep("Typed in email field");
@@ -1076,7 +1076,7 @@ public class AuthenticationTestNG {
             navigateToLoginPage();
 
             // Type in email field, then Tab to password
-            WebElement emailField = driver.findElement(By.id("email"));
+            WebElement emailField = driver.findElement(LoginPage.EMAIL_INPUT);
             emailField.click();
             emailField.sendKeys(AppConstants.VALID_EMAIL);
             logStep("Entered email via keyboard");
@@ -1196,7 +1196,7 @@ public class AuthenticationTestNG {
 
             try {
                 new WebDriverWait(driver, Duration.ofSeconds(LOGIN_TIMEOUT))
-                        .until(ExpectedConditions.visibilityOfElementLocated(By.id("email")));
+                        .until(ExpectedConditions.visibilityOfElementLocated(LoginPage.EMAIL_INPUT));
                 System.out.println("[Auth] Login page loaded. URL: " + driver.getCurrentUrl());
                 return;
             } catch (Exception e) {
@@ -1232,11 +1232,7 @@ public class AuthenticationTestNG {
 
     private boolean isOnLoginPage() {
         try {
-            boolean hasEmailField = driver.findElements(By.id("email")).size() > 0;
-            boolean hasPasswordField = driver.findElements(By.id("password")).size() > 0;
-            boolean hasSubmitBtn = driver.findElements(
-                    By.xpath("//button[@type='submit'][contains(.,'Sign In') or contains(.,'Sign in') or contains(.,'Login')]")).size() > 0;
-            return hasEmailField && (hasPasswordField || hasSubmitBtn);
+            return LoginPage.isLoginScreen(driver);
         } catch (Exception e) {
             return false;
         }
