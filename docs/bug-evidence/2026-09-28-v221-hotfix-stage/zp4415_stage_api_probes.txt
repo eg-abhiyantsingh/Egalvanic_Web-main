@@ -1,0 +1,21 @@
+1 history, test site, limit=1                              200 application/json 0.697929s  {   "data": {     "reports": []   },   "success": true } 
+2 history, test site, limit=50                             200 application/json 0.318305s  {   "data": {     "reports": []   },   "success": true } 
+3 history, test site + reporting_config_id                 200 application/json 0.393019s  {   "data": {     "reports": []   },   "success": true } 
+4 history, no sld_id                                       400 application/json 0.319664s  {   "error": "sld_id is required",   "success": false } 
+5 history, sld_id=not-a-uuid                               500 application/json 0.309247s  {   "error": "internal_error",   "success": false,   "trace_id": "8d461923bb3c453b92bf65df01e6c100" } 
+6 history, unknown site uuid                               200 application/json 0.364628s  {   "data": {     "reports": []   },   "success": true } 
+7 history, limit=0                                         200 application/json 0.309985s  {   "data": {     "reports": []   },   "success": true } 
+8 history, limit=-1                                        200 application/json 0.307582s  {   "data": {     "reports": []   },   "success": true } 
+9 history, limit=abc                                       200 application/json 1.302362s  {   "data": {     "reports": []   },   "success": true } 
+10 download, unknown report uuid                           200 text/html 1.148220s  <!DOCTYPE html> <html lang="en">  <head>   <meta charset="UTF-8" />   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-ev
+11 download, not-a-uuid                                    200 text/html 0.319923s  <!DOCTYPE html> <html lang="en">  <head>   <meta charset="UTF-8" />   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-ev
+12 history, no token                                       401 0.276186s  {
+  "error": "No authorization provided"
+}
+
+control: made-up route /reporting/zzz-no-such-route            200 text/html  <!DOCTYPE html> <html lang="en">  <head>   <meta charset="UTF-8" />   <meta http-equiv="Content-Security-Polic
+control: made-up /reporting/history/00000000-0000-4000-8000-000000000000/zzz 200 text/html  <!DOCTYPE html> <html lang="en">  <head>   <meta charset="UTF-8" />   <meta http-equiv="Content-Security-Polic
+GET  /reporting/history/{uuid}                                 200 text/html  <!DOCTYPE html> <html lang="en">  <head>   <meta charset="UTF-8" />   <meta http-equiv="Content-Security-Polic
+POST /reporting/history/{uuid}/download                        405 text/html; charset=utf-8  <!doctype html> <html lang=en> <title>405 Method Not Allowed</title> <h1>Method Not Allowed</h1> <p>The method
+GET  /reporting/history/{uuid}/download (again)                200 text/html  <!DOCTYPE html> <html lang="en">  <head>   <meta charset="UTF-8" />   <meta http-equiv="Content-Security-Polic
+control: known JSON route GET /reporting/configs/{uuid}        200 text/html  <!DOCTYPE html> <html lang="en">  <head>   <meta charset="UTF-8" />   <meta http-equiv="Content-Security-Polic

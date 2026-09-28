@@ -1,0 +1,3 @@
+sales page1 200 keys ['counts_by_type', 'items', 'page', 'page_size', 'success', 'total'] items 6 total 6
+ops page1 200 keys ['counts_by_type', 'items', 'page', 'page_size', 'sessions_by_service', 'success', 'total'] items 1 total 1
+admin page1 200 keys ['counts_by_type', 'items', 'page', 'page_size', 'success', 'total'] items 6 total 6

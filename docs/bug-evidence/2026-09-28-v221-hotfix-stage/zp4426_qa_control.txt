@@ -1,0 +1,13 @@
+QA Android Site 2   200 {   "data": {     "assets": [       {         "assessed_at": "2026-09-24",         "assessed_by": "b17b15e0-00
+QA Accout Site      200 {   "data": {     "assets": [       {         "assessed_at": null,         "assessed_by": null,         "asses
+QA Z - Hospital     200 {   "data": {     "assets": [       {         "assessed_at": null,         "assessed_by": null,         "asses
+QA ZTest_28_07      200 {   "data": {     "assets": [       {         "assessed_at": null,         "assessed_by": null,         "asses
+QA demo             200 {   "data": {     "assets": [       {         "assessed_at": null,         "assessed_by": null,         "asses
+QA Offline Testing  200 {   "data": {     "assets": [       {         "assessed_at": null,         "assessed_by": null,         "asses
+QA NewSiteSKMIMport 200 {   "data": {     "assets": [       {         "assessed_at": null,         "assessed_by": null,         "asses
+QA new site account 200 {   "data": {     "assets": [       {         "assessed_at": null,         "assessed_by": null,         "asses
+QA verify review ch 200 {   "data": {     "assets": [       {         "assessed_at": null,         "assessed_by": null,         "asses
+QA Abhiyant test 12 200 {   "data": {     "assets": [       {         "assessed_at": null,         "assessed_by": null,         "asses
+QA Test_31_test1    200 {   "data": {     "assets": [       {         "assessed_at": null,         "assessed_by": null,         "asses
+QA test by kd       200 {   "data": {     "assets": [       {         "assessed_at": null,         "assessed_by": null,         "asses
+QA totals (first 12 sites): {'200': 12}

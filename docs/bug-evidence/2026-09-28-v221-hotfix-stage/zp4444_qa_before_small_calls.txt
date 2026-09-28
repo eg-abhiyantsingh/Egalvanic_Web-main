@@ -1,0 +1,52 @@
+small work order f532bf11 — grid [7196, 6419, 6704] ms after the work order's first call ([11333, 11219, 11248] ms after page load), assets/v2 server wait [5065, 4156, 4338] ms (3 opens)
+plain GET /ir_session/{id} before grid (should be 0): 1
+/session-work-blocks/session/{id} before grid (should be 0): 0
+/node_classes/user/{id} before grid (should be 0): 1
+/reporting/configs?type=session before grid (should be 0): 1
+/ir_session/{id}/full?include=header (should be 1): 0
+/ir_session/{id}/full (any form): 1
+/location-readiness/v2 per open (should be 1): 1
+
+  before-grid   1411 ms wait     0 ms  https://o4509671240105984.ingest.us.sentry.io/api/4510464365101056/envelope/?sentry_version=7&sentry_key=b6be32259a437065e80bc19260796221&sentry_client=sentry.javascript.react%2F10.27.0
+  before-grid   1446 ms wait   652 ms  /api/company/alliance-config/acme.egalvanic
+  before-grid   2110 ms wait   846 ms  /api/auth/v2/me
+  before-grid   2974 ms wait   786 ms  /api/auth/v4/mfa/status
+  before-grid   2975 ms wait   623 ms  /api/features/sync
+  before-grid   2975 ms wait   617 ms  /api/beamer/user-hash
+  before-grid   2975 ms wait   826 ms  /api/devrev/session-token
+  before-grid   2976 ms wait   794 ms  /api/auth/v2/key-exchange
+  before-grid   2976 ms wait   793 ms  /api/legal/acceptance/check
+  before-grid   2977 ms wait   643 ms  /api/features/access
+  before-grid   3856 ms wait   886 ms  /api/users/{id}/slds
+  before-grid   3856 ms wait   349 ms  /api/entitlements
+  before-grid   3857 ms wait   793 ms  /api/company/{id}/attention/counts
+  before-grid   3857 ms wait   458 ms  /api/devrev/session-token
+  before-grid   3857 ms wait   717 ms  /api/company/{id}/timezone
+  before-grid   4137 ms wait   452 ms  /api/ir_session/{id}/full
+  before-grid   4138 ms wait   875 ms  /api/ir_session/{id}
+  before-grid   4138 ms wait   867 ms  /api/ir_session/{id}/summary/v2
+  before-grid   4139 ms wait   346 ms  /api/ir_session/{id}/locations/v2
+  before-grid   4139 ms wait   345 ms  /api/ir_session/{id}/tasks/v2?limit=200&offset=0
+  before-grid   4139 ms wait  5065 ms  /api/ir_session/{id}/assets/v2?limit=20&offset=0
+  before-grid   4140 ms wait   667 ms  /api/procedures-v2/services
+  before-grid   4140 ms wait   740 ms  /api/ir_session/{id}/service-registry
+  before-grid   4140 ms wait   679 ms  /api/eg-form-instance/by-session/{id}/count
+  before-grid   4140 ms wait   762 ms  /api/ir_session/{id}/service-completion
+  before-grid   4140 ms wait   735 ms  /api/ir_session/{id}/team
+  before-grid   4140 ms wait   889 ms  /api/eg-form-instance/by-session/{id}/node-status
+  before-grid   4140 ms wait   526 ms  /api/model/issue/schema
+  before-grid   4140 ms wait   750 ms  /api/model/task/schema
+  before-grid   4140 ms wait   750 ms  /api/model/node/schema
+  before-grid   4140 ms wait   464 ms  /api/reporting/configs?type=session
+  before-grid   4140 ms wait   976 ms  /api/node_classes/user/{id}
+  before-grid   4691 ms wait     0 ms  https://ingestion-useast1.devrev.ai/web/api/ingest/startSession/
+  before-grid   4902 ms wait   298 ms  /api/ir_session/{id}/location-readiness/v2?mask=asset_checks
+  before-grid   4902 ms wait   732 ms  /api/ir_session/{id}/asset-checks
+  before-grid   5131 ms wait  2673 ms  /api/lookup/nodes/{id}
+  before-grid   5132 ms wait  1608 ms  /api/lookup/procedures
+  before-grid   5132 ms wait  1175 ms  /api/lookup/node-classes
+  before-grid   5132 ms wait  1243 ms  /api/issue_classes/user/{id}
+  before-grid   5753 ms wait     0 ms  https://ingestion-useast1.devrev.ai/web/api/ingest/addMetadata/
+  before-grid   5755 ms wait     0 ms  https://ingestion-useast1.devrev.ai/web/api/ingest/setIdentifier/
+  before-grid   8999 ms wait     0 ms  https://ingestion-useast1.devrev.ai/web/api/ingest/logData/
+  after-grid   12936 ms wait     0 ms  https://ingestion-useast1.devrev.ai/web/api/ingest/logData/

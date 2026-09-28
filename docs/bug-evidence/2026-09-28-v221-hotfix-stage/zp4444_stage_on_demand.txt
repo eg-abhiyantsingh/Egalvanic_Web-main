@@ -1,0 +1,4 @@
+Bulk dialog text: null
+Bulk Ops toggle: Bulk Ops; toolbar buttons [Close Work Order, Assets
+20, SLD, Engineering, Issues, IR Photos, Attachments, More, Actions, Cancel, Select all 20, Services, Edit, Mark As..]; opened: Edit (not needed) → /node_classes/user fired 1× on first open (should be 1), 0× on re-open (should be 0)
+⋮ menu items: []; Generate Report: Generate Report → /reporting/configs fired 1× (should be 1); dialog: Generate Report Report Configuration STAGE TEST Custom HTML ​ Output Format PDF Cancel Generate Report

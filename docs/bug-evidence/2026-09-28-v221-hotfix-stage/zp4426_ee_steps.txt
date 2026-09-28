@@ -1,0 +1,5 @@
+Step 1 (All Facilities chosen on Work Orders: false; Condition Assessment opened via menu link, picker '(no site picker)'): condition-assessment calls [], 'Pick a single site' shown true, error screen false · page: Condition Assessment Pick a single site — a condition assessment is one facility's equipment.
+Step 1b (page reloaded, stored activeSiteId 'null', picker '(no site picker)'): condition-assessment calls [], error screen false
+Step 2 (picked 'DemoSite 1': false, picker '(no site picker)'): condition-assessment calls 0 (0 answered 200), message gone false, error screen false · page: Condition Assessment Pick a single site — a condition assessment is one facility's equipment.
+Step 3 (All Facilities again: false, opened via menu link, picker '(no site picker)'): condition-assessment calls [], failed API calls [], message true, error screen false
+Step 4 (All Facilities: false, /maintenance-portal/condition via null, on /tasks): condition-assessment calls [], Access Denied false, message false, error screen false

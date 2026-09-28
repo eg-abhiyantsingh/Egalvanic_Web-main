@@ -1,0 +1,17 @@
+== every acme site × every seat: GET /condition-assessment/assets?sld_id=<site>
+Test uhhujh    3e3d11df  admin:200(3) 0.72s | superadmin:200(3) 0.38s | am:200 1.05s | cp:422 0.76s | ee:200 1.36s
+Atest          db9b8488  admin:200(9) 0.32s | superadmin:200(9) 0.29s | am:200(9) 0.38s | cp:422 0.30s | ee:200 0.96s
+Kareem Page    48123170  admin:200(644) 1.54s | superadmin:200(644) 1.19s | am:200(644) 0.60s | cp:422 0.28s | ee:200 0.99s
+test site      ead61188  admin:200(1) 0.32s | superadmin:200(1) 0.33s | am:200 0.92s | cp:422 0.28s | ee:200 0.96s
+Test new 123   ed68d862  admin:200(5) 0.28s | superadmin:200(5) 0.30s | am:200(5) 0.39s | cp:422 0.27s | ee:200 1.01s
+Test new       941c77fa  admin:200(22) 0.28s | superadmin:200(22) 0.30s | am:200(22) 0.38s | cp:422 0.29s | ee:200 0.90s
+DemoSite 1     09a227e7  admin:200(26) 0.34s | superadmin:200(26) 0.32s | am:200(26) 0.29s | cp:422 0.27s | ee:200 1.02s
+test           55823278  admin:200(83) 0.39s | superadmin:200(83) 0.39s | am:200(83) 0.38s | cp:422 0.29s | ee:200 0.94s
+Atest          6928e3a4  admin:200(21) 0.31s | superadmin:200(21) 0.28s | am:200(21) 0.32s | cp:422 0.35s | ee:200 0.93s
+qqq            bbd2031d  admin:200(0) 0.36s | superadmin:200(0) 0.28s | am:200 1.00s | cp:422 0.29s | ee:200 0.95s
+status totals: {200: 40, 422: 10}
+== edge cases (admin seat)
+no sld_id              400 0.28s  {   "error": "sld_id is required",   "success": false } 
+sld_id=not-a-uuid      500 0.28s  {   "error": "internal_error",   "success": false,   "trace_id": "7208c1a6793347479eeb01977e9f9739" } 
+unknown site uuid      200 0.95s  <!DOCTYPE html> <html lang="en">  <head>   <meta charset="UTF-8" />   <meta http-equiv="Content-Security-Policy" content="default-src 'self'
+empty sld_id           400 0.30s  {   "error": "sld_id is required",   "success": false } 

@@ -1,0 +1,4 @@
+sa  limit=1: 200 application/json {   "data": {     "reports": []   },   "success": true }  | no sld_id: 400 {   "error": "sld_id is required",   "success": false } 
+am  limit=1: 200 application/json {   "data": {     "reports": []   },   "success": true }  | no sld_id: 400 {   "error": "sld_id is required",   "success": false } 
+cp  limit=1: 200 application/json {   "data": {     "reports": []   },   "success": true }  | no sld_id: 400 {   "error": "sld_id is required",   "success": false } 
+ee  limit=1: 422 application/json {   "error": "permission_denied",   "message": "You do not have permission to perform this action. Required: r | no sld_id: 422 {   "error": "permission_denied",   "message": "You do not have permis

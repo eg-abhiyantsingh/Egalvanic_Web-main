@@ -103,8 +103,7 @@ public class ZP4445DashboardPollingTest extends BaseTest {
         // Three browsers run at once: tile them so none is fully covered. A covered Chrome window
         // reports document.visibilityState = "hidden", and the old code only polls visible pages.
         int slot = route.contains("sales") ? 0 : route.contains("admin") ? 1 : 2;
-        driver.manage().window().setSize(new org.openqa.selenium.Dimension(900, 820));
-        driver.manage().window().setPosition(new org.openqa.selenium.Point(slot * 470, slot * 40));
+        tileWindow(slot * 470, slot * 40, 900, 820);
         installRecorder();
         long t0 = System.currentTimeMillis();
         driver.get(AppConstants.BASE_URL + route);
@@ -158,24 +157,47 @@ public class ZP4445DashboardPollingTest extends BaseTest {
         Assert.assertTrue(after.isEmpty(), "Returning to the tab on " + route + " re-fetched: " + after);
     }
 
-    @Test(priority = 4, description = "ZP-4445: leave and come back within 5 minutes — the donut is reused, Needs Attention reloads")
+    /** Polls location.pathname for up to {@code seconds}; returns it once {@code ok} holds, else null. */
+    private String waitForPath(java.util.function.Predicate<String> ok, int seconds) {
+        for (int i = 0; i < seconds * 4; i++) {
+            String p = String.valueOf(js("return location.pathname;"));
+            if (ok.test(p)) return p;
+            sleep(250);
+        }
+        return null;
+    }
+
+    @Test(priority = 4, description = "ZP-4445 step 6: leave and come back within 5 minutes — the donut is reused, Needs Attention reloads")
     public void comeBackWithinFiveMinutes() {
+        String list = route.contains("sales") ? "/attention/sales" : route.contains("admin") ? "/attention/admin" : "/attention/ops";
+        boolean hasDonut = !route.contains("admin");
         long t0 = now();
-        // In-app navigation, the way a user moves: click a menu link to another page, then a link back.
-        Object away = js("var r=arguments[0];var a=[].slice.call(document.querySelectorAll('nav a[href]')).find(function(x){var h=x.getAttribute('href');"
-                + "return h&&h.charAt(0)==='/'&&h!==r&&x.offsetParent!==null;});"
+        // In-app navigation, the way a user moves: a visible menu link to a page that is not a dashboard.
+        Object away = js("var r=arguments[0];var l=[].slice.call(document.querySelectorAll('nav a[href], aside a[href]')).filter(function(x){"
+                + "var h=x.getAttribute('href');return h&&h.charAt(0)==='/'&&h!==r&&h!=='/z-university'&&x.offsetParent!==null;});"
+                + "var a=l.find(function(x){return !/dashboard|overview/.test(x.getAttribute('href'));})||l[0];"
                 + "if(!a)return null;a.click();return a.getAttribute('href');", route);
-        System.out.println("[ZP-4445] left " + route + " for " + away + " (menu click)");
-        sleep(8000);
-        Object back = js("var r=arguments[0];var a=[].slice.call(document.querySelectorAll('a[href]')).find(function(x){return x.getAttribute('href')===r&&x.offsetParent!==null;});"
-                + "if(a){a.click();return 'menu';} history.back(); return 'history-back';", route);
-        System.out.println("[ZP-4445] returned to " + route + " via " + back);
+        String awayPath = waitForPath(p -> !p.equals(route), 10);
+        System.out.println("[ZP-4445] left " + route + " by clicking menu link " + away + " → now on " + awayPath);
+        sleep(6000);
+        Object how = js("var r=arguments[0];var a=[].slice.call(document.querySelectorAll('a[href]')).find(function(x){return x.getAttribute('href')===r&&x.offsetParent!==null;});"
+                + "if(a){a.click();return 'menu link';} history.back(); return 'browser Back';", route);
+        String backPath = waitForPath(p -> p.equals(route), 10);
+        System.out.println("[ZP-4445] came back to " + backPath + " via " + how);
         sleep(12000);
-        List<String> after = watched(t0);
-        System.out.println("[ZP-4445] " + route + " away and back → " + after.size() + " watched calls:\n  " + String.join("\n  ", after));
-        evidence(tag() + "_4_back_within_5min", "away to /assets and back on " + route, after);
+        String onRoute = "on " + route + "]";
+        List<String> after = new ArrayList<>();
+        for (String l : watched(t0)) if (l.endsWith(onRoute)) after.add(l);
+        long listCalls = after.stream().filter(l -> l.contains(list)).count();
         long donut = after.stream().filter(l -> l.contains("open-by-site")).count();
-        System.out.println("[ZP-4445] donut (open-by-site) calls on return: " + donut);
+        System.out.println("[ZP-4445] " + route + " away (" + awayPath + ") and back via " + how + " → " + after.size() + " watched calls on the dashboard:\n  " + String.join("\n  ", after));
+        System.out.println("[ZP-4445] " + route + " step 6: Needs Attention list " + list + " loaded " + listCalls + "× (should be ≥1), donut open-by-site " + donut + "× (should be 0)");
+        evidence(tag() + "_4_back_within_5min", "went to " + awayPath + " and came back via " + how + " on " + route
+                + " · Needs Attention " + listCalls + "×, donut " + (hasDonut ? donut + "×" : "n/a"), after);
+        Assert.assertNotNull(awayPath, "The menu click never left " + route + " — step 6 was not exercised");
+        Assert.assertEquals(backPath, route, "Did not get back to the dashboard");
+        if (hasDonut) Assert.assertEquals(donut, 0L, "Step 6: the donut should reuse its data within 5 minutes");
+        Assert.assertTrue(listCalls >= 1, "Step 6: the Needs Attention list should load again when the dashboard opens again");
     }
 
     @Test(priority = 5, description = "ZP-4445: hidden for more than 5 minutes, then come back — nothing is re-fetched")

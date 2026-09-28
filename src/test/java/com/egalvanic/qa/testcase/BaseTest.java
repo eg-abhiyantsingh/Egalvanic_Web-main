@@ -279,6 +279,26 @@ public class BaseTest {
     // ================================================================
 
     /**
+     * Move this browser window to a tile so several browsers run side by side and all stay
+     * visible (Chrome stops timers and polling in covered windows). A maximized macOS window
+     * refuses Selenium's setSize ("failed to change window state to 'normal'"), so the window
+     * is un-maximized through CDP first. Best-effort: a failure is logged, never thrown.
+     */
+    protected void tileWindow(int left, int top, int width, int height) {
+        try {
+            WebDriver d = driver instanceof SelfHealingDriver ? ((SelfHealingDriver) driver).getWrappedDriver() : driver;
+            ChromeDriver raw = (ChromeDriver) d;
+            Object windowId = raw.executeCdpCommand("Browser.getWindowForTarget", new java.util.HashMap<>()).get("windowId");
+            raw.executeCdpCommand("Browser.setWindowBounds",
+                    java.util.Map.of("windowId", windowId, "bounds", java.util.Map.of("windowState", "normal")));
+            raw.executeCdpCommand("Browser.setWindowBounds", java.util.Map.of("windowId", windowId,
+                    "bounds", java.util.Map.of("left", left, "top", top, "width", width, "height", height)));
+        } catch (Exception e) {
+            System.out.println("[BaseTest] window tiling skipped: " + String.valueOf(e.getMessage()).split("\n")[0]);
+        }
+    }
+
+    /**
      * Hard-assert that the current page is healthy: responsive (not hung),
      * no severe JS/console errors, no failed app XHR/fetch, and a valid UI
      * state (not blank / no error banner). Call after navigations in module

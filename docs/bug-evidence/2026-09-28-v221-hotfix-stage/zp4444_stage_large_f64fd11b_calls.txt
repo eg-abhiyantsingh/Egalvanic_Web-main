@@ -1,0 +1,51 @@
+large work order f64fd11b — grid [1526, 493, 925] ms after the work order's first call ([5579, 4647, 4653] ms after page load), assets/v2 server wait [1494, 463, 866] ms (3 opens)
+plain GET /ir_session/{id} before grid (should be 0): 0
+/session-work-blocks/session/{id} before grid (should be 0): 0
+/node_classes/user/{id} before grid (should be 0): 0
+/reporting/configs?type=session before grid (should be 0): 0
+/ir_session/{id}/full?include=header (should be 1): 1
+/ir_session/{id}/full (any form): 1
+/location-readiness/v2 per open (should be 1): 1
+lookup/*, issue_classes/user, model/*/schema started before grid (plan 3.3: should be 0): 0
+
+  before-grid   1213–1339   ms wait     0 ms  https://o4509671240105984.ingest.us.sentry.io/api/4510464365101056/envelope/?sentry_version=7&sentry_key=b6be32259a437065e80bc19260796221&sentry_client=sentry.javascript.react%2F10.27.0
+  before-grid   1222–2055   ms wait   831 ms  /api/company/alliance-config/acme.egalvanic
+  before-grid   2068–2579   ms wait   504 ms  /api/auth/v2/me
+  before-grid   2584–3719   ms wait  1134 ms  /api/auth/v4/mfa/status
+  before-grid   2584–3436   ms wait   850 ms  /api/features/sync
+  before-grid   2585–3302   ms wait   717 ms  /api/beamer/user-hash
+  before-grid   2585–3719   ms wait  1133 ms  /api/devrev/session-token
+  before-grid   2585–3435   ms wait   758 ms  /api/auth/v2/key-exchange
+  before-grid   2585–3344   ms wait   758 ms  /api/legal/acceptance/check
+  before-grid   2586–3435   ms wait   848 ms  /api/features/access
+  before-grid   3509–4484   ms wait   972 ms  /api/users/{id}/slds
+  before-grid   3509–4198   ms wait   685 ms  /api/entitlements
+  before-grid   3509–4160   ms wait   646 ms  /api/company/{id}/attention/counts
+  before-grid   3509–4485   ms wait   972 ms  /api/devrev/session-token
+  before-grid   3510–4363   ms wait   850 ms  /api/company/{id}/timezone
+  before-grid   4053–4700   ms wait   645 ms  /api/ir_session/{id}/full?include=header
+  before-grid   4053–5736   ms wait  1681 ms  /api/ir_session/{id}/locations/v2
+  before-grid   4053–5964   ms wait  1910 ms  /api/ir_session/{id}/summary/v2
+  before-grid   4053–5585   ms wait  1530 ms  /api/ir_session/{id}/tasks/v2?limit=200&offset=0
+  before-grid   4053–5551   ms wait  1494 ms  /api/ir_session/{id}/assets/v2?limit=20&offset=0
+  before-grid   4053–4484   ms wait   427 ms  /api/procedures-v2/services
+  before-grid   4053–5099   ms wait  1042 ms  /api/ir_session/{id}/service-registry
+  before-grid   4054–4557   ms wait   497 ms  /api/eg-form-instance/by-session/{id}/count
+  before-grid   4054–5823   ms wait  1765 ms  /api/ir_session/{id}/service-completion
+  before-grid   4054–5090   ms wait  1030 ms  /api/eg-form-instance/by-session/{id}/node-status
+  before-grid   4054–6107   ms wait  2047 ms  /api/ir_session/{id}/team
+  before-grid   4516–4738   ms wait     0 ms  https://ingestion-useast1.devrev.ai/web/api/ingest/startSession/
+  before-grid   5115–6455   ms wait  1340 ms  /api/ir_session/{id}/location-readiness/v2?mask=arc_flash
+  before-grid   5115–5573   ms wait   457 ms  /api/ir_session/{id}/method-lines
+  before-grid   5115–6108   ms wait   992 ms  /api/ir_session/{id}/asset-checks
+  before-grid   5202–5428   ms wait     0 ms  https://ingestion-useast1.devrev.ai/web/api/ingest/addMetadata/
+  before-grid   5204–5423   ms wait     0 ms  https://ingestion-useast1.devrev.ai/web/api/ingest/setIdentifier/
+  after-grid    5616–6304   ms wait   688 ms  /api/model/task/schema
+  after-grid    5616–6484   ms wait   867 ms  /api/model/issue/schema
+  after-grid    5616–6130   ms wait   513 ms  /api/model/node/schema
+  after-grid    5628–6581   ms wait   952 ms  /api/lookup/nodes/{id}
+  after-grid    5628–6777   ms wait  1036 ms  /api/lookup/procedures
+  after-grid    5628–6305   ms wait   676 ms  /api/issue_classes/user/{id}
+  after-grid    5628–6960   ms wait  1035 ms  /api/lookup/node-classes
+  after-grid    8885–9792   ms wait     0 ms  https://ingestion-useast1.devrev.ai/web/api/ingest/logData/
+  after-grid   12828–13088  ms wait     0 ms  https://ingestion-useast1.devrev.ai/web/api/ingest/logData/
