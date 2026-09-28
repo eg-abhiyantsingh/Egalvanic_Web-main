@@ -1,0 +1,9 @@
+wo-large run 1 (warm): LCP 4436 ms [{cls=MuiTypography-root MuiTypography-body1 css-wh041a, h=24, id=null, tag=P, text=Loading work order details..., w=202}] · FCP 1476 · shell 3790 · grid 5335 · TTFB 1405 · DCL 1437
+wo-large run 2 (warm): LCP 4300 ms [{cls=MuiTypography-root MuiTypography-body1 css-wh041a, h=24, id=null, tag=P, text=Loading work order details..., w=202}] · FCP 1372 · shell 3669 · grid 5057 · TTFB 1318 · DCL 1341
+wo-large run 3 (warm): LCP 4052 ms [{cls=MuiTypography-root MuiTypography-body1 css-wh041a, h=24, id=null, tag=P, text=Loading work order details..., w=202}] · FCP 1444 · shell 3721 · grid 4993 · TTFB 1373 · DCL 1407
+wo-large run 4 (warm): LCP 3628 ms [{cls=MuiTypography-root MuiTypography-h6 css-1cz522c, h=32, id=null, tag=H6, text=Checking agreements, w=206}] · FCP 1352 · shell 3761 · grid 5165 · TTFB 1280 · DCL 1310
+wo-large run 5 (warm): LCP 4068 ms [{cls=MuiTypography-root MuiTypography-body1 css-wh041a, h=24, id=null, tag=P, text=Loading work order details..., w=202}] · FCP 1392 · shell 3738 · grid 4936 · TTFB 1309 · DCL 1346
+wo-large run 6 (warm): LCP 4132 ms [{cls=MuiTypography-root MuiTypography-body1 css-wh041a, h=24, id=null, tag=P, text=Loading work order details..., w=202}] · FCP 1424 · shell 3802 · grid 4946 · TTFB 1358 · DCL 1391
+wo-large run 7 (cold): LCP 4236 ms [{cls=MuiTypography-root MuiTypography-body1 css-wh041a, h=24, id=null, tag=P, text=Loading work order details..., w=202}] · FCP 1528 · shell 3733 · grid 5005 · TTFB 1256 · DCL 1483
+wo-large run 8 (cold): LCP 4468 ms [{cls=MuiTypography-root MuiTypography-body1 css-wh041a, h=24, id=null, tag=P, text=Loading work order details..., w=202}] · FCP 1608 · shell 3830 · grid 5334 · TTFB 1346 · DCL 1567
+wo-large run 9 (cold): LCP 4024 ms [{cls=MuiTypography-root MuiTypography-body1 css-wh041a, h=24, id=null, tag=P, text=Loading work order details..., w=202}] · FCP 1464 · shell 3396 · grid 4438 · TTFB 1285 · DCL 1412

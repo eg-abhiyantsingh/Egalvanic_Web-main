@@ -1,0 +1,9 @@
+dashboard run 1 (warm): LCP 3788 ms [{cls=MuiTypography-root MuiTypography-h5 css-skai7o, h=32, id=null, tag=H5, text=Good evening!, w=896}] · FCP 1432 · shell 3455 · grid null · TTFB 1366 · DCL 1401
+dashboard run 2 (warm): LCP 3800 ms [{cls=MuiTypography-root MuiTypography-h5 css-skai7o, h=32, id=null, tag=H5, text=Good evening!, w=896}] · FCP 1424 · shell 3360 · grid null · TTFB 1353 · DCL 1388
+dashboard run 3 (warm): LCP 4144 ms [{cls=MuiTypography-root MuiTypography-h5 css-skai7o, h=32, id=null, tag=H5, text=Good evening!, w=896}] · FCP 1448 · shell 3822 · grid null · TTFB 1377 · DCL 1405
+dashboard run 4 (warm): LCP 4008 ms [{cls=MuiTypography-root MuiTypography-h5 css-skai7o, h=32, id=null, tag=H5, text=Good evening!, w=896}] · FCP 1312 · shell 3693 · grid null · TTFB 1257 · DCL 1287
+dashboard run 5 (warm): LCP 3860 ms [{cls=MuiTypography-root MuiTypography-h5 css-skai7o, h=32, id=null, tag=H5, text=Good evening!, w=896}] · FCP 1336 · shell 3554 · grid null · TTFB 1269 · DCL 1291
+dashboard run 6 (warm): LCP 4572 ms [{cls=MuiTypography-root MuiTypography-h6 css-1cz522c, h=32, id=null, tag=H6, text=Checking agreements, w=206}] · FCP 1576 · shell 4766 · grid null · TTFB 1507 · DCL 1543
+dashboard run 7 (cold): LCP 2540 ms [{cls=MuiTypography-root MuiTypography-h6 css-1cz522c, h=32, id=null, tag=H6, text=Checking agreements, w=206}] · FCP 1052 · shell 2947 · grid null · TTFB 867 · DCL 1008
+dashboard run 8 (cold): LCP 4356 ms [{cls=MuiTypography-root MuiTypography-h5 css-skai7o, h=32, id=null, tag=H5, text=Good evening!, w=1201}] · FCP 1496 · shell 3754 · grid null · TTFB 1325 · DCL 1469
+dashboard run 9 (cold): LCP 4292 ms [{cls=MuiTypography-root MuiTypography-h5 css-skai7o, h=32, id=null, tag=H5, text=Good evening!, w=1201}] · FCP 1432 · shell 3700 · grid null · TTFB 1274 · DCL 1403
