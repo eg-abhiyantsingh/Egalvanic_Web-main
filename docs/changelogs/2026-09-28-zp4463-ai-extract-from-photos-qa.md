@@ -31,3 +31,11 @@ Library) — the first runs never picked an option. 4. "Shown twice" was my sele
 - `src/test/java/com/egalvanic/qa/testcase/ExtractFromPhotosTest.java` (new; `-Dext.option`, `-Dext.afterError=save|retry`)
 - `src/test/java/com/egalvanic/qa/testcase/ExtractionFixtureSetupTest.java` (new)
 - `docs/bug-evidence/2026-09-28-ai-extraction-qa/` (5 screenshots incl. the owner's prod capture, per-run notes)
+
+## Second pass (same day) + Artifact
+- Background route (bulk-job, Step Function) with the SAME 12 photos: SUCCEEDED, chose the Square D plate with a written reason
+  → the async route copes; supports moving single-asset extraction onto it.
+- Re-extract on an already-filled asset: 200 / 28.5 s, updated 0, nothing overwritten; but a red "No data was extracted".
+- Project Manager seat: allowed, 200 / 7.8 s.
+- Every result message (success, no-data, error) renders at ~807 px in a ~600 px window — out of view in all cases.
+- Artifact: https://claude.ai/artifact/3s35oJavxtXv9zanyPjGHT
