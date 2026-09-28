@@ -1,0 +1,304 @@
+editor showed the asset's data after 1538 ms (name 'QA-DEMO extract 12 photos library (delete me)')
+asset 01c46c47-1fae-4215-a27b-ffe6510a5c61 (p12library): opened editor via '⋮ › Edit Asset'; photos tab: Nameplate (12)
+menu options: [Attributes, Attributes + Library]
+pressed 'Extract from Photos › Attributes + Library'; button while waiting: Extracting... disabled=true
+request: POST /api/extraction/extract-nameplate-data → 504 after 60532 ms (text/html; charset=UTF-8)
+response body: <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd"> <HTML><HEAD><META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8"> <TITLE>ERROR: The request could not be satisfied</TITLE> </HEAD><BODY> <H1>504 Gateway Timeout ERROR</H1> <H2>The request could not be satisfied.</H2> <HR noshade size="1px"> We can't connect to the server for this ap
+shown to the user: Failed to execute 'json' on 'Response': Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+form fields changed on screen (0): 
+result message position: message top 807px in a 599px window → OUT OF VIEW (user must scroll)
+after 'Attributes + Library': dialog: Bulk Extraction Job 1 asset · 0 done, 1 running QA-DEMO extract 12 photos library (delete me) Configuring… Close Apply all (0)
+bulk-job calls: [GET /api/extraction/bulk-job/recent → 200, POST /api/extraction/bulk-job/submit → 200, GET /api/extraction/bulk-job/status?execution_arn=arn%3Aaws%3Astates%3Aus-east-2%3A165183897698%3Aexecution%3Aeg-pz-qa-ai-bulk-extraction-sfn-ohio%3A7230bfe7-64e5-4287-991a-43085b4087d2 → 200, GET /api/extraction/bulk-job/status?execution_arn=arn%3Aaws%3Astates%3Aus-east-2%3A165183897698%3Aexecution%3Aeg-pz-qa-ai-bulk-extraction-sfn-ohio%3A7230bfe7-64e5-4287-991a-43085b4087d2 → 200, GET /api/extraction/bulk-job/status?execution_arn=arn%3Aaws%3Astates%3Aus-east-2%3A165183897698%3Aexecution%3Aeg-pz-qa-ai-bulk-extraction-sfn-ohio%3A7230bfe7-64e5-4287-991a-43085b4087d2 → 200]
+after the answer: asset CHANGED on the server 15 s after the error
+
+all recorded calls:
+[{b={
+  "afc_updated_at": null,
+  "aic_label_present": null,
+  "aic_rating": null,
+  "ampere_rating": null,
+  "applied_shortcut": null,
+  "available_fault_ka": null,
+  "building_name": null,
+  "busway_ampere_rating": null,
+  "cable_size_id": null,
+  "cable_size_label": null,
+  "child_incoming_edges": [],
+  "child_nodes": [],
+  "child_outgoing_edges": [],
+  "circuit_voltage": null,
+  "circuit_voltage_id": null,
+  "circuit_voltage_label": null,
+  "com": null,
+  "com_calculation": null,
+  "com_calculation_modified_at": null,
+  "com_calculation_modified_by": null,
+  "condition_notes": null,
+  "conduct, ct=application/json, m=GET, ms=733, s=200, t=1790607500562, u=https://acme.qa.egalvanic.ai/api/api/graph/nodes/01c46c47-1fae-4215-a27b-ffe6510a5c61/enriched}, {b={
+  "afc_updated_at": null,
+  "aic_label_present": null,
+  "aic_rating": null,
+  "ampere_rating": null,
+  "applied_shortcut": null,
+  "available_fault_ka": null,
+  "building_name": null,
+  "busway_ampere_rating": null,
+  "cable_size_id": null,
+  "cable_size_label": null,
+  "child_incoming_edges": [],
+  "child_nodes": [],
+  "child_outgoing_edges": [],
+  "circuit_voltage": null,
+  "circuit_voltage_id": null,
+  "circuit_voltage_label": null,
+  "com": null,
+  "com_calculation": null,
+  "com_calculation_modified_at": null,
+  "com_calculation_modified_by": null,
+  "condition_notes": null,
+  "conduct, ct=application/json, m=GET, ms=793, s=200, t=1790607508111, u=/api/graph/nodes/01c46c47-1fae-4215-a27b-ffe6510a5c61/enriched}, {b={
+  "afc_updated_at": null,
+  "aic_label_present": null,
+  "aic_rating": null,
+  "ampere_rating": null,
+  "applied_shortcut": null,
+  "available_fault_ka": null,
+  "busway_ampere_rating": null,
+  "cable_size_id": null,
+  "cable_size_label": null,
+  "circuit_voltage": null,
+  "circuit_voltage_id": null,
+  "circuit_voltage_label": null,
+  "com": null,
+  "com_calculation": null,
+  "com_calculation_modified_at": null,
+  "com_calculation_modified_by": null,
+  "condition_notes": null,
+  "conductor_configuration_id": null,
+  "conductor_configuration_label": null,
+  "conductor_description_id": null,
+ , ct=application/json, m=GET, ms=402, s=200, t=1790607509845, u=https://acme.qa.egalvanic.ai/api/api/graph/nodes/01c46c47-1fae-4215-a27b-ffe6510a5c61}, {b={
+  "afc_updated_at": null,
+  "aic_label_present": null,
+  "aic_rating": null,
+  "ampere_rating": null,
+  "applied_shortcut": null,
+  "available_fault_ka": null,
+  "building_name": null,
+  "busway_ampere_rating": null,
+  "cable_size_id": null,
+  "cable_size_label": null,
+  "child_incoming_edges": [],
+  "child_nodes": [],
+  "child_outgoing_edges": [],
+  "circuit_voltage": null,
+  "circuit_voltage_id": null,
+  "circuit_voltage_label": null,
+  "com": null,
+  "com_calculation": null,
+  "com_calculation_modified_at": null,
+  "com_calculation_modified_by": null,
+  "condition_notes": null,
+  "conduct, ct=application/json, m=GET, ms=812, s=200, t=1790607510277, u=https://acme.qa.egalvanic.ai/api/api/graph/nodes/01c46c47-1fae-4215-a27b-ffe6510a5c61/enriched}, {b={
+  "approved_matches": [],
+  "catalog_match": null
+}
+, ct=application/json, m=POST, ms=755, s=200, t=1790607511144, u=https://acme.qa.egalvanic.ai/api/extraction/engineering-matches}, {b={
+  "afc_updated_at": null,
+  "aic_label_present": null,
+  "aic_rating": null,
+  "ampere_rating": null,
+  "applied_shortcut": null,
+  "available_fault_ka": null,
+  "building_name": null,
+  "busway_ampere_rating": null,
+  "cable_size_id": null,
+  "cable_size_label": null,
+  "child_incoming_edges": [],
+  "child_nodes": [],
+  "child_outgoing_edges": [],
+  "circuit_voltage": null,
+  "circuit_voltage_id": null,
+  "circuit_voltage_label": null,
+  "com": null,
+  "com_calculation": null,
+  "com_calculation_modified_at": null,
+  "com_calculation_modified_by": null,
+  "condition_notes": null,
+  "conduct, ct=application/json, m=GET, ms=904, s=200, t=1790607511144, u=https://acme.qa.egalvanic.ai/api/api/graph/nodes/01c46c47-1fae-4215-a27b-ffe6510a5c61/enriched}, {b=<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML><HEAD><META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<TITLE>ERROR: The request could not be satisfied</TITLE>
+</HEAD><BODY>
+<H1>504 Gateway Timeout ERROR</H1>
+<H2>The request could not be satisfied.</H2>
+<HR noshade size="1px">
+We can't connect to the server for this app or website at this time. There might be too much traffic or a configuration error. Try again later, or contact the app or website owner.
+<BR clear="all">
+If you provide content to customers through , ct=text/html; charset=UTF-8, m=POST, ms=60532, s=504, t=1790607514084, u=https://acme.qa.egalvanic.ai/api/extraction/extract-nameplate-data}, {b={
+  "jobs": [],
+  "success": true
+}
+, ct=application/json, m=GET, ms=758, s=200, t=1790607574700, u=https://acme.qa.egalvanic.ai/api/extraction/bulk-job/recent}, {b={
+  "execution_arn": "arn:aws:states:us-east-2:165183897698:execution:eg-pz-qa-ai-bulk-extraction-sfn-ohio:7230bfe7-64e5-4287-991a-43085b4087d2",
+  "job_id": "7230bfe7-64e5-4287-991a-43085b4087d2",
+  "mode": "configure",
+  "skipped": 0,
+  "success": true,
+  "total": 1
+}
+, ct=application/json, m=POST, ms=1750, s=200, t=1790607575458, u=https://acme.qa.egalvanic.ai/api/extraction/bulk-job/submit}, {b={
+  "done": 0,
+  "job_id": "7230bfe7-64e5-4287-991a-43085b4087d2",
+  "results": [],
+  "status": "RUNNING",
+  "success": true
+}
+, ct=application/json, m=GET, ms=352, s=200, t=1790607577208, u=https://acme.qa.egalvanic.ai/api/extraction/bulk-job/status?execution_arn=arn%3Aaws%3Astates%3Aus-east-2%3A165183897698%3Aexecution%3Aeg-pz-qa-ai-bulk-extraction-sfn-ohio%3A7230bfe7-64e5-4287-991a-43085b4087d2}, {b={
+  "done": 0,
+  "job_id": "7230bfe7-64e5-4287-991a-43085b4087d2",
+  "results": [],
+  "status": "RUNNING",
+  "success": true
+}
+, ct=application/json, m=GET, ms=297, s=200, t=1790607580062, u=https://acme.qa.egalvanic.ai/api/extraction/bulk-job/status?execution_arn=arn%3Aaws%3Astates%3Aus-east-2%3A165183897698%3Aexecution%3Aeg-pz-qa-ai-bulk-extraction-sfn-ohio%3A7230bfe7-64e5-4287-991a-43085b4087d2}, {b={
+  "done": 0,
+  "job_id": "7230bfe7-64e5-4287-991a-43085b4087d2",
+  "results": [],
+  "status": "RUNNING",
+  "success": true
+}
+, ct=application/json, m=GET, ms=259, s=200, t=1790607582861, u=https://acme.qa.egalvanic.ai/api/extraction/bulk-job/status?execution_arn=arn%3Aaws%3Astates%3Aus-east-2%3A165183897698%3Aexecution%3Aeg-pz-qa-ai-bulk-extraction-sfn-ohio%3A7230bfe7-64e5-4287-991a-43085b4087d2}, {b={
+  "done": 1,
+  "job_id": "7230bfe7-64e5-4287-991a-43085b4087d2",
+  "results": [
+    {
+      "config": null,
+      "error": null,
+      "label": "QA-DEMO extract 12 photos library (delete me)",
+      "node_id": "01c46c47-1fae-4215-a27b-ffe6510a5c61",
+      "stage": "Sorting photos\u2026",
+      "status": "running"
+    }
+  ],
+  "status": "RUNNING",
+  "success": true
+}
+, ct=application/json, m=GET, ms=659, s=200, t=1790607585622, u=https://acme.qa.egalvanic.ai/api/extraction/bulk-job/status?execution_arn=arn%3Aaws%3Astates%3Aus-east-2%3A165183897698%3Aexecution%3Aeg-pz-qa-ai-bulk-extraction-sfn-ohio%3A7230bfe7-64e5-4287-991a-43085b4087d2}, {b={
+  "done": 1,
+  "job_id": "7230bfe7-64e5-4287-991a-43085b4087d2",
+  "results": [
+    {
+      "config": null,
+      "error": null,
+      "label": "QA-DEMO extract 12 photos library (delete me)",
+      "node_id": "01c46c47-1fae-4215-a27b-ffe6510a5c61",
+      "stage": "Sorting photos\u2026",
+      "status": "running"
+    }
+  ],
+  "status": "RUNNING",
+  "success": true
+}
+, ct=application/json, m=GET, ms=311, s=200, t=1790607588780, u=https://acme.qa.egalvanic.ai/api/extraction/bulk-job/status?execution_arn=arn%3Aaws%3Astates%3Aus-east-2%3A165183897698%3Aexecution%3Aeg-pz-qa-ai-bulk-extraction-sfn-ohio%3A7230bfe7-64e5-4287-991a-43085b4087d2}, {b={
+  "done": 1,
+  "job_id": "7230bfe7-64e5-4287-991a-43085b4087d2",
+  "results": [
+    {
+      "config": null,
+      "error": null,
+      "label": "QA-DEMO extract 12 photos library (delete me)",
+      "node_id": "01c46c47-1fae-4215-a27b-ffe6510a5c61",
+      "stage": "Sorting photos\u2026",
+      "status": "running"
+    }
+  ],
+  "status": "RUNNING",
+  "success": true
+}
+, ct=application/json, m=GET, ms=259, s=200, t=1790607591593, u=https://acme.qa.egalvanic.ai/api/extraction/bulk-job/status?execution_arn=arn%3Aaws%3Astates%3Aus-east-2%3A165183897698%3Aexecution%3Aeg-pz-qa-ai-bulk-extraction-sfn-ohio%3A7230bfe7-64e5-4287-991a-43085b4087d2}, {b={
+  "done": 1,
+  "job_id": "7230bfe7-64e5-4287-991a-43085b4087d2",
+  "results": [
+    {
+      "config": null,
+      "error": null,
+      "label": "QA-DEMO extract 12 photos library (delete me)",
+      "node_id": "01c46c47-1fae-4215-a27b-ffe6510a5c61",
+      "stage": "Reading 12 nameplate photo(s)\u2026",
+      "status": "running"
+    }
+  ],
+  "status": "RUNNING",
+  "success": true
+}
+, ct=application/json, m=GET, ms=694, s=200, t=1790607594354, u=https://acme.qa.egalvanic.ai/api/extraction/bulk-job/status?execution_arn=arn%3Aaws%3Astates%3Aus-east-2%3A165183897698%3Aexecution%3Aeg-pz-qa-ai-bulk-extraction-sfn-ohio%3A7230bfe7-64e5-4287-991a-43085b4087d2}, {b={
+  "done": 1,
+  "job_id": "7230bfe7-64e5-4287-991a-43085b4087d2",
+  "results": [
+    {
+      "config": null,
+      "error": null,
+      "label": "QA-DEMO extract 12 photos library (delete me)",
+      "node_id": "01c46c47-1fae-4215-a27b-ffe6510a5c61",
+      "stage": "Reading 12 nameplate photo(s)\u2026",
+      "status": "running"
+    }
+  ],
+  "status": "RUNNING",
+  "success": true
+}
+, ct=application/json, m=GET, ms=269, s=200, t=1790607597550, u=https://acme.qa.egalvanic.ai/api/extraction/bulk-job/status?execution_arn=arn%3Aaws%3Astates%3Aus-east-2%3A165183897698%3Aexecution%3Aeg-pz-qa-ai-bulk-extraction-sfn-ohio%3A7230bfe7-64e5-4287-991a-43085b4087d2}, {b={
+  "done": 1,
+  "job_id": "7230bfe7-64e5-4287-991a-43085b4087d2",
+  "results": [
+    {
+      "config": null,
+      "error": null,
+      "label": "QA-DEMO extract 12 photos library (delete me)",
+      "node_id": "01c46c47-1fae-4215-a27b-ffe6510a5c61",
+      "stage": "Reading 12 nameplate photo(s)\u2026",
+      "status": "running"
+    }
+  ],
+  "status": "RUNNING",
+  "success": true
+}
+, ct=application/json, m=GET, ms=661, s=200, t=1790607600321, u=https://acme.qa.egalvanic.ai/api/extraction/bulk-job/status?execution_arn=arn%3Aaws%3Astates%3Aus-east-2%3A165183897698%3Aexecution%3Aeg-pz-qa-ai-bulk-extraction-sfn-ohio%3A7230bfe7-64e5-4287-991a-43085b4087d2}, {b={
+  "done": 1,
+  "job_id": "7230bfe7-64e5-4287-991a-43085b4087d2",
+  "results": [
+    {
+      "config": null,
+      "error": null,
+      "label": "QA-DEMO extract 12 photos library (delete me)",
+      "node_id": "01c46c47-1fae-4215-a27b-ffe6510a5c61",
+      "stage": "Reading 12 nameplate photo(s)\u2026",
+      "status": "running"
+    }
+  ],
+  "status": "RUNNING",
+  "success": true
+}
+, ct=application/json, m=GET, ms=691, s=200, t=1790607603484, u=https://acme.qa.egalvanic.ai/api/extraction/bulk-job/status?execution_arn=arn%3Aaws%3Astates%3Aus-east-2%3A165183897698%3Aexecution%3Aeg-pz-qa-ai-bulk-extraction-sfn-ohio%3A7230bfe7-64e5-4287-991a-43085b4087d2}, {b={
+  "afc_updated_at": null,
+  "aic_label_present": null,
+  "aic_rating": null,
+  "ampere_rating": null,
+  "applied_shortcut": null,
+  "available_fault_ka": null,
+  "building_name": null,
+  "busway_ampere_rating": null,
+  "cable_size_id": null,
+  "cable_size_label": null,
+  "child_incoming_edges": [],
+  "child_nodes": [],
+  "child_outgoing_edges": [],
+  "circuit_voltage": null,
+  "circuit_voltage_id": null,
+  "circuit_voltage_label": null,
+  "com": null,
+  "com_calculation": null,
+  "com_calculation_modified_at": null,
+  "com_calculation_modified_by": null,
+  "condition_notes": null,
+  "conduct, ct=application/json, m=GET, ms=1191, s=200, t=1790607604466, u=/api/graph/nodes/01c46c47-1fae-4215-a27b-ffe6510a5c61/enriched}]
