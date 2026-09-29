@@ -57,6 +57,50 @@ public class ZP4464SubscriptionStageTest extends BaseTest {
         js("var o=document.getElementById('__qaOverlay');if(o)o.remove();");
     }
 
+    /**
+     * Admin seats only (skips itself otherwise): the banner's "View subscription" leads to the page, the Admin
+     * rail lists Billing › Subscription, the full API payloads are saved, and the banner is captured at phone width.
+     * Run with TZ=America/Chicago in the environment to see the viewer-timezone dates.
+     */
+    @SuppressWarnings("unchecked")
+    @Test(priority = 2, description = "ZP-4464: admin deep checks — View subscription, menu item, API payloads, phone width")
+    public void adminDeepChecks() throws Exception {
+        ExtentReportManager.createTest("ZP-4464", "Subscription module", "Admin deep checks " + seat());
+        List<String> notes = new ArrayList<>();
+        open("/dashboard");
+        Object tz = js("return Intl.DateTimeFormat().resolvedOptions().timeZone+' · local now '+new Date().toString();");
+        notes.add("browser timezone: " + tz);
+        String bText = banner();
+        notes.add("banner: " + bText);
+        Object clicked = js("var b=[].slice.call(document.querySelectorAll('button')).find(function(x){return /^view subscription$/i.test((x.innerText||'').trim())&&x.offsetParent!==null;});if(!b)return null;b.click();return 'clicked';");
+        if (clicked == null) throw new org.testng.SkipException("No 'View subscription' button for seat " + seat() + " (not an admin seat)");
+        sleep(5000);
+        notes.add("View subscription → " + js("return location.pathname;"));
+        Object rail = js("var a=[].slice.call(document.querySelectorAll('a[href=\"/admin/subscription\"]')).filter(function(x){return x.offsetParent!==null;});"
+                + "if(!a.length)return 'no visible menu link';var g=a[0];var t='';for(var p=g;p&&!t;p=p.parentElement){var h=[].slice.call(p.parentElement?p.parentElement.children:[]).map(function(c){return (c.innerText||'').trim();}).filter(function(s){return /^billing$/i.test(s);});if(h.length)t='under BILLING';}"
+                + "return 'visible menu link: '+(g.innerText||'').trim()+' '+t+' · selected '+(g.getAttribute('aria-current')||g.className.indexOf('active')>=0||g.className.indexOf('selected')>=0);");
+        notes.add("menu: " + rail);
+        Map<String, Object> api = (Map<String, Object>) jsAsync("var done=arguments[arguments.length-1];var tok=null;[localStorage,sessionStorage].forEach(function(s){for(var i=0;i<s.length;i++){"
+                + "var m=String(s.getItem(s.key(i))).match(/eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]+/);if(m&&!tok)tok=m[0];}});var h=tok?{Authorization:'Bearer '+tok}:{};"
+                + "function g(u){return fetch(u,{headers:h,credentials:'include'}).then(function(r){return r.text().then(function(b){return {s:r.status,b:b};});});}"
+                + "Promise.all([g('/api/subscription/banner'),g('/api/subscription')]).then(function(a){done({banner:a[0],page:a[1]});});");
+        Files.createDirectories(OUT);
+        Files.write(OUT.resolve(seat() + "_api_banner.json"), String.valueOf(((Map<String, Object>) api.get("banner")).get("b")).getBytes());
+        Files.write(OUT.resolve(seat() + "_api_subscription.json"), String.valueOf(((Map<String, Object>) api.get("page")).get("b")).getBytes());
+        shot("5_after_view_subscription", "View subscription → " + js("return location.pathname;") + "\n" + rail + "\n" + tz);
+        // phone width
+        driver.manage().window().setSize(new org.openqa.selenium.Dimension(420, 900));
+        sleep(2500);
+        String phone = banner();
+        notes.add("banner at 420 px: " + phone);
+        Object overflow = js("return document.documentElement.scrollWidth+' px page width vs '+window.innerWidth+' px viewport';");
+        notes.add("phone layout: " + overflow);
+        shot("6_phone_width", "420 px wide · " + overflow);
+        System.out.println("[ZP-4464 deep] " + seat() + ":\n  " + String.join("\n  ", notes));
+        Files.write(OUT.resolve(seat() + "_deep.txt"), String.join("\n", notes).getBytes());
+        Assert.assertEquals(String.valueOf(js("return location.pathname;")), "/admin/subscription", "View subscription should open the Subscription page");
+    }
+
     @SuppressWarnings("unchecked")
     @Test(description = "ZP-4464: subscription banner, page and API as seen by the signed-in seat (read-only)")
     public void subscriptionAsThisSeat() throws Exception {
