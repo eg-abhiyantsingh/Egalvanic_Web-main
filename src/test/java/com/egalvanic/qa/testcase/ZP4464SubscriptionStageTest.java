@@ -72,6 +72,14 @@ public class ZP4464SubscriptionStageTest extends BaseTest {
         notes.add("browser timezone: " + tz);
         String bText = banner();
         notes.add("banner: " + bText);
+        // save the raw API answers first, so a plan with no banner (no View subscription button) still leaves evidence
+        Map<String, Object> api = (Map<String, Object>) jsAsync("var done=arguments[arguments.length-1];var tok=null;[localStorage,sessionStorage].forEach(function(s){for(var i=0;i<s.length;i++){"
+                + "var m=String(s.getItem(s.key(i))).match(/eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]+/);if(m&&!tok)tok=m[0];}});var h=tok?{Authorization:'Bearer '+tok}:{};"
+                + "function g(u){return fetch(u,{headers:h,credentials:'include'}).then(function(r){return r.text().then(function(b){return {s:r.status,b:b};});});}"
+                + "Promise.all([g('/api/subscription/banner'),g('/api/subscription')]).then(function(a){done({banner:a[0],page:a[1]});});");
+        Files.createDirectories(OUT);
+        Files.write(OUT.resolve(seat() + "_api_banner.json"), String.valueOf(((Map<String, Object>) api.get("banner")).get("b")).getBytes());
+        Files.write(OUT.resolve(seat() + "_api_subscription.json"), String.valueOf(((Map<String, Object>) api.get("page")).get("b")).getBytes());
         Object clicked = js("var b=[].slice.call(document.querySelectorAll('button')).find(function(x){return /^view subscription$/i.test((x.innerText||'').trim())&&x.offsetParent!==null;});if(!b)return null;b.click();return 'clicked';");
         if (clicked == null) throw new org.testng.SkipException("No 'View subscription' button for seat " + seat() + " (not an admin seat)");
         sleep(5000);
@@ -80,13 +88,6 @@ public class ZP4464SubscriptionStageTest extends BaseTest {
                 + "if(!a.length)return 'no visible menu link';var g=a[0];var t='';for(var p=g;p&&!t;p=p.parentElement){var h=[].slice.call(p.parentElement?p.parentElement.children:[]).map(function(c){return (c.innerText||'').trim();}).filter(function(s){return /^billing$/i.test(s);});if(h.length)t='under BILLING';}"
                 + "return 'visible menu link: '+(g.innerText||'').trim()+' '+t+' · selected '+(g.getAttribute('aria-current')||g.className.indexOf('active')>=0||g.className.indexOf('selected')>=0);");
         notes.add("menu: " + rail);
-        Map<String, Object> api = (Map<String, Object>) jsAsync("var done=arguments[arguments.length-1];var tok=null;[localStorage,sessionStorage].forEach(function(s){for(var i=0;i<s.length;i++){"
-                + "var m=String(s.getItem(s.key(i))).match(/eyJ[\\w-]+\\.[\\w-]+\\.[\\w-]+/);if(m&&!tok)tok=m[0];}});var h=tok?{Authorization:'Bearer '+tok}:{};"
-                + "function g(u){return fetch(u,{headers:h,credentials:'include'}).then(function(r){return r.text().then(function(b){return {s:r.status,b:b};});});}"
-                + "Promise.all([g('/api/subscription/banner'),g('/api/subscription')]).then(function(a){done({banner:a[0],page:a[1]});});");
-        Files.createDirectories(OUT);
-        Files.write(OUT.resolve(seat() + "_api_banner.json"), String.valueOf(((Map<String, Object>) api.get("banner")).get("b")).getBytes());
-        Files.write(OUT.resolve(seat() + "_api_subscription.json"), String.valueOf(((Map<String, Object>) api.get("page")).get("b")).getBytes());
         shot("5_after_view_subscription", "View subscription → " + js("return location.pathname;") + "\n" + rail + "\n" + tz);
         // phone width
         driver.manage().window().setSize(new org.openqa.selenium.Dimension(420, 900));
@@ -140,7 +141,7 @@ public class ZP4464SubscriptionStageTest extends BaseTest {
             String full = String.valueOf(js("var m=document.querySelector('main')||document.body;return (m.innerText||'');"));
             Files.createDirectories(OUT);
             Files.write(OUT.resolve(seat() + "_page_full.txt"), full.getBytes());
-            String[] sections = {"Modules", "Included access", "Activity"};
+            String[] sections = {"Modules", "Licensed sites", "Modules by site", "Customer portal licences", "Included access", "Activity"};
             for (int k = 0; k < sections.length; k++) {
                 Object found = js("var s=arguments[0];var h=[].slice.call(document.querySelectorAll('main *')).find(function(e){return e.children.length===0&&(e.innerText||'').trim()===s;});"
                         + "if(!h)return false;h.scrollIntoView({block:'start'});return true;", sections[k]);

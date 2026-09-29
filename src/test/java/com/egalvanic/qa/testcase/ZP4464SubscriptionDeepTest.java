@@ -59,7 +59,7 @@ public class ZP4464SubscriptionDeepTest extends BaseTest {
     private String banner() {
         return String.valueOf(js("var a=[].slice.call(document.querySelectorAll('a[href^=\"mailto:customer-success\"]')).find(function(x){return x.offsetParent!==null;});"
                 + "if(!a)return 'none';var b=a;while(b.parentElement&&!b.getAttribute('role'))b=b.parentElement;if(!b.getAttribute('role'))return 'no role container';"
-                + "var btn=[].slice.call(b.querySelectorAll('button')).map(function(x){return (x.innerText||'').trim();});var cs=getComputedStyle(b);"
+                + "var btn=[].slice.call(b.querySelectorAll('button')).map(function(x){return (x.innerText||'').trim()||('['+(x.getAttribute('aria-label')||'icon')+']');});var cs=getComputedStyle(b);"
                 + "return (b.innerText||'').replace(/\\s+/g,' ').trim()+' || role='+b.getAttribute('role')+' || bg='+cs.backgroundColor+' || buttons='+JSON.stringify(btn);"));
     }
 
@@ -115,18 +115,24 @@ public class ZP4464SubscriptionDeepTest extends BaseTest {
             notes.add("dashboard banner: " + b1);
             shot(seat() + "_" + name + "_1_banner", "SIMULATED API answer · " + name + " · seat " + seat() + "\n" + b1);
 
-            if (b1.contains("\"Dismiss\"")) {
+            // first build: a "Dismiss" text button; owner-note build (index-BFc32lrB): an X icon button labelled "Close subscription notice"
+            if (b1.contains("\"Dismiss\"") || b1.contains("[Close subscription notice]")) {
                 js("var a=[].slice.call(document.querySelectorAll('a[href^=\"mailto:customer-success\"]')).find(function(x){return x.offsetParent!==null;});var b=a;while(b.parentElement&&!b.getAttribute('role'))b=b.parentElement;"
-                        + "var d=[].slice.call(b.querySelectorAll('button')).find(function(x){return /^dismiss$/i.test((x.innerText||'').trim());});if(d)d.click();");
+                        + "var d=[].slice.call(b.querySelectorAll('button')).find(function(x){return /^dismiss$/i.test((x.innerText||'').trim())||/close subscription notice/i.test(x.getAttribute('aria-label')||'');});if(d)d.click();");
                 sleep(1500);
                 String afterClick = banner();
+                shot(seat() + "_" + name + "_1a_after_close", "SIMULATED · " + name + " · right after clicking close\nbanner: " + afterClick);
                 Object key = js("return Object.keys(localStorage).filter(function(k){return k.indexOf('subscriptionBanner.dismissed:')===0;}).join(', ')||'none';");
-                open("/sessions");
+                // real in-app navigation: click a visible menu link, same document (the marker survives only without a reload)
+                Object went = js("window.__qaSameDoc=1;var a=[].slice.call(document.querySelectorAll('nav a[href^=\"/\"],aside a[href^=\"/\"],a[href^=\"/\"]')).filter(function(x){"
+                        + "var h=x.getAttribute('href');return x.offsetParent!==null&&h!==location.pathname&&h.indexOf('/admin/subscription')<0&&h.length>1;});if(!a.length)return 'no link';a[0].click();return a[0].getAttribute('href');");
+                sleep(3000);
                 String afterNav = banner();
+                notes.add("in-app click to " + went + " → now " + js("return location.pathname;") + ", same document (no reload): " + js("return window.__qaSameDoc===1;"));
                 driver.navigate().refresh();
                 sleep(8000);
                 String afterReload = banner();
-                notes.add("Dismiss clicked → banner " + (afterClick.equals("none") ? "hidden" : "STILL SHOWN: " + afterClick) + "; storage key: " + key
+                notes.add("Close/Dismiss clicked → banner " + (afterClick.equals("none") ? "hidden" : "STILL SHOWN: " + afterClick) + "; storage key: " + key
                         + "; after in-app navigation: " + (afterNav.equals("none") ? "hidden" : "shown") + "; after browser refresh: " + (afterReload.equals("none") ? "hidden (kept in localStorage)" : "shown again"));
                 shot(seat() + "_" + name + "_1b_after_dismiss_refresh", "SIMULATED · " + name + " · after Dismiss + browser refresh\nbanner: " + afterReload);
                 js("try{Object.keys(localStorage).forEach(function(k){if(k.indexOf('subscriptionBanner.dismissed:')===0)localStorage.removeItem(k);});}catch(e){}");
