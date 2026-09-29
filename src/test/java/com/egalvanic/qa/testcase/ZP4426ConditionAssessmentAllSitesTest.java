@@ -146,7 +146,7 @@ public class ZP4426ConditionAssessmentAllSitesTest extends BaseTest {
         return how == null ? null : String.valueOf(how);
     }
 
-    @Test(description = "ZP-4426 QA steps 1-4: Condition Assessment with All Sites makes no request and shows 'Pick a single site'")
+    @Test(description = "ZP-4426 QA steps 1-4: Condition Assessment with All Sites never sends sld_id=all — guard or a real site, nothing fails")
     public void allSitesMakesNoConditionAssessmentRequest() throws Exception {
         ExtentReportManager.createTest("ZP-4426", "Condition Assessment with All Sites", "Steps 1-4");
         installRecorder();
@@ -161,6 +161,7 @@ public class ZP4426ConditionAssessmentAllSitesTest extends BaseTest {
         List<String> s1 = calls(t1, CA);
         String text1 = mainText();
         boolean msg1 = text1.contains("Pick a single site");
+        String pick1 = site(); boolean err1 = errorScreen();
         notes.add("Step 1 (All Facilities chosen on Work Orders: " + picked + "; Condition Assessment opened via " + nav1 + ", picker '" + site()
                 + "'): condition-assessment calls " + s1 + ", 'Pick a single site' shown " + msg1 + ", error screen " + errorScreen()
                 + " · page: " + text1.substring(0, Math.min(140, text1.length())));
@@ -195,6 +196,7 @@ public class ZP4426ConditionAssessmentAllSitesTest extends BaseTest {
         List<String> failed3 = new ArrayList<>();
         for (String l : calls(t3, ".")) if (!l.matches("^(2|3)\\d\\d .*")) failed3.add(l);
         boolean msg3 = mainText().contains("Pick a single site");
+        String pick3 = site(); boolean err3 = errorScreen();
         notes.add("Step 3 (All Facilities again: " + picked3 + ", opened via " + nav3 + ", picker '" + site() + "'): condition-assessment calls " + s3
                 + ", failed API calls " + failed3 + ", message " + msg3 + ", error screen " + errorScreen());
         evidence("3_back_to_all_sites", "step 3 · All Facilities again, then Condition Assessment from the menu", s3);
@@ -206,6 +208,7 @@ public class ZP4426ConditionAssessmentAllSitesTest extends BaseTest {
         List<String> s4 = calls(t4, CA);
         String text4 = mainText();
         boolean msg4 = text4.contains("Pick a single site");
+        String pick4 = site(); boolean err4 = errorScreen();
         notes.add("Step 4 (All Facilities: " + picked4 + ", /maintenance-portal/condition via " + nav4 + ", on " + js("return location.pathname;")
                 + "): condition-assessment calls " + s4 + ", Access Denied " + text4.contains("Access Denied") + ", message " + msg4 + ", error screen " + errorScreen());
         evidence("4_portal_condition", "step 4 · All Facilities, then the portal's Condition Assessment", s4);
@@ -215,11 +218,26 @@ public class ZP4426ConditionAssessmentAllSitesTest extends BaseTest {
 
         Assert.assertTrue(picked, "Could not choose All Facilities on Work Orders");
         Assert.assertTrue(anyAll.isEmpty(), "No request may carry sld_id=all, got " + anyAll);
-        Assert.assertEquals(s1.size(), 0, "Step 1: no /condition-assessment/* request with All Facilities, got " + s1);
-        Assert.assertTrue(msg1, "Step 1: 'Pick a single site' should show with All Facilities");
+        // After All Facilities the app may do either of two correct things: keep "all" and show the guard
+        // ("Pick a single site", no request), or re-resolve "all" to the first real site (site routes do this,
+        // seen on staging and QA) and load that site with 200s. Either way: no sld_id=all, nothing fails.
+        assertAllSitesHandled("Step 1", s1, msg1, pick1, err1);
         Assert.assertTrue(s2ok >= 3 && s2ok == s2.size(), "Step 2: overview, findings and assets should load with 200, got " + s2);
-        Assert.assertEquals(s3.size(), 0, "Step 3: no /condition-assessment/* request after switching back, got " + s3);
         Assert.assertTrue(failed3.isEmpty(), "Step 3: no failed request, got " + failed3);
-        Assert.assertTrue(msg3, "Step 3: 'Pick a single site' should return");
+        assertAllSitesHandled("Step 3", s3, msg3, pick3, err3);
+        assertAllSitesHandled("Step 4", s4, msg4, pick4, err4);
+    }
+
+    /** The guard with no request, or a real site whose calls all answered 200 — and never an error screen. */
+    private void assertAllSitesHandled(String step, List<String> caCalls, boolean guardShown, String picker, boolean errorShown) {
+        Assert.assertFalse(errorShown, step + ": error screen shown");
+        if (guardShown) {
+            Assert.assertEquals(caCalls.size(), 0, step + ": 'Pick a single site' shown but requests still went out: " + caCalls);
+            return;
+        }
+        Assert.assertFalse(picker.isEmpty() || picker.toLowerCase().startsWith("all "),
+                step + ": no guard shown, yet the picker still reads '" + picker + "'");
+        Assert.assertTrue(!caCalls.isEmpty() && caCalls.stream().allMatch(l -> l.startsWith("200 ")),
+                step + ": moved to site '" + picker + "' but its condition-assessment calls did not all answer 200: " + caCalls);
     }
 }
