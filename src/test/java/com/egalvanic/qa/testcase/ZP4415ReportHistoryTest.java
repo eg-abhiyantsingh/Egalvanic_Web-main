@@ -3,8 +3,10 @@ package com.egalvanic.qa.testcase;
 import com.egalvanic.qa.constants.AppConstants;
 import com.egalvanic.qa.utils.ExtentReportManager;
 import com.egalvanic.qa.utils.ai.SelfHealingDriver;
+import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.OutputType;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -23,7 +25,9 @@ import java.util.Map;
  * {@code GET /api/reporting/history?sld_id=<site>&limit=1} call. Before the fix every call answers
  * 500 {@code internal_error} (NameError: User not imported), so the page can never show history.
  *
- * <p>The page's fetches are recorded with their HTTP status by a wrapper installed before the app
+ * <p>The page asks for history only on the Free license ({@code latestReportOnly}), so the test
+ * first picks "Free" in the sidebar License select (a per-browser preview, restored afterwards).
+ * The page's fetches are recorded with their HTTP status by a wrapper installed before the app
  * loads. The evidence screenshot shows the Reports page with that log drawn on top.</p>
  */
 public class ZP4415ReportHistoryTest extends BaseTest {
@@ -53,7 +57,25 @@ public class ZP4415ReportHistoryTest extends BaseTest {
             if (Boolean.TRUE.equals(js("return !((document.body&&document.body.innerText)||'').startsWith('Loading')&&document.querySelectorAll('nav a[href]').length>0;"))) break;
             sleep(1000);
         }
-        sleep(12000);
+        sleep(6000);
+        Object lic0 = js("return localStorage.getItem('eg.maintenancePortal.previewLicense');");
+        Object sel = js("var c=[].slice.call(document.querySelectorAll('span,p,div,label')).filter(function(e){return e.children.length===0&&(e.textContent||'').trim()==='License';});"
+                + "for(var i=0;i<c.length;i++){var p=c[i];for(var k=0;k<4&&p;k++){p=p.parentElement;if(!p)break;var s=p.querySelector('[aria-haspopup=listbox],[role=combobox]');if(s){s.scrollIntoView({block:'center'});return s;}}}return null;");
+        // Tier-2 tenants get no License select (their server licence applies); the page must then already be on Free
+        boolean hasSelect = sel instanceof WebElement;
+        if (hasSelect) {
+            ((WebElement) sel).click();
+            sleep(800);
+            List<WebElement> free = driver.findElements(By.xpath("//li[@role='option'][normalize-space(.)='Free']"));
+            Assert.assertFalse(free.isEmpty(), "The sidebar License select has no 'Free' option");
+            free.get(0).click();
+        } else {
+            System.out.println("[ZP-4415] no sidebar License select (tier-2 tenant): relying on the server licence being Free");
+        }
+        Object lic1 = js("return localStorage.getItem('eg.maintenancePortal.previewLicense');");
+        for (int i = 0; i < 20 && Boolean.FALSE.equals(js("return JSON.parse(sessionStorage.getItem('__qaHist')||'[]').length>0;")); i++) sleep(1000);
+        sleep(2000);
+        String siteId = String.valueOf(js("return localStorage.getItem('activeSiteId')||'';"));
         Object site = js("var i=[].slice.call(document.querySelectorAll('input')).find(function(x){return x.closest('nav,aside')&&x.value;});return i?i.value:'';");
         List<Map<String, Object>> calls = (List<Map<String, Object>>) js("return JSON.parse(sessionStorage.getItem('__qaHist')||'[]');");
         List<String> lines = new ArrayList<>();
@@ -62,18 +84,23 @@ public class ZP4415ReportHistoryTest extends BaseTest {
                     + "  →  " + String.valueOf(c.get("b")).replaceAll("\\s+", " "));
         }
         String pageText = String.valueOf(js("var m=document.querySelector('main')||document.body;return m.innerText;"));
-        System.out.println("[ZP-4415] site='" + site + "' history calls:\n  " + String.join("\n  ", lines));
+        System.out.println("[ZP-4415] License Free, site='" + site + "' " + siteId + " history calls:\n  " + String.join("\n  ", lines));
         System.out.println("[ZP-4415] page text (first 600): " + pageText.replace('\n', '|').substring(0, Math.min(600, pageText.length())));
 
         js("var o=document.createElement('div');o.id='__qaOverlay';o.style.cssText='position:fixed;right:12px;bottom:12px;z-index:2147483647;max-width:820px;"
                 + "background:rgba(15,27,33,.93);color:#e4edef;font:12px/1.5 Menlo,monospace;padding:10px 12px;border-radius:6px;border:2px solid #f0887f;white-space:pre-wrap';"
                 + "o.textContent=arguments[0];document.body.appendChild(o);",
-                "QA evidence ZP-4415 · report history calls made by this page (site: " + site + ")\n"
+                "QA evidence ZP-4415 · report history calls made by this page (License Free, site: " + site + ")\n"
                         + (lines.isEmpty() ? "(no /reporting/history call)" : String.join("\n", lines)));
         Files.createDirectories(OUT);
         Files.write(OUT.resolve("reports_page_history_calls.png"), ((org.openqa.selenium.TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES));
+        js("if(arguments[0]==null)localStorage.removeItem('eg.maintenancePortal.previewLicense');else localStorage.setItem('eg.maintenancePortal.previewLicense',arguments[0]);", lic0);
 
-        Assert.assertFalse(calls.isEmpty(), "The Reports page should ask for the site's report history");
+        if (hasSelect) Assert.assertEquals(lic1, "no_license", "License preview after picking Free");
+        Assert.assertFalse(calls.isEmpty(), hasSelect ? "On the Free license the Reports page should ask for the site's report history"
+                : "No License select and no history call: this tier-2 tenant's server licence is not Free, so step 1 cannot run here");
+        Assert.assertTrue(calls.stream().anyMatch(c -> String.valueOf(c.get("u")).contains("/reporting/history?sld_id=" + siteId + "&limit=1")),
+                "Expected GET /api/reporting/history?sld_id=" + siteId + "&limit=1, got " + lines);
         for (Map<String, Object> c : calls) {
             Assert.assertEquals(((Number) c.get("s")).intValue(), 200, "Report history call answered " + c.get("s") + ": " + c.get("b"));
         }
@@ -130,6 +157,8 @@ public class ZP4415ReportHistoryTest extends BaseTest {
     @Test(priority = 2, description = "ZP-4415 steps 1/2/4: a generated report shows in history and downloads")
     public void generatedReportAppearsInHistory() throws Exception {
         ExtentReportManager.createTest("ZP-4415", "Report history", "Generate then list + download");
+        String siteName = System.getProperty("zp4415.site", "Test site 4/12");
+        Assert.assertTrue(selectSiteByName(siteName), "Could not select site '" + siteName + "' (-Dzp4415.site)");
         driver.get(AppConstants.BASE_URL + "/maintenance-portal/reports");
         sleep(10000);
         loginPage.dismissMfaPromptIfShowing();

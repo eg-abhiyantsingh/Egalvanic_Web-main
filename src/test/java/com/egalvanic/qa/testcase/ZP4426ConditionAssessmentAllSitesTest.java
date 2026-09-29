@@ -33,8 +33,8 @@ public class ZP4426ConditionAssessmentAllSitesTest extends BaseTest {
 
     private static final Path OUT = Paths.get("test-output", "screenshots", "zp4426");
     private static final String PAGE = "/pm-readiness";
-    /** A single site with assessment data on the acme test tenant (26 assets on staging). */
-    private static final String ONE_SITE = System.getProperty("zp4426.site", "DemoSite 1");
+    /** Step 2's single site; optional — site names differ per environment (see {@link #pickSingleSite()}). */
+    private static final String ONE_SITE = System.getProperty("zp4426.site");
 
     private Object js(String s, Object... a) { return ((JavascriptExecutor) driver).executeScript(s, a); }
     private void sleep(long ms) { try { Thread.sleep(ms); } catch (InterruptedException e) { Thread.currentThread().interrupt(); } }
@@ -105,12 +105,7 @@ public class ZP4426ConditionAssessmentAllSitesTest extends BaseTest {
         String list = System.getProperty("zp4426.list", "/tasks");   // Tasks is site-scoped AND offers All Facilities
         driver.get(AppConstants.BASE_URL + list);
         waitLoaded();
-        // several pickers can exist (one hidden in a collapsed panel): use the visible one
-        Object opened = js("var i=[].slice.call(document.querySelectorAll(\"input[placeholder='Select facility']\")).find(function(x){return x.offsetParent!==null;});"
-                + "if(!i)return null;i.scrollIntoView({block:'center'});i.focus();"
-                + "var s=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;s.call(i,'');i.dispatchEvent(new Event('input',{bubbles:true}));"
-                + "var r=i.closest('.MuiAutocomplete-root');var t=r&&r.querySelector('.MuiAutocomplete-popupIndicator');"
-                + "if(t)t.click();else i.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));return 'ok';");
+        Object opened = openSitePicker();
         if (opened == null) { System.out.println("[ZP-4426] no visible site picker on " + list); return false; }
         Object clicked = null;
         for (int i = 0; i < 20 && clicked == null; i++) {
@@ -124,6 +119,48 @@ public class ZP4426ConditionAssessmentAllSitesTest extends BaseTest {
         sleep(2000);
         System.out.println("[ZP-4426] on " + list + " chose '" + clicked + "'; picker '" + site() + "', stored activeSiteId '" + js("return localStorage.getItem('activeSiteId');") + "'");
         return clicked != null;
+    }
+
+    /** Opens the visible site picker with its filter empty, so every option is listed; null when there is none. */
+    private Object openSitePicker() {
+        // several pickers can exist (one hidden in a collapsed panel): use the visible one
+        return js("var i=[].slice.call(document.querySelectorAll(\"input[placeholder='Select facility']\")).find(function(x){return x.offsetParent!==null;});"
+                + "if(!i)return null;i.scrollIntoView({block:'center'});i.focus();"
+                + "var s=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;s.call(i,'');i.dispatchEvent(new Event('input',{bubbles:true}));"
+                + "var r=i.closest('.MuiAutocomplete-root');var t=r&&r.querySelector('.MuiAutocomplete-popupIndicator');"
+                + "if(t)t.click();else i.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));return 'ok';");
+    }
+
+    /**
+     * Step 2's single site: -Dzp4426.site when it is set and in the picker, otherwise the first picker
+     * option that is a real site other than the current one. Returns the site chosen, or null.
+     */
+    private String pickSingleSite() {
+        if (ONE_SITE != null && !ONE_SITE.trim().isEmpty()) {
+            if (selectSiteByName(ONE_SITE)) return ONE_SITE;
+            // the typed filter matched nothing: blur closes the empty list and restores the picker's text
+            js("var a=document.activeElement;if(a&&a.blur)a.blur();");
+            sleep(800);
+            System.out.println("[ZP-4426] '" + ONE_SITE + "' is not in the site picker — using the first other site instead");
+        }
+        String current = site();
+        if (openSitePicker() == null) { System.out.println("[ZP-4426] no visible site picker for step 2"); return null; }
+        Object clicked = null;
+        for (int i = 0; i < 20 && clicked == null; i++) {
+            sleep(250);
+            clicked = js("var cur=String(arguments[0]).trim().toLowerCase();var o=[].slice.call(document.querySelectorAll('li[role=option]'));"
+                    + "var a=o.find(function(x){var t=(x.innerText||'').trim();return t&&t.toLowerCase()!==cur&&!/^all (facilities|sites)$/i.test(t);});"
+                    + "if(!a)return null;a.click();return (a.innerText||'').trim();", current);
+        }
+        System.out.println("[ZP-4426] step 2 site: '" + clicked + "' — the first picker option other than the current '" + current + "'"
+                + (ONE_SITE == null ? " (no -Dzp4426.site given)" : ""));
+        return clicked == null ? null : String.valueOf(clicked);
+    }
+
+    /** True when the rail offers the category at all (its label is visible in the narrow left rail). */
+    private boolean railHas(String category) {
+        return Boolean.TRUE.equals(js("var want=arguments[0];return [].slice.call(document.querySelectorAll('button,a,[role=button],div')).some(function(x){"
+                + "return (x.innerText||'').replace(/\\s+/g,' ').trim()===want&&x.offsetParent!==null&&x.getBoundingClientRect().left<90;});", category));
     }
 
     /**
@@ -177,13 +214,14 @@ public class ZP4426ConditionAssessmentAllSitesTest extends BaseTest {
 
         // Step 2: pick a single site; overview, findings and assets load
         long t2 = now();
-        boolean picked2 = selectSiteByName(ONE_SITE);
+        String site2 = pickSingleSite();
+        boolean picked2 = site2 != null;
         if (!String.valueOf(js("return location.pathname;")).equals(PAGE)) { driver.get(AppConstants.BASE_URL + PAGE); waitLoaded(); }
         sleep(7000);
         List<String> s2 = calls(t2, CA);
         long s2ok = s2.stream().filter(l -> l.startsWith("200 ")).count();
         String text2 = mainText();
-        notes.add("Step 2 (picked '" + ONE_SITE + "': " + picked2 + ", picker '" + site() + "'): condition-assessment calls " + s2.size()
+        notes.add("Step 2 (picked '" + site2 + "': " + picked2 + ", picker '" + site() + "'): condition-assessment calls " + s2.size()
                 + " (" + s2ok + " answered 200), message gone " + !text2.contains("Pick a single site") + ", error screen " + errorScreen()
                 + " · page: " + text2.substring(0, Math.min(160, text2.length())));
         evidence("2_single_site", "step 2 · single site '" + site() + "'", s2);
@@ -209,9 +247,14 @@ public class ZP4426ConditionAssessmentAllSitesTest extends BaseTest {
         String text4 = mainText();
         boolean msg4 = text4.contains("Pick a single site");
         String pick4 = site(); boolean err4 = errorScreen();
+        // Roles without Maintenance Portal (e.g. Electrical Engineer) have no such rail entry: the step does not apply to them
+        boolean na4 = nav4 == null && !railHas("Maintenance Portal");
+        String na4Note = "not applicable for this role (no Maintenance Portal in the rail)";
         notes.add("Step 4 (All Facilities: " + picked4 + ", /maintenance-portal/condition via " + nav4 + ", on " + js("return location.pathname;")
-                + "): condition-assessment calls " + s4 + ", Access Denied " + text4.contains("Access Denied") + ", message " + msg4 + ", error screen " + errorScreen());
-        evidence("4_portal_condition", "step 4 · All Facilities, then the portal's Condition Assessment", s4);
+                + "): " + (na4 ? na4Note + "; " : "") + "condition-assessment calls " + s4 + ", Access Denied " + text4.contains("Access Denied")
+                + ", message " + msg4 + ", error screen " + errorScreen());
+        if (na4) ExtentReportManager.logInfo("Step 4 " + na4Note);
+        evidence("4_portal_condition", "step 4 · " + (na4 ? na4Note : "All Facilities, then the portal's Condition Assessment"), s4);
         List<String> anyAll = calls(t1, "sld_id=all");
         System.out.println("[ZP-4426] " + seat() + ":\n  " + String.join("\n  ", notes));
         Files.write(OUT.resolve(seat() + "_steps.txt"), String.join("\n", notes).getBytes());
@@ -222,10 +265,11 @@ public class ZP4426ConditionAssessmentAllSitesTest extends BaseTest {
         // ("Pick a single site", no request), or re-resolve "all" to the first real site (site routes do this,
         // seen on staging and QA) and load that site with 200s. Either way: no sld_id=all, nothing fails.
         assertAllSitesHandled("Step 1", s1, msg1, pick1, err1);
+        Assert.assertTrue(picked2, "Step 2: could not pick a single site in the picker");
         Assert.assertTrue(s2ok >= 3 && s2ok == s2.size(), "Step 2: overview, findings and assets should load with 200, got " + s2);
         Assert.assertTrue(failed3.isEmpty(), "Step 3: no failed request, got " + failed3);
         assertAllSitesHandled("Step 3", s3, msg3, pick3, err3);
-        assertAllSitesHandled("Step 4", s4, msg4, pick4, err4);
+        if (!na4) assertAllSitesHandled("Step 4", s4, msg4, pick4, err4);
     }
 
     /** The guard with no request, or a real site whose calls all answered 200 — and never an error screen. */

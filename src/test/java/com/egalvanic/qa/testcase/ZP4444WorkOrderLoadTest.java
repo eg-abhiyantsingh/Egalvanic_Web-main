@@ -3,8 +3,13 @@ package com.egalvanic.qa.testcase;
 import com.egalvanic.qa.constants.AppConstants;
 import com.egalvanic.qa.utils.ExtentReportManager;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.OutputType;
+import org.openqa.selenium.StaleElementReferenceException;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -167,83 +172,200 @@ public class ZP4444WorkOrderLoadTest extends BaseTest {
                 + "if(!b)return null;b.scrollIntoView({block:'center'});b.click();return (b.innerText||b.getAttribute('aria-label')||'').trim();", textRegex);
     }
 
-    private void closeDialog() {
-        js("var d=[].slice.call(document.querySelectorAll('[role=dialog]')).pop();if(!d)return;"
-                + "var c=[].slice.call(d.querySelectorAll('button')).find(function(x){return /^(close|cancel)$/i.test((x.innerText||x.getAttribute('aria-label')||'').trim());});"
-                + "if(c)c.click();else document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));");
-        sleep(1500);
+    /** The grid's own row-selection boxes (MUI DataGrid selection column) — never the in-cell Forms check-off. */
+    private static final String ROW_SELECT = "[role='row'][data-rowindex] [data-field='__check__'] input[type=checkbox]";
+
+    /** Top-most open dialog, modal drawer or menu (portals stack in DOM order), or null; docked nav drawers and snackbars are ignored. */
+    private WebElement topOverlay() {
+        return (WebElement) js("var els=[].slice.call(document.querySelectorAll(\"[role=dialog], .MuiDrawer-paper, [role=presentation] .MuiPaper-root\")).filter(function(e){"
+                + "if(e.closest('.MuiDrawer-docked, .MuiSnackbar-root'))return false;var r=e.getBoundingClientRect();"
+                + "return r.width>0&&r.height>0&&r.right>0&&r.left<innerWidth&&getComputedStyle(e).visibility!=='hidden';});"
+                + "els=els.filter(function(e){return !els.some(function(o){return o!==e&&o.contains(e);});});return els.length?els[els.length-1]:null;");
+    }
+
+    private String overlayText(WebElement o) {
+        return o == null ? null : (String) js("return (arguments[0].innerText||'').replace(/\\s+/g,' ').trim().slice(0,220);", o);
+    }
+
+    private boolean isShown(WebElement o) {
+        try {
+            return Boolean.TRUE.equals(js("var e=arguments[0];if(!e.isConnected)return false;var r=e.getBoundingClientRect();"
+                    + "return r.width>0&&r.height>0&&r.right>0&&r.left<innerWidth&&getComputedStyle(e).visibility!=='hidden';", o));
+        } catch (StaleElementReferenceException gone) { return false; }
+    }
+
+    /** A real key press: MUI only closes on a trusted Escape, a synthetic KeyboardEvent never reaches it. */
+    private void pressEscape() {
+        new Actions(((com.egalvanic.qa.utils.ai.SelfHealingDriver) driver).getWrappedDriver()).sendKeys(Keys.ESCAPE).perform();
+    }
+
+    /** Closes an overlay with its own Cancel/Close button, else a real Escape; true once it is gone. */
+    private boolean closeOverlay(WebElement o) {
+        if (o == null) return true;
+        Object viaButton = js("var b=[].slice.call(arguments[0].querySelectorAll('button')).filter(function(x){return !x.disabled;});"
+                + "var c=b.find(function(x){return /^(cancel|close)$/i.test((x.innerText||'').trim());})||b.find(function(x){return /^close$/i.test(x.getAttribute('aria-label')||'');});"
+                + "if(c)c.click();return !!c;", o);
+        if (!Boolean.TRUE.equals(viaButton)) pressEscape();
+        for (int i = 0; i < 20 && isShown(o); i++) sleep(250);
+        if (isShown(o)) { pressEscape(); for (int i = 0; i < 12 && isShown(o); i++) sleep(250); }
+        return !isShown(o);
+    }
+
+    /** Each rendered row's in-cell check-offs (every checkbox outside the selection column), keyed by row id. Read only. */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> checkOffs() {
+        return (Map<String, Object>) js("var o={};[].slice.call(document.querySelectorAll(\"[role='row'][data-rowindex]\")).forEach(function(r){"
+                + "var s=[].slice.call(r.querySelectorAll('input[type=checkbox]')).filter(function(c){return !c.closest(\"[data-field='__check__']\");}).map(function(c){"
+                + "var f=c.closest('[data-field]');return (f?f.getAttribute('data-field'):'?')+'='+(c.getAttribute('data-indeterminate')==='true'?'partial':c.checked);});"
+                + "if(s.length)o[r.getAttribute('data-id')]=s.join(',');});return o;");
+    }
+
+    private void waitForGrid() {
+        for (int i = 0; i < 80 && js("return document.querySelector(\"" + GRID_ROWS + "\")?1:null;") == null; i++) {
+            loginPage.dismissMfaPromptIfShowing(); sleep(250);
+        }
+        sleep(5000);
     }
 
     /**
-     * Plan section 5.1 + 5.2: the data the page stopped loading on open now loads when its dialog opens.
-     * Bulk Actions fires /node_classes/user once (not again on re-open); Generate Report fires
-     * /reporting/configs once. Dialogs are closed without submitting anything.
+     * Plan section 5.1 + 5.2: the data the page stopped loading on open now loads when its panel opens.
+     * Bulk Edit (a right-hand drawer) fires /node_classes/user once (not again on re-open); Generate Report
+     * fires /reporting/configs once. Only the grid's row-selection boxes are ticked, panels are closed with
+     * Cancel/Close or a real Escape, nothing is submitted, and in-cell check-offs must be unchanged after a reload.
      */
+    @SuppressWarnings("unchecked")
     @Test(priority = 2, description = "ZP-4444 plan §5: Bulk Actions and Generate Report load their data on demand")
     @Parameters({"zp4444.wo", "zp4444.label"})
     public void dialogsLoadOnDemand(@Optional("f532bf11-41e0-4b50-b310-bb82237d0d9b") String woId,
                                     @Optional("small") String label) throws Exception {
         ExtentReportManager.createTest("ZP-4444", "Work order loading time", "On-demand loads " + label + " " + woId);
         driver.get(AppConstants.BASE_URL + "/sessions/" + woId);
-        for (int i = 0; i < 80 && js("return document.querySelector(\"" + GRID_ROWS + "\")?1:null;") == null; i++) {
-            loginPage.dismissMfaPromptIfShowing(); sleep(250);
-        }
-        sleep(5000);
+        waitForGrid();
         List<String> notes = new ArrayList<>();
         Files.createDirectories(OUT);
+        Path notesFile = OUT.resolve(label + "_" + woId.substring(0, 8) + "_on_demand.txt");
 
-        // 5.1 Bulk actions: turn on "Bulk Ops", select two assets, open the bulk dialog from "Actions"
+        // A closed work order's asset grid is read-only and renders no Bulk Ops, so 5.1 cannot run there
+        String mode = null;
+        for (int i = 0; i < 20 && mode == null; i++) {
+            mode = (String) js("var v=function(x){return x.offsetParent!==null;};"
+                    + "if([].slice.call(document.querySelectorAll('button')).some(function(x){return /^bulk ops$/i.test((x.innerText||'').trim())&&v(x);}))return 'bulk';"
+                    + "return [].slice.call(document.querySelectorAll('.MuiChip-label')).some(function(x){return /^closed$/i.test((x.innerText||'').trim())&&v(x);})?'closed':null;");
+            if (mode == null) sleep(250);
+        }
+        if ("closed".equals(mode)) {
+            String why = "Work order " + woId.substring(0, 8) + " is Closed, so its asset grid offers no Bulk Ops; Bulk Edit on-demand loading cannot be exercised here";
+            Files.write(notesFile, ("Skipped: " + why).getBytes());
+            throw new SkipException(why);
+        }
+        // an OPEN work order without Bulk Ops is a regression or a locator break, never a skip
+        if (!"bulk".equals(mode)) {
+            Files.write(notesFile, ("Failed: no Bulk Ops button and no Closed chip on work order " + woId.substring(0, 8)).getBytes());
+            Assert.fail("Bulk Ops button not found on work order " + woId.substring(0, 8) + ", which is not shown as Closed");
+        }
+        Map<String, Object> checksBefore = checkOffs();
+        Files.write(OUT.resolve(label + "_before.png"), ((org.openqa.selenium.TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES));
+
+        // 5.1 Bulk Edit: turn on "Bulk Ops", tick the row-selection box of the first two rows, open it with "Edit"
         String bulkOps = clickButton("^bulk ops$");
-        sleep(1200);
-        js("var c=[].slice.call(document.querySelectorAll(\"[role='row'][data-rowindex] input[type=checkbox]\")).slice(0,2);c.forEach(function(x){x.click();});");
+        Object hasSelect = null;
+        for (int i = 0; i < 24 && hasSelect == null; i++) { sleep(250); hasSelect = js("return document.querySelector(\"" + ROW_SELECT + "\")?1:null;"); }
+        if (hasSelect == null) {
+            Object cells = js("var r=document.querySelector(\"[role='row'][data-rowindex]\");return r?[].slice.call(r.querySelectorAll('input[type=checkbox]'))"
+                    + ".map(function(c){var f=c.closest('[data-field]');return f?f.getAttribute('data-field'):'?';}):null;");
+            String why = "No row-selection checkbox (" + ROW_SELECT + ") after Bulk Ops (" + bulkOps + "), so nothing was ticked; checkbox cells in the first row: " + cells;
+            Files.write(notesFile, why.getBytes());
+            Assert.fail(why);
+        }
+        List<Object> ticked = (List<Object>) js("var rows=[].slice.call(document.querySelectorAll(\"[role='row'][data-rowindex]\"))"
+                + ".sort(function(a,b){return a.getAttribute('data-rowindex')-b.getAttribute('data-rowindex');});var out=[];"
+                + "for(var i=0;i<rows.length&&out.length<2;i++){var c=rows[i].querySelector(\"[data-field='__check__'] input[type=checkbox]\");"
+                + "if(!c||c.disabled)continue;if(!c.checked)c.click();out.push(rows[i].getAttribute('data-id'));}return out;");
         sleep(1000);
+        Object selected = js("return document.querySelectorAll(\"" + ROW_SELECT + ":checked\").length;");
         double t1 = now();
-        // with Bulk Ops on and rows ticked the toolbar shows Services / Edit / Mark As; "Edit" opens the bulk dialog
-        String actions = "(not needed)";
+        // with Bulk Ops on and rows ticked the toolbar shows Services / Edit / Mark As; "Edit" opens the Bulk Edit drawer
         Object menu = js("return [].slice.call(document.querySelectorAll('main button')).filter(function(x){return x.offsetParent!==null;}).map(function(x){return (x.innerText||'').trim();}).filter(Boolean).slice(0,14);");
         String bulk = clickButton("^edit$");
         sleep(4000);
         long nc1 = callsSince(t1, "/api/node_classes/user/");
-        Object bulkDialog = js("var d=[].slice.call(document.querySelectorAll('[role=dialog]')).pop();return d?(d.innerText||'').replace(/\\s+/g,' ').slice(0,220):null;");
-        notes.add("Bulk dialog text: " + bulkDialog);
+        WebElement drawer = topOverlay();
+        String bulkText = overlayText(drawer);
+        java.util.regex.Matcher cm = java.util.regex.Pattern.compile("Bulk Edit \\((\\d+) asset").matcher(String.valueOf(bulkText));
+        int bulkCount = cm.find() ? Integer.parseInt(cm.group(1)) : -1;
+        notes.add("Bulk Edit drawer text: " + bulkText);
         Files.write(OUT.resolve(label + "_bulk_actions_open.png"), ((org.openqa.selenium.TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES));
-        closeDialog();
+        String opened = "Bulk Ops toggle: " + bulkOps + "; ticked row-selection boxes of rows " + ticked + " (" + selected + " selected); toolbar buttons " + menu
+                + "; opened: " + bulk + " → /node_classes/user fired " + nc1 + "× on first open (should be 1)";
+        if (bulk == null || bulkCount < 0) {
+            Files.write(notesFile, (opened + "\nBulk Edit drawer did not open; top overlay: " + bulkText).getBytes());
+            Assert.fail("Bulk Edit drawer did not open (Edit button " + (bulk == null ? "not found" : "clicked") + " after ticking rows " + ticked + "); top overlay: " + bulkText);
+        }
+        boolean closed1 = closeOverlay(drawer);
+        if (!closed1) {
+            Files.write(notesFile, (opened + "\nBulk Edit drawer still open after Cancel/Close and a real Escape").getBytes());
+            Assert.fail("Bulk Edit drawer did not close (Cancel/Close, then a real Escape), so the re-open check was not run");
+        }
         double t2 = now();
-        String bulk2 = null;
-        if (bulk != null) bulk2 = clickButton("^edit$");
+        String bulk2 = clickButton("^edit$");
         sleep(3000);
         long nc2 = callsSince(t2, "/api/node_classes/user/");
-        closeDialog();
-        notes.add("Bulk Ops toggle: " + bulkOps + "; toolbar buttons " + menu + "; opened: " + bulk + " " + actions
-                + " → /node_classes/user fired " + nc1 + "× on first open (should be 1), " + nc2 + "× on re-open (should be 0)");
+        WebElement drawer2 = topOverlay();
+        String reopenText = overlayText(drawer2);
+        boolean closed2 = drawer2 != null && closeOverlay(drawer2);
+        notes.add(opened + "; drawer gone before re-open: " + closed1 + "; re-opened: " + bulk2 + " (" + reopenText + ") → /node_classes/user fired "
+                + nc2 + "× on re-open (should be 0); closed again: " + closed2);
 
-        // 5.2 Generate Report: from the page's ⋮ menu or Actions; count /reporting/configs, close without generating
-        js("document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));");
-        sleep(500);
+        // 5.2 Generate Report: a visible "Generate Report" button, else "Actions" → its Generate Report item; close without generating
+        for (int i = 0; i < 3; i++) { WebElement o = topOverlay(); if (o == null) break; closeOverlay(o); }
         double t3 = now();
+        Object menuItems = null;
         String gen = clickButton("^generate report$");
-        Object kebab = null;
-        if (gen == null) {
-            kebab = js("var b=[].slice.call(document.querySelectorAll('header button, main button')).filter(function(x){return x.offsetParent!==null&&!(x.innerText||'').trim()&&x.querySelector('svg');});"
-                    + "var r=b.filter(function(x){return x.getBoundingClientRect().top<80;});var k=r[r.length-1];if(!k)return null;k.click();"
-                    + "return [].slice.call(document.querySelectorAll('[role=menuitem]')).filter(function(x){return x.offsetParent!==null;}).map(function(x){return (x.innerText||'').trim();});");
+        if (gen == null && clickButton("^actions$") != null) {
             sleep(700);
-            gen = clickButton("generate report|^report$|create report");
+            WebElement actionsMenu = topOverlay();
+            if (actionsMenu != null) {
+                menuItems = js("return [].slice.call(arguments[0].querySelectorAll('[role=menuitem]')).map(function(x){return (x.innerText||'').trim();});", actionsMenu);
+                gen = (String) js("var it=[].slice.call(arguments[0].querySelectorAll('[role=menuitem]')).find(function(x){return /generate report/i.test((x.innerText||'').trim())"
+                        + "&&x.getAttribute('aria-disabled')!=='true';});if(!it)return null;it.click();return (it.innerText||'').trim();", actionsMenu);
+            }
         }
-        if (gen == null) { clickButton("^actions$"); sleep(700); gen = clickButton("generate report|create report"); }
-        sleep(4000);
+        if (gen == null) { pressEscape(); sleep(500); } else sleep(4000);
         long rc = callsSince(t3, "/api/reporting/configs");
-        Object options = js("var d=[].slice.call(document.querySelectorAll('[role=dialog]')).pop();return d?(d.innerText||'').replace(/\\s+/g,' ').slice(0,200):null;");
+        WebElement dlg = gen == null ? null : topOverlay();
+        String options = overlayText(dlg);
         Files.write(OUT.resolve(label + "_generate_report_open.png"), ((org.openqa.selenium.TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES));
-        closeDialog();
-        notes.add("⋮ menu items: " + kebab + "; Generate Report: " + gen + " → /reporting/configs fired " + rc + "× (should be 1); dialog: " + options);
-        System.out.println("[ZP-4444] " + label + " on-demand:\n  " + String.join("\n  ", notes));
-        Files.write(OUT.resolve(label + "_" + woId.substring(0, 8) + "_on_demand.txt"), String.join("\n", notes).getBytes());
+        boolean closed3 = closeOverlay(dlg);
+        notes.add("Actions menu items: " + menuItems + "; Generate Report: " + gen + " → /reporting/configs fired " + rc + "× (should be 1); dialog: " + options + "; closed: " + closed3);
 
-        Assert.assertNotNull(bulk, "Bulk Actions button not found after selecting assets");
-        Assert.assertEquals(nc1, 1L, "Bulk Actions should load /node_classes/user once when it opens");
-        Assert.assertEquals(nc2, 0L, "Re-opening Bulk Actions should not load /node_classes/user again");
-        Assert.assertNotNull(gen, "Generate Report button not found");
+        // Nothing may change: in-cell check-offs (Forms) on a fresh load must match the state before any click
+        driver.get(AppConstants.BASE_URL + "/sessions/" + woId);
+        waitForGrid();
+        Map<String, Object> checksAfter = checkOffs();
+        Files.write(OUT.resolve(label + "_after_reload.png"), ((org.openqa.selenium.TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES));
+        List<String> changed = new ArrayList<>();
+        int compared = 0;
+        for (Map.Entry<String, Object> e : checksBefore.entrySet()) {
+            if (!checksAfter.containsKey(e.getKey())) continue;
+            compared++;
+            if (!e.getValue().equals(checksAfter.get(e.getKey()))) changed.add(e.getKey() + " " + e.getValue() + " → " + checksAfter.get(e.getKey()));
+        }
+        List<String> tickedState = new ArrayList<>();
+        for (Object id : ticked) tickedState.add(id + " " + checksBefore.get(String.valueOf(id)) + " → " + checksAfter.get(String.valueOf(id)));
+        notes.add("In-cell check-offs, before any click vs a fresh reload at the end: " + compared + " rows compared, "
+                + (changed.isEmpty() ? "unchanged" : "CHANGED " + changed) + "; ticked rows " + tickedState);
+        System.out.println("[ZP-4444] " + label + " on-demand:\n  " + String.join("\n  ", notes));
+        Files.write(notesFile, String.join("\n", notes).getBytes());
+
+        Assert.assertTrue(checksBefore.isEmpty() || compared > 0,
+                "Data-safety check compared 0 of " + checksBefore.size() + " rows with check-offs, so it proved nothing");
+        Assert.assertTrue(changed.isEmpty(), "The test must not change data, but in-cell check-offs changed: " + changed);
+        Assert.assertEquals(bulkCount, 2, "Bulk Edit should say 2 assets after ticking two rows; drawer: " + bulkText);
+        Assert.assertEquals(nc1, 1L, "Bulk Edit should load /node_classes/user once when it opens");
+        Assert.assertTrue(String.valueOf(reopenText).contains("Bulk Edit"), "Re-opening (" + bulk2 + ") did not show the Bulk Edit drawer: " + reopenText);
+        Assert.assertEquals(nc2, 0L, "Re-opening Bulk Edit should not load /node_classes/user again");
+        Assert.assertNotNull(gen, "No visible Generate Report button and no Generate Report item in the Actions menu (items: " + menuItems + ")");
         Assert.assertEquals(rc, 1L, "Generate Report should load /reporting/configs once when it opens");
+        Assert.assertTrue(closed2 && closed3, "An overlay did not close: Bulk Edit re-open " + closed2 + ", Generate Report " + closed3);
     }
 }
