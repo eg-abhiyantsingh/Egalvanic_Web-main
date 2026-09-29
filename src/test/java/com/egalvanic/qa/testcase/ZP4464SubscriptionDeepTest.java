@@ -39,6 +39,36 @@ public class ZP4464SubscriptionDeepTest extends BaseTest {
 
     private static final Path OUT = Paths.get("test-output", "zp4464-deep");
 
+    /**
+     * The Foundation term bar's "today" marker (the design draws it as a white line). Reports where it sits, its
+     * colour, the segment behind it and the contrast between them (WCAG 1.4.11 wants 3:1 for a UI graphic), and
+     * tags the card with data-qa-timeline for an element screenshot.
+     */
+    static final String TIMELINE_JS =
+            "var seg=[].slice.call(document.querySelectorAll('main *')).find(function(e){return e.children.length===0&&(e.innerText||'').trim()==='All features';});"
+            + "if(!seg)return 'no Foundation term bar on this page';var bar=seg.parentElement,br=bar.getBoundingClientRect(),kids=[].slice.call(bar.children);"
+            + "var m=kids.find(function(k){return k.getBoundingClientRect().width<=3&&!(k.innerText||'').trim();});"
+            + "var c=bar;for(var i=0;i<6&&c.parentElement;i++){c=c.parentElement;if(/Foundation term/.test(c.innerText||''))break;}c.setAttribute('data-qa-timeline','1');"
+            + "if(!m)return 'NO today marker element in the bar';var mr=m.getBoundingClientRect(),cx=mr.left+mr.width/2;"
+            + "var under=kids.find(function(k){var r=k.getBoundingClientRect();return k!==m&&r.left<=cx&&r.right>=cx;});"
+            + "function p(s){return (s.match(/[\\d.]+/g)||[]).map(Number);}function lum(a){return a.slice(0,3).map(function(v){v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);}).reduce(function(s,v,i){return s+v*[0.2126,0.7152,0.0722][i];},0);}"
+            + "var mc=p(getComputedStyle(m).backgroundColor),uc=p(under?getComputedStyle(under).backgroundColor:getComputedStyle(bar).backgroundColor),al=mc.length>3?mc[3]:1;"
+            + "var eff=[0,1,2].map(function(i){return Math.round(mc[i]*al+uc[i]*(1-al));});var a=lum(eff),b=lum(uc);var cr=(Math.max(a,b)+0.05)/(Math.min(a,b)+0.05);"
+            + "return 'today marker at '+((cx-br.left)/br.width*100).toFixed(2)+'% of the bar ('+Math.round(mr.left-br.left)+' px from its left edge), '+Math.round(mr.width)+' px wide · colour '+getComputedStyle(m).backgroundColor"
+            + "+' · drawn on \"'+(under?(under.innerText||'').trim():'empty bar')+'\" '+(under?getComputedStyle(under).backgroundColor:'')+' · contrast '+cr.toFixed(2)+':1 (3:1 needed)'"
+            + "+' · bar corner radius '+getComputedStyle(bar).borderTopLeftRadius+', overflow '+getComputedStyle(bar).overflow;";
+
+    /** Measures the today marker and saves a screenshot of just the Foundation term card. */
+    static String timeline(org.openqa.selenium.WebDriver d, Path png) throws Exception {
+        String r = String.valueOf(((JavascriptExecutor) d).executeScript(TIMELINE_JS));
+        List<org.openqa.selenium.WebElement> card = d.findElements(org.openqa.selenium.By.cssSelector("[data-qa-timeline]"));
+        if (!card.isEmpty()) {
+            Files.createDirectories(png.getParent());
+            Files.write(png, card.get(0).getScreenshotAs(OutputType.BYTES));
+        }
+        return r;
+    }
+
     private Object js(String s, Object... a) { return ((JavascriptExecutor) driver).executeScript(s, a); }
     private Object jsAsync(String s, Object... a) { return ((JavascriptExecutor) driver).executeAsyncScript(s, a); }
     private void sleep(long ms) { try { Thread.sleep(ms); } catch (InterruptedException e) { Thread.currentThread().interrupt(); } }
@@ -103,7 +133,8 @@ public class ZP4464SubscriptionDeepTest extends BaseTest {
             Map<String, Object> src = new HashMap<>();
             src.put("source", "(function(){var S=" + scen + ";window.__qaSim=S.name;var f=window.fetch;window.fetch=function(i,o){var u=String(i&&i.url?i.url:i).split('?')[0];"
                     + "if(/\\/api\\/subscription\\/banner$/.test(u)){return Promise.resolve(new Response(JSON.stringify({success:true,banner:S.banner}),{status:200,headers:{'Content-Type':'application/json'}}));}"
-                    + "if(/\\/api\\/subscription$/.test(u)){return Promise.resolve(new Response(JSON.stringify(S.page.body),{status:S.page.status,headers:{'Content-Type':'application/json'}}));}"
+                    // page.raw = a non-JSON body as-is (e.g. CloudFront's 200 HTML error page that stage serves for an /api 403/404)
+                    + "if(/\\/api\\/subscription$/.test(u)){return Promise.resolve(new Response(S.page.raw!=null?S.page.raw:JSON.stringify(S.page.body),{status:S.page.status,headers:{'Content-Type':S.page.contentType||'application/json'}}));}"
                     + "return f.apply(this,arguments);};})();");
             scriptId = String.valueOf(raw().executeCdpCommand("Page.addScriptToEvaluateOnNewDocument", src).get("identifier"));
             js("try{Object.keys(localStorage).forEach(function(k){if(k.indexOf('subscriptionBanner.dismissed:')===0)localStorage.removeItem(k);});}catch(e){}");
@@ -143,6 +174,7 @@ public class ZP4464SubscriptionDeepTest extends BaseTest {
             Files.createDirectories(OUT);
             Files.write(OUT.resolve(seat() + "_" + name + "_page.txt"), page.getBytes(StandardCharsets.UTF_8));
             notes.add("page (first 700): " + page.replaceAll("\\s+", " ").substring(0, Math.min(700, page.replaceAll("\\s+", " ").length())));
+            notes.add("Foundation term bar: " + timeline(driver, OUT.resolve(seat() + "_" + name + "_2b_timeline.png")));
             shot(seat() + "_" + name + "_2_page_top", "SIMULATED API answer · " + name + " · /admin/subscription");
             sectionShot("Modules", seat() + "_" + name + "_3_modules", "SIMULATED · " + name + " · Modules");
             sectionShot("Licensed sites", seat() + "_" + name + "_3b_sites", "SIMULATED · " + name + " · Licensed sites");

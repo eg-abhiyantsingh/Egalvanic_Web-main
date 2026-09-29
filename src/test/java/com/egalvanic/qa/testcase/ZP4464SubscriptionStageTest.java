@@ -136,6 +136,9 @@ public class ZP4464SubscriptionStageTest extends BaseTest {
         String text = String.valueOf(js("var m=document.querySelector('main')||document.body;return (m.innerText||'').replace(/\\s+/g,' ').slice(0,900);"));
         notes.add("/admin/subscription opened directly → now on " + path + " · page: " + text);
         shot("3_subscription_page", "direct URL /admin/subscription → " + path + "\n" + text.substring(0, Math.min(300, text.length())));
+        if (!text.contains("Access Denied")) {
+            notes.add("Foundation term bar: " + ZP4464SubscriptionDeepTest.timeline(driver, OUT.resolve(seat() + "_3b_timeline.png")));
+        }
         // the whole page, for seats that can read it: full text plus the lower sections scrolled into view
         if (!text.contains("Access Denied") && text.contains("Modules")) {
             String full = String.valueOf(js("var m=document.querySelector('main')||document.body;return (m.innerText||'');"));

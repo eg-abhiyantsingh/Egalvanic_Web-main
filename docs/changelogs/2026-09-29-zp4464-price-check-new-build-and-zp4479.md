@@ -31,3 +31,13 @@
 - `test-output/zp4464-foundation-2311/`: the Foundation API at 23:11
 - Artifact v5: https://claude.ai/artifact/EhE9HsXzVG2W3QpTDbSNbx
 - The ZP-4479 screenshots are kept locally in `docs/bug-evidence/zp4464-site-total/` and are not committed, because they show unreleased rate-card prices and this is a public repo.
+
+## Later: 30 Sep 2026, 00:00–00:30 IST
+- **"Price is static at $25,000" (added to ZP-4479, comment 44689).** The page has no fixed 25000. It prints `fees.annual_cents`, and for Foundation the API sets that to `contract_value_cents`, so it never follows the modules ($64,000 at list rates).
+- **New bug ZP-4483** (Medium, avani.patel): the Foundation term bar's "today" marker can't be seen. It's a 2 px `text.primary` (near-black) line on the theme-dark "All features" part, 2.42:1 contrast against the 3:1 minimum. At day 0 it also sits on the bar's edge. The design draws it white.
+- **Expired → "Couldn't load the subscription" (added to ZP-4479, comment 44693).** A 404 from the backend reaches the browser as 200 HTML (CloudFront, `x-cache: Error from cloudfront`, re-checked live at 00:25). `fetchSubscription` then fails on `.json()` and reports status 0. The simulation shows the difference: a JSON 404 gives "Subscription details aren't available", the CloudFront HTML gives "Couldn't load".
+- Test code:
+  - `TIMELINE_JS` / `timeline()` measure the today marker (position, colour, the part under it, contrast) and take a screenshot of just that card.
+  - The simulated answer can now be a non-JSON body (`page.raw` + `contentType`).
+  - New scenario `e1_expired_cloudfront_masked.json`.
+  - Why: the marker bug needed a number, not an opinion ("hard to see" versus 2.42:1 < 3:1). The CloudFront case needed a faithful copy of what the browser actually receives. A JSON 404 simulation had hidden the real error path.
