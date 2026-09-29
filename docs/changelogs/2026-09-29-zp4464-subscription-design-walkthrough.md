@@ -37,6 +37,25 @@
    Legacy, the modules table gained a License term column, there are new cards, and the Contact sales / Order form
    buttons are gone.
 7. Small: the "Grace" label is cut to "Grac" on the term bar.
+8. The sample module-based company has 4,860 managed assets on eg-ai Starter, whose limit is "max 2,400 assets",
+   and no warning is shown.
+9. Module-based says "no cap on … customer accounts", while Terms on the same screen say "extra accounts need a
+   signed order form".
+10. The modules don't line up: LOTO is sold as a package but has no Modules row, "FLIR Image Editing Studio" and
+    "FLIR Photo Editing Studio" name the same thing, each "Until Nov 1" badge sits next to a full-year licence term,
+    and Analytics Core has no module key on QA today.
+
+(8–10 came from a 32-agent pass over the 9 owner screenshots, the ticket and the QA bundle. Each was re-checked in the
+design source and the rendered page before it was added. Artifact version 2.)
+
+## Today's QA gating, re-checked in the live bundle index-ypMk4Gu6.js
+- `/api/entitlements` has 4 module keys (ops, sales, engineering, ops_advanced), and the check FAILS OPEN:
+  `accountHasModule` returns true when `enforced` is false (the store default) or the account is unknown.
+- LaunchDarkly company flags (`feature-<name>`: ops-core, sales-core, eng-lib…) grey sidebar pages separately.
+- Existing locked-page wording: "Not included for this site · Pick another site, or contact Egalvanic to add it to
+  this account."
+- Asset capacity is only displayed (`assetUnit:1500`); nothing blocks creating assets today.
+- Not checked: the live `enforced` value, because the saved QA token has expired (401). It is listed as a pre-test step.
 
 Also flagged: Dharmesh's comment (banner only for OM and AM, API-gated) conflicts with Avani's comment and the design
 (banner for all T1 and T2).
