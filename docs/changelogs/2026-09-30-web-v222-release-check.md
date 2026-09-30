@@ -41,3 +41,7 @@ Release page v2. Evidence: `test-output/zp4464-dev-expired-1412`.
 - Test code: `realDataChecks` now does F1 on real data, the E3/dev probes, and a whole-page axe + timing step. Runner traps: `eval` re-parses passwords with glob characters (Client Portal seat) → `run-one.sh` (no eval); macOS has no `setsid` → watcher started with `nohup … &!`.
 - `watch-states.sh` (in /tmp) re-runs the Admin check every 4 min for an hour and keeps evidence per new state under `test-output/zp4464-release/`.
 - Release page v3. Evidence: `zp4464-acme-expired-1444`, `zp4464-deep` (real checks + dev-chicago), `zp4464-stage` (8 seats).
+
+## 14:55–15:05: banner position (ZP-4493)
+- Owner: "banner is not consistent, something up and something down" (Builder › Reports vs Admin › Platform Users). New probe `ZP4464BannerPositionProbe` (routes via `-Dzp4464.routes`, `-Dzp4464.inapp=true` for router navigation) measured 9 pages: 81 px under a 65 px header bar on pages with a header, 16 px with nothing above on Dashboard / Admin dashboard / Maintenance Portal; identical after in-app navigation. Filed **ZP-4493** (Avani, Medium, To Do, sprint 1223, Web v2.2.2, 6 screenshots). The different years in the owner's screenshots were data edits between captures (the watcher logged "Sep 20, 2025" at 14:53 and "Jun 20, 2026" at 14:59).
+- Watcher: round 1 captured the expired state; the label ignores the ended date, so date-only edits are logged but not stored as new states.
