@@ -50,3 +50,8 @@ Release page v2. Evidence: `test-output/zp4464-dev-expired-1412`.
 - Owner: "sites is not shown on block" (design tile "Sites · Assets — 2 of 3 · 1,212 · Foundation cap: 3 sites, 1,500 assets" vs stage "Managed assets" only). Filed **ZP-4494** (Avani, Medium, To Do, sprint 1223, Web v2.2.2, 4 screenshots). Also on the ticket: locked-state second tile says "Full access left · Ended · Since <full-access end>" where the design says "Advanced features · Locked · since <grace end>".
 - The watcher caught state **A3 (grace)** at 15:05: "full access ended 12 days ago … within 2 days … Oct 2", pill Grace, "Today · 2 days of grace left" — as expected. **A4 (locked)** seen in the owner's screenshot at ~15:08: "locked since Sep 29", pill "Ops Core only", "260 days of Ops Core only left" — as expected.
 - Release page v5.
+
+## 15:20–15:40: ZP-4495 and two more real states
+- Owner: "Ops Core should always be Included" (grace state, module rows re-dated to Aug 26, 2025 – Aug 26, 2026 → Ops Core "Not subscribed"). Filed **ZP-4495** (High, Avani, To Do, sprint 1223, Web v2.2.2; owner's screenshot + QA's 15:05 "Included" capture). Rule: Foundation access codes must follow the phase, not the module rows' dates.
+- Watcher captured **module-based EG-MOD-002** at 15:23 (no banner; next expiry 365 d = earliest module; $64,000 · $65,920 at renewal; per-row renewals) and a **new Foundation** row at 15:30 ($11,950, 60 days left, no order number) — both as expected. Release page v6.
+- Owner asked that every bug carry a screenshot: all 9 tickets today have 2–7 attachments each (Attachments panel, not inline).
