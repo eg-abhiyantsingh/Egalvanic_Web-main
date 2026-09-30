@@ -45,3 +45,8 @@ Release page v2. Evidence: `test-output/zp4464-dev-expired-1412`.
 ## 14:55–15:05: banner position (ZP-4493)
 - Owner: "banner is not consistent, something up and something down" (Builder › Reports vs Admin › Platform Users). New probe `ZP4464BannerPositionProbe` (routes via `-Dzp4464.routes`, `-Dzp4464.inapp=true` for router navigation) measured 9 pages: 81 px under a 65 px header bar on pages with a header, 16 px with nothing above on Dashboard / Admin dashboard / Maintenance Portal; identical after in-app navigation. Filed **ZP-4493** (Avani, Medium, To Do, sprint 1223, Web v2.2.2, 6 screenshots). The different years in the owner's screenshots were data edits between captures (the watcher logged "Sep 20, 2025" at 14:53 and "Jun 20, 2026" at 14:59).
 - Watcher: round 1 captured the expired state; the label ignores the ended date, so date-only edits are logged but not stored as new states.
+
+## 15:08–15:15: sites tile (ZP-4494) and the grace / locked states
+- Owner: "sites is not shown on block" (design tile "Sites · Assets — 2 of 3 · 1,212 · Foundation cap: 3 sites, 1,500 assets" vs stage "Managed assets" only). Filed **ZP-4494** (Avani, Medium, To Do, sprint 1223, Web v2.2.2, 4 screenshots). Also on the ticket: locked-state second tile says "Full access left · Ended · Since <full-access end>" where the design says "Advanced features · Locked · since <grace end>".
+- The watcher caught state **A3 (grace)** at 15:05: "full access ended 12 days ago … within 2 days … Oct 2", pill Grace, "Today · 2 days of grace left" — as expected. **A4 (locked)** seen in the owner's screenshot at ~15:08: "locked since Sep 29", pill "Ops Core only", "260 days of Ops Core only left" — as expected.
+- Release page v5.
