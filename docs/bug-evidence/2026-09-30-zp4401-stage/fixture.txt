@@ -1,0 +1,16 @@
+ZP-4401 fixture on acme STAGE, site "test site" (SLD ead61188-b332-4316-9d7e-afbd68262e92), all QA-DEMO (delete me), created 30 Sep 2026 ~17:20 IST
+bus  (Node Bus)        b73236ac-6e8c-4c64-8633-40a5ebad1b48  "QA-DEMO ZP-4401 bus (delete me)"
+L1   (Circuit Breaker) ba57863f-924a-43c2-b235-89f676a900a8  "QA-DEMO ZP-4401 load 1 (delete me)"
+L2   (Circuit Breaker) 27b2db86-cc5d-4a9a-a749-ebc3a9a1cc04  "QA-DEMO ZP-4401 load 2 (delete me)"
+e1 bus->L1 7148f70c-04f3-4151-9b61-da516e0ea0f9 · e2 bus->L2 0b59f7f5-03b8-4ea0-b1c7-37a144b98d6d
+view "QA-DEMO ZP-4401 view - bus + load 1 (delete me)" f57ae962-252b-4ab7-b80b-c6fe87b5f0f6 = {bus, L1} (L2 only in the full SLD)
+
+RESULTS (build index-BiQjo0Z9.js, 30 Sep 2026 ~17:25-17:35 IST)
+1. In the view {bus, load 1}: Delete › Delete Permanently on load 1
+   POST /api/node/bulk-delete {"node_ids":["ba57863f-…"]}  (bus NOT sent)
+   → 200 {"cascaded_node_ids":[],"deleted_node_ids":["ba57863f-…"],"impedance_splits":[]}
+   server graph 6 s later: bus alive · load 1 DELETED · load 2 alive · edge bus→load1 DELETED · edge bus→load2 alive
+2. Control, All Nodes: Delete on load 2
+   POST /api/node/bulk-delete {"node_ids":["27b2db86-…"]}
+   → 200 {"cascaded_node_ids":["b73236ac-…"(bus)],"deleted_node_ids":["27b2db86-…"]}; canvas drops bus + load 2
+Side note: after step 1, switching to All Nodes in the same page still drew load 1 (deleted) until a reload.
