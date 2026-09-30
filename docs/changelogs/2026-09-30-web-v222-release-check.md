@@ -26,3 +26,10 @@ Also seen in the new build: "10 of 3 sites" now has a red bar and an explanation
 
 ## Evidence
 `test-output/zp4464-build4-A1` (new build, state A1, Admin + AM), `zp4464-full-1349` (old build, same data, for the before/after).
+
+## 14:12 update: ZP-4486 verified on real data (dev.stage)
+dev.stage's Foundation row EG-FND-003 was set to expired mid-term (Avani's A7). Old backend at 13:53: "Couldn't load", no banner.
+New build at 14:12: Expired pill, "Ended Sep 30, 2026", red banner (also after refresh), Ops Core Included, advanced Locked,
+list-price footer, no error — the fix works. Two wording defects on the ended page (reported on the ticket, status left as is):
+"Full access left · Ended · Since Dec 30, 2026" (a future date) and "366 days left" on locked rows of an ended plan.
+Release page v2. Evidence: `test-output/zp4464-dev-expired-1412`.
