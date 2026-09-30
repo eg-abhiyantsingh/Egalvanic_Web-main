@@ -44,7 +44,7 @@ public class ZP4464SubscriptionStageTest extends BaseTest {
     private String banner() {
         return String.valueOf(js("var e=[].slice.call(document.querySelectorAll('a[href^=\"mailto:customer-success\"]')).find(function(a){return a.offsetParent!==null;});"
                 + "if(!e)return 'none';var b=e;for(var i=0;i<6&&b.parentElement;i++){b=b.parentElement;if(b.querySelector('button'))break;}"
-                + "var btns=[].slice.call(b.querySelectorAll('button')).map(function(x){return (x.innerText||'').trim();}).filter(Boolean);"
+                + "var btns=[].slice.call(b.querySelectorAll('button')).map(function(x){return (x.innerText||'').trim()||('['+(x.getAttribute('aria-label')||'icon')+']');}).filter(Boolean);"
                 + "var cs=getComputedStyle(b);return (b.innerText||'').replace(/\\s+/g,' ').trim().slice(0,400)+' || buttons='+JSON.stringify(btns)+' || bg='+cs.backgroundColor+' border='+cs.borderLeftColor;"));
     }
 
@@ -90,7 +90,17 @@ public class ZP4464SubscriptionStageTest extends BaseTest {
         notes.add("menu: " + rail);
         shot("5_after_view_subscription", "View subscription → " + js("return location.pathname;") + "\n" + rail + "\n" + tz);
         // phone width
-        driver.manage().window().setSize(new org.openqa.selenium.Dimension(420, 900));
+        // chromedriver refuses setSize on a maximized window ("failed to change window state to 'normal'"), so
+        // emulate a 420 px device through CDP instead — that works whatever the window state.
+        try {
+            driver.manage().window().setSize(new org.openqa.selenium.Dimension(420, 900));
+        } catch (org.openqa.selenium.WebDriverException e) {
+            Map<String, Object> m = new java.util.HashMap<>();
+            m.put("width", 420); m.put("height", 900); m.put("deviceScaleFactor", 1); m.put("mobile", false);
+            ((org.openqa.selenium.chrome.ChromeDriver) ((com.egalvanic.qa.utils.ai.SelfHealingDriver) driver).getWrappedDriver())
+                    .executeCdpCommand("Emulation.setDeviceMetricsOverride", m);
+            notes.add("phone width via CDP emulation (window resize refused: " + e.getMessage().split("\n")[0] + ")");
+        }
         sleep(2500);
         String phone = banner();
         notes.add("banner at 420 px: " + phone);

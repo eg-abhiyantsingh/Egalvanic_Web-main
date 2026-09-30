@@ -121,6 +121,7 @@ public class ZP4464SubscriptionDeepTest extends BaseTest {
         Arrays.sort(files);
         String scriptId = null;
         List<String> summary = new ArrayList<>();
+        try {
         for (File f : files) {
             String name = f.getName().replace(".json", "");
             if (!only.get(0).isEmpty() && only.stream().noneMatch(name::startsWith)) continue;
@@ -155,17 +156,29 @@ public class ZP4464SubscriptionDeepTest extends BaseTest {
                 shot(seat() + "_" + name + "_1a_after_close", "SIMULATED · " + name + " · right after clicking close\nbanner: " + afterClick);
                 Object key = js("return Object.keys(localStorage).filter(function(k){return k.indexOf('subscriptionBanner.dismissed:')===0;}).join(', ')||'none';");
                 // real in-app navigation: click a visible menu link, same document (the marker survives only without a reload)
-                Object went = js("window.__qaSameDoc=1;var a=[].slice.call(document.querySelectorAll('nav a[href^=\"/\"],aside a[href^=\"/\"],a[href^=\"/\"]')).filter(function(x){"
-                        + "var h=x.getAttribute('href');return x.offsetParent!==null&&h!==location.pathname&&h.indexOf('/admin/subscription')<0&&h.length>1;});if(!a.length)return 'no link';a[0].click();return a[0].getAttribute('href');");
+                // prefer a real page (Assets / Work Orders / Issues); the first visible link on the dashboard didn't leave it
+                Object went = js("window.__qaSameDoc=1;var all=[].slice.call(document.querySelectorAll('a[href^=\"/\"]')).filter(function(x){"
+                        + "var h=x.getAttribute('href');return x.offsetParent!==null&&h!==location.pathname&&h.indexOf('/admin/subscription')<0&&h.length>1;});"
+                        + "var pref=['/assets','/sessions','/issues','/connections','/locations'];var a=all.find(function(x){return pref.indexOf(x.getAttribute('href'))>=0;})||all[0];"
+                        + "if(!a)return 'no link';a.click();return a.getAttribute('href');");
                 sleep(3000);
                 String afterNav = banner();
-                notes.add("in-app click to " + went + " → now " + js("return location.pathname;") + ", same document (no reload): " + js("return window.__qaSameDoc===1;"));
+                Object nowPath = js("return location.pathname;");
+                notes.add("in-app click to " + went + " → now " + nowPath + ", route changed: " + !String.valueOf(nowPath).equals("/dashboard")
+                        + ", same document (no reload): " + js("return window.__qaSameDoc===1;"));
                 driver.navigate().refresh();
                 sleep(8000);
                 String afterReload = banner();
                 notes.add("Close/Dismiss clicked → banner " + (afterClick.equals("none") ? "hidden" : "STILL SHOWN: " + afterClick) + "; storage key: " + key
                         + "; after in-app navigation: " + (afterNav.equals("none") ? "hidden" : "shown") + "; after browser refresh: " + (afterReload.equals("none") ? "hidden (kept in localStorage)" : "shown again"));
                 shot(seat() + "_" + name + "_1b_after_dismiss_refresh", "SIMULATED · " + name + " · after Dismiss + browser refresh\nbanner: " + afterReload);
+                // keyboard: the close button must be reachable and work without a mouse (the banner is back after the refresh)
+                Object kb = js("var b=document.querySelector('button[aria-label=\"Close subscription notice\"]');if(!b)return 'no close button';b.focus();"
+                        + "return document.activeElement===b?'focusable (tabindex '+b.tabIndex+')':'focus refused';");
+                // Actions needs the real ChromeDriver: the SelfHealingDriver wrapper doesn't implement Interactive
+                new org.openqa.selenium.interactions.Actions(raw()).sendKeys(org.openqa.selenium.Keys.ENTER).perform();
+                sleep(800);
+                notes.add("keyboard: close button " + kb + " → Enter → banner " + (banner().equals("none") ? "hidden" : "STILL SHOWN"));
                 js("try{Object.keys(localStorage).forEach(function(k){if(k.indexOf('subscriptionBanner.dismissed:')===0)localStorage.removeItem(k);});}catch(e){}");
             }
 
@@ -184,10 +197,14 @@ public class ZP4464SubscriptionDeepTest extends BaseTest {
             summary.add(name + ": " + b1.substring(0, Math.min(160, b1.length())));
             System.out.println("[ZP-4464 sim] " + name + ":\n  " + String.join("\n  ", notes));
         }
-        if (scriptId != null) {
-            Map<String, Object> rm = new HashMap<>();
-            rm.put("identifier", scriptId);
-            raw().executeCdpCommand("Page.removeScriptToEvaluateOnNewDocument", rm);
+        } finally {
+            // ALWAYS take the fetch override down: a failure mid-loop once left it installed, and the real-data
+            // probes that ran next in the same browser were answered by the simulation instead of the server.
+            if (scriptId != null) {
+                Map<String, Object> rm = new HashMap<>();
+                rm.put("identifier", scriptId);
+                raw().executeCdpCommand("Page.removeScriptToEvaluateOnNewDocument", rm);
+            }
         }
         Files.write(OUT.resolve(seat() + "_sim_summary.txt"), String.join("\n", summary).getBytes(StandardCharsets.UTF_8));
         Assert.assertFalse(summary.isEmpty(), "no scenario ran");
@@ -210,6 +227,9 @@ public class ZP4464SubscriptionDeepTest extends BaseTest {
         js("try{sessionStorage.removeItem('__qaSubCalls');}catch(e){}");
         open("/dashboard");
         sleep(3000);
+        // real data only: refuse to measure anything while a simulated-answer override is still in the page
+        Assert.assertEquals(String.valueOf(js("return window.__qaSim||'';")), "",
+                "a simulated /api/subscription override is still installed — these real-data results would be fake");
         Object cls = js("var s=0;(window.__qaCls||[]).forEach(function(e){s+=e.v;});return 'CLS '+s.toFixed(4)+' · shifts '+JSON.stringify(window.__qaCls||[]).slice(0,900);");
         notes.add("dashboard load layout shift: " + cls);
         // in-app navigation through visible menu links (no reloads)
