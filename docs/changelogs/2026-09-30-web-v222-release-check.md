@@ -55,3 +55,8 @@ Release page v2. Evidence: `test-output/zp4464-dev-expired-1412`.
 - Owner: "Ops Core should always be Included" (grace state, module rows re-dated to Aug 26, 2025 – Aug 26, 2026 → Ops Core "Not subscribed"). Filed **ZP-4495** (High, Avani, To Do, sprint 1223, Web v2.2.2; owner's screenshot + QA's 15:05 "Included" capture). Rule: Foundation access codes must follow the phase, not the module rows' dates.
 - Watcher captured **module-based EG-MOD-002** at 15:23 (no banner; next expiry 365 d = earliest module; $64,000 · $65,920 at renewal; per-row renewals) and a **new Foundation** row at 15:30 ($11,950, 60 days left, no order number) — both as expected. Release page v6.
 - Owner asked that every bug carry a screenshot: all 9 tickets today have 2–7 attachments each (Attachments panel, not inline).
+
+## 16:00: ZP-4496 and links everywhere
+- Owner: "in module-based the banner is not showing; it should show even if you subscribed" (dev.stage EG-MOD-003). Filed **ZP-4496** (Avani, Medium, To Do, sprint 1223, Web v2.2.2, 3 screenshots). Flagged in the ticket that it changes test case B1 ("no banner") and the design's 30-day rule, so product confirms the wording/tone and whether Site-based and Legacy get the same.
+- Owner asked that every bug link sits in the artifact: the release page now has a "New bugs filed today" table with links and every ZP-key in the body is linked (rule saved in memory).
+- New build index-B9gyjkNi.js (15:49) already carries fixes for ZP-4491 (banner "ended <relative> (<date>)") and ZP-4492 (term bar takes endedAt; rows "Plan ended"); ZP-4494's tile is not in it. Deep per-role pass running on it (8 logins × seat + real-data suites).
