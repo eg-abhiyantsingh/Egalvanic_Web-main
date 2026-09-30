@@ -232,6 +232,17 @@ public class ZP4464SubscriptionDeepTest extends BaseTest {
                 "a simulated /api/subscription override is still installed — these real-data results would be fake");
         Object cls = js("var s=0;(window.__qaCls||[]).forEach(function(e){s+=e.v;});return 'CLS '+s.toFixed(4)+' · shifts '+JSON.stringify(window.__qaCls||[]).slice(0,900);");
         notes.add("dashboard load layout shift: " + cls);
+        // F1 on REAL data: close the banner (if any), then the in-app navigation below must keep it hidden, and a refresh brings it back
+        String realBanner = banner();
+        boolean closed = false;
+        if (!realBanner.equals("none") && realBanner.contains("[Close subscription notice]")) {
+            js("var b=document.querySelector('button[aria-label=\"Close subscription notice\"]');if(b)b.click();");
+            sleep(1200);
+            closed = banner().equals("none");
+            notes.add("F1 real data: banner \"" + realBanner.substring(0, Math.min(70, realBanner.length())) + "…\" → ✕ clicked → " + (closed ? "hidden" : "STILL SHOWN"));
+        } else {
+            notes.add("F1 real data: " + (realBanner.equals("none") ? "no banner on this company today" : "banner has no close button"));
+        }
         // in-app navigation through visible menu links (no reloads)
         List<String> visited = new ArrayList<>();
         for (int k = 0; k < 6; k++) {
@@ -243,6 +254,14 @@ public class ZP4464SubscriptionDeepTest extends BaseTest {
         }
         Object calls = js("return sessionStorage.getItem('__qaSubCalls')||'[]';");
         notes.add("in-app navigation through " + visited + " → subscription API calls since load: " + calls);
+        if (closed) {
+            String afterNav = banner();
+            driver.navigate().refresh();
+            sleep(7000);
+            String afterRefresh = banner();
+            notes.add("F1 real data: after " + visited.size() + " in-app page changes the banner is " + (afterNav.equals("none") ? "still hidden" : "SHOWN AGAIN")
+                    + " · after a browser refresh it is " + (afterRefresh.equals("none") ? "STILL HIDDEN" : "back"));
+        }
         // axe accessibility scan of the banner only
         String axe = new String(Files.readAllBytes(Paths.get(System.getProperty("zp4464.axe", "/tmp/zp4464stage/axe.min.js"))), StandardCharsets.UTF_8);
         js(axe);
@@ -259,9 +278,28 @@ public class ZP4464SubscriptionDeepTest extends BaseTest {
                 + "Promise.all([g('banner, no token','/api/subscription/banner',{'X-Subdomain':'acme'},'omit'),g('page, no token','/api/subscription',{'X-Subdomain':'acme'},'omit'),"
                 + "g('banner, forged token','/api/subscription/banner',{Authorization:'Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.bad','X-Subdomain':'acme'},'omit'),"
                 + "g('page, ?company_id=<other uuid>','/api/subscription?company_id='+fake,A),g('page, X-Subdomain: demo','/api/subscription',{Authorization:'Bearer '+tok,'X-Subdomain':'demo'}),"
-                + "g('page, /api/subscription/<uuid>','/api/subscription/'+fake,A),g('banner, X-Subdomain: demo','/api/subscription/banner',{Authorization:'Bearer '+tok,'X-Subdomain':'demo'})])"
+                + "g('page, /api/subscription/<uuid>','/api/subscription/'+fake,A),g('banner, X-Subdomain: demo','/api/subscription/banner',{Authorization:'Bearer '+tok,'X-Subdomain':'demo'}),"
+                // E3 (Avani's test cases): no company resolved → page 404 not_found, banner 200 with banner:null, never 400
+                + "g('page, X-Subdomain: qa-no-such-company','/api/subscription',{Authorization:'Bearer '+tok,'X-Subdomain':'qa-no-such-company'}),"
+                + "g('banner, X-Subdomain: qa-no-such-company','/api/subscription/banner',{Authorization:'Bearer '+tok,'X-Subdomain':'qa-no-such-company'}),"
+                + "g('banner, no X-Subdomain header','/api/subscription/banner',{Authorization:'Bearer '+tok}),"
+                // the second stage company: an acme token must not read dev's subscription
+                + "g('page, X-Subdomain: dev','/api/subscription',{Authorization:'Bearer '+tok,'X-Subdomain':'dev'}),"
+                + "g('banner, X-Subdomain: dev','/api/subscription/banner',{Authorization:'Bearer '+tok,'X-Subdomain':'dev'})])"
                 + ".then(function(a){done({r:a});});");
         for (Object line : (List<Object>) probes.get("r")) notes.add("API " + line);
+        // the whole Subscription page: load timing of its API call, and an axe scan of the page (Admin gets the page, others Access Denied)
+        open("/admin/subscription");
+        sleep(2000);
+        Object timing = js("var e=performance.getEntriesByType('resource').filter(function(r){return /\\/api\\/subscription(\\?|$)/.test(r.name);}).pop();"
+                + "var n=performance.getEntriesByType('navigation')[0];return (e?('/api/subscription '+Math.round(e.duration)+' ms, '+Math.round(e.transferSize/1024)+' KB'):'no /api/subscription entry')"
+                + "+' · page domContentLoaded '+(n?Math.round(n.domContentLoadedEventEnd):'?')+' ms';");
+        notes.add("Subscription page timing: " + timing);
+        js(axe);
+        Object axePage = jsAsync("var done=arguments[arguments.length-1];var m=document.querySelector('main')||document.body;"
+                + "axe.run(m,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa']}}).then(function(r){done('violations '+r.violations.length+' '+JSON.stringify(r.violations.map(function(v){return {id:v.id,impact:v.impact,help:v.help,n:v.nodes.length,t:v.nodes.map(function(n){return (n.html||'').slice(0,80)+' :: '+n.failureSummary;}).join(' | ').slice(0,400)};}))+' · passes '+r.passes.length+' · incomplete '+JSON.stringify(r.incomplete.map(function(v){return v.id;})));}).catch(function(e){done('axe error '+e);});");
+        notes.add("axe (WCAG 2.1 A/AA) on the whole Subscription page: " + axePage);
+        shot(seat() + "_real_page_axe", "REAL data · /admin/subscription · " + timing + "\naxe: " + String.valueOf(axePage).substring(0, Math.min(300, String.valueOf(axePage).length())));
         Map<String, Object> rm = new HashMap<>();
         rm.put("identifier", id);
         raw().executeCdpCommand("Page.removeScriptToEvaluateOnNewDocument", rm);

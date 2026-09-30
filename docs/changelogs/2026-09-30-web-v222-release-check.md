@@ -33,3 +33,11 @@ New build at 14:12: Expired pill, "Ended Sep 30, 2026", red banner (also after r
 list-price footer, no error — the fix works. Two wording defects on the ended page (reported on the ticket, status left as is):
 "Full access left · Ended · Since Dec 30, 2026" (a future date) and "366 days left" on locked rows of an ended plan.
 Release page v2. Evidence: `test-output/zp4464-dev-expired-1412`.
+
+## 14:24–14:55: deep sanity on the newest build (index-BG9CyzoX.js; page/banner code identical to 14:05)
+- Prompts: "v2.2.2 test in depth", "start testing in depth", "only … stage", "do deep sanity testing", two "create a bug" requests from the ended plan.
+- Run: 8 logins (state A1), then Avani set acme expired at 14:40 (A7) → later checks on the ended plan. Real-data checks extended: F1 on real data (✕ → 6 in-app pages hidden → refresh back), E3 probes (unknown / missing X-Subdomain → 401, not the documented 404/200-null; never 400), acme token vs dev tenant → 401, whole-page axe (4 serious: unnamed progress bars, aria-label on a div, "Expired" chip 4.13:1, main scroll area not focusable), page timing 410 ms / DCL 1.3 s, flag off, Chicago view of dev.stage's real row (Sep 30–Sep 30 vs Oct 1–Oct 1: N1 on real data).
+- New bugs (owner's request): **ZP-4491** banner should say "ended 10 days ago"; **ZP-4492** term bar still "Today · 80 days of full access left" on an ended plan. Both Avani, Medium, To Do, sprint 1223, Web v2.2.2, screenshots.
+- Test code: `realDataChecks` now does F1 on real data, the E3/dev probes, and a whole-page axe + timing step. Runner traps: `eval` re-parses passwords with glob characters (Client Portal seat) → `run-one.sh` (no eval); macOS has no `setsid` → watcher started with `nohup … &!`.
+- `watch-states.sh` (in /tmp) re-runs the Admin check every 4 min for an hour and keeps evidence per new state under `test-output/zp4464-release/`.
+- Release page v3. Evidence: `zp4464-acme-expired-1444`, `zp4464-deep` (real checks + dev-chicago), `zp4464-stage` (8 seats).
