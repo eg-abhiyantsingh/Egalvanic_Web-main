@@ -1,0 +1,8 @@
+ZP-4406 — "Edit with AI" not shown for SLD-type report configs (QA acme, index-CdsUTPRH.js, 5 Oct 2026, admin seat) — FE PR #1559
+PASS  Company SLD config "Annual Maintenance Report (Copy)" https://acme.qa.egalvanic.ai/reporting/config/0eee082a-af4d-4805-9ae0-c19d3996af9a
+      shows "Edit with AI" next to Edit; the dialog opens ("Rendering against 10 SEP 2026 …").
+PASS  Global SLD config "Annual Maintenance Report" https://acme.qa.egalvanic.ai/reporting/config/6bd0c71c-c86c-442c-b4ed-91ce0145acf0
+      shows Edit only (AI edit is for company-owned configs; global ones are read-only templates).
+      SLD configs on QA: 6 global + 1 company copy. The AI edit itself on an SLD config was run 30 Sep (ZP-4398): 200, applied in 74 s.
+Not re-run today (paid AI call); the dialog's start call was intercepted in the browser for ZP-4529.
+Jira: moved to READY TO RELEASE 5 Oct 2026 (status only).

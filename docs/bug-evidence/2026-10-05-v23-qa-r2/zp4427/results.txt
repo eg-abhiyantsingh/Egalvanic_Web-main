@@ -1,0 +1,12 @@
+ZP-4427 — [Web] 502 on GET /api/issues/open-by-site (QA acme, index-CdsUTPRH.js, 5 Oct 2026)
+Avani: platform-wide BCES IQ prod DB saturation on 23 Sep (same incident as ZP-4360), not this endpoint; no code change; recommends
+closing as resolved by ZP-4360.
+Sentry EGALVANIC-REACT-APP-4S8 (the open-by-site stack): 156 events / 58 users since 27 Jul, last seen 2026-09-23 18:07 UTC (twielectric,
+V2.1) — none since. (7637472933 / 4SV is the sales-attention stack, as Avani says.)
+PASS  QA: GET /api/issues/open-by-site?company_id=<acme> → 200 in 0.75 s / 0.65 s (11 KB).
+Tenant scope — PM seat (+project@, Project Manager, is_admin false, not staff), 5 Oct 2026 ~13:50 IST. Other company = sites
+outside acme's 247-site list (e.g. site f86052b7-1683-431f-a86f-f52c6dd5be39, WO aed4636d-ef1a-4e10-bc4b-b9f34805599e "TestSession1").
+PASS  own company_id → 200, 70 sites, all inside PM's 129 allowed sites (0 outside).
+PASS  other company's id fdcadc86-aa7b-4363-9d2a-f0bb3b1107df → 422 "You do not have access to this company's data."
+PASS  random company id → 422 (same message); malformed id → 422; no company_id → 400 "company_id is required".
+Jira: moved to READY TO RELEASE 5 Oct 2026 (status only).

@@ -1,0 +1,10 @@
+ZP-4366 on acme QA (build index-DXSz_B6n.js), 30 Sep 2026 ~18:15-18:35 IST, admin session
+Paging (POST /api/v2/issues/list):
+- Android Site 2 (aadcee4c-7dd0-45b3-81b9-309c5c166084): 99 issues; page_size 7 and 10 -> 99 rows, 99 distinct, same order on repeat (no timestamp ties on this site)
+- Company-wide: 1,161 issues, 7 same-timestamp pairs. For each pair a page size was chosen so a page boundary falls BETWEEN the two tied rows (5, 4, 2, 51, 5, 1, 2): every tied row came back exactly once, in the page_size-100 order, identical on a second run.
+- page_size above 100 is capped at 100.
+Export CSV (captured in the page, no file saved):
+- Android Site 2, no search: grid "of 56" -> CSV 56 rows, 56 unique, 15 columns (Title, Status, Priority, Issue Class, Issue Type, Issue Subtype, Asset, Site, Work Order, Description, Proposed Resolution, Immediate Hazard, Customer Notified, Created, Last Modified)
+- search "QA-DEMO": grid 6 -> CSV 6 rows, all matching
+- test site, QA-DEMO issue f753f5a4-da0b-4b0e-b197-395b41a79c43: title "=1+1 ..." -> "'=1+1 ...", description "@QA-DEMO ..." -> "'@QA-DEMO ...", proposed resolution "-12.5" -> "-12.5" (untouched)
+Not covered: the 10,000-row cap notice (largest scope has 1,161 issues); French strings.

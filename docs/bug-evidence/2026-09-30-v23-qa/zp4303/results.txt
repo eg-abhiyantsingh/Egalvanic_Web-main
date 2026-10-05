@@ -1,0 +1,18 @@
+ZP-4303 — EMP Lite Appendix D service→method endpoint (QA, 30 Sep 2026 20:20 IST) — API only
+
+Site: Android Site 2 (sld aadcee4c-7dd0-45b3-81b9-309c5c166084, 415 nodes), signed in as Admin, calls made from the app page.
+GET /api/sld/<sld>/resolve-service-methods?service_ids=<ids>
+
+PASS  200 {data:{methods:{…}, node_count:415, services:{<id>:{effective_service_id, nodes:{<node>:[method ids]}}}}}.
+      Catalog entries carry name, description, labor {est_mins, labor_type}, test_equipment[], forms[], de_energized, sort_order
+      (63 methods for 3 services).
+PASS  Each service resolves separately: Insulation Resistance Testing 131 nodes (7 methods), NETA Testing 278 (23),
+      Infrared Thermography 195 (19), Cleaning 288, UPS Maintenance 0 (no UPS on the site → no method, not a placeholder).
+      0 empty entries, 0 method ids missing from the catalog.
+PASS  Unknown site id → refused (QA's CDN turns the 4xx into the app's HTML page; no data returned).
+PASS  No sign-in → 401 {"error":"No authorization provided"} (also /api/program-compliance/<sld>).
+CANNOT CHECK ON QA  Eaton reference numbers (409 nodes, 314–356, NETA → Eaton fork): QA has no company forks of these
+      services (effective_service_id = requested id for all 5).
+CANNOT CHECK ON QA  Busduct ≤600 V / >600 V split: the 13 busways on Android Site 2 have no voltage of their own;
+      5 resolve to "De-Energized Electrical Testing (≤600 V)", 8 get no method; there is no >600 V busway on QA.
+Not tested: a caller without access to the site (needs a site-restricted seat); EMP Lite Appendix D render.

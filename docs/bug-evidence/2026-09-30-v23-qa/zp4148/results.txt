@@ -1,0 +1,19 @@
+ZP-4148 — Portal Sales role gates the Maintenance Portal preview (QA, build index-DXSz_B6n.js, 30 Sep 2026 19:20–19:50 IST)
+Ticket note: Dharmesh (2026-09-10) "DUPLICATE - do not action" of ZP-4138 (Done, v2.2); later changed by ZP-4390 (padlocks).
+
+Seat (roles · tier from /api/features/access) → what the rail and the /maintenance-portal/* routes show:
+  PM  (Project Manager · no Portal Sales)   → Maintenance Portal IS in the rail; items locked with "You don't have permission to view
+                                              this page. Contact your admin for access." except Condition Assessment + SLD;
+                                              /maintenance-portal → Access Denied; /condition → page loads; /sld → page loads;
+                                              /reports → Access Denied.                                              FAIL vs AC1
+  AM  (Account Manager · no Portal Sales)   → same as PM (padlocks; /condition and /sld reachable).                  FAIL vs AC1
+  FM  (Facility Manager · T2, features ["maintenance-portal"] · no Portal Sales)
+                                            → full portal, all 10 items, no locks (Site Health, Condition, Assets, …). FAIL vs AC1
+  Client Portal (T2 · no Portal Sales)      → full portal through the tier gate.                                      PASS (AC4)
+  All-roles seat (Super Admin, Admin, Portal Sales, EE, PM, AM · T1)
+                                            → full portal, all routes load.                                           PASS (AC2)
+  Portal-Sales-only seat (0 permissions)    → "Web Access Restricted" on every route (no web access at all).
+  Technician (T1)                           → "Web Access Restricted" on every route (this QA seat has no web access).
+Not testable here: Super Admin WITHOUT Portal Sales (no such QA seat), backend alembic/role checks (AC5).
+Verdict: fails as written (staff without Portal Sales still see the section and reach /condition and /sld), but the
+ticket is a duplicate of ZP-4138 and the behaviour was later reworked by ZP-4390 → owner to decide.

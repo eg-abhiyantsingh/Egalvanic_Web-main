@@ -1,0 +1,8 @@
+ZP-4394 — EG form test-equipment class filter; full-form Section Done; section_states — re-check on QA build index-CdsUTPRH.js (5 Oct)
+QA-DEMO WO https://acme.qa.egalvanic.ai/sessions/51d54087-6a74-4ddd-9698-f34e40e14015 › More › Forms: "test kd transformer — 2/2 Draft".
+PASS  Opening the Torque Record form: both top-level sections show the done toggle in its done state ("Mark Not Done" ×2) — kept since 30 Sep.
+PASS  GET /api/eg-form-instance/by-session/<wo> → instance 035fc427… with section_states {measurements:{done:true, done_at, done_by},
+      per_connection_torque_record:{done:true,…}}.
+Still not tested (as on 30 Sep): the builder "Equipment classes" filter on a Test Equipment select and its empty-class negative
+(needs a QA-DEMO form copy with a Test Equipment select + a test-equipment library with 2 classes); WO "Add Procedure" refresh.
+Closed without saving.

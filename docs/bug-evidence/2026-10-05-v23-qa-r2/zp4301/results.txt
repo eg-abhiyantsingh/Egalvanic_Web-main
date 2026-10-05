@@ -1,0 +1,11 @@
+ZP-4301 — Surface asset delete-refusal reasons (name the collapsed SLD view) — re-check on QA build index-CdsUTPRH.js (5 Oct 2026, admin)
+Fresh test data on site "10 SEP 2026" (aae9883c-…): node "QA-DEMO ZP-4301 34693 (delete me)" 530df9db-3953-4428-b67b-7252cfce477e,
+view "QA-DEMO ZP-4301 view 34693 (delete me)" 2ce631ab-b2e6-4238-b7bb-e7b6eed2c593 (node added + collapsed through the app's own API).
+PASS  Server refusal names the view: DELETE /api/node/delete/<id> (no flag) and POST /api/node/bulk-delete → 400
+      {error:"collapsed_node_not_deletable", message:"Collapsed nodes can't be deleted — this node is collapsed in the SLD view
+      \"QA-DEMO ZP-4301 view 34693 (delete me)\". Open that view and expand it first.", views:[…]}.
+NOT REACHABLE ON THE WEB (unchanged)  The asset page's Delete Asset → "Delete Node … cannot be undone" → Delete sends
+      DELETE /api/node/delete/<id>?allow_collapsed=true → 200 deleted. The list and asset page always send the flag (since ZP-4302),
+      so the named-view message can't appear in the UI as ACs 1–2 describe.
+Not tested (as on 30 Sep): a partly failing bulk delete toast; the PM-plan matching part (QA sites have no maintenance programs).
+Cleanup: the node is deleted; the empty QA-DEMO view is left (labelled).

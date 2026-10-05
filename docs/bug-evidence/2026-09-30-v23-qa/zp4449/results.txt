@@ -1,0 +1,18 @@
+ZP-4449 — Client Portal gets 422 generating a portal report (QA, build index-DXSz_B6n.js, 30 Sep 2026 20:05 IST)
+
+Seat: Client Portal seat on acme.qa (roles ["Client Portal"], tier T2, 36 permissions incl. reports.generate + reports.view).
+Path: Maintenance Portal > Reports > site "test kd 1111" > card "Issue Report" > dialog "Generate Report" (Issue Report · PDF) > Generate Report.
+
+Client Portal (the ticket's case):
+  GET  /api/reporting/configs              200
+  POST /api/reporting/generate_simple      200  (execution started, no 422)
+  GET  /api/reporting/status/<arn>         200 RUNNING -> SUCCEEDED with report_url
+  download .../reports/166ea288-fa89-477c-a5b8-6797fd0b0ad3.pdf (caught in the page, not saved)
+  toasts: 0 s "Generating report — the download starts when it's ready." · 6 s "Report ready — download started."
+  (two earlier runs, 19:53 and before, also returned 200 + a PDF url)
+
+Controls:
+  Admin (all roles) — same path, generate_simple 200, PDF url.
+  Facility Manager (no reports.view) — /api/reporting/configs 422 permission_denied, the dialog shows
+  "Select a configuration" with nothing to choose and Generate Report stays disabled (expected: FM has no report grants;
+  side note: the Reports page still shows FM the cards with no explanation).

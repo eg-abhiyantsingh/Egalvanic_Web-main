@@ -1,0 +1,19 @@
+ZP-4365 — Create-mode nameplate extraction uses profile photos (QA, build index-DXSz_B6n.js, 30 Sep 2026 20:25–20:35 IST)
+
+Where: /assets → Create Asset (Android Site 2) → class Circuit Breaker → Asset Photos → "Extract from Photos" (drawer header).
+Photo used: docs/bug-evidence/zp-bulk-extraction-review-surfaces/CB5-squared-powerpact-hj-aic-preset.jpg (Square D PowerPacT).
+Nothing was saved: both drawers were closed with Cancel (asset count unchanged, 316 top-level / 412 total).
+Paid AI runs: 2 (one per scenario).
+
+PASS  No photos: the "Extract from Photos" button is not rendered (Profile 0 … Other 0).
+PASS  Profile photo only: button shown → POST /api/extraction/extract-temp-nameplate-data
+      {photos: [] (0), profile_photos: [1], node_class_id, core_attributes, overwrite_existing: false, extract_name, extract_subtype}
+      → 200 in 25.2 s; the model's notes say "No dedicated NAMEPLATE photo group was provided; the single supplied photo
+      (though categorized as a profile/context image) … was treated as authoritative" → backend honours profile_photos.
+      Filled: subtype Low-Voltage Molded Case Circuit Breaker, 3P, manufacturer SCHNEIDER/SQUARE D, model HJL36150, 150A,
+      25 kA, 600V, serial from the label. Message "Data extracted successfully from photos!".
+PASS  Only an "Other" photo: button shown; pressing it shows "No nameplate or profile photos available for extraction"
+      inside the Engineering section; no extraction request was sent (0 calls), no crash.
+PASS  Nameplate + profile (+ the Other photo): request {photos: [1], profile_photos: [1]} (Other left out) → 200 in 26.7 s;
+      sensible values (PowerPacT H-Frame, HJL36150, 150A, 25 kA, 600V, Thermal Magnetic).
+Not tested here: edit-mode extraction regression (covered by ZP-4463 / ExtractFromPhotosTest on 30 Sep); iOS → ZP-4468.

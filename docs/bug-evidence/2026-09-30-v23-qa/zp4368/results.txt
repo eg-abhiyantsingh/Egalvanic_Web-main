@@ -1,0 +1,11 @@
+ZP-4368 — Newkirk + /lookup tenant gates (QA, 30 Sep 2026 20:15 IST)
+
+Feature parts = ZP-4341 (same PRs): NFPA 70B names, nested Assets, Copy Last Row, verdict-aware section count → PASS (see zp4341/).
+Sign-in gate (curl, no Authorization header):
+  /api/lookup/issues/<sld>, /api/lookup/issues?company_id=<acme>, /api/lookup/v2/nodes/<sld>, …/filter-options,
+  /api/lookup/nodes/<sld>, /api/lookup/node-class-counts/<sld>  → all 401 {"error":"No authorization provided"}  PASS
+Own company (Admin, from the app): lookup/issues/<sld> 200 (99), lookup/issues?company_id 200 (1163),
+  v2/nodes 200 (total 412), filter-options 200, v1 nodes 200 (412), node-class-counts 200 (36)  PASS
+Unknown sld id (random UUID): v2/nodes, filter-options, lookup/issues, node-class-counts → no data (4xx shown as the app HTML
+  by QA's CDN)  PASS
+CANNOT CHECK ON QA  another tenant's sld_id → 404 (the only second tenant, demo, is off-limits).

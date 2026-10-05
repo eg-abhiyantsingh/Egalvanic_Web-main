@@ -1,0 +1,32 @@
+ZP-4461 — [Web] Auto Derived values - Severity — checked on acme PRODUCTION (acme.egalvanic.ai, web V2.2, build index-C_XD_y1m.js), 2 Oct 2026
+Read-only: nothing was saved (every edit cancelled; the issue's saved values re-read afterwards, no app write calls).
+
+Class definition (GET /api/issue_classes/user/<me>, acme company 0a61e613, class 0fb186e0 "Thermal Anomaly", company override):
+  0 Severity Criteria (select: Similar, Ambient, Indirect) · 1 Problem Location · 2 Problem Temp (temperature, required) ·
+  3 Reference Temp (temperature, required) · 4 Delta T (calculated) · 5 Severity (calculated, required, options Nominal /
+  Intermediate / Serious / Critical) · 6 Current Draw (A) · 7 Current Rating (A) · 8 Voltage Drop (mV)
+  → Severity is calculated and sits right after Delta T. Same field id as before (95c3a45a, key severity), so saved values stay attached.
+  Formula (by Problem Temp unit and Severity Criteria; Delta T ≤ 0 → no Severity):
+    °F  Similar ≤5.4 Nominal, ≤27 Intermediate, else Critical · Ambient ≤18 / ≤36 / ≤72 Serious / else Critical ·
+        Indirect ≤1.8 / ≤18 / ≤63 Serious / else Critical
+    °C  Similar ≤3 / ≤15 / else Critical · Ambient ≤10 / ≤20 / ≤40 Serious / else Critical · Indirect (°C part of the expression not read in full)
+
+Old issues on site "SLD V3 Site" (data unchanged):
+  https://acme.egalvanic.ai/issues/9ad35e93-5a24-4cbf-a91c-9717ccd4813e — 140 °F / 90 °F, Delta T 50 °F, Severity Intermediate (kept)
+  https://acme.egalvanic.ai/issues/007ad868-ff37-4d32-ad25-5838dc03e604 — no temperatures, Severity Intermediate (kept)
+
+Edit form of 9ad35e93 (acme's own class), nothing saved:
+  PASS Severity shows right after Delta T; the saved "Intermediate" is marked as a manual value with "Reset to auto-calculated value".
+  PASS Criteria → Ambient: Severity stays Intermediate (old value does not recalculate until Reset).
+  PASS Reset → Serious (Ambient, 50 °F) · Similar → Critical (50 °F > 27) · Problem Temp 95 → Delta T 5 °F → Nominal
+  PASS Problem Temp °C, Reference °F (90 °F = 32.22 °C) → Delta T 62.78 °C → Critical · both °C → Delta T 5 °C → Intermediate
+  PASS Typing a value marks it as an override (orange mark + Reset); Reset brings back the calculated value.
+  Cancel → closed, no confirm; GET /api/issue/9ad35e93 afterwards = 140 °F / 90 °F / 50 °F / Intermediate.
+
+Notes:
+  - My seat sees every company's issue classes (GET /api/issue_classes = 485, many named "Thermal Anomaly"), so the Add Issue picker
+    can't tell acme's class apart; the first one listed (company ea2d2c99) still has the old select Severity at position 2. The new-issue
+    form was therefore not checked with acme's own class; a plain acme seat would only see acme's.
+  - Issue Class list in Add Issue is empty until its refresh icon is pressed (seen on QA too; not part of this rollout).
+  - One old issue (9ad35e93) also holds a second, empty "Severity" entry under a field id that is not in the class (older leftover data).
+  - Fast automated typing dropped letters in the Severity box ("Crtcl"); typed slowly, all letters arrive — automation artifact.

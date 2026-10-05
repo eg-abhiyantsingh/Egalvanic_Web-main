@@ -1,0 +1,9 @@
+ZP-4305 — Resolve issues directly from the issue form — re-check on the new QA build index-CdsUTPRH.js (5 Oct 2026, admin)
+Issue: https://acme.qa.egalvanic.ai/issues/f753f5a4-da0b-4b0e-b197-395b41a79c43 ("=1+1 QA-DEMO ZP-4366 formula check (delete me)")
+PASS  ⋮ › Edit Issue › Mark Resolved → "Resolve Issue?" (description required) → text "QA-DEMO ZP-4305 re-check 5 Oct resolved" →
+      Mark Resolved → form closes, header "Resolved".
+DEFECT (smaller than 30 Sep)  ⋮ › Edit Issue › Mark Open → "Reopen Issue? … The form fields will be unlocked for editing." → Reopen Issue →
+      server status Open, the form stays open (unlocked) but the page header still shows "Resolved" (both chips). It turns "Open" as
+      soon as the form is closed (Cancel) — on 30 Sep it needed a page reload.
+DEFECT (unchanged)  Typing /pull-through-work still opens a page with only the title "Pull-Through Work" (AC: "no longer routes").
+Other 30 Sep passes not re-run (no PR change to this flow since): photo upload, Add to Work Order, Create Service without Preventive/Corrective.

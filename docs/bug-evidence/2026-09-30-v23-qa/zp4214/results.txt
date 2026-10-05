@@ -1,0 +1,22 @@
+ZP-4214 — Bulk configure skips unchanged assets (QA, build index-DXSz_B6n.js, 30 Sep 2026 20:42–20:47 IST)
+
+Where: Engineering › Equipment Designations (site "Z - Hospital", sld d5d99deb-9554-4774-99d1-16eb1ded0735)
+       → search "nameplate" → Bulk Ops → tick "Circuit Breaker nameplate" → AI Extraction (1) → "Bulk Extraction Job".
+Asset: https://acme.qa.egalvanic.ai/assets/3c92d3f8-0278-409b-af57-aa786ce1ef9d  (someone configured + applied it at 12:42 UTC today)
+Paid AI runs: 1.
+
+Run 1 (first press today by me): processed, not skipped — "0 done, 1 running" → Configuring… → "Reading 0 nameplate photo(s)…"
+      → "Searching the SKM library…" → "1 done · ALLIS-CHALMERS MA · 1200A frame · Medium". (The earlier 12:42 apply
+      may predate the fingerprint, so this run on its own proves nothing either way.)
+Apply all (1) → POST /api/extraction/asset-agent/apply 200 → "1 applied".
+Run 2 (Configure → Apply → Configure again, the ticket's key regression case): within 3 s
+      "1 asset · 0 done, 1 skipped" · info well "1 asset skipped because its information has not changed since the last run.
+      Add or replace photos to have it configured again." · row "Skipped — information unchanged since last run" ·
+      no Apply button on the row · "Apply all (0)" disabled · nothing counted as failed.
+      Network: POST /api/extraction/bulk-job/submit 200 → GET …/bulk-job/status 200 {"status":"SUCCEEDED","done":1,
+      "results":[{"status":"skipped", …}]} (no "reason" field in the result).
+Repeat in a second browser (Selenium, Admin seat, 20:48): same asset → "Checking for a previous run…" → "Configuring…" →
+      at 2 s "0 done, 1 skipped … Skipped — information unchanged since last run" (screenshot 2).
+PASS  web half (BE #1272 is on QA).
+Not tested (backend / pipeline, needs logs): Fargate not started on skip; positive re-run triggers (photo add/replace,
+class, voltage, attribute-definition change); model switch Opus↔Sonnet must not re-run; runner-doctrine edit must.

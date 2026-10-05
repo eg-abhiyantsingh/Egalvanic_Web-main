@@ -1,0 +1,14 @@
+ZP-4430 — [Web] 500 on POST /api/reporting/configs/{id}/preview-html (QA acme, index-CdsUTPRH.js, 5 Oct 2026, admin seat) — BE PR #1410
+Sentry EGALVANIC-REACT-APP-5CR: 37 events / 8 users, production, last seen 2026-09-25 18:54 UTC (kroon, config 81f813bb…, web V2.1).
+The backend PR isn't visible to me (eg-pz-backend not readable), so the fix's exact case is unknown; the ticket has no repro steps.
+PASS  Sweep of EVERY report config on QA: 110 configs, all 11 types (session, quote_standard, quote_emp, quote_breaker_rfq, issue,
+      quote_issue_report, arc_flash_readiness, plan_emp, plan_standard, sld, plan_rfq) → preview-entities → first entity →
+      POST preview-html {primary_id} → 110 × 200 success:true. Median 2.1 s, p95 5.0 s, max 8.4 s (EMP Lite).
+PASS  Bad input: primary_id "not-a-uuid" → 400 "Invalid primary_id"; unknown primary / unknown config → refused (4xx, shown by QA's CDN
+      as its HTML page); no primary_id → falls back to a default entity. No 500 anywhere.
+Not reproducible on QA: the production config/entity behind the Sentry events (kroon tenant).
+Tenant scope — PM seat (+project@, Project Manager, is_admin false, not staff), 5 Oct 2026 ~13:50 IST. Other company = sites
+outside acme's 247-site list (e.g. site f86052b7-1683-431f-a86f-f52c6dd5be39, WO aed4636d-ef1a-4e10-bc4b-b9f34805599e "TestSession1").
+PASS  IR Thermography Report (Frontloaded) 366d6fed with own WO 51d54087 → 200, 9 pages; with the other company's WO aed4636d →
+      refused (CDN error page); nothing of that WO rendered. The config list shows only acme's 91 + 22 global configs.
+Jira: moved to READY TO RELEASE 5 Oct 2026 (status only).

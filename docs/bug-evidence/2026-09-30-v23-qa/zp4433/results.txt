@@ -1,0 +1,12 @@
+ZP-4433 — [Ops] Dev → QA merge (QA, 30 Sep 2026)
+
+QA serves build index-DXSz_B6n.js (FE #1561 cicd/dev → cicd/qa, 2026-09-28 16:56 UTC; FE #1564 on top). No "Application
+Error" or update loop seen in 3 hours of testing.
+Smoke: sign-in worked for 9 seats through the v2.2 email-first + 2FA flow (Admin, PM, AM, FM, Client Portal, Technician,
+Portal Sales, EE, all-roles); /assets, /issues, /sessions + WO detail, /eg-forms + a WO form, Maintenance Portal, reports all
+load and save (see the other tickets' evidence).
+Migrations, by their visible effect: issueres_b1 — an issue resolution saves (ZP-4305); nfpa70b_a1 — NFPA 70B subcategory
+names rewritten and an existing issue keeps its subcategory (ZP-4341); portalsales_a1 — the Portal Sales role exists
+(the all-roles seat holds it; a Portal-Sales-only seat signs in with 0 permissions).
+Not checkable here: backend / Terraform promotion PRs (no repo access); the QA-only FE fixes (#1564, #1562, #1559) are not
+on cicd/dev yet, so the next dev → qa merge must not undo them.

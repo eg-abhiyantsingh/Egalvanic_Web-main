@@ -1,0 +1,12 @@
+ZP-4303 — EMP Lite Appendix D service→method resolution — re-check on the new QA build index-CdsUTPRH.js (5 Oct 2026, admin)
+PASS  GET /api/sld/aadcee4c-…(Android Site 2)/resolve-service-methods?service_ids=<5> → 200 in 2.1 s, node_count 425, 81 catalog methods:
+      NETA Testing 286 nodes / 37 methods, Cleaning 298 / 18, Infrared Thermography 198 / 19, Insulation Resistance Testing 138 / 7,
+      UPS Maintenance 0 / 0 (no UPS on the site). 0 method ids missing from the catalog; effective_service_id = requested (no forks on QA).
+PASS  No sign-in → 401; unknown site → refused (CDN HTML, no data).
+Same as 30 Sep (site grew 415 → 425 nodes). Still not checkable on QA: Eaton fork numbers, Busduct ≤600 V / >600 V split, a
+site-restricted caller, the Appendix D render.
+Site-restricted caller — PM seat (+project@, Project Manager, not staff, 129 of acme's 247 sites), 5 Oct ~14:25 IST, same 5 services:
+PASS  PM's own site Android Site 2 (aadcee4c) → 200, node_count 425, 81 methods (same as admin).
+PASS  acme site NOT assigned to PM, "Z - Hospital" d5d99deb-9554-4774-99d1-16eb1ded0735 (159 assets) → refused (CDN error page, no data).
+PASS  other company's site "Saveland Avenue Lofts" f86052b7-1683-431f-a86f-f52c6dd5be39 → refused (CDN error page, no data).
+Still not checkable on QA: Eaton fork numbers, Busduct ≤600 V / >600 V split (no such data on QA), the Appendix D render.

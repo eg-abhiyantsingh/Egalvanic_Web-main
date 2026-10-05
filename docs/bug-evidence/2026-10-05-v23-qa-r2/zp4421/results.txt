@@ -1,0 +1,7 @@
+ZP-4421 — [Web] Add Search to "Add Form" Dialog on Work Orders — re-check on the new QA build index-CdsUTPRH.js (5 Oct 2026, admin)
+Path: WO https://acme.qa.egalvanic.ai/sessions/4c2317d2-11fe-40b0-98b7-c7d0a7fac7d6 → right-click asset "asset" (ATS) → Add Procedure →
+Standalone Form (42 forms; 5 distinct "Applies to: Automatic Transfer Switch …" texts).
+PASS  "ats" → ATS inspection, 70B - ATS - All Types ×2, ATEST2 ATS … (name search, case-insensitive).
+FAIL  "automatic" → "No forms match “automatic”." although several forms read "Applies to: Automatic Transfer Switch (<= 1000V) …" —
+      the ticket asks to match the form name AND the "Applies to" text. Unchanged since 30 Sep (no PR for this ticket).
+Cancelled, nothing added.

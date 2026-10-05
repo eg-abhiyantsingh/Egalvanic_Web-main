@@ -1,0 +1,11 @@
+ZP-4372 — [Web] Database Index Cleanup — Drop 100 Unused Indexes & Add Missing Index (QA acme, index-CdsUTPRH.js, 5 Oct 2026) — BE PR #1386
+What the web can check: the "key workflows" in the QA Review (IR Sessions, Nodes, Procedures, Quotes, Issues) still load, with no 5xx and
+normal timings after the index drops. Page loads (admin seat, opened fresh; the time includes app start and a fixed wait):
+  /sessions (WO list) ok · slowest API /company/<acme>/workorders/v2 0.73 s
+  /sessions/<1,076-asset WO> ok · /ir_session/<id>/assets/v2 2.9 s (first, cold), location-readiness 2.1 s
+  /assets ok · /lookup/v2/nodes/<sld> 0.94 s, /filter 0.87 s, node_classes 1.2 s
+  /issues ok · /tasks ok · /services (procedures) ok · /pm-plans ok
+  /planning ok · /company/<acme>/quotes 1.35 s · /opportunities ok · /sales-overview loads (dashboard)
+  No 5xx on any of the 10 pages (229 API calls). Plus: 110/110 report previews OK (zp4430), 1,076-asset WO pages 0.4–1.6 s (zp4429).
+NOT CHECKABLE FROM THE WEB: "Analyze Indexes shows 0 unused", the new mapping_procedure_shortcut index, pg_stat_statements
+before/after timings — these need DB access (the Utility Toolkit). No "before" timings exist to compare against.

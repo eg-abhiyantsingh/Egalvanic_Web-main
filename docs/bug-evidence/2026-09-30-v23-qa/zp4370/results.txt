@@ -1,0 +1,10 @@
+ZP-4370 on acme QA (index-DXSz_B6n.js), 30 Sep 2026 ~18:45-19:10 IST, admin session
+Asset: test kd 30 https://acme.qa.egalvanic.ai/assets/eb9bc916-4ba4-4c1d-9096-b46dacdbb154 (Android Site 2; 712 5th Ave > Floor 1 > t1)
+- GET /api/location/node/{id}/photos → {count, levels[room,floor,building], node_id, sld_id, success}; all 415 assets on Android Site 2 had 0 location photos before the test
+- Location card: camera button "Add location photo" when empty; after upload a thumbnail "Location Photos"
+- Dialog "Location Photos": t1 Room · N / Floor 1 Floor · N / 712 5th Ave Building · N, one Upload Photo each
+- Upload to room: POST /api/photo/create 201 {entity_type:"room", entity_id:3da3d8fd-… (room t1), sld_id: aadcee4c-…}; asset's own photos unchanged (node_nameplate only)
+- Caption: PUT /api/photo/update/c78a2db5… {caption:"QA-DEMO ZP-4370 caption (delete me)"} 200
+- Delete: PUT /api/photo/update/c78a2db5… {is_deleted:true} 200 — no confirm step; endpoint back to room 0
+- Edit Asset with global site = "test site": Location shows 712 5th Ave › Floor 1 › t1 + thumbnail; drawer loaded /api/location/sld/aadcee4c (asset's own site)
+- API refusals: room_id=abc → 400 {"error":"Invalid room_id"}; unknown node id / unknown room_id / non-UUID node → no data (CloudFront turns the API 404 into the SPA HTML with 200)

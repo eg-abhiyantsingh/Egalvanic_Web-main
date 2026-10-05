@@ -1,0 +1,17 @@
+ZP-4148 — Portal Sales role gates the Maintenance Portal preview — re-check on the new QA build index-CdsUTPRH.js (5 Oct 2026)
+Seats run with V23RoleProbe (nav,mp), visible Chrome, one at a time.
+AC1 staff WITHOUT Portal Sales:
+  PM (T1, Project Manager)  → Maintenance Portal NOT in the rail (30 Sep: it was there with padlocks)                           PASS
+                             /maintenance-portal → Access Denied · /reports → Access Denied                                  PASS
+                             /maintenance-portal/condition → the Condition Assessment page loads (findings 259, assets 1,983) FAIL
+                             /maintenance-portal/sld → "SLD Loading SLD…" + an Access Denied heading (mixed)                  FAIL (partial)
+  AM (T1, Account Manager)   → same as PM                                                                                     same
+AC3 Super Admin WITHOUT Portal Sales: qa1 seat (Super Admin, Admin, AM, EE, PM — no Portal Sales) → not in the rail, /maintenance-portal
+                             and /reports denied; /condition loads, /sld mixed                                               PASS rail / FAIL route
+AC2 seat WITH Portal Sales: admin seat (Super Admin, Admin, Portal Sales, AM, EE, PM) → Maintenance Portal in the rail, /condition opens PASS
+AC4 T2 portal seats: Client Portal (T2, no Portal Sales) → portal in the rail, all routes load                                PASS
+                     Facility Manager (T2 on QA, no Portal Sales) → same                                                      PASS
+                     (30 Sep listed FM as a FAIL vs AC1 — wrong: on QA the FM seat is a T2 portal seat, so AC4 applies.)
+AC5 backend (alembic head, role grant-free): not checkable from the web.
+Net: the rail gate now works; the route guard still lets /maintenance-portal/condition (and partly /sld) through for staff without
+Portal Sales. Ticket is still a duplicate of ZP-4138 per Dharmesh (10 Sep).

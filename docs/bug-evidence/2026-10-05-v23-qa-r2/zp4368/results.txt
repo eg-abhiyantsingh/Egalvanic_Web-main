@@ -1,0 +1,16 @@
+ZP-4368 — Newkirk fixes + /lookup tenant gates — re-check on the new QA build index-CdsUTPRH.js (5 Oct 2026)
+PASS  No sign-in (curl): /api/lookup/issues/<sld>, /api/lookup/issues?company_id=<acme>, /api/lookup/v2/nodes/<sld>,
+      /api/lookup/nodes/<sld>, /api/lookup/node-class-counts/<sld> → all 401.
+PASS  Own company signed in: /api/lookup/issues?company_id=<acme> → 200 (1,168 issues); /api/lookup/v2/nodes/<sld> → 200.
+Same as 30 Sep. Still not checkable on QA: another tenant's sld_id → 404 (second tenant needed). Feature parts were verified with ZP-4341.
+Other tenant — PM seat (+project@, not staff), 5 Oct ~14:25 IST. Other company's site "Saveland Avenue Lofts" f86052b7-1683-431f-a86f-f52c6dd5be39
+(not in acme's 247-site list; not the demo tenant's site):
+PASS  /lookup/issues/<site>, /lookup/v2/nodes/<site>, /lookup/nodes/<site>, /lookup/node-class-counts/<site> → all refused
+      (QA's CDN error page; no data). /lookup/issues?company_id=<other company fdcadc86…> → 422 "You do not have access to this
+      company's data." Own site → 200 JSON on all four. This closes the 30 Sep "another tenant's sld_id" gap.
+KNOWN, STILL OPEN (not this ticket's ACs; first found 11 Sep): the same four /lookup calls on an acme site NOT assigned to PM
+      ("Z - Hospital" d5d99deb…) → 200 with that site's issues and assets, although /sld/<id>/resolve-service-methods refuses the
+      same site. Site scope inside the company is not applied by /lookup.
+PASS  The rest of the QA Review list, same seats/sites: /lookup/v2/nodes/<site>/filter-options, /lookup/tasks/<site>,
+      /lookup/node-subtype-counts/<site>/<class> → own site 200 JSON, other company's site refused (CDN error page) on all three.
+Jira: moved to READY TO RELEASE 5 Oct 2026 (status only).

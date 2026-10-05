@@ -1,0 +1,20 @@
+ZP-4302 — [Web] Asset-list and asset-detail deletes bypass the SLD collapsed-node guard (QA, index-DXSz_B6n.js, 30 Sep 2026 20:55–21:22 IST)
+
+Test data (made through the app's own API from the signed-in page, all "QA-DEMO … (delete me)"):
+  site "10 SEP 2026" (sld aae9883c-b198-49b7-978d-979cbe045fa4); nodes A–E (Panelboard); custom view
+  "QA-DEMO ZP-4302 view 77203 (delete me)" (3eebe497-0897-4db1-90be-6a28af02771e) holding them; A, B, C, E collapsed in the view
+  (PUT /api/sld-view/<view>/nodes/<id>/collapse), D normal. View graph before the deletes: A, B, E is_collapsed=true.
+  A second set (tag 63552, view 30df2676…) was made by an accidental re-run of the setup; its C + D bulk delete gave the same result.
+
+PASS  AC1 list: row Delete (bin) on A → "Delete Node — Are you sure you want to delete "QA-DEMO ZP-4302 A 77203 (delete me)"? This action
+      cannot be undone." → DELETE /api/node/delete/<A>?allow_collapsed=true → 200 {"cascaded_node_ids":[],"message":"Node … deleted
+      successfully"}; row gone.
+PASS  AC2 asset page: ⋮ → Delete Asset on B → same dialog → DELETE …/<B>?allow_collapsed=true → 200; page returns to /assets.
+PASS  AC3 bulk: Bulk Ops, tick C (collapsed) + D (normal) → "Delete Node — … "2 assets (… C …, … D …)"?" → both gone (both sets).
+PASS  AC5 normal asset: D deleted in the same bulk delete, no error.
+PASS  AC4 (server side) the SLD editor's own delete path still refuses: POST /api/node/bulk-delete {"node_ids":[E]} → 400
+      {"error":"collapsed_node_not_deletable","message":"Collapsed nodes can't be deleted — this node is collapsed in the SLD view
+      "QA-DEMO ZP-4302 view 77203 (delete me)". Open that view and expand it first.","views":[…]}; E still exists.
+NOTE  The on-screen refusal in the SLD editor could not be triggered by keyboard: in the probe session the diagram stayed
+      "Editing is locked" (the Delete key handler stops there first) and no unlock toggle was offered in the custom view. The QA build
+      has the client check ("Collapsed nodes can't be deleted — expand it first so you can see everything you'd be removing.").

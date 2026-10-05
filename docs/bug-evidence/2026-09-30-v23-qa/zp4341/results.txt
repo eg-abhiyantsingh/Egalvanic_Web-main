@@ -1,0 +1,27 @@
+ZP-4341 — Newkirk fixes: NFPA 70B names, nested Assets, Copy Last Row, verdict-aware section progress (QA, 30 Sep 2026)
+
+NFPA 70B (Android Site 2, /issues → Create Issue → class "NFPA 70B Violation"):
+  PASS subcategory options read "section — equipment — activity", e.g. "12.3.1 Substations & Switchgear — Visual Inspection",
+       chapter order kept (11.3.x Transformers, 12.3.x Substations & Switchgear, 13.3.x Panelboards & Switchboards …).
+  PASS existing issue https://acme.qa.egalvanic.ai/issues (NFPA 70B Violation on 11N-H1-2) keeps "13.3.1 Panelboards &
+       Switchboards — Visual Inspection" (no orphaned value).
+Nested Assets (https://acme.qa.egalvanic.ai/assets, Android Site 2, 412 assets, 107 with a parent):
+  PASS nesting is the default (localStorage assets.nestSubcomponents = true) → "1–25 of 316" top-level rows.
+  PASS parents show a chevron and a child count, e.g. "Test main (1)", "pnlqweqwe (2)"; children indent (aria-level 2).
+  PASS search "Fuse 1" expands the parents of the hits; non-matching parents are greyed.
+  PASS the "Nest subcomponents" toggle turns nesting off (flat, "1–7 of 7" for the same search) and stays off after a
+       reload (localStorage false); turned back on afterwards.
+  PASS paging: flat API 412 rows / 17 pages, page 1 vs 2 no overlap, last page 12; nested API 316 top-level / 13 pages,
+       every child listed after its parent, all 412 assets exactly once. 11 children whose parent is not an asset in the
+       list (bus "BUS5", "10N-H1-1", "10N-H1-2") are shown at the top level with their Parent Asset name.
+Copy Last Row (QA-DEMO WO https://acme.qa.egalvanic.ai/sessions/51d54087-6a74-4ddd-9698-f34e40e14015, form "Torque Record"
+  on asset "test kd transformer", table "Per-Connection Torque Record"):
+  PASS "+ Add Row" and "Copy Last Row" are shown; row 1 = QA-DEMO Bus A lug · 1/2-13 · 50 · 42 · 50 · Torque Table · Fail ·
+       "re-torqued, copy me"; Copy Last Row → row 2 identical, both select values copied; Save 1 as Draft → reopened after a
+       reload → 2 identical rows saved (method_1 torque_table, result_1 fail …).
+  CODE ONLY calculated / label-only / disabled cells: no dynamic table on QA with those cells can be attached to a WO; in the
+       QA build Copy Last Row leaves "na" cells, disabled cells and calculated cells without can_overwrite blank, copies
+       overwritable ones, and carries an existing override lock into the new row.
+Verdict-aware progress (web): the Torque Record form has 3 sections (2 + Verdict); WO Forms "Sections" shows 0/2 at the start
+  and 2/2 ✓ after both are marked done — the Verdict section is not counted.  PASS
+iOS parts → ZP-4467.

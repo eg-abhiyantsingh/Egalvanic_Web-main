@@ -1,0 +1,10 @@
+ZP-4394 — EG form test-equipment class filter; full-form Section Done; section_states on by-node lists (QA, 30 Sep 2026)
+
+Same QA-DEMO WO + Torque Record form as ZP-4341.
+PASS Full Form: each top-level section has the "Section Done" toggle (2), the Verdict section has none.
+PASS Toggle both → tooltips change to "Mark Not Done", nav shows green checks → "Save 1 as Draft" → WO Forms "Sections" 0/2 → 2/2 ✓.
+PASS Reload + reopen: both still done. Saved instance carries section_states {measurements:{done:true, done_at, done_by},
+     per_connection_torque_record:{done:true, …}}; GET /api/eg-form-instance/by-session/<wo>/by-node/<node> returns
+     section_states too.
+Not tested: builder Edit / Create without a role switch (needs the +qa1 seat with a non-Admin role active); the builder "Equipment classes" filter on a Test Equipment select (needs a QA-DEMO form copy with a Test Equipment
+     select + a test-equipment library with 2 classes) and its empty-class negative; WO "Add Procedure" checkbox refresh.

@@ -1,0 +1,12 @@
+ZP-4423 — Journal fold: pair photo ids to surviving images (eg-pz-engineering-ai-pipeline #118, cicd/qa) — 5 Oct 2026
+NOT TESTABLE FROM THE WEB APP. The fix is inside the agent-runner engine (load_images / fold_entry / on_tool in runner/journal.py and
+journal_local.py, FOLD_VERSION 2026-09-16.1, MAX_PHOTO_CLAIMS). The web app only shows the Site Walk result; it has no way to make a
+photo "not staged yet" while the phone drains a journal entry, no view of the model's visible-photo set, the repair round, the
+claim cap or the fold cache. Every QA-Review item in the ticket (photo missing from the middle, dropped-photo claim rejected with
+"photo 'p0' was not shown for this entry", lookback entry_id, 20-claim cap, set-vs-dict apply_ops, cache invalidation) is an
+engine-level assertion; the ticket itself says "No automated test suite in this repo — verify by hand against the engine".
+Needs: the pipeline repo + a phone (or replayed journal) run on cicd/qa with log access. Ticket also notes cicd/dev still has the bug.
+Screenshots: Site Walks list (2 walks marked JOURNAL) and one Journal Review page
+https://acme.qa.egalvanic.ai/site-walks/5b85ca51-833a-4622-8146-83e6ec2c9a73 (3 entries · 2 photos, "Nothing interpreted yet").
+Interpret was not run (paid AI call), and the bug's condition (a photo that hasn't arrived when the entry is read) can't be made
+from the web.

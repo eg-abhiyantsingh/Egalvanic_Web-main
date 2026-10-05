@@ -1,0 +1,14 @@
+ZP-4454 — Prevent Deletion of Asset Class When It Is Assigned to an Asset (QA acme, index-CdsUTPRH.js, 5 Oct 2026, admin seat)
+Test data (all deleted afterwards): classes "QA-DEMO ZP4454 in-use class (delete me)" f48de99e-ecb6-474f-bb67-f7bc855c9c76 and
+"QA-DEMO ZP4454 unused class (delete me)" 83c3ad2e-ec16-4f16-843c-042cf1e0e1fa (Admin › Asset Classes › Create Asset Class);
+asset "QA-DEMO ZP4454 asset (delete me)" b9511465-b2de-4bc9-9867-f0e020d125e4 on site test site (Assets › Create Asset).
+PASS  Delete on the in-use class → confirm "Are you sure you want to delete …? This action can be undone later." → OK →
+      orange warning "Can't delete 'QA-DEMO ZP4454 in-use class (delete me)': this asset class is linked to 1 asset(s).
+      Remove it from those assets first." Dialog stays open, class kept.
+PASS  Server-side: DELETE /api/node_class/delete {id,userId} → 409 {code:"node_class_in_use", asset_count:1, error:…} (not only the UI).
+PASS  Asset unaffected: still lists class "QA-DEMO ZP4454 in-use class (delete me)".
+PASS  Unused class → Delete → OK → deleted (list 52 → 51).
+PASS  After the asset was deleted (asset page ⋮ › Delete Asset), deleting the class → 200 "Class deleted successfully".
+Note: the message gives the count, not asset names (the code comment says the server names "the first few" — not in ACs).
+Not tried: deleting another company's class from the PM seat — if the guard were missing it would really delete their class.
+Jira: moved to READY TO RELEASE 5 Oct 2026 (status only).

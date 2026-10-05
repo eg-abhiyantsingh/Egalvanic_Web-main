@@ -1,0 +1,10 @@
+ZP-4398 — AI report-config editor on SLD configs — re-check on the new QA build index-CdsUTPRH.js (5 Oct 2026)
+Unchanged since 30 Sep: Edit with AI on company SLD configs works (see zp4406), but the auto-picked preview site is still the
+A–Z-first site: GET /api/reporting/configs/<copy>/preview-entities → 50 sites, alphabetical, first "10 SEP 2026";
+"test site" (21bd10d4…, ~2,000 assets) still not in the list; Android Site 2 at position 39.        FAIL (as on 30 Sep)
+PASS  Other company's site — PM seat (not staff), 5 Oct ~14:35 IST: the picker list (preview-entities) gives PM 50 sites, all inside
+      PM's own 129; preview-html with PM's site Android Site 2 → 200, 5 pages; with the other company's site "Saveland Avenue Lofts"
+      f86052b7… → refused (CDN error page), nothing rendered. (The AI edit itself with that site as context was not run: it's a paid
+      call and it writes.)
+Screenshot 2: the site picker open — the list starts at "10 SEP 2026" and runs A–Z; "test site" isn't in it.
+Jira: left in Ready for QA (the auto-pick rule still fails).

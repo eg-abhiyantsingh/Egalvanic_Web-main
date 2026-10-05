@@ -200,6 +200,13 @@ public class BaseTest {
         opts.setAcceptInsecureCerts(true);
         opts.addArguments("--ignore-certificate-errors");
 
+        // -Dqa.unhandledPrompt=ignore keeps a native confirm()/alert() open until a test handles it
+        // (Selenium's default dismisses it on the next command). Unset = Selenium's default.
+        String prompt = System.getProperty("qa.unhandledPrompt", "");
+        if ("ignore".equalsIgnoreCase(prompt)) {
+            opts.setUnhandledPromptBehaviour(org.openqa.selenium.UnexpectedAlertBehaviour.IGNORE);
+        }
+
         // Capture native SEVERE browser logs so BrowserErrorCapture can drain them
         // in addition to its JS-injected hooks.
         org.openqa.selenium.logging.LoggingPreferences logPrefs =

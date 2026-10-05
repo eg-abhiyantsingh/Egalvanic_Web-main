@@ -1,0 +1,11 @@
+ZP-4590 — Issue severity list missing "Minor" (QA acme, index-CdsUTPRH.js, 5 Oct 2026)
+Avani (5 Oct): changed the Thermal Anomaly Severity formula so it returns Minor (Similar Minor 1–4 °C; Nominal ≤1 °C).
+QA: acme's Thermal Anomaly class (override 9cbb3bd9-253d-471c-9263-2c8917b6317d) still has the OLD formula:
+  options Nominal / Intermediate / Serious / Critical, °F Similar ≤5.4 Nominal · ≤27 Intermediate · else Critical, ΔT≤0 → null.
+  No issue class on QA contains "Minor" (global 88903684…, company fdcadc86… and acme checked).            NOT ON QA
+Live: Issues › Create Issue › Thermal Anomaly, Severity Criteria Similar, Problem 95 °F, Reference 90 °F → Delta T 5 →
+  Severity "Nominal" (new bands → Minor).                                                                    NOT ON QA
+Web Severity is calculated (no dropdown), as Avani says; Severity Criteria list reads Ambient, Indirect, Similar.
+Ticket's QA Review says "Environment: staging" — not tested there (QA-only rule; owner to say).
+Form cancelled, nothing saved.
+Jira: moved back to In Progress by the developer at 13:36 IST on 5 Oct (03:06 CDT).

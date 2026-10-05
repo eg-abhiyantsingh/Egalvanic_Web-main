@@ -1,0 +1,17 @@
+ZP-4432 — [Web] 500 on POST /api/program-compliance/{id}/acks (QA acme, index-CdsUTPRH.js, 5 Oct 2026, admin seat)
+Root cause per Avani: QA only — the ack tables were created by raw SQL scripts that hadn't been run on QA (24–25 Sep); no code change.
+Sentry EGALVANIC-REACT-APP-5RY: environment qa, 19 events, first 24 Sep 12:10, last seen 25 Sep 09:12 UTC (none since).
+PASS  Maintenance Portal › Compliance (site test site, 3,589 deviations) › Deviations › tick "UPS Maintenance · UPS · annual · 1 asset" ›
+      Acknowledge › Justification "QA-DEMO ZP-4432 ack re-check (delete me)" › Acknowledge →
+      POST /api/program-compliance/21bd10d4-…/acks {dev_keys:[1 key], justification} → 200 {acknowledged:1, group_id, success:true};
+      toast "1 deviation acknowledged."
+PASS  Bad input gets plain 400s, no raw SQL in the body (Avani's follow-up concern): {} → "dev_keys must be a list of 1..1000 keys";
+      no justification → "justification is required (max 2000 chars)"; unknown key → "1 key(s) do not match a current deviation";
+      bad date → "expires_on must be YYYY-MM-DD". Unknown site id → no data (CDN HTML).
+Cleanup: Acknowledgements › Delete acknowledgment › Delete → DELETE …/ack-groups/<id> 200; site back to 0 acknowledged.
+Site "ab" (8e845299-…, the original failing site) still has its 25 Sep acknowledgement (8 deviations) — written after the scripts ran.
+Tenant scope — PM seat (+project@, Project Manager, is_admin false, not staff), 5 Oct 2026 ~13:50 IST. Other company = sites
+outside acme's 247-site list (e.g. site f86052b7-1683-431f-a86f-f52c6dd5be39, WO aed4636d-ef1a-4e10-bc4b-b9f34805599e "TestSession1").
+PASS  own site test site 21bd10d4 → compliance 200 JSON; the other company's site f86052b7 → refused (CDN error page).
+PASS  POST acks with a no-op key: own site → 400 JSON validation; other company's site → refused (CDN error page). Nothing written.
+Jira: moved to READY TO RELEASE 5 Oct 2026 (status only).

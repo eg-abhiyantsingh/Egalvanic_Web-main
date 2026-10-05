@@ -1,0 +1,12 @@
+ZP-4429 — [Web] 504 timeout on GET /api/ir_session/{id}/assets/v2 (QA acme, index-CdsUTPRH.js, 5 Oct 2026, admin seat)
+Avani: resolved by ZP-4444 (ids first, then selectinload — shipped to prod in V2.2.1 on 28 Sep). No code change in this ticket.
+Sentry EGALVANIC-REACT-APP-4Z0: 105 events, last seen 2026-09-23 19:18 UTC (sabinoelectric, V2.1) — none after the 28 Sep deploy.
+QA, largest work order found: AutoTest_WO_99443 (1,076 assets) https://acme.qa.egalvanic.ai/sessions/9de85c9d-8059-416b-9972-0bd6d54afb78
+PASS  /assets/v2?limit=25&offset=0 → 200 in 1.64 s (cold) / 0.42 s; offset=1050 → 200 0.87 s; limit=100 sort=label desc → 200 1.23 s
+      (1.1 MB); search → 200 0.82 s. No 504.
+PASS  WO page opened from scratch: rows visible ~6.2 s after navigation (app start included); the page's assets/v2 call 0.71 s.
+Note: ZP-4444 itself was verified on QA on 29 Sep (v2.2.1 hotfix check). Production timing can't be measured here (QA only).
+Tenant scope — PM seat (+project@, Project Manager, is_admin false, not staff), 5 Oct 2026 ~13:50 IST. Other company = sites
+outside acme's 247-site list (e.g. site f86052b7-1683-431f-a86f-f52c6dd5be39, WO aed4636d-ef1a-4e10-bc4b-b9f34805599e "TestSession1").
+PASS  own QA-DEMO WO 51d54087 → assets/v2 200 JSON; the other company's WO aed4636d → refused (QA's CDN error page, no JSON).
+Jira: moved to READY TO RELEASE 5 Oct 2026 (status only).

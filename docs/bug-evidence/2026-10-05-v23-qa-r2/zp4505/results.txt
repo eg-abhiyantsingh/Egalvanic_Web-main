@@ -1,0 +1,14 @@
+ZP-4505 — Engineering Library Toggle Should Turn ON Automatically After Library Is Linked (QA acme, index-CdsUTPRH.js, 5 Oct 2026, admin) — FE PR #1594
+Test asset (QA-DEMO, kept): "QA-DEMO ZP4505 create-mode (delete me)" https://acme.qa.egalvanic.ai/assets/2163e6a0-3559-4c64-95b2-c427da54c768
+  (site test site, class Circuit Breaker, nameplate photo = docs/bug-evidence/zp-bulk-extraction-review-surfaces/CB4-squared-powerpact-control.jpg)
+Create mode: Assets › Create Asset › Circuit Breaker › Nameplate upload → Engineering "Use library" OFF; Extract from Photos menu:
+  "Attributes" enabled, "Attributes + Library" DISABLED with "Available once this asset is created." → the library can't be linked by
+  Extract + Library before the asset exists (by design), so the create flow continues in edit mode.        (create-mode: n/a by design)
+Edit mode (existing asset): ⋮ › Edit Asset → "Use library" OFF → Extract from Photos › Attributes + Library (1 paid run):
+  POST /extraction/bulk-job/submit 200 → status polls → POST /extraction/nameplate-agent/apply 200 (attributes) → Bulk Extraction Job
+  dialog → after 156 s: "Square D PowerPacT H-Frame (Powerpact HJ), Thermal-Magnetic, 15-150A · 150A frame / 150A · High" → Apply →
+  POST /extraction/asset-agent/apply 200.
+PASS  "Use library" turned ON by itself; LIBRARY MATCHED card "Square D · … — HJL36150", Trip Configuration "HJ — 150A @ 600V (25kA)".
+PASS  Save Changes → "…asset is updated successfully" → page reload → Edit Asset: "Use library" ON, LIBRARY MATCHED HJL36150 kept.
+Cost: one paid extraction job (attributes + library).
+Jira: moved to READY TO RELEASE 5 Oct 2026 (status only).

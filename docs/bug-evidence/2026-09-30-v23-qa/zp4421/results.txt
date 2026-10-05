@@ -1,0 +1,10 @@
+ZP-4421 on acme QA (index-DXSz_B6n.js), 30 Sep 2026 ~19:30 IST, admin
+Path: WO https://acme.qa.egalvanic.ai/sessions/4c2317d2-11fe-40b0-98b7-c7d0a7fac7d6 → right-click asset "asset" (ATS) → Add Procedure → tab Standalone Form
+- search box "Search forms by name…" above the list; 42 forms, groups FOR THIS ASSET / OTHER FORMS, each with "Applies to: …"
+- "ats" → 4 matches (ATS inspection, 70B - ATS - All Types ×2, ATEST2 ATS …): case-insensitive substring OK
+- "automatic" → "No forms match “automatic”." although several forms read "Applies to: Automatic Transfer Switch …" → Applies-to matching NOT implemented (ticket: "match against form name and the 'Applies to' text")
+- "zzqq" → "No forms match “zzqq”." (ticket wording: "No forms found")
+- tick ATS inspection → search 70B → tick 70B - ATS - All Types → clear: both still ticked, button "Add (2)"
+- Add not pressed (not a QA-DEMO work order)
+Code (SessionDetail chunk): Me = Z ? k.filter(V => (V.title||V.key||"").toLowerCase().includes(Z)) : k  — title/key only
+Intel: no PR for ZP-4421; the dialog comes from ZP-3312 (FE #1008, 17 Jul) reworked in #1325 (26 Aug); moved To Do → Ready for QA in 10 s on 28 Sep

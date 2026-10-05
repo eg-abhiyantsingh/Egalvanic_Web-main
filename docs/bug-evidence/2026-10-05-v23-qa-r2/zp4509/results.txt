@@ -1,0 +1,12 @@
+ZP-4509 — IR Photo Editor: Temperature Unit Conversion and Parameter Persistence (QA acme, index-CdsUTPRH.js, 5 Oct 2026, admin) — FE PR #1589
+Photo: FOTRIC_2026-09-29_0038 (95953523-fc7a-46d0-8df5-0d08bbe27c4e) on WO "Work Order - Sep 29, 4:49 PM"
+  https://acme.qa.egalvanic.ai/sessions/40c61863-0d89-4bd6-ac12-2c2be4e435f1 → IR Photos tab → row action "Edit IR Annotations".
+PASS  Opens in °F: Reflected 72, Atmospheric 72, IR-window 70; spots 1 = 90.0, 2 = 111.8.
+PASS  °F → °C (real click): Reflected 22.2, Atmospheric 22.2, IR-window 21.1 (labels "(°C)"), spots 32.2 / 44.4, scene 46.3/28.5/32.6 °C
+      — the values convert, not just the unit label (issue 1).
+PASS  Reflected → 25 °C, Apply parameters → POST /ir_photo/<id>/measure 200 + /render 200 with reflected_c 25, atmospheric_c 22.2,
+      ir_window_c 21.1; Save → POST /ir_photo/<id>/save 200 with the same values.
+PASS  Close, reopen: Reflected (°F) = 77 (= 25 °C), Atmospheric 72, IR-window 70, emissivity unchanged — the saved values come back
+      instead of the upload's (issue 2).
+Restored afterwards: Reflected 72 °F → Apply → Save → reopened: 72 / 72 / 70 (original state).
+Jira: moved to READY TO RELEASE 5 Oct 2026 (status only).

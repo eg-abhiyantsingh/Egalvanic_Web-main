@@ -1,0 +1,10 @@
+ZP-4519 — Z | FE | Update Issue Field Sequence (QA acme, build index-CdsUTPRH.js, 5 Oct 2026, admin seat) — FE PR #1603
+Edit Issue (Thermal Anomaly issue https://acme.qa.egalvanic.ai/issues/b2a2dc41-882c-4629-a465-e0e0d77dac97):
+  BASIC INFO (Priority, Issue Class, Asset, Title) → DETAILS = class attributes (Problem Location, Severity Criteria, Problem Temp,
+  Reference Temp, Delta T, Severity, Current Draw, Current Rating, Voltage Drop) → Description → Proposed Resolution →
+  SAFETY & NOTIFICATION (Immediate Hazard, Customer Notified) → IR PHOTOS → Issue Photos → RESOLUTION.       PASS (Issue Details order)
+Add Issue (Issues › Create Issue, Thermal Anomaly picked): BASIC INFO → class attributes → Description → Proposed Resolution →
+  SAFETY & NOTIFICATION → Issue Photos (IR PHOTOS only with a work order + asset). Nothing removed.             PASS
+"Mark as Thermal Anomaly" is the mobile flow (ticket cloned from Android ZP-4506); the web build has no such screen.
+Form cancelled, nothing saved.
+Jira: moved to READY TO RELEASE 5 Oct 2026 (status only).

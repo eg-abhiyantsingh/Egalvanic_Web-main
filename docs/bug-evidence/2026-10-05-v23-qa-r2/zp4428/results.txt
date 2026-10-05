@@ -1,0 +1,18 @@
+ZP-4428 — [Web] 500 on POST /api/mapping/node-session/bulk-create (QA acme, index-CdsUTPRH.js, 5 Oct 2026, admin seat)
+Avani: same bug as ZP-4181 (Quick Count created nodes without X-Direct-Write → queued → bulk-create hit fk_node → 500). Fix in ZP-4181.
+Sentry EGALVANIC-REACT-APP-2PP: still occurring on PRODUCTION (last 1 Oct 2026 19:31 UTC, twielectric, web V2.2) — the fix isn't on prod yet.
+PASS  QA-DEMO WO https://acme.qa.egalvanic.ai/sessions/51d54087-6a74-4ddd-9698-f34e40e14015 › Actions › New Quick Count ›
+      Add Asset Type "Fuse" × 2 › Create 2 Assets → POST /node/create 201 ×2 (X-Direct-Write: true) →
+      POST /mapping/node-session/bulk-create 201 (X-Direct-Write: true) {created:{count:2}} → back on the WO. No 500.
+      New nodes: d45b3d40-92aa-4e00-b80c-b97bf95abb5c, f43fada9-70e0-4… (Fuse, in the QA-DEMO WO).
+PASS  Backend half of ZP-4181 on QA (direct write): missing node id → 400 "node not found: <id>"; missing session → 400
+      "session not found: <id>"; node already linked → 201 count 0 (no unique-constraint 500).
+Note  Without X-Direct-Write the call is queued (200 _mutation status "received") even for a missing node; its later failure isn't
+      visible to the caller (by design of the inbox path).
+Not testable on QA: cross-tenant node/session ids ("node-session links are now tenant-gated") — needs a second tenant.
+Tenant scope — PM seat (+project@, Project Manager, is_admin false, not staff), 5 Oct 2026 ~13:50 IST. Other company = sites
+outside acme's 247-site list (e.g. site f86052b7-1683-431f-a86f-f52c6dd5be39, WO aed4636d-ef1a-4e10-bc4b-b9f34805599e "TestSession1").
+PASS  bulk-create (X-Direct-Write) with a random node id: own WO 51d54087 → 400 "node not found: <id>"; the other company's WO
+      aed4636d → refused before the node check (CDN error page). So the session is tenant-checked. A random node id means
+      nothing could be linked. (Replaces the "needs a second tenant" note above for the session half.)
+Jira: moved to READY TO RELEASE 5 Oct 2026 (status only).

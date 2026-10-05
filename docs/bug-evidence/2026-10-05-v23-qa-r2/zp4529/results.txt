@@ -1,0 +1,12 @@
+ZP-4529 — Edit with AI shows "Could not start the AI edit (HTTP 200)" when the AI usage limit is used up (QA, index-CdsUTPRH.js, 5 Oct)
+FE PR #1602 title: "Edit with AI says the request was blocked by the firewall instead of HTTP 200". It treats a NON-JSON 200 reply
+(the CDN firewall rewriting a block into the app's index.html) as a firewall block. There is no AI-limit or reset-time handling
+anywhere in the QA build (no "limit"/"reset"/"usage" strings in the editor; 429 is not special-cased).
+QA's firewall did not block "../../../../etc/passwd" or "<script>" in a multipart body (preview-html answered JSON), so a real block
+can't be produced on QA. Simulated in my browser only (the ai-edit POST answered inside the page; no AI job ran; status stayed "ready"):
+  SIMULATED firewall reply (200, text/html)        → "This request was blocked by our network firewall … Try rewording …"   PASS (dev's fix)
+  SIMULATED 200 JSON with no error/message         → "Could not start the AI edit (HTTP 200)."                              still shown
+  SIMULATED 429 JSON with a limit sentence          → shows the server's sentence as-is                                      (server-dependent)
+Verdict vs the ticket as written (limit used up → clear limit message + reset time, never "HTTP 200"): NOT FIXED in the web build —
+the fix targets a different cause. Whether the real limit reply is a firewall-style page, a JSON error, or a bare 200 is unknown from QA.
+Config used: Annual Maintenance Report (Copy) https://acme.qa.egalvanic.ai/reporting/config/0eee082a-af4d-4805-9ae0-c19d3996af9a

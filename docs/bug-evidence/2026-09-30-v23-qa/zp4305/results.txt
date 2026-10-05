@@ -1,0 +1,29 @@
+ZP-4305 — [Web] Resolve issues directly from the issue form (QA, build index-DXSz_B6n.js, 30 Sep 2026 19:30–20:15 IST)
+
+Test data (all QA-DEMO, Android Site 2):
+  issue   https://acme.qa.egalvanic.ai/issues/f753f5a4-da0b-4b0e-b197-395b41a79c43  ("=1+1 QA-DEMO ZP-4366 formula check (delete me)")
+  WO      https://acme.qa.egalvanic.ai/sessions/51d54087-6a74-4ddd-9698-f34e40e14015 ("QA-DEMO review says starts empty 25 Sep delete me 1790346934125")
+  issues  bf9e3a07-c5e6-4e97-8574-2ce05fb96411, f96c3bb4-fe0a-41fd-a3ec-f79c0f0ce059 ("QA-DEMO WO Issue … delete me")
+
+PASS  Mark Resolved opens "Resolve Issue?"; its Mark Resolved stays disabled until the description has text.
+PASS  Description + 1 after photo → S3 PUT 200, POST /api/photo/create 201 (type issue_after), PUT /api/issue/update 200
+      → status Resolved, resolved_at + resolved_by set, resolution_description saved.
+PASS  Reopened: form read-only (0 of 13 inputs editable), RESOLUTION shows text + photo + "Resolved 30/09/2026, 19:31:06",
+      Mark Open is the only action.
+PASS  Mark Open → "Reopen Issue?" → Reopen Issue → status Open, resolved_at/resolved_by null, description and photo kept.
+PASS  /services → Create Service: no Preventive/Corrective choice in the dialog.
+PASS  Pull-Through Work is gone from the nav.
+PASS  /issues → Add to Work Order → select 2 → Existing WO → POST /api/ir_session/<wo>/add-issues body {"issue_ids":[2 ids]} only
+      → {"invalid_issue_ids":[],"issues_added":2,"nodes_linked":0}; WO Issues tab = 2; WO Forms tab gained no break/fix form.
+PASS  Malformed id: {"issue_ids":["not-a-uuid", <already-linked id>]} → invalid_issue_ids ["not-a-uuid"] (no duplicate row;
+      note: the already-linked id is counted again in issues_added = 1).
+
+DEFECT (small)  After Reopen Issue, the issue page header still shows "Resolved" (both status chips) until a page reload;
+                after reload it shows "Open".
+DEFECT (small)  Acceptance says "/pull-through-work no longer routes" — typing /pull-through-work still opens a page with
+                only the old title "Pull-Through Work" and nothing else (no redirect, no not-found message).
+
+Not tested: after-photo upload still in flight when pressing Mark Resolved (the 140 KB upload finished in < 1 s);
+SCCR hand-resolve + recheck; device-rule dialog corrective filter; Before/After grouping in the issue workbench.
+Side note: typing fast dropped one character in the description ("re-teste"); the same happened in a control field
+(Edit Issue → Description), so it is an automation artifact, not this ticket.

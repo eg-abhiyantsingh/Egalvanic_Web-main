@@ -1,0 +1,14 @@
+ZP-4301 — [Web] Surface asset delete-refusal reasons (name the collapsed SLD view) and fix PM plan matching (QA, 30 Sep 2026 21:10–21:22 IST)
+
+Same test data as ZP-4302 (site "10 SEP 2026", view "QA-DEMO ZP-4302 view 77203 (delete me)", collapsed asset E 2bab73dc-96d8-4d08-a6e0-86b9f6623ec8).
+
+PASS  The server's refusal names the view: DELETE /api/node/delete/<E> (no allow_collapsed) and POST /api/node/bulk-delete [E] →
+      400 collapsed_node_not_deletable "Collapsed nodes can't be deleted — this node is collapsed in the SLD view "QA-DEMO ZP-4302
+      view 77203 (delete me)". Open that view and expand it first." + views[].
+PASS  Negative: a normal asset (D) deleted cleanly, no toast.
+NOT REACHABLE ON THE WEB  Since ZP-4302 the Assets list and asset page send allow_collapsed=true, so a collapsed asset simply deletes
+      there and the named-view toast cannot appear (ACs 1–2 as written). The SLD editor stops the delete itself first.
+NOT TESTED  The bulk "Couldn't delete "<label>": … (+N more)" toast on a partly failing bulk delete (needs a refusal for another
+      reason, e.g. an asset already deleted in a second tab); the PM-plan matching part (QA sites have no maintenance programs).
+Code (QA build): list delete toast `Couldn't delete "<label>": <server message or HTTP code>`; asset page `Couldn't delete asset: <reason>`;
+      bulk delete continues past failures and collects them.
