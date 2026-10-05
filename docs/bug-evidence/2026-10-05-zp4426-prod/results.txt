@@ -1,0 +1,24 @@
+ZP-4426 — [Web] 500 on GET /api/condition-assessment/assets (new regression) — PRODUCTION check, acme.egalvanic.ai, 5 Oct 2026 ~18:55 IST
+Owner asked: "check production - CP client portal user". Read-only. Prod web build index-8_W3WIa8.js (V2.2).
+User: Nency's prod "Client Portal" seat (+cmprod@), signed in through the Selenium framework (2FA enrolment declined: "Set up later").
+
+FINDING 1 — this login is NOT a pure Client Portal user on production:
+  /auth/me roles = ["Client Portal" 2a85145f-31ca-4e2c-8dd2-82c958cd6380, "Admin" e9ad3158-0af5-4b7e-9c2d-000000003158], is_admin true,
+  119 permissions incl. features.condition_assessment.view (from Admin). The X-Active-Role-Id header no longer narrows permissions
+  (same 119 with either role id), so a Client-Portal-only user can't be simulated with it.
+  => Avani's prediction (a CP-only user on prod gets 422) can't be confirmed or refuted with our prod logins.
+FINDING 2 — the 500 itself is gone on prod:
+  /api/condition-assessment/{overview,findings,assets}?sld_id=<Test Site a6f5fe55…> → 200 JSON.
+  ?sld_id=all → refused (QA/prod error page, not JSON; consistent with the fix's 404), not a 500.
+  Sentry, last 30 days, errors on condition-assessment URLs: production last seen 2026-09-25 17:11 UTC (kroon), 21 Sep (eaton,
+  phelectricalcontractor), 18 Sep (acme) — none since v2.2.1 (28 Sep). Staging: 53 events, last 2026-10-05 09:56 UTC.
+FINDING 3 — the reopen trigger is on STAGING: issues 59X / 5AS / 5A1 got 422 events today 09:52–09:56 UTC from
+  abhiyant.singh+cpstage@ (Client Portal, staging) on /maintenance-portal/condition.
+FINDING 4 — on prod, the portal page is plan-locked for this site: /maintenance-portal/condition for "Test Site 1 - Aiden" shows
+  "Not included in your plan — This page isn't included in this account's plan" (padlocks on Condition Assessment, Locations,
+  Panel Schedules, SLD, Maintenance Program) and makes NO condition-assessment calls.
+  Site Data › Condition Assessment (/pm-readiness) on the same site loads: overview/findings/assets → 200 (Findings 1, Assets 42).
+CONTEXT — testcase/prod_permissions-by-role_202606151113.csv (prod export, 15 Jun 2026): Client Portal (2a85145f…) HAD
+  features.condition_assessment.view then; Avani says migration zp4123_a1 (ZP-4123) removed it later. Not re-checkable from the web.
+NEEDED to finish the CP part: a production user holding ONLY the Client Portal role, on a site whose account's plan includes the
+  portal Condition Assessment page. Nothing was changed on production (no clicks that save; reads only).
