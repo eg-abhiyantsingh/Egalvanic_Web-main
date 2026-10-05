@@ -1,0 +1,33 @@
+*QA result: PASS on production — a Client Portal user can open Condition Assessment, and the 500 is gone*
+Tested on production (acme.egalvanic.ai), web build {{index-8_W3WIa8.js}} (V2.2), 5 Oct 2026, read-only, as a user whose only role is Client Portal (not Egalvanic staff).
+
+*Steps*
+# Sign in to https://acme.egalvanic.ai as a user whose only role is Client Portal.
+# Open Maintenance Portal › Condition Assessment on the site "Test Site 1 - Aiden", then open the Asset Details tab.
+# Call {{GET /api/condition-assessment/overview}}, {{/findings}} and {{/assets}} directly for another of the user's sites, and once with {{sld_id=all}}.
+
+*What happened*
+* The page loads with data: Findings 1, Asset Details 42. The page's own three calls ({{overview}}, {{findings}}, {{assets}}) all return 200. No 422 and no error message.
+* The Asset Details tab lists the 42 assets (this is the {{/assets}} call in this ticket's title).
+* The direct calls for another of the user's sites also return 200 with data.
+* {{sld_id=all}}, the value behind the 500, is refused with an error page instead of a 500.
+* This user's permissions on production include {{features.condition_assessment.view}} (35 permissions, Client Portal role only), and the page shows the account license as Full Access.
+* Sentry: no production errors on the condition-assessment URLs since 25 Sep 17:11 UTC, before v2.2.1 shipped on 28 Sep.
+
+*About the 422 that reopened this ticket*
+* It came from staging: the three linked Sentry issues (59X, 5AS, 5A1) got 422 events today, 09:52–09:56 UTC, from a staging Client Portal user on /maintenance-portal/condition.
+* On production I could not reproduce it with this Client Portal user. Another production user (Client Portal + Admin) saw this page locked on the same site ("Not included in your plan"), and that locked page makes no condition-assessment calls.
+
+*Not covered*
+* Staging, where the 422 events come from, was not re-tested.
+* A Client Portal-only user whose account license is not Full Access, calling these endpoints.
+
+*Test data*
+* Page: https://acme.egalvanic.ai/maintenance-portal/condition (site "Test Site 1 - Aiden")
+
+*Screenshots*
+!QA-5Oct-4426-1_client_portal_user_condition_assessment_loads.png|width=640!
+_Client Portal user: Maintenance Portal › Condition Assessment loads (Findings 1, Asset Details 42)._
+
+!QA-5Oct-4426-2_client_portal_user_asset_details_42_assets.png|width=640!
+_The Asset Details tab lists the 42 assets (the /assets call)._

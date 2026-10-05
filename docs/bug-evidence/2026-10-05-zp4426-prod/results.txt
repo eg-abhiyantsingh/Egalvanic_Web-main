@@ -22,3 +22,12 @@ CONTEXT — testcase/prod_permissions-by-role_202606151113.csv (prod export, 15 
   features.condition_assessment.view then; Avani says migration zp4123_a1 (ZP-4123) removed it later. Not re-checkable from the web.
 NEEDED to finish the CP part: a production user holding ONLY the Client Portal role, on a site whose account's plan includes the
   portal Condition Assessment page. Nothing was changed on production (no clicks that save; reads only).
+
+UPDATE 5 Oct ~19:35 IST — owner supplied a Client-Portal-only production user (abhiyant.singh+cp1@):
+  /auth/me: roles = [Client Portal 2a85145f…] only, is_admin false, 35 permissions, INCLUDING features.condition_assessment.view;
+  160 accessible sites. Portal shows LICENSE "Full Access" for the account.
+  Maintenance Portal › Condition Assessment, site "Test Site 1 - Aiden" (d771296b…): page loads; its own calls overview/findings/assets
+  → 200; Findings 1, Asset Details 42; Asset Details tab lists 42 assets. No 422, no error.
+  Direct calls for another accessible site (9a6adbd6…): overview/findings/assets → 200 with data. sld_id=all → refused (error page).
+  => PASS on production for a Client Portal user. The 422 that reopened the ticket is from STAGING (+cpstage, today 09:52–09:56 UTC).
+  Jira: QA comment 44855 posted on ZP-4426 with 2 screenshots. Status left in Ready for QA (owner's call: RTR vs Done; v2.2.1 is released).
