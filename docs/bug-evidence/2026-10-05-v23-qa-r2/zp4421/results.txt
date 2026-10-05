@@ -5,3 +5,11 @@ PASS  "ats" → ATS inspection, 70B - ATS - All Types ×2, ATEST2 ATS … (name 
 FAIL  "automatic" → "No forms match “automatic”." although several forms read "Applies to: Automatic Transfer Switch (<= 1000V) …" —
       the ticket asks to match the form name AND the "Applies to" text. Unchanged since 30 Sep (no PR for this ticket).
 Cancelled, nothing added.
+RE-CHECK on the NEW QA build index-C913tyjW.js (deployed this afternoon), 5 Oct ~18:00 IST, real key presses in the search box:
+  The box's placeholder reads "Search forms by name…". 42 forms listed; 34 of them read "Applies to: Automatic Transfer Switch …".
+  "automatic" → 0 results, "No forms match “automatic”."                                         FAIL (Applies-to not searched)
+  "transfer"  → 4 results, all with "Transfer" in the NAME ("Transfer Testing", "Transfer Time Test" …); forms whose Applies-to
+               lists "Transfer Switch" but whose name doesn't (e.g. "70B - ATS - All Types") are not shown.          FAIL (same)
+  "ATS"       → name matches ("ATS inspection", "70B - ATS - All Types")                             control: search works
+  Ticket: "Filter the list in real-time as the user types — match against form name and the "Applies to" text". No comment on the
+  ticket changes that. VERDICT: FAIL, certain → Jira To Do (owner instruction 5 Oct: move a ticket to To Do only when 100% sure).

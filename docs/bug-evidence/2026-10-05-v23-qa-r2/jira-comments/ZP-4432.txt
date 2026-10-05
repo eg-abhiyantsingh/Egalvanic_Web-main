@@ -1,0 +1,33 @@
+*QA result: PASS*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-CdsUTPRH.js}}, 5 Oct 2026.
+Moved to READY TO RELEASE.
+
+*Steps*
+# Sign in as an admin user. Open Maintenance Portal › Compliance, site "test site", Deviations tab.
+# Tick "UPS Maintenance · UPS · annual · 1 asset" › Acknowledge › type a justification › Acknowledge.
+# Send the acknowledge request with bad input: an empty body, no justification, a deviation key that doesn't exist, a bad date.
+# Delete the test acknowledgement: Acknowledgements › Delete acknowledgment › Delete.
+# Sign in as a Project Manager (not Egalvanic staff). Read compliance for your own site and send a test acknowledge there, then try to read and to acknowledge on another company's site by its id.
+
+*What happened*
+* The acknowledge request ({{POST /api/program-compliance/…/acks}}) now returns 200 instead of 500: acknowledged 1, and the toast says "1 deviation acknowledged."
+* Bad input gets a plain 400 with no raw SQL in the message: empty body \{\} → "{{dev_keys}} must be a list of 1..1000 keys"; no justification → "justification is required (max 2000 chars)"; unknown key → "1 key(s) do not match a current deviation"; bad date → "{{expires_on}} must be YYYY-MM-DD".
+* Cleanup: Delete acknowledgment → 200, and the site is back to 0 acknowledged.
+* The site from the original error, "ab", still has its 25 Sep acknowledgement (8 deviations), written after the missing SQL scripts were run on QA.
+* Project Manager, own site: compliance loads (200), and a test acknowledge with a key that matches no deviation gets the normal 400 input error. Another company's site: reading and acknowledging are both refused (QA's server answers with its standard error page; no data comes back). Nothing was written.
+* Root cause (Avani): the ack tables are created by SQL scripts that had not yet been run on QA on 24–25 Sep; no code change. So this pass shows the QA database fix holds. Sentry EGALVANIC-REACT-APP-5RY: environment qa, 19 events, last seen 25 Sep 09:12 UTC, none since.
+
+*Not covered*
+* Production: not re-tested. The ticket says production, but Avani found the errors only on QA.
+* Whether a real 500 from this route still shows the raw SQL error to the browser (Avani's follow-up, for a separate ticket): not checked, because this test produced no 500.
+
+*Test data*
+* Page: https://acme.qa.egalvanic.ai/maintenance-portal/compliance (site: test site)
+* Another company's site used for the refusal check: {{f86052b7-1683-431f-a86f-f52c6dd5be39}}
+
+*Screenshots*
+!QA-5Oct-4432-1_acknowledge_dialog_with_justification.png|width=640!
+_Acknowledge with a justification._
+
+!QA-5Oct-4432-2_after_ack_toast.png|width=640!
+_"1 deviation acknowledged."_

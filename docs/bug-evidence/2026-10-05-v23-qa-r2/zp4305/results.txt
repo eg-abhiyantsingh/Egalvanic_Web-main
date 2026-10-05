@@ -7,3 +7,8 @@ DEFECT (smaller than 30 Sep)  ⋮ › Edit Issue › Mark Open → "Reopen Issue
       soon as the form is closed (Cancel) — on 30 Sep it needed a page reload.
 DEFECT (unchanged)  Typing /pull-through-work still opens a page with only the title "Pull-Through Work" (AC: "no longer routes").
 Other 30 Sep passes not re-run (no PR change to this flow since): photo upload, Add to Work Order, Create Service without Preventive/Corrective.
+RE-CHECK on the NEW QA build index-C913tyjW.js, 5 Oct ~18:03 IST, with a control:
+  /pull-through-work → a blank page whose only content is the heading "Pull-Through Work".
+  /zz-qa-no-such-page (made-up address) → a blank page with no heading.
+  The QA bundle has no route path "/pull-through-work" any more; only the page-title map still has "Pull-Through Work". So the page is
+  gone and only the old title is left — a cosmetic leftover, not a working route. NOT a certain fail → Jira left in Ready for QA.

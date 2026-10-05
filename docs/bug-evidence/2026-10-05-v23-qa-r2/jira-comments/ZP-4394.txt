@@ -1,0 +1,29 @@
+*QA result: PARTLY TESTED*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-CdsUTPRH.js}}, 5 Oct 2026.
+
+*Steps*
+# Open the test work order (link under Test data) › More › Forms › "test kd transformer" (Torque Record).
+# In Full Form, look at the two top-level sections in the left list (a green check means done).
+# Load the saved form: {{GET /api/eg-form-instance/by-session/51d54087-6a74-4ddd-9698-f34e40e14015}}.
+# Close the form without saving.
+
+*What happened*
+* Both top-level sections still show as done, as set on 30 Sep: a green check next to each in the left list, and the toggle's tooltip reads "Mark Not Done" on both.
+* The saved form (by-session response) has {{section_states}} with {{done: true}} for both sections, {{measurements}} and {{per_connection_torque_record}}.
+* Passed on 30 Sep (build {{index-DXSz_B6n.js}}), not re-run today: in Full Form each of the 2 top-level sections had a Section Done toggle and Verdict had none; turning both on and saving as draft changed the work order's Forms "Sections" from 0/2 to 2/2; the by-node list ({{GET /api/eg-form-instance/by-session/<work order id>/by-node/<node id>}}) also returned {{section_states}}.
+
+*Not covered*
+* The test-equipment select offering only equipment of the section's class (the builder's "Equipment classes" setting on a Test Equipment select), and an empty list for a class with no test equipment; this needs a test form with a Test Equipment select and test equipment in 2 classes.
+* Editing or creating a form in the builder without switching your active role; this needs a test user whose active role is not Admin.
+* The work-order checkbox refreshing without a page reload after a change (Add Procedure).
+* iOS: the class-filtered select and the full-form Section Done toggle (only the web app was checked).
+
+*Test data*
+* Work order: https://acme.qa.egalvanic.ai/sessions/51d54087-6a74-4ddd-9698-f34e40e14015
+
+*Screenshots*
+!QA-5Oct-4394-1_torque_record_sections_still_done.png|width=640!
+_Today: both sections still done._
+
+!QA-30Sep-4394-2_wo_forms_sections_2of2_after_save_draft.png|width=640!
+_30 Sep: the work order's Forms tab, Sections 2/2._

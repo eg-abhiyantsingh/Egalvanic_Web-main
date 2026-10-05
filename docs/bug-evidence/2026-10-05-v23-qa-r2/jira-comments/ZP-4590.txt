@@ -1,0 +1,30 @@
+*QA result: FAIL on QA — the fix is not on QA yet*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-CdsUTPRH.js}}, 5 Oct 2026.
+The developer moved this back to In Progress at 13:36 IST on 5 Oct.
+
+*Steps*
+# Issues › Create Issue › Thermal Anomaly. Severity Criteria Similar, Problem 95 °F, Reference 90 °F. Read Delta T and Severity.
+# Admin › Issue Classes › Thermal Anomaly › Severity: read the formula.
+
+*What happened*
+* Delta T 5 °F → Severity "Nominal". A 5 °F difference is about 2.8 °C, which is in the "Minor" band (1 to 4 °C) of Avani's new Similar bands.
+* acme's Thermal Anomaly class still has the old formula (Similar: up to 5.4 °F Nominal, up to 27 °F Intermediate, else Critical). None of the issue classes I checked on QA (the global level, the company level and acme's own override) contains "Minor".
+* Avani's change is an edit to the Thermal Anomaly class's Severity formula, and her comment says other companies keep the old formula until they are updated. acme's Thermal Anomaly class on QA needs the same edit before the new bands can be tested here, so this result does not test the new formula itself.
+* On Web, Severity is calculated, with no dropdown, as Avani says. So the order part of the ticket can't be checked on Web.
+
+*Not covered*
+* Staging (the environment in the ticket's QA Review) was not tested; this result is for QA only.
+* The mobile app's severity list and its order were not checked.
+* Only Severity Criteria "Similar" was tried, and only through Issues › Create Issue; Ambient, Indirect and the Mark as Thermal Anomaly flow were not.
+* Not run: saving an issue at each severity, the IR report chart check, a second company's severity formula, and the check that existing issues keep their saved severity.
+
+*Test data*
+* Issue Classes: https://acme.qa.egalvanic.ai/issue-classes
+* Add Issue on site "test site" (acme), from https://acme.qa.egalvanic.ai/issues. The form was cancelled; nothing was saved.
+
+*Screenshots*
+!QA-5Oct-4590-1_add_issue_similar_95_90F_deltaT_5_severity_nominal.png|width=640!
+_Similar 95 / 90 °F → Delta T 5 → Nominal (should be Minor)._
+
+!QA-5Oct-4590-2_severity_formula_old_bands.png|width=640!
+_The class formula on QA: Similar up to 5.4 °F → Nominal (old bands)._

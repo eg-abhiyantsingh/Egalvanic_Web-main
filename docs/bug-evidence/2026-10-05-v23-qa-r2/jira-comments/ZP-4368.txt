@@ -1,0 +1,33 @@
+*QA result: PASS*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-CdsUTPRH.js}}, 5 Oct 2026.
+Moved to READY TO RELEASE.
+
+*Steps*
+# With no sign-in, call the /lookup routes for a site, and the issues route for the whole company.
+# Signed in as an acme user, call the issues route for the whole company and the v2 nodes route for an acme site.
+# Signed in as a Project Manager (not Egalvanic staff), call all seven routes for one of the PM's own sites and for another company's site, "Saveland Avenue Lofts". Then call the issues route with another company's id.
+
+*What happened*
+* No sign-in → 401 on the five routes called today: issues for a site, issues for the whole company, v2 nodes, v1 nodes and node-class-counts. filter-options also gave 401 on 30 Sep.
+* Own company → 200 (1,168 issues company-wide; the site's assets). For comparison, the PM's own site → 200 on all seven routes.
+* *New today:* the other company's site is refused (QA's server answers with its standard error page; no data comes back) on all seven routes in the ticket's QA Review (v2 nodes, filter-options, v1 nodes, tasks, node-class-counts, node-subtype-counts, issues). Because of that error page I can't see whether the code is 404 as the ticket says. Another company's id gets 422 "You do not have access to this company's data."
+* Passed on 30 Sep (build {{index-DXSz_B6n.js}}), not re-run today, tested under ZP-4341 (same pull requests): NFPA 70B subcategory names (in the list and on an existing issue), nested Assets, Copy Last Row copying the last row's values, and the Sections counter leaving out the Verdict section (2/2).
+* *Known, separate (first found 11 Sep, not in this ticket):* the four /lookup calls tested (issues, v2 nodes, v1 nodes, node-class-counts) still return 200 with the issues and assets of an acme site the PM isn't assigned to ("Z - Hospital"), while {{/sld/<id>/resolve-service-methods}} (the ZP-4303 call) refuses the same site. Inside one company, /lookup doesn't check which sites the user is assigned to.
+
+*Not covered*
+* Tasks and node-subtype-counts were not called without sign-in.
+* Copy Last Row leaving label-only, disabled and calculated cells blank, and keeping override locks: QA has no form table with those cells that can be added to a work order, so this was checked only in the build's code.
+* Submit not warning about unmarked sections: I checked only the Sections counter and did not submit the form.
+* The iOS parts are tested under ZP-4467.
+* The database migration check (one migration head, and a downgrade that restores the old subcategory names) can't be done from the web app.
+
+*Test data*
+* Other company's site: Saveland Avenue Lofts {{f86052b7-1683-431f-a86f-f52c6dd5be39}} (not one of acme's 247 sites); another company's id used: {{fdcadc86-aa7b-4363-9d2a-f0bb3b1107df}}
+* acme site not assigned to the Project Manager: Z - Hospital {{d5d99deb-9554-4774-99d1-16eb1ded0735}}
+
+*Screenshots*
+!QA-5Oct-4368-1_issues_page_own_company.png|width=640!
+_The Issues page for one acme site loads as usual (1–25 of 453 issues)._
+
+!QA-30Sep-4368-1_own_company_issues_load_clean.png|width=640!
+_30 Sep: signed in as an acme admin, the Issues page for Android Site 2 loads its own issues._

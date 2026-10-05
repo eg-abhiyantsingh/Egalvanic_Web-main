@@ -1,0 +1,29 @@
+*QA result: NOT TESTABLE FROM THE WEB APP*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-CdsUTPRH.js}}, 5 Oct 2026.
+
+*Steps*
+# Open Site Walks (left menu, under Sales).
+# Open a walk marked JOURNAL (link under Test data). The Journal Review page opens.
+
+*What happened*
+* The fix is inside the engineering AI pipeline (the agent-runner's journal fold), not in the web app.
+* The web shows the journal entries and offers "Interpret" (a paid AI run; QA did not run it), but it can't create the bug's condition: a photo that hasn't arrived when the entry is read. It also doesn't show which photos the AI was shown, the retry when the AI names a photo it wasn't shown, the 20-claim limit, or the results saved from earlier reads.
+* Every item in the ticket's QA Review is an engine check, and the ticket itself says to verify by hand against the engine. Testing them needs the pipeline repo and a phone (or a saved journal sent through again) on cicd/qa, with access to its logs.
+
+*Not covered*
+* A photo that hasn't uploaded: with 3 photos where the first hasn't uploaded yet, photos 2 and 3 keep their own labels, and a claim on the missing photo is rejected with "photo 'p0' was not shown for this entry" so the AI tries again.
+* A claim on a photo from an earlier entry is saved against that earlier entry, not the entry being read.
+* The 20-claim limit: with 20 "other" claims already kept, a nameplate claim that arrives later still survives (20 are kept, and the nameplate is not dropped by arrival order).
+* Older code that passes a plain set of shown photos works as before.
+* Results saved before the version change to {{2026-09-16.1}} are read again.
+* End to end: a board's profile shot is no longer filed as an asset's nameplate.
+
+*Test data*
+* Journal walk shown: https://acme.qa.egalvanic.ai/site-walks/5b85ca51-833a-4622-8146-83e6ec2c9a73
+
+*Screenshots*
+!QA-5Oct-4423-1_site_walks_page.png|width=640!
+_Site Walks: two of the walks in view are marked JOURNAL._
+
+!QA-5Oct-4423-2_journal_review_page.png|width=640!
+_Journal Review: 3 entries · 2 photos (the two photos are grey tiles in this capture); the right panel says "Nothing interpreted yet" because Interpret was not run (it is a paid AI run)._

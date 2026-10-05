@@ -1,0 +1,32 @@
+*QA result: PASS for what QA can check — two data checks can't be done on QA*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-CdsUTPRH.js}}, 5 Oct 2026.
+Moved to READY TO RELEASE.
+
+*Steps*
+# Sign in as admin and call {{GET /api/sld/<site id>/resolve-service-methods?service_ids=<ids>}} for Android Site 2 with 5 services: NETA Testing, Cleaning, Infrared Thermography, Insulation Resistance Testing, UPS Maintenance.
+# Sign in as a Project Manager (not Egalvanic staff, assigned to 129 of acme's 247 sites) and make the same call for one of their sites, for an acme site they aren't assigned to, and for another company's site.
+# Make the call once with no sign-in, and once as admin for a site id that doesn't exist.
+
+*What happened*
+* Admin, Android Site 2: 200 in 2.1 s, {{node_count}} 425, 81 methods — NETA Testing 286 nodes / 37 methods, Cleaning 298 / 18, Infrared Thermography 198 / 19, Insulation Resistance Testing 138 / 7, UPS Maintenance 0 / 0 (the site has no UPS). Every method id in the answer is in the method catalog.
+* *New today:* the Project Manager gets the same answer for Android Site 2 (one of their sites: 425 nodes, 81 methods). For "Z - Hospital" (an acme site not assigned to them) and "Saveland Avenue Lofts" (another company's site) the call is refused (QA's server answers with its standard error page; no data comes back). This is the "caller without access to the site" check I couldn't run on 30 Sep.
+* No sign-in → 401. A site id that doesn't exist → refused the same way.
+* Passed on 30 Sep (build {{index-DXSz_B6n.js}}), not re-run today: the method catalog entries (63 methods in a 3-service call) carry name, description, labor, test equipment and forms; an asset with no match gets no method, not a placeholder (no empty entries); with no sign-in, {{/api/program-compliance/<site id>}} also returns 401.
+
+*Not covered*
+* Eaton fork check: QA has no company forks of these services, so each service resolves to itself ({{effective_service_id}} = the requested id) and the ticket's Eaton reference numbers (314–356 of 409 nodes) can't be compared.
+* Busduct ≤600 V / >600 V split: QA has no busway above 600 V, and the 13 busways on Android Site 2 have no voltage of their own (30 Sep: 5 got "De-Energized Electrical Testing (≤600 V)", 8 got no method).
+* The Appendix D page in the EMP Lite report itself.
+* Calling the endpoint with the reporting pipeline's key instead of a user sign-in: not tried.
+
+*Test data*
+* Android Site 2 (admin, and one of the Project Manager's sites): {{aadcee4c-7dd0-45b3-81b9-309c5c166084}}, SLD page https://acme.qa.egalvanic.ai/sld
+* Z - Hospital (acme site not assigned to the Project Manager): {{d5d99deb-9554-4774-99d1-16eb1ded0735}}
+* Saveland Avenue Lofts (another company's site): {{f86052b7-1683-431f-a86f-f52c6dd5be39}}
+
+*Screenshots*
+!QA-5Oct-4303-1_emp_lite_preview_maintenance_procedures_android_site_2.png|width=640!
+_Context: the EMP Lite report preview for Android Site 2 (Maintenance Procedures section). It does not show which endpoint the page uses._
+
+!QA-30Sep-4303-1_services_list_clean.png|width=640!
+_30 Sep: the Builder › Services list. Cleaning, Infrared Thermography and Insulation Resistance Testing (cut off at the bottom) are in view; NETA Testing and UPS Maintenance are not in this view._

@@ -1,0 +1,30 @@
+*QA result: PARTLY TESTED*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-CdsUTPRH.js}}, 5 Oct 2026.
+
+*Steps*
+# On site "10 SEP 2026", add a QA-DEMO asset to a QA-DEMO SLD view and collapse it there (done through the app's API).
+# Through the app's API, delete that asset without the {{allow_collapsed}} flag: once alone ({{DELETE /api/node/delete/<id>}}) and once in a bulk delete ({{POST /api/node/bulk-delete}}).
+# Open that collapsed asset's page › ⋮ › Delete Asset, and press Delete.
+# For the screenshot, open the same dialog on an ordinary asset and press Cancel.
+
+*What happened*
+* *Passed:* the server refuses both API deletes with 400 ({{collapsed_node_not_deletable}}) and names the view. The message reads: Collapsed nodes can't be deleted — this node is collapsed in the SLD view "QA-DEMO ZP-4301 view 34693 (delete me)". Open that view and expand it first. The response also has a {{views}} field.
+* *Not reachable in the web app:* the asset page's Delete sends {{allow_collapsed=true}}, so the collapsed asset was simply deleted (200) with no warning about the view. The asset list's delete sends the same flag (since ZP-4302). So the named-view toast that the first two QA Review checks expect (asset list and asset detail page) can't appear from either place. The SLD editor has its own check that blocks this delete before it reaches the server (found in the 30 Sep build's code; not triggered on screen, because the diagram stayed locked for editing).
+* Passed on 30 Sep (build {{index-DXSz_B6n.js}}), not re-run today: deleting a normal (not collapsed) asset worked, with no toast.
+
+*Not covered*
+* The partly failing bulk delete from the asset list (the "+N more" toast and the list reload). Collapsed assets no longer fail there because the list sends the flag, so this needs a refusal of another kind, for example an asset already deleted in a second tab.
+* The PM-plan matching part (MV Switch / Busduct / Cable plans and the export coverage): QA sites have no maintenance programs.
+
+*Test data*
+* Collapsed test asset: QA-DEMO ZP-4301 34693 (delete me) · 530df9db-3953-4428-b67b-7252cfce477e · deleted in step 3
+* Test view, left empty and labelled: QA-DEMO ZP-4301 view 34693 (delete me) · id 2ce631ab-b2e6-4238-b7bb-e7b6eed2c593 (site 10 SEP 2026)
+* Asset used only for the dialog screenshot (an ordinary asset from ZP-4505, not the collapsed one; kept, Cancel pressed): QA-DEMO ZP4505 create-mode (delete me) · https://acme.qa.egalvanic.ai/assets/2163e6a0-3559-4c64-95b2-c427da54c768
+* 30 Sep run (second screenshot): ZP-4302's test view "QA-DEMO ZP-4302 view 77203 (delete me)", with asset E collapsed in it.
+
+*Screenshots*
+!QA-5Oct-4301-1_asset_page_delete_confirm.png|width=640!
+_5 Oct: the asset page's "Delete Node" dialog, shown on an ordinary asset (not the collapsed one). It asks "Are you sure…?" and says "This action cannot be undone.", with no reason about a view. Here Cancel was pressed; on the collapsed test asset, Delete went through with no warning (step 3)._
+
+!QA-30Sep-4301-1_sld_view_holding_collapsed_E_clean.png|width=640!
+_30 Sep: an SLD view holding a collapsed asset — the case the message is for._

@@ -1,0 +1,30 @@
+*QA result: PASS*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-CdsUTPRH.js}}, 5 Oct 2026.
+Moved to READY TO RELEASE.
+
+*Steps*
+# Open the Sales overview as a user who has the Sales menu; it loads "Open Issues by Site".
+# Check Sentry for new errors from this endpoint.
+# As a Project Manager (a normal customer user, not an eGalvanic staff account), call {{GET /api/issues/open-by-site}} for acme, another company's id, a random id, a malformed id, and no id.
+
+*What happened*
+* The card loads: 1018 open (test site: 453, Android Site 2: 57, …). The API answers in 0.65–0.75 s.
+* Avani's root cause: a platform-wide database overload on BCES IQ production on 23 Sep (same incident as ZP-4360), not this endpoint; no code change. She recommends closing this as resolved by ZP-4360.
+* In Sentry, this endpoint's error group {{EGALVANIC-REACT-APP-4S8}} was last seen 23 Sep 18:07 UTC, with no events since. The ticket's Sentry link 7637472933 (4SV) is a different error, the sales-attention one, as Avani says.
+* Project Manager: acme → 200, 70 sites, all inside the 129 sites this user is allowed to see (acme has 247). Another company's id and a random id → 422 "You do not have access to this company's data."; a malformed id → 422 too. No id → 400 "{{company_id}} is required".
+* *Seen on the way (not this ticket, not filed):* a Project Manager who types {{/sales-overview}} gets a red banner with raw JSON, "API call failed: 422 … features.salesdb.view", instead of the Access Denied page a Project Manager gets on other blocked pages such as {{/maintenance-portal}}. The Project Manager has no Sales menu, so only a typed or shared link gets there.
+
+*Not covered*
+* The 23 Sep production overload can't be recreated on QA, so production was checked only through Sentry; the BCES IQ production page was not opened.
+* The ZP-4360 fix itself was not re-tested here; this ticket has no code change of its own.
+* Only the Sales overview was opened; the Ops overview, which Avani says also loads this endpoint, was not.
+
+*Test data*
+* Page: https://acme.qa.egalvanic.ai/sales-overview
+
+*Screenshots*
+!QA-5Oct-4427-1_sales_overview_open_issues_by_site.png|width=640!
+_Sales overview: Open Issues by Site loads (1018)._
+
+!QA-5Oct-4427-2_pm_opens_sales_overview_raw_422_banner.png|width=640!
+_Side note: a Project Manager typing /sales-overview sees a raw 422 banner._

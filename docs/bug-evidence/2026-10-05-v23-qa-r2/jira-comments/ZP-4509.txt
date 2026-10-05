@@ -1,0 +1,31 @@
+*QA result: PASS*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-CdsUTPRH.js}}, 5 Oct 2026.
+Moved to READY TO RELEASE.
+
+*Steps*
+# Open the work order › IR Photos › FOTRIC_2026-09-29_0038 › Edit IR Annotations.
+# Switch °F to °C.
+# Set Reflected to 25 °C › Apply parameters › Save. Close and reopen.
+
+*What happened*
+* °F → °C converts the values, not just the label: Reflected 72 → 22.2, Atmospheric 72 → 22.2, IR-window 70 → 21.1; spot readings 90.0 → 32.2 and 111.8 → 44.4.
+* Apply parameters ({{POST /ir_photo/<id>/measure}}) and Save ({{POST /ir_photo/<id>/save}}) both answer 200 and send Reflected 25 °C, with Atmospheric 22.2 and IR-window 21.1 unchanged.
+* After saving 25 °C and reopening, Reflected reads 77 °F (= 25 °C): the saved value comes back instead of the original value from the upload. The spot readings come back recalculated too (89.8 / 111.6 instead of 90.0 / 111.8).
+* Restored afterwards: Reflected set back to 72 °F, applied and saved; on reopening the photo shows its original 72 / 72 / 70 again.
+
+*Not covered*
+* Only Reflected was changed and saved; Emissivity, Distance, Humidity, Atmospheric, IR-window and the transmission values were not edited.
+* The editor reopened in °F, as it does on first open; whether it should remember the °C choice was not checked.
+
+*Test data*
+* Work order (photo FOTRIC_2026-09-29_0038): https://acme.qa.egalvanic.ai/sessions/40c61863-0d89-4bd6-ac12-2c2be4e435f1
+
+*Screenshots*
+!QA-5Oct-4509-1_editor_opened_in_F_72_72_70.png|width=640!
+_Opens in °F: 72 / 72 / 70._
+
+!QA-5Oct-4509-2_switched_to_C_22_2_22_2_21_1_readings_converted.png|width=640!
+_In °C: 22.2 / 22.2 / 21.1, readings converted._
+
+!QA-5Oct-4509-3_reopened_after_save_reflected_77F_eq_25C.png|width=640!
+_Reopened after saving: Reflected 77 °F (= 25 °C)._

@@ -1,0 +1,32 @@
+*QA result: PASS*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-CdsUTPRH.js}}, 5 Oct 2026.
+Moved to READY TO RELEASE.
+
+*Steps*
+# Assets › Create Asset › Circuit Breaker › upload the nameplate photo › open Extract from Photos. Close the menu and click Create Asset.
+# On the saved asset: ⋮ › Edit Asset ("Use library" OFF) › Extract from Photos › Attributes + Library. Wait for the job, then Apply.
+# Save Changes, reload, open Edit Asset again.
+
+*What happened*
+* While creating the asset (Add Asset panel): "Attributes + Library" is disabled with "Available once this asset is created." That is the agreed design from ZP-4504 (2 Oct: Nency, during asset creation the Attributes + Library option should be disabled; Krunal, the library match needs the asset's id). So for a new asset: create it, then run Extract from Photos › Attributes + Library on it.
+* In Edit Asset, the job matched "Square D PowerPacT H-Frame (Powerpact HJ), Thermal-Magnetic, 15-150A · 150A frame / 150A · High" after 156 s. Apply turned "Use library" ON by itself (LIBRARY MATCHED HJL36150).
+* After Save Changes and a reload, "Use library" is still ON and the HJL36150 match is kept.
+
+*Not covered*
+* An older asset that existed before this build was not tried. Only the asset created for this test was used.
+
+*Test data*
+* Asset "QA-DEMO ZP4505 create-mode (delete me)" on site "test site" (kept): https://acme.qa.egalvanic.ai/assets/2163e6a0-3559-4c64-95b2-c427da54c768
+
+*Screenshots*
+!QA-5Oct-4505-1_create_mode_attributes_plus_library_available_once_created.png|width=640!
+_Create mode: "Available once this asset is created."_
+
+!QA-5Oct-4505-2_library_job_match_powerpact_hj_high.png|width=640!
+_The job matched PowerPacT HJ (High)._
+
+!QA-5Oct-4505-3_use_library_turned_on_after_apply.png|width=640!
+_After Apply, "Use library" is ON._
+
+!QA-5Oct-4505-4_after_save_and_reload_still_on.png|width=640!
+_After save and reload, still ON._

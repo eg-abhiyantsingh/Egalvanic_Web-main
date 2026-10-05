@@ -1,0 +1,34 @@
+*QA result: PASS on QA*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-CdsUTPRH.js}}, 5 Oct 2026.
+Moved to READY TO RELEASE.
+
+*Steps*
+# As the admin user, open the work order "QA-DEMO review says starts empty 25 Sep delete me 1790346934125" (link under Test data) › Actions › New Quick Count.
+# Add Asset Type "Fuse" with count 2 › Create 2 Assets.
+# Search the work order's Assets for "Fuse".
+
+*What happened*
+* Both assets are created ({{/node/create}} 201, twice) and linked to the work order ({{/mapping/node-session/bulk-create}} 201, count 2). All three requests carry {{X-Direct-Write: true}}. No 500. The work order lists Fuse 1 and Fuse 2.
+* Server checks on bulk-create with {{X-Direct-Write: true}}: missing asset → 400 "node not found: <id>"; missing work order → 400 "session not found: <id>"; asset already linked → 201 with count 0 (no unique-constraint 500).
+* *Other company's work order:* signed in as a Project Manager, a bulk-create request with a random asset id gets 400 "node not found: <id>" on our own work order. On another company's work order the same request is refused before the asset check (QA's server answers with its standard error page; no data comes back). Nothing could be linked, because the asset id was random.
+* Developer note (Avani): this is the same bug as ZP-4181, and the fix is in ZP-4181. Sentry issue {{EGALVANIC-REACT-APP-2PP}} still fires on production (last 1 Oct 19:31 UTC, web V2.2) because the fix isn't on production yet.
+
+*Not covered*
+* Linking another company's asset to our own work order: not tested. Only another company's work order was tried.
+* Two link requests for the same asset at the same moment: not tested. Only a repeat after the asset was already linked was checked.
+* Bulk-create without {{X-Direct-Write}} is queued (200, status "received"), even for a missing asset. Its later result can't be seen by the caller, so that path was not checked.
+* The single-link request {{/mapping/node-session/create}} with a missing asset or work order: not tested. Only bulk-create was checked.
+* Copy Quick Count to other rooms, and a Quick Count with photos (which also updates the new asset): not tested. Only a new Quick Count with two Fuse assets was run.
+
+*Test data*
+* Work order: https://acme.qa.egalvanic.ai/sessions/51d54087-6a74-4ddd-9698-f34e40e14015
+* Fuse 1: https://acme.qa.egalvanic.ai/assets/d45b3d40-92aa-4e00-b80c-b97bf95abb5c
+* Fuse 2: https://acme.qa.egalvanic.ai/assets/f43fada9-70e0-4ef3-ac47-7f382e12abef
+* Other company's work order used for the check: {{aed4636d-ef1a-4e10-bc4b-b9f34805599e}} ("TestSession1")
+
+*Screenshots*
+!QA-5Oct-4428-1_wo_fuse_1_fuse_2_from_quick_count.png|width=640!
+_The work order lists Fuse 1 and Fuse 2 from the Quick Count._
+
+!QA-5Oct-4428-2_quick_count_page.png|width=640!
+_The Quick Count page._

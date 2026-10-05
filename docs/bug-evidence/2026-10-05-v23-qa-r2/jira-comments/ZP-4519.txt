@@ -1,0 +1,31 @@
+*QA result: PASS (web)*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-CdsUTPRH.js}}, 5 Oct 2026.
+Moved to READY TO RELEASE.
+
+*Steps*
+# Open a Thermal Anomaly issue › Edit Issue. Read the sections top to bottom.
+# Issues › Create Issue. In the Add Issue form, pick Thermal Anomaly. Read the sections.
+
+*What happened*
+* Edit Issue: Basic Info → Details (the custom attributes, Problem Location … Voltage Drop) → Description → Proposed Resolution → Safety & Notification → IR Photos → Issue Photos. This is the ticket's Issue Details order. Resolution comes last; the ticket does not list it.
+* The Details section in Edit Issue lists 9 custom attributes, the same count as the issue's Class Details tab (9).
+* Add Issue: Basic Info → custom attributes → Description → Proposed Resolution → Safety & Notification → Issue Photos. Same order as Edit Issue, and it ends at Issue Photos (no Resolution section). IR Photos is not shown until a work order and asset are picked. Nothing removed.
+
+*Not covered*
+* "Mark as Thermal Anomaly" order: this is a phone app screen (this ticket was cloned from the Android ticket ZP-4506). QA found no such screen in the web app, so this part was not tested here.
+* Android and iOS apps: not checked. This result covers the web app only.
+* Saving: nothing was saved, so QA did not check that saving an edited or a new issue still works after the reorder.
+* Add Issue with a work order and asset picked: IR Photos shows only then, and its place in that form was not checked.
+
+*Test data*
+* Issue: https://acme.qa.egalvanic.ai/issues/b2a2dc41-882c-4629-a465-e0e0d77dac97
+
+*Screenshots*
+!QA-5Oct-4519-1_edit_issue_top_basic_info_then_details.png|width=640!
+_Edit Issue: Basic Info (Priority, Issue Class, Asset, Title) first; the Details section with the custom attributes starts right below._
+
+!QA-5Oct-4519-2_edit_issue_safety_after_proposed_resolution_then_ir_photos.png|width=640!
+_Safety & Notification after Proposed Resolution, then IR Photos._
+
+!QA-5Oct-4519-3_add_issue_safety_then_issue_photos.png|width=640!
+_Add Issue (opened with Create Issue): Safety & Notification, then Issue Photos._

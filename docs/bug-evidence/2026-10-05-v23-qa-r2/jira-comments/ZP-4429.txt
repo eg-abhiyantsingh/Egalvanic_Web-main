@@ -1,0 +1,30 @@
+*QA result: PASS*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-CdsUTPRH.js}}, 5 Oct 2026.
+Moved to READY TO RELEASE.
+
+*Steps*
+# Open the largest work order found on QA, {{AutoTest_WO_99443}} (1,076 assets), from scratch and go to the Assets tab.
+# Call that tab's request directly, {{GET /api/ir_session/<work order id>/assets/v2}}: first page (25 rows), offset 1050 (near the end), 100 rows sorted by label descending, and a search.
+# As a Project Manager user (a normal customer user, not Egalvanic staff), call the same request for their own work order and for another company's work order.
+
+*What happened*
+* First page 1.64 s the first time, 0.42 s on repeat. Offset 1050: 0.87 s. 100 rows sorted by label: 1.23 s (1.1 MB). Search: 0.82 s. All returned 200, no 504.
+* Opening the work order page from scratch: rows show after about 6 s (app start included). The page's own assets/v2 call took 0.71 s.
+* Avani's comment: resolved by ZP-4444 (production V2.2.1, 28 Sep), no code change in this ticket. ZP-4444 itself was checked on QA on 29 Sep.
+* Sentry issue {{EGALVANIC-REACT-APP-4Z0}}: last seen 23 Sep (on V2.1), none since the 28 Sep release.
+* Project Manager: their own work order returns its asset list (200). Another company's work order is refused (QA's server answers with its standard error page; no data comes back).
+
+*Not covered*
+* Production speed: not measured (QA only). Sentry's last event (23 Sep) came before the 28 Sep release, so Sentry alone does not show the fix in production.
+* The slower requests on large sites that the developer's comment leaves for a separate follow-up: not tested.
+
+*Test data*
+* Work order: https://acme.qa.egalvanic.ai/sessions/9de85c9d-8059-416b-9972-0bd6d54afb78
+* Other company's work order (Project Manager check): {{aed4636d-ef1a-4e10-bc4b-b9f34805599e}}
+
+*Screenshots*
+!QA-5Oct-4429-1_wo_1076_assets_loaded.png|width=640!
+_The 1,076-asset work order loads its assets._
+
+!QA-5Oct-4429-2_wo_1076_assets_pager.png|width=640!
+_Pager: 1–20 of 1076._

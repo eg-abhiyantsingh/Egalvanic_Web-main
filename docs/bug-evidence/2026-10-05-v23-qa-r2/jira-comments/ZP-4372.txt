@@ -1,0 +1,30 @@
+*QA result: PASS for the web part — the database checks need database access*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-CdsUTPRH.js}}, 5 Oct 2026.
+Reassigned to Dharmesh: the database checks below need someone with database access.
+
+*Steps*
+# As an admin user, open the page behind each key workflow in the QA Review, each with a full page load: IR Sessions (Work Orders, and a work order with 1,076 assets), Nodes (Assets), Procedures (Services), Quotes (Planning, which loads the quotes list), Issues (Issues).
+# Also open Tasks, PM Plans, Opportunities and Sales overview.
+# Watch every API call for 5xx errors and timing.
+
+*What happened*
+* All 10 pages load. No 5xx error in the API calls made while each page loaded.
+* Slowest calls noted: the big work order's asset list 2.9 s and its location-readiness call 2.1 s, on the first load. In the ZP-4429 test, the same work order's asset calls took 0.4–1.6 s.
+* Other timings: work-order list 0.73 s; Assets nodes lookup 0.94 s; quotes list (on Planning) 1.35 s.
+* All 110 report configs checked in ZP-4430 preview without error.
+
+*Not covered*
+* "Analyze Indexes shows 0 unused", no drop in index scan counts, the new {{mapping_procedure_shortcut}} index, and {{pg_stat_statements}} timings before / after. These need database access (the Utility Toolkit), and there are no "before" timings to compare with.
+* Phase 3, whether the code that reads whole tables over and over (such as {{permissions}} and {{mapping_tel_procedure}}) was fixed, also needs database access.
+* Re-running the index analysis on Prod before release is a Prod step, not a QA one.
+
+*Test data*
+* Work order with 1,076 assets ({{AutoTest_WO_99443}}): https://acme.qa.egalvanic.ai/sessions/9de85c9d-8059-416b-9972-0bd6d54afb78
+* Backend change under test: {{eg-pz-backend}} PR #1386.
+
+*Screenshots*
+!QA-5Oct-4372-1_assets_list_loads.png|width=640!
+_Assets list loads (1–25 of 1930). The two summary tiles at the top still show "Calculating…" in this capture._
+
+!QA-5Oct-4372-2_work_orders_list_loads.png|width=640!
+_Work Orders loads (1–25 of 180)._

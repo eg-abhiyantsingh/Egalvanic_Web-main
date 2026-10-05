@@ -1,0 +1,39 @@
+*QA result: FAIL — the search does not look at the "Applies to" text*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-CdsUTPRH.js}}, 5 Oct 2026.
+Re-checked on the newer QA build {{index-C913tyjW.js}} at about 18:00 IST the same day: same result.
+Moved back to To Do.
+
+*Steps*
+# Open the work order, right-click the asset "asset" (ATS) › Add Procedure › Standalone Form (the ticket's "Add Form" dialog).
+# Look at the "Applies to" line under each form.
+# Type "automatic", then "transfer", then "ATS" in the search box.
+
+*What happened*
+* Name search works: "ats" and "ATS" find the forms with ATS in the name, and "transfer" finds "Transfer …" names, so case doesn't matter. The box has a search icon and reads "Search forms by name…".
+* *Actual:* searching "automatic" shows "No forms match “automatic”." although 34 of the 42 forms read "Applies to: Automatic Transfer Switch …".
+* Searching "transfer" shows only the 4 forms with "Transfer" in the name. Forms whose "Applies to" lists Transfer Switch but whose name doesn't, such as "70B - ATS - All Types", are left out. The forms it shows, such as "Transfer Testing", also read "Applies to: Automatic Transfer Switch …", yet "automatic" does not find them.
+* *Expected (ticket):* the list matches the form name and the "Applies to" text.
+* Same result as QA's first check on 30 Sep (build {{index-DXSz_B6n.js}}), when the filter code checked only the form title or key. QA found no pull request for this ticket; the dialog comes from earlier work (ZP-3312).
+* Passed on 30 Sep (build {{index-DXSz_B6n.js}}), not re-run today: ticks are kept across searches (ticked "ATS inspection", searched "70B", ticked "70B - ATS - All Types", cleared the search: both still ticked, button "Add (2)").
+* When nothing matches, the list says "No forms match “…”." where the ticket says "No forms found": same meaning, different words.
+
+*Not covered*
+* Filtering while typing, without pressing Enter, was not checked on its own.
+* Only the ATS asset (42 forms) was tried; the ticket's many-forms example (Oil-Filled Transformer) and an asset type with few forms were not.
+* Add was not pressed after searching and ticking, so no forms were added to this shared work order.
+
+*Test data*
+* Work order: https://acme.qa.egalvanic.ai/sessions/4c2317d2-11fe-40b0-98b7-c7d0a7fac7d6
+
+*Screenshots*
+!QA-5Oct-4421-2_newbuild_list_applies_to_automatic_transfer_switch.png|width=640!
+_Before searching: forms such as "70B - ATS - All Types" read "Applies to: Automatic Transfer Switch (<= 1000V) …"._
+
+!QA-5Oct-4421-3_newbuild_search_automatic_no_match.png|width=640!
+_Searching "automatic": "No forms match “automatic”."_
+
+!QA-5Oct-4421-4_newbuild_search_transfer_name_matches_only.png|width=640!
+_Searching "transfer": only forms with "Transfer" in the name; "70B - ATS - All Types" (Applies to … Transfer Switch) is missing._
+
+!QA-5Oct-4421-5_newbuild_search_ATS_control_name_match.png|width=640!
+_For comparison, "ATS" finds the forms with ATS in the name, so the search itself works._

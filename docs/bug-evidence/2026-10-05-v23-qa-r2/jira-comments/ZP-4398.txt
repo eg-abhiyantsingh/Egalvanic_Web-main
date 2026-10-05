@@ -1,0 +1,34 @@
+*QA result: FAIL — the preview does not auto-pick the site with the most assets*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-CdsUTPRH.js}}, 5 Oct 2026.
+Re-checked on the newer QA build {{index-C913tyjW.js}} at about 18:00 IST the same day: same result.
+Moved back to To Do.
+
+*Steps*
+# Open Reporting › "Annual Maintenance Report (Copy)" (a company SLD config).
+# See which site the preview picked, then open the Site list.
+# Log in as a Project Manager (not an Egalvanic staff user) and preview the config for one of its own sites (Android Site 2).
+# Send the same preview request ({{preview-html}}) with another company's site id ("Saveland Avenue Lofts"). That site isn't in the Project Manager's Site list, so it can't be picked on screen.
+
+*What happened*
+* *Defect (same as on 30 Sep):* the ticket says the preview should pick the company's site with the most assets. The Site list is 50 sites in A–Z order and the page picks the first, "10 SEP 2026" (16 assets). Android Site 2 (425 assets) is 39th in the same list and is not picked. "test site" (1,983 assets) isn't in the list at all. The asset counts were checked two ways and agree.
+* Edit with AI shows on the company SLD config (see ZP-4406), and the preview picker is labelled "Site" (screenshot 1).
+* Passed on 30 Sep (build {{index-DXSz_B6n.js}}), not re-run today: the AI edit started with no "Unsupported config type" error, was sent with the site chosen in the preview, rendered a page to check its work, and its change showed on the preview cover (74 s). In Builder › Reports › New, the "SLD" type was disabled for AI create.
+* *New today (on {{index-CdsUTPRH.js}}):* the Project Manager's Site list holds only its own sites (50 of its 129). Its own site renders (5 pages). The other company's site is refused (QA's server answers with its standard error page; no data comes back) and nothing renders.
+
+*Not covered*
+* The AI edit with another company's site as its context (not run: it uses paid AI credits and changes the config).
+* A deleted site as the preview or AI-edit site (it should be refused).
+* A regression check of Work Order and Plan configs.
+
+*Test data*
+* Config: https://acme.qa.egalvanic.ai/reporting/config/0eee082a-af4d-4805-9ae0-c19d3996af9a
+
+*Screenshots*
+!QA-5Oct-4398-3_newbuild_auto_picked_10_SEP_2026.png|width=640!
+_New build: the preview auto-picked "10 SEP 2026" (16 assets)._
+
+!QA-5Oct-4398-5_newbuild_site_list_starts_A_Z.png|width=640!
+_The Site list opens at "10 SEP 2026" and runs A–Z (top of the list shown; the list is the same on both builds). "test site" (1,983 assets) is not among its 50 sites._
+
+!QA-5Oct-4398-4_newbuild_site_list_android_site_2_in_list.png|width=640!
+_Android Site 2 (425 assets) is in the same list, but was not picked._

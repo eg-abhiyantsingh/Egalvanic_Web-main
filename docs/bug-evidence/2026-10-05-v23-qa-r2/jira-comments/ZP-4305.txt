@@ -1,0 +1,36 @@
+*QA result: PARTLY TESTED — the tested parts pass, with 2 small defects*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-CdsUTPRH.js}}, 5 Oct 2026.
+Re-checked /pull-through-work on the newer QA build {{index-C913tyjW.js}} at about 18:00 IST the same day: same result.
+
+*Steps*
+# Open the test issue (link under Test data) › ⋮ › Edit Issue › Mark Resolved. Type what was done and press Mark Resolved in the dialog.
+# Open ⋮ › Edit Issue again › Mark Open › Reopen Issue.
+# Look at the page header while the form is still open, then close the form (Cancel).
+# Go to https://acme.qa.egalvanic.ai/pull-through-work (type it in the address bar). For comparison, also open a made-up address: https://acme.qa.egalvanic.ai/zz-qa-no-such-page
+
+*What happened*
+* Resolve works: the dialog needs a description, and after Mark Resolved the form closes and the header reads Resolved.
+* *Defect 1 (smaller than 30 Sep):* after Reopen Issue the server says Open and the form unlocks, but the header still says Resolved until the form is closed. On the 30 Sep build ({{index-DXSz_B6n.js}}) it stayed Resolved until a page reload.
+* *Defect 2 (cosmetic):* /pull-through-work shows a blank page with only the old heading "Pull-Through Work". For comparison, the made-up address shows a blank page with no heading. The app no longer has a /pull-through-work route; only the page-title list still has "Pull-Through Work". So the page is gone and the old title is a leftover. Re-checked on {{index-C913tyjW.js}}.
+* Passed on 30 Sep (build {{index-DXSz_B6n.js}}), not re-checked today: resolving with an after photo; a resolved issue's form is read-only, shows the resolution text, photo and resolved date, and has Mark Open as the only button; Mark Open clears the resolved date and person and keeps the resolution text and photo; Add to Work Order links only the chosen issues, reports a malformed id in {{invalid_issue_ids}} and adds no break/fix form; Create Service has no Preventive / Corrective choice; Pull-Through Work is gone from the side menu.
+
+*Not covered*
+* Defect 1 on the newer build {{index-C913tyjW.js}}: the re-check on that build covered only /pull-through-work.
+* Pressing Mark Resolved in the dialog while an after photo is still uploading (the test photo finished uploading in under a second).
+* After photos under the After tab in the issue workbench, and the issue API returning both before and after photos.
+* Services: new ones saved as preventive with no {{service_kind}} sent (only the Create Service dialog was checked), and the Add Device Rule dialog still hiding corrective services.
+* SCCR issues: resolving one by hand, then running recheck/mint (it must not reopen or duplicate it), and deleting a derived issue still refused.
+* The database migration (single migration head, soft-delete of corrective services only): backend, not checkable from the web app.
+
+*Test data*
+* Issue (now Open): https://acme.qa.egalvanic.ai/issues/f753f5a4-da0b-4b0e-b197-395b41a79c43
+
+*Screenshots*
+!QA-5Oct-4305-1_after_reopen_header_still_resolved_while_form_open.png|width=640!
+_Defect 1: reopened (form unlocked) but the header still says Resolved._
+
+!QA-5Oct-4305-2_after_closing_form_header_open.png|width=640!
+_After closing the form the header turns Open._
+
+!QA-5Oct-4305-3_pull_through_work_url_still_opens_title_only.png|width=640!
+_Defect 2: /pull-through-work shows a blank page with only the old heading "Pull-Through Work"._

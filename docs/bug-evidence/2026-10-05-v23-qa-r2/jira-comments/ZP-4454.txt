@@ -1,0 +1,29 @@
+*QA result: PASS*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-CdsUTPRH.js}}, 5 Oct 2026.
+Moved to READY TO RELEASE.
+
+*Steps*
+# Admin › Asset Classes › Create Asset Class, twice (one to use, one unused).
+# Assets › Create Asset with the first class.
+# Open the used class (Edit Asset Class), click Delete, then OK. Do the same for the unused class.
+# Delete the asset (asset page ⋮ › Delete Asset), then delete the first class again.
+
+*What happened*
+* Used class: after confirming "Are you sure…?" with OK, an orange warning: "Can't delete 'QA-DEMO ZP4454 in-use class (delete me)': this asset class is linked to 1 asset(s). Remove it from those assets first." The class stays and the asset keeps it.
+* The server refuses too: 409 {{node_class_in_use}} with {{asset_count: 1}} (not only the screen).
+* The unused class deletes (the list goes from 52 to 51 classes). After the asset is deleted, the first class deletes too (server reply 200 "Class deleted successfully").
+* The warning gives a count, not asset names (not in the ACs).
+
+*Not covered*
+* Deleting another company's asset class as a Project Manager user (not tried on purpose, because if the check were missing it would really delete that company's class).
+* A class linked to more than one asset (only one asset was tried).
+
+*Test data*
+* Asset Classes (both test classes and the asset deleted): https://acme.qa.egalvanic.ai/asset-classes
+
+*Screenshots*
+!QA-5Oct-4454-1_delete_in_use_class_warning.png|width=640!
+_The warning on the used class._
+
+!QA-5Oct-4454-2_asset_classes_list.png|width=640!
+_Asset Classes after clean-up (50)._

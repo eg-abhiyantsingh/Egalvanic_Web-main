@@ -1,0 +1,46 @@
+*QA result: FAIL on 1 check — the /maintenance-portal/condition address is not blocked*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-CdsUTPRH.js}}, 5 Oct 2026.
+Status not changed: Dharmesh's 10 Sep comment asks to close this as a duplicate of ZP-4138.
+
+*Steps*
+# Sign in, one at a time, as: Project Manager, Account Manager, a Super Admin without Portal Sales, an admin user with Portal Sales, Client Portal, and Facility Manager.
+# Look at the left menu: is "Maintenance Portal" there?
+# Type these addresses: /maintenance-portal, /maintenance-portal/condition, /maintenance-portal/sld, /maintenance-portal/reports.
+
+*What happened*
+* *Fixed since 30 Sep:* Project Manager and Account Manager no longer see Maintenance Portal in the left menu (on the 30 Sep build they saw it, with padlocks). The Super Admin user without Portal Sales, first tested today, doesn't see it either.
+* For all three, /maintenance-portal and /maintenance-portal/reports show Access Denied. For Project Manager and Account Manager this is the same as on 30 Sep.
+* *Still wrong:* for the same three users, /maintenance-portal/condition opens a page instead of Access Denied. It is the same Condition Assessment page they already have under Site Data (259 findings, 1,983 assets), shown inside the Site Data menu, not the portal (the only visible difference is a License picker, set to Full Access, in the left panel). So no extra data shows, but the address is not blocked as the QA Review asks.
+* /maintenance-portal/sld also opens for them: the SLD page shows "Loading SLD…" with its All Nodes, Export and Layout buttons. An Access Denied heading is in the page's HTML but is not shown on screen (no screenshot attached).
+* On the 30 Sep build, Condition Assessment and SLD were also the only portal items Project Manager and Account Manager could open without a padlock (the ZP-4390 change). If those two are meant to stay open, please say so.
+* *Passes:* the admin user with Portal Sales (same roles as the Super Admin user, plus Portal Sales) sees Maintenance Portal in the menu, and /maintenance-portal/condition opens inside the portal.
+* *Passes:* Client Portal and Facility Manager are T2 portal users on QA without Portal Sales. They see Maintenance Portal in the menu through the tier gate, and the four addresses open inside the portal.
+
+*Not covered*
+* Passed on 30 Sep (build {{index-DXSz_B6n.js}}), not re-run today: the user with Portal Sales saw the full portal and all four addresses opened.
+* Adding Portal Sales to a user who lacks it (also as a non-active assignment) and reloading: not done; I compared two existing users instead (same roles, only one has Portal Sales).
+* A staff (T1) Facility Manager without Portal Sales: not tested, because the Facility Manager user I used on QA is a T2 portal user.
+* Backend and migration checks (single alembic head, Portal Sales as a global system role with no grants, the downgrade): can't be checked from the web; on 30 Sep a user holding only Portal Sales had 0 permissions, which fits a role with no grants.
+
+*Test data*
+* Site "test site" on acme QA.
+* The Super Admin user without Portal Sales holds Super Admin, Admin, Account Manager, Electrical Engineer and Project Manager; the admin user holds the same roles plus Portal Sales.
+
+*Screenshots*
+!QA-5Oct-4148-1_pm_no_portal_sales_portal_not_in_rail_clean.png|width=640!
+_Project Manager: no Maintenance Portal in the left menu now._
+
+!QA-5Oct-4148-2_pm_maintenance_portal_access_denied_clean.png|width=640!
+_Project Manager typing /maintenance-portal: Access Denied._
+
+!QA-5Oct-4148-3_pm_condition_route_still_loads_clean.png|width=640!
+_Project Manager typing /maintenance-portal/condition: a page opens (the Condition Assessment page from Site Data), not Access Denied._
+
+!QA-5Oct-4148-4_super_admin_without_portal_sales_not_in_rail_clean.png|width=640!
+_Super Admin without Portal Sales: no Maintenance Portal in the menu._
+
+!QA-5Oct-4148-5_client_portal_t2_sees_portal_clean.png|width=640!
+_Client Portal (T2) sees the portal through the tier gate._
+
+!QA-5Oct-4148-6_admin_with_portal_sales_portal_shown.png|width=640!
+_The user with Portal Sales sees the portal._

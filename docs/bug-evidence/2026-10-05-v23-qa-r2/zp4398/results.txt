@@ -8,3 +8,8 @@ PASS  Other company's site — PM seat (not staff), 5 Oct ~14:35 IST: the picker
       call and it writes.)
 Screenshot 2: the site picker open — the list starts at "10 SEP 2026" and runs A–Z; "test site" isn't in it.
 Jira: left in Ready for QA (the auto-pick rule still fails).
+RE-CHECK on the NEW QA build index-C913tyjW.js, 5 Oct ~18:05 IST: the preview still auto-picks "10 SEP 2026" (16 assets) — the first
+  of 50 sites in text order. Android Site 2 (425 assets) is 39th in the same list; "test site" 21bd10d4 (1,983 assets) is not in the
+  list. Counts: /lookup/v2/nodes total and /lookup/nodes length agree (16 / 425 / 1,983). The SLD AI edit works on QA, so backend
+  #1359 (which removes the duplicate preview-entity entry so "#1175's asset-count auto-pick wins") is on QA.
+  Ticket QA Review: "the auto-picked preview site is the company's site with the most assets". VERDICT: FAIL, certain → Jira To Do.
