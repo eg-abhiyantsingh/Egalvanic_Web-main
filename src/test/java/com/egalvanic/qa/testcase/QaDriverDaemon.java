@@ -110,6 +110,20 @@ public class QaDriverDaemon extends BaseTest {
                             result = "OK clicked " + lines[0] + " #" + idx;
                             break;
                         }
+                        case "hover": {
+                            // hover <css|xpath:...>\n<dx,dy>  -- real mouse move (Selenium Actions) to the element centre + optional offset
+                            String[] hl = body.split("\n");
+                            By hby = hl[0].startsWith("xpath:") ? By.xpath(hl[0].substring(6)) : By.cssSelector(hl[0].trim());
+                            WebElement hel = raw().findElement(hby);
+                            int hx = 0, hy = 0;
+                            if (hl.length > 1 && hl[1].contains(",")) { String[] xy = hl[1].trim().split(","); hx = Integer.parseInt(xy[0].trim()); hy = Integer.parseInt(xy[1].trim()); }
+                            boolean doClick = hl.length > 2 && hl[2].trim().equals("click");
+                            Actions ha = new Actions(raw()).moveToElement(hel, hx, hy);
+                            if (doClick) ha = ha.click();
+                            ha.perform();
+                            result = "OK hover " + hl[0] + " +" + hx + "," + hy + (doClick ? " click" : "");
+                            break;
+                        }
                         case "keys": {
                             int nl = body.indexOf('\n');
                             String css = nl < 0 ? body.trim() : body.substring(0, nl).trim();

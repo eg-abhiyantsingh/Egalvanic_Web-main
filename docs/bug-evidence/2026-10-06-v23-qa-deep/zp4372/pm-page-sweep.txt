@@ -1,0 +1,43 @@
+ZP-4372 sweep — PM seat (+project@), build index-Buq-IBvX.js, Tue Oct  6 18:46:23 IST 2026
+OK {"path":"/dashboard","api":24,"s5xx":[],"s4xx":[],"noStatus":0,"slow":["https://ingestion-useast1.devrev.ai/web/api/ingest/logData/ 3584ms s=200","/api/devrev/session-token 911ms s=200","/api/auth/v4/mfa/status 873ms s=200"],"head":"Good evening, Abhiyant! | TOTAL ASSETS | 1,983 | ACTIVE WORK ORDERS | 0 | EQUIPMENT AT RIS"}
+[6509 ms · https://acme.qa.egalvanic.ai/dashboard]
+
+OK {"path":"/sessions","api":26,"s5xx":[],"s4xx":[],"noStatus":0,"slow":["https://ingestion-useast1.devrev.ai/web/api/ingest/logData/ 2433ms s=200","/api/auth/v4/mfa/status 903ms s=200","/api/devrev/session-token 882ms s=200"],"head":"Work Orders | Create Work Order | ​ | ​ | Created | Priority | Work Order | Account | Serv"}
+[6508 ms · https://acme.qa.egalvanic.ai/sessions]
+
+OK {"path":"/assets","api":28,"s5xx":[],"s4xx":[],"noStatus":0,"slow":["/api/lookup/nodes/21bd10d4-cb0e-4e21-9722-9cd6219cedfc 3278ms s=200","https://ingestion-useast1.devrev.ai/web/api/ingest/logData/ 2714ms s=200","/api/node_classes/user/113b6590-6081-7009-c4ae-04bc262a17c9 1202ms s=200"],"head":"Assets | Arc Flash Readiness | 551 of 10266 fields • 418 unclassified | 5% | Condition Ass"}
+[6509 ms · https://acme.qa.egalvanic.ai/assets]
+
+OK {"path":"/issues","api":24,"s5xx":[],"s4xx":[],"noStatus":0,"slow":["https://ingestion-useast1.devrev.ai/web/api/ingest/logData/ 2396ms s=200","/api/auth/v2/me 819ms s=200","/api/auth/v4/mfa/status 809ms s=200"],"head":"Issues | Create Issue | Add to Work Order | Add to Quote | Export CSV | Bulk Upload | ​ | "}
+[6509 ms · https://acme.qa.egalvanic.ai/issues]
+
+OK {"path":"/tasks","api":24,"s5xx":[],"s4xx":[],"noStatus":0,"slow":["https://ingestion-useast1.devrev.ai/web/api/ingest/logData/ 1571ms s=200","/api/devrev/session-token 857ms s=200","/api/devrev/session-token 831ms s=200"],"head":"Tasks | PENDING | 241 | tasks | COMPLETED | 3 | tasks | DUE SOON (NEXT 30 DAYS) | 0 | task"}
+[6507 ms · https://acme.qa.egalvanic.ai/tasks]
+
+OK {"path":"/services","api":22,"s5xx":[],"s4xx":[],"noStatus":0,"slow":["https://ingestion-useast1.devrev.ai/web/api/ingest/logData/ 1346ms s=200","/api/auth/v2/me 929ms s=200","/api/auth/v4/mfa/status 832ms s=200"],"head":"Access Denied | You do not have permission to access this page. Please contact your admini"}
+[6507 ms · https://acme.qa.egalvanic.ai/services]
+
+OK {"path":"/pm-plans","api":22,"s5xx":[],"s4xx":[],"noStatus":0,"slow":["https://ingestion-useast1.devrev.ai/web/api/ingest/logData/ 2278ms s=200","/api/devrev/session-token 855ms s=200","/api/auth/v2/me 822ms s=200"],"head":"Access Denied | You do not have permission to access this page. Please contact your admini"}
+[6507 ms · https://acme.qa.egalvanic.ai/pm-plans]
+
+OK {"path":"/planning","api":24,"s5xx":[],"s4xx":[],"noStatus":0,"slow":["https://ingestion-useast1.devrev.ai/web/api/ingest/logData/ 1423ms s=200","/api/devrev/session-token 841ms s=200","/api/auth/v2/me 837ms s=200"],"head":"Work Order Planning | Create New Plan | ​ | ​ | Name | Type | Description | Facility | Cre"}
+[6507 ms · https://acme.qa.egalvanic.ai/planning]
+
+OK {"path":"/connections","api":25,"s5xx":[],"s4xx":[],"noStatus":0,"slow":["https://ingestion-useast1.devrev.ai/web/api/ingest/logData/ 2368ms s=200","/api/auth/v2/me 859ms s=200","/api/devrev/session-token 820ms s=200"],"head":"Connections | List | Graph | Overall Readiness | 7 connections • 0 of 5 required fields co"}
+[6508 ms · https://acme.qa.egalvanic.ai/connections]
+
+OK {"path":"/locations","api":23,"s5xx":[],"s4xx":[],"noStatus":0,"slow":["https://ingestion-useast1.devrev.ai/web/api/ingest/logData/ 3224ms s=200","/api/location/sld/21bd10d4-cb0e-4e21-9722-9cd6219cedfc 1507ms s=200","/api/auth/v4/mfa/status 870ms s=200"],"head":"Locations | Locations | ​ | ​ | 1 | a | a | a | a | a | a | a | a | a | a | a | a | a | a "}
+[6509 ms · https://acme.qa.egalvanic.ai/locations]
+
+OK {"path":"/qr-labels","api":33,"s5xx":[],"s4xx":[],"noStatus":0,"slow":["/api/lookup/v2/nodes/21bd10d4-cb0e-4e21-9722-9cd6219cedfc?page=9&page_ 1480ms s=200","/api/lookup/v2/nodes/21bd10d4-cb0e-4e21-9722-9cd6219cedfc?page=8&page_ 1460ms s=200","/api/lookup/v2/nodes/21bd10d4-cb0e-4e21-9722-9cd6219cedfc?page=7&page_ 1231ms s=200"],"head":"QR Labels | Print QR Labels | Generate and print asset QR labels by location, so a tech ca"}
+[6511 ms · https://acme.qa.egalvanic.ai/qr-labels]
+
+OK {"path":"/site-walks","api":25,"s5xx":[],"s4xx":[],"noStatus":0,"slow":["https://ingestion-useast1.devrev.ai/web/api/ingest/logData/ 1190ms s=200","/api/devrev/session-token 936ms s=200","/api/auth/v4/mfa/status 873ms s=200"],"head":"Site Walks | New Site Walk | ​ | ​ | Date | Walk | Site | Account | Services | Assets | Lo"}
+[6509 ms · https://acme.qa.egalvanic.ai/site-walks]
+
+OK {"path":"/arc-flash","api":28,"s5xx":[],"s4xx":[],"noStatus":0,"slow":["/api/lookup/nodes/21bd10d4-cb0e-4e21-9722-9cd6219cedfc?include_bus_nod 3182ms s=200","/api/auth/v2/me 1463ms s=200","/api/company/alliance-config/acme.egalvanic 1462ms s=200"],"head":"Arc Flash Readiness | Export readiness report | Overview | Asset Details | Source/Target C"}
+[6507 ms · https://acme.qa.egalvanic.ai/arc-flash]
+
+OK {"path":"/condition-assessment","api":22,"s5xx":[],"s4xx":[],"noStatus":0,"slow":["/api/auth/v2/me 910ms s=200","/api/devrev/session-token 871ms s=200","/api/devrev/session-token 811ms s=200"],"head":""}
+[6521 ms · https://acme.qa.egalvanic.ai/condition-assessment]
+

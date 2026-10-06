@@ -1,0 +1,25 @@
+ZP-4372 sweep — admin seat (+admin@), build index-Buq-IBvX.js, Tue Oct  6 19:19:31 IST 2026
+OK {"path":"/opportunities","api":24,"s5xx":[],"s4xx":[],"noStatus":0,"slow":["/api/users/77e99d86-7f0a-4345-b056-6f470bb668ec/slds 1479ms s=200","https://ingestion-useast1.devrev.ai/web/api/ingest/logData/ 1227ms s=200","https://ingestion-useast1.devrev.ai/web/api/ingest/startSession/ 1072ms s=201"],"head":"Quotes | DRAFT | $109.1K | 33 quotes | PENDING RESPONSE | $0 | 0 quotes | CLOSED WON | $37"}
+[6509 ms · https://acme.qa.egalvanic.ai/opportunities]
+
+OK {"path":"/sales-overview","api":26,"s5xx":[],"s4xx":[],"noStatus":0,"slow":["/api/users/77e99d86-7f0a-4345-b056-6f470bb668ec/slds 937ms s=200","/api/auth/v2/me 848ms s=200","/api/devrev/session-token 817ms s=200"],"head":"Good evening, abhiyant! | Planned Work | 9 unreleased work orders | OVERDUE | 0 | DUE IN 3"}
+[6508 ms · https://acme.qa.egalvanic.ai/sales-overview]
+
+OK {"path":"/customers","api":24,"s5xx":[],"s4xx":[],"noStatus":0,"slow":["https://ingestion-useast1.devrev.ai/web/api/ingest/logData/ 2172ms s=200","/api/auth/v2/me 984ms s=200","/api/entitlements?counts=1 886ms s=200"],"head":"Customers | New Customer | ​ | ​ | 17 aug abhiyant | 4 sites | 18 aug abhiyant | 1 site | "}
+[6519 ms · https://acme.qa.egalvanic.ai/customers]
+
+OK {"path":"/sessions/9de85c9d","api":39,"s5xx":["/api/eg-form-instance/by-session/9de85c9d/count 500","/api/eg-form-instance/by-session/9de85c9d/node-status 500"],"s4xx":[],"noStatus":0,"slow":["/api/ir_session/9de85c9d/assets/v2?limit=20&offset=0 1403ms s=200","/api/users/77e99d86-7f0a-4345-b056-6f470bb668ec/slds 1039ms s=200","https://ingestion-useast1.devrev.ai/web/api/ingest/logData/ 1009ms s=200"],"head":"Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON | Back to Work Orders"}
+[6512 ms · https://acme.qa.egalvanic.ai/sessions/9de85c9d]
+
+OK {"path":"/services","api":23,"s5xx":[],"s4xx":[],"noStatus":0,"slow":["/api/users/77e99d86-7f0a-4345-b056-6f470bb668ec/slds 961ms s=200","/api/devrev/session-token 881ms s=200","/api/devrev/session-token 870ms s=200"],"head":"Create Service | ​ | ​ | Service | Work Order Type | Asset Classes | De-Energized | Status"}
+[6526 ms · https://acme.qa.egalvanic.ai/services]
+
+OK {"path":"/pm-plans","api":23,"s5xx":[],"s4xx":[],"noStatus":0,"slow":["/api/auth/v4/mfa/status 919ms s=200","https://ingestion-useast1.devrev.ai/web/api/ingest/logData/ 883ms s=200","/api/auth/v2/me 859ms s=200"],"head":"Create Standard | ​ | ​ | PM Standard | Plans | Actions | 123 | 0 | abhiyant_new pm | 0 | "}
+[6506 ms · https://acme.qa.egalvanic.ai/pm-plans]
+
+OK {"path":"/emps","api":22,"s5xx":[],"s4xx":[],"noStatus":0,"slow":["https://ingestion-useast1.devrev.ai/web/api/ingest/logData/ 1289ms s=200","/api/users/77e99d86-7f0a-4345-b056-6f470bb668ec/slds 943ms s=200","/api/auth/v2/me 923ms s=200"],"head":"EMPs | Create EMP | ​ | ​ | Created | Site | EMP # | Progress | Status | Sep 30, 2026 | Na"}
+[6508 ms · https://acme.qa.egalvanic.ai/emps]
+
+OK {"path":"/reporting/builder","api":27,"s5xx":[],"s4xx":[],"noStatus":0,"slow":["https://ingestion-useast1.devrev.ai/web/api/ingest/logData/ 2624ms s=200","/api/reporting/configs?include_builds=1 1069ms s=200","/api/users/77e99d86-7f0a-4345-b056-6f470bb668ec/slds 949ms s=200"],"head":"Reporting | Report Builder | Branding | All (113) | Arc Flash Label Placement (1) | Cleani"}
+[6507 ms · https://acme.qa.egalvanic.ai/reporting/builder]
+
