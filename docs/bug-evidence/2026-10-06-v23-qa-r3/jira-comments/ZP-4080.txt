@@ -1,0 +1,44 @@
+*QA result: PASS — the whole print flow works on QA*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-CfC0Y-hD.js}}, 6 Oct 2026, admin seat, site Android Site 2 (438 assets). The ticket only lists a checklist, so I tested the page the way a tech would use it. Status not changed: the ticket has no fix version and no written acceptance — say if it should go to READY TO RELEASE.
+
+*Steps*
+# Site Data › QR Labels. Wait for the assets to load. Tick the location aCascade-39342 (2 assets).
+# Edit codes › type a code for each asset › Save codes.
+# Continue › pick Avery 94207 › Continue › add the Readable code and Asset class fields › Continue.
+# Print 1 sheet › in the "Did all the labels print correctly?" dialog choose Yes.
+# Open Print history; press Reprint. Go back to step 1 and look at the two assets with "Hide already labeled" on and off. Print test sheet.
+
+*What happened*
+* The page shows "Loading assets… 200 of 438" with a progress bar, then the building › floor › room tree with counts and the asset list (asset, class, location, QR code, last labeled, reprint) with the filters Hide already labeled, No QR code yet, Sort in walk order.
+* Ticking the location selected its 2 assets; the banner said "2 selected · 2 without a code" and the footer "0 labels", because assets without a code are not printed. Edit codes opened the side panel, "2 codes to save", Save codes → "2 QR codes saved", footer "2 labels · 1 sheet".
+* Label stock lists 10 stocks (Avery UltraDuty and SheetLabels) with the sheet count for the selection, plus start-at-label, copies per asset and print alignment.
+* Label designer: fields can be added with + or dragged into the top and main zones; the preview updates; emphasis Scan first / Balanced / Text first; the Fit report shows QR module size, scan distance, smallest text, logo coverage and safe margin. The QR encodes the asset's code (prefix + code, e.g. 12345555555QADEMOC1); the text around it is the chosen fields.
+* Print: the sheet proof shows the labels in walk order by room (or by name with the toggle off), die-cut guides, the sheet count and the printer instructions. Print 1 sheet opens the browser print, then asks "Did all the labels print correctly?". Yes → "2 assets marked as labeled" and the run is recorded (one request).
+* Print history lists the run first ("06/10/2026, 16:13:09 · 2 assets · 2 labels · Avery 94207") with Reprint and Select these assets. Reprint goes straight to the sheet proof with "Reprinting 2 labels. Your selection is kept."; Select these assets re-selects them on step 1.
+* Both assets now show Last labeled 06/10/2026 and a Reprint icon; with Hide already labeled on they disappear ("No assets match these filters"). Print test sheet records nothing.
+
+*Not covered*
+* The feature flag cannot be checked from the web (no QR flag in the features answer; the page is simply visible to this seat). Other companies' sites were not checked: the only signed-in seat is Egalvanic staff and sees every company. Physical print quality and scanning a printed label were not done.
+
+*Test data*
+* QR Labels on Android Site 2: https://acme.qa.egalvanic.ai/qr-labels
+* Assets given codes: 13N-H1-1 and Ats in aCascade-39342 › aCFloor-39342 › Before new room 2 (codes 12345555555QADEMOC1 and …C2); one print run recorded at 16:13 IST.
+
+*Screenshots*
+!QA-6Oct-4080-1_qr_labels_page_android_site_2.png|width=640!
+_QR Labels on Android Site 2: location tree, asset list and filters._
+
+!QA-6Oct-4080-5_codes_saved_2_labels.png|width=640!
+_After Save codes: "2 QR codes saved", 2 selected · 0 without a code, footer 2 labels._
+
+!QA-6Oct-4080-7_label_designer_fit_report.png|width=640!
+_Label designer: fields, live preview with the QR, emphasis and Fit report._
+
+!QA-6Oct-4080-8_marked_as_labeled_after_print.png|width=640!
+_Sheet proof after Print 1 sheet and Yes: "2 assets marked as labeled"._
+
+!QA-6Oct-4080-9_print_history_newest_run.png|width=640!
+_Print history with the new run first._
+
+!QA-6Oct-4080-10_last_labeled_date_and_reprint_column.png|width=640!
+_The two assets with Last labeled 06/10/2026 and the Reprint icon (Hide already labeled off)._

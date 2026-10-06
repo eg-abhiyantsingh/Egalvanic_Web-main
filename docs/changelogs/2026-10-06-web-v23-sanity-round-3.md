@@ -3,7 +3,7 @@
 **Prompt:** "https://egalvanic.atlassian.net/projects/ZP/versions/14236/tab/release-report-all-issues test all ready to qa ticket sanity testing"
 
 **Where:** acme.qa.egalvanic.ai, web build `index-Dyz0HxpC.js` (deployed overnight; 5 Oct was `index-CdsUTPRH.js`, then `index-C913tyjW.js`).
-**Page (same link, now version 8):** https://claude.ai/artifact/3e3VwLmEk5fDa7pQEyb24y
+**Page (same link, now version 9):** https://claude.ai/artifact/3e3VwLmEk5fDa7pQEyb24y
 **Evidence:** `docs/bug-evidence/2026-10-06-v23-qa-r3/zp<number>/` (`results.txt` + screenshots), posted comment texts in `jira-comments/`.
 
 ## Scope
@@ -106,4 +106,23 @@ Backlog → To Do. No fix version (Jira has no next web version yet); the owner 
 | ZP-4673 | Bug · Low | [Web] Every page load calls /api/auth/v2/me and /api/devrev/session-token twice |
 Bodies in `docs/bug-evidence/2026-10-06-v23-qa-r3/api-audit/tickets/`. Not filed: ZP-4667 (already in the current sprint, High; my
 reproduction path is in the audit table) and ZP-4666 (exists; the add-assets measurement answers its step 1). Nothing posted on those two.
+
+## Addendum 2 — ZP-4080 Print QR Labels (owner: "continue")
+The QR module's own feature ticket sits in Ready for QA in the current sprint (backend PRs #1390/#1425, frontend PR #1653; no fix
+version; the design link is a Claude Design page the tools cannot read, and the ticket text is a 4-line checklist). Tested end to end
+on QA (`index-CfC0Y-hD.js`, Android Site 2, 438 assets) in the signed-in browser, 15:55–16:25 IST. Evidence
+`docs/bug-evidence/2026-10-06-v23-qa-r3/zp4080/` (results.txt + 13 screenshots).
+
+**PASS** on everything the page offers: paged asset load with a progress bar; location tree with counts; selection banner "N selected ·
+N without a code" (assets without a code are not printed); Edit codes drawer → per-asset `node/update`; 10 label stocks with sheet
+counts, start-at-label, copies, print alignment; label designer with draggable fields, live preview, emphasis modes and a Fit report
+(the QR encodes `<prefix><code>`, e.g. `12345555555QADEMOC1`); sheet proof in walk order or by name with die-cut guides and printer
+instructions; Print 1 sheet → browser print → "Did all the labels print correctly?" → Yes → `POST /api/qr-labels/prints`, "2 assets
+marked as labeled"; Print history (newest first, Reprint re-opens the sheet proof, Select these assets re-selects); Last labeled date +
+Reprint icon; Hide already labeled hides them; Print test sheet records nothing. Not covered: the feature flag (no QR flag in
+`/api/features/access`), other companies' sites (staff seat), physical print and scan.
+
+Jira: comment **44897** with 6 screenshots. **Status not changed** (Ready for QA): no fix version and no written acceptance — the owner
+decides on READY TO RELEASE. Test data: codes 12345555555QADEMOC1/2 on 13N-H1-1 and Ats (Android Site 2); one recorded print run at
+16:13 IST. The session scratchpad from the morning was gone, so the page was patched directly from the published HTML (v9).
 

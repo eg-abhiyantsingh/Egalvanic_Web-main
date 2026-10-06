@@ -1,0 +1,43 @@
+ZP-4080 — Print QR Labels (Story, Ready for QA since 29 Sep; backend PRs #1390 + #1425, frontend PR #1653; no fix version; sprint Z-26-09-S3)
+QA acme, web build index-CfC0Y-hD.js, 6 Oct 2026 15:55–16:25 IST, admin seat abhiyant.singh@ (staff) in claude-in-chrome, site Android Site 2
+(438 assets). Ticket text is a checklist only (Feature Flag · Site Data → QR Labels · QR will have information based on selection · "Dharmesh
+will add the more information"); the design link is a Claude Design page that cannot be read outside the browser shell. Tested the page as a user.
+PASS  Site Data › QR Labels opens (route /qr-labels); shows "Loading assets… 200 of 438" with a progress bar while it pages the site's assets
+      (3 × GET /api/lookup/v2/nodes/<site>?page=N&page_size=200), then the Locations tree (building › floor › room with counts) and the asset list
+      (ASSET, CLASS, LOCATION, QR CODE, LAST LABELED, REPRINT), filters Hide already labeled (on by default) · No QR code yet · Sort in walk order,
+      Select all 426 / Clear selection, search box.
+PASS  Ticking a location (aCascade-39342, 2 assets) selects its assets: banner "2 selected · 2 without a code" + Edit codes; footer "2 assets
+      selected · 0 labels" (no codes → nothing to print). Edit codes = right drawer "Edit QR codes · 2 assets", Prefix (site default here is
+      "12345555555"), one "asset code" box per asset, "No changes yet" → "2 codes to save · no existing codes affected" → Save codes →
+      2 × POST /api/node/update/<asset> (0.85/0.89 s, parallel), toast "2 QR codes saved", banner "2 selected · 0 without a code", footer
+      "2 labels · Avery 94500 · 1 sheet(s)".
+PASS  Step 2 Label stock: 10 stocks (Avery UltraDuty 94222/94207/94211/94103/94500/61533, SheetLabels 2/14/24/30-Up) with per-sheet counts for
+      the selection; Sheet options: start at label (1 of 12), copies per asset, print alignment horizontal/vertical. Picking Avery 94207 updates
+      the footer ("Avery 94207 · 1 sheet(s)").
+PASS  Step 3 Label designer: fields Site name · Asset name ✓ · Fed from (parent) · Asset class · Location path ✓ · Readable code · Contact & phone,
+      drag or + onto TOP/MAIN zones; live preview (QR with ACME logo centre, asset name, location); emphasis Scan first / Balanced / Text first;
+      Auto-fit sizing + Logo in QR centre toggles; Fit report (QR module 1.15 mm, scans at 13 in, smallest text 10.5 pt, logo 22 %, safe margin
+      0.063"); "same design, every stock" row. Adding Readable code + Asset class with + works. QR payload (React prop) = "<prefix><code>", e.g.
+      12345555555QADEMOC1 — the QR encodes the asset's code, the text around it is the field selection ("information based on selection").
+PASS  Step 4 Print: Sheet proof "2 labels · Avery 94207 2" × 4" · 1 sheet(s) · sorted by name" (→ "walk order by room" with Sort in walk order on),
+      Sheet 1 of 1, Die-cut guides, WALK ORDER ON THIS SHEET, BEFORE YOU PRINT (manual feed, Actual size, alignment offset +0.000"/+0.085").
+      Print 1 sheet → browser print (via the page's print frame, not window.print) → dialog "Did all the labels print correctly?" with
+      "No, don't record" / "Yes, mark 2 as labeled". Yes → POST /api/qr-labels/prints (0.7 s), toast "2 assets marked as labeled".
+PASS  Print history drawer (GET /api/qr-labels/prints?site_id=…): newest first "06/10/2026, 16:13:09 · Abhiyant Singh · 2 assets · 2 labels ·
+      Avery 94207 · Reprint · Select these assets"; older runs by krunal patel (2–5 Oct) and one by the owner's seat at 14:02:46 today.
+      "Select these assets" re-selects the run's assets on step 1 (footer "2 assets selected").
+PASS  After the run: LAST LABELED = 06/10/2026 and a Reprint icon on both rows; with Hide already labeled ON + search "aCascade" the list says
+      "No assets match these filters." (labelled assets hidden); OFF shows both rows with their codes.
+PASS  Print test sheet: no record dialog, no API call, no toast (a test sheet does not mark assets as labelled).
+NOTE  Feature flag: not verifiable from the web — the nav item and route are visible to this seat; /api/features/access returns the seat's features
+      (see below). Tenancy (foreign site id on /api/qr-labels/prints) not checked: the only signed-in seat is staff (is_eg_admin), which sees all
+      companies, so a refusal cannot be proven from it.
+Test data written on Android Site 2: codes 12345555555QADEMOC1/2 on 13N-H1-1 and Ats (aCascade-39342 › aCFloor-39342 › Before new room 2); one
+print run recorded 16:13:09 IST. Nothing else changed.
+PASS  Reprint from Print history: GET /api/qr-labels/prints/<run id> → step 4 with banner "Reprinting 2 labels. Your selection is kept." + "Back
+      to selection", sheet proof for the same 2 labels.
+NOTE  /api/features/access carries no qr/label flag (keys account_detail, company_features, tier, user_permissions, user_roles); the QR Labels
+      nav item and route are simply present for this seat. /api/qr-labels/prints?site_id=<site> as a bare probe → 400 (the page's own call uses a
+      different query); not a finding.
+Screens: 1 page · 2 loading · 3 selection banner · 4 edit codes drawer · 5 codes saved · 6 stock · 7 designer · 8 marked as labeled · 9 history ·
+10 last labeled/reprint · 11 walk order sheet · 12 reprint banner · 13 hidden by filter.

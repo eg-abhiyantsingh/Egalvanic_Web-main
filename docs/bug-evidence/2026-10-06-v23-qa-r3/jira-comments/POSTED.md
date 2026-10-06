@@ -16,6 +16,7 @@ One comment per ticket, body = the `ZP-<n>.txt` beside this file (Jira wiki mark
 | ZP-4394 | 44889 | 1 | PARTLY TESTED — unchanged |
 | ZP-4423 | 44890 | 1 | NOT TESTABLE FROM THE WEB APP — unchanged |
 | ZP-4529 | 44891 | 1 | NOT CONFIRMED — unchanged |
+| ZP-4080 | 44897 | 6 | PASS — the whole print flow works on QA (addendum 2, 15:55–16:25 IST on index-CfC0Y-hD.js; held in Ready for QA: no fix version, no written acceptance) |
 | ZP-4435 | 44892 | 7 | FAIL on the keyboard path — everything else passes (addendum, tested 14:40–16:20 IST on index-CfC0Y-hD.js) |
 
 **ZP-4421 duplicate:** comments 44882 and 44883 are identical and were created 1 ms apart (03:24:46.166 / .167 CDT). The
