@@ -1,0 +1,23 @@
+API-calling audit (owner, 6 Oct: "check api testing too for qr code and other module issue in next sprint for api calling like multiple api calling")
+QA acme, build index-CfC0Y-hD.js, admin daemon seat (abhiyant.singh+admin@), 6 Oct 2026 15:30–16:40 IST. Calls read from performance resource
+entries (every XHR/fetch the page makes, with start/duration). Jira has no "next sprint" yet (only active Z-26-09-S3 to 10 Oct + Triage).
+QR Labels (/qr-labels, test site 1,983 assets; tickets ZP-4080 RFQ "Print QR Labels", ZP-4667 To Do pop-up bug, ZP-4668 Backlog sequence fill)
+- page load: GET /api/lookup/v2/nodes/<site>?page=1..10&page_size=200 — 10 calls in 4 waves (1,4,4,1), first→last 4.6 s (5355→9936 ms), 0.4–1.4 s each.
+  Loads EVERY asset of the site up front for the location tree + asset list. Also app-shell: /api/auth/v2/me ×2, /api/devrev/session-token ×2.
+- tick rows, Continue → Label stock → Label designer → Print: 0 API calls (client-side). Step 4 offers "Print test sheet"/"Print 1 sheet" (not pressed).
+- Add code (1 asset) → Save codes: 1 × POST /api/node/update/<asset> (740 ms); no pop-up when no existing code is affected.
+- Add codes (3 selected assets) → Save codes: 3 × POST /api/node/update/<asset>, all started within 1 ms (parallel), 0.8 s each, ~0.9 s wall.
+  → per-asset writes, not a batch; 50+ assets (ZP-4668) = 50+ parallel requests in browser waves of 6.
+- change an existing code (Circuit Breaker 1 TS-QADEMO1 → TS-QADEMO2) → "Change existing QR codes?" (1 of these assets already has a QR code):
+  Cancel → closed (edit dialog kept). Save again → pop-up → Change codes → 1 × POST /api/node/update (721 ms), toast "1 QR code saved", row shows
+  TS-QADEMO2, BUT the pop-up STAYS on screen re-rendered as "0 of these assets already have a QR code … 0 assets selected" (= ZP-4667 symptom).
+  On the stale pop-up: Change codes → NO API call, stays; Cancel → closes. ZP-4667 confirmed on the Change-codes path; no double write.
+- Print history: 1 × GET /api/qr-labels/prints ("No print runs recorded for this site yet").
+Work order asset linking (ZP-4666 "writes one asset at a time") — QA-DEMO WO 51d54087… (Android Site 2), Actions › Add Existing by Service
+- WO page load: 36 API calls (17 per-WO section calls + lookups + app shell; /api/devrev/session-token ×2).
+- pick a service: 1 × POST /api/ir_session/scope-preview (0.7–1.4 s) → qualifying assets with checkboxes.
+- "Add 3 Assets" (Cleaning Services): 1 × POST /api/ir_session/<wo>/add-assets (1.3 s) + 12 section refreshes; 6 s on screen.
+- "Add 308 Assets" (Cleaning): 1 × POST …/add-assets (4.1 s) + the same 12 refreshes = 13 calls; ~10 s on screen. Assets tab 99+.
+  → this web path is ONE batched call already; ZP-4666's per-asset claim must come from another path (create-WO wizard, Assets tab, mobile) — not measured.
+Test data written: QR codes TS-QADEMO2 (Circuit Breaker 1), TS-QADEMO3/4/5 (Circuit Breaker 2/3/4) on test site; 311 assets added to the
+QA-DEMO WO "review says starts empty 25 Sep delete me" (51d54087…). Nothing posted on ZP-4080/4666/4667/4668.

@@ -16,11 +16,13 @@ One comment per ticket, body = the `ZP-<n>.txt` beside this file (Jira wiki mark
 | ZP-4394 | 44889 | 1 | PARTLY TESTED — unchanged |
 | ZP-4423 | 44890 | 1 | NOT TESTABLE FROM THE WEB APP — unchanged |
 | ZP-4529 | 44891 | 1 | NOT CONFIRMED — unchanged |
+| ZP-4435 | 44892 | 7 | FAIL on the keyboard path — everything else passes (addendum, tested 14:40–16:20 IST on index-CfC0Y-hD.js) |
 
 **ZP-4421 duplicate:** comments 44882 and 44883 are identical and were created 1 ms apart (03:24:46.166 / .167 CDT). The
 first attempt uploaded the screenshots through Jira's own hidden file input, which froze the page renderer; the comment
 request had already gone out, and the retry posted it again before the duplicate guard could see the first one. The
 duplicate was left in place (comment deletion is the owner's call); delete 44883 from its "..." menu.
 
-**Status changes this round:** only ZP-4421 Ready for QA → READY TO RELEASE (13:38 IST, transition 7, status only).
+**Status changes this round:** ZP-4421 Ready for QA → READY TO RELEASE (13:38 IST, transition 7, status only); ZP-4435 Ready for QA → To Do
+(addendum, transition 2: the keyboard path never opens the photos — certain on the current build, control = the mouse path works).
 Everything else stays in Ready for QA with the reason in its comment.

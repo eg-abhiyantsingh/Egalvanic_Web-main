@@ -1,0 +1,50 @@
+*QA result: FAIL on the keyboard path — everything else passes*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-CfC0Y-hD.js}} (deployed 14:07 IST, it carries frontend PR #1661; backend PR #1474 is live: the graph call returns photo_count), 6 Oct 2026, admin seat, site Android Site 2 (443 nodes drawn, 41 with photos).
+Moved to To Do: no key opens the photos, so the feature is hover-only (details below).
+
+*Steps*
+# Engineering › SLD on Android Site 2, canvas locked. Hover a node with photos (MCC Bucket 1, then CB android), move away, hover again, click a thumbnail, press Escape.
+# Click a node with photos to select it, move the mouse off it, press Enter, then Space, then Tab.
+# Switch Lock Graph off, hover the same node, switch it back on.
+# Hover a node with no photos (child 1). Move a node with photos to the right edge and then the bottom edge of the canvas and hover it.
+# In my browser only: make the signed photo address fail once, then every time, to see the retry and the placeholder.
+
+*What happened*
+* Badge: nodes with photos show a camera badge with the count (1, 2). "child 1" (0 photos) has no badge; hovering it opens nothing and sends no request. Panelboard groups with photos (Panelboard 1 has 3) show no badge and open nothing.
+* Hover: the popover "Photos for <node>" opens beside the node — right of it, flipped to the left when the node is at the right edge, never over it — with the class and location line, PHOTOS n and the thumbnails. The first hover makes two requests (the photo list, then the signed addresses); hovering the same node again makes none. Loading the diagram makes no photo request.
+* Clicking a thumbnail opens the full-size viewer on top; the canvas stays and its pan and zoom are unchanged after Escape. Twice in 7 tries a real click on the thumbnail only focused it and opened nothing; it did not happen again while I was recording the events, so I could not pin it down.
+* *Keyboard — fails:* with the node selected, Enter tries to edit the node (toast "Editing is locked"), Space does nothing, and Tab leaves the canvas (nodes are not in the tab order). The key handler looks for a key named "Space", but the diagram reports the space bar as " ", so the keyboard path can never open the popover.
+* Lock Graph off: no badges and no popover; on again: both are back.
+* Failure states (simulated): one failed signed address → one silent re-request and the thumbnail loads, no broken image. An address that fails every time → the tile shows "Unavailable" with Retry after exactly one re-request, the popover stays; Retry loads the photo.
+* "Open asset" opens the asset page in a new tab.
+
+*Not covered*
+* The mobile bridge (openNodePhotos) is not reachable from the web. Multi-select mode was not tried. A diagram with more than 100 nodes is covered (443).
+
+*Test data*
+* SLD: https://acme.qa.egalvanic.ai/slds (site Android Site 2)
+* MCC Bucket 1: https://acme.qa.egalvanic.ai/assets/4fcdefcf-b160-45ae-82be-12a986ae6201
+* CB android: https://acme.qa.egalvanic.ai/assets/b2466236-208f-4996-95ef-b5d24cd3d49d
+* Lighting Controls 1: https://acme.qa.egalvanic.ai/assets/cbde4bd9-524e-4427-8f93-f1d0e43a85df
+
+*Screenshots*
+!QA-6Oct-4435-1_hover_badge_and_popover_mcc_bucket_1.png|width=640!
+_Hovering MCC Bucket 1: camera badge "1" on the node, popover to its right with the thumbnail._
+
+!QA-6Oct-4435-3_viewer_open_canvas_stays.png|width=640!
+_Clicking the thumbnail: the full-size viewer over the canvas._
+
+!QA-6Oct-4435-4_keyboard_enter_editing_is_locked.png|width=640!
+_Node selected, Enter pressed: "Editing is locked", no photos._
+
+!QA-6Oct-4435-5_keyboard_space_nothing_opens.png|width=640!
+_Node selected, Space pressed: nothing opens (the toast is left over from Enter)._
+
+!QA-6Oct-4435-6_unlocked_canvas_no_badge_no_popover.png|width=640!
+_Lock Graph off: no badge on MCC Bucket 1, hovering opens nothing._
+
+!QA-6Oct-4435-8_failed_thumbnail_unavailable_retry.png|width=640!
+_Simulated: the signed address fails every time → "Unavailable" with Retry._
+
+!QA-6Oct-4435-9_right_edge_popover_flips_left.png|width=640!
+_Node at the right edge: the popover flips to the left of it._

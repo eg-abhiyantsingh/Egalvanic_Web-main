@@ -1,0 +1,30 @@
+ZP-4435 — [Web] Easier photo access from SLD (quick view) — QA acme, web build index-CfC0Y-hD.js (deployed 14:07 IST 6 Oct, last-modified 08:37 GMT;
+carries frontend PR #1661; backend PR #1474 live: GET /api/sld/<id>/graph returns photo_count per node), 6 Oct 2026 14:40–16:20 IST, admin seat
+(abhiyant.singh@, is_eg_admin) in the claude-in-chrome Chrome, site Android Site 2 = SLD aadcee4c… (456 graph nodes / 443 drawn, 41 with photos, 55 photos).
+Ticket reached Ready for QA at 13:38 IST (Avani), after the round-3 list was taken.
+PASS  Badge: camera + count on nodes with photo_count>0 (MCC Bucket 1 "1", CB android "2", test kd 30 1 "2"); "child 1" (0) no badge, hover opens
+      nothing, no request. GoJS: node part PHOTO_BADGE, itemArray from photoCount, visible bound to model showPhotoBadges.
+PASS  Hover popover .npqv role=dialog "Photos for <name>": class · location line, PHOTOS n, tiles, "Click a photo to open it full size", "Open asset".
+      Placement right of the node (gap 0 px, no overlap); node at the right canvas edge → flips LEFT (pop 844–1112 vs node 1120–1368 CSS px);
+      node at the bottom edge → still right, fully inside the canvas (pop bottom 618 < canvas 626).
+PASS  Network: graph load makes no photo request; first hover = 2 requests (GET /api/photo/by_entity/<node> then POST /api/s3/urls/batch);
+      re-hover after leaving = 0 requests (cache). Mouse leave closes the popover after a short grace ($p=200 ms; gone by 3 s).
+PASS  Thumbnail click → MUI full-size viewer (download + close); canvas element identical before/after; d.scale/position unchanged after Escape.
+      Each open makes one POST /api/s3/urls/batch. OBSERVATION: 2 of 7 real clicks only focused the tile and opened nothing (not reproduced in
+      3 instrumented trials: pointerdown/mousedown/mouseup/click all reached the tile, viewer opened). Not filed.
+FAIL  Keyboard: with the node selected, Enter → openEditNodeModal → toast "Editing is locked"; Space → nothing (doKeyDown compares
+      lastInput.key === "Space" but GoJS reports the space bar as " " → Qp() never runs); Tab from the canvas goes to the "Expand" button
+      (nodes are not DOM buttons / not in tab order). Ticket item 5 + "Done means: keyboard path works end to end without a mouse" not met;
+      the feature is hover-only. Evidence: shots 4/5, key log {dom:" ", code:"Space"} vs handler literal "Space" in GoJSGraphEditor-Dm7x1soo.js.
+PASS  Locked only: Lock Graph toggle off → showPhotoBadges=false, badge hidden, allowMove=true, hover opens nothing; toggle on → restored.
+PASS  Failure states (simulated in my browser by rewriting POST /api/s3/urls/batch results[].url to an unsigned address → S3 503):
+      once → img error → ONE re-sign call → good URL → thumbnail loads, no broken image, no Retry (ATS 1).
+      every time (distinct bad URL each call) → error → one re-sign → error → tile "Unavailable" + Retry, popover stays (Lighting Controls 1);
+      Retry (real click, fetch restored) → new signed URL → photo loads.
+      Caveat: when the re-signed URL is byte-identical to the failed one, React does not reload the image and the tile shows the browser's
+      broken-image icon + alt "Photo 1 of 1" with no Retry (seen with 12N-H1-2) — only reachable if the server re-signs to the same string.
+OBS   Panelboard groups with photos (Panelboard 1, 3 photos, go.Group, 6 members) have no PHOTO_BADGE part and open nothing (code excludes groups).
+OBS   "Open asset" opens /assets/<id> in a NEW tab (old NodeHoverPopup behaviour kept).
+OBS   Test data: many Android Site 2 nodes are stacked at identical coordinates (Relay 1 / MCC Bucket 1 share bounds; Circuit Breaker 8 under
+      main switch 416) — the topmost node gets the hover and the lower node's badge peeks out half-hidden. Data, not a defect.
+Jira: comment + screenshots posted; moved Ready for QA → To Do (keyboard path certain: current build, control = mouse path works).
