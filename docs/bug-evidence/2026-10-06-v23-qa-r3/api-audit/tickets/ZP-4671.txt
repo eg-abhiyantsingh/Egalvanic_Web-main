@@ -1,0 +1,31 @@
+SUMMARY: [Web] QR Labels: opening the page downloads every asset of the site before it can be used (10 calls, 4.6 s on a 1,983-asset site)
+TYPE: Bug
+PRIORITY: Medium
+
+*What is wrong*
+On *Site Data › QR Labels* the page fetches the whole asset list of the site as soon as it opens, in pages of 200, before the location tree and the asset list are usable. The wait grows with the size of the site.
+
+*Environment*
+* Web app (QA), build {{index-CfC0Y-hD.js}}, site *test site* (1,983 assets), admin user
+* Measured 2026-10-06 from the browser's own network log
+
+*Steps to reproduce*
+# Pick the site *test site*.
+# Open *Site Data › QR Labels*.
+# Watch the network calls while the page opens.
+
+*Actual*
+* 10 calls to {{GET /api/lookup/v2/nodes/<site>?page=1..10&page_size=200}}, in 4 waves (1 · 4 · 4 · 1), 0.4–1.4 s each; 4.6 s from the first to the last.
+* The page is usable only after the last page lands. A site with 10,000 assets would make 50 calls.
+
+*Expected*
+* One call for the location tree (names and counts), and the assets of a location only when it is opened or when "Select all" is used, so the page opens in about one call.
+
+*Evidence*
+!QA-6Oct-QR-load-1_page_loads_all_1983_assets.png|width=640!
+_QR Labels on test site right after opening: "Select all 1983" and the full tree._
+
+!QA-6Oct-QR-load-2_asset_list_after_load.png|width=640!
+_The asset list after the ten pages arrived._
+
+Related: ZP-4080 (Print QR Labels), ZP-4668 (sequence fill of large batches). Full numbers in the QA page https://claude.ai/artifact/3e3VwLmEk5fDa7pQEyb24y (API-calling audit section).

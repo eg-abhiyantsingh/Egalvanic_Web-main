@@ -3,7 +3,7 @@
 **Prompt:** "https://egalvanic.atlassian.net/projects/ZP/versions/14236/tab/release-report-all-issues test all ready to qa ticket sanity testing"
 
 **Where:** acme.qa.egalvanic.ai, web build `index-Dyz0HxpC.js` (deployed overnight; 5 Oct was `index-CdsUTPRH.js`, then `index-C913tyjW.js`).
-**Page (same link, now version 7):** https://claude.ai/artifact/3e3VwLmEk5fDa7pQEyb24y
+**Page (same link, now version 8):** https://claude.ai/artifact/3e3VwLmEk5fDa7pQEyb24y
 **Evidence:** `docs/bug-evidence/2026-10-06-v23-qa-r3/zp<number>/` (`results.txt` + screenshots), posted comment texts in `jira-comments/`.
 
 ## Scope
@@ -94,4 +94,16 @@ on those tickets.
 | Actions › Add Existing by Service, 3 assets | 1 × `scope-preview`, **1 × `POST /api/ir_session/<wo>/add-assets`** (1.3 s) + 12 section refreshes | already one batched call |
 | same, 308 assets | **1 × add-assets (4.1 s)** + 12 refreshes, ~10 s on screen | ZP-4666's "one write per asset" is not this path; its step-1 measurement must name the path |
 | App shell on every page | `/api/auth/v2/me` ×2, `/api/devrev/session-token` ×2 | the plainest "multiple API calling" |
+
+### Filed from the audit (owner, 6 Oct: "if the api issue is critical take in current sprint otherwise next sprint")
+Verdict: not critical (nothing fails for the user, no data loss, no double writes) → **next sprint Z-26-10-S1** (id 1224, 13–25 Oct).
+Created through the Jira REST API from the signed-in page, each with two real screenshots attached and inline, render-checked, then
+Backlog → To Do. No fix version (Jira has no next web version yet); the owner sets it when Web v2.4 exists.
+| Ticket | Type · priority | Summary |
+|---|---|---|
+| ZP-4671 | Bug · Medium | [Web] QR Labels: opening the page downloads every asset of the site before it can be used (10 calls, 4.6 s on a 1,983-asset site) |
+| ZP-4672 | Story · Medium | [Web] QR Labels: "Save codes" sends one request per asset; no batch endpoint, so a 50-asset batch is 50 requests |
+| ZP-4673 | Bug · Low | [Web] Every page load calls /api/auth/v2/me and /api/devrev/session-token twice |
+Bodies in `docs/bug-evidence/2026-10-06-v23-qa-r3/api-audit/tickets/`. Not filed: ZP-4667 (already in the current sprint, High; my
+reproduction path is in the audit table) and ZP-4666 (exists; the add-assets measurement answers its step 1). Nothing posted on those two.
 

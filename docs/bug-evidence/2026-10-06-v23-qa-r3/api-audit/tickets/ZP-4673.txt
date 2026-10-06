@@ -1,0 +1,30 @@
+SUMMARY: [Web] Every page load calls /api/auth/v2/me and /api/devrev/session-token twice
+TYPE: Bug
+PRIORITY: Low
+
+*What is wrong*
+On every page the web app opens, two boot calls are made twice: {{GET /api/auth/v2/me}} and {{GET /api/devrev/session-token}}. They return the same thing both times.
+
+*Environment*
+* Web app (QA), build {{index-CfC0Y-hD.js}}, admin user
+* Measured 2026-10-06 from the browser's own network log on *Site Data › QR Labels* and on a work order page
+
+*Steps to reproduce*
+# Open any page, for example *Site Data › QR Labels* or a work order.
+# Watch the network calls while the page opens.
+
+*Actual*
+* QR Labels: {{/api/auth/v2/me}} ×2 (0.7 s and 0.8 s) and {{/api/devrev/session-token}} ×2 (0.8 s each) among 28 calls.
+* Work order page: {{/api/devrev/session-token}} ×2 among 36 calls.
+
+*Expected*
+* Each boot call once per page load; the second caller reuses the first answer.
+
+*Evidence*
+!QA-6Oct-boot-1_work_order_page.png|width=640!
+_A work order page: 36 calls on open, the session-token call twice._
+
+!QA-6Oct-boot-2_qr_labels_page.png|width=640!
+_QR Labels: 28 calls on open, me and session-token twice each._
+
+Numbers in the QA page https://claude.ai/artifact/3e3VwLmEk5fDa7pQEyb24y (API-calling audit section).

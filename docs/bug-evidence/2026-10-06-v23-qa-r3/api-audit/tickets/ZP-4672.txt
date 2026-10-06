@@ -1,0 +1,35 @@
+SUMMARY: [Web] QR Labels: "Save codes" sends one request per asset; no batch endpoint, so a 50-asset batch is 50 requests
+TYPE: Story
+PRIORITY: Medium
+
+h3. What's the problem
+In *Site Data › QR Labels › Edit QR codes*, saving a batch writes each asset separately: {{POST /api/node/update/<asset>}} once per asset, fired in parallel. Three assets = three requests (0.8 s each). The sequence fill in ZP-4668 is meant for batches of 50 and more, which would be 50+ requests per save, in browser waves of six. Measured on QA 2026-10-06, build {{index-CfC0Y-hD.js}}, site *test site*, admin user.
+
+h3. What's the solution
+* One batch endpoint that takes the whole set of (asset, code) pairs, used by Edit QR codes (single and multi-asset).
+* Define partial failure: say which codes saved and which did not; no duplicate writes on a double click.
+* Keep the per-asset {{node/update}} contract for the mobile apps unless they get the same change.
+
+h3. Steps to see it today
+# Open *Site Data › QR Labels* on *test site*.
+# Tick 3 assets that have no code and click *Add codes*.
+# Type a code for each and click *Save codes*, with the network panel open.
+
+h3. Actual / Expected
+* Actual: 3 × {{POST /api/node/update/<asset>}} started in the same millisecond, 0.8 s each; "3 QR codes saved".
+* Expected: one request for the batch.
+
+h3. QA Review
+# Save codes for 1, 10 and 50 assets with the network panel open: one request each time, time grows slowly with the count.
+# Reopen the dialog: every code persisted, none dropped.
+# Double-click Save: no duplicate writes, no duplicate codes.
+# Change one existing code in a batch: the "Change existing QR codes?" pop-up still appears and closes after the choice (see ZP-4667).
+
+h3. Evidence
+!QA-6Oct-QR-save-1_edit_qr_codes_one_asset.png|width=640!
+_Edit QR codes for one asset (one request on save)._
+
+!QA-6Oct-QR-save-2_edit_qr_codes_three_assets.png|width=640!
+_Edit QR codes for three assets: three requests on save, one per asset._
+
+Related: ZP-4668 (start-number fill), ZP-4666 (same request shape for linking). Numbers in the QA page https://claude.ai/artifact/3e3VwLmEk5fDa7pQEyb24y (API-calling audit section).
