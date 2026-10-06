@@ -9,7 +9,7 @@ a signed-in Jira browser session exists (the Rovo connector cannot attach files)
 | ZP-4398 | 44907 | PASS — the preview now opens on the site with the most assets, and an AI edit ran against it | → READY TO RELEASE |
 | ZP-4435 | 44908 | PASS — the keyboard path is fixed; mouse path and enclosure groups re-checked | → READY TO RELEASE |
 | ZP-3801 | 44909 | PASS — the request limit, the message the form shows, "save as entered" and the cross-company checks | → READY TO RELEASE |
-| ZP-3802 | (see below) | PASS on the main flows — one gap already filed as ZP-4675 | held |
+| ZP-3802 | 44918 (the first call hung and never posted; re-posted 20:26 IST) | PASS on the main flows — one gap already filed as ZP-4675 | moved to READY TO RELEASE by the owner at ~20:25 IST |
 | ZP-4305 | 44910 | PASS — resolve and reopen work end to end; the header lag from 30 Sep is still there | held |
 | ZP-4372 | 44911 | PASS on the web side; the database checks still need Dharmesh | held |
 | ZP-4394 | 44912 | PARTLY TESTED — section states and role-free editing pass; the class filter cannot be set up on QA | held |

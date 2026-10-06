@@ -29,3 +29,5 @@ Posting path: the Jira browser session was not available at first (claude-in-chr
 - Status moves: ZP-4435 → READY TO RELEASE, ZP-3801 → READY TO RELEASE, ZP-4301 → To Do. **ZP-4398's move to READY TO RELEASE was refused by the auto-mode permission gate** (the other three went through); its comment says "Moved to READY TO RELEASE" — the owner has to move it by hand.
 - Screenshots: named in every comment; files in `docs/bug-evidence/2026-10-06-v23-qa-deep/jira-attach/` (27 + the ZP-4680 picker shot). The chrome-devtools Chrome was opened on the Atlassian login so the owner could sign in; until that happens nothing can be attached.
 - Page republished with a "Jira updates" section: https://claude.ai/artifact/D4J1GacfmZjz3jvytp2J4o
+- ZP-3802: the first connector call hung (background task, never posted); re-posted as comment 44918 at 20:26 IST with the status line "moved to READY TO RELEASE by the QA owner" — the owner moved the ticket by hand at about 20:25 IST while this was running.
+- ZP-4398 is still in Ready for QA (the one transition the permission gate refused); its comment 44907 says "Moved to READY TO RELEASE" — needs the owner's click.
