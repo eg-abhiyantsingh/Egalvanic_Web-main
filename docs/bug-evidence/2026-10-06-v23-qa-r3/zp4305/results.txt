@@ -1,0 +1,4 @@
+ZP-4305 — Resolve issues directly from the issue form — QA acme, web build index-Dyz0HxpC.js (new overnight; 5 Oct was index-CdsUTPRH.js then index-C913tyjW.js), 6 Oct 2026 13:20–14:10 IST, admin seat unless noted. Sanity round 3.
+UNCHANGED  /pull-through-work → page with only the old heading "Pull-Through Work" (screenshot retaken 14:5x after the first capture caught the made-up address instead); /zz-qa-no-such-page → blank page, no heading.
+  New main bundle has no path:"/pull-through-work" route; only the page-title map keeps the name (2 occurrences). Cosmetic leftover.
+Not re-run today: Defect 1 (header stays Resolved until the form closes) and the resolve/reopen flow — no PR change on this ticket.

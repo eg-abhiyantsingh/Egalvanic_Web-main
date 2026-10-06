@@ -1,0 +1,11 @@
+ZP-4421 — [Web] Add Search to "Add Form" Dialog on Work Orders — QA acme, web build index-Dyz0HxpC.js (new overnight; 5 Oct was index-CdsUTPRH.js then index-C913tyjW.js), 6 Oct 2026 13:20–14:10 IST, admin seat unless noted. Sanity round 3.
+Developer: Dharmesh merged eg-pz-backend PR #1476 to QA 12:54 IST today; ticket back to Ready for QA (I had moved it to To Do 5 Oct).
+WO https://acme.qa.egalvanic.ai/sessions/4c2317d2-11fe-40b0-98b7-c7d0a7fac7d6 › right-click asset "asset" (ATS) › Add Procedure › Standalone Form.
+Box placeholder now "Search forms…" (was "Search forms by name…"). List: 25 forms — "FOR THIS ASSET" 7 (Applies to: Any subtype) + "OTHER FORMS" 18.
+PASS  "automatic" → only the forms whose Applies-to names an Automatic Transfer Switch stay (70B - ATS - All Types ×2, abhiyant singh,
+      ATEST1, Atestform 1, Clean Tighten Torque …, Contact Resistance Testing …); the 7 "Any subtype" forms and ATEST2 (Applies to:
+      Transfer Switch only) are hidden. Dump of the dialog text before/after confirms it (cap5.out).
+PASS  "transfer" → the Transfer Switch forms incl. ATEST2 ("Applies to: Transfer Switch (<= 1000V)…") and the "Transfer …" names.
+PASS  "ATS" → 4 forms by name (control, as on 5 Oct). "bolt" → "No forms match “bolt”." (empty-state message).
+Not re-run: ticks kept across searches (passed 30 Sep), Oil-Filled Transformer (many forms), Add after search.
+Jira: READY TO RELEASE (moved today, status only).

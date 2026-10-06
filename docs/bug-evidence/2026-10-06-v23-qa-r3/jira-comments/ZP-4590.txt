@@ -1,0 +1,27 @@
+*QA result: FAIL on QA — the new severity formula is not on QA acme*
+Sanity re-test on QA (acme.qa.egalvanic.ai), web build {{index-Dyz0HxpC.js}}, 6 Oct 2026, after the ticket came back to Ready for QA at 11:09 IST.
+Status not changed. Which environment has the new formula? The QA Review says staging; QA acme still has the old one.
+
+*Steps*
+# Issues › Create Issue › Thermal Anomaly. Severity Criteria "Similar", Problem Temp 95 °F, Reference Temp 90 °F. Read Delta T and Severity. (Cancelled, nothing saved.)
+# Admin › Issue Classes › Thermal Anomaly › Core Attributes › Severity: read the expression.
+
+*What happened*
+* Delta T 5 °F → Severity "Nominal". With the new Similar bands a 5 °F difference (about 2.8 °C) should be "Minor".
+* The class expression on QA is still the old one: Similar up to 5.4 °F → Nominal, up to 27 °F → Intermediate, else Critical. No "Minor" anywhere in it.
+* None of the three Thermal Anomaly classes the classes API returns on QA (acme's own, the global one, and another company's) contains "Minor".
+* Same result as on 5 Oct.
+
+*Not covered*
+* Staging was not tested (QA only unless asked). Ambient and Indirect, saving issues, the report chart and the mobile picker order were not run.
+
+*Test data*
+* Issue Classes: https://acme.qa.egalvanic.ai/issue-classes
+* Add Issue from https://acme.qa.egalvanic.ai/issues on site "test site".
+
+*Screenshots*
+!QA-6Oct-4590-1_similar_95_90_severity.png|width=640!
+_Similar, 95 / 90 °F → Delta T 5 → Severity "Nominal" (new bands: Minor)._
+
+!QA-6Oct-4590-2_formula_still_old.png|width=640!
+_The class expression on QA: the Similar band still starts "Delta T <= 5.4 → Nominal" (old bands); the full expression contains no "Minor"._

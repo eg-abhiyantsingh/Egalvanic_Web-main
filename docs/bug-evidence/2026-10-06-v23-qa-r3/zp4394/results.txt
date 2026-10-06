@@ -1,0 +1,4 @@
+ZP-4394 — EG form test-equipment class filter; full-form Section Done — QA acme, web build index-Dyz0HxpC.js (new overnight; 5 Oct was index-CdsUTPRH.js then index-C913tyjW.js), 6 Oct 2026 13:20–14:10 IST, admin seat unless noted. Sanity round 3.
+PASS (unchanged)  GET /api/eg-form-instance/by-session/51d54087… → instance 035fc427 section_states measurements/per_connection_torque_record
+  done:true (30 Sep 14:37 UTC). WO › More › Forms tab: "Torque Record · Transformer · Dry-Type Transformer (<= 600V) · 1".
+Still not tested: builder "Equipment classes" filter on a Test Equipment select (needs a test form + 2-class library); iOS half.

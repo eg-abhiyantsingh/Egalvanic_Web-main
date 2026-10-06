@@ -1,0 +1,18 @@
+*QA result: PASS for the web part — the database checks still need database access*
+Sanity re-test on QA (acme.qa.egalvanic.ai), web build {{index-Dyz0HxpC.js}}, 6 Oct 2026.
+
+*Steps*
+# Open each key page fresh: Work Orders, the 1,076-asset work order, Assets, Issues, Tasks, Services, PM Plans, Planning, Opportunities, Sales overview.
+# Watch every API call for 5xx errors and timing.
+
+*What happened*
+* All 10 pages load; 242 API calls, no 5xx.
+* Slowest calls: the assets lookup for the site, 3.1 s on both the work order page and Assets; the log-upload call ({{/web/api/ingest/logData/}}), 1.0–1.7 s on five pages; the user's site list 0.9 s on three pages. Nothing else was slower than these.
+* The database checks (Analyze Indexes, the new index, {{pg_stat_statements}} before and after) are not possible from the web.
+
+*Test data*
+* Work order with 1,076 assets: https://acme.qa.egalvanic.ai/sessions/9de85c9d-8059-416b-9972-0bd6d54afb78
+
+*Screenshots*
+!QA-6Oct-4372-1_work_orders_list.png|width=640!
+_Work Orders loads on today's build._

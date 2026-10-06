@@ -1,0 +1,2 @@
+ZP-4423 — Journal fold (engineering AI pipeline) — QA acme, web build index-Dyz0HxpC.js (new overnight; 5 Oct was index-CdsUTPRH.js then index-C913tyjW.js), 6 Oct 2026 13:20–14:10 IST, admin seat unless noted. Sanity round 3.
+UNCHANGED  not testable from the web app (engine-side fix). /site-walks loads on the new build; Interpret not run (paid).

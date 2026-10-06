@@ -1,0 +1,20 @@
+*QA result: PARTLY TESTED — unchanged*
+Sanity re-test on QA (acme.qa.egalvanic.ai), web build {{index-Dyz0HxpC.js}}, 6 Oct 2026.
+
+*Steps*
+# Open the work order › More › Forms.
+# Load the saved form data for the work order ({{GET /api/eg-form-instance/by-session/<work order id>}}).
+
+*What happened*
+* The Forms tab lists "Torque Record" (Transformer · Dry-Type Transformer (<= 600V)) with 1 form; its row "test kd transformer" shows Sections 2/2 with a green check, status Draft.
+* The saved form still has both sections marked done ({{section_states}} with {{done: true}} for both, set on 30 Sep).
+
+*Not covered*
+* The builder's "Equipment classes" filter on a Test Equipment select and its empty-class case (needs a test form with such a select and a two-class test-equipment library); the iOS half.
+
+*Test data*
+* Work order: https://acme.qa.egalvanic.ai/sessions/51d54087-6a74-4ddd-9698-f34e40e14015
+
+*Screenshots*
+!QA-6Oct-4394-1_wo_forms_tab.png|width=640!
+_The work order's Forms tab._

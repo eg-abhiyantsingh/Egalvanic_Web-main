@@ -1,0 +1,9 @@
+ZP-4301 — Surface asset delete-refusal reasons (name the collapsed SLD view) — QA acme, web build index-Dyz0HxpC.js (new overnight; 5 Oct was index-CdsUTPRH.js then index-C913tyjW.js), 6 Oct 2026 13:20–14:10 IST, admin seat unless noted. Sanity round 3.
+Server part re-proven with existing asset Fuse 2 (f43fada9…, Android Site 2) placed in a new view "QA-DEMO ZP-4301 r3 view (delete me)"
+  13292fe7-a2bd-4793-a713-987557f7aaa3 and collapsed there (app API, X-Direct-Write):
+PASS  DELETE /api/node/delete/<id> (no flag) → 400 collapsed_node_not_deletable, message names the view, views:["QA-DEMO ZP-4301 r3 view (delete me)"].
+PASS  POST /api/node/bulk-delete → same 400 with the view name.
+UNCHANGED  the web asset page / list still send allow_collapsed=true (new main bundle), so the named-view message cannot appear on screen.
+Cleanup: node un-collapsed (200), Fuse 2 kept (GET 200); the empty view is left, labelled.
+Side note (not a user flow): POST /api/node/create with a hand-built body (QuickCount shape minus class fields) → 500 "An internal error
+  occurred." trace c85fb9105e404c04b6070c493be8b775. Quick Count itself created nodes fine on 5 Oct. Not filed.

@@ -1,0 +1,32 @@
+*QA result: PASS*
+Sanity re-test on QA (acme.qa.egalvanic.ai), web build {{index-Dyz0HxpC.js}}, 6 Oct 2026, after backend PR #1476.
+Moved to READY TO RELEASE.
+
+*Steps*
+# Open the work order (link under Test data), right-click the asset "asset" (ATS) › Add Procedure › Standalone Form.
+# Type "automatic", then "transfer", then "ATS", then "bolt" in the search box.
+
+*What happened*
+* The search box now reads "Search forms…" and matches the "Applies to" text as well as the name.
+* "automatic": only the forms whose "Applies to" names an Automatic Transfer Switch stay (the two "70B - ATS - All Types" rows and "abhiyant singh" in the screenshot, then "ATEST1" and "Clean, Tighten, Torque — Cleaning" further down). The 7 forms that read "Applies to: Any subtype" and the one that applies only to "Transfer Switch" are hidden. On 5 Oct this search found nothing.
+* "transfer": 25 forms stay, each with "Transfer" in its name or its "Applies to" text; the first rows are the same "70B - ATS - All Types" and "abhiyant singh" forms as for "automatic".
+* "ATS": 4 forms by name, as before. "bolt": "No forms match “bolt”."
+
+*Not covered*
+* Ticks kept across searches (passed on 30 Sep), an asset type with many forms (Oil-Filled Transformer), and pressing Add after searching: not re-run today.
+
+*Test data*
+* Work order: https://acme.qa.egalvanic.ai/sessions/4c2317d2-11fe-40b0-98b7-c7d0a7fac7d6
+
+*Screenshots*
+!QA-6Oct-4421-1_list_before_search.png|width=640!
+_Before searching: the first group, "FOR THIS ASSET", reads "Applies to: Any subtype" (25 of the 42 forms are loaded; a Load more button holds the other 17)._
+
+!QA-6Oct-4421-2_search_automatic_matches_applies_to.png|width=640!
+_"automatic": only forms whose "Applies to" names an Automatic Transfer Switch remain._
+
+!QA-6Oct-4421-3_search_transfer.png|width=640!
+_"transfer": forms whose "Applies to" names a Transfer Switch stay (same first rows as "automatic")._
+
+!QA-6Oct-4421-4_search_bolt_no_match.png|width=640!
+_"bolt": the empty-state message._

@@ -1,0 +1,5 @@
+ZP-4372 — Database Index Cleanup — QA acme, web build index-Dyz0HxpC.js (new overnight; 5 Oct was index-CdsUTPRH.js then index-C913tyjW.js), 6 Oct 2026 13:20–14:10 IST, admin seat unless noted. Sanity round 3.
+PASS (web part)  10 key pages opened fresh on the new build: /sessions, /sessions/9de85c9d (1,076 assets), /assets, /issues, /tasks,
+  /services, /pm-plans, /planning, /opportunities, /sales-overview — 242 API calls, 0 × 5xx. Slowest: /api/lookup/nodes/<sld> 3.07 s
+  (assets lookup, cold), /api/users/<id>/slds 0.92 s; the rest under 1.7 s.
+Still needs DB access (Dharmesh): Analyze Indexes, new index, pg_stat_statements before/after.

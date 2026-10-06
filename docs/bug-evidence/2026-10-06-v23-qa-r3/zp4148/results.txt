@@ -1,0 +1,10 @@
+ZP-4148 — Portal Sales role gates the Maintenance Portal preview — QA acme, web build index-Dyz0HxpC.js (new overnight; 5 Oct was index-CdsUTPRH.js then index-C913tyjW.js), 6 Oct 2026 13:20–14:10 IST, admin seat unless noted. Sanity round 3. (V23RoleProbe nav,mp: PM seat +pm+qa, Super Admin seat qa1)
+CHANGED since 5 Oct: the new web build has NO "Portal Sales" role-name gate (old index-CdsUTPRH.js had xV="Portal Sales"; new
+  index-Dyz0HxpC.js: 0 occurrences). The portal now follows /api/features/access: qa1 (Super Admin, Admin, AM, EE, PM — no Portal Sales)
+  gets features=["maintenance-portal"] (5 Oct: []) and sees Maintenance Portal in the rail; /maintenance-portal/overview, /condition,
+  /sld, /reports all open for it (5 Oct: rail hidden, /maintenance-portal and /reports Access Denied).
+UNCHANGED  PM (+pm+qa, features=[]): rail hidden; /maintenance-portal and /reports Access Denied; /maintenance-portal/condition opens the
+  Site Data Condition Assessment page; /sld "Loading SLD…" with an Access Denied heading in the HTML.
+=> As written (AC1 route block, AC3 Super Admin loses the portal) the ticket FAILS on today's build, but the product rule moved from the
+   Portal Sales marker role to a feature entitlement. Dharmesh's 10 Sep "DUPLICATE of ZP-4138, do not action" still stands. Not moved.
+Note: /api/users/ carries no role field, so a non-active Portal Sales assignment on qa1 can't be seen from the web; /auth/me lists 5 roles.

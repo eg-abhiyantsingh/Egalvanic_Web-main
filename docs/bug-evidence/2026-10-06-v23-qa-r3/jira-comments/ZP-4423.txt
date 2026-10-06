@@ -1,0 +1,13 @@
+*QA result: NOT TESTABLE FROM THE WEB APP — unchanged*
+Sanity re-test on QA (acme.qa.egalvanic.ai), web build {{index-Dyz0HxpC.js}}, 6 Oct 2026.
+
+*What happened*
+* The fix is inside the engineering AI pipeline (the journal fold), not in the web app. The web can show journal entries and start a paid Interpret run, but it cannot create the bug's condition (a photo that has not arrived when the entry is read).
+* Site Walks loads on today's build. Interpret was not run.
+
+*Test data*
+* Site Walks: https://acme.qa.egalvanic.ai/site-walks
+
+*Screenshots*
+!QA-6Oct-4423-1_site_walks_new_build.png|width=640!
+_Site Walks on today's build._

@@ -1,0 +1,8 @@
+ZP-4590 — [Web] Issue severity list is missing "Minor" … — QA acme, web build index-Dyz0HxpC.js (new overnight; 5 Oct was index-CdsUTPRH.js then index-C913tyjW.js), 6 Oct 2026 13:20–14:10 IST, admin seat unless noted. Sanity round 3.
+Avani moved it In Progress → Ready for QA at 11:09 IST today (changelog), no new comment, no build note.
+FAIL (unchanged)  Issues › Create Issue › Thermal Anomaly, Severity Criteria Similar, Problem 95 °F, Reference 90 °F → Delta T 5 °F →
+      Severity "Nominal" (new bands: 5 °F ≈ 2.8 °C → "Minor"). Form cancelled, nothing saved.
+FAIL (unchanged)  Admin › Issue Classes › Thermal Anomaly › Core Attributes › Severity: the expression is still the old one
+      (Similar: ≤5.4 °F Nominal, ≤27 Intermediate, else Critical). /api/issue_classes: none of the 3 Thermal Anomaly classes on QA
+      (acme override 9cbb3bd9, global 88903684, company fdcadc86's cc2fd617) contains "Minor".
+=> The formula change is not on QA acme. Not moved (which environment carries the new formula is the open question; QA Review said staging).

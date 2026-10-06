@@ -1,0 +1,19 @@
+*QA result: PARTLY TESTED — unchanged, 2 small defects*
+Sanity re-test on QA (acme.qa.egalvanic.ai), web build {{index-Dyz0HxpC.js}}, 6 Oct 2026. No new fix was merged for this ticket since 5 Oct (no new comment on it).
+
+*Steps*
+# Type https://acme.qa.egalvanic.ai/pull-through-work in the address bar. For comparison, type a made-up address.
+
+*What happened*
+* /pull-through-work still shows a blank page with only the old heading "Pull-Through Work". The made-up address shows a blank page with no heading. Today's build has no route for the page; only its title is left over (cosmetic).
+* Defect 1 from 5 Oct (after Reopen the header says Resolved until the form closes) and the resolve flow were not re-run: nothing changed in this build for them.
+
+*Test data*
+* Issue used on 5 Oct: https://acme.qa.egalvanic.ai/issues/f753f5a4-da0b-4b0e-b197-395b41a79c43
+
+*Screenshots*
+!QA-6Oct-4305-1_pull_through_work_heading_only.png|width=640!
+_/pull-through-work: the old heading "Pull-Through Work" over an empty page._
+
+!QA-6Oct-4305-2_made_up_address_blank.png|width=640!
+_For comparison, a made-up address: an empty page with no heading._

@@ -1,0 +1,21 @@
+*QA result: NOT CONFIRMED — unchanged*
+Sanity re-test on QA (acme.qa.egalvanic.ai), web build {{index-Dyz0HxpC.js}}, 6 Oct 2026. Status not changed; the question to the developer from 5 Oct is still open (what does the server send when the AI limit is used up?).
+
+*Steps*
+# Open Reporting › "Annual Maintenance Report (Copy)" › Edit with AI, type a change.
+# In my browser only, make the start request answer with a 200 reply that has no error text, then press Apply with AI. No AI job ran.
+
+*What happened*
+* The dialog still shows "Could not start the AI edit (HTTP 200)." for that reply, as on 5 Oct.
+* The Edit with AI code in today's build has the same two messages as before: the firewall message added by PR #1602 and this fallback; no limit or reset-time text.
+
+*Not covered*
+* A real used-up AI limit cannot be produced on QA.
+* The firewall-style reply and the 429 reply from 5 Oct were not re-simulated today.
+
+*Test data*
+* Config: https://acme.qa.egalvanic.ai/reporting/config/0eee082a-af4d-4805-9ae0-c19d3996af9a
+
+*Screenshots*
+!QA-6Oct-4529-1_sim_200_no_error_still_http_200.png|width=640!
+_Simulated in my browser: a 200 reply with no error text → still "HTTP 200"._

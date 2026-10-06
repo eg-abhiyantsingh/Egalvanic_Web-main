@@ -1,7 +1,7 @@
 # Claude Code Chat Log (Compressed)
 
 > Auto-updated summary of AI-assisted debugging sessions. Read this for full context when starting a new chat.
-> Last updated: 2026-04-09 (Session 11)
+> Last updated: 2026-10-06 (Web v2.3 round 3)
 
 ---
 
@@ -1146,3 +1146,35 @@ Verdict `docs/bug-reports/2026-09-14-QA-web-v2.2-release-check.md`; artifact V20
 **Jira: nothing changed** — ZP-4145 reopen + ZP-4159 scope widening raised for the owner to decide, per
 [[feedback_ask_before_every_extra_jira_change]]. Also ZP-4159's priority field says Medium while its own
 description says High (same mismatch ZP-4160 had).
+
+## 2026-09-15 → 2026-09-29 — not compressed here
+Sessions in this window (Web v2.2 release day 25 Sep, hotfix v2.2.1 on stage 29 Sep, ZP-4464 Subscription and ZP-4548 on
+stage, ZP-4461 on acme prod) are in `docs/changelogs/2026-09-*.md`, `docs/changelogs/2026-10-02-*.md` and the memory index.
+
+## 2026-09-30 → 2026-10-06 — Web v2.3 (Jira version 14236) release check: three rounds on QA
+**Round 1, 30 Sep** (build `index-DXSz_B6n.js`): 18 Ready-for-QA tickets tested as a user would, plus API and other-company
+checks. 10 moved READY TO RELEASE (ZP-4472/4367/4366/4370/4341/4365/4449/4214/4433/4302); 8 held with reasons (4303/4368
+site-gate check not runnable on QA, 4394/4301 partly tested, 4305 two small defects, 4398 preview auto-picks the A–Z-first
+site, 4421 search ignores "Applies to", 4148 duplicate of ZP-4138). Release page https://claude.ai/artifact/3e3VwLmEk5fDa7pQEyb24y.
+**Round 2, 5 Oct** (`index-CdsUTPRH.js`, afternoon redeploy `index-C913tyjW.js`): 22 Ready for QA. 11 moved RTR
+(4519/4454/4406/4509/4505/4432/4428/4429/4427/4430/4368); the owner moved 4303. Owner rule that evening: **"add comment for
+pass or fail both with screenshot"** and **To Do only when 100% sure** → 22 QA comments (ids 44832–44854, 57 inline
+screenshots) posted from the signed-in Jira tab (REST: attachments first, then a wiki-markup comment, server-side render check).
+ZP-4421 and ZP-4398 → To Do (fails re-proven on the new build with a control). ZP-4590 went back to In Progress by the developer
+(QA acme still has the old severity formula, no "Minor").
+**Round 3, 6 Oct** (`index-Dyz0HxpC.js`, new overnight): 9 Ready for QA = the 7 held + ZP-4421 (back with backend PR #1476)
++ ZP-4590 (back from In Progress, no note). ZP-4421 **PASS → RTR** ("automatic" now keeps only the Applies-to ATS forms).
+ZP-4590 still FAIL on QA (formula unchanged in all 3 Thermal Anomaly classes). ZP-4148: the new bundle **dropped the "Portal
+Sales" role-name gate** — the portal follows `/api/features/access`, so a Super Admin without Portal Sales now sees the whole
+portal (hidden on 5 Oct); fails as written, rule changed, still a duplicate per Dharmesh. 4301/4305/4394 partly tested and
+unchanged; 4372 web part PASS (10 pages, 242 calls, 0×5xx), DB checks with Dharmesh; 4423 pipeline-only; 4529 still NOT
+CONFIRMED. 9 QA comments 44882–44891; **44883 is an accidental duplicate on ZP-4421** (renderer froze after an upload through
+Jira's own hidden file input; the retry re-posted) — left for the owner to delete. Page v6.
+**Tooling lessons:** never touch Jira's native `input[type=file]` from the extension (freezes the page, double-posts); inject
+own `<input type=file multiple>` + a body-file input, upload with `POST /rest/api/3/issue/<key>/attachments`, render-check with
+`POST /rest/api/1.0/render`, and run the dedupe guard (author + today + "QA result") BEFORE `POST …/comment`. `QaDriverDaemon`
+(signed-in headed Selenium driven by command files) runs whole UI flows in one batch; MUI selects open on mouse-down, not click.
+Evidence: `docs/bug-evidence/2026-09-30-v23-qa/`, `2026-10-05-v23-qa-r2/`, `2026-10-06-v23-qa-r3/` (each with
+`jira-comments/POSTED.md`); changelogs `2026-09-30-web-v23-qa-round.md`, `2026-10-05-web-v23-qa-round-2.md`,
+`2026-10-05-v23-jira-comments-and-todo.md`, `2026-10-06-web-v23-sanity-round-3.md`.
+

@@ -1,0 +1,5 @@
+ZP-4529 — Edit with AI "Could not start the AI edit (HTTP 200)" — QA acme, web build index-Dyz0HxpC.js (new overnight; 5 Oct was index-CdsUTPRH.js then index-C913tyjW.js), 6 Oct 2026 13:20–14:10 IST, admin seat unless noted. Sanity round 3.
+UNCHANGED  New ReportingConfigEditor chunk (C2ODHBid) still has only the fallback "Could not start the AI edit (HTTP ${u})." and the
+  firewall message; no limit/reset text. Simulated in my browser only on config 0eee082a…: a 200 JSON reply with no error text to
+  POST …/ai-edit → dialog shows "Could not start the AI edit (HTTP 200)." (1 intercepted call, no AI job ran). Not re-run: (a), (c).
+Still NOT CONFIRMED: a real used-up limit can't be produced on QA; waiting for the developer's answer on what the server sends.

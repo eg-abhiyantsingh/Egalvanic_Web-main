@@ -1,0 +1,33 @@
+*QA result: FAIL as written — and the rule changed in today's build*
+Sanity re-test on QA (acme.qa.egalvanic.ai), web build {{index-Dyz0HxpC.js}}, 6 Oct 2026, as a Project Manager and as a Super Admin without Portal Sales.
+Status not changed: Dharmesh's 10 Sep comment asks to close this as a duplicate of ZP-4138.
+
+*Steps*
+# Sign in as a Super Admin user without Portal Sales (roles: Super Admin, Admin, Account Manager, Electrical Engineer, Project Manager). Look at the left menu; open /maintenance-portal, /maintenance-portal/condition, /maintenance-portal/sld, /maintenance-portal/reports.
+# Do the same as a Project Manager without Portal Sales.
+
+*What happened*
+* *Changed since 5 Oct:* the Super Admin user without Portal Sales now sees Maintenance Portal in the menu, and all four addresses open (Site Health, Condition Assessment, SLD, Reports). On 5 Oct the menu entry was hidden for this user and /maintenance-portal was Access Denied.
+* The text "Portal Sales" no longer appears in today's main web bundle (it was in the 5 Oct one). What the portal shows now matches the features/access answer: this user gets the "maintenance-portal" feature, the Project Manager does not.
+* *Unchanged:* the Project Manager has no Maintenance Portal in the menu; /maintenance-portal and /maintenance-portal/reports show Access Denied; /maintenance-portal/condition still opens (the same Condition Assessment page as under Site Data); /maintenance-portal/sld still shows "Loading SLD…" with the All Nodes, Export and Layout buttons (an Access Denied heading is in the page HTML but not on screen), as on 5 Oct.
+* So the ticket's rule (staff without Portal Sales are blocked, and a Super Admin without it loses the portal) is not what today's build does. If the feature-based gate is the intended rule now, this ticket should be closed as the duplicate note says.
+
+*Not covered*
+* Whether the Super Admin user holds a non-active Portal Sales assignment: the users list carries no role data, and the user's profile lists five roles without it.
+* The seat with Portal Sales and the T2 portal users were not re-run today.
+
+*Test data*
+* Site "test site" on acme QA.
+
+*Screenshots*
+!QA-6Oct-4148-1_super_admin_no_portal_sales_now_sees_portal.png|width=640!
+_Super Admin without Portal Sales: Maintenance Portal is in the menu and Site Health opens._
+
+!QA-6Oct-4148-2_super_admin_portal_reports_opens.png|width=640!
+_The same user at /maintenance-portal/reports: the portal's Reports page opens (Condition Assessment, EMP Lite, …)._
+
+!QA-6Oct-4148-3_pm_still_no_portal_in_menu.png|width=640!
+_Project Manager: still no Maintenance Portal in the menu._
+
+!QA-6Oct-4148-4_pm_condition_route_still_opens.png|width=640!
+_Project Manager typing /maintenance-portal/condition: the page still opens._

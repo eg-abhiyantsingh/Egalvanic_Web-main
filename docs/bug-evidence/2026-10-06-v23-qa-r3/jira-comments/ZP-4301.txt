@@ -1,0 +1,22 @@
+*QA result: PARTLY TESTED — the server names the view; the web app still never shows it*
+Sanity re-test on QA (acme.qa.egalvanic.ai), web build {{index-Dyz0HxpC.js}}, 6 Oct 2026.
+
+*Steps*
+# Put an existing asset (Fuse 2 on Android Site 2) into a new SLD view "QA-DEMO ZP-4301 r3 view (delete me)" and collapse it there (through the app's API).
+# Delete it through the app's API without the {{allow_collapsed}} flag, once alone and once as a bulk delete.
+# Open the asset's page › ⋮ › Delete Asset and look at the dialog (Cancel pressed).
+
+*What happened*
+* Both deletes are refused with 400 {{collapsed_node_not_deletable}} and the message names the view: Collapsed nodes can't be deleted — this node is collapsed in the SLD view "QA-DEMO ZP-4301 r3 view (delete me)". Open that view and expand it first.
+* The asset page's Delete dialog still gives no reason, and today's build still sends {{allow_collapsed=true}} from the asset page and the asset list, so the named-view message cannot appear on screen.
+* Fuse 2 was un-collapsed and kept; the empty test view is left, labelled.
+
+*Not covered*
+* The partly failing bulk delete toast and the PM-plan matching part (no QA site has a maintenance program).
+
+*Test data*
+* Asset: https://acme.qa.egalvanic.ai/assets/f43fada9-70e0-4ef3-ac47-7f382e12abef
+
+*Screenshots*
+!QA-6Oct-4301-1_fuse2_delete_dialog_no_view_reason.png|width=640!
+_The asset page's Delete dialog: no view named (Cancel pressed)._
