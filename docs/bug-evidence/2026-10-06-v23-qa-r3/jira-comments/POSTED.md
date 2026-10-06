@@ -25,6 +25,11 @@ first attempt uploaded the screenshots through Jira's own hidden file input, whi
 request had already gone out, and the retry posted it again before the duplicate guard could see the first one. The
 duplicate was left in place (comment deletion is the owner's call); delete 44883 from its "..." menu.
 
+**Bug filed from the ZP-3802 sanity pass (owner: "if yes then assign to avani"):** ZP-4675 "[Web] Create Customer › site address: Google's
+version replaces what was typed with no \"keep as entered\" choice" — Bug, Medium, assignee avani.patel, sprint Z-26-09-S3 (1223), fixVersion
+Web v2.3, Backlog → To Do. Screenshots live on ZP-3802 (comment 44900) and are linked from the bug: the browser connection was gone when it
+was filed, so nothing could be attached directly.
+
 **Status changes this round:** ZP-4421 Ready for QA → READY TO RELEASE (13:38 IST, transition 7, status only); ZP-4435 Ready for QA → To Do
 (addendum, transition 2: the keyboard path never opens the photos — certain on the current build, control = the mouse path works).
 Everything else stays in Ready for QA with the reason in its comment.

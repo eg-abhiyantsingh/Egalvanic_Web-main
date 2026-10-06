@@ -3,7 +3,7 @@
 **Prompt:** "https://egalvanic.atlassian.net/projects/ZP/versions/14236/tab/release-report-all-issues test all ready to qa ticket sanity testing"
 
 **Where:** acme.qa.egalvanic.ai, web build `index-Dyz0HxpC.js` (deployed overnight; 5 Oct was `index-CdsUTPRH.js`, then `index-C913tyjW.js`).
-**Page (same link, now version 10):** https://claude.ai/artifact/3e3VwLmEk5fDa7pQEyb24y
+**Page (same link, now version 11):** https://claude.ai/artifact/3e3VwLmEk5fDa7pQEyb24y
 **Evidence:** `docs/bug-evidence/2026-10-06-v23-qa-r3/zp<number>/` (`results.txt` + screenshots), posted comment texts in `jira-comments/`.
 
 ## Scope
@@ -139,4 +139,12 @@ Google's version plus a note; no "keep as entered" choice exists. Jira: comment 
 (owner decides whether item 2 is still required). Not covered: photo upload, 429 limit, "Use current location", Create/Edit Site, other
 companies (staff seat). Test data: accounts "QA-DEMO ZP-3802 address verify (delete me)" (site at 1600 Amphitheatre Pkwy, Google photo,
 line 2 "Suite 100") and "QA-DEMO ZP-3802 no-match (delete me)".
+
+### Bug filed from addendum 3 (owner: "did you find any bugs? … if yes then assign to avani")
+**ZP-4675** — [Web] Create Customer › site address: Google's version replaces what was typed with no "keep as entered" choice. Bug, Medium,
+assigned to avani.patel, sprint Z-26-09-S3 (current, it belongs to ZP-3802's acceptance), fixVersion Web v2.3, Backlog → To Do. Plain-words
+steps (type `1600 amphitheater parkway`, do not pick a suggestion, wait), Actual (fields rewritten, note shown, no choice) and Expected (ticket
+item 2) are in the description. Screenshots: the two from ZP-3802 (attachments 37950 and 37945) are linked, not re-attached — the browser
+connection had dropped, so the ticket was created through the Jira connector, which cannot upload files. Reporter is the connector's own
+Atlassian account.
 
