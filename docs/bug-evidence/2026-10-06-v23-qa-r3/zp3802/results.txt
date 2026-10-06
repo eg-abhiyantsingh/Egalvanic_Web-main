@@ -1,0 +1,54 @@
+ZP-3802 — [Web] Map Integration for Address Verification - Account (Frontend) — SANITY (owner: "do sanity testing")
+QA acme, web build index-DKyx_D-d.js (redeployed 16:32 IST 6 Oct; carries frontend PR #1666 merged 16:15 IST + new SiteDetails chunk; backend ZP-3801
+PR #1477 live: /api/address/* endpoints), 6 Oct 2026 16:40–17:10 IST, admin seat abhiyant.singh@ (staff) in claude-in-chrome (page zoom 80%).
+Ticket moved to Ready for QA at 16:15 IST (Dharmesh). Parent ZP-3786; design prototype artifact 7ca0e978 (summary read).
+PASS  Create Customer › "Add a site now" → SITE DETAILS block: Site Name, Access Complexity, "Finding your location…" (geolocation attempt),
+      Address Line 1 "Start typing an address…" (Google autocomplete: 1 × POST /api/address/autocomplete after typing, 5 suggestions), Line 2,
+      City, State (autocomplete AL/AK/…), ZIP, Country; ADDRESS VERIFICATION chip "Not verified" + "Verify address"; SITE PHOTO "Verify the
+      address to get a Google photo of the site" + "Upload a photo"; Create DISABLED while the site block is on and unverified.
+PASS  Picking the suggestion "1600 Amphitheatre Pkwy, Mountain View, CA" → POST /address/place-details fills the fields (ZIP 94043-1351) and
+      the block auto-verifies: chip "Verifying…" → "Verified" (POST /address/verify), map iframe, note "Updated to Google's version of this
+      address.", SITE PHOTO = Google place photo with attribution ("Photo: chica dificil · Google") + "Use this photo" / "Upload my own"
+      (POST /address/place-photos). Create ENABLED. 4 Google-backed calls for the whole verification, one each.
+PASS  Edit after verify: changing City → chip "Verifying…" and Create disabled again (auto re-verify; the explicit "Re-verify needed" chip
+      shows in Edit Customer, see below); restoring the city → "Verified" with no new call (same address not checked twice).
+PASS  "Use this photo" → "Google photo selected" + Change. Create → POST /api/account/v2 (address + address_verification {choice
+      "normalized", token}) 201 → account gets address_coordinates + address_metadata.verification (status verified, provider
+      google_address_validation, place_id, verified_by); PUT /api/account/<id> {license_type}; POST /api/sld/ (address_formatted = Google's
+      canonical string, address_coordinates 37.4224864/-122.0855962, address_metadata {status verified, granularity PREMISE, stored_as google},
+      token) 201 → server stores address_formatted in its own 3-line form and keeps Google's canonical form in metadata.verification;
+      PUT /api/sld/<id>/site-photo {google_place {photo_name, attribution}} 200 → site_photo {source google_place} (reference, not a file).
+      No extra Google call on save (token path). App then switches to the new site (/assets, onboarding dialog).
+      Account 3151322f-a00e-431c-aee6-8b784b94dc56 · site d170e403-eb90-4d37-82df-4450b22934a7.
+PASS  New site page /sites/<id> (SiteDetails chunk): back arrow + title + ⋮; tabs Details / Notes (no count pills); "Site Information"
+      card: Google map (iframe, pin; loads a few seconds after the page), "Google view" (the chosen Google photo + attribution) and "Site
+      photo" slot "No site photo — Crews won't have a picture of the entrance." (upload slot, explicit empty state); two-column grid Site
+      Name / Account (link) / Address (3 lines) + Verified chip UNDER the address / Coordinates + "Verified Oct 06, 2026" / Access Complexity /
+      Created; three wells Location ("Open in Google Maps") / Access / Notes. Calls: /sld/<id>/profile, /notes, /address/place-photo-uri.
+      Reached from Customers tree › site ⋮ (Go to Site / Edit Site / Manage Access List / Delete Site has no "View"; the page is at /sites/<id>).
+      Layout differs from the ticket's 180x180 photo box (wide Google view + Site photo pair instead) — design moved on; not a defect.
+PASS  Edit Customer (account address): fields + ADDRESS VERIFICATION chip "Verified" + map; editing Address line 2 → chip "Re-verify needed"
+      + "Verify address" + "The address changed after it was verified. Verify again before saving." but Save Details stays ENABLED (never
+      blocked) → PUT /api/account/<id> (no token) 200 → server re-verified: metadata.verification choice "as_entered", formatted_address
+      "1600 Amphitheatre Parkway Suite 100, …", coordinates kept.
+PASS  No match: typed "123 Nowhere Lane / Faketown / TX / 00000" (suggestions shown, not picked; no auto-verify without a pick) → "Verify
+      address" → POST /address/verify → chip "Not verified" (orange) + "Google could not find this address. You can still save it as entered —
+      it just will not carry coordinates, so dispatch and routing cannot use it." + "Correct the address, then verify it again." Create was
+      disabled only while State* was empty; with State set Create ENABLED → POST account/v2 + POST /api/sld/ → site address_coordinates null,
+      address_metadata {status no_match, stored_as entered, reason not_precise, granularity PREMISE_PROXIMITY}; account the same.
+      Account e7ce1d5e-c1d6-43ab-b872-67449af13af3 · site = "QA-DEMO ZP-3802 no-match site (delete me)".
+NOTE  Store-which-address choice (typed form ≠ Google's, no suggestion picked): see below.
+NOT COVERED (sanity): photo upload ("Upload my own"/"Upload a photo"), 429 rate limit (>30 verifies/min), Street View (the build uses Google
+place photos), "Use current location", Create Site / Edit Site surfaces (out of scope per ticket), other companies (staff seat).
+Test data on QA: accounts "QA-DEMO ZP-3802 address verify (delete me)" (site at 1600 Amphitheatre Pkwy, Google photo) and
+"QA-DEMO ZP-3802 no-match (delete me)" (site 123 Nowhere Lane, no coordinates); account 1's address line 2 "Suite 100".
+GAP   Store-which-address choice (ticket item 2): typed "1600 amphitheatre pkwy / mountain view / CA / 94043" without picking a suggestion →
+      auto-verify replaced the fields with Google's form (Pkwy, Mountain View, 94043-1351) + note "Updated to Google's version of this address.";
+      typed misspelled "1600 Amphitheater Parkway" → same: replaced + note, verify + place-photos called. No radio/button to keep the address
+      as entered anywhere in the Create modal (bundle has "as entered" strings; the server records choice "normalized"/"as_entered" only from
+      the token or from an un-verified edit). Modal cancelled, nothing saved. Reported as a gap; status left for the owner (design may have
+      moved to "always Google's version").
+Screens: 1 modal top · 2 add-a-site + license · 3 site block not verified, Create disabled · 4 suggestions · 5 fields from suggestion ·
+6 verified chip + map + Google photo · 7 edit → Verifying… · 8 photo selected · 9 after Create · 10 tree · 11 site ⋮ menu · 12/13 site page
+top (map loading / loaded) · 14 site page fields + wells · 15 Edit Customer verified · 16 no-match suggestions · 17 no-match message ·
+18 no-match Create enabled · 19 no-match created · 20 choice probe (no choice).

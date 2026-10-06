@@ -16,6 +16,7 @@ One comment per ticket, body = the `ZP-<n>.txt` beside this file (Jira wiki mark
 | ZP-4394 | 44889 | 1 | PARTLY TESTED — unchanged |
 | ZP-4423 | 44890 | 1 | NOT TESTABLE FROM THE WEB APP — unchanged |
 | ZP-4529 | 44891 | 1 | NOT CONFIRMED — unchanged |
+| ZP-3802 | 44900 | 7 | PASS on the sanity pass (address verification, photo, site page, no-match); gap: no "keep as entered" choice (addendum 3, 16:40–17:15 IST on index-DKyx_D-d.js; held in Ready for QA) |
 | ZP-4080 | 44897 | 6 | PASS — the whole print flow works on QA (addendum 2, 15:55–16:25 IST on index-CfC0Y-hD.js; held in Ready for QA: no fix version, no written acceptance) |
 | ZP-4435 | 44892 | 7 | FAIL on the keyboard path — everything else passes (addendum, tested 14:40–16:20 IST on index-CfC0Y-hD.js) |
 

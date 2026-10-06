@@ -3,7 +3,7 @@
 **Prompt:** "https://egalvanic.atlassian.net/projects/ZP/versions/14236/tab/release-report-all-issues test all ready to qa ticket sanity testing"
 
 **Where:** acme.qa.egalvanic.ai, web build `index-Dyz0HxpC.js` (deployed overnight; 5 Oct was `index-CdsUTPRH.js`, then `index-C913tyjW.js`).
-**Page (same link, now version 9):** https://claude.ai/artifact/3e3VwLmEk5fDa7pQEyb24y
+**Page (same link, now version 10):** https://claude.ai/artifact/3e3VwLmEk5fDa7pQEyb24y
 **Evidence:** `docs/bug-evidence/2026-10-06-v23-qa-r3/zp<number>/` (`results.txt` + screenshots), posted comment texts in `jira-comments/`.
 
 ## Scope
@@ -125,4 +125,18 @@ Reprint icon; Hide already labeled hides them; Print test sheet records nothing.
 Jira: comment **44897** with 6 screenshots. **Status not changed** (Ready for QA): no fix version and no written acceptance — the owner
 decides on READY TO RELEASE. Test data: codes 12345555555QADEMOC1/2 on 13N-H1-1 and Ats (Android Site 2); one recorded print run at
 16:13 IST. The session scratchpad from the morning was gone, so the page was patched directly from the published HTML (v9).
+
+## Addendum 3 — ZP-3802 address verification (owner: "test this ticket too" + "do sanity testing")
+Ready for QA at 16:15 IST (frontend PR #1666; backend ZP-3801 PR #1477 live); QA redeployed at 16:32 IST to `index-DKyx_D-d.js`. Sanity pass
+on QA 16:40–17:15 IST, evidence `docs/bug-evidence/2026-10-06-v23-qa-r3/zp3802/` (results.txt + 20 screenshots).
+**PASS on the main flows:** Create Customer › Add a site now: autocomplete (1 call), pick → auto-verify → "Verified" + map + Google place
+photo; Create blocked until verified; edit → re-verify and re-block; Create saves canonical address + coordinates + verification metadata and
+the photo as a reference (no extra Google call on save). New site page `/sites/<id>`: map, Google view, empty "Site photo" state, Verified chip
+under the address, coordinates, Location/Access/Notes wells. Edit Customer: "Re-verify needed" on edit, Save never blocked, server re-verifies.
+No match: "Not verified — … save it as entered … will not carry coordinates"; Create enabled; site saved with `address_coordinates: null`,
+status `no_match`. **Gap (ticket item 2):** a typed address that differs from Google's (lowercase, misspelled street) is replaced with
+Google's version plus a note; no "keep as entered" choice exists. Jira: comment **44900** with 7 screenshots; status held in Ready for QA
+(owner decides whether item 2 is still required). Not covered: photo upload, 429 limit, "Use current location", Create/Edit Site, other
+companies (staff seat). Test data: accounts "QA-DEMO ZP-3802 address verify (delete me)" (site at 1600 Amphitheatre Pkwy, Google photo,
+line 2 "Suite 100") and "QA-DEMO ZP-3802 no-match (delete me)".
 

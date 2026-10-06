@@ -1,0 +1,48 @@
+*QA result: PASS on the sanity pass — verification, photo, site page and no-match all work; one gap: no "keep as entered" choice*
+Tested on QA (acme.qa.egalvanic.ai), web build {{index-DKyx_D-d.js}} (deployed 16:32 IST with frontend PR #1666; backend PR #1477 live), 6 Oct 2026, admin seat. Sanity pass only, as asked, not the full QA Review.
+Status not changed: item 2 of the ticket (the choice between Google's version and the address as entered) is not in the build. Say if that is still wanted, or if "always Google's version" is the agreed rule.
+
+*Steps*
+# Admin › Customers › New Customer: fill the account and contact, tick "Add a site now", type "1600 amphitheatre pkwy" in Address Line 1 and pick the suggestion. Watch the address verification block. Change the city, then change it back. Press "Use this photo". Press Create.
+# Open the new site: Customers › expand the account › site; the page is at /sites/<site id>.
+# Customers › account menu › Edit Customer: type "Suite 100" in Address line 2, press Save Details.
+# New Customer again with a site at "123 Nowhere Lane, Faketown, TX 00000" (typed, no suggestion picked): press Verify address, then Create.
+# New Customer again: type "1600 Amphitheater Parkway" (misspelled) with city, state and ZIP and wait for the verification. Cancel.
+
+*What happened*
+* Typing shows Google suggestions (one request after three letters). Picking one fills the fields and the block verifies by itself: chip "Verified", a map, "Updated to Google's version of this address." (ZIP became 94043-1351), and a Google photo of the place with "Use this photo" / "Upload my own". Create stays disabled until the address is verified.
+* Changing the city makes the chip "Verifying…" and disables Create again; restoring it returns to "Verified" with no new request.
+* Create saves the account and the site with Google's canonical address, the coordinates and the verification details, and stores the chosen Google photo as a reference with its attribution. One request each for suggestions, place details, verify and photos; no extra Google call on save.
+* The site page shows the map, "Google view" (the chosen photo), a "Site photo" slot with the empty state "No site photo — Crews won't have a picture of the entrance.", the address with the Verified chip under it, the coordinates with "Verified Oct 06, 2026", access complexity, created date, and the Location, Access and Notes cards.
+* Edit Customer: the account's address has its own Verified chip and map. Changing Address line 2 shows "Re-verify needed — The address changed after it was verified. Verify again before saving." but Save Details stays enabled; after saving, the server re-verified the address itself (stored as entered, coordinates kept).
+* No match: Verify address shows "Not verified — Google could not find this address. You can still save it as entered — it just will not carry coordinates, so dispatch and routing cannot use it." Create stays enabled once every required field is filled, and the site is saved without coordinates, status "no match".
+* *Gap (item 2):* when the typed address differs from Google's (lowercase, or the misspelled "Amphitheater Parkway"), the build replaces the fields with Google's version and shows the note. It never offers to keep the address as entered.
+
+*Not covered (sanity)*
+* Photo upload, the "Too many requests" limit, "Use current location", Create Site / Edit Site, other companies' data (staff seat), the Street View case (the build uses Google place photos).
+
+*Test data*
+* Site with a verified address and a Google photo: https://acme.qa.egalvanic.ai/sites/d170e403-eb90-4d37-82df-4450b22934a7 (account "QA-DEMO ZP-3802 address verify (delete me)")
+* Account "QA-DEMO ZP-3802 no-match (delete me)" with the no-match site, on https://acme.qa.egalvanic.ai/customers
+
+*Screenshots*
+!QA-6Oct-3802-3_site_block_not_verified_create_disabled.png|width=640!
+_Create Customer with "Add a site now": the address block reads "Not verified", Create is disabled._
+
+!QA-6Oct-3802-6_verified_chip_map_google_photo.png|width=640!
+_After picking the suggestion: "Verified", the map, "Updated to Google's version of this address.", the Google photo with "Use this photo"._
+
+!QA-6Oct-3802-13_site_detail_page_map_loaded_google_view_site_photo_empty.png|width=640!
+_The new site page: map, Google view, and the empty "Site photo" slot._
+
+!QA-6Oct-3802-14_site_detail_page_fields_chip_under_address_three_wells.png|width=640!
+_The site page fields: the Verified chip under the address, coordinates, and the Location / Access / Notes cards._
+
+!QA-6Oct-3802-15_edit_customer_address_verified_chip_map.png|width=640!
+_Edit Customer: the account address with its Verified chip and map; Save Details enabled._
+
+!QA-6Oct-3802-17_no_match_message_create_disabled.png|width=640!
+_No match: the message says the address can be saved as entered without coordinates (Create enabled once State is filled)._
+
+!QA-6Oct-3802-20_choice_probe_typed_lowercase_auto_updated_to_google_no_choice.png|width=640!
+_Typed in lowercase without picking a suggestion: the fields were replaced with Google's version; no choice to keep the address as entered._
