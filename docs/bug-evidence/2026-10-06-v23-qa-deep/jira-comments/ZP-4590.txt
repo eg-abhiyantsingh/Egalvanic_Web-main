@@ -1,0 +1,22 @@
+*QA result: FAIL on QA — third check, same result: the new severity bands are not on QA acme*
+Deep test on QA (acme.qa.egalvanic.ai), web build {{index-Buq-IBvX.js}}, 6 Oct 2026. Status not changed. Avani: which environment has the new formula? The QA Review says staging; QA acme still has the old one.
+
+*Steps*
+# Issues › Create Issue › class Thermal Anomaly. Severity Criteria "Similar", Problem Temp 95 °F, Reference Temp 90 °F; read Delta T and Severity. Repeat with Ambient and Indirect.
+# Read the three Thermal Anomaly classes from the classes API.
+
+*What happened*
+* Delta T 5 °F → Severity *Nominal* for Similar and for Ambient; *Intermediate* for Indirect — the old bands. With the new bands Similar should give "Minor".
+* None of the three Thermal Anomaly classes on QA (acme's own, the global one, another company's) contains "Minor"; acme's expression still starts "Delta T <= 5.4 → Nominal". The global class's Severity options are Nominal, Intermediate, Serious, Critical.
+* On the web Severity is calculated (no dropdown), so the ordering part cannot be checked here.
+
+*Not covered*
+* Staging; the IR report chart; a second company's table; the mobile picker.
+
+*Test data*
+* Issue classes: https://acme.qa.egalvanic.ai/issue-classes
+* Add Issue from https://acme.qa.egalvanic.ai/issues on site "test site" (this form was then used to create the ZP-4305 test issue)
+
+*Screenshot*
+!QA-6Oct-deep-4590-1_similar-95-90-nominal.png|width=640!
+_Similar, 95 / 90 °F → Delta T 5 → Severity "Nominal" (new bands: Minor)._

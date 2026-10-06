@@ -1,0 +1,20 @@
+*QA result: PASS on the web side — no errors, no slowdown; the database checks still need Dharmesh*
+Deep test on QA (acme.qa.egalvanic.ai), web build {{index-Buq-IBvX.js}}, 6 Oct 2026. Status not changed.
+
+*Steps*
+# As a Project Manager open 14 pages fresh (Dashboard, Work Orders, Assets, Issues, Tasks, Planning, Connections, Locations, QR Labels, Site Walks, Arc Flash, Condition Assessment and two Access-Denied pages). As the admin open 8 more (Quotes, Sales Overview, Customers, Services, PM Plans, EMPs, Report Builder and the 1,076-asset work order AutoTest_WO_99443).
+# Time 11 list/lookup calls three times each.
+
+*What happened*
+* 22 pages: *0 server errors*, 0 client errors. Slowest calls: the site asset lookup (12 MB, 2.7–3.3 s) and the SLD graph (12.7 MB, 1.9–3.3 s), both the same as at 13:20 today.
+* Timings: work-order list 2.1–2.6 s (1.6 MB, 2,042 rows — the known unbounded list), issues list 0.3–0.8 s, users 0.3–1.0 s, issue classes 0.7 s, company sites 0.7 s.
+
+*Still needed (database access)*
+* Analyze Indexes after the drops, the new mapping_procedure_shortcut index and pg_stat_statements before/after.
+
+*Test data*
+* Large work order: https://acme.qa.egalvanic.ai/sessions/9de85c9d-8059-416b-9972-0bd6d54afb78
+
+*Screenshot*
+!QA-6Oct-deep-4372-1_large-work-order-page.png|width=640!
+_The 1,076-asset work order opens cleanly on this build (41 API calls, no server errors)._

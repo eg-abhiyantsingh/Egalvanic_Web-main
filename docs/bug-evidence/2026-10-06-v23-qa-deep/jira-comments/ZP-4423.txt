@@ -1,0 +1,16 @@
+*QA result: NOT TESTABLE FROM THE WEB APP — unchanged*
+Deep test on QA (acme.qa.egalvanic.ai), web build {{index-Buq-IBvX.js}}, 6 Oct 2026. Status not changed.
+
+*What was checked*
+# List the site walks and read the completed walk "test" (27 journal entries) from the API and on the Journal Review page.
+
+*What happened*
+* The walk payload holds rooms with journal entries, items and an interpretation summary (job, needs_interpretation, readable_entry_count); it exposes no photo-id pairing, claims or fold version. The Site Walks pages load without errors. Interpret was not run (paid).
+* The fold itself (load_images, fold_entry, on_tool, FOLD_VERSION) runs inside the engineering-AI pipeline, so the checks in the ticket need that repo and its test harness.
+
+*Test data*
+* Walk: https://acme.qa.egalvanic.ai/site-walks/2c5a3976-de03-4849-8a25-8e37050b6ad7
+
+*Screenshot*
+!QA-6Oct-deep-4423-1_site-walk-page.png|width=640!
+_The Journal Review page of the completed walk "test"; the fold's photo pairing is not visible here._

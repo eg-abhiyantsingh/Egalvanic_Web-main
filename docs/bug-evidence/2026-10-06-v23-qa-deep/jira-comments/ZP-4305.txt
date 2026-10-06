@@ -1,0 +1,35 @@
+*QA result: PASS — resolve and reopen work end to end with an after photo; the header lag from 30 Sep is still there*
+Deep test on QA (acme.qa.egalvanic.ai), web build {{index-Buq-IBvX.js}}, 6 Oct 2026, admin seat, site "test site".
+Status not changed: the only open point is the page header, which keeps saying "Resolved" until the form is closed.
+
+*Steps*
+# Issues › Create Issue: class Thermal Anomaly, asset "QA-DEMO extract 5 photos (delete me)", title "QA-DEMO ZP-4305 resolve test 6 Oct (delete me)", Create Issue.
+# Open the issue › ⋮ › Edit Issue › Mark Resolved. Type a description, choose an after photo, click Mark Resolved.
+# Open ⋮ › Edit Issue again and read the form. Click Mark Open and confirm "Reopen Issue?".
+# Read the page header while the form is still open, then close the form and read it again.
+# As a Project Manager, call the work order's add-issues with a malformed id and a made-up id, with an empty list, and on another company's work order.
+
+*What happened*
+* "Resolve Issue?" keeps Mark Resolved disabled until the description has text. Choosing the photo uploads it; 0.3 s after the choice the button went disabled and 2.3 s later it came back when the upload finished — the in-flight upload gate works.
+* Mark Resolved stored the photo as type {{issue_after}} and updated the issue: status Resolved, description, resolved date and user saved; the issue API returns the after photo.
+* The reopened form is fully read-only (30 fields, none editable) with a RESOLUTION section (description, after photos, "Resolved 06/10/2026, 19:15:25") and *Mark Open* as the only action.
+* Mark Open cleared the resolved date and user, kept the description and the photo, and unlocked the form (Save Changes and Mark Resolved are back).
+* *Open point (same as 30 Sep and 5 Oct):* while the unlocked form is open the page header still shows "Resolved"; it only turns "Open" after the form is closed and the page reloads.
+* add-issues: a malformed and a made-up id come back in {{invalid_issue_ids}} with nothing added; an empty list is a 400 "issue_ids required"; another company's work order is refused. The services list only knows service kind "preventive". /pull-through-work still opens a page that holds only the old heading.
+
+*Not covered*
+* SCCR hand-resolve + recheck; the device-rule dialog's corrective filter; the Before/After grouping in the issue workbench.
+
+*Test data*
+* Issue: https://acme.qa.egalvanic.ai/issues/f8f71b23-ec93-422b-ad6c-5f062d59b6c0 (QA-DEMO, left in place, status Open)
+* Work order used for the API checks: https://acme.qa.egalvanic.ai/sessions/51d54087-6a74-4ddd-9698-f34e40e14015
+
+*Screenshots*
+!QA-6Oct-deep-4305-1_resolved.png|width=640!
+_After Mark Resolved the page header says Resolved._
+!QA-6Oct-deep-4305-2_resolved-form-read-only.png|width=640!
+_The resolved issue's form is read-only; Mark Open is the only action._
+!QA-6Oct-deep-4305-3_after-mark-open-header-still-resolved.png|width=640!
+_After Mark Open the form is unlocked but the header still says Resolved (open point)._
+!QA-6Oct-deep-4305-4_after-closing-the-form-header-open.png|width=640!
+_After closing the form the header shows Open._
