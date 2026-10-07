@@ -1,0 +1,259 @@
+{
+ "base": "https://acme.stage.egalvanic.ai",
+ "utc": "13:10:48",
+ "cp": {
+  "email": "abhiyant.singh+cpstage@egalvanic.com",
+  "roles": [
+   "Client Portal"
+  ],
+  "is_eg_admin": false,
+  "account_id": "49210b2f-b25a-49bc-b337-002607f846be",
+  "tier": "T2",
+  "account_detail": {
+   "id": null,
+   "name": null,
+   "license_type": "interactive"
+  },
+  "own_sites_api": 7,
+  "accessible_sld_ids": 7,
+  "company_sites": 10,
+  "perm_count": 35,
+  "perms_of_interest": [
+   "features.connections.view",
+   "features.issues.view",
+   "features.slds.view",
+   "issue_classes.view",
+   "issues.view",
+   "node_classes.view",
+   "nodes.view",
+   "slds.view"
+  ]
+ },
+ "foreign_tested": [
+  {
+   "site": "Test uhhujh",
+   "site_id": "3e3d11df-a8b7-4342-a209-43f54c8b73e6",
+   "node": "GEN 3",
+   "node_id": "313339b4-cdd7-49e8-8b94-fcb2da4191ad",
+   "cp": {
+    "sld_graph": [
+     422,
+     "JSON",
+     169,
+     0
+    ],
+    "connections_v2": [
+     422,
+     "JSON",
+     169,
+     0
+    ],
+    "nodes_sld": [
+     200,
+     "JSON",
+     12683,
+     3
+    ],
+    "lookup_v2_nodes": [
+     200,
+     "JSON",
+     4973,
+     3
+    ],
+    "node_class_counts": [
+     200,
+     "JSON",
+     509,
+     3
+    ],
+    "graph_node_enriched": [
+     200,
+     "JSON",
+     4732,
+     0
+    ]
+   },
+   "admin_control": {
+    "sld_graph": [
+     200,
+     "JSON",
+     14674,
+     3
+    ],
+    "connections_v2": [
+     200,
+     "JSON",
+     1770,
+     2
+    ],
+    "nodes_sld": [
+     200,
+     "JSON",
+     12683,
+     3
+    ],
+    "lookup_v2_nodes": [
+     200,
+     "JSON",
+     4973,
+     3
+    ],
+    "node_class_counts": [
+     200,
+     "JSON",
+     509,
+     3
+    ],
+    "graph_node_enriched": [
+     200,
+     "JSON",
+     4732,
+     0
+    ]
+   },
+   "cp_nodes_identical_to_admin": true,
+   "cp_node_labels": [
+    "GEN 3",
+    "UTIL 2",
+    "Panel 1"
+   ]
+  },
+  {
+   "site": "test site",
+   "site_id": "ead61188-b332-4316-9d7e-afbd68262e92",
+   "node": "70B Special",
+   "node_id": "0f8dcba0-a82a-476d-920e-bd0166606d24",
+   "cp": {
+    "sld_graph": [
+     422,
+     "JSON",
+     169,
+     0
+    ],
+    "connections_v2": [
+     422,
+     "JSON",
+     169,
+     0
+    ],
+    "nodes_sld": [
+     200,
+     "JSON",
+     16592777,
+     1907
+    ],
+    "lookup_v2_nodes": [
+     200,
+     "JSON",
+     257869,
+     50
+    ],
+    "node_class_counts": [
+     200,
+     "JSON",
+     515,
+     3
+    ],
+    "graph_node_enriched": [
+     200,
+     "JSON",
+     5381,
+     0
+    ]
+   },
+   "admin_control": {
+    "sld_graph": [
+     200,
+     "JSON",
+     16714741,
+     1910
+    ],
+    "connections_v2": [
+     200,
+     "JSON",
+     113,
+     0
+    ],
+    "nodes_sld": [
+     200,
+     "JSON",
+     16592777,
+     1907
+    ],
+    "lookup_v2_nodes": [
+     200,
+     "JSON",
+     257869,
+     50
+    ],
+    "node_class_counts": [
+     200,
+     "JSON",
+     515,
+     3
+    ],
+    "graph_node_enriched": [
+     200,
+     "JSON",
+     5381,
+     0
+    ]
+   },
+   "cp_nodes_identical_to_admin": true,
+   "cp_node_labels": [
+    "70B Special",
+    "QA-DEMO ZP-4463 stage 12 photos (delete me)",
+    "QA-DEMO ZP-4463 stage 1 photo (delete me)",
+    "ATS Automatic Transfer Switch (<= 1000V) 1",
+    "ATS Automatic Transfer Switch (<= 1000V) 2",
+    "ATS Automatic Transfer Switch (<= 1000V) 7",
+    "ATS Automatic Transfer Switch (<= 1000V) 4",
+    "ATS Automatic Transfer Switch (<= 1000V) 3"
+   ]
+  }
+ ],
+ "own_control": {
+  "site": "Atest",
+  "site_id": "db9b8488-adec-4f85-b85b-38c02c8e9415",
+  "node": "AST-2",
+  "node_id": "00f1b526-ef0d-4928-b41b-394bd170f31e",
+  "cp": {
+   "sld_graph": [
+    200,
+    "JSON",
+    54770,
+    9
+   ],
+   "connections_v2": [
+    200,
+    "JSON",
+    2627,
+    3
+   ],
+   "nodes_sld": [
+    200,
+    "JSON",
+    52990,
+    9
+   ],
+   "lookup_v2_nodes": [
+    200,
+    "JSON",
+    26141,
+    9
+   ],
+   "node_class_counts": [
+    200,
+    "JSON",
+    660,
+    4
+   ],
+   "graph_node_enriched": [
+    200,
+    "JSON",
+    7074,
+    0
+   ]
+  }
+ }
+}

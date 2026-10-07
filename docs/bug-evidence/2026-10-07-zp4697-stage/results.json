@@ -1,0 +1,48 @@
+{
+ "ticket": "ZP-4697",
+ "env": "https://acme.stage.egalvanic.ai",
+ "utc": "2026-10-07 12:42-12:55",
+ "build": "index-aLJ0EMXb.js (last-modified 07:12 UTC); no ZP-4697 promote to cicd/stag (last frontend promote #1674 ZP-4572 07:09 UTC); QA meanwhile moved to index-DUAZDfXp.js (12:33 UTC)",
+ "section1_platform_users_route": "missing on stage: POST and GET /api/users/company/{id}/platform-users return the masked 200 HTML page (3029 bytes); control /api/users/guest-portal without token = 401 JSON",
+ "section2_account_filter": "ignored on stage: /api/users/guest-portal total 6 (3 accounts); with account_id=49210b2f-b25a-49bc-b337-002607f846be total still 6, 2 rows from other accounts",
+ "section2_site_scoping": {
+  "verdict": "FAIL (High), reproduced on stage via API and UI",
+  "seats": [
+   "abhiyant.singh+stagefm@egalvanic.com (Facility Manager)",
+   "abhiyant.singh+cpstage@egalvanic.com (Client Portal)"
+  ],
+  "seat_sites": "7 accessible sites (site picker: Atest, Atest, DemoSite 1, Kareem Page, test, Test new, Test new 123)",
+  "foreign_site": "Test uhhujh 3e3d11df-a8b7-4342-a209-43f54c8b73e6 (not in either seat's list)",
+  "api_guest_on_foreign": {
+   "sld_graph": 422,
+   "connections_v2": 422,
+   "nodes_sld": 200,
+   "lookup_v2_nodes": 200,
+   "node_class_counts": 200,
+   "graph_node_enriched": 200
+  },
+  "nodes_returned": "GEN 3 (Generator), UTIL 2 (Utility), Panel 1 (Series Reactor) - byte-identical to the admin's response",
+  "controls": {
+   "guest_on_own_site": {
+    "sld_graph": 200,
+    "connections_v2": 200,
+    "nodes_sld": 200,
+    "lookup_v2_nodes": 200,
+    "node_class_counts": 200,
+    "graph_node_enriched": 200
+   },
+   "admin_on_foreign": {
+    "sld_graph": 200,
+    "connections_v2": 200,
+    "nodes_sld": 200,
+    "lookup_v2_nodes": 200,
+    "node_class_counts": 200,
+    "graph_node_enriched": 200
+   }
+  },
+  "ui": "FM seat opens https://acme.stage.egalvanic.ai/maintenance-portal/assets/313339b4-cdd7-49e8-8b94-fcb2da4191ad -> GEN 3 page with Basic Info + Engineering (Arc Flash Readiness, custom attributes) tabs; control AST-2 on own site opens the same way"
+ },
+ "section3_domains": "stage company allowed-domains (old endpoint): acme, gmail.com, icloud.com; no account approved-domains config",
+ "section6_portal_issues": "stage FM portal menu 10 items (no Issues); typed /maintenance-portal/issues shows a blank Site Data layout",
+ "not_run_on_stage": "create flows and sections 4,5,7 - the ZP-4697 code is not on stage, so they would test the old build"
+}

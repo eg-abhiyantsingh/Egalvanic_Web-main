@@ -1,0 +1,24 @@
+{
+  "ticket": "ZP-4703 (re-test of ZP-4572 too)",
+  "env": "https://acme.stage.egalvanic.ai",
+  "build": "index-aLJ0EMXb.js UNCHANGED (Last-Modified 07 Oct 2026 07:12 GMT; re-checked 09:31 UTC)",
+  "fix_type": "permission grant, no new code: maintenance_portal.manage added to Project Manager (95->96 perms), Account Manager (77->78), Electrical Engineer (81->82)",
+  "tested": "2026-10-07 09:05-09:31 UTC (14:35-15:01 IST)",
+  "seats_api": {
+    "admin_staff": {"perm": true, "tier": "T1"}, "superadmin_staff": {"perm": true, "tier": "T1"},
+    "pm": {"perm": true, "tier": "T1"}, "am": {"perm": true, "tier": "T1"}, "ee": {"perm": true, "tier": "T1"},
+    "fm": {"perm": false, "tier": "T2"}, "cp": {"perm": false, "tier": "T2"}, "tech": {"perm": false, "web": false}
+  },
+  "ui": {
+    "pm":  {"menu_section": true, "items_locked": 0, "inapp": ["Site Health opens", "Work Orders opens"], "typed_10": "all open (no Access Denied)"},
+    "am":  {"menu_section": true, "items_locked": 0, "inapp": ["Site Health opens"], "typed_10": "all open"},
+    "ee":  {"menu_section": true, "items_locked": 0, "inapp": ["Site Health opens (no site assigned: 'No site is assigned to your account yet')"], "typed_10": "all open"},
+    "fm":  {"menu_section": true, "items_locked": 0, "inapp": ["Site Health opens"]},
+    "cp":  {"menu_section": true, "items_locked": 0, "inapp": ["Site Health opens"]},
+    "admin_staff": {"menu_section": true, "items_locked": 0, "inapp": ["Site Health opens"]},
+    "superadmin_staff": {"menu_section": true, "items_locked": 0, "inapp": ["Site Health opens"]},
+    "tech": {"web": "Web Access Restricted"}
+  },
+  "zp4572_retest": "menu and route agree for every role; the /condition + /sld typed-address gap no longer applies because PM/AM/EE are allowed in",
+  "console": "only CSP font-src blocks (unrelated)"
+}

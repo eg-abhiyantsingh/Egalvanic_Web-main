@@ -1,0 +1,19 @@
+{
+  "ticket": "ZP-4701 Create Work Order option not available to a Super Admin",
+  "tested": "2026-10-07 10:40-11:35 UTC",
+  "builds": {"stage": "index-aLJ0EMXb.js (7 Oct 07:12 GMT)", "prod": "index-8_W3WIa8.js (4 Oct)"},
+  "code_fact": "Sessions page chunk identical on stage and prod; onCreate (Create Work Order button) and the Actions column render only when !isTier2(); tier comes from GET /api/features/access",
+  "root_cause_on_prod": "reporter seat dharmesh.avaiya+acme+prod@ (user 96aa4804) is listed in /api/users/guest-portal on account 'Large Pharmaceutical Company' (533564f1, license no_license) with roles [AM, Admin, EE, PM, Super Admin] and NO Facility Manager role -> /api/features/access tier T2, account_detail {533564f1, no_license} -> button hidden",
+  "developer_fix_per_comment_44937": "tier is derived from assigned roles: FM+Admin user = T2 with account info; remove FM -> T1, account info null",
+  "stage": {
+    "reporter_seat": {"roles": ["Super Admin","Electrical Engineer","Admin"], "tier": "T1", "account_detail": null, "create_button": true, "e2e": "wizard General service -> POST /api/ir_session/create 201 -> /sessions/9d741ecf-61df-4025-95f9-ad7320179082 -> list (in-app nav) shows the new WO at row 1 of 28"},
+    "pm": {"tier": "T1", "create_button": true},
+    "am": {"tier": "T1", "page": "Access Denied (/sessions needs features.site_visits.view; AM lacks it; no Work Orders menu entry)"},
+    "ee": {"tier": "T1", "page": "Access Denied (same reason)"},
+    "cp": {"tier": "T2", "page": "Access Denied", "api_create": "422 permission_denied sessions.manage"},
+    "fm_baseline": {"tier": "T2", "account": "49210b2f Default EG-ACME Account interactive", "in_guest_portal_list": true}
+  },
+  "prod_read_only": {"reporter_seat": {"tier": "T2", "account_detail": {"account_id": "533564f1-295c-4133-86af-0d8e5a66676d", "license_type": "no_license"}, "create_button": false, "rows": "1-25 of 470"}},
+  "blocked": "Krunal steps 2-9 (add Admin to FM user, remove FM) = user permission change; refused by the Claude Code permission check; owner to perform or allow",
+  "test_data_created": "stage WO 9d741ecf-61df-4025-95f9-ad7320179082 'QA-DEMO ZP-4701 create check 7 Oct (delete me)' on site 'test site', account 'test account'"
+}

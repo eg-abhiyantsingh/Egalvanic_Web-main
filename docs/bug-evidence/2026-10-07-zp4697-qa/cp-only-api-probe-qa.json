@@ -1,0 +1,350 @@
+{
+ "base": "https://acme.qa.egalvanic.ai",
+ "utc": "13:10:12",
+ "cp": {
+  "email": "abhiyant.singh+clientportal@egalvanic.com",
+  "roles": [
+   "Client Portal"
+  ],
+  "is_eg_admin": false,
+  "account_id": "43f1d80a-9214-434f-b26a-44d0de07160d",
+  "tier": "T2",
+  "account_detail": {
+   "id": null,
+   "name": null,
+   "license_type": "interactive"
+  },
+  "own_sites_api": 234,
+  "accessible_sld_ids": 234,
+  "company_sites": 265,
+  "perm_count": 36,
+  "perms_of_interest": [
+   "features.connections.view",
+   "features.issues.view",
+   "features.slds.view",
+   "issue_classes.view",
+   "issues.view",
+   "node_classes.view",
+   "nodes.view",
+   "slds.view"
+  ]
+ },
+ "foreign_tested": [
+  {
+   "site": "Backword 27/8 iOS",
+   "site_id": "098a50ad-abc2-414e-a62e-dda0baa9d850",
+   "node": "abhiyant 2",
+   "node_id": "0b25e069-cf43-4505-9f87-6a28f59fac16",
+   "cp": {
+    "sld_graph": [
+     422,
+     "JSON",
+     169,
+     0
+    ],
+    "connections_v2": [
+     422,
+     "JSON",
+     169,
+     0
+    ],
+    "nodes_sld": [
+     200,
+     "JSON",
+     73943,
+     14
+    ],
+    "lookup_v2_nodes": [
+     200,
+     "JSON",
+     31597,
+     11
+    ],
+    "node_class_counts": [
+     200,
+     "JSON",
+     960,
+     6
+    ],
+    "graph_node_enriched": [
+     200,
+     "JSON",
+     4792,
+     0
+    ]
+   },
+   "admin_control": {
+    "sld_graph": [
+     200,
+     "JSON",
+     85942,
+     14
+    ],
+    "connections_v2": [
+     200,
+     "JSON",
+     10357,
+     10
+    ],
+    "nodes_sld": [
+     200,
+     "JSON",
+     73943,
+     14
+    ],
+    "lookup_v2_nodes": [
+     200,
+     "JSON",
+     31597,
+     11
+    ],
+    "node_class_counts": [
+     200,
+     "JSON",
+     960,
+     6
+    ],
+    "graph_node_enriched": [
+     200,
+     "JSON",
+     4792,
+     0
+    ]
+   },
+   "cp_nodes_identical_to_admin": true,
+   "cp_node_labels": [
+    "abhiyant 2",
+    "Busduct photo",
+    "Circuit Breaker 1",
+    "Circuit Breaker 5",
+    "Circuit Breaker 4",
+    "Circuit Breaker 2",
+    "Circuit Breaker 3",
+    "FDR-Test "
+   ]
+  },
+  {
+   "site": "10 SEP 2026",
+   "site_id": "aae9883c-b198-49b7-978d-979cbe045fa4",
+   "node": "Fuse-1",
+   "node_id": "db6e2a55-db0f-4187-85c9-245ce6192710",
+   "cp": {
+    "sld_graph": [
+     422,
+     "JSON",
+     169,
+     0
+    ],
+    "connections_v2": [
+     422,
+     "JSON",
+     169,
+     0
+    ],
+    "nodes_sld": [
+     200,
+     "JSON",
+     80861,
+     16
+    ],
+    "lookup_v2_nodes": [
+     200,
+     "JSON",
+     40197,
+     16
+    ],
+    "node_class_counts": [
+     200,
+     "JSON",
+     1097,
+     7
+    ],
+    "graph_node_enriched": [
+     200,
+     "JSON",
+     5155,
+     0
+    ]
+   },
+   "admin_control": {
+    "sld_graph": [
+     200,
+     "JSON",
+     166699,
+     31
+    ],
+    "connections_v2": [
+     200,
+     "JSON",
+     113,
+     0
+    ],
+    "nodes_sld": [
+     200,
+     "JSON",
+     80861,
+     16
+    ],
+    "lookup_v2_nodes": [
+     200,
+     "JSON",
+     40197,
+     16
+    ],
+    "node_class_counts": [
+     200,
+     "JSON",
+     1097,
+     7
+    ],
+    "graph_node_enriched": [
+     200,
+     "JSON",
+     5155,
+     0
+    ]
+   },
+   "cp_nodes_identical_to_admin": true,
+   "cp_node_labels": [
+    "Fuse-1",
+    "Panelboard-1",
+    "Panelboard-2",
+    "1 path",
+    "3",
+    "test",
+    "2",
+    "17"
+   ]
+  },
+  {
+   "site": "test site by tier",
+   "site_id": "c2f4d2e4-d0cd-4a19-b31f-c59d107e8bd5",
+   "node": "test k",
+   "node_id": "c720e297-2cb0-478f-89ad-e51d7254dae3",
+   "cp": {
+    "sld_graph": [
+     422,
+     "JSON",
+     169,
+     0
+    ],
+    "connections_v2": [
+     422,
+     "JSON",
+     169,
+     0
+    ],
+    "nodes_sld": [
+     200,
+     "JSON",
+     4738,
+     1
+    ],
+    "lookup_v2_nodes": [
+     200,
+     "JSON",
+     2212,
+     1
+    ],
+    "node_class_counts": [
+     200,
+     "JSON",
+     185,
+     1
+    ],
+    "graph_node_enriched": [
+     200,
+     "JSON",
+     4866,
+     0
+    ]
+   },
+   "admin_control": {
+    "sld_graph": [
+     200,
+     "JSON",
+     5027,
+     1
+    ],
+    "connections_v2": [
+     200,
+     "JSON",
+     113,
+     0
+    ],
+    "nodes_sld": [
+     200,
+     "JSON",
+     4738,
+     1
+    ],
+    "lookup_v2_nodes": [
+     200,
+     "JSON",
+     2212,
+     1
+    ],
+    "node_class_counts": [
+     200,
+     "JSON",
+     185,
+     1
+    ],
+    "graph_node_enriched": [
+     200,
+     "JSON",
+     4866,
+     0
+    ]
+   },
+   "cp_nodes_identical_to_admin": true,
+   "cp_node_labels": [
+    "test k"
+   ]
+  }
+ ],
+ "own_control": {
+  "site": "Android Site 2",
+  "site_id": "aadcee4c-7dd0-45b3-81b9-309c5c166084",
+  "node": "child 1",
+  "node_id": "4862d2e1-534b-4061-b675-fd1dc0c053bd",
+  "cp": {
+   "sld_graph": [
+    200,
+    "JSON",
+    2667497,
+    463
+   ],
+   "connections_v2": [
+    200,
+    "JSON",
+    42882,
+    50
+   ],
+   "nodes_sld": [
+    200,
+    "JSON",
+    2396156,
+    449
+   ],
+   "lookup_v2_nodes": [
+    200,
+    "JSON",
+    154466,
+    50
+   ],
+   "node_class_counts": [
+    200,
+    "JSON",
+    5803,
+    37
+   ],
+   "graph_node_enriched": [
+    200,
+    "JSON",
+    5792,
+    0
+   ]
+  }
+ }
+}

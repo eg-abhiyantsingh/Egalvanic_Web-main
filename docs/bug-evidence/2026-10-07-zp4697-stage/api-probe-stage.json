@@ -1,0 +1,384 @@
+{
+ "base": "https://acme.stage.egalvanic.ai",
+ "utc": "2026-10-07 12:43:11",
+ "admin": {
+  "roles": [
+   "Admin",
+   "Electrical Engineer",
+   "Account Manager",
+   "Super Admin"
+  ],
+  "company_id": "d59d449b-09d8-45d6-8f0a-ef70024b1293",
+  "is_eg_admin": true
+ },
+ "s1_platform_users_post": [
+  200,
+  "HTML",
+  3029
+ ],
+ "s1_platform_users_get": [
+  200,
+  "HTML",
+  3029
+ ],
+ "s1_old_users_list": [
+  405,
+  "HTML",
+  0
+ ],
+ "s3_company_allowed_domains": [
+  200,
+  "JSON",
+  {
+   "allowed_domains": [
+    "acme",
+    "gmail.com",
+    "icloud.com"
+   ],
+   "exceptions": [
+    "gmail.com",
+    "icloud.com"
+   ],
+   "subdomain": "acme",
+   "success": true
+  }
+ ],
+ "s2_guest_list": [
+  200,
+  "JSON",
+  6
+ ],
+ "s2_accounts_seen_in_list": 3,
+ "s2_filter_account_id": {
+  "account": "49210b2f-b25a-49bc-b337-002607f846be",
+  "status": 200,
+  "kind": "JSON",
+  "total": 6,
+  "rows_from_other_accounts": 2
+ },
+ "s2_sample_user_keys": [
+  "account_id",
+  "account_name",
+  "active",
+  "email",
+  "first_name",
+  "last_name",
+  "license_type",
+  "roles",
+  "seat_id",
+  "user_id"
+ ],
+ "site_names": {
+  "3e3d11df-a8b7-4342-a209-43f54c8b73e6": "Test uhhujh",
+  "db9b8488-adec-4f85-b85b-38c02c8e9415": "Atest",
+  "48123170-743d-4a87-8001-85991bda23a2": "Kareem Page",
+  "ead61188-b332-4316-9d7e-afbd68262e92": "test site",
+  "ed68d862-7850-4557-b5b6-fb0e84601d13": "Test new 123",
+  "941c77fa-5947-4fc6-abb2-a01c405173b3": "Test new",
+  "09a227e7-b3c7-4b9a-8424-9f7e02ea4512": "DemoSite 1",
+  "55823278-e295-4010-b77f-96f76cbc2165": "test",
+  "6928e3a4-d9cf-4039-950b-c182c2295414": "Atest",
+  "bbd2031d-57ba-41d1-a8bb-9b2b2b6e96d2": "qqq"
+ },
+ "admin_sites": 10,
+ "fm": {
+  "email": "abhiyant.singh+stagefm@egalvanic.com",
+  "roles": [
+   "Facility Manager"
+  ],
+  "own_sites": 7,
+  "accessible_sld_ids": 7,
+  "foreign_site": [
+   "3e3d11df-a8b7-4342-a209-43f54c8b73e6",
+   "313339b4-cdd7-49e8-8b94-fcb2da4191ad"
+  ],
+  "own_site": [
+   "db9b8488-adec-4f85-b85b-38c02c8e9415",
+   "00f1b526-ef0d-4928-b41b-394bd170f31e"
+  ],
+  "calls": {
+   "guest_on_FOREIGN_site": {
+    "sld_graph": {
+     "status": 422,
+     "kind": "JSON",
+     "bytes": 169,
+     "rows": 0,
+     "err": "{'error': 'permission_denied', 'message': 'You do not have permission to access this SLD', 'sld_id': '3e3d11df-a8b7-4342-a209-43f54c8b73e6',"
+    },
+    "connections_v2": {
+     "status": 422,
+     "kind": "JSON",
+     "bytes": 169,
+     "rows": 0,
+     "err": "{'error': 'permission_denied', 'message': 'You do not have permission to access this SLD', 'sld_id': '3e3d11df-a8b7-4342-a209-43f54c8b73e6',"
+    },
+    "nodes_sld": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 12683,
+     "rows": 3,
+     "err": null
+    },
+    "lookup_v2_nodes": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 3584,
+     "rows": 2,
+     "err": null
+    },
+    "node_class_counts": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 509,
+     "rows": 3,
+     "err": null
+    },
+    "graph_node_enriched": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 4732,
+     "rows": 0,
+     "err": null
+    }
+   },
+   "admin_on_same_foreign_site(control)": {
+    "sld_graph": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 14674,
+     "rows": 3,
+     "err": null
+    },
+    "connections_v2": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 1770,
+     "rows": 2,
+     "err": null
+    },
+    "nodes_sld": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 12683,
+     "rows": 3,
+     "err": null
+    },
+    "lookup_v2_nodes": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 3584,
+     "rows": 2,
+     "err": null
+    },
+    "node_class_counts": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 509,
+     "rows": 3,
+     "err": null
+    },
+    "graph_node_enriched": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 4732,
+     "rows": 0,
+     "err": null
+    }
+   },
+   "guest_on_OWN_site(control)": {
+    "sld_graph": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 54770,
+     "rows": 9,
+     "err": null
+    },
+    "connections_v2": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 2627,
+     "rows": 3,
+     "err": null
+    },
+    "nodes_sld": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 52990,
+     "rows": 9,
+     "err": null
+    },
+    "lookup_v2_nodes": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 7520,
+     "rows": 2,
+     "err": null
+    },
+    "node_class_counts": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 660,
+     "rows": 4,
+     "err": null
+    },
+    "graph_node_enriched": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 7074,
+     "rows": 0,
+     "err": null
+    }
+   }
+  }
+ },
+ "cp": {
+  "email": "abhiyant.singh+cpstage@egalvanic.com",
+  "roles": [
+   "Client Portal"
+  ],
+  "own_sites": 7,
+  "accessible_sld_ids": 7,
+  "foreign_site": [
+   "3e3d11df-a8b7-4342-a209-43f54c8b73e6",
+   "313339b4-cdd7-49e8-8b94-fcb2da4191ad"
+  ],
+  "own_site": [
+   "db9b8488-adec-4f85-b85b-38c02c8e9415",
+   "00f1b526-ef0d-4928-b41b-394bd170f31e"
+  ],
+  "calls": {
+   "guest_on_FOREIGN_site": {
+    "sld_graph": {
+     "status": 422,
+     "kind": "JSON",
+     "bytes": 169,
+     "rows": 0,
+     "err": "{'error': 'permission_denied', 'message': 'You do not have permission to access this SLD', 'sld_id': '3e3d11df-a8b7-4342-a209-43f54c8b73e6',"
+    },
+    "connections_v2": {
+     "status": 422,
+     "kind": "JSON",
+     "bytes": 169,
+     "rows": 0,
+     "err": "{'error': 'permission_denied', 'message': 'You do not have permission to access this SLD', 'sld_id': '3e3d11df-a8b7-4342-a209-43f54c8b73e6',"
+    },
+    "nodes_sld": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 12683,
+     "rows": 3,
+     "err": null
+    },
+    "lookup_v2_nodes": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 3584,
+     "rows": 2,
+     "err": null
+    },
+    "node_class_counts": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 509,
+     "rows": 3,
+     "err": null
+    },
+    "graph_node_enriched": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 4732,
+     "rows": 0,
+     "err": null
+    }
+   },
+   "admin_on_same_foreign_site(control)": {
+    "sld_graph": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 14674,
+     "rows": 3,
+     "err": null
+    },
+    "connections_v2": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 1770,
+     "rows": 2,
+     "err": null
+    },
+    "nodes_sld": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 12683,
+     "rows": 3,
+     "err": null
+    },
+    "lookup_v2_nodes": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 3584,
+     "rows": 2,
+     "err": null
+    },
+    "node_class_counts": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 509,
+     "rows": 3,
+     "err": null
+    },
+    "graph_node_enriched": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 4732,
+     "rows": 0,
+     "err": null
+    }
+   },
+   "guest_on_OWN_site(control)": {
+    "sld_graph": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 54770,
+     "rows": 9,
+     "err": null
+    },
+    "connections_v2": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 2627,
+     "rows": 3,
+     "err": null
+    },
+    "nodes_sld": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 52990,
+     "rows": 9,
+     "err": null
+    },
+    "lookup_v2_nodes": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 7520,
+     "rows": 2,
+     "err": null
+    },
+    "node_class_counts": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 660,
+     "rows": 4,
+     "err": null
+    },
+    "graph_node_enriched": {
+     "status": 200,
+     "kind": "JSON",
+     "bytes": 7074,
+     "rows": 0,
+     "err": null
+    }
+   }
+  }
+ }
+}

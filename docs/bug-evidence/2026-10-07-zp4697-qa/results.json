@@ -1,0 +1,26 @@
+{
+  "ticket": "ZP-4697 BE Enforce domain-scoped user management and read-only access controls in Maintenance Portal (Story, Web v2.2.4)",
+  "where_code_is": "frontend PR #1677 merged to cicd/qa 11:43 UTC -> QA build index-DLTfMdFs.js 11:45 UTC; backend PR #1488 'merged to QA' per Dharmesh 11:45 UTC. STAGE: build index-aLJ0EMXb.js (07:12 GMT) has none of the strings; Guest Portal Users on stage has no Create Guest User / account filter; no promote PR to cicd/stag as of 12:05 UTC",
+  "tested": "2026-10-07 11:50-12:20 UTC on acme.qa.egalvanic.ai (admin +admin@, Admin +adminqa@, FM +fm@, API)",
+  "company": "EG-ACME d59d449b-09d8-45d6-8f0a-ef70024b1293; approved domains shown in Create User: @acme.*, @xyz.com; old /api/users/ = 283 users, 197 @egalvanic.com, 6 @acme.com",
+  "section1_platform_users": {
+    "list": "FAIL: 0-0 of 0 for Super Admin and Admin seats; POST /api/users/company/{id}/platform-users returns masked HTML (backend 403/404) for GET/POST variants at 11:58, 12:10, 12:14 UTC; no domain chips rendered; no 'Domain mismatch' badge in bundle",
+    "create_outside_domain": "PASS (server-side): POST /api/users/ -> 400 {error: The email domain \"@example.org\" is not associated with this company. Please use an email ending in @acme.*, @xyz.com.}; UI shows raw 'API call failed: 400 - {...}' twice; wording differs from ticket text",
+    "update_invite_apis": "not checked"
+  },
+  "section2_guest_portal_users": {
+    "list": "71 users (old API had 25 entries in guest list earlier? -> new list total 71 via /api/users/guest-portal?page=1&page_size=25, pagination); includes users whose domain matches no account domain (e.g. @testwithshubham.com, @checktest.com) -> no filtering/flagging",
+    "account_filter": "FAIL: UI sends GET /api/users/guest-portal?...&account_id=104be1e9-... ; response still total 71 with mixed accounts (API ignores account_id); list not grouped by account",
+    "create_flow": "PASS: Account (search, company accounts) -> Email with helper 'Allowed: @egalvanic.*' when the account has domains -> Sites multi-select limited to the account (test tier: 1 site; 17 aug abhiyant: 4) -> Role by license (Lite -> Client Portal only; Full Access -> FM or CP) -> temporary password option; POST /api/account/{id}/users 201 with sld_ids; new user listed under the account; search works",
+    "outside_domain": "PASS (server-side) but broken message when the account has no domains: 17 aug abhiyant (allowed_domains []) -> 400 'The email domain \"@example.org\" is not associated with this account. Please use an email ending in .' ; the flow is NOT blocked up front (ticket: 'Configure approved domains on this Account before adding guest users.')",
+    "site_scoping_admin_side": "new guest 81db7510... has /api/users/{id}/slds = 1 (test tier site); pre-existing +clientportal@ has 234 sites, +fm@ 11 -> legacy guests unscoped, not flagged",
+    "temporary_password": "not returned by the API (emailed) -> could not sign in as the created guests"
+  },
+  "section3_account_domains_config": "no approved-domains endpoint (/api/account/{id}/approved-domains masked) and no UI found; only the old /api/account/{id}/allowed-domains (bare labels) exists -> not implemented",
+  "section4_domain_mismatch": "no 'Domain mismatch' string in bundle; non-compliant users shown without a badge -> not implemented",
+  "section5_audit_log": "Admin > Audit Log (offline mutation log) shows no entry for the guest user created 12:12:14Z; /api/audit-log variants masked -> not implemented/visible",
+  "section6_portal_issues_tab": "FM portal nav: 10 items, no Issues; typed /maintenance-portal/issues falls to the Site Data layout -> not implemented",
+  "section7_read_only_asset": "Lite license preview (staff) on /maintenance-portal/assets/70ad71df...: tabs Basic Info, Engineering 4, Maintenance, Inspections, Issues, Connections, Photos, Attachments; Engineering content renders -> not implemented in frontend; server-side not checked (no Lite seat password)",
+  "test_data_created": ["guest abhiyant.singh+zp4697cp@egalvanic.com (81db7510-4011-7058-9869-7fc6b47bdeef) FM on 'test tier' site 'test tier site'", "guest abhiyant.singh+zp4697lite@egalvanic.com (d1bbe540-2001-709e-076d-abcb37648ad9) CP on 'test' (Lite) site '24 auguest ABS'"],
+  "traps": "Escape after an Autocomplete option is chosen closes the MUI dialog; CloudFront masks 403/404 as 200 HTML"
+}

@@ -1,0 +1,34 @@
+{
+  "ticket": "ZP-4572",
+  "env": "https://acme.stage.egalvanic.ai",
+  "build": "index-aLJ0EMXb.js (Last-Modified Wed, 07 Oct 2026 07:12:00 GMT; re-checked unchanged 08:33 UTC)",
+  "tested": "2026-10-07 08:20-08:33 UTC (13:50-14:03 IST)",
+  "rule_in_build": {
+    "menu": "section 'maintenance-portal' requiresTier2 = !hasPermission('maintenance_portal.manage'); hidden when requiresTier2 && !isT2",
+    "route": "/maintenance-portal/* wrapped in Tier2Route(orPermission='maintenance_portal.manage', fallback=AccessDenied); T2 seats pass",
+    "outside_guard": "/maintenance-portal/condition has no <Route>; Layout renders ConditionAssessment by pathname. /maintenance-portal/sld is inside the guard, but Layout renders the persistent SLD canvas for that pathname and hides the outlet (Access Denied card) with display:none"
+  },
+  "seats_api": {
+    "admin_staff":  {"roles": ["Admin","Electrical Engineer","Account Manager","Super Admin"], "eg_admin": true,  "tier": "T1", "perm": true,  "nperm": 132},
+    "superadmin_staff": {"roles": ["Super Admin","Project Manager","Account Manager","Electrical Engineer","Admin"], "eg_admin": true, "tier": "T1", "perm": true, "nperm": 133},
+    "pm":   {"roles": ["Project Manager"],     "tier": "T1", "perm": false, "nperm": 95},
+    "am":   {"roles": ["Account Manager"],     "tier": "T1", "perm": false, "nperm": 77, "note": "28 Sep 2026 the same seat had 78 permissions incl. maintenance_portal.manage"},
+    "ee":   {"roles": ["Electrical Engineer"], "tier": "T1", "perm": false, "nperm": 81},
+    "fm":   {"roles": ["Facility Manager"],    "tier": "T2", "perm": false, "nperm": 75, "license": "interactive"},
+    "cp":   {"roles": ["Client Portal"],       "tier": "T2", "perm": false, "nperm": 35, "license": "interactive"},
+    "tech": {"roles": ["Technician"],          "tier": "T1", "perm": false, "web": false}
+  },
+  "company_feature_maintenance_portal": true,
+  "ui": {
+    "admin_staff":  {"menu_section": true,  "items_locked": 0, "inapp_site_health": "opens", "typed": {"8_guarded": "open", "condition": "open", "sld": "open"}},
+    "superadmin_staff": {"menu_section": true, "items_locked": 0, "inapp_site_health": "opens", "typed": {"8_guarded": "open", "condition": "open", "sld": "open"}},
+    "pm":   {"menu_section": false, "typed": {"8_guarded": "Access Denied", "condition": "OPENS (full page, same data as /pm-readiness)", "sld": "OPENS (diagram, same as /sld)"}},
+    "am":   {"menu_section": false, "typed": {"8_guarded": "Access Denied", "condition": "OPENS", "sld": "OPENS"}},
+    "ee":   {"menu_section": false, "typed": {"8_guarded": "Access Denied", "condition": "OPENS", "sld": "OPENS"}},
+    "fm":   {"menu_section": true,  "items_locked": 0, "inapp_site_health": "opens", "typed": {"8_guarded": "open", "condition": "open", "sld": "open"}},
+    "cp":   {"menu_section": true,  "items_locked": 0, "inapp_site_health": "opens", "typed": {"8_guarded": "open", "condition": "open", "sld": "open"}},
+    "tech": {"web": "Web Access Restricted"}
+  },
+  "guarded_8": ["overview","assets","locations","panel-schedules","program","work-orders","compliance","reports"],
+  "console": "only CSP font-src blocks (unrelated)"
+}
