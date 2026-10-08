@@ -28,3 +28,12 @@
 ## Evidence
 - `docs/bug-evidence/2026-10-08-zp4732-stage/` (real-* and sim-on-* menu / typed-portal screenshots for 8 seats)
 - `docs/bug-evidence/2026-10-08-zp4735-address-issues-qa/`
+
+## Correction (08:00 UTC): ZP-4732 READY TO RELEASE → On Hold
+The owner asked "why ready to release yet? we dint check for disable launch darkly". The RTR move rested on a SIMULATED
+flag-ON state and on a flag-OFF state someone else had set before QA started. I moved it to On Hold (no path back to In
+QA from RTR) and posted comment **44971** stating what is still needed: real LD switches (ON then OFF, stage, acme), with
+the 9-role sweep re-run after each.
+Extra check done meanwhile: LaunchDarkly unreachable (all *launchdarkly.com* requests blocked) on stage for Admin, PM, FM
+and CP → the portal is hidden for all four, and the typed URL shows "Feature Not Available" (the gate fails closed).
+Release v2.2.5 status: ZP-4732 On Hold; ZP-4731 In Progress (PR #1695 to cicd/stag open, not merged).
