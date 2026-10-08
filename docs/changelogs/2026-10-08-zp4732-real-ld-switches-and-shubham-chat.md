@@ -117,3 +117,5 @@ Replied to Avani in the DM with these points. Script: `.playwright-mcp/zp4697sta
 - No Jira change was made by QA; the closing status is for the owner to decide.
 
 Scripts: `z4723b.js`, `z4723c.js`
+
+- Owner said "yes reply. to avani". Sent in the DM: "Thanks Avani, agreed. I compared the /sld/{id} record for the Client Portal user and a PM on Atest: both get the same assets, connections and photos, with no work order, issue or quote data, and /graph stays blocked. Fine to close ZP-4723 as working as designed."
