@@ -87,3 +87,20 @@ Evidence:
 - `E-cp-own-issue-detail-PASS.png`
 
 Scripts: `.playwright-mcp/zp4697stage/z4731c.js` … `z4731g.js`
+
+## ZP-4723: Avani asked (Google Chat DM) "Can you please check if its happening in STAGE? I checked no api is being called /sld/{id} /sld/{id}/graph no view"
+Re-checked on stage `index-D-TgQbk4.js`, flag ON. Seat: Client Portal `+cpstage@` (`is_eg_admin: false`, site Atest db9b8488 assigned).
+
+**What the portal screens call:** I walked Overview, Assets, Asset detail + Connections tab, Locations, Panel Schedules and Issues. The only SLD-related calls are `/api/users/{id}/slds`, `/api/location/sld/{id}` and `/api/panels/sld/{id}`. Avani is right that no screen uses `/sld/{id}`, `/edges` or `/graph`.
+
+**Calling them directly with the CP's own token:**
+
+| Call | Client Portal | PM (control) |
+|---|---|---|
+| `GET /api/sld/{id}` | **200**, 62 KB (edges, issues, ir_sessions, ir_photos, comments, mappings) | 200 |
+| `GET /api/sld/{id}/edges` | **200**, 2.3 KB | 200 |
+| `GET /api/sld/{id}/graph` | 422 permission_denied | 200 |
+
+**Verdict:** still open on stage, API side only. Blocking `/sld/{id}` and `/edges` for CP will not break the portal, because its screens do not use them.
+
+Replied to Avani in the DM with these points. Script: `.playwright-mcp/zp4697stage/z4723.js`.
