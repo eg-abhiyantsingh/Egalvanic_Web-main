@@ -52,3 +52,38 @@ Verdict: **PASS**. The portal follows the real flag for every role in both direc
   - `ld-blocked-*`
   - `flag-back-on-0839-NOT-off-evidence-*`
 - Scripts: `.playwright-mcp/zp4697stage/mp-real-on.js`, `mp-real-off2.js`, `mp-real-off3.js`
+
+## Outcome
+- Jira comment **44974** on ZP-4732, with three screenshots.
+- ZP-4732 moved In QA → **READY TO RELEASE** (transition 10). The ticket had already been put back to In QA by someone else; On Hold was not used.
+- Shubham turned the flag back ON: stage v323 at 08:47:33, QA v707. The LD watch was stopped.
+
+## ZP-4731 (still In Progress, Krunal): re-checks with the flag ON (v323), Client Portal seat `+cpstage@`
+The seat is `is_eg_admin: false`, has the single role "Client Portal", 35 permissions and 7 sites.
+
+| Check | Result |
+|---|---|
+| Issues tab on own site "test" | **PASS**: 3 issues. Columns: Title, Issue Class, Priority, Asset, Status, Actions. |
+| Own issue detail (61810ec7 "titke ddj") | **PASS**: read-only. No edit, save or resolve controls; no editable fields. Tabs: Details, Class Details, Photos, Status History. |
+| Issues list for a site NOT assigned (ead61188) | **PASS**: `POST /api/v2/issues/list` → 200, empty |
+| Issue from that unassigned site opened by id (27588f70 "NEC Violation on ATS…") | **FAIL**: `GET /api/issue/{id}` → 200 JSON with full details; `/status-history` → 200; the portal page shows it (description, session name, photos, status history) |
+
+Controls:
+- Admin gets the same issue as JSON (it exists).
+- A random UUID returns the HTML fallback (no data).
+- The user's own issue returns JSON.
+
+### Corrected: the earlier "foreign issue" id was not an issue
+- `d295936c-…` (taken from an `open-by-site` reply by z4731b) returns the HTML fallback **for the Admin too**, so it is not a fetchable issue.
+- Any "refused" verdict built on it would have been false. That screenshot is renamed `INCONCLUSIVE-d295936c-is-not-an-issue-id.png`.
+- The z4731b issue-detail and foreign-issue shots ran while the flag was OFF; they are renamed `INVALID-flag-was-off-*`.
+
+### Overlap and filing
+- Closest existing bug: **ZP-4709** ("Client Portal user can see assets from sites they are not assigned to"). It covers assets, not issues.
+- Not filed yet. The owner will decide: a new bug, or added to ZP-4709.
+
+Evidence:
+- `docs/bug-evidence/2026-10-08-zp4731-stage/E-cp-foreign-site-issue-opens-FAIL.png`
+- `E-cp-own-issue-detail-PASS.png`
+
+Scripts: `.playwright-mcp/zp4697stage/z4731c.js` … `z4731g.js`
