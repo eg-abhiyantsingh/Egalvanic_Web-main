@@ -104,3 +104,16 @@ Re-checked on stage `index-D-TgQbk4.js`, flag ON. Seat: Client Portal `+cpstage@
 **Verdict:** still open on stage, API side only. Blocking `/sld/{id}` and `/edges` for CP will not break the portal, because its screens do not use them.
 
 Replied to Avani in the DM with these points. Script: `.playwright-mcp/zp4697stage/z4723.js`.
+
+### Avani's answer (DM + Jira comment 44978): ZP-4723 "working as designed"
+- `/sld/{id}` is the mobile app's site loader (`slds.view`).
+- `/edges` is a shared connections endpoint (NFPA 70E tables, quote Work Units). Its rows are the same ones the CP already sees in Connections (`/connections/v2/sld/{id}`).
+- The diagram itself (`/graph`, views, view-mappings, sld-view, SKM export) is blocked by `sld_diagrams.view`.
+
+**QA cross-check of her reasoning** (site Atest, CP vs PM, same record):
+- nodes 9, edges 3, photos 5 for both.
+- ir_sessions, ir_photos, comments, issues, quotes and tasks are all **empty for both roles**. The endpoint does not carry work-order, issue or quote data, so the CP gets nothing beyond the assets and connections the portal already shows.
+- **Conclusion: her explanation holds.** ZP-4723 was an over-report; the real requirement (no SLD diagram for CP) is met.
+- No Jira change was made by QA; the closing status is for the owner to decide.
+
+Scripts: `z4723b.js`, `z4723c.js`
