@@ -29,7 +29,7 @@
 - **ZP-4305:** 6 Oct PASS with a header-lag open point. No new PR; the QA-DEMO issue is Open, so the lag needs a resolve-with-photo first.
 
 ## Side events
-- **Maintenance Portal disappeared for Acme QA** between 12:40 and 13:00 UTC: `/api/features/access` shows maintenance-portal `is_entitled: false`, while the LD flag is still ON (v21). This happened around Shubham's "Disabled for Acme QA" reply. Asked him in eg-internal-dev to restore it, and to switch only `feature-qr-labels` (QA env client id `6a34e78f93e3e00a6eef8fda`, org key `d59d449b-…`).
+- **Maintenance Portal disappeared for Acme QA** between 12:40 and 13:00 UTC: `/api/features/access` shows maintenance-portal `is_entitled: false`, while the LD flag is still ON (v21). This happened around Shubham's "Disabled for Acme QA" reply. Asked him in eg-internal-dev to restore it, and to switch only `feature-qr-labels` (QA env client id `6a34e78f93e3e00a6eef8fda`, org key `d59d449b-…`). He replied "Enabled for Acme QA". Confirmed at 14:25 UTC: maintenance-portal is entitled again and back in the menu. The QR flag was never switched (still ON v13).
 - The owner forwarded my v2.2.5 production summary to Krunal ("Please check this. (Urgent)").
 
 ## Test data created (QA-DEMO)
