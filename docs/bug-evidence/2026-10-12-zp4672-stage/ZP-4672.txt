@@ -1,0 +1,27 @@
+h3. QA result: PASS on stage (build index-Eltoc33D.js), 12 Oct
+
+Saving QR codes now sends *one request for the whole batch*, at every size.
+
+||Assets saved||Requests||Per-asset node/update calls||Request time||
+|1|1|0|0.68 s|
+|10|1|0|0.95 s|
+|50|1|0|2.17 s|
+|80|1 (all 80 codes in one body)|0|-|
+
+# *Codes are kept:* after a page reload, the "No QR code yet" list on test site went from 1,907 to 1,846, exactly the 61 codes saved. Searching the 50-batch finds all 50.
+# *Double-click Save codes:* 1 request, no duplicate codes.
+# *Change an existing code:* "Change existing QR codes?" appears, shows old and new code, and closes after *Change codes*.
+
+*Note for the developer (not a failure):* save time grows about 30 ms per code. The app sends up to 1,000 codes per request, so a 1,000-code save would take about 30 s. Not tested; worth one check together with ZP-4671.
+
+*50 assets saved in one request:*
+!https://raw.githubusercontent.com/eg-abhiyantsingh/Egalvanic_Web-main/main/docs/bug-evidence/2026-10-12-zp4672-stage/14-fifty-assets-after-save.png|width=720!
+
+*The 50-asset editor (Start number fill):*
+!https://raw.githubusercontent.com/eg-abhiyantsingh/Egalvanic_Web-main/main/docs/bug-evidence/2026-10-12-zp4672-stage/13-fifty-assets-editor.png|width=720!
+
+*Change existing code pop-up:*
+!https://raw.githubusercontent.com/eg-abhiyantsingh/Egalvanic_Web-main/main/docs/bug-evidence/2026-10-12-zp4672-stage/6-change-existing-popup.png|width=720!
+
+*After reload, the 50 codes are still there:*
+!https://raw.githubusercontent.com/eg-abhiyantsingh/Egalvanic_Web-main/main/docs/bug-evidence/2026-10-12-zp4672-stage/15-after-reload-search-50-batch.png|width=720!
