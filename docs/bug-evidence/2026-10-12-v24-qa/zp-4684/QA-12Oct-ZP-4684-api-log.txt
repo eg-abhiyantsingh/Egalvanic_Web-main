@@ -1,0 +1,11 @@
+cable method key qa-demo-zp-4720-cable-insulation-test forms in spec 0
+addServiceForm 201 944 {"data": {"form_id": "0db85564-cd22-4ccf-8742-26562aa230b7", "form_key": "qa-demo-zp-4684-html-form-delete-me", "title": "QA-DEMO ZP-4684 html form (delete me)", "version": 10}, "success": true}
+--- after add (new version applied): form 0db85564-cd22-4ccf-8742-26562aa230b7 template_id=ee95138c-9692-48e2-901b-b03b4c49a67e s3_key=9b479b714254.html modified=2026-10-12T14:16:24Z
+versions [(10, 'Added form — QA-DEMO ZP-4684 html form (delete me)', 1, True), (9, 'Added Busway', 0, False), (8, 'Added Cable', 0, False), (7, None, 0, False)]
+current spec forms [('QA-DEMO ZP-4684 html form (delete me)', ['definition', 'eg_form_type', 'key', 'node_classes', 'references_json', 'sample_data', 'title'])]
+re-apply current version 200 1005 {"data": {"counts": {"form_ids": {"qa-demo-zp-4684-html-form-delete-me": "0db85564-cd22-4ccf-8742-26562aa230b7"}, "forms_created": 0, "forms_soft_deleted": 0, "forms_updated": 1, "methods_created": 0,
+--- after re-apply same version: form 0db85564-cd22-4ccf-8742-26562aa230b7 template_id=ee95138c-9692-48e2-901b-b03b4c49a67e s3_key=aca9c9652243.html modified=2026-10-12T14:16:29Z
+export-spec (with html) form keys [['definition', 'eg_form_type', 'key', 'node_classes', 'references_json', 'sample_data', 'template_html', 'title']] template_html chars [7617]
+post exported spec as new version (apply) 201 430 {"data": {"apply_counts": {"form_ids": {"qa-demo-zp-4684-html-form-delete-me": "0db85564-cd22-4ccf-8742-26562aa230b7"}, "forms_created": 0, "forms_soft_deleted": 0, "forms_updated": 1, "methods_create
+--- after posting exported spec back: form 0db85564-cd22-4ccf-8742-26562aa230b7 template_id=ee95138c-9692-48e2-901b-b03b4c49a67e s3_key=d8e646ff200a.html modified=2026-10-12T14:16:32Z
+template unchanged across applies: True

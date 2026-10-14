@@ -1,0 +1,73 @@
+WO id (created 201 by PM, 1153 ms) 3f682025-6e77-4176-8461-68d8c27d36fc
+--- 1 after create (creation spec: CTT on A): services ['Clean, Tighten, Torque'] | members 1 | lines 1
+   A Abhiyant Panelboard  member=True  registered=['Clean, Tighten, Torque'] lines=['Clean, Tighten, Torque']
+   B ATS 00789            member=False registered=[] lines=[]
+   C ATS 1                member=False registered=[] lines=[]
+   D ATS 1(2)             member=False registered=[] lines=[]
+   E ATS 6                member=False registered=[] lines=[]
+   F ATS 82               member=False registered=[] lines=[]
+add IR to A (explicit by-service) 200 {"data": {"assets_added": 1, "form_instances": 0, "invalid_node_ids": [], "method_lines": 1, "nodes_linked": 0, "unmatched_node_ids": []}, "success": true}
+--- 2 after explicit IR on A (WO now performs CTT+IR): services ['Clean, Tighten, Torque', 'Infrared Thermography'] | members 1 | lines 2
+   A Abhiyant Panelboard  member=True  registered=['Infrared Thermography', 'Clean, Tighten, Torque'] lines=['Clean, Tighten, Torque', 'Infrared Thermography']
+   B ATS 00789            member=False registered=[] lines=[]
+   C ATS 1                member=False registered=[] lines=[]
+   D ATS 1(2)             member=False registered=[] lines=[]
+   E ATS 6                member=False registered=[] lines=[]
+   F ATS 82               member=False registered=[] lines=[]
+link B via node-session/create (asset picker / create drawer path) 201 {"mapping": {"includes_ancestors": false, "includes_descendants": false, "mapping": {"id": "800abf31-786d-481b-8b14-6fc5385561ae", "is_checked": false, "is_deleted": false, "node_id": "b1c683c4-130f-4
+link E via node-session/bulk-create 201 {"created": {"count": 1, "mappings": [{"id": "11597193-3db9-4b1e-94a5-c300319771bc", "is_checked": false, "is_deleted": false, "node_id": "d4053b7d-799b-422c-bd54-f6e1c7125ad9", "session_id": "3f68202
+add-assets C with NO service_id 200 {"data": {"assets_added": 1, "form_instances": 0, "invalid_node_ids": [], "method_lines": 0, "nodes_linked": 1, "unmatched_node_ids": ["11a5347b-832d-48b0-9258-fe494b777056"]}, "success": true}
+--- 3 after link B, bulk-link E, add-assets C without service: services ['Clean, Tighten, Torque', 'Infrared Thermography'] | members 4 | lines 2
+   A Abhiyant Panelboard  member=True  registered=['Infrared Thermography', 'Clean, Tighten, Torque'] lines=['Clean, Tighten, Torque', 'Infrared Thermography']
+   B ATS 00789            member=True  registered=[] lines=[]
+   C ATS 1                member=True  registered=[] lines=[]
+   D ATS 1(2)             member=False registered=[] lines=[]
+   E ATS 6                member=True  registered=[] lines=[]
+   F ATS 82               member=False registered=[] lines=[]
+add-assets D WITH service CTT 200 {"data": {"assets_added": 1, "form_instances": 0, "invalid_node_ids": [], "method_lines": 1, "nodes_linked": 1, "unmatched_node_ids": []}, "success": true}
+method-lines F explicit 200 {"data": {"form_instances_created": 3, "lines": [{"id": "4d93c03f-56c2-469b-905e-732795389a85", "implementation_method_id": "d98fc606-0dcb-4864-a4f4-b89c1f7e6f06", "method_name": "Standard Clean, Tigh
+--- 4 after explicit adds D (add-assets+service) and F (method-lines): services ['Clean, Tighten, Torque', 'Infrared Thermography'] | members 6 | lines 4
+   A Abhiyant Panelboard  member=True  registered=['Infrared Thermography', 'Clean, Tighten, Torque'] lines=['Clean, Tighten, Torque', 'Infrared Thermography']
+   B ATS 00789            member=True  registered=[] lines=[]
+   C ATS 1                member=True  registered=[] lines=[]
+   D ATS 1(2)             member=True  registered=['Clean, Tighten, Torque'] lines=['Standard Clean, Tighten, Torque']
+   E ATS 6                member=True  registered=[] lines=[]
+   F ATS 82               member=True  registered=['Clean, Tighten, Torque'] lines=['Standard Clean, Tighten, Torque']
+unlink A and B (bulk-remove) 200 {"descendants_removed": 0, "message": "Successfully removed 2 assets", "original_count": 2, "removed_count": 2, "success": true}
+--- 5 after unlink A,B (A lines must be gone): services ['Clean, Tighten, Torque'] | members 4 | lines 2
+   A Abhiyant Panelboard  member=False registered=[] lines=[]
+   B ATS 00789            member=False registered=[] lines=[]
+   C ATS 1                member=True  registered=[] lines=[]
+   D ATS 1(2)             member=True  registered=['Clean, Tighten, Torque'] lines=['Standard Clean, Tighten, Torque']
+   E ATS 6                member=True  registered=[] lines=[]
+   F ATS 82               member=True  registered=['Clean, Tighten, Torque'] lines=['Standard Clean, Tighten, Torque']
+RELINK A via node-session/create 201 {"mapping": {"includes_ancestors": false, "includes_descendants": false, "mapping": {"id": "5e66f3d4-8c52-4956-8c32-059bb97a4a42", "is_checked": false, "is_deleted": false, "node_id": "047db472-12f7-4
+RELINK B via node-session/create 201 {"mapping": {"includes_ancestors": false, "includes_descendants": false, "mapping": {"id": "800abf31-786d-481b-8b14-6fc5385561ae", "is_checked": false, "is_deleted": false, "node_id": "b1c683c4-130f-4
+--- 6 after relink A,B (no services may come back): services ['Clean, Tighten, Torque'] | members 6 | lines 2
+   A Abhiyant Panelboard  member=True  registered=[] lines=[]
+   B ATS 00789            member=True  registered=[] lines=[]
+   C ATS 1                member=True  registered=[] lines=[]
+   D ATS 1(2)             member=True  registered=['Clean, Tighten, Torque'] lines=['Standard Clean, Tighten, Torque']
+   E ATS 6                member=True  registered=[] lines=[]
+   F ATS 82               member=True  registered=['Clean, Tighten, Torque'] lines=['Standard Clean, Tighten, Torque']link G via node-session/create WITHOUT X-Direct-Write (queued/mobile-style path) 200 {"_mutation": {"mutation_id": "9dc9a4e7-7b19-497e-9e28-3a8beb928c92", "status": "received"}, "id": "6311789d-867c-4b7a-91dc-f355ea1398e2", "is_deleted": false, "node_id": "5a7cf17c-f091-429a-a40b-1e9994f1dacd", "session_id": "3f682025-6e77-4176-8461-
+--- 7 after queued link G (wait 12 s): services ['Clean, Tighten, Torque'] | members 7 | lines 2
+   A Abhiyant Panelboard  member=True  registered=[] lines=[]
+   B ATS 00789            member=True  registered=[] lines=[]
+   C ATS 1                member=True  registered=[] lines=[]
+   D ATS 1(2)             member=True  registered=['Clean, Tighten, Torque'] lines=['Standard Clean, Tighten, Torque']
+   E ATS 6                member=True  registered=[] lines=[]
+   F ATS 82               member=True  registered=['Clean, Tighten, Torque'] lines=['Standard Clean, Tighten, Torque']
+   G Motor Starter 15 (queued path) member=True  registered=[] lines=[]
+form instance count 200 {"open": 7, "success": true, "total": 7}
+staff sees foreign site nodes 200 0
+PM add-assets (no-op random node) into FOREIGN WO 200 {"_nonjson": "<!DOCTYPE html>\n<html lang=\"en\">\n\n<head>\n  <meta charset=\"UTF-8\" />\n  <meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self' 'unsafe-eval' 'sha256-RtrBkOW2bTlPbtWdXp", "_ct": "text/html"}
+PM GET method-lines of FOREIGN WO 200 {"_nonjson": "<!DOCTYPE html>\n<html lang=\"en\">\n\n<head>\n  <meta charset=\"UTF-8\" />\n  <meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self' 'unsafe-eval' 
+control: staff GET method-lines of same FOREIGN WO 200 {"_nonjson": "<!DOCTYPE html>\n<html lang=\"en\">\n\n<head>\n  <meta charset=\"UTF-8\" />\n  <meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self' 'unsafe-eval' 
+--- 8 final: services ['Clean, Tighten, Torque'] | members 7 | lines 2
+   A Abhiyant Panelboard  member=True  registered=[] lines=[]
+   B ATS 00789            member=True  registered=[] lines=[]
+   C ATS 1                member=True  registered=[] lines=[]
+   D ATS 1(2)             member=True  registered=['Clean, Tighten, Torque'] lines=['Standard Clean, Tighten, Torque']
+   E ATS 6                member=True  registered=[] lines=[]
+   F ATS 82               member=True  registered=['Clean, Tighten, Torque'] lines=['Standard Clean, Tighten, Torque']
+   G Motor Starter 15 (queued path) member=True  registered=[] lines=[]
