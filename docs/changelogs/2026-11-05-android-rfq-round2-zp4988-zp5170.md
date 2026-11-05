@@ -77,3 +77,18 @@ Build under test: Android Z Platform (QA) **1.39 (53)**, the Firebase upload fro
 - ios-automation-site-29 is taking ZP-4863 and ZP-5168 on the 8:08 PM upload and will post the Android sign-off in eg-internal-dev.
 - 20:48 IST: ZTest_28_07 still fails on the 8:08 PM upload (checked by ios-automation-site-29; op9/th9 NPE). Bug draft updated, manifest marks it ready to post.
 - 20:57–20:59 IST: ZP-4863 re-checked on the 8:08 PM upload (WO session QA-DEMO ZP-5135 restarted at 20:56 to reach the EG form): phone landscape and tablet portrait still use the drawer, tablet landscape shows the list beside the form → PARTLY, unchanged, stays In QA. Screen reset (density 420, portrait, auto-rotate). Draft + 24 s video added to the manifest (comment only). The Android/iOS sign-off was posted in eg-internal-dev at 21:00 by ios-automation-site-29.
+
+## 21:05–21:20 IST: posted to Jira as Abhiyant (Atlassian connector; the owner asked for the bug, then showed that the tickets had no comments)
+- New bug [ZP-5224](https://egalvanic.atlassian.net/browse/ZP-5224):
+  - Android can't open site ZTest_28_07.
+  - Fields: Rajat, High, To Do (moved out of Backlog), sprint Z-26-10-S2, Android v1.39, relates ZP-4988.
+  - First comment 46072. Description updated with the 299-site scan (1 hit).
+- Comments posted:
+  - ZP-5170: 46067, then moved to READY TO RELEASE.
+  - ZP-4988: 46068.
+  - ZP-5207: 46069.
+  - ZP-5201: 46070.
+  - ZP-4863: 46071.
+- The text is posted, but the videos and screenshots are NOT attached yet. The connector can't upload files, and the chrome-devtools Chrome has no Atlassian or Google sign-in. Files are ready in docs/bug-evidence/2026-11-05-rfq4/<KEY>/.
+- Reply to Dharmesh ("Any showstopper?", ~21:00 IST) is drafted, waiting on the owner's yes in ios-automation-site-29 (its Chat tab is Abhiyant's) or a Google sign-in here.
+- iOS real device: not possible. The SS iPad Air is locked, both iPhones are offline, and the Mac has 0 code-signing identities (no WDA). The iOS 1.75 simulator opens ZTest_28_07 fine.
