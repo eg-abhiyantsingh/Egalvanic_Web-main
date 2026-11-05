@@ -76,3 +76,4 @@ Build under test: Android Z Platform (QA) **1.39 (53)**, the Firebase upload fro
   - The owner must approve there, or tell this session to post.
 - ios-automation-site-29 is taking ZP-4863 and ZP-5168 on the 8:08 PM upload and will post the Android sign-off in eg-internal-dev.
 - 20:48 IST: ZTest_28_07 still fails on the 8:08 PM upload (checked by ios-automation-site-29; op9/th9 NPE). Bug draft updated, manifest marks it ready to post.
+- 20:57–20:59 IST: ZP-4863 re-checked on the 8:08 PM upload (WO session QA-DEMO ZP-5135 restarted at 20:56 to reach the EG form): phone landscape and tablet portrait still use the drawer, tablet landscape shows the list beside the form → PARTLY, unchanged, stays In QA. Screen reset (density 420, portrait, auto-rotate). Draft + 24 s video added to the manifest (comment only). The Android/iOS sign-off was posted in eg-internal-dev at 21:00 by ios-automation-site-29.

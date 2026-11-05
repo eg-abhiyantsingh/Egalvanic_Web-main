@@ -1,0 +1,13 @@
+h3. QA re-check: PARTLY (unchanged) — stays In QA
+Android Z Platform (QA) *1.39 (53)*, Firebase upload 5 Nov 8:08 PM (installed 20:26 IST), emulator, QA EG-ACME, 5 Nov 20:57–20:59 IST.
+
+!QA-05Nov-ZP-4863-video-steps.mp4|width=360!
+_Video (25 s): phone landscape, tablet-size portrait, tablet-size landscape._
+
+* Tablet size in landscape: the Sections list stays beside the form. *PASS*
+* Phone in landscape: Sections still opens the drawer over a dimmed form.
+* Tablet size in portrait (720dp wide): still the drawer.
+* Same as my 5 Nov 18:02 comment. [~accountid:712020:4adb279c-383d-4a86-b512-a5a829380b9f] the question there is still open: is side-by-side meant only for tablets in landscape?
+
+!QA-05Nov-ZP-4863-1-phone-landscape-drawer.png|width=300! !QA-05Nov-ZP-4863-2-tablet-portrait-drawer.png|width=180! !QA-05Nov-ZP-4863-3-tablet-landscape-side-list.png|width=300!
+_1. Phone landscape: drawer. 2. Tablet portrait: drawer. 3. Tablet landscape: list beside the form._
