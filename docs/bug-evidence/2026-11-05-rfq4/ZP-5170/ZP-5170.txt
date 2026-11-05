@@ -1,12 +1,16 @@
-h3. QA result: NOT IN BUILD — stays In QA
-Android Z Platform (QA) *1.39 (53)* (latest Firebase upload, 5 Nov 15:30 IST, installed), emulator, QA EG-ACME, 5 Nov 20:02 IST.
+h3. QA result: PASS → Ready to Release
+Android Z Platform (QA) *1.39 (53)*, Firebase upload 5 Nov 8:08 PM (installed 20:26 IST), emulator, QA EG-ACME, site "(s) Wild Goose Brewery", 5 Nov 20:35–20:43 IST. (The 3:30 PM upload had no Duplicate.)
 
 !QA-05Nov-ZP-5170-video-steps.mp4|width=360!
-_Video (42 s): no Duplicate in the row menu, Select mode or the asset ⋮ menu._
+_Video (1 min 33 s): Edit Asset › ⋯ › Duplicate on 4 panels, offline + sync, the copy on web._
 
-* Panel "QA-DEMO ZP-5204 5 Nov DP-1 copy" (2 child breakers): there is no Duplicate anywhere.
-* Row long-press: Select, Edit Asset, View on SLD, Edit OCP, Add IR Photos, Collect AF/COM Data, Add Issue. Select mode: Cancel, Edit, Delete. Asset ⋮: View on SLD, Copy From, Copy To.
-* The latest upload (15:30 IST) is older than the move to Ready for QA (19:40 IST). [~accountid:712020:4adb279c-383d-4a86-b512-a5a829380b9f] please upload a build with this change; I'll test it right away.
+* *3 levels + Line/Load side:* "QA-DEMO ZP-5215 5 Nov SWB" (switchboard › T21 › 3 breakers, plus a line-side breaker) › "SWB (Copy 3)": all 6 assets copied with new ids, same structure and connections.
+* *QR + serial:* no copy has a QR code or serial number. The original keeps Q5215-SWB and SN-5215-SWB.
+* *Details copied:* "PNL-1 (Copy)" keeps MCB, Square D, NEHB.
+* *5+ children:* "ZP-5171 Main Distribution Panel (Copy)": all 7 breakers copied, none with a QR code.
+* *Offline:* "PN111" duplicated offline (2 pending), then synced: exactly 1 copy on the server, no doubles.
+* *Web:* the copies show with the same children; QR code "Not Set".
+* Child names repeat "(Copy)" across copies (e.g. 3 × "Q5215S-Circuit Breaker 1 (Copy)"). Web does the same.
 
-!QA-05Nov-ZP-5170-1-row-menu-no-duplicate.png|width=180! !QA-05Nov-ZP-5170-2-select-mode-no-duplicate.png|width=180! !QA-05Nov-ZP-5170-3-asset-menu-no-duplicate.png|width=180! !QA-05Nov-ZP-5170-4-latest-build-1.39-53.png|width=180!
-_1. Row menu. 2. Select mode. 3. Asset ⋮ menu. 4. App Tester: 1.39 (53) from 3:30 PM is the latest and is installed._
+!QA-05Nov-ZP-5170-1-edit-asset-menu-duplicate.png|width=180! !QA-05Nov-ZP-5170-2-confirm-5-sub-components.png|width=180! !QA-05Nov-ZP-5170-3-copy-children-and-connections.png|width=180! !QA-05Nov-ZP-5170-4-7-children-dialog.png|width=180! !QA-05Nov-ZP-5170-5-offline-copy-2-pending.png|width=180! !QA-05Nov-ZP-5170-6-web-copy-qr-not-set.png|width=300!
+_1. Edit Asset › ⋯ › Duplicate. 2. Confirm: 5 sub-components, no QR or serial. 3. The copy's children and connections. 4. 7-child panel. 5. Offline copy, 2 pending. 6. Web: the copy, QR Not Set._

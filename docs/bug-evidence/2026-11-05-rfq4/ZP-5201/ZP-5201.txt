@@ -1,12 +1,13 @@
-h3. QA result: PASS → Ready to Release
-Android Z Platform (QA) *1.39 (53)* (latest upload, 5 Nov 15:30 IST), emulator, QA EG-ACME, 5 Nov 20:10–20:12 IST.
+h3. QA result: PASS
+Android Z Platform (QA) *1.39 (53)*, uploads 5 Nov 3:30 PM and 8:08 PM, emulator, QA EG-ACME, 5 Nov 20:10–20:46 IST.
 
 !QA-05Nov-ZP-5201-video-steps.mp4|width=360!
-_Video (55 s): add a custom manufacturer, save, reopen, check the picker._
+_Video (1 min): add a custom manufacturer, save, reopen, check the picker, then the 8:08 PM upload._
 
 * Asset "QA-DEMO ZP-4988 TX-B 208V 5 Nov" › Manufacturer › type "QA-DEMO Mfr ZP-5201" › Use "QA-DEMO Mfr ZP-5201": the field shows only the name (no "(New)"), with the hint "New manufacturer — added for your company when you save".
 * Save Changes › reopen: still only the name. The server has manufacturer "QA-DEMO Mfr ZP-5201" on the asset.
 * Manufacturer picker: the new entry also has no "(new)".
+* 8:08 PM upload: re-checked, still no "(New)".
 
-!QA-05Nov-ZP-5201-1-use-typed-name.png|width=180! !QA-05Nov-ZP-5201-2-field-no-new-label.png|width=180! !QA-05Nov-ZP-5201-3-after-save-no-new-label.png|width=180! !QA-05Nov-ZP-5201-4-picker-no-new-label.png|width=180!
-_1. Use the typed name. 2. Field: name only. 3. After save and reopen. 4. Picker list._
+!QA-05Nov-ZP-5201-1-use-typed-name.png|width=180! !QA-05Nov-ZP-5201-2-field-no-new-label.png|width=180! !QA-05Nov-ZP-5201-3-after-save-no-new-label.png|width=180! !QA-05Nov-ZP-5201-4-picker-no-new-label.png|width=180! !QA-05Nov-ZP-5201-5-new-build-no-new-label.png|width=180!
+_1. Use the typed name. 2. Field: name only. 3. After save and reopen. 4. Picker list. 5. 8:08 PM upload._

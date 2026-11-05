@@ -55,3 +55,23 @@ Build under test: Android Z Platform (QA) **1.39 (53)**, the Firebase upload fro
 - The jira-chrome-reconnect-tasks (3) session has no signed-in Jira tab either.
 - Manifest: .playwright-mcp/v25/jira/post-manifest-5nov-rfq4.json. Waiting for the owner to sign in to Atlassian in the chrome-devtools window.
 - Status moves already done through the connector: ZP-5170, ZP-5207 and ZP-5201 → In QA.
+
+## 20:26–20:55 IST: new upload (Firebase 8:08 PM, installed 20:26 by the owner)
+- **ZP-5170: PASS on the 8:08 PM upload.** The path is Edit Asset › ⋯ › Duplicate; the view-mode ⋯ has no Duplicate. The dialog reads "Creates a new asset with copies of its N sub-components. The copies get no QR code and no serial number." Server checks:
+  - "QA-DEMO ZP-5215 5 Nov SWB (Copy 3)": 3 levels, 6 assets, line/load edges copied, QR/serial empty. The original keeps Q5215-SWB / SN-5215-SWB.
+  - "QA-DEMO ZP-5204 5 Nov PNL-1 (Copy)": MCB, Square D (110), NEHB (5) copied.
+  - "QA-DEMO 4 Nov ZP-5171 Main Distribution Panel (Copy)": 7 children, no QR.
+  - "PN111 (Copy)": done offline (2 pending), then synced. Exactly 1 copy (counts checked).
+  - Web shows the copies, QR Not Set.
+  - Child names repeat "(Copy)" across copies, which matches web.
+- **ZP-5207: PASS.** The QR note is now under every QR field, and used codes are still refused.
+- **ZP-5201: PASS** (still no "(New)").
+- **ZP-4988:** smoke check fine (PN111 MCB warning).
+- Jira:
+  - ZP-5201 and ZP-5207 were moved to READY TO RELEASE at 20:41 IST by someone else, with no comment.
+  - Manifest updated: ZP-5170 → RTR; ZP-5201 and ZP-5207 comment only.
+  - The bug waits for an 8:08 PM re-check of ZTest_28_07 (asked of the ios-automation-site-29 session, which has the emulator).
+- Posting is still blocked:
+  - jira-chrome-reconnect-tasks (3)'s permission check refused writes requested by another session.
+  - The owner must approve there, or tell this session to post.
+- ios-automation-site-29 is taking ZP-4863 and ZP-5168 on the 8:08 PM upload and will post the Android sign-off in eg-internal-dev.

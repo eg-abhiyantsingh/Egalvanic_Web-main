@@ -1,5 +1,5 @@
 h3. QA result: PARTLY (most checks pass) — stays In QA
-Android Z Platform (QA) *1.39 (53)* (latest upload, 5 Nov 15:30 IST), emulator, QA EG-ACME, 5 Nov 19:00–20:00 IST.
+Android Z Platform (QA) *1.39 (53)*, 5 Nov 3:30 PM upload (smoke re-check on the 8:08 PM upload at 20:46 IST: MCB warning still correct), emulator, QA EG-ACME, 5 Nov 19:00–20:46 IST.
 
 !QA-05Nov-ZP-4988-video-steps.mp4|width=360!
 _Video (2 min): MCB warning, Manufacturer/Panel Type offline, pole cap, 3-winding transformer, frames by voltage, warnings kept._

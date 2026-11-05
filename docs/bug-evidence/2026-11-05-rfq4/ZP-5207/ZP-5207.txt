@@ -1,17 +1,17 @@
-h3. QA result: fix works — stays In QA only for the QR note (not in this build)
-Android Z Platform (QA) *1.39 (53)* (latest upload, 5 Nov 15:30 IST), emulator, QA EG-ACME, site "(s) Wild Goose Brewery", 5 Nov 20:03–20:09 IST.
+h3. QA result: PASS
+Android Z Platform (QA) *1.39 (53)*, uploads 5 Nov 3:30 PM and 8:08 PM, emulator, QA EG-ACME, site "(s) Wild Goose Brewery", 5 Nov 20:03–20:45 IST.
 
 !QA-05Nov-ZP-5207-video-steps.mp4|width=360!
-_Video (70 s): steps 1–5 below._
+_Video (1 min 35 s): steps 1–6 below._
 
-# Edit Q4NZMDP-Circuit Breaker 4 › QR "QA5171-1002" (the panel's code) › Save: "QR Code Already Used — … used by QA-DEMO 4 Nov ZP-5171 Main Distribution Panel on this site." Not saved (server unchanged). *PASS*
-# " qa5171-1002 " (lower case, spaces): refused the same way. *PASS*
-# Create Multiple, QR start QA5171-1000: used 1000/1001/1002 are skipped, rows get 1003–1007. *PASS*
-# A used code typed into a row: red error under the row, Create disabled. *PASS*
-# New Asset with a used code: refused, nothing created. *PASS*
+# Edit Q4NZMDP-Circuit Breaker 4 › QR "QA5171-1002" (the panel's code) › Save: "QR Code Already Used — … used by QA-DEMO 4 Nov ZP-5171 Main Distribution Panel on this site." Not saved (server unchanged).
+# " qa5171-1002 " (lower case, spaces): refused the same way.
+# Create Multiple, QR start QA5171-1000: used 1000/1001/1002 are skipped, rows get 1003–1007.
+# A used code typed into a row: red error under the row, Create disabled.
+# New Asset with a used code: refused, nothing created.
+# 8:08 PM upload: every QR field now shows "A QR code another asset on this site already uses can't be saved. If it was added from another device, it clears automatically after syncing." Step 1 re-checked: still refused.
 
-*Missing in this build:* the note from Rajat's comment ("A QR code another asset on this site already uses can't be saved…") is not under the QR fields or the QR start number hint. I'll move this to Ready to Release once it shows in the next upload.
 *Not tested:* Create New Child, offline, a code added on web after the last download.
 
-!QA-05Nov-ZP-5207-1-edit-used-code-refused.png|width=180! !QA-05Nov-ZP-5207-2-lowercase-refused.png|width=180! !QA-05Nov-ZP-5207-3-create-multiple-skips-used.png|width=180! !QA-05Nov-ZP-5207-4-row-error-create-disabled.png|width=180! !QA-05Nov-ZP-5207-5-new-asset-refused.png|width=180! !QA-05Nov-ZP-5207-6-no-note-under-qr-field.png|width=180!
-_1. Edit refused. 2. Lower case refused. 3. Create Multiple skips used codes. 4. Row error, Create disabled. 5. New Asset refused. 6. No note under the QR field._
+!QA-05Nov-ZP-5207-1-edit-used-code-refused.png|width=180! !QA-05Nov-ZP-5207-2-lowercase-refused.png|width=180! !QA-05Nov-ZP-5207-3-create-multiple-skips-used.png|width=180! !QA-05Nov-ZP-5207-4-row-error-create-disabled.png|width=180! !QA-05Nov-ZP-5207-5-new-asset-refused.png|width=180! !QA-05Nov-ZP-5207-7-new-build-note-under-qr-field.png|width=180!
+_1. Edit refused. 2. Lower case refused. 3. Create Multiple skips used codes. 4. Row error, Create disabled. 5. New Asset refused. 6. 8:08 PM upload: the note under the QR field._
