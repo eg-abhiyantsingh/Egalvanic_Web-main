@@ -1,0 +1,12 @@
+h3. QA result: NOT IN BUILD — stays In QA
+Android Z Platform (QA) *1.39 (53)* (latest Firebase upload, 5 Nov 15:30 IST, installed), emulator, QA EG-ACME, 5 Nov 20:02 IST.
+
+!QA-05Nov-ZP-5170-video-steps.mp4|width=360!
+_Video (42 s): no Duplicate in the row menu, Select mode or the asset ⋮ menu._
+
+* Panel "QA-DEMO ZP-5204 5 Nov DP-1 copy" (2 child breakers): there is no Duplicate anywhere.
+* Row long-press: Select, Edit Asset, View on SLD, Edit OCP, Add IR Photos, Collect AF/COM Data, Add Issue. Select mode: Cancel, Edit, Delete. Asset ⋮: View on SLD, Copy From, Copy To.
+* The latest upload (15:30 IST) is older than the move to Ready for QA (19:40 IST). [~accountid:712020:4adb279c-383d-4a86-b512-a5a829380b9f] please upload a build with this change; I'll test it right away.
+
+!QA-05Nov-ZP-5170-1-row-menu-no-duplicate.png|width=180! !QA-05Nov-ZP-5170-2-select-mode-no-duplicate.png|width=180! !QA-05Nov-ZP-5170-3-asset-menu-no-duplicate.png|width=180! !QA-05Nov-ZP-5170-4-latest-build-1.39-53.png|width=180!
+_1. Row menu. 2. Select mode. 3. Asset ⋮ menu. 4. App Tester: 1.39 (53) from 3:30 PM is the latest and is installed._
