@@ -2,14 +2,14 @@
 _Video (37 s): open site ZTest_28_07 on Android → stops at 30% with a Java error → no site selected. Control: iOS 1.75 opens the same site._
 
 *Steps*
-# Android Z Platform (QA) 1.39 (53), QA, company EG-ACME, Super Admin seat.
+# Android Z Platform (QA) 1.39 (53) (Firebase 5 Nov 3:30 PM and 8:08 PM uploads), QA, company EG-ACME, Super Admin seat.
 # Site › Sites › search "ZTest_28_07" › tap it.
 
 *Actual:* "Loading ZTest_28_07" stops at 30% ("Connection failed. Retrying…", 3 tries), then shows "Attempt to invoke virtual method 'java.lang.Class java.lang.Object.getClass()' on a null object reference" and Retry. Retry fails the same way. Going back shows "No Site Selected", so the previous site is gone too.
 *Expected:* the site opens, as it does on iOS 1.75 (about 20 s) and as other sites do on Android (Android Site 2, Wild Goose).
 
-*For the developer:* logcat says "Failed to switch SLD: NullPointerException at si5.<init> ← eda.L" (R8 map id 2274ecc…). Likely trigger: ZTest_28_07 has 3 IR photos with no asset (node_id = null; ids 3c1b065c…, 4829c934…, 48f479ec…, IR session 8d8757c3…). No other site checked has these.
-Site on web: https://acme.qa.egalvanic.ai (site ZTest_28_07). Reproduced 4 times, 19:32–19:35 IST, 5 Nov.
+*For the developer:* logcat says "Failed to switch SLD: … NullPointerException" (3:30 PM upload: si5.<init> ← eda.L, R8 map id 2274ecc…; 8:08 PM upload: op9 / th9). Likely trigger: ZTest_28_07 has 3 IR photos with no asset (node_id = null; ids 3c1b065c…, 4829c934…, 48f479ec…, IR session 8d8757c3…). No other site checked has these.
+Site on web: https://acme.qa.egalvanic.ai (site ZTest_28_07). Reproduced on the 3:30 PM upload (4 times, 19:32–19:35 IST) and on the 8:08 PM upload (20:48 IST, 3 retries), 5 Nov.
 
-!QA-05Nov-ztest-1-loading-retry.png|width=180! !QA-05Nov-ztest-2-java-null-error.png|width=180! !QA-05Nov-ztest-3-no-site-selected.png|width=180! !QA-05Nov-ztest-4-ios-1.75-loads-fine-control.png|width=180!
-_1. Stuck at 30%, retrying. 2. Java null error. 3. After going back: no site selected. 4. Control: iOS 1.75 opens ZTest_28_07._
+!QA-05Nov-ztest-1-loading-retry.png|width=180! !QA-05Nov-ztest-2-java-null-error.png|width=180! !QA-05Nov-ztest-3-no-site-selected.png|width=180! !QA-05Nov-ztest-4-ios-1.75-loads-fine-control.png|width=180! !QA-05Nov-ztest-5-new-build-2048-still-fails.png|width=180!
+_1. Stuck at 30%, retrying. 2. Java null error. 3. After going back: no site selected. 4. Control: iOS 1.75 opens ZTest_28_07. 5. 8:08 PM upload (20:48 IST): same error._

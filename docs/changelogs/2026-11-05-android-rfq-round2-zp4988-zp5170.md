@@ -75,3 +75,4 @@ Build under test: Android Z Platform (QA) **1.39 (53)**, the Firebase upload fro
   - jira-chrome-reconnect-tasks (3)'s permission check refused writes requested by another session.
   - The owner must approve there, or tell this session to post.
 - ios-automation-site-29 is taking ZP-4863 and ZP-5168 on the 8:08 PM upload and will post the Android sign-off in eg-internal-dev.
+- 20:48 IST: ZTest_28_07 still fails on the 8:08 PM upload (checked by ios-automation-site-29; op9/th9 NPE). Bug draft updated, manifest marks it ready to post.
