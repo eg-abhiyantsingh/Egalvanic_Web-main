@@ -84,3 +84,15 @@ Owner prompts:
 - Stage was still on the tested build index-JLMOAHlX (13:37 IST); /api/health 200.
 - Stage sanity just before sign-off: Dashboard, Assets, Issues, Work Orders, SLD, Connections, Reporting builder, Audit Log and Users all loaded. No error banners and no 4xx/5xx API calls.
 - Avani had asked at ~15:10 IST "Please test the hotfix tickets so I can merge the code in prod ASAP".
+
+## 16:30–17:35 IST: ZP-5229 (Metal Tech / Newkirk, IR photos on report issue pages) → READY TO RELEASE
+- QA first ("does it exist in QA"):
+  - Photo storage changed in Oct 2026. New photos have `storage_key=ir-photos/<company>/<photo>/ir.jpg`; old ones only `ir_session_id/ir_photo_key`.
+  - I generated the IR Thermography Report (Frontloaded / Nested DOCX) and the HTML Infrared Thermography Report.
+  - Linked new-storage photos print on issue pages, both IR and visual. The old-storage control prints the same way.
+- Stage, Krunal's WO "Test IR 2", 5 new photos H1–H5, all unlinked:
+  - Issue pages had no IR photos; they printed only on the asset pages. Krunal's attached PDF is the same 4,030,814-byte report.
+  - I ticked H3 in Edit Issue › IR Photos on "Thermal Anomaly on A2" and regenerated. The A2 issue page then shows IR PHOTOS (H3 + H3_visual); A1, still unlinked, shows none.
+- Customer cause: their screenshot shows the photo "0 selected" in Edit Issue › IR Photos, so it is not linked. Fix: tick the photo on each issue, then regenerate the report.
+- [Comment 46099](https://egalvanic.atlassian.net/browse/ZP-5229?focusedCommentId=46099) has the video and the before/after PDFs. Status In QA → READY TO RELEASE.
+- Stage login used: STAGE_OPS (owner gave it on 6 Nov). The owner sent "bciq id and password" mid-task with no details, so nothing was used for BCES-IQ.

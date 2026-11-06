@@ -1,0 +1,11 @@
+!QA-06Nov-ZP-5229-stage-video.mp4|width=560!
+
+*Tested on STAGE, 6 Nov 17:05–17:30 IST: PASS* (WO "Test IR 2", 5 new IR photos H1–H5; IR Thermography Report Frontloaded + Nested)
+* An IR photo *linked to the issue* prints on the issue page. I ticked H3 in Edit Issue › IR Photos on "Thermal Anomaly on A2", regenerated, and the issue page shows IR PHOTOS (H3 + H3_visual).
+* *Not linked = no photo on the issue page.* Before the link, and still for the A1 issue, there is no IR photo section. The photos only print on the asset page.
+* HTML IR report (checked on QA): linked new photos also print on the issue page (Thermal Imagery, IR_1/IR_2 + visual).
+
+*Why the customer sees "No IR photo available":* in their screenshot, Edit Issue › IR Photos shows FLIR9758 on the same asset but *"0 selected"*, so the photo is not linked to that issue.
+Fix for them: open each issue › IR Photos › tick the photo › Save, then regenerate the report.
+
+PDFs: STAGE-before-link-Frontloaded.pdf (no photo on the issue page) and STAGE-after-link-Frontloaded.pdf (photo on page 7).
