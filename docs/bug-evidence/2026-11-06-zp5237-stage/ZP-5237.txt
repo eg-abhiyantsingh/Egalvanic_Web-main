@@ -1,0 +1,9 @@
+!QA-06Nov-ZP-5237-stage-video.mp4|width=560!
+
+*Tested on STAGE, 6 Nov 15:22–15:28 IST: PASS* (acme.stage.egalvanic.ai; Audit Log total 3,522 rows)
+* *The crawl is blocked:* {{GET /api/mutations?limit=100&offset=100000&until=…}} → *400* "Cannot page past 10000 records; narrow the date range or filters instead".
+* Normal paging works: offset 0, 1000 and the last page (Audit Log › All Time › page 141 = 3501–3522 of 3522) load in 0.7–1.0 s. {{limit=1000}} is capped to 100. A negative offset is treated as 0.
+* Audit Log page: Last Hour / All Time filters and Go-to-page all work.
+
+Not checked by QA (needs AWS): the new {{(company_id, received_at)}} index and Performance Insights before/after (QA steps 1–4, 7, 8). [~accountid:712020:19109706-a11c-4efd-abee-5ca72d900e45] please confirm these on bces-iq-prod-rds-ohio after deploy.
+Note: no per-user rate limit yet (40 calls in about 19 s, all 200). It was listed as "Should", so it is not blocking.

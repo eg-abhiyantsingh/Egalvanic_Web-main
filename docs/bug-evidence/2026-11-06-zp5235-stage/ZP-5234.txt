@@ -1,0 +1,6 @@
+!QA-06Nov-ZP-5235-stage-video.mp4|width=560!
+
+*Checked on STAGE (build index-JLMOAHlX, 6 Nov 14:52–14:59 IST): PASS.* Same run as ZP-5235.
+# IR task on a *General* work order: asset Test 789 (ATS), procedure *Infrared Thermography*. Saved, Pending.
+# Dharmesh's note *"While editing, Procedure unable to select"*: works now. Changed to Visual Inspection and back to Infrared Thermography; both saved.
+# *Create Work Order:* Infrared Thermography can be picked at creation together with other services (Clean, Tighten, Torque + IR, 5 assets each). Only "General" can't be combined ("Not with General").

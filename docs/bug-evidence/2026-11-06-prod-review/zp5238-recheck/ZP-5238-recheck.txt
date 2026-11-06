@@ -1,0 +1,11 @@
+!QA-06Nov-ZP-5238-bces-prod-recheck-video.mp4|width=520!
+
+*Re-checked directly on BCES PRODUCTION (acme.bces-iq.com), 6 Nov 15:10 IST: PASS*
+* The Privacy Policy link (the app's {{content_url}}) now opens *"Egalvanic Privacy Policy"*.
+** The file is new: Last-Modified 6 Nov 09:19 GMT.
+** Its sha256 2b509549… matches the hash the API registered for privacy v1.
+* The Terms link still opens the Terms of Use, so there is no mix-up any more.
+
+Note, not blocking: BCES terms v23 is still a different file from the one the API registered. It is 49,910 B "Platform Terms of Use — Egalvanic, Inc." (sha 1def0d0d…, from 24 Aug), but the API's hash is dee06261…. If BCES is meant to have its own terms, this is fine; if not, the terms file needs the same re-upload.
+
+!ZP5238-2-bces-privacy-policy-fixed.png|width=420!

@@ -61,3 +61,20 @@ Owner prompts:
   - [ZP-5235 comment 46094](https://egalvanic.atlassian.net/browse/ZP-5235?focusedCommentId=46094), video first (the first upload hit HTTP 500; the retry worked). Status In Progress → In QA → READY TO RELEASE.
   - [ZP-5234 comment 46095](https://egalvanic.atlassian.net/browse/ZP-5234?focusedCommentId=46095).
 - Evidence: docs/bug-evidence/2026-11-06-zp5235-stage/.
+
+## 15:00–15:35 IST: ZP-5238 re-check, To Do videos, Web v2.5.1 finished
+- **ZP-5238** (owner: "check this directly in bciq production"): PASS on acme.bces-iq.com.
+  - The Privacy Policy link now opens "Egalvanic Privacy Policy". The file was re-uploaded 6 Nov 09:19 GMT; its sha 2b509549… matches the API hash.
+  - Moved In QA → READY TO RELEASE; [comment 46096](https://egalvanic.atlassian.net/browse/ZP-5238?focusedCommentId=46096) has the video first.
+  - Remaining note: BCES terms v23 is still a different file from the one the API registered (1def0d0d… vs dee06261…). It may be intentional; asked in the comment.
+- **To Do bug videos**: ZP-5230, ZP-5231, ZP-5232 and ZP-5233 now have a captioned step video at the top of the description (old text kept).
+  - Built from the 5 Nov emulator screenshots and clips with scratchpad todo_vid/build.py.
+  - Fix in that builder: `vstack=shortest=1`, otherwise a looped caption PNG makes ffmpeg run forever.
+- **Web v2.5.1** ([release page](https://egalvanic.atlassian.net/projects/ZP/versions/14334/tab/release-report-all-issues)): all three tickets are READY TO RELEASE.
+  - [ZP-5234](https://egalvanic.atlassian.net/browse/ZP-5234): passed with the ZP-5235 stage run; video at the top of comment 46095.
+  - [ZP-5237](https://egalvanic.atlassian.net/browse/ZP-5237): checked on stage.
+    - `GET /api/mutations` with offset 100000 → 400 "Cannot page past 10000 records…".
+    - Normal and last-page paging work (0.7–1.0 s). limit is capped at 100.
+    - No rate limit (40 calls all 200; it was a "Should").
+    - The index and Performance Insights checks need AWS; Avani is tagged. Comment 46097.
+  - ZP-5238: see above.
