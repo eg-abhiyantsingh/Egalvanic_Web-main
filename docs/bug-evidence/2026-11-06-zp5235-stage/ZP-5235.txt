@@ -1,0 +1,10 @@
+!QA-06Nov-ZP-5235-stage-video.mp4|width=560!
+
+*Tested on STAGE, 6 Nov 14:52–14:59 IST: PASS* (acme.stage.egalvanic.ai, build index-JLMOAHlX)
+# *IR task on a General (non-IR) work order:* "Work Order - Nov 5, 8:36 PM" › Actions › Add Tasks › asset Test 789 (ATS). The Procedure list shows *Infrared Thermography*. The task was created (PM, asset Test 789, Pending).
+# *Edit Task:* Procedure can be changed (Visual Inspection, then back to Infrared Thermography). Both saves kept. Dharmesh's ZP-5234 note "Procedure unable to select" no longer happens.
+# *Fast asset switching:* the list always matches the last asset picked (ATS, or Panelboard + Other). A Load with no procedures shows "No options", with no old list left over.
+# *Create Work Order wizard:* Infrared Thermography can be picked at creation together with other services (tested Clean, Tighten, Torque + IR, 5 assets each).
+
+Note for the customer reply: "General" can't be combined with any other service in the wizard ("Not with General"). If they start from General, they add IR as tasks afterwards, which now works.
+Small UX point (not blocking): picking another procedure in Edit Task replaces a title the user typed by hand.

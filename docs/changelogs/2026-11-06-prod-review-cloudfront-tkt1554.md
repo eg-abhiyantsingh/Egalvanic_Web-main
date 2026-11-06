@@ -42,11 +42,22 @@ Owner prompts:
 - Disconnects: a non-fused disconnect (NFDS) asks for "Interrupting Rating" as a required field, which counts in Arc Flash Readiness. Only 2 of 2,062 prod disconnects have an AIC value.
 - Evidence: docs/bug-evidence/2026-11-06-tkt1554/.
 
-## ZP-5235 (stage): blocked on a stage login
-- Stage got a new build (index-JLMOAHlX, 6 Nov 13:37 IST). The only functional change from prod is in the WO Task editor's Procedure list:
-  - a request-order guard, so a late "General" procedures response can't overwrite the asset-class list where the IR procedures are;
+## ZP-5235 (stage), 14:52–14:59 IST: PASS → READY TO RELEASE
+- The stage build index-JLMOAHlX (13:37 IST) changes only the WO Task editor's Procedure list:
+  - a request-order guard, so a late "General" procedures response can't overwrite the asset-class list (where IR lives);
   - a fallback to General procedures when the class lookup fails.
-- No stage login in AppConstants can open Work Orders:
-  - STAGE_SA sees the Maintenance Portal only;
-  - STAGE_AM and STAGE_EE get "Access Denied".
-- The old +acme stage login is only stored as PROD_SUPER_ADMIN_EMAIL. The tool refused to use it on stage, so I asked the owner for a stage login.
+- Login: no stage seat in AppConstants reaches Work Orders.
+  - STAGE_SA sees the Maintenance Portal only; STAGE_AM and STAGE_EE get "Access Denied".
+  - The +acme login is stored only as PROD_SUPER_ADMIN_EMAIL, and the tool refused it on stage.
+  - I used the stage session already open in the owner's Chrome (staff Admin/SA).
+  - The owner then gave a stage operations seat. It is saved locally as STAGE_OPS_EMAIL/STAGE_OPS_PASSWORD in AppConstants (not committed: that file also holds prod credentials) and noted in the stage-seats memory.
+- Results, on General WO "Work Order - Nov 5, 8:36 PM" (Jakes electric):
+  - Add Task › asset Test 789 (ATS): Procedure lists Infrared Thermography. Created "QA ZP-5235 Infrared Thermography on Test 789" (PM, Pending, linked to the asset).
+  - Edit Task: changed the procedure to Visual Inspection, then back to IR; both saved. This covers Dharmesh's ZP-5234 note.
+  - Fast asset switches: the list follows the last asset (ATS / Panelboard + Other). A Load with no procedures shows "No options".
+  - Create WO wizard: IR combines with other services (Clean, Tighten, Torque + IR, 5 assets each). "General" is exclusive ("Not with General"). Wizard cancelled, nothing created.
+  - Minor UX: picking a procedure in Edit replaces a hand-typed title.
+- Jira:
+  - [ZP-5235 comment 46094](https://egalvanic.atlassian.net/browse/ZP-5235?focusedCommentId=46094), video first (the first upload hit HTTP 500; the retry worked). Status In Progress → In QA → READY TO RELEASE.
+  - [ZP-5234 comment 46095](https://egalvanic.atlassian.net/browse/ZP-5234?focusedCommentId=46095).
+- Evidence: docs/bug-evidence/2026-11-06-zp5235-stage/.
