@@ -78,3 +78,9 @@ Owner prompts:
     - No rate limit (40 calls all 200; it was a "Should").
     - The index and Performance Insights checks need AWS; Avani is tagged. Comment 46097.
   - ZP-5238: see above.
+
+## 15:45 IST: Web v2.5.1 hotfix sign-off posted (eg-internal-dev, mentions Avani + Dharmesh)
+- Version now holds ZP-5235, ZP-5237 and ZP-5238 (ZP-5234 was replaced by ZP-5235). All three are READY TO RELEASE.
+- Stage was still on the tested build index-JLMOAHlX (13:37 IST); /api/health 200.
+- Stage sanity just before sign-off: Dashboard, Assets, Issues, Work Orders, SLD, Connections, Reporting builder, Audit Log and Users all loaded. No error banners and no 4xx/5xx API calls.
+- Avani had asked at ~15:10 IST "Please test the hotfix tickets so I can merge the code in prod ASAP".
