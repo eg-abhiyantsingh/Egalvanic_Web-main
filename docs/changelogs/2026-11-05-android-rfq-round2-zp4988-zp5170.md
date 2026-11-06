@@ -92,3 +92,16 @@ Build under test: Android Z Platform (QA) **1.39 (53)**, the Firebase upload fro
 - The text is posted, but the videos and screenshots are NOT attached yet. The connector can't upload files, and the chrome-devtools Chrome has no Atlassian or Google sign-in. Files are ready in docs/bug-evidence/2026-11-05-rfq4/<KEY>/.
 - Reply to Dharmesh ("Any showstopper?", ~21:00 IST) is drafted, waiting on the owner's yes in ios-automation-site-29 (its Chat tab is Abhiyant's) or a Google sign-in here.
 - iOS real device: not possible. The SS iPad Air is locked, both iPhones are offline, and the Mac has 0 code-signing identities (no WDA). The iOS 1.75 simulator opens ZTest_28_07 fine.
+
+## 6 Nov: owner asked "why 3 ticket are in qa" → RTR rule applied
+- Rule (owner 26–27 Oct): tested tickets don't sit In QA. If the main purpose works, each gap becomes its own bug and the ticket goes to READY TO RELEASE.
+- New Android bugs (Rajat, To Do, next sprint Z-26-11-S1, no fix version):
+  - [ZP-5230](https://egalvanic.atlassian.net/browse/ZP-5230): EG form Sections stay a drawer on phone landscape and tablet portrait (from ZP-4863). Medium.
+  - [ZP-5231](https://egalvanic.atlassian.net/browse/ZP-5231): QR on its own line, not "Name (QR)" (ZP-5168 Part 2). Low.
+  - [ZP-5232](https://egalvanic.atlassian.net/browse/ZP-5232): Create New Child gets no parent-initials name (ZP-5168 Part 4). Low.
+  - [ZP-5233](https://egalvanic.atlassian.net/browse/ZP-5233): Duplicate only in Edit Asset › ⋮, not on the row (ZP-5168 Part 7). Medium.
+- Parents moved to READY TO RELEASE, each with a short comment naming its bugs:
+  - ZP-4863: comment 46079.
+  - ZP-5168: comment 46080.
+  - ZP-4988: comment 46081. Its web differences are recorded as questions, not bugs; ZP-5224 is referenced.
+- Memory project_android_emulator_lane corrected: the old "Android fails stay In QA" line now points to the RTR rule.
