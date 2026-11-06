@@ -1,0 +1,24 @@
+!PROD-06Nov-BCES-privacy-link-shows-terms-video.mp4|width=480!
+
+h3. What is wrong
+On *BCES production* (acme.bces-iq.com) the *Privacy Policy* link opens the *Terms of Use* page. BCES users can't read the privacy policy.
+egalvanic production (acme.egalvanic.ai) is fine.
+
+h3. Steps
+# Open [https://acme.bces-iq.com/legal/privacy-policy/v1/index.html] (this is the link the app gives for "Privacy Policy": {{GET /api/legal/page/privacy_policy}} → {{content_url}}).
+# Look at the page heading.
+*Expected:* "Privacy Policy".
+*Actual:* "Platform Terms of Use".
+Control: [https://acme.egalvanic.ai/legal/privacy-policy/v1/index.html] shows "Egalvanic Privacy Policy".
+
+h3. Proof (checked 6 Nov 13:10 IST)
+|| File on BCES prod || What it shows || sha256 || Last-Modified ||
+| /legal/privacy-policy/v1/index.html | Platform Terms of Use (49,910 B) | 1def0d0d… | 24 Aug 2026 18:43 GMT |
+| /legal/terms-and-conditions/v23/index.html | the same file (same ETag) | 1def0d0d… | 24 Aug 2026 18:42 GMT |
+* The API's registered hashes are privacy {{2b509549…}} and terms {{dee06261…}}. Neither BCES file matches, so the files in the BCES legal bucket were replaced outside the publish flow on 24 Aug.
+* Not caused by the CloudFront change (ZP-4958): the files are older, and CloudFront serves them correctly.
+
+!PROD-06Nov-BCES-1-api-privacy-policy-url.png|width=420! !PROD-06Nov-BCES-2-privacy-link-shows-terms.png|width=420! !PROD-06Nov-BCES-3-control-egalvanic-privacy-ok.png|width=420!
+
+h3. Fix
+Re-upload the real privacy policy (v1) to the BCES prod legal bucket, and check terms v23 there too. Related: ZP-5186 (new privacy policy document).

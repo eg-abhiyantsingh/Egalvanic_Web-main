@@ -1,0 +1,52 @@
+{
+ "login": "mfa-skipped|welcome:none|update:null",
+ "trimSec": 21,
+ "site": "SLD V3 Site",
+ "siteId": "f0f4d407-dac0-49ab-aaf4-77ff5e7ec92c",
+ "noZ": {
+  "id": "e3089b19-6444-4b71-9b34-66c0459ce1c5",
+  "label": "SEM Transformer (Tag 02145)",
+  "kva": 5
+ },
+ "withZ": {
+  "id": "e8b0fb09-f472-4e94-9032-e385048acf88",
+  "label": "Coater 4 Transformer",
+  "kva": 112.5,
+  "z": 4.6
+ },
+ "ds": {
+  "id": "a4bc889a-1d22-4c23-8f5a-3126abd85120",
+  "label": "Big Outside Chiller Disconnect",
+  "sub": "Disconnect Switch (<= 1000V)",
+  "aic": null
+ },
+ "pick": "SLD V3 Site",
+ "vNoZ": {
+  "url": "/assets/e3089b19-6444-4b71-9b34-66c0459ce1c5",
+  "fields": [],
+  "hasXROverride": true,
+  "hasAIC": false
+ },
+ "zRow": 1,
+ "zInputs": [],
+ "zInputsBefore": 0,
+ "vWithZ": {
+  "url": "/assets/e8b0fb09-f472-4e94-9032-e385048acf88",
+  "fields": [],
+  "hasXROverride": true,
+  "hasAIC": false
+ },
+ "vDs": {
+  "url": "/assets/a4bc889a-1d22-4c23-8f5a-3126abd85120",
+  "fields": [],
+  "hasXROverride": false,
+  "hasAIC": false
+ },
+ "dsInterrupting": true,
+ "blocked": [
+  "06/11/2026, 13:46:42|1793953002447 POST /api/shortcut/by-node-class/774fb9d6-6dd8-4110-bae4-c7bb6de9964d/v2",
+  "06/11/2026, 13:47:02|1793953022013 POST /api/shortcut/by-node-class/774fb9d6-6dd8-4110-bae4-c7bb6de9964d/v2",
+  "06/11/2026, 13:47:15|1793953035772 POST /api/shortcut/by-node-class/c0691718-0359-4107-bb7e-1c2bee814ca5/v2"
+ ],
+ "video": "/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/docs/bug-evidence/2026-11-06-tkt1554/vid/page@3eea82d10b6fbf3e0b5a43d1dccc12be.webm"
+}

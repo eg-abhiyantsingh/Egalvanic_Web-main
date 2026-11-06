@@ -1,0 +1,11 @@
+!PROD-06Nov-ZP-4958-cloudfront-prod-video.mp4|width=520!
+
+*Production check, 6 Nov 13:20 IST: PASS* on acme.egalvanic.ai and acme.bces-iq.com (web v2.5, build index-CyBtIMxg).
+* Direct links and refresh open the app (200 HTML, no "Access Denied" XML): /dashboard, /assets/<id>, /sessions, /sessions/<id>. (trailing dot), /schedule-confirmation/<dotted token>?action=confirm.
+* Real files are still served as files: JS bundle 200 (immutable), robots.txt, version.json, pdf.worker, .well-known AASA + assetlinks.json.
+* A missing JS file gives 403 (correct: the browser does not get the app page in place of a JS file).
+* Legal pages: the active versions (privacy v1, terms v23) open. v19/v29 return 403 on prod because they exist only on QA (correct).
+* Refresh LCP on prod: /dashboard 1.9–2.4 s, /assets 1.8–2.4 s, /sessions 1.7–2.4 s.
+
+Found while checking (not caused by this change): on BCES prod the Privacy Policy file is the Terms of Use → ZP-5238.
+Stage note: stage serves the app page for every /legal/... link (it has no legal files), so legal links can't be checked on stage.
