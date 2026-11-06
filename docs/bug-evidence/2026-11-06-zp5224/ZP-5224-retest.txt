@@ -1,0 +1,13 @@
+h3. QA re-test: PASS → Ready to Release
+Android Z Platform (QA) *1.39 (53)*, Firebase upload 5 Nov 11:16 PM ("v1.39 - site not loading fix", installed on the emulator 6 Nov 12:20 IST), QA EG-ACME, Super Admin seat, 6 Nov 12:33–12:36 IST.
+
+!QA-06Nov-ZP-5224-retest-video.mp4|width=360!
+_Video (55 s): Select Site › ZTest_28_07 loads; dashboard, Assets and SLD open; switch back to Wild Goose._
+
+* Select Site › "ZTest_28_07": loads in about 25 s, "Welcome to ZTest_28_07". No Java error, no retry, no "No Site Selected".
+* Dashboard: 172 assets, 201 connections, 14 issues (same as iOS 1.75). Assets list and SLD open.
+* Switch back to "(s) Wild Goose Brewery": loads normally.
+* Logcat: no "Failed to switch SLD" during either switch.
+
+!QA-06Nov-ZP-5224-1-ztest-opens-172-assets.png|width=180! !QA-06Nov-ZP-5224-2-assets-list.png|width=180! !QA-06Nov-ZP-5224-3-back-to-wild-goose.png|width=180!
+_1. ZTest_28_07 opened: 172 assets, 201 connections. 2. Its Assets list. 3. Back on Wild Goose._
