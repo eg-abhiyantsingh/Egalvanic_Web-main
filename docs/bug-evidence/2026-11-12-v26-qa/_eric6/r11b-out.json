@@ -1,0 +1,34 @@
+{
+ "startIST": "16:53:17",
+ "connList": "Connections List Graph ​ ​ Source Node Target Node Connection Type Actions QA-DEMO ZP-4580 3-winding (delete me) QA-DEMO ZP-4580 panelboard C retest 14Oct (delete No Type Rows per page: 25 1–1 of 1",
+ "connGraph": "Connections List Graph QA-DEMO ZP-4580 3… QA-DEMO ZP-4580 p… 2 assets · 1 connections ​ ​",
+ "att": "Attachments Folders Home Coordination Studies As-Built Drawings Permits & Compliance Site Photos Proposals & Contracts H",
+ "notes": "Notes Notes Test site A Customer 07:02 · 1600 McKinley Ave Columbus, OH, 43222 United States 0 Notes Notes No notes for ",
+ "vid2": {
+  "file": "/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/docs/bug-evidence/2026-11-12-v26-qa/_eric6/vtmp/p5111b.mp4",
+  "sizeMB": 0.43,
+  "seconds": 53,
+  "cutAt": 8.3,
+  "login": "mfa-skipped"
+ },
+ "cpSignin": "mfa-skipped",
+ "tenancy": [
+  {
+   "path": "/lookup/v2/nodes/{x}?page=1&page_size=25&nest=true&sort_by=created_at&sort_dir=desc",
+   "own": "200 application/json 125808",
+   "foreign": "404 application/json 51 {\"error\":\"SLD not found\",\"success\":false}"
+  },
+  {
+   "path": "/lookup/nodes/{x}",
+   "own": "200 application/json 3892318",
+   "foreign": "404 application/json 51 {\"error\":\"SLD not found\",\"success\":false}"
+  },
+  {
+   "path": "/lookup/v2/nodes/{x}/filter-options",
+   "own": "200 application/json 14918",
+   "foreign": "404 application/json 51 {\"error\":\"SLD not found\",\"success\":false}"
+  }
+ ],
+ "cpSyncDirect": "200 {\"changed\":[],\"company_id\":\"d59d449b-09d8-45d6-8f0a-ef70024b1293\",\"errors\":[],\"missing\":[],\"pushed\":false,\"reason\":\"ld_a",
+ "endIST2": "16:54:37"
+}

@@ -1,0 +1,73 @@
+{
+ "startIST": "16:53:17",
+ "build": "index-C1ZRIunF.js",
+ "onWo": {
+  "id": "5cd7a197-b648-4fbc-ac39-a9cbd6ce1014",
+  "name": "QA-DEMO ZP-4583 r8 CA holiday Jul 2027"
+ },
+ "offPlanning": {
+  "s": 200,
+  "notify": false,
+  "lock": {
+   "at": "2026-10-19T10:47:13.780689+00:00",
+   "by": "abhiyant admin",
+   "count": 1,
+   "locked": true
+  },
+  "notices": [
+   "0:off",
+   "42:off",
+   "14:off",
+   "3:off"
+  ],
+  "revisions": 0
+ },
+ "row QA-DEMO ZP-4583 any-crew demo 19 Oct": "QA-DEMO ZP-4583 any-crew demo 19 Oct General Android Site 2 Test op Nov 2 – Nov 3 Should have started 2 days · Nov 2 – Nov 3 QA-DEMO ZP-4583 r8 sub Partially confirmed Not emailed · confirm by hand Sc",
+ "btn QA-DEMO ZP-4583 any-crew demo 19 Oct": "Schedule",
+ "offCounts": {
+  "locked": 1,
+  "sent": 0,
+  "sentTo": 0
+ },
+ "offDialog": "Site Data Operations Engineering Sales Builder Maintenance Portal Admin Updates 1 Help aa Operations DASHBOARDS Ops Overview PLANNING Planned Work All Unscheduled Tentative Partially confirmed Confirmed Planning Board Maintenance Calendar OPS Work Orders DATA Test Equipment V1.36 || Site DataOperationsEngineeringSalesBuilderMaintenance PortalAdminUpdatesHelpaaOperationsDashboardsOps OverviewPlanningPlanned WorkAllUnscheduledTentativePartially confirmedConfirmedPlanning BoardMaintenance CalendarOpsWork OrdersDataTest EquipmentV1.36 || QA-DEMO ZP-4583 any-crew demo 19 Oct Partially confirmed Android Site 2 · QA-DEMO ZP-4583 r8 sub · Due Tue, Nov 3 Awaiting confirmation · Mon, Nov 2 – Tue, Nov 3 Android Site 2 (site) confirmed. Waiting on QA-DEMO ZP-4583 r8 sub (subcontractor). SCHEDULE 4 days · 34 h MON Nov 2 06:00 – 14:30 Abhiyant Singh 8.5 h TUE Nov 3 06:00 – 14:30 Abhiyant Singh 8.5 h T",
+ "row QA-DEMO ZP-4583 r8 CA holiday Jul 2027": "QA-DEMO ZP-4583 r8 CA holiday Jul 2027 Infrared Thermography Android Site Test op Jul 1 – Jul 31 2 days · Jul 15 – Jul 16 QA-DEMO ZP-4583 r8 team Tentative Sent Oct 16 · waiting on Android Site Schedu",
+ "btn QA-DEMO ZP-4583 r8 CA holiday Jul 2027": "Schedule",
+ "onCounts": {
+  "locked": 0,
+  "sent": 0,
+  "sentTo": 2
+ },
+ "simCounts": {
+  "locked": 0,
+  "sent": 1,
+  "sentTo": 0
+ },
+ "simDialog": "Site Data Operations Engineering Sales Builder Maintenance Portal Admin Updates 1 Help aa Operations DASHBOARDS Ops Overview PLANNING Planned Work All Unscheduled Tentative Partially confirmed Confirmed Planning Board Maintenance Calendar OPS Work Orders DATA Test Equipment V1.36 || Site DataOperationsEngineeringSalesBuilderMaintenance PortalAdminUpdatesHelpaaOperationsDashboardsOps OverviewPlanningPlanned WorkAllUnscheduledTentativePartially confirmedConfirmedPlanning BoardMaintenance CalendarOpsWork OrdersDataTest EquipmentV1.36 || QA-DEMO ZP-4583 any-crew demo 19 Oct Partially confirmed And",
+ "assignable": {
+  "s": 200,
+  "n": null,
+  "keys": [
+   "data",
+   "success"
+  ],
+  "linked": null
+ },
+ "vendorsLinked": 0,
+ "vendorsTotal": 12,
+ "video": {
+  "file": "/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/docs/bug-evidence/2026-11-12-v26-qa/ZP-4833/QA-12Nov-ZP-4833-video-steps.mp4",
+  "sizeMB": 1.11,
+  "seconds": 78,
+  "cutAt": 8.7,
+  "login": "mfa-skipped"
+ },
+ "pmSignin": "mfa-skipped",
+ "pmEg": false,
+ "pmOwn": "200 application/json 2664",
+ "pmForeign": "404 application/json 58 {\"error\":\"Work order not found\",\"success\":false}",
+ "pmRandom": "404 {\"error\":\"Work order not found\",\"success\":false}",
+ "pmAssignable": "200 10119",
+ "pmLocked": 0,
+ "saForeignControl": "404 application/json 58",
+ "endIST": "16:55:14"
+}

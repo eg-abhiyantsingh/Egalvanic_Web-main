@@ -1,0 +1,16 @@
+*Result: PASS on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+!QA-12Nov-ZP-4885-video-steps.mp4|width=640!
+_Video: four test fuses on the SLD, Export › Export Engineering XML, then the ProtectionType read from the downloaded XML (39 s)_
+
+* Fuse with no subtype now exports ProtectionType "Low Voltage Fuse" — a new test fuse and the QA4885 FUSE nosub from 2 Nov (which exported "Fuse" on 2 and 5 Nov).
+* Fuse (<= 1000V) → "Low Voltage Fuse", Fuse (> 1000V) → "High Voltage Fuse", DC Fuse → "DC Fuse" (unchanged).
+* No literal ProtectionType "Fuse" anywhere in the file; no EG-ACME class or subtype config holds exactly "Fuse" (GET /api/lookup/node-classes).
+* Not covered: importing into SKM PowerTools (no PTW here).
+
+!QA-12Nov-ZP-4885-1-four-test-fuses-on-sld.png|width=640!
+_1. The four test fuses on the QA-DEMO SLD (PASS)_
+!QA-12Nov-ZP-4885-2-export-engineering-xml-dialog.png|width=640!
+_2. Export Engineering XML acknowledgement dialog (PASS)_
+!QA-12Nov-ZP-4885-3-exported-xml-protection-types-card.png|width=640!
+_3. ProtectionType per fuse in the exported XML + class config (PASS)_
+[^skm_export_c4438cd3_2026-11-12_110550.xml]

@@ -1,0 +1,24 @@
+*Result: FAIL on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+!QA-12Nov-ZP-4830-video-steps.mp4|width=640!
+_Video: Collaborators menu, /guests redirect, send a request, Withdraw fails, then SIMULATED incoming request and active link (114 s)_
+
+* PASS: Admin › People › Collaborators, /guests redirects, People / Company Links / Requests tabs, New company link (Customer / Subcontractor).
+* PASS: sending a request works (201). The Requests row shows only the email; the response never names a company.
+* FAIL: Requests › Withdraw says "undefined's company can no longer accept it", then "Something went wrong", and the request stays (re-proved twice).
+* FAIL (same cause): the row buttons on Requests and Company Links read the grid params as the row. With SIMULATED data, an incoming request shows only Withdraw (no Accept / Decline), and an active link shows only "End link", which throws a TypeError. The People grid uses \{row\} correctly.
+* Roles PASS: PM / AM / EE get no menu entry, Access Denied, API 403 / 422; FM / CP are sent to the portal.
+* Small: the API accepts \{"email":"not-an-email"\} (201). With feature-guest-access OFF (SIMULATED), the typed /collaborators still opens with Invite / New company link (as in ZP-4843).
+* Not covered: accepting, Teams as crews, guest access following assignments, SLD sharing. These need a second QA company admin login (not demo).
+
+!QA-12Nov-ZP-4830-1-collaborators-tabs-PASS.png|width=640!
+_1. PASS: Collaborators with People / Company Links / Requests_
+!QA-12Nov-ZP-4830-3-request-sent-email-only-PASS.png|width=640!
+_2. PASS: sent request shows only the email_
+!QA-12Nov-ZP-4830-4-withdraw-dialog-undefined-FAIL.png|width=640!
+_3. FAIL: Withdraw dialog reads "undefined's company"_
+!QA-12Nov-ZP-4830-5-request-still-listed-after-withdraw-FAIL.png|width=640!
+_4. FAIL: after Withdraw and a reload the request is still there_
+!QA-12Nov-ZP-4830-6-SIMULATED-incoming-request-no-accept-FAIL.png|width=640!
+_5. FAIL (SIMULATED data): incoming request has no Accept / Decline_
+!QA-12Nov-ZP-4830-7-SIMULATED-active-link-wrong-action-FAIL.png|width=640!
+_6. FAIL (SIMULATED data): active sub link shows only "End link"_

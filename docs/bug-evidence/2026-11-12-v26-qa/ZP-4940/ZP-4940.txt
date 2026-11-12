@@ -1,0 +1,20 @@
+*Result: PASS on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+!QA-12Nov-ZP-4940-video-steps.mp4|width=640!
+_Video: copy a group + elbowed edge + hidden edge, paste, API read-back, partial-group paste, tenant-gate checks (98 s)_
+
+* Paste now sends dx/dy; the pasted elbow moved by exactly that delta; the hidden FUSE → Load-1 stays hidden on the copy.
+* A fully selected group comes back as "QA-DEMO ZP-4942 grp 12 Nov (copy)"; copying half of a group carries no group; clones are not in the source group.
+* Paste inside a view keeps the source's per-view rotation (90°) and size, and the clone lands in that view.
+* Tenant gate: node from another SLD → 400, view from another SLD → 400, Facility Manager without access → 404; positive control 201.
+* Not covered: paste into another group's area, terminal/label manips.
+
+!QA-12Nov-ZP-4940-1-selection-group-elbow-hidden-edge.png|width=640!
+_1. Selection: group with an elbowed edge + hidden FUSE → Load-1 (PASS)_
+!QA-12Nov-ZP-4940-2-after-paste-group-copy-elbow-hidden.png|width=640!
+_2. After paste: group "(copy)", elbow kept, hidden connection still pills (PASS)_
+!QA-12Nov-ZP-4940-4-partial-group-copy-no-group.png|width=640!
+_3. Partial group copy: the clone is in no group (PASS)_
+!QA-12Nov-ZP-4940-5-tenant-gate-card.png|width=640!
+_4. Tenant gate on /node/copy-set (PASS)_
+!QA-12Nov-ZP-4940-6-paste-in-view-rotation-kept.png|width=640!
+_5. Paste in a view keeps the rotation (PASS)_

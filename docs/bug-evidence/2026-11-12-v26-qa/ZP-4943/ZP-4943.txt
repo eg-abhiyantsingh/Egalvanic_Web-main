@@ -1,0 +1,21 @@
+*Result: PASS on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+!QA-12Nov-ZP-4943-video-steps.mp4|width=640!
+_Video: locked group — click a member, right-click its connection, drag a member, drag the elbow alone; Edit with AI in Save as Assembly and on the detail page; API checks (115 s)_
+
+* #202: in a locked group a click selects the member, a right-click on a connection opens the connection menu, dragging a member moves the whole group with its elbow, and the elbow cannot be dragged on its own. The group box is on the Background layer.
+* #203: Edit with AI fills the label templates in Save as Assembly and on the assembly detail page; Cancel / reload shows nothing was saved.
+* API: 2001-char instruction → 400, unsafe instruction → 422 "The AI model declined…", users without assemblies.manage → 422.
+* Note (no visible effect, so not filed): dragging a locked group also sends PUT /api/node/update/\{group id\} → 400; the members save fine.
+* Not covered: hidden-edge badges inside a locked group; real LaunchDarkly OFF for feature-sld-assemblies (simulated only).
+* Status: stays In QA only until feature-sld-assemblies is really switched OFF and back ON for Acme on QA (asked in eg-internal-dev); then Ready to Release.
+
+!QA-12Nov-ZP-4943-1-locked-group-member-selected.png|width=640!
+_1. Locked group: click selects the member PNL-2 (PASS)_
+!QA-12Nov-ZP-4943-2-locked-group-link-connection-menu.png|width=640!
+_2. Right-click on a connection inside the locked group: connection menu (PASS)_
+!QA-12Nov-ZP-4943-3-drag-member-moves-whole-group.png|width=640!
+_3. Dragging a member moved the whole group (PASS)_
+!QA-12Nov-ZP-4943-4-save-dialog-edit-with-ai-filled.png|width=640!
+_4. Save as Assembly: Edit with AI filled the templates (PASS)_
+!QA-12Nov-ZP-4943-6-ai-templates-api-card.png|width=640!
+_5. ai-templates API checks (PASS)_

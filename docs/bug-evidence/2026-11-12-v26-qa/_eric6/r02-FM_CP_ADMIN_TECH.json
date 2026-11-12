@@ -1,0 +1,428 @@
+{
+ "FM": {
+  "startIST": "16:10:50",
+  "signin": "mfa-skipped",
+  "build": "index-C1ZRIunF.js",
+  "me": {
+   "status": 200,
+   "roles": [
+    "Facility Manager"
+   ],
+   "is_admin": false,
+   "is_eg_admin": false,
+   "web": true,
+   "n": 79,
+   "safety": [],
+   "usersView": false,
+   "usersManage": false,
+   "slds": 11
+  },
+  "api": {
+   "/guest-access/guests": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 186,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: users.manage\",\"required_permission\":\"users.manage\",\"success"
+   },
+   "/guest-access/roles": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 186,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: users.manage\",\"required_permission\":\"users.manage\",\"success"
+   },
+   "/guest-access/workspaces": {
+    "s": 200,
+    "ct": "application/json",
+    "len": 468,
+    "body": "{\"data\":{\"invites\":[],\"subcontracting\":{\"can_manage\":false,\"invites\":[],\"linked\":false},\"workspaces\":[{\"company_id\":\"d59d449b-09d8-45d6-8f0a-ef70024b1293\",\"curr"
+   },
+   "/subcontracting": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 186,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: users.manage\",\"required_permission\":\"users.manage\",\"success"
+   },
+   "/subcontracting/link-candidates": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 200,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: company_data.manage\",\"required_permission\":\"company_data.ma"
+   },
+   "/safety/install-statuses/vocabulary": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 236,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: features.safety.install_statuses.view\",\"required_permission"
+   },
+   "/safety/sld/{own}/install-statuses": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 236,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: features.safety.install_statuses.view\",\"required_permission"
+   },
+   "/safety/sld/{foreign}/install-statuses": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 236,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: features.safety.install_statuses.view\",\"required_permission"
+   },
+   "/safety/sld/{own}/scenarios": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 222,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: features.safety.scenarios.view\",\"required_permission\":\"feat"
+   }
+  },
+  "rail": [
+   "Home",
+   "Maintenance Portal",
+   "Updates 1",
+   "Help",
+   "AS"
+  ],
+  "menu": {
+   "Maintenance Portal": [
+    "/maintenance-portal/site-overview",
+    "/maintenance-portal/overview",
+    "/maintenance-portal/condition",
+    "/maintenance-portal/assets",
+    "/maintenance-portal/connections",
+    "/maintenance-portal/locations",
+    "/maintenance-portal/panel-schedules",
+    "/maintenance-portal/issues",
+    "/maintenance-portal/program",
+    "/maintenance-portal/compliance"
+   ]
+  },
+  "navCollaborators": false,
+  "navSafety": [],
+  "typed /collaborators": {
+   "url": "/maintenance-portal/overview",
+   "denied": false,
+   "text": "Site Health MAINTENANCE RECORD Condition index 100 / 100 No issue activity recorded for this site yet TOTAL ASSETS 101 SERVICES OVERDUE 0 next 3 years DUE NOW 0 awaiting scheduling SCHEDULED 0 on a wo",
+   "err": [],
+   "shot": "w-FM-typed-collaborators.png"
+  },
+  "typed /guests": {
+   "url": "/maintenance-portal/overview",
+   "denied": false,
+   "text": "Site Health MAINTENANCE RECORD Condition index 100 / 100 No issue activity recorded for this site yet TOTAL ASSETS 101 SERVICES OVERDUE 0 next 3 years DUE NOW 0 awaiting scheduling SCHEDULED 0 on a wo",
+   "err": []
+  },
+  "typed /safety/install-statuses": {
+   "url": "/maintenance-portal/overview",
+   "denied": false,
+   "text": "Site Health MAINTENANCE RECORD Condition index 100 / 100 No issue activity recorded for this site yet TOTAL ASSETS 101 SERVICES OVERDUE 0 next 3 years DUE NOW 0 awaiting scheduling SCHEDULED 0 on a wo",
+   "err": [],
+   "shot": "w-FM-typed-safety-install-statuses.png"
+  },
+  "typed /safety/loto-registry": {
+   "url": "/maintenance-portal/overview",
+   "denied": false,
+   "text": "Site Health MAINTENANCE RECORD Condition index 100 / 100 No issue activity recorded for this site yet TOTAL ASSETS 101 SERVICES OVERDUE 0 next 3 years DUE NOW 0 awaiting scheduling SCHEDULED 0 on a wo",
+   "err": []
+  },
+  "typed /safety/sld": {
+   "url": "/maintenance-portal/overview",
+   "denied": false,
+   "text": "Site Health MAINTENANCE RECORD Condition index 100 / 100 No issue activity recorded for this site yet TOTAL ASSETS 101 SERVICES OVERDUE 0 next 3 years DUE NOW 0 awaiting scheduling SCHEDULED 0 on a wo",
+   "err": []
+  },
+  "typed /safety/scenarios": {
+   "url": "/maintenance-portal/overview",
+   "denied": false,
+   "text": "Site Health MAINTENANCE RECORD Condition index 100 / 100 No issue activity recorded for this site yet TOTAL ASSETS 101 SERVICES OVERDUE 0 next 3 years DUE NOW 0 awaiting scheduling SCHEDULED 0 on a wo",
+   "err": []
+  },
+  "endIST": "16:11:54"
+ },
+ "CP": {
+  "startIST": "16:11:58",
+  "signin": "mfa-skipped",
+  "build": "index-C1ZRIunF.js",
+  "me": {
+   "status": 200,
+   "roles": [
+    "Client Portal"
+   ],
+   "is_admin": false,
+   "is_eg_admin": false,
+   "web": true,
+   "n": 36,
+   "safety": [],
+   "usersView": false,
+   "usersManage": false,
+   "slds": 234
+  },
+  "api": {
+   "/guest-access/guests": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 186,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: users.manage\",\"required_permission\":\"users.manage\",\"success"
+   },
+   "/guest-access/roles": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 186,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: users.manage\",\"required_permission\":\"users.manage\",\"success"
+   },
+   "/guest-access/workspaces": {
+    "s": 200,
+    "ct": "application/json",
+    "len": 468,
+    "body": "{\"data\":{\"invites\":[],\"subcontracting\":{\"can_manage\":false,\"invites\":[],\"linked\":false},\"workspaces\":[{\"company_id\":\"d59d449b-09d8-45d6-8f0a-ef70024b1293\",\"curr"
+   },
+   "/subcontracting": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 186,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: users.manage\",\"required_permission\":\"users.manage\",\"success"
+   },
+   "/subcontracting/link-candidates": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 200,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: company_data.manage\",\"required_permission\":\"company_data.ma"
+   },
+   "/safety/install-statuses/vocabulary": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 236,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: features.safety.install_statuses.view\",\"required_permission"
+   },
+   "/safety/sld/{own}/install-statuses": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 236,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: features.safety.install_statuses.view\",\"required_permission"
+   },
+   "/safety/sld/{foreign}/install-statuses": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 236,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: features.safety.install_statuses.view\",\"required_permission"
+   },
+   "/safety/sld/{own}/scenarios": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 222,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: features.safety.scenarios.view\",\"required_permission\":\"feat"
+   }
+  },
+  "rail": [
+   "Home",
+   "Maintenance Portal",
+   "Updates 1",
+   "Help",
+   "AS"
+  ],
+  "menu": {
+   "Maintenance Portal": [
+    "/maintenance-portal/site-overview",
+    "/maintenance-portal/overview",
+    "/maintenance-portal/assets",
+    "/maintenance-portal/reports"
+   ]
+  },
+  "navCollaborators": false,
+  "navSafety": [],
+  "typed /collaborators": {
+   "url": "/maintenance-portal/overview",
+   "denied": false,
+   "text": "Site Health MAINTENANCE RECORD Condition index 95 / 100 As of Nov 6, 2026 · 138 issues on record TOTAL ASSETS 620 SERVICES OVERDUE 0 next 3 years DUE NOW 0 awaiting scheduling SCHEDULED 2,732 on a wor",
+   "err": [],
+   "shot": "w-CP-typed-collaborators.png"
+  },
+  "typed /guests": {
+   "url": "/maintenance-portal/overview",
+   "denied": false,
+   "text": "Site Health MAINTENANCE RECORD Condition index 95 / 100 As of Nov 6, 2026 · 138 issues on record TOTAL ASSETS 620 SERVICES OVERDUE 0 next 3 years DUE NOW 0 awaiting scheduling SCHEDULED 2,732 on a wor",
+   "err": []
+  },
+  "typed /safety/install-statuses": {
+   "url": "/maintenance-portal/overview",
+   "denied": false,
+   "text": "Site Health MAINTENANCE RECORD Condition index 95 / 100 As of Nov 6, 2026 · 138 issues on record TOTAL ASSETS 620 SERVICES OVERDUE 0 next 3 years DUE NOW 0 awaiting scheduling SCHEDULED 2,732 on a wor",
+   "err": [],
+   "shot": "w-CP-typed-safety-install-statuses.png"
+  },
+  "typed /safety/loto-registry": {
+   "url": "/maintenance-portal/overview",
+   "denied": false,
+   "text": "Site Health MAINTENANCE RECORD Condition index 95 / 100 As of Nov 6, 2026 · 138 issues on record TOTAL ASSETS 620 SERVICES OVERDUE 0 next 3 years DUE NOW 0 awaiting scheduling SCHEDULED 2,732 on a wor",
+   "err": []
+  },
+  "typed /safety/sld": {
+   "url": "/maintenance-portal/overview",
+   "denied": false,
+   "text": "Site Health MAINTENANCE RECORD Condition index 95 / 100 As of Nov 6, 2026 · 138 issues on record TOTAL ASSETS 620 SERVICES OVERDUE 0 next 3 years DUE NOW 0 awaiting scheduling SCHEDULED 2,732 on a wor",
+   "err": []
+  },
+  "typed /safety/scenarios": {
+   "url": "/maintenance-portal/overview",
+   "denied": false,
+   "text": "Site Health MAINTENANCE RECORD Condition index 95 / 100 As of Nov 6, 2026 · 138 issues on record TOTAL ASSETS 620 SERVICES OVERDUE 0 next 3 years DUE NOW 0 awaiting scheduling SCHEDULED 2,732 on a wor",
+   "err": []
+  },
+  "endIST": "16:13:36"
+ },
+ "ADMIN": {
+  "startIST": "16:13:36",
+  "signin": "mfa-skipped",
+  "build": "index-C1ZRIunF.js",
+  "me": {
+   "status": 200,
+   "roles": [
+    "Admin"
+   ],
+   "is_admin": true,
+   "is_eg_admin": true,
+   "web": true,
+   "n": 114,
+   "safety": [],
+   "usersView": true,
+   "usersManage": true,
+   "slds": 0
+  },
+  "api": {
+   "/guest-access/guests": {
+    "s": 200,
+    "ct": "application/json",
+    "len": 36,
+    "body": "{\"data\":[],\"success\":true}"
+   },
+   "/guest-access/roles": {
+    "s": 200,
+    "ct": "application/json",
+    "len": 840,
+    "body": "{\"data\":[{\"description\":\"Account Manager role — view-only SLD access, curated feature flags\",\"id\":\"392a2233-e4a3-4322-a440-7fd62b4bed7e\",\"name\":\"Account Manager"
+   },
+   "/guest-access/workspaces": {
+    "s": 200,
+    "ct": "application/json",
+    "len": 467,
+    "body": "{\"data\":{\"invites\":[],\"subcontracting\":{\"can_manage\":true,\"invites\":[],\"linked\":false},\"workspaces\":[{\"company_id\":\"d59d449b-09d8-45d6-8f0a-ef70024b1293\",\"curre"
+   },
+   "/subcontracting": {
+    "s": 200,
+    "ct": "application/json",
+    "len": 161,
+    "body": "{\"data\":{\"customer_invites\":[],\"customers\":[],\"invites\":[],\"primes\":[],\"providers\":[],\"subs\":[]},\"success\":true}"
+   },
+   "/subcontracting/link-candidates": {
+    "s": 200,
+    "ct": "application/json",
+    "len": 20636,
+    "body": "{\"data\":{\"customers\":[{\"id\":\"65cdcf13-d156-47f2-a71b-7880cc34689e\",\"link_status\":null,\"name\":\"111\"},{\"id\":\"104be1e9-ff78-40a5-87cf-13708af53fb4\",\"link_status\":n"
+   },
+   "/safety/install-statuses/vocabulary": {
+    "s": 200,
+    "ct": "application/json",
+    "len": 805,
+    "body": "{\"energizable\":[\"wire_terminations_complete\",\"tested\",\"in_service\"],\"groups\":[{\"label\":\"Planning\",\"statuses\":[\"proposed\",\"planned\",\"ordered\",\"delivered\"]},{\"lab"
+   },
+   "/safety/sld/{foreign}/install-statuses": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 169,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to access this SLD\",\"sld_id\":\"f86052b7-1683-431f-a86f-f52c6dd5be39\",\"success\":false}"
+   }
+  },
+  "rail": [
+   "Home",
+   "Builder",
+   "Maintenance Portal",
+   "Admin",
+   "Updates 1",
+   "Help",
+   "AS"
+  ],
+  "menu": {
+   "Builder": [
+    "/reporting/builder",
+    "/services",
+    "/pm-plans",
+    "/issue-suggestions",
+    "/eg-forms"
+   ],
+   "Maintenance Portal": [
+    "/maintenance-portal/site-overview",
+    "/maintenance-portal/overview",
+    "/maintenance-portal/condition",
+    "/maintenance-portal/assets",
+    "/maintenance-portal/connections",
+    "/maintenance-portal/locations",
+    "/maintenance-portal/panel-schedules",
+    "/maintenance-portal/issues",
+    "/maintenance-portal/program",
+    "/maintenance-portal/compliance",
+    "/maintenance-portal/reports"
+   ],
+   "Admin": [
+    "/admin-dashboard",
+    "/admin/subscription",
+    "/users",
+    "/guest-portal-users",
+    "/collaborators",
+    "/customers",
+    "/offices",
+    "/teams",
+    "/subcontractors",
+    "/asset-classes",
+    "/connection-classes",
+    "/issue-classes",
+    "/assemblies",
+    "/devices",
+    "/test-equipment",
+    "/labor",
+    "/materials",
+    "/admin/audit-log",
+    "/legacy-procedures",
+    "/legacy-forms"
+   ]
+  },
+  "shot_Admin": "w-ADMIN-admin-panel.png",
+  "navCollaborators": true,
+  "navSafety": [],
+  "typed /collaborators": {
+   "url": "/collaborators",
+   "denied": false,
+   "text": "Collaborators People Company Links Requests Invite individual ​ ​ Name Email Their company Role Sites Status Actions No rows Rows per page: 25 0–0 of 0",
+   "err": [],
+   "shot": "w-ADMIN-typed-collaborators.png"
+  },
+  "typed /guests": {
+   "url": "/collaborators",
+   "denied": false,
+   "text": "Collaborators People Company Links Requests Invite individual ​ ​ Name Email Their company Role Sites Status Actions No rows Rows per page: 25 0–0 of 0",
+   "err": []
+  },
+  "typed /safety/install-statuses": {
+   "url": "/safety/install-statuses",
+   "denied": false,
+   "text": "Install Statuses Assets (10) Connections (1) 10 in service Set status ​ ​ Asset Class Subtype Location Enclosure Install Status Status Set By AST-1 Panelboard Control Panel In Service AST-2 ATS In Ser",
+   "err": [],
+   "shot": "w-ADMIN-typed-safety-install-statuses.png"
+  },
+  "typed /safety/loto-registry": {
+   "url": "/safety/loto-registry",
+   "denied": false,
+   "text": "LOTO Registry 0 events on record · 0 locks hanging right now. Click a row for the device's full history. ​ ​ When Device Event Change Performed By Phone Tag Hole Remarks No rows Rows per page: 50 0–0 ",
+   "err": []
+  },
+  "typed /safety/sld": {
+   "url": "/safety/sld",
+   "denied": false,
+   "text": "SLD 1 1 issue All Nodes Scenario Export Layout",
+   "err": []
+  },
+  "typed /safety/scenarios": {
+   "url": "/safety/scenarios",
+   "denied": false,
+   "text": "Scenarios New scenario ​ ​ Scenario Description Effective Switching Forecast Updated No rows Rows per page: 50 0–0 of 0",
+   "err": []
+  },
+  "endIST": "16:14:24"
+ }
+}

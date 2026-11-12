@@ -1,0 +1,21 @@
+*Result: PARTLY on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+!QA-12Nov-ZP-5111-video-steps.mp4|width=640!
+_Video: Client Portal on a No License account (real), then the staff License preview with SIMULATED BCES-Lite: Connections List/Graph, Attachments and Notes (118 s)_
+
+* PASS: the Client Portal user on a No License account signs in to the portal: Site Health, Site Overview, Assets, Reports; other pages show "Not included in your plan" with their title.
+* PASS (fixed since 5 Nov): POST /api/features/sync and POST /api/devrev/session-token return 200 on every portal page load. On 5 Nov they returned 403 portal_read_only.
+* PASS: another company's SLD on the portal Assets calls returns 404 "SLD not found" for this customer seat; its own SLD returns 200.
+* PASS (SIMULATED BCES tiers): Connections has its title and the List / Graph switch, and both views render. Attachments and Notes open with their titles.
+* BLOCKED: real BCES-Lite / BCES-Viewer accounts. QA acme offers only Lite and No License.
+* Note: the portal Assets page downloads 3.9 MB (/api/lookup/nodes) for a 620-asset site.
+
+!QA-12Nov-ZP-5111-1-cp-no-license-portal-overview-PASS.png|width=640!
+_1. PASS: Client Portal on No License: portal opens with data_
+!QA-12Nov-ZP-5111-3-cp-no-license-connections-locked-title-PASS.png|width=640!
+_2. PASS: No License: Connections locked, title shown_
+!QA-12Nov-ZP-5111-4-SIMULATED-bces-lite-connections-list-PASS.png|width=640!
+_3. PASS (SIMULATED BCES-Lite): Connections List_
+!QA-12Nov-ZP-5111-5-SIMULATED-bces-lite-connections-graph-PASS.png|width=640!
+_4. PASS (SIMULATED BCES-Lite): Connections Graph_
+!QA-12Nov-ZP-5111-6-SIMULATED-bces-lite-notes-title-PASS.png|width=640!
+_5. PASS (SIMULATED BCES-Lite): Notes page with its title_

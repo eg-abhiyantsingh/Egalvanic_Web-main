@@ -1,0 +1,155 @@
+{
+ "startIST": "16:45:05",
+ "signin": "mfa-skipped",
+ "build": "index-C1ZRIunF.js",
+ "site": "Test site A",
+ "optionsSim": [
+  "BCES-Lite",
+  "BCES-Viewer",
+  "Lite",
+  "No License"
+ ],
+ "menuBcesLite": [],
+ "urlAfterLite": "/maintenance-portal/overview",
+ "conn": {
+  "text": "Connections List Graph ​ ​ Source Node Target Node Connection Type Actions QA-DEMO ZP-4580 3-winding (delete me) QA-DEMO ZP-4580 panelboard C retest 14Oct (delete No Type Rows per page: 25 1–1 of 1",
+  "title": [
+   "Maintenance Portal",
+   "Connections",
+   "Maintenance Portal"
+  ],
+  "buttons": [
+   "List",
+   "Graph",
+   "Sort",
+   "Source Node column menu",
+   "Sort",
+   "Target Node column menu",
+   "Sort",
+   "Connection Type column menu",
+   "Go to previous page",
+   "Go to next page"
+  ],
+  "calls": [
+   "200 POST https://ingestion-useast1.devrev.ai/web/api/ingest/logData/",
+   "200 POST https://o4509671240105984.ingest.us.sentry.io/api/4510464365101056/envelope/",
+   "200 GET /api/auth/v2/me",
+   "200 GET /api/legal/acceptance/check",
+   "200 GET /api/company/alliance-config/acme.egalvanic",
+   "200 GET /api/features/access",
+   "200 GET /api/auth/v4/mfa/status",
+   "200 GET /api/beamer/user-hash",
+   "200 POST /api/features/sync",
+   "200 POST /api/auth/v2/key-exchange",
+   "200 POST /api/devrev/session-token",
+   "200 GET /api/subscription/banner",
+   "200 GET /api/guest-access/workspaces",
+   "200 GET /api/users/77e99d86-7f0a-4345-b056-6f470bb668ec/slds",
+   "200 GET /api/company/d59d449b-09d8-45d6-8f0a-ef70024b1293/timezone",
+   "200 GET /api/company/d59d449b-09d8-45d6-8f0a-ef70024b1293/guided-tours",
+   "200 GET /api/company/d59d449b-09d8-45d6-8f0a-ef70024b1293/attention/counts",
+   "200 GET /api/entitlements",
+   "200 GET /api/edge_classes/user/77e99d86-7f0a-4345-b056-6f470bb668ec",
+   "200 POST https://ingestion-useast1.devrev.ai/web/api/ingest/startSession/",
+   "200 GET /api/connections/v2/sld/b99f9c84-a4d9-40fe-8f1b-7ef9e38de3f0",
+   "200 GET https://plug-platform.devrev.ai/api/plug-config",
+   "200 GET https://plug-platform.devrev.ai/api/translations",
+   "200 GET https://plug-platform.devrev.ai/api/translations",
+   "200 GET /api/connections/v2/sld/b99f9c84-a4d9-40fe-8f1b-7ef9e38de3f0",
+   "200 GET https://plug-platform.devrev.ai/api/plug-config",
+   "200 GET https://plug-platform.devrev.ai/api/translations",
+   "200 GET https://plug-platform.devrev.ai/api/translations",
+   "200 POST https://ingestion-useast1.devrev.ai/web/api/ingest/addMetadata/",
+   "200 POST https://ingestion-useast1.devrev.ai/web/api/ingest/setIdentifier/",
+   "200 POST https://o4509671240105984.ingest.us.sentry.io/api/4510464365101056/envelope/",
+   "200 POST https://ingestion-useast1.devrev.ai/web/api/ingest/logData/"
+  ]
+ },
+ "graphBtn": 1,
+ "connGraph": {
+  "text": "Connections List Graph QA-DEMO ZP-4580 3… QA-DEMO ZP-4580 p… 2 assets · 1 connections ​ ​",
+  "canvas": 0,
+  "calls": [
+   "200 POST https://ingestion-useast1.devrev.ai/web/api/ingest/logData/"
+  ]
+ },
+ "connBackToList": "Connections List Graph ​ ​ Source Node Target Node Connection Type Actions QA-DEMO ZP-4580 3-winding (delete me) QA-DEMO",
+ "attachments": {
+  "text": "Attachments Folders Home Coordination Studies As-Built Drawings Permits & Compliance Site Photos Proposals & Contracts Home ​ ​ File Name Type Visibility Size Created Actions Coordination Studies Folder — — — As-Built Drawings Folder — — — Permits & Compliance",
+  "headerTitle": [
+   "Attachments"
+  ],
+  "buttons": [
+   "Home"
+  ],
+  "err": []
+ },
+ "notes": {
+  "text": "Notes Notes Test site A Customer 07:02 · 1600 McKinley Ave Columbus, OH, 43222 United States 0 Notes Notes No notes for this site",
+  "headerTitle": [
+   "Notes",
+   "Notes"
+  ],
+  "buttons": [],
+  "err": []
+ },
+ "issues": {
+  "text": "Issues Export Issue Report ​ ​ Title Issue Class Priority QR Code Asset Status Actions Thermal Anomaly on AST-2 Thermal Anomaly Medium — AST-2 Open Thermal Anomaly on AST-1 Thermal Anomaly Medium — AST-1 Open QA-DEMO ZP-5005 26 Oct SA Critical 17404 NEC Violat",
+  "headerTitle": [
+   "Issues"
+  ],
+  "buttons": [
+   "Export Issue Report"
+  ],
+  "err": []
+ },
+ "eirCount": 1,
+ "csvCount": 0,
+ "eirDialog": "Generate Report Report Configuration Custom HTML ​ Output Format PDF Options Include resolved and closed issues Include thermal (IR) photos Include issue photos Cancel Generate Report",
+ "assetRow": "AST-2 — — ATS — — — — —",
+ "assetUrl": "/maintenance-portal/assets/2e989985-adb2-408a-b84a-e4c60fe7e732",
+ "assetTabs": [
+  "Basic Info",
+  "Engineering",
+  "Maintenance",
+  "Issues\n1",
+  "Connections\n!",
+  "Photos",
+  "Attachments"
+ ],
+ "engTab": 1,
+ "engText": "AST-2 Basic Info Engineering Maintenance Issues 1 Connections ! Photos Attachments CUSTOM ATTRIBUTES 4 / 4 CATALOG NUMBER 56 CONTACT TYPE Normally Open (NO) INTERRUPTING RATING 30 kA AMPERE RATING 800A MANUFACTURER Cummins MECHANISM TYPE ATS MODEL ATS MAINS TYPE MCB SERIAL NUMBER 89 SIZE 67 NOTES ATS VOLTAGE 240V TYPE Test",
+ "engButtons": [
+  "Basic Info",
+  "Engineering",
+  "Maintenance",
+  "Issues\n1",
+  "Connections\n!",
+  "Photos",
+  "Attachments"
+ ],
+ "engInputsEnabled": 0,
+ "engRing": 0,
+ "optionsViewer": [
+  "BCES-Lite",
+  "BCES-Viewer",
+  "Lite",
+  "No License"
+ ],
+ "menuViewer": [
+  "/maintenance-portal/site-overview",
+  "/maintenance-portal/assets"
+ ],
+ "urlViewer": "/maintenance-portal/assets",
+ "viewerIssues": "Issues Not included in your plan This page is locked on the BCES-Viewer plan — switch the license in the sidebar to preview it. Back to the portal",
+ "viewerAssetTabs": [
+  "Basic Info",
+  "Maintenance",
+  "Issues\n1",
+  "Connections\n!",
+  "Photos",
+  "Attachments"
+ ],
+ "error": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('combobox').filter({ hasText: /^(Lite|No License|BCES-Lite|BCES-Viewer|Full Access)$/ }).first()\u001b[22m\n",
+ "endIST": "16:47:10"
+}

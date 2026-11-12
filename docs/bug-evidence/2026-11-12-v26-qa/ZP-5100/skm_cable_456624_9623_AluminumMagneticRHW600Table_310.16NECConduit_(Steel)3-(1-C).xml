@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--EG Project Z device export
+Thursday, November 12, 2026 11:20:53-->
+<s:SKM xmlns:s="http://www.skm.com/schemas/powersystem" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<s:PowerSystem>
+<s:Components>
+<s:Cable s:action="create" s:id="1" s:name="CBL-0001" s:altId="" s:altName="" xsi:ID="skm1">
+<s:Field s:id="524294" s:name="KeyInLibrary" s:value="1"/>
+<s:Field s:id="524331" s:name="CableModel" s:value="AluminumMagneticRHW600Table 310.16NECConduit (Steel)3-(1/C)"/>
+<s:Field s:id="524333" s:name="Manufacturer" s:value="NEC"/>
+<s:Field s:id="524318" s:name="CableAmpacityChoice" s:value="Library Design/Derating"/>
+<s:Field s:id="524323" s:name="Description" s:value="Table 310.16"/>
+<s:Field s:id="524300" s:name="CableSize" s:value="12"/>
+<s:Field s:id="524316" s:name="CircularMils" s:value="6530"/>
+<s:Field s:id="524301" s:name="Length" s:value="100.0"/>
+<s:Field s:id="524295" s:name="QtyPerPhase" s:value="1"/>
+<s:Field s:id="524377" s:name="#/Conductors" s:value="3"/>
+<s:Field s:id="524312" s:name="Conductor Desc" s:value="3-(1/C)"/>
+<s:Field s:id="524306" s:name="NeutralSize" s:value="12.00"/>
+<s:Field s:id="524304" s:name="Ground Size (No Parallel)" s:value=""/>
+<s:Field s:id="524303" s:name="Ground Size (Parallel)" s:value=""/>
+<s:Field s:id="524376" s:name="CondConstructions" s:value="RoundStr_dr"/>
+<s:Field s:id="524378" s:name="ConductorOD" s:value="0.1"/>
+<s:Field s:id="524375" s:name="CableOD" s:value="0.2"/>
+<s:Field s:id="524396" s:name="ConductorKp" s:value="1.000"/>
+<s:Field s:id="524395" s:name="ConductorKs" s:value="1.000"/>
+<s:Field s:id="524379" s:name="InsulationThickness" s:value="50.0"/>
+<s:Field s:id="524380" s:name="Insulation Rho" s:value="700.00"/>
+<s:Field s:id="524385" s:name="BeddingThickness" s:value="0.0"/>
+<s:Field s:id="524386" s:name="Bedding Rho" s:value="500.00"/>
+<s:Field s:id="524388" s:name="ArmorType" s:value="None"/>
+<s:Field s:id="524389" s:name="ArmorThickness" s:value="0.0"/>
+<s:Field s:id="524321" s:name="ConductorType" s:value="Aluminum"/>
+<s:Field s:id="524332" s:name="InsulationClass" s:value="RHW"/>
+<s:Field s:id="524305" s:name="InsulationType" s:value=""/>
+<s:Field s:id="524322" s:name="DuctMaterial" s:value="Magnetic"/>
+<s:Field s:id="524334" s:name="Installation" s:value="Conduit (Steel)"/>
+<s:Field s:id="524400" s:name="CableInstallationType" s:value="Conduit (Steel)"/>
+<s:Field s:id="524311" s:name="VoltageRating" s:value="600"/>
+<s:Field s:id="65543" s:name="SystemNominalVoltage" s:value="480.0"/>
+<s:Field s:id="65550" s:name="ConnectionType" s:value="Wye-Ground"/>
+<s:Field s:id="393217" s:name="ConnectedComponent1" s:value=""/>
+<s:Field s:id="393218" s:name="ConnectedComponent2" s:value=""/>
+<s:Field s:id="65556" s:name="Data State" s:value="Incomplete"/>
+<s:Field s:id="65539" s:name="InService" s:value="In"/>
+<s:Field s:id="2" s:name="Alternate UID" s:value=""/>
+<s:Field s:id="65559" s:name="Alternate Name" s:value=""/>
+<s:Field s:id="65569" s:name="Alternate Type" s:value=""/>
+<s:Field s:id="65563" s:name="Alternate Desc 2" s:value=""/>
+<s:Field s:id="65564" s:name="Alternate Cubicle Name" s:value=""/>
+</s:Cable>
+</s:Components>
+</s:PowerSystem>
+</s:SKM>

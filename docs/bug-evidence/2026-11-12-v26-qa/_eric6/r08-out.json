@@ -1,0 +1,79 @@
+{
+ "startIST": "16:42:42",
+ "build": "index-C1ZRIunF.js",
+ "headers": [
+  "Name",
+  "Email",
+  "Job Title",
+  "Crew",
+  "2FA",
+  "Roles",
+  "Status",
+  "Actions"
+ ],
+ "tooltip": "Super Admin, Electrical Engineer, Admin",
+ "chip": "+2",
+ "chipRowRoles": "Super Admin +2",
+ "roleOptions": [
+  "Technician",
+  "Admin",
+  "Portal Sales",
+  "Account Manager",
+  "Electrical Engineer",
+  "Project Manager",
+  "Construction Manager"
+ ],
+ "editText": "Edit User Edit an existing user's information, roles, and site access. Basic Info First Name First Name Last Name Last Name Job Title Job Title Phone Phone Email Email Roles Roles * Construction Manager Roles * Labor Types Assigned Labor Types Assigned Labor Types Account Access Assigned Accounts 6th OCT FREEACCOUNTAP +1 more Assigned Accounts Site Access Assigned Sites Android Site 2 Assigned Sites 1 / 304 selected Select All Platform Access Active This user can log in and access the platform. Cancel Save Changes",
+ "saRail": [
+  "Site Data",
+  "Operations",
+  "Engineering",
+  "Sales",
+  "Builder",
+  "Maintenance Portal",
+  "Admin",
+  "Updates 1",
+  "Help",
+  "aa"
+ ],
+ "ist": "Install Statuses Assets (10) Connections (1) 10 in service Set status ​ ​ Asset Class Subtype Location Enclosure Install Status Status Set By AST-1 Panelboard Control Panel In Service AST-2 ATS In Ser",
+ "history": "",
+ "scenarioMenu": "",
+ "vidSA": {
+  "file": "/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/docs/bug-evidence/2026-11-12-v26-qa/_eric6/vtmp/part-sa.mp4",
+  "sizeMB": 0.9,
+  "seconds": 69,
+  "cutAt": 8.5,
+  "login": "mfa-skipped"
+ },
+ "pmRail": [
+  "Site Data",
+  "Operations",
+  "Maintenance Portal",
+  "Admin",
+  "Updates 1",
+  "Help",
+  "AS"
+ ],
+ "pmIst": "Install Statuses Access Denied You do not have permission to access this page. Please contact your administrator if you believe this is an error. Go to Dashboar",
+ "pmApi": "422 {\n  \"error\": \"permission_denied\",\n  \"message\": \"You do not have permission to perform this action. Required: features.sa",
+ "pmSsld": "SLD 26 18 44 issues All Nodes Scenario Export Layout",
+ "pmSsldNet": [
+  "GET /api/safety/sld/aadcee4c-7dd0-45b3-81b9-309c5c166084/scenarios 422",
+  "GET /api/safety/sld/aadcee4c-7dd0-45b3-81b9-309c5c166084/actual 422",
+  "GET /api/safety/install-statuses/vocabulary 422"
+ ],
+ "pmDenied": true,
+ "vidPM": {
+  "file": "/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/docs/bug-evidence/2026-11-12-v26-qa/_eric6/vtmp/part-pm.mp4",
+  "sizeMB": 0.3,
+  "seconds": 33,
+  "cutAt": 7,
+  "login": "mfa-skipped"
+ },
+ "video": {
+  "size": 1259605,
+  "secs": 101.933333
+ },
+ "endIST": "16:44:42"
+}

@@ -1,0 +1,23 @@
+*Result: PARTLY on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+!QA-12Nov-ZP-4831-video-steps.mp4|width=640!
+_Video: Users roles column and dialogs, the QA-DEMO Construction Manager user, Safety pages for a staff Admin, then a Project Manager without the role (102 s)_
+
+* PASS Users: Roles column shows the first role, a "+N" chip and a tooltip; the "no labor types" column is gone; Create and Edit have no Default role; Construction Manager and Portal Sales are in the picker. A QA-DEMO user with only Construction Manager was created (201).
+* PASS gating: PM / AM / EE / FM / CP have no Safety menu. Typed Install Statuses, LOTO Registry and Scenarios show Access Denied, and the Safety API returns 422.
+* FAIL (minor): typed /safety/sld still renders the SLD canvas with the Scenario control for those seats; its safety calls return 422 (screenshot 6).
+* Question: Admin / Super Admin (no Construction Manager) get no Safety menu, but every Safety page opens by URL and writes work. Should Admins see Safety, or be refused?
+* PASS functions (Admin seat, QA data): set install status, history with reason, restore; scenario create; LOTO Registry; power flow and lockout-options API. Small: lockout-options with a malformed body returns 500 instead of 400.
+* BLOCKED: the Safety menu for a real Construction Manager login. The QA-DEMO CM user has no deliverable email, so it cannot sign in; a CM test seat is needed.
+
+!QA-12Nov-ZP-4831-1-users-roles-plusN-tooltip-PASS.png|width=640!
+_1. PASS: Roles column with "+N" chip and tooltip_
+!QA-12Nov-ZP-4831-2-create-user-roles-cm-portal-sales-PASS.png|width=640!
+_2. PASS: Create User: no Default role; Construction Manager and Portal Sales offered_
+!QA-12Nov-ZP-4831-3-edit-cm-user-no-default-role-PASS.png|width=640!
+_3. PASS: Edit user (Construction Manager only): no Default role_
+!QA-12Nov-ZP-4831-4-admin-no-safety-menu-but-typed-url-opens-FAIL.png|width=640!
+_4. Question: staff Admin has no Safety menu, but typed /safety/install-statuses opens with data_
+!QA-12Nov-ZP-4831-5-pm-typed-install-statuses-access-denied-PASS.png|width=640!
+_5. PASS: Project Manager, typed /safety/install-statuses: Access Denied_
+!QA-12Nov-ZP-4831-6-pm-typed-safety-sld-renders-FAIL.png|width=640!
+_6. FAIL (minor): Project Manager, typed /safety/sld: the SLD canvas renders_

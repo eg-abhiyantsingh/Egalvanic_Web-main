@@ -1,0 +1,55 @@
+{
+ "startIST": "16:56:49",
+ "signin": "mfa-skipped",
+ "build": "index-C1ZRIunF.js",
+ "pick": "Test site A",
+ "rowBefore": "QA-DEMO ZP-4580 3-winding (delete me) Transformer (3-Winding) In Service",
+ "setBtn": "Set status (1)",
+ "dlgText": "Set install status 1 asset Status * ​ Status * Reason Reason Every change is recorded with who made it, when, and the reason. Cancel Apply",
+ "statusOptions": [
+  "PLANNING",
+  "Proposed\n\nnot energizable",
+  "Planned\n\nnot energizable",
+  "Ordered\n\nnot energizable",
+  "Delivered\n\nnot energizable",
+  "INSTALLED",
+  "Equipment Set\n\nnot energizable",
+  "Conduit Complete\n\nnot energizable",
+  "Wire Pulled\n\nnot energizable",
+  "Wire Terminations Complete\n\nmay carry power",
+  "SERVICE",
+  "Tested\n\nmay carry power",
+  "In Service\n\nmay carry power",
+  "Decommissioned\n\nnot energizable"
+ ],
+ "setResp": {
+  "s": 200,
+  "body": "{\n  \"edges\": 0,\n  \"nodes\": 1,\n  \"skipped\": {\n    \"edges\": [],\n    \"nodes\": []\n  },\n  \"success\": true\n}\n",
+  "req": "{\"node_ids\":[\"e79f0f16-28f4-4080-bdc0-b4a5f33653ef\"],\"edge_ids\":[],\"status\":\"tested\",\"reason\":\"QA-DEMO ZP-4831 12 Nov test\"}",
+  "url": "/api/safety/sld/b99f9c84-a4d9-40fe-8f1b-7ef9e38de3f0/install-status"
+ },
+ "rowAfter": "QA-DEMO ZP-4580 3-winding (delete me) Transformer (3-Winding) Tested 11/12/2026, 4:57:15 PM abhiyant admin",
+ "history": "Site Data Operations Engineering Sales Builder Maintenance Portal Admin Updates 1 Help aa Site Data CURRENT SITE ​ DASHBOARDS Site Overview Condition Assessment DATA Assets Panel Schedules Torque Rules Connections Locations QR Labels Issues Tasks MAINTENANCE Maintenance Program Compliance Reports OTHER Attachments V1.36 || Site DataOperationsEngineeringSalesBuilderMaintenance PortalAdminUpdatesHelpaaSite DataCurrent Site​DashboardsSite OverviewCondition AssessmentDataAssetsPanel SchedulesTorque ",
+ "rowRestored": "QA-DEMO ZP-4580 3-winding (delete me) Transformer (3-Winding) In Service 11/12/2026, 4:57:24 PM abhiyant admin",
+ "istTestA": "200 4471",
+ "sld": "b99f9c84-a4d9-40fe-8f1b-7ef9e38de3f0",
+ "qaNode": {
+  "id": "e79f0f16-28f4-4080-bdc0-b4a5f33653ef",
+  "label": "QA-DEMO ZP-4580 3-winding (delete me)",
+  "st": "in_service"
+ },
+ "histApi": "200 {\"events\":[{\"change_reason\":\"QA-DEMO ZP-4831 12 Nov: back to original\",\"changed_at\":\"2026-11-12T11:27:24.421616+00:00\",\"changed_by\":\"77e99d86-7f0a-4345-b056-6f470bb668ec\",\"changed_by_name\":\"abhiyant admin\",\"entity_id\":\"e79f0f16-28f4-4080-bdc0-b4a5f33653ef\",\"entity_label\":\"QA-DEMO ZP-4580 3-winding (delete me)\",\"entity_type\":\"node\",\"id\":\"3c02e938-c2ea-42a5-8f07-c63164b57ba6\",\"new_status\":\"in_servic",
+ "lockout obj": "200 356ms {\"data\":{\"insufficient_info\":true,\"message\":\"We don't have enough topology to reason about how these assets are fed.\",\"not_installed\":[],\"options\":[],\"sld_id\":\"b99f9c84-a4d9-40fe-8f1b-7ef9e38de3f0\",\"targets\":[{\"class_name\":\"Transformer (3-Winding)\",\"id\":\"e79f0f16-28f4-4080-bdc0-b4a5f33653ef\",\"install_status\":\"in_service\",\"label\":\"QA-DEMO ZP-4580 3-winding (delete me)\"}]},\"success\":true}",
+ "lockout array": "500 241ms {\"error\":\"internal_error\",\"success\":false,\"trace_id\":\"bd68b8f4822e4789b8a73103f6a78e56\"}",
+ "pfActual": "200 655ms 2970",
+ "scenarioCreate": "201 {\n  \"data\": {\n    \"created_at\": \"2026-11-12T11:27:36.244895+00:00\",\n    \"created_by\": \"77e99d86-7f0a-4345-b056-6f470bb668ec\",\n    \"description\": \"QA test scenario\",\n    \"effective_on\": null,\n    \"id\":",
+ "scenarios": "Scenarios New scenario ​ ​ Scenario Description Effective Switching Forecast Updated QA-DEMO ZP-4831 scenario 12 Nov QA test scenario 0 0 11/12/2026, 4:57:36 PM Open on SLD Edit Delete Rows per page: 50 1–1 of 1",
+ "lensMenu": "",
+ "cons": [
+  "Failed to load resource: the server responded with a status of 502 ()",
+  "Failed to load resource: the server responded with a status of 500 ()",
+  "WebSocket connection to 'wss://acme.qa.egalvanic.ai/api/realtime/ws?ticket=eyJjIjoiZDU5ZDQ0OWItMDlkOC00NWQ2LThmMGEtZWY3MDAyNGIxMjkzIiwiZXhwIjoxNzk0NDgyOTIxLCJuIjoiYWJoaXlhbnQgYWRtaW4iLCJzIjoiYjk5ZjljO",
+  "WebSocket connection to 'wss://acme.qa.egalvanic.ai/api/realtime/ws?ticket=eyJjIjoiZDU5ZDQ0OWItMDlkOC00NWQ2LThmMGEtZWY3MDAyNGIxMjkzIiwiZXhwIjoxNzk0NDgyOTIzLCJuIjoiYWJoaXlhbnQgYWRtaW4iLCJzIjoiYjk5ZjljO"
+ ],
+ "endIST": "16:57:49"
+}

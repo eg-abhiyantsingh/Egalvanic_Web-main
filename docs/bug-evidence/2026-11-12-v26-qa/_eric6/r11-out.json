@@ -1,0 +1,115 @@
+{
+ "startIST": "16:48:17",
+ "build": "index-C1ZRIunF.js",
+ "fa": {
+  "tier": "T2",
+  "lic": "no_license",
+  "offered": [
+   "read_only",
+   "no_license"
+  ],
+  "roles": [
+   {
+    "id": "2a85145f-31ca-4e2c-8dd2-82c958cd6380",
+    "is_system": true,
+    "name": "Client Portal"
+   }
+  ]
+ },
+ "me": {
+  "roles": [
+   "Client Portal"
+  ],
+  "is_eg_admin": false,
+  "slds": 234
+ },
+ "landing": "/maintenance-portal/overview",
+ "landingCalls": [
+  "POST /api/devrev/session-token 200",
+  "POST /api/features/sync 200"
+ ],
+ "menu": [
+  "Site Overview /maintenance-portal/site-overview",
+  "Site Health /maintenance-portal/overview",
+  "Assets /maintenance-portal/assets",
+  "Reports /maintenance-portal/reports"
+ ],
+ "pages": {
+  "Assets": {
+   "url": "/maintenance-portal/assets",
+   "text": "Assets Arc Flash Readiness 320 of 2773 fields • 4 unclassified 12% Condition Assessment 926 of 3100 fields 30% ​ ​ Asset Name QR Code Condition Asset Class Subt",
+   "calls": [],
+   "err": []
+  },
+  "Reports": {
+   "url": "/maintenance-portal/reports",
+   "text": "Reports Included with a paid plan Condition Assessment NFPA 70B condition bands by asset class, healthy vs at-risk equipment, replacement value at risk, and eve",
+   "calls": [],
+   "err": []
+  },
+  "Connections": {
+   "url": "/maintenance-portal/connections",
+   "text": "Connections Not included in your plan This page isn't included in this account's plan — talk to your account manager to add it. Back to the portal",
+   "calls": [
+    "POST /api/devrev/session-token 200",
+    "POST /api/features/sync 200"
+   ],
+   "err": []
+  },
+  "Attachments": {
+   "url": "/maintenance-portal/attachments",
+   "text": "Attachments Not included in your plan This page isn't included in this account's plan — talk to your account manager to add it. Back to the portal",
+   "calls": [
+    "POST /api/devrev/session-token 200",
+    "POST /api/features/sync 200"
+   ],
+   "err": []
+  },
+  "Notes": {
+   "url": "/maintenance-portal/notes",
+   "text": "Notes Not included in your plan This page isn't included in this account's plan — talk to your account manager to add it. Back to the portal",
+   "calls": [
+    "POST /api/features/sync 200",
+    "POST /api/devrev/session-token 200"
+   ],
+   "err": []
+  },
+  "Site Overview": {
+   "url": "/maintenance-portal/site-overview",
+   "text": "Good afternoon, Abhiyant! TOTAL ASSETS 620 ACTIVE WORK ORDERS 86 EQUIPMENT AT RISK $18,605 $2,500 needs attention · 29 assets Assets by Type 620 assets Circuit ",
+   "calls": [],
+   "err": []
+  }
+ },
+ "assetCalls": [
+  "POST https://o4509671240105984.ingest.us.sentry.io/api/4510464365101056/envelope/?sentry_version=7&sentry_key=b6be32259a437065e80bc19260796221&se 200",
+  "POST https://o4509671240105984.ingest.us.sentry.io/api/4510464365101056/envelope/?sentry_version=7&sentry_key=b6be32259a437065e80bc19260796221&se 200",
+  "POST https://ingestion-useast1.devrev.ai/web/api/ingest/logData/ 200",
+  "GET /api/lookup/v2/nodes/aadcee4c-7dd0-45b3-81b9-309c5c166084/filter-options 200",
+  "GET /api/lookup/v2/nodes/aadcee4c-7dd0-45b3-81b9-309c5c166084?page=1&page_size=25&nest=true&sort_by=created_at&sort_dir=desc 200",
+  "GET /api/node_classes/user/480ed8a5-0e9a-4ed6-8461-02cd5d69b3f3 200",
+  "GET /api/lookup/nodes/aadcee4c-7dd0-45b3-81b9-309c5c166084 200",
+  "POST https://ingestion-useast1.devrev.ai/web/api/ingest/logData/ 200"
+ ],
+ "reloadCalls": [
+  "POST /api/devrev/session-token 200",
+  "POST /api/features/sync 200"
+ ],
+ "tenancy": [],
+ "vid1": {
+  "file": "/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/docs/bug-evidence/2026-11-12-v26-qa/_eric6/vtmp/p5111a.mp4",
+  "sizeMB": 0.76,
+  "seconds": 65,
+  "cutAt": 8.2,
+  "login": "mfa-skipped"
+ },
+ "err2": "TimeoutError: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('a[href=\"/maintenance-portal/connections\"]').first()\u001b[22m\n",
+ "vid2": {
+  "file": "/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/docs/bug-evidence/2026-11-12-v26-qa/_eric6/vtmp/p5111b.mp4",
+  "sizeMB": 0.23,
+  "seconds": 46,
+  "cutAt": 8.8,
+  "login": "mfa-skipped"
+ },
+ "endIST": "16:50:29"
+}

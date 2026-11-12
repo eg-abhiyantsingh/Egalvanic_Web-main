@@ -1,0 +1,63 @@
+{
+ "startIST": "16:21:41",
+ "signin": "mfa-skipped",
+ "build": "index-C1ZRIunF.js",
+ "sldShape": [],
+ "qaDemoSites": [],
+ "androidSite2": [],
+ "combos": [
+  "text:First Name *",
+  "text:Last Name *",
+  "text:Job Title",
+  "text:Phone",
+  "email:Email *",
+  "combobox:Roles *",
+  "combobox:Assigned Sites",
+  "checkbox:Copy me on this invitation\n\nYou'll be notified that the invitation was sent. The notification does not include the user's credentials.",
+  "checkbox:Send a temporary password\n\nThey get a temporary password by email and choose their own at first sign-in. Leave this off for anyone who signs in on the mobile app — it cannot complete that step yet."
+ ],
+ "roleChips": [
+  "Construction Manager"
+ ],
+ "siteOpt": 1,
+ "beforeCreateText": "Create User Add a new user with roles and site access. Basic Info First Name * First Name * Last Name * Last Name * Job Title Job Title Phone Phone Email * Email * Allowed domains: @acme.*, @xyz.com Roles Roles * Construction Manager Roles * Site Access Assigned Sites Android Site 2 Assigned Sites 1 / 303 selected Select All Copy me on this invitation You'll be notified that the invitation was sent. The notification does not include the user's credentials. Send a temporary password They get a temporary password by email and choose their own at first sign-in. Leave this off for anyone who signs in on the mobile app — it cannot complete that step yet. Cancel Create User",
+ "createResp": {
+  "status": 201,
+  "keys": [
+   "send_temporary_password",
+   "user"
+  ],
+  "userKeys": [
+   "active",
+   "active_role_name",
+   "company_id",
+   "copy_invitation_to_creator",
+   "created_at",
+   "created_by",
+   "email",
+   "email_otp_enrolled",
+   "first_name",
+   "id",
+   "is_deleted",
+   "last_name",
+   "mfa_enrolled",
+   "mfa_required",
+   "modified_at",
+   "phone",
+   "profile_image_url",
+   "role",
+   "roles",
+   "username"
+  ],
+  "hasPassword": false
+ },
+ "afterCreateText": "User Created A welcome email with login credentials has been sent to <email>. If the user does not receive the email, please ask them to: Check their Inbox. Check their Spam or Junk folder. Confirm that <email> is correct. Wait a few minutes and refresh their inbox. If the email is still not received, you may resend the invitation or verify the user's email address. If you selected \"Copy me on this invitation,\" you will receive a notification that the invitation was sent. It does not include the user's credentials. Done",
+ "rowsAfter": [
+  "QA-DEMO ZP-4831 CM 12 Nov <email> Construction Manager QA None Off Construction Manager Active",
+  "QA-DEMO ZP-4977 Q1 <email> QA re-test: temp password, never signed in None Off Electrical Engineer Active"
+ ],
+ "editText": "",
+ "editHasDefaultRole": false,
+ "createdId": "614b9590-a071-70d8-d200-c3e16ad3c117",
+ "endIST": "16:23:53"
+}

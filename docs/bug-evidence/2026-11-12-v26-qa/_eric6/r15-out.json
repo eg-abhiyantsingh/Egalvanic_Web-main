@@ -1,0 +1,13 @@
+{
+ "at": "2026-11-12T11:29:23.157Z",
+ "signin": "mfa-skipped",
+ "build": "index-C1ZRIunF.js",
+ "badEmail": "201 {\"data\":{\"id\":\"606b627e-cb78-44cb-a507-c73a5a824c62\",\"invited_at\":\"2026-11-12T11:29:31Z\",\"invited_email\":\"not-an-email\",\"prime_company_id\":\"d59d449b-09d8-45d6-8f0a-ef70024b1293\",\"prime_company_name\":null,\"responded_at\":n",
+ "emptyEmail": "409 {\"error\":\"link_exists\",\"message\":\"This subcontractor already has a link or a pending invite.\",\"success\":false}",
+ "cleanup": 200,
+ "lockoutArray": "500 {\"error\":\"internal_error\",\"success\":false,\"trace_id\":\"97a4962e3f95406c8d2e163a987bb4d5\"}",
+ "lockoutString": "200 {\"data\":{\"insufficient_info\":true,\"message\":\"None of the selected assets are installed on this site.\",\"not_installed\":[\"x\"],\"options\":[],\"sld_id\":\"b99f9c84-a4d9-40fe-8f1b-7ef9e38de3f0\",\"targets\":[]},\"",
+ "lockoutOk": "200 {\"data\":{\"insufficient_info\":true,\"message\":\"We don't have enough topology to reason about how these assets are fed.\",\"n",
+ "badEnum": "400 {\"allowed\":[\"proposed\",\"planned\",\"ordered\",\"delivered\",\"equipment_set\",\"conduit_complete\",\"wire_pulled\",\"wire_terminations_complete\",\"tested\",\"in_service\",\"decommissioned\"],\"error\":\"invalid install st",
+ "nodeAfter": "in_service"
+}

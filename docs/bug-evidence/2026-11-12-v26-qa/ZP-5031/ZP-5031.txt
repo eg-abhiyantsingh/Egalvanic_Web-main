@@ -1,0 +1,19 @@
+*Result: PARTLY on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+!QA-12Nov-ZP-5031-video-steps.mp4|width=640!
+_Video: SIMULATED BCES-Lite Issues and Engineering tab, BCES-Viewer, then the real non-BCES Lite and Site Data negatives (106 s)_
+
+* QA acme offers no BCES tier, so the BCES checks use the staff License preview with SIMULATED BCES tiers.
+* PASS (SIMULATED BCES-Lite): Issues shows "Export Issue Report" and no "Export CSV". It opens the Generate Report dialog with "Issue Report (Copy)" preselected (not generated).
+* PASS (SIMULATED BCES-Lite): asset Engineering tab is shown, view-only: no edit, no export, no readiness ring.
+* PASS (SIMULATED BCES-Viewer): no Engineering tab; Issues is locked on this tier.
+* PASS (real): non-BCES Lite and Site Data › Issues keep "Export CSV"; the Engineering tab stays hidden in the portal for non-BCES tiers.
+* BLOCKED: a real BCES-Lite / BCES-Viewer portal login (BCES-IQ or a QA company offering BCES tiers).
+
+!QA-12Nov-ZP-5031-1-SIMULATED-bces-lite-issues-export-issue-report-PASS.png|width=640!
+_1. PASS (SIMULATED BCES-Lite): Export Issue Report replaces Export CSV_
+!QA-12Nov-ZP-5031-2-SIMULATED-export-issue-report-dialog-configs-PASS.png|width=640!
+_2. PASS (SIMULATED BCES-Lite): report dialog with the issue-report configurations_
+!QA-12Nov-ZP-5031-3-SIMULATED-bces-lite-engineering-tab-view-only-PASS.png|width=640!
+_3. PASS (SIMULATED BCES-Lite): Engineering tab, view-only_
+!QA-12Nov-ZP-5031-4-lite-non-bces-issues-export-csv-PASS.png|width=640!
+_4. PASS: non-BCES Lite keeps Export CSV_

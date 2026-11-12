@@ -1,0 +1,497 @@
+{
+ "PM": {
+  "startIST": "16:08:08",
+  "signin": "mfa-skipped",
+  "build": "index-C1ZRIunF.js",
+  "me": {
+   "status": 200,
+   "roles": [
+    "Project Manager"
+   ],
+   "is_admin": false,
+   "is_eg_admin": false,
+   "web": true,
+   "n": 101,
+   "safety": [],
+   "usersView": false,
+   "usersManage": true,
+   "slds": 120
+  },
+  "api": {
+   "/guest-access/guests": {
+    "s": 200,
+    "ct": "application/json",
+    "len": 36,
+    "body": "{\"data\":[],\"success\":true}"
+   },
+   "/guest-access/roles": {
+    "s": 200,
+    "ct": "application/json",
+    "len": 840,
+    "body": "{\"data\":[{\"description\":\"Account Manager role — view-only SLD access, curated feature flags\",\"id\":\"392a2233-e4a3-4322-a440-7fd62b4bed7e\",\"name\":\"Account Manager"
+   },
+   "/guest-access/workspaces": {
+    "s": 200,
+    "ct": "application/json",
+    "len": 468,
+    "body": "{\"data\":{\"invites\":[],\"subcontracting\":{\"can_manage\":false,\"invites\":[],\"linked\":false},\"workspaces\":[{\"company_id\":\"d59d449b-09d8-45d6-8f0a-ef70024b1293\",\"curr"
+   },
+   "/subcontracting": {
+    "s": 403,
+    "ct": "application/json",
+    "len": 102,
+    "body": "{\"error\":\"admin_only\",\"message\":\"Only admins can manage subcontracting\",\"success\":false}"
+   },
+   "/subcontracting/link-candidates": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 200,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: company_data.manage\",\"required_permission\":\"company_data.ma"
+   },
+   "/safety/install-statuses/vocabulary": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 236,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: features.safety.install_statuses.view\",\"required_permission"
+   },
+   "/safety/sld/{own}/install-statuses": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 236,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: features.safety.install_statuses.view\",\"required_permission"
+   },
+   "/safety/sld/{foreign}/install-statuses": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 236,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: features.safety.install_statuses.view\",\"required_permission"
+   },
+   "/safety/sld/{own}/scenarios": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 222,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: features.safety.scenarios.view\",\"required_permission\":\"feat"
+   }
+  },
+  "rail": [
+   "Home",
+   "Site Data",
+   "Operations",
+   "Maintenance Portal",
+   "Admin",
+   "Updates 1",
+   "Help",
+   "AS"
+  ],
+  "menu": {
+   "Site Data": [
+    "/dashboard",
+    "/pm-readiness",
+    "/arc-flash",
+    "/assets",
+    "/torque-rules",
+    "/connections",
+    "/locations",
+    "/qr-labels",
+    "/issues",
+    "/tasks",
+    "/maintenance/program",
+    "/maintenance/compliance",
+    "/maintenance/reports",
+    "/attachments"
+   ],
+   "Operations": [
+    "/ops-dashboard",
+    "/planned-work",
+    "/planning-board",
+    "/maintenance-calendar",
+    "/sessions",
+    "/test-equipment"
+   ],
+   "Maintenance Portal": [
+    "/maintenance-portal/site-overview",
+    "/maintenance-portal/overview",
+    "/maintenance-portal/condition",
+    "/maintenance-portal/assets",
+    "/maintenance-portal/connections",
+    "/maintenance-portal/locations",
+    "/maintenance-portal/panel-schedules",
+    "/maintenance-portal/issues",
+    "/maintenance-portal/program",
+    "/maintenance-portal/compliance",
+    "/maintenance-portal/reports"
+   ],
+   "Admin": [
+    "/customers"
+   ]
+  },
+  "shot_Admin": "w-PM-admin-panel.png",
+  "navCollaborators": false,
+  "navSafety": [],
+  "typed /collaborators": {
+   "url": "/collaborators",
+   "denied": true,
+   "text": "Collaborators Access Denied You do not have permission to access this page. Please contact your administrator if you believe this is an error. Go to Dashboard",
+   "err": [],
+   "shot": "w-PM-typed-collaborators.png"
+  },
+  "typed /guests": {
+   "url": "/collaborators",
+   "denied": true,
+   "text": "Collaborators Access Denied You do not have permission to access this page. Please contact your administrator if you believe this is an error. Go to Dashboard",
+   "err": []
+  },
+  "typed /safety/install-statuses": {
+   "url": "/safety/install-statuses",
+   "denied": true,
+   "text": "Install Statuses Access Denied You do not have permission to access this page. Please contact your administrator if you believe this is an error. Go to Dashboard",
+   "err": [],
+   "shot": "w-PM-typed-safety-install-statuses.png"
+  },
+  "typed /safety/loto-registry": {
+   "url": "/safety/loto-registry",
+   "denied": true,
+   "text": "LOTO Registry Access Denied You do not have permission to access this page. Please contact your administrator if you believe this is an error. Go to Dashboard",
+   "err": []
+  },
+  "typed /safety/sld": {
+   "url": "/safety/sld",
+   "denied": false,
+   "text": "SLD 26 18 44 issues All Nodes Scenario Export Layout",
+   "err": [
+    "422 GET /api/safety/install-statuses/vocabulary",
+    "422 GET /api/safety/sld/aadcee4c-7dd0-45b3-81b9-309c5c166084/scenarios",
+    "422 GET /api/safety/sld/aadcee4c-7dd0-45b3-81b9-309c5c166084/actual"
+   ]
+  },
+  "typed /safety/scenarios": {
+   "url": "/safety/scenarios",
+   "denied": true,
+   "text": "Scenarios Access Denied You do not have permission to access this page. Please contact your administrator if you believe this is an error. Go to Dashboard",
+   "err": []
+  },
+  "endIST": "16:09:01"
+ },
+ "AM": {
+  "startIST": "16:09:01",
+  "signin": "mfa-skipped",
+  "build": "index-C1ZRIunF.js",
+  "me": {
+   "status": 200,
+   "roles": [
+    "Account Manager"
+   ],
+   "is_admin": false,
+   "is_eg_admin": false,
+   "web": true,
+   "n": 83,
+   "safety": [],
+   "usersView": false,
+   "usersManage": true,
+   "slds": 114
+  },
+  "api": {
+   "/guest-access/guests": {
+    "s": 200,
+    "ct": "application/json",
+    "len": 36,
+    "body": "{\"data\":[],\"success\":true}"
+   },
+   "/guest-access/roles": {
+    "s": 200,
+    "ct": "application/json",
+    "len": 840,
+    "body": "{\"data\":[{\"description\":\"Account Manager role — view-only SLD access, curated feature flags\",\"id\":\"392a2233-e4a3-4322-a440-7fd62b4bed7e\",\"name\":\"Account Manager"
+   },
+   "/guest-access/workspaces": {
+    "s": 200,
+    "ct": "application/json",
+    "len": 468,
+    "body": "{\"data\":{\"invites\":[],\"subcontracting\":{\"can_manage\":false,\"invites\":[],\"linked\":false},\"workspaces\":[{\"company_id\":\"d59d449b-09d8-45d6-8f0a-ef70024b1293\",\"curr"
+   },
+   "/subcontracting": {
+    "s": 403,
+    "ct": "application/json",
+    "len": 102,
+    "body": "{\"error\":\"admin_only\",\"message\":\"Only admins can manage subcontracting\",\"success\":false}"
+   },
+   "/subcontracting/link-candidates": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 200,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: company_data.manage\",\"required_permission\":\"company_data.ma"
+   },
+   "/safety/install-statuses/vocabulary": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 236,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: features.safety.install_statuses.view\",\"required_permission"
+   },
+   "/safety/sld/{own}/install-statuses": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 236,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: features.safety.install_statuses.view\",\"required_permission"
+   },
+   "/safety/sld/{foreign}/install-statuses": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 236,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: features.safety.install_statuses.view\",\"required_permission"
+   },
+   "/safety/sld/{own}/scenarios": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 222,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: features.safety.scenarios.view\",\"required_permission\":\"feat"
+   }
+  },
+  "rail": [
+   "Home",
+   "Site Data",
+   "Sales",
+   "Maintenance Portal",
+   "Admin",
+   "Updates 1",
+   "Help",
+   "AS"
+  ],
+  "menu": {
+   "Site Data": [
+    "/pm-readiness",
+    "/arc-flash",
+    "/assets",
+    "/torque-rules",
+    "/qr-labels",
+    "/issues",
+    "/maintenance/program",
+    "/maintenance/compliance",
+    "/maintenance/reports"
+   ],
+   "Sales": [
+    "/sales-overview",
+    "/site-walks",
+    "/opportunities"
+   ],
+   "Maintenance Portal": [
+    "/maintenance-portal/site-overview",
+    "/maintenance-portal/overview",
+    "/maintenance-portal/condition",
+    "/maintenance-portal/assets",
+    "/maintenance-portal/connections",
+    "/maintenance-portal/locations",
+    "/maintenance-portal/panel-schedules",
+    "/maintenance-portal/issues",
+    "/maintenance-portal/program",
+    "/maintenance-portal/compliance",
+    "/maintenance-portal/reports"
+   ],
+   "Admin": [
+    "/customers"
+   ]
+  },
+  "shot_Admin": "w-AM-admin-panel.png",
+  "navCollaborators": false,
+  "navSafety": [],
+  "typed /collaborators": {
+   "url": "/collaborators",
+   "denied": true,
+   "text": "Collaborators Access Denied You do not have permission to access this page. Please contact your administrator if you believe this is an error. Go to Dashboard",
+   "err": [],
+   "shot": "w-AM-typed-collaborators.png"
+  },
+  "typed /guests": {
+   "url": "/collaborators",
+   "denied": true,
+   "text": "Collaborators Access Denied You do not have permission to access this page. Please contact your administrator if you believe this is an error. Go to Dashboard",
+   "err": []
+  },
+  "typed /safety/install-statuses": {
+   "url": "/safety/install-statuses",
+   "denied": true,
+   "text": "Install Statuses Access Denied You do not have permission to access this page. Please contact your administrator if you believe this is an error. Go to Dashboard",
+   "err": [],
+   "shot": "w-AM-typed-safety-install-statuses.png"
+  },
+  "typed /safety/loto-registry": {
+   "url": "/safety/loto-registry",
+   "denied": true,
+   "text": "LOTO Registry Access Denied You do not have permission to access this page. Please contact your administrator if you believe this is an error. Go to Dashboard",
+   "err": []
+  },
+  "typed /safety/sld": {
+   "url": "/safety/sld",
+   "denied": false,
+   "text": "SLD 26 18 44 issues All Nodes Scenario Export Layout",
+   "err": [
+    "422 GET /api/safety/sld/aadcee4c-7dd0-45b3-81b9-309c5c166084/scenarios",
+    "422 GET /api/safety/sld/aadcee4c-7dd0-45b3-81b9-309c5c166084/actual",
+    "422 GET /api/safety/install-statuses/vocabulary"
+   ]
+  },
+  "typed /safety/scenarios": {
+   "url": "/safety/scenarios",
+   "denied": true,
+   "text": "Scenarios Access Denied You do not have permission to access this page. Please contact your administrator if you believe this is an error. Go to Dashboard",
+   "err": []
+  },
+  "endIST": "16:09:52"
+ },
+ "EE": {
+  "startIST": "16:09:52",
+  "signin": "mfa-skipped",
+  "build": "index-C1ZRIunF.js",
+  "me": {
+   "status": 200,
+   "roles": [
+    "Electrical Engineer"
+   ],
+   "is_admin": false,
+   "is_eg_admin": false,
+   "web": true,
+   "n": 84,
+   "safety": [],
+   "usersView": false,
+   "usersManage": true,
+   "slds": 4
+  },
+  "api": {
+   "/guest-access/guests": {
+    "s": 200,
+    "ct": "application/json",
+    "len": 36,
+    "body": "{\"data\":[],\"success\":true}"
+   },
+   "/guest-access/roles": {
+    "s": 200,
+    "ct": "application/json",
+    "len": 840,
+    "body": "{\"data\":[{\"description\":\"Account Manager role — view-only SLD access, curated feature flags\",\"id\":\"392a2233-e4a3-4322-a440-7fd62b4bed7e\",\"name\":\"Account Manager"
+   },
+   "/guest-access/workspaces": {
+    "s": 200,
+    "ct": "application/json",
+    "len": 795,
+    "body": "{\"data\":{\"invites\":[],\"subcontracting\":{\"can_manage\":false,\"invites\":[],\"linked\":false},\"workspaces\":[{\"company_id\":\"d59d449b-09d8-45d6-8f0a-ef70024b1293\",\"curr"
+   },
+   "/subcontracting": {
+    "s": 403,
+    "ct": "application/json",
+    "len": 102,
+    "body": "{\"error\":\"admin_only\",\"message\":\"Only admins can manage subcontracting\",\"success\":false}"
+   },
+   "/subcontracting/link-candidates": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 200,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: company_data.manage\",\"required_permission\":\"company_data.ma"
+   },
+   "/safety/install-statuses/vocabulary": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 236,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: features.safety.install_statuses.view\",\"required_permission"
+   },
+   "/safety/sld/{own}/install-statuses": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 236,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: features.safety.install_statuses.view\",\"required_permission"
+   },
+   "/safety/sld/{foreign}/install-statuses": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 236,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: features.safety.install_statuses.view\",\"required_permission"
+   },
+   "/safety/sld/{own}/scenarios": {
+    "s": 422,
+    "ct": "application/json",
+    "len": 222,
+    "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: features.safety.scenarios.view\",\"required_permission\":\"feat"
+   }
+  },
+  "rail": [
+   "Home",
+   "Site Data",
+   "Engineering",
+   "Admin",
+   "Updates 1",
+   "Help",
+   "AS"
+  ],
+  "menu": {
+   "Site Data": [
+    "/dashboard",
+    "/pm-readiness",
+    "/assets",
+    "/panel-schedules",
+    "/torque-rules",
+    "/connections",
+    "/locations",
+    "/issues",
+    "/tasks",
+    "/maintenance/program",
+    "/maintenance/compliance",
+    "/attachments"
+   ],
+   "Engineering": [
+    "/arc-flash",
+    "/slds",
+    "/short-circuit-ratings",
+    "/feeder-schedule",
+    "/ocpd-settings",
+    "/transformer-schedule"
+   ],
+   "Admin": [
+    "/customers"
+   ]
+  },
+  "shot_Admin": "w-EE-admin-panel.png",
+  "navCollaborators": false,
+  "navSafety": [],
+  "typed /collaborators": {
+   "url": "/collaborators",
+   "denied": true,
+   "text": "Collaborators Access Denied You do not have permission to access this page. Please contact your administrator if you believe this is an error. Go to Dashboard",
+   "err": [],
+   "shot": "w-EE-typed-collaborators.png"
+  },
+  "typed /guests": {
+   "url": "/collaborators",
+   "denied": true,
+   "text": "Collaborators Access Denied You do not have permission to access this page. Please contact your administrator if you believe this is an error. Go to Dashboard",
+   "err": []
+  },
+  "typed /safety/install-statuses": {
+   "url": "/safety/install-statuses",
+   "denied": true,
+   "text": "Install Statuses Access Denied You do not have permission to access this page. Please contact your administrator if you believe this is an error. Go to Dashboard",
+   "err": [],
+   "shot": "w-EE-typed-safety-install-statuses.png"
+  },
+  "typed /safety/loto-registry": {
+   "url": "/safety/loto-registry",
+   "denied": true,
+   "text": "LOTO Registry Access Denied You do not have permission to access this page. Please contact your administrator if you believe this is an error. Go to Dashboard",
+   "err": []
+  },
+  "typed /safety/sld": {
+   "url": "/safety/sld",
+   "denied": false,
+   "text": "SLD No issues All Nodes Scenario Export Layout",
+   "err": [
+    "422 GET /api/safety/sld/9fbd40f2-3fbf-4249-a228-cae3629ec17a/actual",
+    "422 GET /api/safety/install-statuses/vocabulary",
+    "422 GET /api/safety/sld/9fbd40f2-3fbf-4249-a228-cae3629ec17a/scenarios"
+   ]
+  },
+  "typed /safety/scenarios": {
+   "url": "/safety/scenarios",
+   "denied": true,
+   "text": "Scenarios Access Denied You do not have permission to access this page. Please contact your administrator if you believe this is an error. Go to Dashboard",
+   "err": []
+  },
+  "endIST": "16:10:42"
+ }
+}

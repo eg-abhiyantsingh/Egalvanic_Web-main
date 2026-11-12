@@ -1,0 +1,14 @@
+*Result: PASS on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+!QA-12Nov-ZP-4835-video-steps.mp4|width=640!
+_Video: Audit Log, two queued changes on my own QA-DEMO site (one fails on save), then the result and the error details (65 s)_
+
+* A queued node update with a room that does not exist (FK violation on nodes.room_id) was counted, retried and dead-lettered after 4 attempts (about 11 s). No endless retry. Seen 3 times today.
+* The recorded error is now the real one (ForeignKeyViolation), not "transaction has been rolled back… first issue Session.rollback()" as on 2 Nov (#185049).
+* A valid change on another node of the same site, sent right after, applied within seconds. A later change on the failed node itself also applied, so the lane is not blocked.
+* Not testable from the web: local backend vs the dev queue, the ECS/RDS gate and the MUTATION_QUEUE_ENV override. This needs a dev check.
+* Side note (separate, low): GET /api/mutations?status=pending (any unknown status) returns 500 instead of 400.
+
+!QA-12Nov-ZP-4835-1-audit-log-dead-letter-and-applied.png|width=640!
+_1. Admin › Audit Log: failing change A = Dead Letter (4 attempts), change B on the same site = Applied_
+!QA-12Nov-ZP-4835-2-dead-letter-details-real-error.png|width=640!
+_2. View Details: the real database error is recorded_

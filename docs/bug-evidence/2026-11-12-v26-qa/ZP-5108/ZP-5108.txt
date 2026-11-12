@@ -1,0 +1,23 @@
+*Result: PASS on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+!QA-12Nov-ZP-5108-video-steps.mp4|width=640!
+_Video: Details rings, Study File and Report cards, an SLD edit that creates a bus–OCP–bus chain, the Topology Errors refresh, a new asset joining with Arc Flash, a check-off with incomplete data, then the Guided Tour (151 s at 1.4×)_
+
+* Work order Details shows Field Data Collected (with "x of y arc-flash ready" under it), Engineering Approved and Topology Errors, plus the Study File and Report cards. Generate Report opens the report dialog.
+* A check-off on an asset with incomplete arc-flash data shows "1 checked off with incomplete data" beside the count. The Study File card warns too.
+* Breaker inside SWBD-1 wired straight to bus PNL-1: the SLD flags "Buses connected without impedance", and the Topology Errors ring goes from No errors to 1 error after the SLD tab, with no reload.
+* exclude_kinds=sccr drops the SCCR-kind assets (5 → 3), so Engineering Approved reads 2 of 3.
+* Add New Asset in the work order: the new breaker joins with Arc Flash Data Collection already registered. ⋮ › Take the Guided Tour runs the 9-step AFDC tour.
+* feature-skm-export (ON for Acme): a simulated OFF and a LaunchDarkly outage both hide the Topology ring and the Study File card. A real OFF check is still needed.
+* Not covered: connection cables joining the WO (no cable nodes on my test site).
+* Test data: [https://acme.qa.egalvanic.ai/sessions/c3791ea4-f421-465e-9c16-61b37eecdd6d]
+
+!QA-12Nov-ZP-5108-1-details-rings-engineering-topology.png|width=640!
+_1. Details: Field Data (arc-flash ready), Engineering Approved 2 of 3, Topology Errors_
+!QA-12Nov-ZP-5108-3-topology-errors-1-after-sld-edit.png|width=640!
+_2. After the SLD edit: Topology Errors = 1 error_
+!QA-12Nov-ZP-5108-4-sld-issue-bus-ocp-no-impedance.png|width=640!
+_3. The SLD issue: buses connected without impedance (through the breaker inside SWBD-1)_
+!QA-12Nov-ZP-5108-5-arc-flash-readiness-beside-check-off.png|width=640!
+_4. 1 of 6 checked off, 0 of 6 arc-flash ready, "1 checked off with incomplete data"_
+!QA-12Nov-ZP-5108-6-new-asset-joined-with-work-type.png|width=640!
+_5. A new asset joined the work order with Arc Flash registered_

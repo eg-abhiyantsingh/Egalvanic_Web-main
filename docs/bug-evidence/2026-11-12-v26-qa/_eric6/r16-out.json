@@ -1,0 +1,24 @@
+{
+ "build": "index-C1ZRIunF.js",
+ "picker": [
+  "BCES-Lite",
+  "BCES-Viewer",
+  "Lite",
+  "No License"
+ ],
+ "ncEN": " = Additional cost BCES-Lite Read-only portal: Site Overview, Condition Assessment, Assets, Connections, Locations, Issues, Attachments and Notes. Client Portal users only. BCES-Viewer View-only BCES portal: Assets, with the rest of the BCES-Lite pages shown locked. Client Portal users only. Lite View-only access. Can only be assigned the Client Portal role. No License Free portal: Site Health, Assets and the latest report. Client Portal users only. Cancel Create",
+ "subSim": true,
+ "subCount": 3,
+ "subText": [
+  "rder form T2 licenses 57 Full Access · 9 Lite · 1 BCES-Lite · 74 No License · 2 BCES-Viewer $144,900 / yr CUSTOMER TIER PORTAL USERS ANNUAL RATE Default EG-ACME Account BC"
+ ],
+ "ncFR": " = Coût supplémentaire BCES-Lite Portail en lecture seule : aperçu du site, évaluation de l'état, actifs, connexions, emplacements, problèmes, pièces jointes et notes. Utilisateurs Portail client uniquement. BCES-Viewer Portail BCES en consultation : actifs, les autres pages BCES-Lite affichées verrouillées. Utilisateurs Portail client uniquement. Lite Accès en lecture seule. Peut uniquement se voir attribuer le rôle Portail client. Aucune licence Portail gratuit : santé du site, actifs et dernier rapport. Utilisateurs Portail client uniquement. Annuler Créer",
+ "lang": "en",
+ "video": {
+  "file": "/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/docs/bug-evidence/2026-11-12-v26-qa/_eric6/vtmp/v5026b.mp4",
+  "sizeMB": 0.96,
+  "seconds": 53,
+  "cutAt": 8.3,
+  "login": "mfa-skipped"
+ }
+}

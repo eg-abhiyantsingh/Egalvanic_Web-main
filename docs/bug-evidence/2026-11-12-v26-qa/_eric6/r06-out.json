@@ -1,0 +1,49 @@
+{
+ "startIST": "16:35:39",
+ "build": "index-C1ZRIunF.js",
+ "redirect": "/collaborators",
+ "send": {
+  "status": 201,
+  "sub_company_name": null
+ },
+ "reqRow": "<email> Subcontractor link Sent QA-DEMO ZP-4830 12 Nov sub 11/12/2026",
+ "reqActions": [
+  "?"
+ ],
+ "wTooltip": "Withdraw",
+ "wDialog": "Withdraw the request? undefined's company can no longer accept it. Cancel Withdraw",
+ "wToast": "",
+ "wNet": [],
+ "wCons": [
+  "[UserError]  Operation failed: {}"
+ ],
+ "stillThere": true,
+ "simIncomingRow": "SIMULATED Prime Co Wants you as a subcontractor Received — 11/12/2026",
+ "simIncomingBtns": 1,
+ "simIncomingTooltip": "Withdraw",
+ "simLinkRow": "SIMULATED Sub Co Your subcontractor QA-DEMO ZP-4830 12 Nov sub — — 11/12/2026",
+ "simLinkBtns": 1,
+ "simLinkTooltip": "End link",
+ "simLinkDialog": "",
+ "error": "Error: page.evaluate: TypeError: Failed to execute 'fetch' on 'Window': Failed to parse URL from /api/vendors/b4c35a0a-3f50-4a4b-bf64-c72a3fb1f7fc/link\n    at eval (eval at evaluate (:311:30), <anonymous>:1:33)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)",
+ "cons": [
+  "[UserError]  Operation failed: {}",
+  "PAGEERROR TypeError: Cannot read properties of undefined (reading 'account_name')"
+ ],
+ "net": [
+  "16:36:05 GET /api/subcontracting 200",
+  "16:36:14 GET /api/subcontracting/link-candidates 200",
+  "16:36:21 POST /api/vendors/b4c35a0a-3f50-4a4b-bf64-c72a3fb1f7fc/link 201",
+  "16:36:21 GET /api/subcontracting 200",
+  "16:36:44 GET /api/subcontracting 200",
+  "16:36:53 GET /api/subcontracting 200"
+ ],
+ "video": {
+  "file": "/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/docs/bug-evidence/2026-11-12-v26-qa/ZP-4830/QA-12Nov-ZP-4830-video-steps.mp4",
+  "sizeMB": 0.79,
+  "seconds": 114,
+  "cutAt": 8.6,
+  "login": "mfa-skipped"
+ },
+ "endIST": "16:37:47"
+}

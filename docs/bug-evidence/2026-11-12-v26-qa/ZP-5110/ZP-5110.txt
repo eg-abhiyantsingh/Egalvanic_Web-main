@@ -1,0 +1,20 @@
+*Result: PASS on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+!QA-12Nov-ZP-5110-video-steps.mp4|width=640!
+_Video: fill a section input by input, the auto-done, un-fill and refill, save and reopen, then a section with a hidden field and a conditional field (124 s)_
+
+* All visible inputs filled: the section completes by itself. The footer shows "Done — all fields filled" and the navigator shows a green check.
+* One visible input blank: the section stays incomplete. Clearing a value after the auto-done reverts it.
+* Save as Draft and reopen: the values and the done state are kept.
+* A hidden field (visible:false) and a conditional field that is not shown do not block completion. Once the conditional field shows (answer Yes) and is empty, the section is not done until it is filled.
+* Test data: QA-DEMO work order [https://acme.qa.egalvanic.ai/sessions/96fdd76a-542f-45cf-bc92-569a00871bc4], new QA-DEMO form "QA-DEMO ZP-5110 12 Nov conditional section v2".
+
+!QA-12Nov-ZP-5110-1-one-input-blank-not-done.png|width=640!
+_1. One input empty: "Section Done" is still offered (not done)_
+!QA-12Nov-ZP-5110-2-all-filled-done-automatically.png|width=640!
+_2. All filled: "Done — all fields filled", green check in the navigator_
+!QA-12Nov-ZP-5110-3-after-save-draft-reopen-still-done.png|width=640!
+_3. After Save Draft and reopen: still done_
+!QA-12Nov-ZP-5110-4-hidden-and-conditional-do-not-block.png|width=640!
+_4. Hidden field and not-shown conditional field do not block completion_
+!QA-12Nov-ZP-5110-5-conditional-shown-empty-not-done.png|width=640!
+_5. Conditional field shown and empty: not done_

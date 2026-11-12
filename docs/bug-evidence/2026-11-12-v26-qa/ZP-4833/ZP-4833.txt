@@ -1,0 +1,17 @@
+*Result: PARTLY on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+!QA-12Nov-ZP-4833-video-steps.mp4|width=640!
+_Video: notifications OFF schedule, the notifications ON control, SIMULATED notify ON, then Subcontractors (78 s)_
+
+* PASS: notifications OFF ("QA-DEMO ZP-4583 any-crew demo 19 Oct" › Schedule): Activity now reads "Schedule locked for confirmation". On 5 Nov it still said "sent".
+* PASS: control with notifications ON and the notice really sent: "Schedule sent for confirmation to N recipients" is unchanged.
+* PASS (SIMULATED notify_enabled = true on the same work order): the lock entry reads "Schedule sent for confirmation". QA has no real work order in that state.
+* BLOCKED: a linked subcontractor's Team on a schedule. No subcontractor on QA has an accepted company link, and the Accept button in Collaborators › Requests does not render today (see ZP-4830).
+
+!QA-12Nov-ZP-4833-1-notify-off-schedule-locked-for-confirmation-PASS.png|width=640!
+_1. PASS: notifications off: "Schedule locked for confirmation"_
+!QA-12Nov-ZP-4833-2-notify-on-control-sent-to-recipients-PASS.png|width=640!
+_2. PASS: control, notifications on: "sent for confirmation to N recipients"_
+!QA-12Nov-ZP-4833-3-SIMULATED-notify-on-schedule-sent-for-confirmation-PASS.png|width=640!
+_3. PASS (SIMULATED notify on): "Schedule sent for confirmation"_
+!QA-12Nov-ZP-4833-4-subcontractors-no-linked-team-BLOCKED.png|width=640!
+_4. BLOCKED: no subcontractor is linked to a company, so there is no linked Team to schedule_

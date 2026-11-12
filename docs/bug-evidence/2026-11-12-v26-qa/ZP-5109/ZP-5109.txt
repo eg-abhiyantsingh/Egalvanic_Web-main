@@ -1,0 +1,21 @@
+*Result: PASS on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+!QA-12Nov-ZP-5109-video-steps.mp4|width=640!
+_Video: Equipment Designations on a QA-DEMO site with 3 new breakers; Approve blocked, a library link made in the drawer, Approve & Next, Approve, then the last row (83 s)_
+
+* The asset drawer now has Approve and Approve & Next. With no library link both are disabled: "Link this asset to a library entry (and save) to approve it".
+* A library match made inside the drawer (ABB Emax 2 E1.2, not saved yet) enables both buttons right away.
+* Approve & Next saves the link, marks CB-1 Complete ("CB-1 approved") and moves the drawer to CB-2.
+* Approve on CB-2 approves it and closes the drawer. Engineering Approved goes 0 of 3 → 2 of 3.
+* The last row (CB-3) offers only Approve.
+* Suggestion: show the asset name in the drawer header. After Approve & Next it is hard to tell which asset is open.
+
+!QA-12Nov-ZP-5109-1-approve-disabled-until-library-link.png|width=640!
+_1. Not linked: Approve / Approve & Next disabled, with the reason_
+!QA-12Nov-ZP-5109-2-library-linked-in-drawer-approve-enabled.png|width=640!
+_2. Linked in the drawer (not saved): both enabled_
+!QA-12Nov-ZP-5109-3-approve-and-next-advanced-to-cb2.png|width=640!
+_3. After Approve & Next: "CB-1 approved", drawer now on CB-2_
+!QA-12Nov-ZP-5109-4-both-approved-header-updated.png|width=640!
+_4. CB-1 and CB-2 Complete, Engineering Approved 2 of 3_
+!QA-12Nov-ZP-5109-5-last-asset-no-approve-and-next.png|width=640!
+_5. Last asset: only Approve_

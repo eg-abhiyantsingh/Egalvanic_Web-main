@@ -1,0 +1,22 @@
+*Result: PASS on QA except one row, which is filed as a new bug* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+!QA-12Nov-ZP-4947-video-steps.mp4|width=640!
+_Video: Add to View copies the hide, Show Connection in a view survives reload, All Nodes unchanged, Insert Cable in view A, view B left unconnected (re-proved), remove-from-view (126 s, 1.5× speed)_
+
+* Passed: Add to View now copies a hidden connection into the new view (edge_mappings_created 2; on 5 Nov it was 0).
+* Passed: Show Connection in a view saves an empty override (edge_manips \{\}) and the connection stays shown after reload; All Nodes keeps its hide and elbow.
+* Passed: node menu › Remove from View also removes the cable left with one neighbour.
+* Failed, filed as ZP-5262 (Medium, Avani, Web v2.6): Insert Cable on XFMR-1 → PNL-3 in view A creates node bus + cable, but view B (also holds XFMR-1 and PNL-3) gets neither and shows the two unconnected — re-proved on FUSE nosub → Load-1.
+* Filed as ZP-5263 (Low, Avani): toolbar Delete › "Remove from View" removes only the node; the cable (even a hidden one) stays.
+* Not covered: bus-off in a view, removing the last elbow in a view, label-drag seeding, fast view switching.
+* Status: Ready to Release, with the two failures tracked in ZP-5262 and ZP-5263 (agreed rule: main fixes pass, remaining defects become their own bugs).
+
+!QA-12Nov-ZP-4947-1-view-a-hide-copied.png|width=640!
+_1. View A: the hidden connection was copied on add (PASS)_
+!QA-12Nov-ZP-4947-2-view-a-after-reload-overrides-kept.png|width=640!
+_2. View A after reload: the cleared hide stays cleared (PASS)_
+!QA-12Nov-ZP-4947-4-view-a-cable-inserted-xfmr-pnl3.png|width=640!
+_3. View A: cable inserted on XFMR-1 → PNL-3_
+!QA-12Nov-ZP-4947-5-view-b-xfmr-pnl3-unconnected.png|width=640!
+_4. View B: XFMR-1 and PNL-3 left unconnected (FAIL)_
+!QA-12Nov-ZP-4947-10-view-a-context-menu-remove-cascades-cable.png|width=640!
+_5. Node menu Remove from View also removed the stranded cable (PASS)_

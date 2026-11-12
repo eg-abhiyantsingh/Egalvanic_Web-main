@@ -1,0 +1,24 @@
+*Result: PARTLY on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+!QA-12Nov-ZP-4942-video-steps.mp4|width=640!
+_Video: Select Entire Run (locked), Simplify / Unsimplify Edge, elbows follow, simplified enclosure split, Save/Replace assembly, place as L1, library (124 s, 1.5× speed)_
+
+* Passed: Select Entire Run (locked menu shows only that item), Simplify Edge → one calculated edge, Convert to Fixed greyed with tooltip, Unsimplify keeps nodes on the line, elbows follow when both ends move, simplified enclosure combine/split (node_manips.terminals).
+* Passed: Save as Assembly + Replace, Admin › Config › Assemblies with thumbnail, place with \{name\} (QA4942-FDR-L1): handles wired by code, elbow and hidden flag kept, group recreated. Fullscreen + Asset picker is above the canvas.
+* Passed: assemblies.manage only on Admin/PM (others get 422), place needs nodes.manage (CP 422), other users' sites 404.
+* Failed: after placing L1 the next suggestion is "L1 CB-3" (place-preview value), not L2 — filed as ZP-5264 (Low, Avani).
+* Question: PM has assemblies.manage but /assemblies says Access Denied, so PM cannot rename/delete an assembly.
+* Flag feature-sld-assemblies is ON for Acme; the OFF state was only simulated (no + Assembly, page "Feature Not Available"). Needs a real OFF/ON check.
+* Status: stays In QA only until feature-sld-assemblies is really switched OFF and back ON for Acme on QA (asked in eg-internal-dev); then Ready to Release.
+
+!QA-12Nov-ZP-4942-1-locked-menu-only-select-entire-run.png|width=640!
+_1. Locked SLD: connection menu shows only Select Entire Run (PASS)_
+!QA-12Nov-ZP-4942-2-simplified-edge-convert-fixed-greyed.png|width=640!
+_2. Simplified edge: Convert to Fixed greyed with tooltip, Unsimplify Edge offered (PASS)_
+!QA-12Nov-ZP-4942-7-place-name-l1-will-create.png|width=640!
+_3. Place with \{name\}: L1 → QA4942-FDR-L1 … (PASS)_
+!QA-12Nov-ZP-4942-8-placed-assembly-l1.png|width=640!
+_4. Placed assembly with its group, elbow and hidden connection (PASS)_
+!QA-12Nov-ZP-4942-9-admin-assemblies-library.png|width=640!
+_5. Admin › Config › Assemblies (PASS)_
+!QA-12Nov-ZP-4942-13-next-name-suggestion-L1-CB-3-BUG.png|width=640!
+_6. Next suggestion "L1 CB-3" instead of L2 (FAIL)_

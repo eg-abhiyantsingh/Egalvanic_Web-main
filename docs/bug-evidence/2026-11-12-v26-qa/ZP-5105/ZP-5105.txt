@@ -1,0 +1,21 @@
+*Result: PASS on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+!QA-12Nov-ZP-5105-video-steps.mp4|width=640!
+_Video: attach one QA-DEMO form to two QA-DEMO services with "Attach", the used-by labels, one edit that both services pick up, then a repeat attach (137 s)_
+
+* The Attach dialog now shares the form ("Attach shares the form — edits to it show up in every service that uses it.") and sends mode "link". No copy is made: the company form count stays the same, and the one form has service_id null.
+* Editing the shared form once (new title) shows up in both services without touching either service.
+* Used-by label: the dialog chip "Used by 1 of your service" (hover lists the service). In Builder › Forms, Edit says "shared — used by A, B" and Delete is disabled until the form is removed from those services.
+* A failed attach shows the server's text (checked with a simulated 400 "source form not found"). From the UI a repeat attach is accepted, so no real failure is reachable there.
+* Not testable from the web: the alias-matched spec form tenancy gate, the template audit, and the AI service builder (#149).
+* Small copy point: "Used by 1 of your service" should read "Used by 1 service".
+
+!QA-12Nov-ZP-5105-1-attach-dialog-shares-not-copies.png|width=640!
+_1. Attach a Form: shares the form, buttons "Attach a copy" / "Attach"_
+!QA-12Nov-ZP-5105-2-used-by-label-in-attach-dialog.png|width=640!
+_2. Second service: the form is marked "Used by 1 …", hover shows the first service_
+!QA-12Nov-ZP-5105-3-builder-forms-used-by-delete-blocked.png|width=640!
+_3. Builder › Forms: Delete is blocked while 2 services use the form_
+!QA-12Nov-ZP-5105-4-second-service-shows-edited-shared-form.png|width=640!
+_4. After one edit, the second service shows the new title_
+!QA-12Nov-ZP-5105-5-SIMULATED-failed-attach-shows-server-message.png|width=640!
+_5. Simulated failed attach: the dialog shows the server's message_

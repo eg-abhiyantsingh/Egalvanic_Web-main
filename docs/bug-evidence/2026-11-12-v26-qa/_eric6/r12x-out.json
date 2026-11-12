@@ -1,0 +1,45 @@
+{
+ "signin": "mfa-skipped",
+ "url": "/planned-work/392284f9-bd36-4cda-a377-c260a603be7e",
+ "tabs": [
+  "Details",
+  "Assets",
+  "Issues",
+  "Attachments"
+ ],
+ "buttons": [
+  "Details",
+  "Assets",
+  "Issues",
+  "Attachments",
+  "More",
+  "Generate Report"
+ ],
+ "more": [
+  "Details",
+  "Assets",
+  "Issues",
+  "Attachments",
+  "Tasks",
+  "Forms",
+  "IR Photos"
+ ],
+ "path /planned-work/392284f9-bd36-4cda-a377-c260a603be7e/edit": {
+  "url": "/planned-work/392284f9-bd36-4cda-a377-c260a603be7e/edit",
+  "locked": 0,
+  "sent": 0,
+  "text": ""
+ },
+ "path /planned-work/392284f9-bd36-4cda-a377-c260a603be7e?tab=schedule": {
+  "url": "/planned-work/392284f9-bd36-4cda-a377-c260a603be7e?tab=schedule",
+  "locked": 0,
+  "sent": 0,
+  "text": "Planned Work / QA-DEMO ZP-4583 any-crew demo 19 Oct Android Site 2 Details Assets Issues Attachments More N/A No assets yet Marked Complete REPORT Generate this work order's report from one of your re"
+ },
+ "path /planned-work/392284f9-bd36-4cda-a377-c260a603be7e/schedule": {
+  "url": "/planned-work/392284f9-bd36-4cda-a377-c260a603be7e/schedule",
+  "locked": 0,
+  "sent": 0,
+  "text": ""
+ }
+}

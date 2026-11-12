@@ -1,0 +1,20 @@
+*Result: PARTLY on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+!QA-12Nov-ZP-5026-video-steps.mp4|width=640!
+_Video: SIMULATED BCES tiers: portal License preview, New Customer license list, Subscription T2 card, then the French UI (53 s)_
+
+* QA acme offers no BCES tier (offered_license_types = read_only, no_license). Every screen below is SIMULATED: the tier list was rewritten in the browser.
+* PASS (SIMULATED): the portal License preview lists BCES-Lite, BCES-Viewer, Lite, No License.
+* PASS (SIMULATED): New Customer › License Type shows "BCES-Viewer" with its description, in English and in French.
+* PASS (SIMULATED): Subscription › T2 licenses shows "BCES-Viewer" in the summary and on the account row.
+* PASS: no "BCES-Free" text is left in the QA build; the stored value is still bces_free. Other tier labels are unchanged.
+* BLOCKED: an existing BCES-Free account keeping its tier. There is none on QA (needs BCES-IQ or a QA company offering bces_free).
+* Question: the Viewer description says "Assets" only, but the Viewer preview also opens Site Overview.
+
+!QA-12Nov-ZP-5026-1-SIMULATED-portal-license-picker-bces-viewer-PASS.png|width=640!
+_1. PASS (SIMULATED): License preview shows BCES-Viewer_
+!QA-12Nov-ZP-5026-3-SIMULATED-new-customer-license-options-PASS.png|width=640!
+_2. PASS (SIMULATED): New Customer › License Type: BCES-Viewer_
+!QA-12Nov-ZP-5026-4-SIMULATED-french-license-options-PASS.png|width=640!
+_3. PASS (SIMULATED): French UI: BCES-Viewer with French description_
+!QA-12Nov-ZP-5026-5-SIMULATED-subscription-t2-bces-viewer-PASS.png|width=640!
+_4. PASS (SIMULATED data): Subscription › T2 licenses: BCES-Viewer_

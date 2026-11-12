@@ -1,0 +1,21 @@
+*Result: PASS on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+!QA-12Nov-ZP-4832-video-steps.mp4|width=640!
+_Video: overlay menu with Photos, Photos vs Arc Flash Readiness, hover preview, Space/click with no pop-up, then the simulated non-eng-lib menu (64 s)_
+
+* The status overlay menu now has Photos; it shows the photo-count badges and does not paint readiness borders/fills.
+* The old ZP-4435 photo pop-up is gone (rest / Space / click); the Task #23 hover preview still works.
+* Non-eng-lib company (simulated in the browser): Arc Flash Readiness · Photos · Power Scheme · Off.
+* No console errors. Every web role here has photos.view, so the "no photos.view" case could not be run.
+* Question: "Test 1234" badge says 12 but the hover preview says 9 photos — which count should the badge use?
+* iOS embed (no badge, no native photo sheet) is for the mobile check.
+
+!QA-12Nov-ZP-4832-1-status-menu-with-photos.png|width=640!
+_1. Overlay menu with the new Photos mode (PASS)_
+!QA-12Nov-ZP-4832-2-photos-mode-badges-no-readiness.png|width=640!
+_2. Photos mode: count badges, no readiness painting (PASS)_
+!QA-12Nov-ZP-4832-3-arc-flash-mode-painted.png|width=640!
+_3. Arc Flash Readiness for comparison: readiness border, no badges (PASS)_
+!QA-12Nov-ZP-4832-4-hover-preview-still-works.png|width=640!
+_4. Hover preview still works (PASS)_
+!QA-12Nov-ZP-4832-6-SIMULATED-englib-off-menu.png|width=640!
+_5. SIMULATED non-eng-lib menu (PASS, simulated)_

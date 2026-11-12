@@ -1,0 +1,16 @@
+*Result: PARTLY on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+!QA-12Nov-ZP-5107-video-steps.mp4|width=640!
+_Video: create a layout group, reload (still there), the group recreated by an assembly placement, then a browser-offline attempt (65 s)_
+
+* Passed (web, online): a new layout group is saved (POST /api/node-group 201) and is still there with its members after a reload.
+* Passed: placing an assembly recreates its group ("QA-DEMO ZP-4942 grp 12 Nov QA4942-FDR-L1").
+* Not web-testable: offline assembly placement and the node_group/update replay order — in a browser the SLD calls the API directly; the offline path runs through the iOS/Android viewer bridge (ZP-5102 / ZP-5112).
+* Observation: with the desktop browser offline, Create Group fails with no message and nothing is queued.
+* Status: stays In QA. The offline rows need the iOS/Android check, and the assembly placement needs the real feature-sld-assemblies OFF/ON check.
+
+!QA-12Nov-ZP-5107-2-group-persists-after-reload.png|width=640!
+_1. Layout groups still there after reopening the SLD (PASS)_
+!QA-12Nov-ZP-5107-3-placed-assembly-group-recreated.png|width=640!
+_2. The placed assembly brought its own copy of the group (PASS)_
+!QA-12Nov-ZP-5107-4-offline-group-attempt.png|width=640!
+_3. Browser offline: Create Group does nothing and shows no message (observation)_

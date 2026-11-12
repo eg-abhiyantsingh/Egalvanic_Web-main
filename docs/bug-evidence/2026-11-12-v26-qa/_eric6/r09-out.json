@@ -1,0 +1,109 @@
+{
+ "ON": {
+  "signin": "mfa-skipped",
+  "adminLinks": [
+   "/users",
+   "/guest-portal-users",
+   "/collaborators"
+  ],
+  "menuShot": "r09-ON-admin-menu.png",
+  "typed /collaborators": {
+   "url": "/collaborators",
+   "text": "Collaborators People Company Links Requests Invite individual ​ ​ Name Email Their company Role Sites Status Actions No rows Rows per page: 25 0–0 of 0",
+   "buttons": [
+    "People",
+    "Company Links",
+    "Requests",
+    "Invite individual"
+   ]
+  },
+  "typed /guests": {
+   "url": "/collaborators",
+   "text": "Collaborators People Company Links Requests Invite individual ​ ​ Name Email Their company Role Sites Status Actions No rows Rows per page: 25 0–0 of 0",
+   "buttons": [
+    "People",
+    "Company Links",
+    "Requests",
+    "Invite individual"
+   ]
+  },
+  "typed /collaborators?tab=links": {
+   "url": "/collaborators?tab=links",
+   "text": "Collaborators People Company Links Requests New company link ​ ​ Company Relationship Your record SLDs shared People Since Actions No rows Rows per page: 25 0–0 of 0",
+   "buttons": [
+    "People",
+    "Company Links",
+    "Requests",
+    "New company link"
+   ]
+  },
+  "api": {
+   "/guest-access/guests": "200 {\"data\":[],\"success\":true}",
+   "/subcontracting": "200 {\"data\":{\"customer_invites\":[],\"customers\":[],\"invites\":[],\"primes\":[],\"providers\":[],\"subs\":[]},\"success\":true}",
+   "/guest-access/workspaces": "200 {\"data\":{\"invites\":[],\"subcontracting\":{\"can_manage\":true,\"invites\":[],\"linked\":false},\"workspaces\":[{\"company_id\":\"d59d"
+  },
+  "ld": [
+   "GET https://app.launchdarkly.com/sdk/goals/6a34e78f93e3e00a6eef8fda",
+   "POST https://events.launchdarkly.com/events/diagnostic/6a34e78f93e3e00a6eef8fda",
+   "GET https://app.launchdarkly.com/sdk/evalx/6a34e78f93e3e00a6eef8fda/contexts/…",
+   "GET https://clientstream.launchdarkly.com/eval/6a34e78f93e3e00a6eef8fda/eyJraW5kIjoib3JnYW5pem",
+   "https://clientstream.launchdarkly.com/eval/6a34e78f93e3e00a6",
+   "GET https://clientstream.launchdarkly.com/eval/6a34e78f93e3e00a6eef8fda/eyJraW5kIjoib3JnYW5pem",
+   "https://clientstream.launchdarkly.com/eval/6a34e78f93e3e00a6",
+   "POST https://events.launchdarkly.com/events/bulk/6a34e78f93e3e00a6eef8fda"
+  ]
+ },
+ "OFF": {
+  "signin": "mfa-skipped",
+  "adminLinks": [
+   "/users",
+   "/guest-portal-users"
+  ],
+  "menuShot": "r09-OFF-admin-menu.png",
+  "typed /collaborators": {
+   "url": "/collaborators",
+   "text": "Collaborators People Company Links Requests Invite individual ​ ​ Name Email Their company Role Sites Status Actions No rows Rows per page: 25 0–0 of 0",
+   "buttons": [
+    "People",
+    "Company Links",
+    "Requests",
+    "Invite individual"
+   ]
+  },
+  "typed /guests": {
+   "url": "/collaborators",
+   "text": "Collaborators People Company Links Requests Invite individual ​ ​ Name Email Their company Role Sites Status Actions No rows Rows per page: 25 0–0 of 0",
+   "buttons": [
+    "People",
+    "Company Links",
+    "Requests",
+    "Invite individual"
+   ]
+  },
+  "typed /collaborators?tab=links": {
+   "url": "/collaborators?tab=links",
+   "text": "Collaborators People Company Links Requests New company link ​ ​ Company Relationship Your record SLDs shared People Since Actions No rows Rows per page: 25 0–0 of 0",
+   "buttons": [
+    "People",
+    "Company Links",
+    "Requests",
+    "New company link"
+   ]
+  },
+  "api": {
+   "/guest-access/guests": "200 {\"data\":[],\"success\":true}",
+   "/subcontracting": "200 {\"data\":{\"customer_invites\":[],\"customers\":[],\"invites\":[],\"primes\":[],\"providers\":[],\"subs\":[]},\"success\":true}",
+   "/guest-access/workspaces": "200 {\"data\":{\"invites\":[],\"subcontracting\":{\"can_manage\":true,\"invites\":[],\"linked\":false},\"workspaces\":[{\"company_id\":\"d59d"
+  },
+  "ld": [
+   "GET https://app.launchdarkly.com/sdk/goals/6a34e78f93e3e00a6eef8fda",
+   "POST https://events.launchdarkly.com/events/diagnostic/6a34e78f93e3e00a6eef8fda",
+   "GET https://app.launchdarkly.com/sdk/evalx/6a34e78f93e3e00a6eef8fda/contexts/…",
+   "GET https://clientstream.launchdarkly.com/eval/6a34e78f93e3e00a6eef8fda/eyJraW5kIjoib3JnYW5pem",
+   "https://clientstream.launchdarkly.com/eval/6a34e78f93e3e00a6",
+   "GET https://clientstream.launchdarkly.com/eval/6a34e78f93e3e00a6eef8fda/eyJraW5kIjoib3JnYW5pem",
+   "https://clientstream.launchdarkly.com/eval/6a34e78f93e3e00a6",
+   "GET https://clientstream.launchdarkly.com/eval/6a34e78f93e3e00a6eef8fda/eyJraW5kIjoib3JnYW5pem"
+  ]
+ }
+}

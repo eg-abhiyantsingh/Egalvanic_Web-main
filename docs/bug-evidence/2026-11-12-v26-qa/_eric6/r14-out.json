@@ -1,0 +1,84 @@
+{
+ "startIST": "16:55:17",
+ "build": "index-C1ZRIunF.js",
+ "pickerEN": [
+  "BCES-Lite",
+  "BCES-Viewer",
+  "Lite",
+  "No License"
+ ],
+ "viewerUrl": "/maintenance-portal/overview",
+ "viewerMain": "Site Health Not included in your plan This page is locked on the BCES-Viewer plan — switch the license in the sidebar to preview it. Back to the portal",
+ "ncText": "Create Customer ACCOUNT DETAILS Account Name* ​ Account Owner* ​ CONTACT DETAILS First Name* ​ Last Name* ​ Email* ​ Job Title* ​ This person becomes the account's Primary Contact and receives portal access. Add a site now Create this account's first site inline. Leave off to add sites later. LICENSE TYPE = Additional cost BCES-Lite Read-only portal: Site Overview, Condition Assessment, Assets, Connections, Locations, Issues, Attachments and Notes. Client Portal users only. BCES-Viewer View-only BCES portal: Assets, with the rest of the BCES-Lite pages shown locked. Client Portal users only. Lite View-only access. Can only be assigned the Client Portal role. No License Free portal: Site Health, Assets and the latest report. Client Portal users only. Cancel Create",
+ "ncTextFR": "Créer un client DÉTAILS DU COMPTE Nom du compte* ​ Propriétaire du compte* ​ DÉTAILS DU CONTACT Prénom* ​ Nom de famille* ​ Courriel* ​ Titre du poste* ​ Cette personne devient le contact principal du compte et reçoit l'accès au portail. Ajouter un site maintenant Créer le premier site de ce compte directement. Laissez décoché pour ajouter des sites plus tard. TYPE DE LICENCE = Coût supplémentaire BCES-Lite Portail en lecture seule : aperçu du site, évaluation de l'état, actifs, connexions, emplacements, problèmes, pièces jointes et notes. Utilisateurs Portail client uniquement. BCES-Viewer Portail BCES en consultation : actifs, les autres pages BCES-Lite affichées verrouillées. Utilisateurs Portail client uniquement. Lite Accès en lecture seule. Peut uniquement se voir attribuer le rôle Portail client. Aucune licence Portail gratuit : santé du site, actifs et dernier rapport. Utilisateurs Portail client uniquement. Annuler Créer",
+ "vid5026": {
+  "file": "/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/docs/bug-evidence/2026-11-12-v26-qa/_eric6/vtmp/v5026.mp4",
+  "sizeMB": 1.06,
+  "seconds": 71,
+  "cutAt": 8.1,
+  "login": "mfa-skipped"
+ },
+ "liteBces": {
+  "eir": 1,
+  "csv": 0
+ },
+ "eirDialog": "Generate Report Report Configuration Custom HTML ​ Output Format PDF Options Include resolved and closed issues Include thermal (IR) photos Include issue photos Cancel Generate Report",
+ "eirConfigs": [
+  "Issue Report (Copy)\n\nCustom\nHTML",
+  "Issue Report\n\nHTML"
+ ],
+ "assetUrl": "/maintenance-portal/assets/2e989985-adb2-408a-b84a-e4c60fe7e732",
+ "liteTabs": [
+  "Basic Info",
+  "Engineering",
+  "Maintenance",
+  "Issues 1",
+  "Connections !",
+  "Photos",
+  "Attachments"
+ ],
+ "engButtons": [
+  "Basic Info",
+  "Engineering",
+  "Maintenance",
+  "Issues\n1",
+  "Connections\n!",
+  "Photos",
+  "Attachments"
+ ],
+ "engEditable": 0,
+ "engText": "AST-2 Basic Info Engineering Maintenance Issues 1 Connections ! Photos Attachments CUSTOM ATTRIBUTES 4 / 4 CATALOG NUMBER 56 CONTACT TYPE Normally Open (NO) INTERRUPTING RATING 30 kA AMPERE RATING 800A MANUFACTURER Cummins MECHANISM TYPE ATS MODEL ATS MAINS TYPE MCB SERIAL NUMBER 89 SIZE 67 NOTES ATS VOLTAGE 240V TYPE Test",
+ "viewerTabs": [
+  "Basic Info",
+  "Maintenance",
+  "Issues 1",
+  "Connections !",
+  "Photos",
+  "Attachments"
+ ],
+ "viewerIssues": "Issues Not included in your plan This page is locked on the BCES-Viewer plan — switch the license in the sidebar to preview it. Back to the portal",
+ "liteIssues": {
+  "eir": 0,
+  "csv": 1
+ },
+ "liteNonBcesTabs": [
+  "Basic Info",
+  "Maintenance",
+  "Issues 1",
+  "Connections !",
+  "Photos",
+  "Attachments"
+ ],
+ "siteIssues": {
+  "eir": 0,
+  "csv": 1
+ },
+ "vid5031": {
+  "file": "/Users/abhiyantsingh/Downloads/Egalvanic_Web-main/docs/bug-evidence/2026-11-12-v26-qa/_eric6/vtmp/v5031.mp4",
+  "sizeMB": 1.07,
+  "seconds": 106,
+  "cutAt": 8.7,
+  "login": "mfa-skipped"
+ },
+ "endIST": "16:58:38"
+}

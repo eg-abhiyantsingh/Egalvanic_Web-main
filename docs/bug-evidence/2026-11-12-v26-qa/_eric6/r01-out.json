@@ -1,0 +1,1124 @@
+{
+  "startIST": "12/11/2026, 16:05:53",
+  "login": "mfa-skipped",
+  "build": "index-C1ZRIunF.js",
+  "me": {
+    "is_admin": true,
+    "roles": [
+      "Super Admin",
+      "Admin",
+      "Portal Sales",
+      "Electrical Engineer",
+      "Project Manager",
+      "Account Manager"
+    ],
+    "nperm": 138,
+    "safety": [],
+    "guest": [
+      "features.settings.users.view",
+      "users.manage",
+      "users.view"
+    ]
+  },
+  "featuresAccess": {
+    "tier": "T1",
+    "offered": [
+      "read_only",
+      "no_license"
+    ],
+    "cf": [
+      {
+        "granted": true,
+        "group_name": "add-on",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "settings-forms",
+        "name": "Forms",
+        "permissions": [
+          "forms.manage"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "add-on",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "issue-suggestions",
+        "name": "Issue suggestion",
+        "permissions": [
+          "issue_suggestions.manage"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "add-on",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "maintenance-portal",
+        "name": "Maintenance Portal",
+        "permissions": [
+          "maintenance_portal.manage"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "add-on",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "panel-schedules",
+        "name": "Panel Schedules",
+        "permissions": [
+          "features.panel_schedules.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "add-on",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "qr-labels",
+        "name": "QR Labels",
+        "permissions": [
+          "qr_labels.manage"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "add-on",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "report-builder",
+        "name": "Report Builder",
+        "permissions": [
+          "reports.manage"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "add-on",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "site-walks",
+        "name": "Site Walks",
+        "permissions": [
+          "site_walks.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "assets",
+        "name": "Assets",
+        "permissions": [
+          "features.assets.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "attachments",
+        "name": "Attachments",
+        "permissions": [
+          "features.attachments.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "audit-log",
+        "name": "Audit Log",
+        "permissions": [
+          "features.audit_log.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "settings-classes",
+        "name": "Classes",
+        "permissions": [
+          "features.settings.classes.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "issues",
+        "name": "Issues",
+        "permissions": [
+          "features.issues.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "legacy-procedures",
+        "name": "Legacy Procedures",
+        "permissions": [
+          "features.settings.pm.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "locations",
+        "name": "Locations",
+        "permissions": [
+          "features.locations.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "offices",
+        "name": "Offices",
+        "permissions": [
+          "features.settings.offices.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "settings",
+        "name": "Settings",
+        "permissions": [
+          "features.settings.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "setup",
+        "name": "Setup",
+        "permissions": [
+          "features.admin_dashboard.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "site-overview",
+        "name": "Site Overview",
+        "permissions": [
+          "features.site_overview.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "tasks",
+        "name": "Tasks",
+        "permissions": [
+          "features.tasks.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "settings-users",
+        "name": "Users",
+        "permissions": [
+          "features.settings.users.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "engineering-core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "arc-flash",
+        "name": "Arc Flash Readiness",
+        "permissions": [
+          "features.arc_flash.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "engineering-core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "condition-assessment",
+        "name": "Condition Assessment",
+        "permissions": [
+          "features.condition_assessment.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "engineering-core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "connections",
+        "name": "Connections",
+        "permissions": [
+          "features.connections.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "engineering-core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "equipment-designations",
+        "name": "Equipment Designations",
+        "permissions": [
+          "features.equipment_designations.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "engineering-core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "slds",
+        "name": "SLDs",
+        "permissions": [
+          "features.slds.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "ops-core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "emps",
+        "name": "EMPs",
+        "permissions": [
+          "features.jobs.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "ops-core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "ops-overview",
+        "name": "Ops Overview",
+        "permissions": [
+          "features.opsdb.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "ops-core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "planned-work",
+        "name": "Planned Work",
+        "permissions": [
+          "features.planned_work.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "ops-core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "settings-pm",
+        "name": "PM Plans",
+        "permissions": [
+          "features.settings.pm.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "ops-core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "scheduling",
+        "name": "Scheduling",
+        "permissions": [
+          "features.scheduling.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "ops-core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "services",
+        "name": "Services",
+        "permissions": [
+          "features.settings.services.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "ops-core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "test-equipment",
+        "name": "Test Equipment",
+        "permissions": [
+          "features.settings.test_equipment.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "ops-core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "test-equipment-library",
+        "name": "Test Equipment Library",
+        "permissions": [
+          "features.settings.test_equipment_library.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "ops-core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "work-orders",
+        "name": "Work Orders",
+        "permissions": [
+          "features.site_visits.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "sales-core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "accounts",
+        "name": "Accounts",
+        "permissions": [
+          "features.accounts.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "sales-core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "customers",
+        "name": "Customers",
+        "permissions": [
+          "features.customers.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "sales-core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "labor",
+        "name": "Labor",
+        "permissions": [
+          "features.settings.labor.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "sales-core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "materials",
+        "name": "Materials",
+        "permissions": [
+          "features.settings.materials.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "sales-core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "opportunities",
+        "name": "Opportunities",
+        "permissions": [
+          "features.opportunities.view"
+        ]
+      },
+      {
+        "granted": true,
+        "group_name": "sales-core",
+        "has_permission": true,
+        "is_entitled": true,
+        "is_page_feature": true,
+        "key": "sales-overview",
+        "name": "Sales Overview",
+        "permissions": [
+          "features.salesdb.view"
+        ]
+      }
+    ],
+    "nperm": 138,
+    "safety": [],
+    "keys": [
+      "account_detail",
+      "company_features",
+      "company_id",
+      "offered_license_types",
+      "subscription_notice",
+      "success",
+      "tier",
+      "user_id",
+      "user_permissions",
+      "user_roles"
+    ]
+  },
+  "roles": [
+    {
+      "id": "e84a0fbb-0b89-4433-807c-4b7886e1cd6d",
+      "name": "Technician",
+      "mod": null,
+      "nperm": 0,
+      "keys": [
+        "available",
+        "company_id",
+        "created_at",
+        "created_by",
+        "description",
+        "id",
+        "is_active",
+        "is_system",
+        "is_template",
+        "modified_at",
+        "name",
+        "required_module"
+      ]
+    },
+    {
+      "id": "54021b71-a055-4c58-91e1-05c705f643f4",
+      "name": "Facility Manager",
+      "mod": null,
+      "nperm": 0,
+      "keys": [
+        "available",
+        "company_id",
+        "created_at",
+        "created_by",
+        "description",
+        "id",
+        "is_active",
+        "is_system",
+        "is_template",
+        "modified_at",
+        "name",
+        "required_module"
+      ]
+    },
+    {
+      "id": "2a85145f-31ca-4e2c-8dd2-82c958cd6380",
+      "name": "Client Portal",
+      "mod": null,
+      "nperm": 0,
+      "keys": [
+        "available",
+        "company_id",
+        "created_at",
+        "created_by",
+        "description",
+        "id",
+        "is_active",
+        "is_system",
+        "is_template",
+        "modified_at",
+        "name",
+        "required_module"
+      ]
+    },
+    {
+      "id": "b60006dd-3cb6-455b-bf90-5d83198321b9",
+      "name": "Super Admin",
+      "mod": null,
+      "nperm": 0,
+      "keys": [
+        "available",
+        "company_id",
+        "created_at",
+        "created_by",
+        "description",
+        "id",
+        "is_active",
+        "is_system",
+        "is_template",
+        "modified_at",
+        "name",
+        "required_module"
+      ]
+    },
+    {
+      "id": "e9ad3158-0af5-4b7e-9c2d-000000003158",
+      "name": "Admin",
+      "mod": null,
+      "nperm": 0,
+      "keys": [
+        "available",
+        "company_id",
+        "created_at",
+        "created_by",
+        "description",
+        "id",
+        "is_active",
+        "is_system",
+        "is_template",
+        "modified_at",
+        "name",
+        "required_module"
+      ]
+    },
+    {
+      "id": "4af40b08-bb84-4486-b556-5e2a51ce568e",
+      "name": "Portal Sales",
+      "mod": null,
+      "nperm": 0,
+      "keys": [
+        "available",
+        "company_id",
+        "created_at",
+        "created_by",
+        "description",
+        "id",
+        "is_active",
+        "is_system",
+        "is_template",
+        "modified_at",
+        "name",
+        "required_module"
+      ]
+    },
+    {
+      "id": "392a2233-e4a3-4322-a440-7fd62b4bed7e",
+      "name": "Account Manager",
+      "mod": "sales",
+      "nperm": 0,
+      "keys": [
+        "available",
+        "company_id",
+        "created_at",
+        "created_by",
+        "description",
+        "id",
+        "is_active",
+        "is_system",
+        "is_template",
+        "modified_at",
+        "name",
+        "required_module"
+      ]
+    },
+    {
+      "id": "baefd87a-c8fe-4e69-921c-58637bed39a0",
+      "name": "Electrical Engineer",
+      "mod": "engineering",
+      "nperm": 0,
+      "keys": [
+        "available",
+        "company_id",
+        "created_at",
+        "created_by",
+        "description",
+        "id",
+        "is_active",
+        "is_system",
+        "is_template",
+        "modified_at",
+        "name",
+        "required_module"
+      ]
+    },
+    {
+      "id": "242dbe6a-063c-4057-ac4a-a0d32a773fc8",
+      "name": "Project Manager",
+      "mod": "ops",
+      "nperm": 0,
+      "keys": [
+        "available",
+        "company_id",
+        "created_at",
+        "created_by",
+        "description",
+        "id",
+        "is_active",
+        "is_system",
+        "is_template",
+        "modified_at",
+        "name",
+        "required_module"
+      ]
+    },
+    {
+      "id": "91ef4a0d-ee68-4c76-8167-37d20b73ba1a",
+      "name": "Construction Manager",
+      "mod": null,
+      "nperm": 0,
+      "keys": [
+        "available",
+        "company_id",
+        "created_at",
+        "created_by",
+        "description",
+        "id",
+        "is_active",
+        "is_system",
+        "is_template",
+        "modified_at",
+        "name",
+        "required_module"
+      ]
+    }
+  ],
+  "/guest-access/guests": {
+    "status": 200,
+    "ms": 272,
+    "len": 36,
+    "body": "{\"data\":[],\"success\":true}"
+  },
+  "/guest-access/roles": {
+    "status": 200,
+    "ms": 243,
+    "len": 840,
+    "body": "{\"data\":[{\"description\":\"Account Manager role — view-only SLD access, curated feature flags\",\"id\":\"392a2233-e4a3-4322-a440-7fd62b4bed7e\",\"name\":\"Account Manager\"},{\"description\":\"Electrical Engineering staff — like Project Manager, but with the Site Overview dashboard, no Operations section, and Settings flattened to the Classes section only.\",\"id\":\"baefd87a-c8fe-4e69-921c-58637bed39a0\",\"name\":\"Electrical Engineer\"},{\"description\":\"Can manage all aspects except settings\",\"id\":\"242dbe6a-063c-4057-ac4a-a0d32a773fc8\",\"name\":\"Project Manager\"},{\"description\":\"Field technicians with mobile access\",\"id\":\"e84a0fbb-0b89-4433-807c-4b7886e1cd6d\",\"name\":\"Technician\"}],\"success\":true}"
+  },
+  "/guest-access/workspaces": {
+    "status": 200,
+    "ms": 683,
+    "len": 785,
+    "body": "{\"data\":{\"invites\":[],\"subcontracting\":{\"can_manage\":true,\"invites\":[],\"linked\":false},\"workspaces\":[{\"company_id\":\"d59d449b-09d8-45d6-8f0a-ef70024b1293\",\"current\":true,\"kind\":\"home\",\"name\":\"EG-ACME\",\"small_logo\":\"https://eg-pz-qa-s3-branding-ohio.s3.us-east-2.amazonaws.com/logos/acme.png\",\"subdomain\":\"acme\"},{\"company_id\":\"93611164-13e6-47da-b2cd-a150e73173f6\",\"current\":false,\"kind\":\"guest\",\"membership_id\":\"44e813ee-389a-4506-873e-1cb6a30147e1\",\"name\":\"Demo Company\",\"role_name\":\"Technician\",\"small_logo\":null,\"subdomain\":\"demo\"}]},\"success\":true}"
+  },
+  "/subcontracting": {
+    "status": 200,
+    "ms": 668,
+    "len": 161,
+    "body": "{\"data\":{\"customer_invites\":[],\"customers\":[],\"invites\":[],\"primes\":[],\"providers\":[],\"subs\":[]},\"success\":true}"
+  },
+  "/subcontracting/link-candidates": {
+    "status": 200,
+    "ms": 707,
+    "len": 20636,
+    "body": "{\"data\":{\"customers\":[{\"id\":\"65cdcf13-d156-47f2-a71b-7880cc34689e\",\"link_status\":null,\"name\":\"111\"},{\"id\":\"104be1e9-ff78-40a5-87cf-13708af53fb4\",\"link_status\":null,\"name\":\"17 aug abhiyant\"},{\"id\":\"632a0a21-c226-4b16-8597-e8d1a7209c72\",\"link_status\":null,\"name\":\"18 aug abhiyant\"},{\"id\":\"3c54e31f-b578-4f93-852e-b5b9e0e51972\",\"link_status\":null,\"name\":\"6th OCT\"},{\"id\":\"43f1d80a-9214-434f-b26a-44d0de07160d\",\"link_status\":null,\"name\":\"Abhiyant\"},{\"id\":\"4b854fe8-7469-4f89-88dc-78ac3de34e6f\",\"link_status\":null,\"name\":\"Abhiyant Singh\"},{\"id\":\"68c9292f-42e1-4783-ad4c-27a349b7e31e\",\"link_status\":null,\"name\":\"Abhiyant Singh\"},{\"id\":\"af99b01b-7470-485b-9e5e-4996a96118f9\",\"link_status\":null,\"name\":\"Abhiyant Singh\"},{\"id\":\"ebec8929-4fa8-48f3-9592-b656f88674ee\",\"link_status\":null,\"name\":\"Abhiyant Singh\"},{\"id\":\"6be36e69-38be-4df4-bb5f-60161b4e5dd6\",\"link_status\":null,\"name\":\"Abhiyant Singh PM\"},{\"id\":\"aa8fb557-b76e-4ece-bc62-f20bef3e32b7\",\"link_status\":null,\"name\":\"ACC - Address\"},{\"id\":\"7349b52b-4958-4b0c-857d-2acc030b4f7f\",\"link_status\":null,\"name\":\"Account-DA\"},{\"id\":\"8e23621f-da35-4dbe-97e7-f23edb35b33e\",\"link_status\":null,\"name\":\"Account-DA-Copy\"},{\"id\":\"bad800c8-1168-40f5-a954-c649f7c3380d\",\"link_status\":null,\"name\":\"Account defult\"},{\"id\":\"44d2cacd-53b4-4b5e-99be-4cdf7b33dabc\",\"link_status\":null,\"name\":\"AccountName\"},{\"id\":\"d0ffc618-6fe8-46a6-b24c-9cc1508d257f\",\"link_status\":null,\"name\":\"account with license type\"},{\"id\":\"01feb4a8-6238-440d-b077-22b26190503c\",\"link_status\":null,\"name\":\"account withoit site 1\"},{\"id\":\"f46a39c5-9076-4c36-b5ca-e8061a8905e6\",\"link_status\":null,\"name\":\"account with postman\"},{\"id\":\"a6124211-c363-4173-bee4-6afde9212599\",\"link_status\":null,\"name\":\"account with site 4\"},{\"id\":\"6acbb08c-7001-4efa-848d-50f1058b81d0\",\"link_status\":null,\"name\":\"account with site 5\"},{\"id\":\"68dfb257-4199-4a65-9f18-9daaf3d86b38\",\"link_status\":null,\"name\":\"Acme\"},{\"id\":\"399dbb73-9690-4dd6-b93a-2a337d5341ae\",\"link_status\":null,\"name\":\"Adria Santos\"},{\"id\":\"6f3d9e33-aa1f-47b5-abd8-92d6f32d473b\",\"link_status\":null,\"name\":\"Android\"},{\"id\":\"db453707-61da-4578-86dd-82fef649d2fb\",\"link_status\":null,\"name\":\"AP New ACC\"},{\"id\":\"ce4d5955-a4fa-4790-b46e-1b60861b24fc\",\"link_status\":null,\"name\":\"AP new account\"},{\"id\":\"b4cb74e3-17da-419a-86ea-a161ee620e58\",\"link_status\":null,\"name\":\"AP NO default site\"},{\"id\":\"da6a27ec-5be9-4bc5-aa6c-d05ce37e326f\",\"link_status\":null,\"name\":\"Article Account 1\"},{\"id\":\"a9ae2c5c-78bd-472f-8d55-acc86f60d970\",\"link_status\":null,\"name\":\"A test by "
+  },
+  "/vendors": {
+    "status": 200,
+    "ms": 768,
+    "len": 20155,
+    "body": "{\"data\":[{\"address\":\"123\",\"company_id\":\"d59d449b-09d8-45d6-8f0a-ef70024b1293\",\"contacts\":[{\"crew_ids\":[\"ef869526-5c4a-41f7-b8c5-e3df7f0110ec\"],\"email\":\"<email>\",\"firstname\":\"Abhiyant\",\"has_login\":false,\"id\":\"e8884b28-4e02-43cc-800e-0835b6b8d0c6\",\"is_scheduling_contact\":true,\"lastname\":\"Singh\",\"phone\":\"12345\",\"title\":null}],\"created_at\":\"2026-10-16T12:39:22.090659+00:00\",\"crews\":[{\"color\":\"#2563eb\",\"contact_ids\":[\"e8884b28-4e02-43cc-800e-0835b6b8d0c6\"],\"id\":\"ef869526-5c4a-41f7-b8c5-e3df7f0110ec\",\"labor_type_ids\":[\"06403cc3-43f5-4a80-985d-55fe8899ea52\",\"a11acf70-a17a-4939-be88-413eaebb6060\"],\"lead\":{\"email\":\"<email>\",\"id\":\"e8884b28-4e02-43cc-800e-0835b6b8d0c6\",\"kind\":\"contact\",\"name\":\"Abhiyant Singh\",\"phone\":\"12345\"},\"lead_contact_id\":\"e8884b28-4e02-43cc-800e-0835b6b8d0c6\",\"lead_user_id\":null,\"members\":[],\"name\":\"abhiyant crew\",\"vendor_id\":\"29cd3965-f7eb-4aaa-9993-e878d4c40166\",\"vendor_name\":\"Abhiyant Singh\"}],\"description\":null,\"email_domain\":null,\"id\":\"29cd3965-f7eb-4aaa-9993-e878d4c40166\",\"is_deleted\":false,\"labor_types\":[{\"id\":\"a11acf70-a17a-4939-be88-413eaebb6060\",\"name\":\"Journeyman Electrician\"},{\"id\":\"06403cc3-43f5-4a80-985d-55fe8899ea52\",\"name\":\"Apprentice Electrician\"}],\"link\":null,\"linked_teams\":[],\"login_count\":0,\"modified_at\":\"2026-10-16T12:39:22.100814+00:00\",\"name\":\"Abhiyant Singh\",\"phone\":null,\"rate_count\":0,\"scheduling_contact\":{\"crew_ids\":[\"ef869526-5c4a-41f7-b8c5-e3df7f0110ec\"],\"email\":\"<email>\",\"firstname\":\"Abhiyant\",\"has_login\":false,\"id\":\"e8884b28-4e02-43cc-800e-0835b6b8d0c6\",\"is_scheduling_contact\":true,\"lastname\":\"Singh\",\"phone\":\"12345\",\"title\":null},\"scheduling_contact_id\":\"e8884b28-4e02-43cc-800e-0835b6b8d0c6\",\"website\":null},{\"address\":null,\"company_id\":\"d59d449b-09d8-45d6-8f0a-ef70024b1293\",\"contacts\":[{\"crew_ids\":[],\"email\":\"<email>\",\"firstname\":\"QA\",\"has_login\":false,\"id\":\"c10d60af-6aa2-4a8f-9a5d-589c63c5b6ad\",\"is_scheduling_contact\":true,\"lastname\":\"FM check\",\"phone\":null,\"title\":null}],\"created_at\":\"2026-10-16T13:28:35.024395+00:00\",\"crews\":[],\"description\":null,\"email_domain\":null,\"id\":\"308750f9-a0b2-46be-9d44-5120131e18e2\",\"is_deleted\":false,\"labor_types\":[],\"link\":null,\"linked_teams\":[],\"login_count\":0,\"modified_at\":\"2026-10-16T13:28:35.036655+00:00\",\"name\":\"QA-DEMO RBAC check by FM 16 Oct sub\",\"phone\":null,\"rate_count\":0,\"scheduling_contact\":{\"crew_ids\":[],\"email\":\"<email>\",\"firstname\":\"QA\",\"has_login\":fals"
+  },
+  "/safety/install-statuses/vocabulary": {
+    "status": 200,
+    "ms": 698,
+    "len": 805,
+    "body": "{\"energizable\":[\"wire_terminations_complete\",\"tested\",\"in_service\"],\"groups\":[{\"label\":\"Planning\",\"statuses\":[\"proposed\",\"planned\",\"ordered\",\"delivered\"]},{\"label\":\"Installed\",\"statuses\":[\"equipment_set\",\"conduit_complete\",\"wire_pulled\",\"wire_terminations_complete\"]},{\"label\":\"Service\",\"statuses\":[\"tested\",\"in_service\",\"decommissioned\"]}],\"statuses\":[\"proposed\",\"planned\",\"ordered\",\"delivered\",\"equipment_set\",\"conduit_complete\",\"wire_pulled\",\"wire_terminations_complete\",\"tested\",\"in_service\",\"decommissioned\"]}"
+  },
+  "/collaborators": {
+    "status": 404,
+    "ms": 823,
+    "len": 207,
+    "body": "<!doctype html>\n<html lang=en>\n<title>404 Not Found</title>\n<h1>Not Found</h1>\n<p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>\n"
+  },
+  "/company-links": {
+    "status": 404,
+    "ms": 683,
+    "len": 207,
+    "body": "<!doctype html>\n<html lang=en>\n<title>404 Not Found</title>\n<h1>Not Found</h1>\n<p>The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.</p>\n"
+  },
+  "plan392": {
+    "notify_enabled": false,
+    "lock": {
+      "at": "2026-10-19T10:47:13.780689+00:00",
+      "by": "abhiyant admin",
+      "count": 1,
+      "locked": true
+    },
+    "notices": [
+      "0:off",
+      "42:off",
+      "14:off",
+      "3:off"
+    ],
+    "revisions": 0,
+    "keys": [
+      "due_day",
+      "id",
+      "lock",
+      "name",
+      "notice_anchor_day",
+      "notices",
+      "notify_enabled",
+      "parties",
+      "proposals",
+      "released",
+      "reminders",
+      "revisions",
+      "sld_id",
+      "sld_name",
+      "start_day",
+      "status",
+      "timezone",
+      "timezone_source"
+    ]
+  },
+  "planned": {
+    "scanned": 22,
+    "locked": [
+      {
+        "sid": "a29a29f0-35d3-40cb-94a4-c6af4d888e78",
+        "name": "2",
+        "site": "Android Site 2",
+        "notify_enabled": false,
+        "notices": [
+          "0:off",
+          "42:off",
+          "14:off",
+          "3:off"
+        ],
+        "revisions": 0,
+        "lockAt": "2026-10-19T10:43:04.039016+00:00",
+        "crews": 0
+      },
+      {
+        "sid": "657745a1-5787-40de-b3b7-176fba515142",
+        "name": "QA-DEMO ZP-4583 r8 starts today",
+        "site": "Android Site 2",
+        "notify_enabled": true,
+        "notices": [
+          "0:skipped",
+          "42:skipped",
+          "14:skipped",
+          "3:skipped"
+        ],
+        "revisions": 1,
+        "lockAt": "2026-10-26T16:24:33.274034+00:00",
+        "crews": 0
+      },
+      {
+        "sid": "0012fc19-9086-4be3-b4de-c873aa66bd1d",
+        "name": "test",
+        "site": "Android Site 2",
+        "notify_enabled": false,
+        "notices": [
+          "0:off",
+          "42:off",
+          "14:off",
+          "3:off"
+        ],
+        "revisions": 0,
+        "lockAt": "2026-10-21T10:45:53.193218+00:00",
+        "crews": 0
+      },
+      {
+        "sid": "2eaddc30-8a85-4168-82b6-93a28b289ac8",
+        "name": "QA-DEMO ZP-4755 stepper 15 Oct",
+        "site": "Android Site 2",
+        "notify_enabled": true,
+        "notices": [
+          "0:skipped",
+          "42:skipped",
+          "14:skipped",
+          "3:not_sent"
+        ],
+        "revisions": 5,
+        "lockAt": "2026-10-26T11:36:17.963185+00:00",
+        "crews": 0
+      },
+      {
+        "sid": "392284f9-bd36-4cda-a377-c260a603be7e",
+        "name": "QA-DEMO ZP-4583 any-crew demo 19 Oct",
+        "site": "Android Site 2",
+        "notify_enabled": false,
+        "notices": [
+          "0:off",
+          "42:off",
+          "14:off",
+          "3:off"
+        ],
+        "revisions": 0,
+        "lockAt": "2026-10-19T10:47:13.780689+00:00",
+        "crews": 0
+      },
+      {
+        "sid": "4dac4b6b-faee-47fd-9ca4-3c49ffa735f2",
+        "name": "QA-DEMO ZP-4583 any-crew demo 2 (19 Oct)",
+        "site": "Android Site 2",
+        "notify_enabled": false,
+        "notices": [
+          "0:off",
+          "42:off",
+          "14:off",
+          "3:off"
+        ],
+        "revisions": 0,
+        "lockAt": "2026-10-19T10:52:51.279490+00:00",
+        "crews": 0
+      },
+      {
+        "sid": "bd39c890-7210-4e99-b94c-78709dc175cc",
+        "name": "QA-DEMO ZP-4755 26 Oct B",
+        "site": "Android Site 2",
+        "notify_enabled": true,
+        "notices": [
+          "0:skipped",
+          "42:not_sent",
+          "14:scheduled",
+          "3:scheduled"
+        ],
+        "revisions": 1,
+        "lockAt": "2026-10-26T12:05:31.022627+00:00",
+        "crews": 0
+      },
+      {
+        "sid": "b38477e6-14fb-44e1-9c68-e46e4c775c85",
+        "name": "QA-DEMO ZP-4755 26 Oct C",
+        "site": "Android Site 2",
+        "notify_enabled": true,
+        "notices": [
+          "0:skipped",
+          "42:not_sent",
+          "14:scheduled",
+          "3:scheduled"
+        ],
+        "revisions": 2,
+        "lockAt": "2026-10-26T12:08:40.999978+00:00",
+        "crews": 0
+      },
+      {
+        "sid": "f8497845-47be-4520-a7f0-82851cf40483",
+        "name": "QA-DEMO ZP-4583 re-test 23 Oct A",
+        "site": "Android Site 2",
+        "notify_enabled": true,
+        "notices": [
+          "0:sent",
+          "42:not_sent",
+          "14:scheduled",
+          "3:scheduled"
+        ],
+        "revisions": 1,
+        "lockAt": "2026-10-23T15:38:35.724940+00:00",
+        "crews": 0
+      },
+      {
+        "sid": "e020d799-3458-4d80-8d5a-a312eb015d05",
+        "name": "etertete",
+        "site": "QA-DEMO ZP-4675 site keep as entered (delete me)",
+        "notify_enabled": false,
+        "notices": [
+          "0:off",
+          "42:off",
+          "14:off",
+          "3:off"
+        ],
+        "revisions": 0,
+        "lockAt": "2026-10-26T17:51:54.305361+00:00",
+        "crews": 0
+      },
+      {
+        "sid": "6b0a5ec3-32b7-4529-8929-421644f8c2cf",
+        "name": "NEW ATEST PLANNED WO",
+        "site": "New ATEST SITE",
+        "notify_enabled": true,
+        "notices": [
+          "0:skipped",
+          "42:not_sent",
+          "14:scheduled",
+          "3:scheduled"
+        ],
+        "revisions": 1,
+        "lockAt": "2026-10-23T10:55:08.005392+00:00",
+        "crews": 0
+      },
+      {
+        "sid": "658d94ae-4b33-4da2-b65f-45d543202a37",
+        "name": "QA-DEMO ZP-5019 27 Oct D",
+        "site": "Android Site 2",
+        "notify_enabled": true,
+        "notices": [
+          "0:skipped",
+          "42:scheduled",
+          "14:scheduled",
+          "3:scheduled"
+        ],
+        "revisions": 2,
+        "lockAt": "2026-10-27T06:14:51.344410+00:00",
+        "crews": 0
+      },
+      {
+        "sid": "61dc50a4-7e13-4d19-88e8-3d79153ac7b3",
+        "name": "QA-DEMO ZP-4583 holiday check US (delete me)",
+        "site": "Android Site 2",
+        "notify_enabled": false,
+        "notices": [
+          "0:off",
+          "42:off",
+          "14:off",
+          "3:off"
+        ],
+        "revisions": 0,
+        "lockAt": "2026-10-12T13:36:14.637037+00:00",
+        "crews": 0
+      },
+      {
+        "sid": "56f9f437-8989-4887-bbb1-93eb6642d9a3",
+        "name": "QA-DEMO ZP-4583 holiday check CA (delete me)",
+        "site": "Android Site",
+        "notify_enabled": false,
+        "notices": [
+          "0:off",
+          "42:off",
+          "14:off",
+          "3:off"
+        ],
+        "revisions": 0,
+        "lockAt": "2026-10-12T13:36:55.231409+00:00",
+        "crews": 0
+      },
+      {
+        "sid": "4a29fd73-257b-4f40-935c-fba8bfd64aa5",
+        "name": "QA-DEMO ZP-5216 5 Nov CloudFront link re-test",
+        "site": "Android Site 2",
+        "notify_enabled": true,
+        "notices": [
+          "0:skipped",
+          "42:scheduled",
+          "14:scheduled",
+          "3:scheduled"
+        ],
+        "revisions": 1,
+        "lockAt": "2026-11-05T12:39:42.475479+00:00",
+        "crews": 0
+      },
+      {
+        "sid": "5cd7a197-b648-4fbc-ac39-a9cbd6ce1014",
+        "name": "QA-DEMO ZP-4583 r8 CA holiday Jul 2027",
+        "site": "Android Site",
+        "notify_enabled": true,
+        "notices": [
+          "0:sent",
+          "42:scheduled",
+          "14:scheduled",
+          "3:scheduled"
+        ],
+        "revisions": 0,
+        "lockAt": "2026-10-16T12:51:19.564230+00:00",
+        "crews": 0
+      },
+      {
+        "sid": "61da3f93-280d-4b59-9610-111baf04ec42",
+        "name": "Infrared Thermography — Q3 2028 — emp v2 - 30 july -abhiyant",
+        "site": "Abhiyant test 12",
+        "notify_enabled": true,
+        "notices": [
+          "0:skipped",
+          "42:scheduled",
+          "14:scheduled",
+          "3:scheduled"
+        ],
+        "revisions": 2,
+        "lockAt": "2026-10-26T17:59:57.418317+00:00",
+        "crews": 0
+      },
+      {
+        "sid": "57d2c7b4-675c-43f9-ab59-2b65fe68c53f",
+        "name": "Infrared Thermography — Q3 2028 — ZTest_28_07 - EMP Test 2",
+        "site": "ZTest_28_07",
+        "notify_enabled": false,
+        "notices": [
+          "0:off",
+          "42:off",
+          "14:off",
+          "3:off"
+        ],
+        "revisions": 0,
+        "lockAt": "2026-10-26T16:38:39.829740+00:00",
+        "crews": 0
+      },
+      {
+        "sid": "5fad458c-1af3-4bf8-8d6e-dda3ed622f28",
+        "name": "Infrared Thermography — Q3 2029 — ZTest_28_07 - EMP Test 2",
+        "site": "ZTest_28_07",
+        "notify_enabled": false,
+        "notices": [
+          "0:off",
+          "42:off",
+          "14:off",
+          "3:off"
+        ],
+        "revisions": 0,
+        "lockAt": "2026-10-19T07:33:23.145130+00:00",
+        "crews": 0
+      },
+      {
+        "sid": "ebb59149-2ec6-46d9-a601-04df4f7b7a0c",
+        "name": "Infrared Thermography — Q3 2029 — emp v2 - 30 july -abhiyant",
+        "site": "Abhiyant test 12",
+        "notify_enabled": false,
+        "notices": [
+          "0:off",
+          "42:off",
+          "14:off",
+          "3:off"
+        ],
+        "revisions": 0,
+        "lockAt": "2026-10-19T10:14:05.142269+00:00",
+        "crews": 0
+      }
+    ]
+  },
+  "endIST": "12/11/2026, 16:06:22"
+}

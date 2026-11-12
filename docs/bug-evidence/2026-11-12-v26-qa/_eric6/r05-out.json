@@ -1,0 +1,134 @@
+{
+ "startIST": "16:28:22",
+ "signin": "mfa-skipped",
+ "build": "index-C1ZRIunF.js",
+ "subDialogInputs": [
+  "text:Name *",
+  "text:Phone",
+  "text:Website",
+  "text:Address",
+  "text:Description",
+  "text:First name *",
+  "text:Last name",
+  "email:Email *",
+  "tel:Phone",
+  "text:Title"
+ ],
+ "subDialogText": "Create Subcontractor Details and the first contact (who gets its scheduling emails) Details Name * Name * Phone Phone Website Website Address Address Description Description Labor types Crews choose from these. Rates are set per labor type. Apprentice Electrician Journeyman Electrician NETA Technician Thermographer Ultrasonic Technician In-House Electrician Manufacturer Service Technician Electrical Engineer Misc Subcontractor First contact Gets this subcontractor's scheduling emails. Add more contacts and crews after creating. First name * First name * Last name Last name Email * Email * Phon",
+ "subSaveBtn": "Create Subcontractor",
+ "subAfter": "",
+ "sub": {
+  "id": "b4c35a0a-3f50-4a4b-bf64-c72a3fb1f7fc",
+  "link": null
+ },
+ "nclFilled": "New company link Link one of your customers or subcontractors to its own company on Egalvanic Customer Subcontractor Subcontractor * Subcontractor * Email of someone at the subcontractor's company * Email of someone at the subcontractor's company * If this email belongs to an Egalvanic user, they'll receive a collaboration request in their portal. Cancel Send request",
+ "uiSend": {
+  "status": 201,
+  "body": "{\n  \"data\": {\n    \"id\": \"011cb699-9f0b-4e7f-9d61-c06e2ef1510f\",\n    \"invited_at\": \"2026-11-12T10:58:53Z\",\n    \"invited_email\": \"<unknownA>\",\n    \"prime_company_id\": \"d59d449b-09d8-45d6-8f0a-ef70024b1293\",\n    \"prime_company_name\": null,\n    \"responded_at\": null,\n    \"revoked_at\": null,\n    \"status\": \"invited\",\n    \"sub_company_id\": null,\n    \"sub_company_name\": null,\n    \"vendor_id\": \"b4c35a0a-3f50-4a4b-bf64-c72a3fb1f7fc\",\n    \"vendor_name\": \"QA-DEMO ZP-4830 12 Nov sub\"\n  },\n  \"success\": true\n}\n"
+ },
+ "toast": "Request sent",
+ "requestsText": "Collaborators People Company Links Requests New company link ​ ​ Company Request Direction Your record Date Actions <unknownA> Subcontractor link Sent QA-DEMO ZP-4830 12 Nov sub 11/12/2026 Rows per page: 25 1–1 of 1",
+ "subcontractingAfter": {
+  "data": {
+   "customer_invites": [],
+   "customers": [],
+   "invites": [],
+   "primes": [],
+   "providers": [],
+   "subs": [
+    {
+     "id": "011cb699-9f0b-4e7f-9d61-c06e2ef1510f",
+     "invited_at": "2026-11-12T10:58:53Z",
+     "invited_email": "<unknownA>",
+     "prime_company_id": "d59d449b-09d8-45d6-8f0a-ef70024b1293",
+     "prime_company_name": null,
+     "responded_at": null,
+     "revoked_at": null,
+     "status": "invited",
+     "sub_company_id": null,
+     "sub_company_name": null,
+     "vendor_id": "b4c35a0a-3f50-4a4b-bf64-c72a3fb1f7fc",
+     "vendor_name": "QA-DEMO ZP-4830 12 Nov sub"
+    }
+   ]
+  },
+  "success": true
+ },
+ "vendorAfter": {
+  "link": {
+   "id": "011cb699-9f0b-4e7f-9d61-c06e2ef1510f",
+   "invited_email": "<unknownA>",
+   "status": "invited",
+   "sub_company_id": null,
+   "sub_company_name": null
+  },
+  "linked_teams": []
+ },
+ "withdrawBtnTitle": null,
+ "withdrawDialog": "Withdraw the request? undefined's company can no longer accept it. Cancel Withdraw",
+ "requestsAfterWithdraw": "Collaborators People Company Links Requests New company link ​ ​ Company Request Direction Your record Date Actions <unknownA> Subcontractor link Sent QA-DEMO ZP-4830 12 Nov sub 11/12/2026 Rows per page: 25 1–1 of 1",
+ "api": {
+  "pre-delete unknownB": 200,
+  "unknownB": {
+   "status": 201,
+   "body": "{\"data\":{\"id\":\"db0d5484-e656-492d-ad2d-b3166e67cfa2\",\"invited_at\":\"2026-11-12T10:59:06Z\",\"invited_email\":\"<unknownB>\",\"prime_company_id\":\"d59d449b-09d8-45d6-8f0a-ef70024b1293\",\"prime_company_name\":null,\"responded_at\":null,\"revoked_at\":null,\"status\":\"invited\",\"sub_company_id\":null,\"sub_company_name\":null,\"vendor_id\":\"b4c35a0a-3f50-4a4b-bf64-c72a3fb1f7fc\",\"vendor_name\":\"QA-DEMO ZP-4830 12 Nov sub\"},\"success\":true}",
+   "subcontracting": "{\"data\":{\"customer_invites\":[],\"customers\":[],\"invites\":[],\"primes\":[],\"providers\":[],\"subs\":[{\"id\":\"db0d5484-e656-492d-ad2d-b3166e67cfa2\",\"invited_at\":\"2026-11-12T10:59:06Z\",\"invited_email\":\"<unknownB>\",\"prime_company_id\":\"d59d449b-09d8-45d6-8f0a-ef70024b1293\",\"prime_company_name\":null,\"responded_at\":null,\"revoked_at\":null,\"status\":\"invited\",\"sub_company_id\":null,\"sub_company_name\":null,\"vendor_id\":\"b4c35a0a-3f50-4a4b-bf64-c72a3fb1f7fc\",\"vendor_name\":\"QA-DEMO ZP-4830 12 Nov sub\"}]},\"success\":true}",
+   "del": "200 {\"success\":true}"
+  },
+  "acmeLike": {
+   "status": 201,
+   "body": "{\"data\":{\"id\":\"1addc998-4ebd-4386-a018-ee27b418312e\",\"invited_at\":\"2026-11-12T10:59:08Z\",\"invited_email\":\"<acmeLike>\",\"prime_company_id\":\"d59d449b-09d8-45d6-8f0a-ef70024b1293\",\"prime_company_name\":null,\"responded_at\":null,\"revoked_at\":null,\"status\":\"invited\",\"sub_company_id\":null,\"sub_company_name\":null,\"vendor_id\":\"b4c35a0a-3f50-4a4b-bf64-c72a3fb1f7fc\",\"vendor_name\":\"QA-DEMO ZP-4830 12 Nov sub\"},\"success\":true}",
+   "subcontracting": "{\"data\":{\"customer_invites\":[],\"customers\":[],\"invites\":[],\"primes\":[],\"providers\":[],\"subs\":[{\"id\":\"1addc998-4ebd-4386-a018-ee27b418312e\",\"invited_at\":\"2026-11-12T10:59:08Z\",\"invited_email\":\"<acmeLike>\",\"prime_company_id\":\"d59d449b-09d8-45d6-8f0a-ef70024b1293\",\"prime_company_name\":null,\"responded_at\":null,\"revoked_at\":null,\"status\":\"invited\",\"sub_company_id\":null,\"sub_company_name\":null,\"vendor_id\":\"b4c35a0a-3f50-4a4b-bf64-c72a3fb1f7fc\",\"vendor_name\":\"QA-DEMO ZP-4830 12 Nov sub\"}]},\"success\":true}",
+   "del": "200 {\"success\":true}"
+  }
+ },
+ "compareUiVsApi": [
+  "{\n  \"data\": {\n    \"id\": \"<id>\",\n    \"invited_at\": \"<ts>Z\",\n    \"invited_email\": \"<unknownA>\",\n    \"prime_company_id\": \"<id>\",\n    \"prime_company_name\": null,\n    \"responded_at\": null,\n    \"revoked_at\": null,\n    \"status\": \"invited\",\n    \"sub_company_id\": null,\n    \"sub_company_name\": null,\n    \"vendor_id\": \"<id>\",\n    \"vendor_name\": \"QA-DEMO ZP-4830 12 Nov sub\"\n  },\n  \"success\": true\n}\n",
+  "{\"data\":{\"id\":\"<id>\",\"invited_at\":\"<ts>Z\",\"invited_email\":\"<e>\",\"prime_company_id\":\"<id>\",\"prime_company_name\":null,\"responded_at\":null,\"revoked_at\":null,\"status\":\"invited\",\"sub_company_id\":null,\"sub_company_name\":null,\"vendor_id\":\"<id>\",\"vendor_name\":\"QA-DEMO ZP-4830 12 Nov sub\"},\"success\":true}",
+  "{\"data\":{\"id\":\"<id>\",\"invited_at\":\"<ts>Z\",\"invited_email\":\"<e>\",\"prime_company_id\":\"<id>\",\"prime_company_name\":null,\"responded_at\":null,\"revoked_at\":null,\"status\":\"invited\",\"sub_company_id\":null,\"sub_company_name\":null,\"vendor_id\":\"<id>\",\"vendor_name\":\"QA-DEMO ZP-4830 12 Nov sub\"},\"success\":true}"
+ ],
+ "custBefore": {
+  "status": 200,
+  "body": "{\"data\":{\"link\":null,\"members\":[],\"people\":[],\"roles\":[],\"shared\":[],\"sites\":[]},\"success\":true}"
+ },
+ "custPost": {
+  "status": 201,
+  "body": "{\"data\":{\"account_id\":\"3cb8a94f-d652-4b15-947c-07777e6c4465\",\"account_name\":\"QA-DEMO ZP-4561 customer 16 Oct\",\"crews_shared\":false,\"facility_company_id\":null,\"facility_company_name\":null,\"id\":\"06d6c058-20e2-41d4-8c82-eb0fcd992018\",\"invited_at\":\"2026-11-12T10:59:12Z\",\"invited_email\":\"<unknownB>\",\"provider_company_id\":\"d59d449b-09d8-45d6-8f0a-ef70024b1293\",\"provider_company_name\":null,\"responded_at\":null,\"revoked_at\":null,\"status\":\"invited\"},\"success\":true}"
+ },
+ "custAfter": {
+  "status": 200,
+  "body": "{\"data\":{\"link\":{\"account_id\":\"3cb8a94f-d652-4b15-947c-07777e6c4465\",\"account_name\":\"QA-DEMO ZP-4561 customer 16 Oct\",\"crews_shared\":false,\"facility_company_id\":null,\"facility_company_name\":null,\"id\":\"06d6c058-20e2-41d4-8c82-eb0fcd992018\",\"invited_at\":\"2026-11-12T10:59:12Z\",\"invited_email\":\"<unknownB>\",\"provider_company_id\":\"d59d449b-09d8-45d6-8f0a-ef70024b1293\",\"provider_company_name\":\"EG-ACME\",\"responded_at\":null,\"revoked_at\":null,\"status\":\"invited\"},\"members\":[],\"people\":"
+ },
+ "custDel": 200,
+ "badEmail": {
+  "status": 201,
+  "body": "{\"data\":{\"id\":\"0867a7e2-2f7e-420c-b5a4-f589c464369e\",\"invited_at\":\"2026-11-12T10:59:12Z\",\"invited_email\":\"not-an-email\",\"prime_company_id\":\"d59d449b-09d8-45d6-8f0a-ef70024b1293\",\"prime_company_name\":n"
+ },
+ "randomVendor": {
+  "status": 404,
+  "ct": "application/json",
+  "body": "{\"error\":\"Subcontractor not found\",\"success\":false}"
+ },
+ "pmSignin": "mfa-skipped",
+ "pmPost": {
+  "status": 422,
+  "body": "{\"error\":\"permission_denied\",\"message\":\"You do not have permission to perform this action. Required: company_data.manage\",\"required_permission\":\"company_data.manage\",\"success\":false}"
+ },
+ "pmAcceptRandom": {
+  "status": 403,
+  "body": "{\"error\":\"admin_only\",\"message\":\"Only admins can manage subcontracting\",\"success\":false}"
+ },
+ "pmIsEgAdmin": false,
+ "cleanup": 200,
+ "cons": [
+  "Failed to load resource: net::ERR_FAILED",
+  "Failed to load resource: the server responded with a status of 429 ()",
+  "Failed to load resource: net::ERR_FAILED",
+  "Failed to load resource: the server responded with a status of 429 ()",
+  "Failed to load resource: net::ERR_FAILED",
+  "Failed to load resource: the server responded with a status of 502 ()",
+  "[UserError]  Operation failed: {}",
+  "Failed to load resource: the server responded with a status of 404 ()"
+ ],
+ "endIST": "16:29:22"
+}

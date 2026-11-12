@@ -1,0 +1,15 @@
+*Result: PASS on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+!QA-12Nov-ZP-4834-video-steps.mp4|width=640!
+_Video: sign in, open /api/auth/v2/me, the company_data_epoch field, then the same call for all 9 QA seats (45 s)_
+
+* /api/auth/v2/me now returns *company_data_epoch* for the acting company: 0 (a number) for EG-ACME.
+* Same result for all 9 seats (Super Admin, Admin, PM, AM, EE, FM, Client Portal, Portal Sales, Technician), including the 2 seats with no web access.
+* An unknown company subdomain gets 401 with no data. The value stays 0 on repeat calls (real tenant, never bumped).
+* Not testable from the web: the demo reset bumping the epoch, the no-column gating, and migration epoch_a1 idempotency. These need a dev check with demo_reset.py. The iOS drop is ZP-4829.
+
+!QA-12Nov-ZP-4834-1-auth-v2-me-company-data-epoch.png|width=640!
+_1. Super Admin: "company_data_epoch": 0 (personal fields hidden)_
+!QA-12Nov-ZP-4834-2-project-manager-epoch.png|width=640!
+_2. Project Manager: same field, 0_
+!QA-12Nov-ZP-4834-3-technician-no-web-access-epoch.png|width=640!
+_3. Technician (no web access): the profile still carries the field, 0_

@@ -1,0 +1,19 @@
+*Result: PARTLY on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+!QA-12Nov-ZP-5100-video-steps.mp4|width=640!
+_Video: SKM import of a test study into a new QA-DEMO site, API read-back, then Export Engineering XML and the re-exported fields (68 s)_
+
+* Passed: cables bound to library entries with a blank axis now show insulation N/A / installation N/A (8 existing cables; values with real insulation/installation are unchanged).
+* Passed: SKM import bound the NEC cable with insulation N/A and the cable is 100% arc-flash ready; buses got ampere rating (800/225/100) and phase 3P4W.
+* Passed: library XML and re-export write N/A as blank (no literal "N/A"); ContinuousRating is re-emitted.
+* Not verified: transformer Type and reserved core attributes on import — my hand-made study had no model name or electrode/winding fields. Can you share a real study (e.g. Koch Building A) to run these two rows?
+* SIEMENS: no SIEMENS cables on QA.
+* Status: stays In QA until the transformer Type and reserved core attribute rows are run with a real SKM study.
+
+!QA-12Nov-ZP-5100-3-skm-import-review.png|width=640!
+_1. SKM import review for the test study (PASS)_
+!QA-12Nov-ZP-5100-4-import-readback-card.png|width=640!
+_2. Imported assets: bus amps + 3P4W, NEC cable insulation N/A (PASS)_
+!QA-12Nov-ZP-5100-6-arc-flash-readiness-imported-site.png|width=640!
+_3. Arc Flash Readiness: the imported cable is 1/1 complete (PASS)_
+!QA-12Nov-ZP-5100-5-reexport-card.png|width=640!
+_4. Re-export: ContinuousRating re-emitted, no literal N/A (PASS)_
