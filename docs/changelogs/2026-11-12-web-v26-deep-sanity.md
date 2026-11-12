@@ -23,6 +23,7 @@
 |---|---|---|---|
 | ZP-5158 Subscription Activity pagination | PASS (tie order + new event mid-paging not covered: QA has 1 real event) | [46121](https://egalvanic.atlassian.net/browse/ZP-5158?focusedCommentId=46121) | READY TO RELEASE |
 | ZP-5223 Generate Report picker search + service on rows | PASS (suggestion: identically named configs still look the same) | [46122](https://egalvanic.atlassian.net/browse/ZP-5223?focusedCommentId=46122) | READY TO RELEASE |
+| ZP-4430 report preview 500 (Sentry reopened 6 Nov) | PASS: Performance sld EMP Lite 40 s / CA 35 s; all 134 configs 200; bad input 400/404 | [46124](https://egalvanic.atlassian.net/browse/ZP-4430?focusedCommentId=46124) | READY TO RELEASE |
 
 ### ZP-5158 details
 - API `/api/subscription/activity?page&page_size` → `{events,page,page_size,total}`.

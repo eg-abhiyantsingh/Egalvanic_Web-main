@@ -4,8 +4,8 @@
 _Video: Builder › Reports › EMP Lite and Condition Assessment previews of "Performance sld" (8,482 assets, the largest acme site), in real time._
 
 * *Largest site:* the EMP Lite preview showed after 40 s (the server answered 200 after 38.5 s), with long lists summed up as "… and 8481 more like this". Condition Assessment showed after 35 s (200 after 31.5 s). No 500 and no "Preview unavailable".
-* SWEEP_LINE
-* INVALID_LINE
+* *Every config:* a preview of all 134 acme report configs (each with its own default record) answered 200. None failed.
+* *Bad input gives a clear error, never a 500:* primary_id "not-a-uuid" → 400; an unknown id → 404; an unknown config → 404. A missing primary_id or a broken JSON body falls back to the default record (200).
 * *Not covered:* which production request triggered the 6 Nov Sentry reopen (Sentry 7709125644 is not reachable from QA). If the dev knows the failing config or input, QA can repeat that exact case.
 
 !QA-12Nov-ZP-4430-1-emp-lite-shown-40s.jpg|width=640!
