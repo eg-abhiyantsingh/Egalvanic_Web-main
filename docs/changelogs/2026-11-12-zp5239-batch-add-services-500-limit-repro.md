@@ -48,3 +48,20 @@ Evidence: `docs/bug-evidence/2026-11-12-zp5239/` (1-create-wo-review, 2-dialog-1
   - Control: one location, 4 assets → 200.
 - Posted comment **46114** on ZP-5239 from abhiyant.singh@egalvanic.com: the video plus 3 screenshots (`QA-12Nov-ZP-5239-*` attachments). The render check was clean. The status stays Backlog.
 - The comment is written as an update to comment 46113 (posted earlier from the owner's account), which said "Already fixed in ZP-4840". ZP-4840 batched only Bulk Ops → Services; Actions → Add Existing by Service is still unbatched.
+
+## Stage sign-off: PASS → READY TO RELEASE (owner: "start testing this in stage and give sign off if everything is fine")
+- Krunal moved the ticket To Do → In Progress → Resolved (migrated) → Ready for QA at 03:50 CST. I moved it to **In QA** (Start Testing) first.
+- Stage build `index-BaASlqvW.js`. The "Add Existing by Service" handler now loops in `SESSION_NODE_CHUNK` (500) batches. It shows "Added X of N assets, then stopped: … Close and add again to finish." inside the dialog instead of replacing the page.
+- Stage WO "QA-DEMO ZP-5239 stage 12 Nov - add existing by service" (test site, General, started empty): https://acme.stage.egalvanic.ai/sessions/2cfc0583-e537-449f-bbbe-75afc55ce78d
+
+| Check | Result |
+|---|---|
+| Cleaning: "1907 of 1907 selected" → Add 1907 Assets (video, STAGE_OPS seat) | 4 add-assets calls 500+500+500+407, all 200; dialog closed in 13.9 s; no error; WO "1–20 of 1907" |
+| Reopen with the same service | "1907 qualifying assets are already on this work order…"; 0 extra calls |
+| De-Energized, 2nd batch forced to fail (fetch override in my tab only) | dialog stays open: "Added 500 of 1907 assets, then stopped: Something went wrong. Close and add again to finish."; page not replaced |
+| Add again (the dialog re-evaluates to "500 already … 1407 of 1407") | 3 calls 500+500+407, all 200; both services on all 1907 nodes; 3816 method lines, 0 duplicates |
+| Small add: Infrared Thermography narrowed to ATS (102) | 1 call, 200 |
+| Not covered | stage services have "No forms" for these classes, so form minting across batches is not checked |
+
+- Comment **46119** posted (video + 4 screenshots, render clean). Transition QA-Complete → **READY TO RELEASE**.
+- Evidence: `docs/bug-evidence/2026-11-12-zp5239-stage/` (the mp4 is gitignored; it is attached in Jira).
