@@ -65,3 +65,8 @@ Evidence: `docs/bug-evidence/2026-11-12-zp5239/` (1-create-wo-review, 2-dialog-1
 
 - Comment **46119** posted (video + 4 screenshots, render clean). Transition QA-Complete → **READY TO RELEASE**.
 - Evidence: `docs/bug-evidence/2026-11-12-zp5239-stage/` (the mp4 is gitignored; it is attached in Jira).
+
+## 15:48 IST: sign-off posted in eg-internal-dev (owner: "if it working as expected then give sign off in group dev")
+- Context in the space: the owner had asked Krunal to fix ZP-5239 as a hotfix ("merge in stage then production after my sign off") and Shubham to tell the customer once it is on production; Krunal replied "@Abhiyant Singh verify in stage".
+- Re-checked just before posting: stage still on the tested build index-BaASlqvW.js, /api/health 200.
+- New message (not a thread reply) with @Krunal Lunagariya and @Shubham Goswami: PASS on stage, 4 batches 500+500+500+407, no duplicates, inline batch-failure message, forms not covered on stage, moved to Ready to Release, Krunal to merge to production, Shubham to tell the customer after that; links to the ticket and comment 46119.
