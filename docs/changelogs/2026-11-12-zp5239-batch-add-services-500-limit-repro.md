@@ -41,3 +41,10 @@ Evidence: `docs/bug-evidence/2026-11-12-zp5239/` (1-create-wo-review, 2-dialog-1
   - 22 In QA: ZP-4830..4835, 4885, 4886, 4940, 4942, 4943, 4947, 5026, 5031, 5100, 5105..5111;
   - 8 READY TO RELEASE: ZP-4884, 4906, 4907, 4919, 4955, 4956, 5029, 5030.
 - Nothing was moved back; that waits for the owner.
+
+## Follow-up: comment posted (owner: "add comment in ticket")
+- Recorded a 79 s step video on QA with `.playwright-mcp/v25/video/zp5239/v.js`:
+  - Infrared Thermography: "1100 of 1100 qualifying assets selected" → Add 1100 Assets → 400 error.
+  - Control: one location, 4 assets → 200.
+- Posted comment **46114** on ZP-5239 from abhiyant.singh@egalvanic.com: the video plus 3 screenshots (`QA-12Nov-ZP-5239-*` attachments). The render check was clean. The status stays Backlog.
+- The comment is written as an update to comment 46113 (posted earlier from the owner's account), which said "Already fixed in ZP-4840". ZP-4840 batched only Bulk Ops → Services; Actions → Add Existing by Service is still unbatched.
