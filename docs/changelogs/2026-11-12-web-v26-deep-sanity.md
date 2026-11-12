@@ -39,6 +39,13 @@
 | ZP-5107 layout groups offline | PARTLY: online passes; offline = mobile bridge | [46142](https://egalvanic.atlassian.net/browse/ZP-5107?focusedCommentId=46142) | In QA |
 | ZP-5100 SKM cables/import | PARTLY: cables + bus pass; transformer Type needs a real study | [46143](https://egalvanic.atlassian.net/browse/ZP-5100?focusedCommentId=46143) | In QA |
 | ZP-4885 Fuse → Low Voltage Fuse | PASS (export XML attached) | [46145](https://egalvanic.atlassian.net/browse/ZP-4885?focusedCommentId=46145) | READY TO RELEASE |
+| ZP-5105 services share EG forms | PASS (failed-attach message SIMULATED; "Used by 1 of your service" copy nit) | [46146](https://egalvanic.atlassian.net/browse/ZP-5105?focusedCommentId=46146) | READY TO RELEASE |
+| ZP-5106 fork moves open WOs | PARTLY: Set Up Forms + Build Quote pass; the one-way global fork was not run (UPS Maintenance would move ~26 open acme WOs) | [46147](https://egalvanic.atlassian.net/browse/ZP-5106?focusedCommentId=46147) | In QA (owner decision) |
+| ZP-5108 WO Details rings | PASS (feature-skm-export OFF SIMULATED only) | [46148](https://egalvanic.atlassian.net/browse/ZP-5108?focusedCommentId=46148) | READY TO RELEASE |
+| ZP-5109 Approve / Approve & Next | PASS | [46149](https://egalvanic.atlassian.net/browse/ZP-5109?focusedCommentId=46149) | READY TO RELEASE |
+| ZP-5110 section auto-complete | PASS | [46150](https://egalvanic.atlassian.net/browse/ZP-5110?focusedCommentId=46150) | READY TO RELEASE |
+| ZP-4834 company_data_epoch | PASS (API, 9 seats); demo-reset bump not web-testable | [46151](https://egalvanic.atlassian.net/browse/ZP-4834?focusedCommentId=46151) | READY TO RELEASE |
+| ZP-4835 mutation worker rollback | PASS part 1 (FK violation dead-lettered after 4 tries, real error recorded); part 2 not web-testable; GET /api/mutations?status=unknown → 500 noted (API-only, not filed) | [46152](https://egalvanic.atlassian.net/browse/ZP-4835?focusedCommentId=46152) | READY TO RELEASE |
 
 ### ZP-5158 details
 - API `/api/subscription/activity?page&page_size` → `{events,page,page_size,total}`.
@@ -79,3 +86,7 @@
 
 ## Open for the owner
 - The tester did not send invites to real/public mailboxes (the safety check stopped that); only `.invalid` addresses were used. The "public domain / egalvanic.com resolves to nobody" negative rows of ZP-4830 need the owner's OK to invite addresses he controls.
+
+## Release state at ~18:10 IST (JQL fixVersion 14299)
+22 READY TO RELEASE, 10 In QA, 3 To Do (ZP-4324 already To Do; ZP-4830; new ZP-5262). Ready for QA: none.
+In QA: 4831, 4833, 4942, 4943, 5026, 5031, 5100, 5106, 5107, 5111. Each is waiting on a seat, flag, data or owner decision listed in its comment.

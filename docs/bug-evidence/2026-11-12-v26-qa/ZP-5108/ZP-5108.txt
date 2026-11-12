@@ -7,7 +7,7 @@ _Video: Details rings, Study File and Report cards, an SLD edit that creates a b
 * Breaker inside SWBD-1 wired straight to bus PNL-1: the SLD flags "Buses connected without impedance", and the Topology Errors ring goes from No errors to 1 error after the SLD tab, with no reload.
 * exclude_kinds=sccr drops the SCCR-kind assets (5 → 3), so Engineering Approved reads 2 of 3.
 * Add New Asset in the work order: the new breaker joins with Arc Flash Data Collection already registered. ⋮ › Take the Guided Tour runs the 9-step AFDC tour.
-* feature-skm-export (ON for Acme): a simulated OFF and a LaunchDarkly outage both hide the Topology ring and the Study File card. A real OFF check is still needed.
+* feature-skm-export (ON for Acme): a simulated OFF and a LaunchDarkly outage both hide the Topology ring and the Study File card. Not switched OFF for real (the flag is shared on QA), so the OFF state is SIMULATED only.
 * Not covered: connection cables joining the WO (no cable nodes on my test site).
 * Test data: [https://acme.qa.egalvanic.ai/sessions/c3791ea4-f421-465e-9c16-61b37eecdd6d]
 

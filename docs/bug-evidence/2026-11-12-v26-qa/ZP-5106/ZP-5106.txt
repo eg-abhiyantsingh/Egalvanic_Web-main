@@ -1,0 +1,17 @@
+*Result: PARTLY on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+!QA-12Nov-ZP-5106-video-steps.mp4|width=640!
+_Video: a QA-DEMO work order that still carries the global Infrared Thermography, Set Up Forms on a new asset, then Build Quote with forked services and a control (74 s)_
+
+* Set Up Forms: on a work order that carries the global Infrared Thermography, a new Panelboard shows "Infrared Thermography — applies" (matched to EG-ACME's fork). Passed.
+* Build Quote: the forked Infrared Thermography and NETA Testing show no "no implementation" warning. Control: UPS Maintenance still warns "9 matched assets have no UPS Maintenance implementation". Passed.
+* Forking a non-global (QA-DEMO) service is refused: 400 "only global services can be forked".
+* Not run: forking a global service so its open work orders move to the fork. It is one-way and would move every open EG-ACME work order of that service on shared QA data.
+* Question: can someone seed a QA-only global service with 1–2 QA-DEMO open work orders, or may we fork UPS Maintenance on QA (about 26 open work orders would move)?
+* Status: stays In QA until the fork test can run on data that is safe to move.
+
+!QA-12Nov-ZP-5106-1-set-up-forms-matches-fork-to-global.png|width=640!
+_1. Set Up Forms: the global Infrared Thermography on the work order applies to the new asset_
+!QA-12Nov-ZP-5106-2-build-quote-forked-services-no-warning.png|width=640!
+_2. Build Quote: forked services, no false warning_
+!QA-12Nov-ZP-5106-3-build-quote-control-real-warning.png|width=640!
+_3. Control: a service with no implementation still warns_
