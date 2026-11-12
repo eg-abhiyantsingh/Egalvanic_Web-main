@@ -1,0 +1,28 @@
+*Result: PASS on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+
+!QA-12Nov-ZP-5223-video-steps.mp4|width=640!
+_Video: work order "IR Atest" → Generate Report: the default, the rows with their service, search by name and by service, no match, keyboard, generate, and the "+2" chip (SIMULATED)._
+
+* *Search:* the box says "Search by name or service…". "thermo" finds configs by name. "NETA" finds "QA Test" (service NETA Testing), and "Cleaning" finds "test" (service Cleaning), although those words are not in the names. No match: 'No report configurations match "zzqq"'.
+* *Service on each row:* the service shows between the name and the Custom/HTML badges. Configs with no service (108 of the 134 on QA) show nothing there, which reads fine.
+* *Several services (SIMULATED, because no QA config has more than one):* the row shows the first service + a "+2" chip on one line, and hovering lists all three.
+* *Default and output unchanged:* the dialog still picks the same default (the selection logic is identical to production), and Generate Report with it still gives the PDF (POST /reporting/generate_simple 200).
+* *Keyboard:* type "QA Test", Arrow Down, Enter selects it.
+* *Regression:* the report config editor's Site picker still searches ("test" lists the matching sites) and says 'No sites match "zzqq"' when nothing matches.
+* *Suggestion (not a bug, the ticket mentions it):* identically named configs still can't be told apart. Two "Infrared Thermography Report (Copy)" rows have the same service (different ids), and four "IR Thermography Report (Frontloaded) (Copy)" rows have no service. Showing who changed it last and when, or making names unique, would separate them.
+* *Not covered:* dark theme and narrow width.
+
+!QA-12Nov-ZP-5223-2-rows-with-category.png|width=640!
+_Screenshot 1: the list: each row shows its service, then the badges._
+
+!QA-12Nov-ZP-5223-4-search-service-neta.png|width=640!
+_Screenshot 2: "NETA" finds "QA Test" through its service._
+
+!QA-12Nov-ZP-5223-5-no-match-message.png|width=640!
+_Screenshot 3: no match: a clear message._
+
+!QA-12Nov-ZP-5223-7-simulated-plus-n.png|width=640!
+_Screenshot 4 (SIMULATED): three services → first one + "+2"; the tooltip lists all._
+
+!QA-12Nov-ZP-5223-8-site-picker-no-match.png|width=640!
+_Screenshot 5 (regression): the report config Site picker still shows its own no-match message._

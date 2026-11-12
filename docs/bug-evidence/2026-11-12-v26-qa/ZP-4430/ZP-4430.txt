@@ -1,0 +1,18 @@
+*Result: PASS on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026), re-tested after the ticket came back from Sentry on 6 Nov.
+
+!QA-12Nov-ZP-4430-video-steps.mp4|width=640!
+_Video: Builder › Reports › EMP Lite and Condition Assessment previews of "Performance sld" (8,482 assets, the largest acme site), in real time._
+
+* *Largest site:* the EMP Lite preview showed after 40 s (the server answered 200 after 38.5 s), with long lists summed up as "… and 8481 more like this". Condition Assessment showed after 35 s (200 after 31.5 s). No 500 and no "Preview unavailable".
+* SWEEP_LINE
+* INVALID_LINE
+* *Not covered:* which production request triggered the 6 Nov Sentry reopen (Sentry 7709125644 is not reachable from QA). If the dev knows the failing config or input, QA can repeat that exact case.
+
+!QA-12Nov-ZP-4430-1-emp-lite-shown-40s.jpg|width=640!
+_Screenshot 1: the EMP Lite preview of the 8,482-asset site, shown after 40 s._
+
+!QA-12Nov-ZP-4430-2-emp-lite-8481-more-like-this.jpg|width=640!
+_Screenshot 2: long lists summed up: "… and 8481 more like this"._
+
+!QA-12Nov-ZP-4430-3-condition-assessment-shown-35s.jpg|width=640!
+_Screenshot 3: the Condition Assessment preview of the same site, shown after 35 s._

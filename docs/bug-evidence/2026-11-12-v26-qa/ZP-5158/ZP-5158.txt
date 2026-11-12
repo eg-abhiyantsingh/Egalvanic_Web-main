@@ -1,0 +1,23 @@
+*Result: PASS on QA* (Web v2.6, build index-C1ZRIunF.js, 12 Nov 2026)
+
+!QA-12Nov-ZP-5158-video-steps.mp4|width=640!
+_Video: the real Activity list (QA has 1 event), the T2 table still paging, then the pager and the empty state with SIMULATED data._
+
+* *Paged on the server:* GET /api/subscription/activity?page=N&page_size=10 returns only that page plus the total. The first page arrives with /api/subscription (activity_total, activity_page_size 10), so the full history is no longer loaded. page=abc → 400 "page and page_size must be integers", page 0 → page 1, page_size is capped at 100.
+* *Pager (SIMULATED, 23 fake events, because QA has only 1 real event):* header "23 events" (the total, not the page), "1–10 of 23", Previous disabled on page 1, Next disabled on the last page ("21–23 of 23"). Each click sends one request for that page only. It looks the same as the T2 table above.
+* *Empty state (SIMULATED):* "No activity yet. Plan starts, module and site changes and customer portal licences will show here." No pager.
+* *Regression:* the T2 licenses table still pages (1–10 → 11–20 of 140).
+* *Roles:* Project Manager, Facility Manager and Client Portal get 403 "forbidden" on both subscription endpoints.
+* *Not covered:* the order of events that share a date, and a new event arriving while paging (QA review rows 5–6), because the QA company has only 1 real event. Seeding 11 or more events on QA would let us check them. Dark theme and narrow width were not checked.
+
+!QA-12Nov-ZP-5158-1-real-1-event-no-pager.png|width=640!
+_Screenshot 1 (real): 1 event, so no pager is needed._
+
+!QA-12Nov-ZP-5158-3-simulated-page1.jpg|width=640!
+_Screenshot 2 (SIMULATED): page 1, "1–10 of 23", same pager as the T2 table._
+
+!QA-12Nov-ZP-5158-4-simulated-last-page.jpg|width=640!
+_Screenshot 3 (SIMULATED): last page "21–23 of 23", Next disabled._
+
+!QA-12Nov-ZP-5158-5-simulated-empty-state.jpg|width=640!
+_Screenshot 4 (SIMULATED): no activity: a message instead of an empty pager._
