@@ -66,3 +66,22 @@ QA shows the same gaps: the Locations building list, issue details and the issue
 - **BCES-IQ sites:** the staff seat's `accessible_sld_ids` is empty and `/api/sld/list` returns 404. Get site ids by picking each site and reading `localStorage.activeSiteId`.
 - **Locations tree:** the expander sits about 24 px left of the label. A click on the label only selects the node.
 - **Quote Bulk Add Procedures:** the Apply To radios (all / classes / select) appear only after a procedure is picked.
+
+## Request 3 (added later): "Issues for Connections & Rooms" — NOT DONE (QA and BCES-IQ production)
+Prompt: owner pasted the customer request (BCESGlobal), "test this too". Jira: ZP-1414 (To Do), with sub-tasks ZP-3587 [Backend] and ZP-3588 [Frontend] (both To Do, as seen in a Jira search on 13 Nov). Jira was timing out later the same day.
+
+| Check | QA (index-BmlIaa75.js) | BCES-IQ prod (index-Bc-4hnLR.js, read-only) |
+|---|---|---|
+| Create Issue: what an issue can be on | Only "Asset" (optional field). No Room or Connection field | Same |
+| Room name in the Asset picker | Not found | "Room ABC" not found |
+| Locations › room | Tabs Assets / Photos / Details. No Issues tab or "Add issue" | Same |
+| Connections › Edit Connection | Basic Info + Core Attributes only. Row actions: Edit / Delete | Same |
+| Admin › Issue Classes | Only Name / Description / Core Attributes. No "applies to room/connection" setting | — |
+
+Workarounds that exist today (not the requested feature):
+- Feeder cable assets (Cable / DC Cable class, "FDR-…" names) can be picked as the issue's asset. This only works where a site models the feeder as an asset.
+- An issue can be saved with no asset at all, but it is then not tied to any room or connection.
+
+Evidence: `docs/bug-evidence/2026-11-13-issues-connections-rooms/`:
+- PROD-BCES-13Nov-ISSUE-TARGET-video-steps.mp4 (68 s, local only);
+- PROD-BCES-13Nov-ISSUE-TARGET-1…4.png.
