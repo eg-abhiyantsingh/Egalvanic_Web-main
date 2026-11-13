@@ -1,0 +1,11 @@
+*Result: PARTLY on QA* (build index-C6DvLko9.js, 13 Nov 2026). The QA smoke test passes; the merge record this ticket asks for is not on the ticket yet.
+[^QA-13Nov-ZP-5067-video-steps.mp4] _Video (28 s): smoke test of QA after the dev → qa promotion: sign-in, Assets, Work Orders, a work order, Builder › Forms._
+
+* QA smoke test passes (Super Admin): sign-in, Site Overview, Assets list, Work Orders list, a work order (Details + Assets) and Builder › Forms all load in 0.3–3 s. No page errors and no 5xx responses.
+* The sprint's dev work is on QA: QA moved to index-CDvWXKDj.js (00:21 IST) and then index-C6DvLko9.js (13:25 IST). Eric's 11 Ready-for-QA tickets (plans pricing, Power Scheme overlay, transformer X/R, Upload Anything feedback) are present on QA and are being tested today.
+* *Not on the ticket yet:* the QA Review rows ask for every merge to be recorded here (repo, direction, PR link) and for Eric's approval of the dev → qa step to be pasted. Neither is on the ticket yet. Only the 2 Nov note about eg-pz-reporting-lambdas and ZP-5073 is here.
+* *Not checked from QA:* the Alembic single head, the deploy order, and whether stage and dev are behind prod. These are repo/pipeline facts that QA can't see from the app.
+* Ask: please add the PR links per repo and direction, plus Eric's approval, and QA will close out the remaining rows.
+
+!QA-13Nov-ZP-5067-1-signed-in-site-overview.png|thumbnail! !QA-13Nov-ZP-5067-2-assets-list.png|thumbnail! !QA-13Nov-ZP-5067-3-work-orders-list.png|thumbnail! !QA-13Nov-ZP-5067-4-work-order-assets.png|thumbnail! !QA-13Nov-ZP-5067-5-eg-forms.png|thumbnail!
+_1. Signed in, Site Overview. 2. Assets list with data. 3. Work Orders list. 4. A work order's Assets tab. 5. Builder › Forms list._

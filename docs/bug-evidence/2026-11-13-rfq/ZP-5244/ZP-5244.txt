@@ -1,0 +1,17 @@
+*Result: PASS on QA* (build index-C6DvLko9.js, 13 Nov 2026)
+[^QA-13Nov-ZP-5244-video-steps.mp4] _Video (40 s): Panelboard added to a service with "Add class", then its check-off box in the work order Assets grid, ticked and still ticked after a reload._
+
+Root cause (from user-checked-default-bug.md): methods added with the service editor's Add class / Add method were saved with user_checked = false, so those assets had no check-off box. Checked on QA:
+* Services › QA-DEMO ZP-4586 Ultrasonic UT 15 Oct › Add class › Panelboard: the save now sends user_checked: true for the new method, and the API reads it back as true.
+* Backend default (API, same QA-DEMO service): a method saved *without* user_checked is stored as *true*; a method saved with user_checked false stays *false* (as the fix intends).
+* Work order [QA-DEMO ZP-5244 13 Nov check-off|https://acme.qa.egalvanic.ai/sessions/d1cbacb1-55bc-4318-b432-bda1df9ffd51] (Android Site 2, 124 assets): every Panelboard row has the check-off box in the Ultrasonic cell. Ticking one keeps it ticked after a reload.
+* IR work order (Infrared Thermography, 308 assets): ticking a Panelboard's box in the IR Photos cell moves the Details ring from 0 of 308 to *1 of 308 Marked Complete*.
+
+Not covered:
+* Newkirk's own work order and the Newkirk data fix are on production; this was checked on QA only.
+* Backfill of the methods created with false before the fix (about 2,440 on prod per the dev note) needs a product decision. Older methods saved before the fix still have no box until that is done.
+* PP-1 and BP-7B on the Newkirk work order have no method lines, so they still get no box (noted in the dev write-up).
+
+!QA-13Nov-ZP-5244-1-service-panelboard-class-added.png|thumbnail! !QA-13Nov-ZP-5244-2-assets-grid-panelboard-check-off-box.png|thumbnail! !QA-13Nov-ZP-5244-3-panelboard-checked-off.png|thumbnail!
+!QA-13Nov-ZP-5244-4-after-reload-still-checked.png|thumbnail! !QA-13Nov-ZP-5244-6-ir-wo-panelboard-checked.png|thumbnail! !QA-13Nov-ZP-5244-7-ir-wo-ring-counts-check-off.png|thumbnail!
+_1. Panelboard added to the service with Add class. 2. Panelboard rows have the check-off box. 3. One Panelboard ticked. 4. Still ticked after a reload. 5. IR work order: Panelboard ticked in the IR Photos cell. 6. Details ring: 1 of 308 Marked Complete._

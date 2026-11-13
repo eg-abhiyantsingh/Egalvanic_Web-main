@@ -1,0 +1,123 @@
+{
+ "before": {
+  "panelboard": {
+   "procId": "c43c973d-a5ad-4f46-9aa1-260554498073",
+   "status": 200,
+   "methods": [
+    {
+     "key": "qa-demo-zp-5244-panel-check-off-13-nov",
+     "user_checked": true
+    }
+   ],
+   "rawKeys": [
+    "description",
+    "id",
+    "key",
+    "methods",
+    "name",
+    "node_class_has_schedule",
+    "node_class_id",
+    "node_class_key",
+    "node_class_name",
+    "rules",
+    "unit_attributes_available"
+   ]
+  },
+  "transformer": {
+   "procId": "3f2f4ce4-82a1-4914-9dce-eb6353eb8265",
+   "status": 200,
+   "methods": [
+    {
+     "key": "qa-demo-zp-4586-ultrasonic-scan",
+     "user_checked": true
+    }
+   ],
+   "rawKeys": [
+    "description",
+    "id",
+    "key",
+    "methods",
+    "name",
+    "node_class_has_schedule",
+    "node_class_id",
+    "node_class_key",
+    "node_class_name",
+    "rules",
+    "unit_attributes_available"
+   ]
+  }
+ },
+ "post": {
+  "s": 201,
+  "counts": {
+   "form_ids": {},
+   "forms_created": 0,
+   "forms_updated": 0,
+   "methods_created": 2,
+   "methods_soft_deleted": 0,
+   "methods_updated": 2,
+   "procedures_created": 0,
+   "procedures_soft_deleted": 0,
+   "procedures_updated": 2,
+   "rule_warnings": [],
+   "unresolved": []
+  },
+  "err": null
+ },
+ "after": {
+  "panelboard": {
+   "procId": "c43c973d-a5ad-4f46-9aa1-260554498073",
+   "status": 200,
+   "methods": [
+    {
+     "key": "qa-demo-zp-5244-panel-check-off-13-nov",
+     "user_checked": true
+    },
+    {
+     "key": "qa-demo-zp-5244-api-no-flag",
+     "user_checked": true
+    },
+    {
+     "key": "qa-demo-zp-5244-api-explicit-false",
+     "user_checked": false
+    }
+   ],
+   "rawKeys": [
+    "description",
+    "id",
+    "key",
+    "methods",
+    "name",
+    "node_class_has_schedule",
+    "node_class_id",
+    "node_class_key",
+    "node_class_name",
+    "rules",
+    "unit_attributes_available"
+   ]
+  },
+  "transformer": {
+   "procId": "3f2f4ce4-82a1-4914-9dce-eb6353eb8265",
+   "status": 200,
+   "methods": [
+    {
+     "key": "qa-demo-zp-4586-ultrasonic-scan",
+     "user_checked": true
+    }
+   ],
+   "rawKeys": [
+    "description",
+    "id",
+    "key",
+    "methods",
+    "name",
+    "node_class_has_schedule",
+    "node_class_id",
+    "node_class_key",
+    "node_class_name",
+    "rules",
+    "unit_attributes_available"
+   ]
+  }
+ }
+}

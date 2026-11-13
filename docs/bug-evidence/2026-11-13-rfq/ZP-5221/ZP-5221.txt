@@ -1,0 +1,14 @@
+*Result: PASS on QA* (build index-C6DvLko9.js, 13 Nov 2026)
+[^QA-13Nov-ZP-5221-video-steps.mp4] _Video (3.4 min): the never-built quote "QA-DEMO triage 4 Nov ZP-3533" in all four plan reports, then the built control "66101"._
+
+* Short Form Proposal for the never-built quote: the letter renders and the price box shows *PRE-TAX TOTAL —* (no red error box).
+* Full Proposal: all 7 pages render, including Investment & Acceptance ("0 planned work orders totaling an estimated 0 labor hours").
+* EMP Proposal: all 8 pages render. The cover now says *5-Year Program* and *Program Term 5 Years* (it said "NONE-YEAR PROGRAM" / "None Years" before).
+* EMP Data Sheet: renders (5 years, 0 assets, 0 services, 0 work orders, 0 est. hours).
+* The other two never-built quotes ("new quote" 41609747, "new" 5b36dfd1) also render in all four reports with no render error.
+* API sweep: all 50 plans in the report picker × the 4 reports = 200 previews, all 200 OK, 0 render errors, no "unsupported format string" and no "NONE-YEAR".
+* Controls unchanged: "66101" (built, $0) still says "The total investment for this program is $0.00 (pre-tax)"; "new" a4ed0f04 still shows $266.67.
+
+!QA-13Nov-ZP-5221-1-empty-quote-this-quote-is-empty.png|thumbnail! !QA-13Nov-ZP-5221-2-short-form-empty-quote-price-dash.png|thumbnail! !QA-13Nov-ZP-5221-2b-short-form-pre-tax-total-dash-zoom.png|thumbnail!
+!QA-13Nov-ZP-5221-3-full-proposal-investment-page-renders.png|thumbnail! !QA-13Nov-ZP-5221-4-emp-proposal-cover-5-year.png|thumbnail! !QA-13Nov-ZP-5221-5-emp-data-sheet-empty-quote.png|thumbnail! !QA-13Nov-ZP-5221-6-control-built-quote-66101.png|thumbnail!
+_1. The quote is still never built ("This quote is empty"). 2 and 2b. Short Form: the price box shows "—". 3. Full Proposal: Investment Summary page renders. 4. EMP Proposal cover: "5-Year Program". 5. EMP Data Sheet renders. 6. Control: built quote 66101, $0.00._

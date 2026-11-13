@@ -1,0 +1,297 @@
+{
+ "login": "mfa-skipped",
+ "build": "index-C6DvLko9.js",
+ "r": {
+  "triage": {
+   "short": {
+    "s": 200,
+    "n": 1,
+    "errs": [],
+    "unsupported": false,
+    "none": null,
+    "invest": "iyant.singh+admin@egalvanic.com EG-ACME Investment Pre-Tax Total — Pricing valid for 30 days from the date of this proposal. Please contact us with any questions. Qualifications & Exceptions Pricing is based on",
+    "labels": [
+     "QA-DEMO triage 4 Nov ZP-3533"
+    ]
+   },
+   "empData": {
+    "s": 200,
+    "n": 1,
+    "errs": [],
+    "unsupported": false,
+    "none": null,
+    "invest": null,
+    "labels": [
+     "QA-DEMO triage 4 Nov ZP-3533"
+    ]
+   },
+   "full": {
+    "s": 200,
+    "n": 7,
+    "errs": [],
+    "unsupported": false,
+    "none": null,
+    "invest": "E QA-DEMO triage 4 Nov ZP-3533 Proposal Investment Investment Summary Pricing reflects the full proposed scope — 0 planned work orders totaling an estimated 0 labor hours . Investment Summary Total Proposal Val",
+    "labels": [
+     "QA-DEMO triage 4 Nov ZP-3533",
+     "QA-DEMO triage 4 Nov ZP-3533",
+     "QA-DEMO triage 4 Nov ZP-3533",
+     "QA-DEMO triage 4 Nov ZP-3533",
+     "QA-DEMO triage 4 Nov ZP-3533",
+     "QA-DEMO triage 4 Nov ZP-3533",
+     "QA-DEMO triage 4 Nov ZP-3533"
+    ]
+   },
+   "emp": {
+    "s": 200,
+    "n": 8,
+    "errs": [],
+    "unsupported": false,
+    "none": " EG-ACME QA-DEMO triage 4 Nov ZP-3533 None · 4.2.4.2 Program Elements Site Assessment Elements Complia",
+    "invest": "ME QA-DEMO triage 4 Nov ZP-3533 Program Investment Investment Summary Program pricing reflects the full 5-year scope — 0 planned work orders totaling an estimated 0 labor hours . Investment Summary Labor — Tota",
+    "labels": [
+     "QA-DEMO triage 4 Nov ZP-3533",
+     "QA-DEMO triage 4 Nov ZP-3533",
+     "QA-DEMO triage 4 Nov ZP-3533",
+     "QA-DEMO triage 4 Nov ZP-3533",
+     "QA-DEMO triage 4 Nov ZP-3533",
+     "QA-DEMO triage 4 Nov ZP-3533",
+     "QA-DEMO triage 4 Nov ZP-3533",
+     "QA-DEMO triage 4 Nov ZP-3533"
+    ]
+   }
+  },
+  "newQuote": {
+   "emp": {
+    "s": 200,
+    "n": 8,
+    "errs": [],
+    "unsupported": false,
+    "none": " EG-ACME new quote None · 4.2.4.2 Program Elements Site Assessment Elements Complia",
+    "invest": " EG-ACME new quote Program Investment Investment Summary Program Total $18,208 Program pricing reflects the full 1-year scope — 1 planned work orders totaling an estimated 90 labor hours , with an annual pric",
+    "labels": [
+     "new quote",
+     "new quote",
+     "new quote",
+     "new quote",
+     "new quote",
+     "new quote",
+     "new quote",
+     "new quote"
+    ]
+   },
+   "full": {
+    "s": 200,
+    "n": 7,
+    "errs": [],
+    "unsupported": false,
+    "none": null,
+    "invest": " EG-ACME new quote Proposal Investment Investment Summary Proposal Total $18,208 Pricing reflects the full proposed scope — 1 planned work order totaling an estimated 90 labor hours , with an annual price adju",
+    "labels": [
+     "new quote",
+     "new quote",
+     "new quote",
+     "new quote",
+     "new quote",
+     "new quote",
+     "new quote"
+    ]
+   },
+   "short": {
+    "s": 504,
+    "n": 0,
+    "errs": [],
+    "unsupported": false,
+    "none": null,
+    "invest": null,
+    "labels": []
+   },
+   "empData": {
+    "s": 504,
+    "n": 0,
+    "errs": [],
+    "unsupported": false,
+    "none": null,
+    "invest": null,
+    "labels": []
+   }
+  },
+  "new5b": {
+   "short": {
+    "s": 200,
+    "n": 1,
+    "errs": [],
+    "unsupported": false,
+    "none": null,
+    "invest": " estimated 2.3 labor hours of work. The total investment for this program is $282.33 (pre-tax), invoiced as the work is performed. The following page details our standard qualifications; your signature there authoriz",
+    "labels": [
+     "new"
+    ]
+   },
+   "emp": {
+    "s": 200,
+    "n": 8,
+    "errs": [],
+    "unsupported": false,
+    "none": " EG-ACME new None · 4.2.4.2 Program Elements Site Assessment Elements Complia",
+    "invest": " EG-ACME new Program Investment Investment Summary Program Total $282 Program pricing reflects the full 1-year scope — 1 planned work orders totaling an estimated 2 labor hours , with an annual price ad",
+    "labels": [
+     "new",
+     "new",
+     "new",
+     "new",
+     "new",
+     "new",
+     "new",
+     "new"
+    ]
+   },
+   "full": {
+    "s": 200,
+    "n": 7,
+    "errs": [],
+    "unsupported": false,
+    "none": null,
+    "invest": " EG-ACME new Proposal Investment Investment Summary Proposal Total $282 Pricing reflects the full proposed scope — 1 planned work order totaling an estimated 2 labor hours , with an annual price adjustme",
+    "labels": [
+     "new",
+     "new",
+     "new",
+     "new",
+     "new",
+     "new",
+     "new"
+    ]
+   },
+   "empData": {
+    "s": 200,
+    "n": 1,
+    "errs": [],
+    "unsupported": false,
+    "none": null,
+    "invest": null,
+    "labels": [
+     "new"
+    ]
+   }
+  },
+  "c66101": {
+   "empData": {
+    "s": 200,
+    "n": 1,
+    "errs": [],
+    "unsupported": false,
+    "none": null,
+    "invest": null,
+    "labels": [
+     "66101"
+    ]
+   },
+   "short": {
+    "s": 200,
+    "n": 1,
+    "errs": [],
+    "unsupported": false,
+    "none": null,
+    "invest": " 0 assets across 0 planned visits . The total investment for this program is $0.00 (pre-tax), invoiced as the work is performed. The following page details our standard qualifications; your signature there authorizes",
+    "labels": [
+     "66101"
+    ]
+   },
+   "emp": {
+    "s": 200,
+    "n": 8,
+    "errs": [],
+    "unsupported": false,
+    "none": " EG-ACME 66101 None · 4.2.4.2 Program Elements Site Assessment Elements Complia",
+    "invest": " EG-ACME 66101 Program Investment Investment Summary Program Total $0 Program pricing reflects the full 1-year scope — 0 planned work orders totaling an estimated 0 labor hours , with an annual price adju",
+    "labels": [
+     "66101",
+     "66101",
+     "66101",
+     "66101",
+     "66101",
+     "66101",
+     "66101",
+     "66101"
+    ]
+   },
+   "full": {
+    "s": 200,
+    "n": 7,
+    "errs": [],
+    "unsupported": false,
+    "none": null,
+    "invest": " EG-ACME 66101 Proposal Investment Investment Summary Proposal Total $0 Pricing reflects the full proposed scope — 0 planned work orders totaling an estimated 0 labor hours , with an annual price adjustmen",
+    "labels": [
+     "66101",
+     "66101",
+     "66101",
+     "66101",
+     "66101",
+     "66101",
+     "66101"
+    ]
+   }
+  },
+  "newSent": {
+   "empData": {
+    "s": 200,
+    "n": 1,
+    "errs": [],
+    "unsupported": false,
+    "none": null,
+    "invest": null,
+    "labels": [
+     "new"
+    ]
+   },
+   "emp": {
+    "s": 200,
+    "n": 8,
+    "errs": [],
+    "unsupported": false,
+    "none": " EG-ACME new None · 4.2.4.2 Program Elements Site Assessment Elements Complia",
+    "invest": " EG-ACME new Program Investment Investment Summary Program Total $267 Program pricing reflects the full 1-year scope — 1 planned work orders totaling an estimated 3 labor hours , with an annual price ad",
+    "labels": [
+     "new",
+     "new",
+     "new",
+     "new",
+     "new",
+     "new",
+     "new",
+     "new"
+    ]
+   },
+   "full": {
+    "s": 200,
+    "n": 7,
+    "errs": [],
+    "unsupported": false,
+    "none": null,
+    "invest": " EG-ACME new Proposal Investment Investment Summary Proposal Total $267 Pricing reflects the full proposed scope — 1 planned work order totaling an estimated 3 labor hours , with an annual price adjustme",
+    "labels": [
+     "new",
+     "new",
+     "new",
+     "new",
+     "new",
+     "new",
+     "new"
+    ]
+   },
+   "short": {
+    "s": 200,
+    "n": 1,
+    "errs": [],
+    "unsupported": false,
+    "none": null,
+    "invest": " estimated 2.7 labor hours of work. The total investment for this program is $266.67 (pre-tax), invoiced as the work is performed. The following page details our standard qualifications; your signature there authoriz",
+    "labels": [
+     "new"
+    ]
+   }
+  }
+ }
+}

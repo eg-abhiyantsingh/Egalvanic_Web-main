@@ -1,0 +1,12 @@
+*Result: PASS on QA* (build index-C6DvLko9.js, 13 Nov 2026). The same result was seen earlier today on index-CDvWXKDj.js.
+[^QA-13Nov-ZP-5037-video-steps.mp4] _Video (1.8 min): Est. hours left empty, Review, Create, Edit drawer, then the control with 6 h._
+
+* Project Manager seat, site Android Site 2, service Infrared Thermography (308 qualifying assets).
+* Est. hours left empty: step 1 says "No hours estimate" and Review now also says *Est. hours: No hours estimate* (before the fix it showed 103 h).
+* After Create, the saved work order matches Review: GET /api/ir_session/<id> returns est_hours null, and Edit Work Order > Estimated Hours is empty.
+* Control: typing 6 shows "6 h estimate" in step 1 and "6 h" in Review, and the work order is saved with est_hours 6.
+* Work orders created: [QA-DEMO ZP-5037 13 Nov empty-hours|https://acme.qa.egalvanic.ai/sessions/427597e0-9aa3-48fc-839a-b724bc90cf9e] and [QA-DEMO ZP-5037 13 Nov control-6h|https://acme.qa.egalvanic.ai/sessions/43ce1b59-0d62-4ac6-926e-fd00c943d672].
+
+!QA-13Nov-ZP-5037-1-step1-est-hours-empty-no-hours-estimate.png|thumbnail! !QA-13Nov-ZP-5037-2-review-with-empty-est-hours.png|thumbnail! !QA-13Nov-ZP-5037-3-edit-drawer-estimated-hours-empty.png|thumbnail!
+!QA-13Nov-ZP-5037-4-control-review-6h.png|thumbnail! !QA-13Nov-ZP-5037-5-control-saved-6h.png|thumbnail!
+_1. Step 1: Est. hours empty, "No hours estimate". 2. Review: "Est. hours: No hours estimate". 3. The created work order: Edit Work Order > Estimated Hours is empty. 4. Control: Review shows 6 h. 5. Control work order saved._
