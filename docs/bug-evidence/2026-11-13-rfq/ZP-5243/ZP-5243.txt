@@ -1,0 +1,21 @@
+*Result: PASS on QA* (build index-C6DvLko9.js, 13 Nov 2026)
+[^QA-13Nov-ZP-5243-video-steps.mp4]
+_Video: banner on /assets after a tiny Upload Anything import; Request revision dialog; Looks good!; Attachments > Upload Anything folder._
+
+* The banner shows above the Arc Flash Readiness / Condition Assessment cards while the job is imported, unanswered and under 14 days old (feedback_due true). Old jobs (Jul/Aug) and jobs that are not imported never show it.
+* Looks good! records "ok" and the banner stays gone after reload.
+* Request revision: "What's wrong?" required (submit disabled when blank); optional extra file; confirmation "Revision requested (request TKT-1600)". The source doc + extra file land in Attachments > "Upload Anything" (Internal).
+* First answer wins: a second POST returns already_recorded and does not change the answer. Permission: Client Portal (no bulk_operations.manage) sees no banner and gets 422. Feedback POST for a job on an unassigned site returns 404.
+* One QA test ticket was filed in DevRev: TKT-1600, note "QA TEST ZP-5243 13 Nov - automated QA check, please ignore". It can be closed.
+* New bug [ZP-5284|https://egalvanic.atlassian.net/browse/ZP-5284] (outside this ticket): GET /onboarding/jobs/active, /status and /result return another site's job and its workbook link to a user who is not assigned to that site.
+
+!QA-13Nov-ZP-5243-1-banner-on-assets-feedback-due.png|thumbnail!
+_Banner after import, above the cards (expected)._
+!QA-13Nov-ZP-5243-2-looks-good-banner-gone-after-reload.png|thumbnail!
+_After Looks good! + reload: banner gone (expected)._
+!QA-13Nov-ZP-5243-3-revision-dialog-note-required-submit-disabled.png|thumbnail!
+_Note required: submit disabled while blank (expected)._
+!QA-13Nov-ZP-5243-5-revision-confirmation.png|thumbnail!
+_Confirmation with request id TKT-1600 (expected)._
+!QA-13Nov-ZP-5243-6-attachments-upload-anything-folder.png|thumbnail!
+_Attachments > Upload Anything: source doc + extra file, Internal (expected)._

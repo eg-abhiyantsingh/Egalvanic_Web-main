@@ -1,0 +1,18 @@
+*Result: PASS on QA* (build index-C6DvLko9.js, 13 Nov 2026)
+[^QA-13Nov-ZP-5265-video-steps.mp4]
+_Video: Power Scheme overlay on an own QA-DEMO SLD; legend swatches and node/link colours measured._
+
+* Legend swatches read with getComputedStyle: UPS rgb(234,88,12), Generator rgb(220,38,38), Utility rgb(0,0,0), Not fed rgb(156,163,175).
+* Node border pixels on screen match exactly: Utility #000000, Generator #dc2626, UPS #ea580c, no source #9ca3af. Body tint = same colour at 20%.
+* Link strokes use the same constants (grey where the two ends differ).
+* PNL-CRIT, fed by the UPS and by the generator through a closed bypass, stays orange; the ATS fed by utility + generator stays red. Priority unchanged.
+* Suggestion: the Utility wash (grey) and the "not fed" wash look alike at normal zoom; only the border separates them.
+
+!QA-13Nov-ZP-5265-1-legend-swatches.png|thumbnail!
+_Legend swatches with the new colours (expected)._
+!QA-13Nov-ZP-5265-2-utility-black-generator-red.png|thumbnail!
+_Utility chain black, generator chain red (expected)._
+!QA-13Nov-ZP-5265-3-ups-orange-dual-fed-stays-orange.png|thumbnail!
+_UPS branch orange; PNL-CRIT (UPS + generator) stays orange (expected)._
+!QA-13Nov-ZP-5265-4-not-fed-grey.png|thumbnail!
+_Not fed by any source = grey (expected)._

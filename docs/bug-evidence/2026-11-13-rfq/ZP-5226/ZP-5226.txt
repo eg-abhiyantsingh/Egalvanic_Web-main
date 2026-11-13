@@ -1,0 +1,19 @@
+*Result: PASS on QA* (build index-C6DvLko9.js, 13 Nov 2026)
+[^QA-13Nov-ZP-5226-video-steps.mp4]
+_Video: class editor X/R Override (locked, Exclude from AI), asset value, SLD Export Engineering XML, the exported Xformer2 fields._
+
+* X/R Override (xrOverride, number) is a reserved core attribute on Transformer and Transformer (3-Winding): padlock tooltip, "Exclude from AI" selected and disabled.
+* Export without library R/X: field 720948 filled with a size-based typical X/R (75 kVA 3.1562, 500 kVA 4.6944, 2500 kVA 10.4732). Rpos/Xpos match Z% (sqrt(R2+X2) = Z%), Rzero/Xzero = pos.
+* Override wins: TX-B with X/R Override 8.5 exports X/R 8.5000, Rpos 0.6718, Xpos 5.7106. A transformer with kVA but no %Z gets no X/R.
+* Re-import of the unchanged native export: X/R Override stays empty (not frozen as user data); TX-B keeps its own 8.5.
+* Question: can you confirm 4.6944 @ 500 kVA / 3.1562 @ 75 kVA / 10.4732 @ 2500 kVA match PTW's Typical X/R button? (no PTW on QA)
+* New bug [ZP-5285|https://egalvanic.atlassian.net/browse/ZP-5285] (outside this ticket): the re-import renames assets to the 25-character SKM name ("...TX-F long name round trip 13 Nov" becomes "...TX-F long") with no warning.
+
+!QA-13Nov-ZP-5226-1-class-editor-xr-override-reserved-lock.png|thumbnail!
+_X/R Override row with the reserved padlock tooltip (expected)._
+!QA-13Nov-ZP-5226-2-class-editor-xr-exclude-from-ai-disabled.png|thumbnail!
+_Exclude from AI selected and disabled (expected)._
+!QA-13Nov-ZP-5226-3-asset-tx-b-xr-override-8-5.png|thumbnail!
+_Asset TX-B: X/R Override 8.5 (expected)._
+!QA-13Nov-ZP-5226-5-exported-xml-xformer-xr-fields.png|thumbnail!
+_Exported XML: X/R, Rpos/Xpos, Rzero/Xzero for TX-A, TX-B, TX-E (expected)._

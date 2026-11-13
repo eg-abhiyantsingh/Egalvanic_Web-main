@@ -1,0 +1,23 @@
+*Result: PASS on QA* (build index-C6DvLko9.js, 13 Nov 2026)
+[^QA-13Nov-ZP-5211-video-steps.mp4]
+_Video: own QA-DEMO SLD with UPS + closed maintenance bypass + tie + orphan; Status > Power Scheme; legend states._
+
+* Power Scheme is in the Status menu with Shutdown Rules / Condition Assessment; border + body wash by source; legend shows UPS / Generator / Utility / Not fed by any source. Colours judged against ZP-5265 (UPS #ea580c, Generator #dc2626, Utility #000000, grey #9ca3af).
+* Backfeed fix proven: power-scheme API on the test site = UPS 7, Generator 7, Utility 8, no source 1. The closed bypass breaker, the ATS and everything upstream stay Generator/Utility; UPS only on the UPS branches. The tie breaker does not carry UPS upstream.
+* Links: coloured only when both ends agree (grey where Generator meets UPS); a cable drawn as an edge takes its own role (orange).
+* Legend "Loading..." and "Power scheme could not be loaded" states shown (simulated slow/500 response). Roles re-fetched once per toggle.
+* Site scope OK: PM/AM/CP/EE/FM get 422 on a site they are not assigned to, 200 once assigned. Another company's site: 422.
+* Question: with eng-lib OFF, Shutdown Rules and Condition Assessment hide but Power Scheme stays (needs photos.view only). Intended? Also ZP-5212 looks like a duplicate of this ticket.
+
+!QA-13Nov-ZP-5211-1-status-menu-power-scheme-item.png|thumbnail!
+_Status menu: Power Scheme next to Shutdown Rules / Condition Assessment (expected)._
+!QA-13Nov-ZP-5211-3-ups-branch-bypass-not-climbing.png|thumbnail!
+_UPS stays on the UPS branch; closed bypass CB-BYP and PNL-EMERG stay Generator (expected)._
+!QA-13Nov-ZP-5211-4-tie-does-not-spread-ups.png|thumbnail!
+_Tie: SWBD-B UPS, tie breaker and SWBD-MAIN stay Utility (expected)._
+!QA-13Nov-ZP-5211-5-orphan-grey-no-source.png|thumbnail!
+_Orphan panel = grey, no source (expected)._
+!QA-13Nov-ZP-5211-8-cable-drawn-as-edge-takes-its-role.png|thumbnail!
+_Cable drawn as an edge takes the cable's role (expected)._
+!QA-13Nov-ZP-5211-7-legend-unavailable-SIMULATED-500.png|thumbnail!
+_Legend unavailable state, simulated 500 (expected)._
