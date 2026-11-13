@@ -75,3 +75,8 @@ testcase/IR_video/
 
 # derived web-sized copies of evidence screenshots (inlined into the artifact)
 docs/bug-evidence/*/web/
+
+# Unfixed security findings: Jira only, never in this public repo (13 Nov 2026, ZP-5284)
+docs/bug-evidence/2026-11-13-rfq/_bugs/upload-anything-job-read-scope/
+docs/bug-evidence/2026-11-13-rfq/ZP-5243/verdict.md
+docs/bug-evidence/2026-11-13-rfq/ZP-5243/ZP-5243.txt
