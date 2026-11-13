@@ -85,3 +85,37 @@ Workarounds that exist today (not the requested feature):
 Evidence: `docs/bug-evidence/2026-11-13-issues-connections-rooms/`:
 - PROD-BCES-13Nov-ISSUE-TARGET-video-steps.mp4 (68 s, local only);
 - PROD-BCES-13Nov-ISSUE-TARGET-1…4.png.
+
+## Request 1, mobile part (Android) — owner: "so mobile also check and save in draft to dharmesh"
+Dharmesh asked in the DM: "In mobile too?" and "Please to verify - instead guessing".
+- **Setup:** Android emulator quacky_test, QA app 1.39 (53), the "Latest" build in Firebase. Site "(s) Wild Goose Brewery". Super Admin seat (2FA "Set up later").
+
+| Customer's mobile place | Android 1.39 (53) | Evidence |
+|---|---|---|
+| Main Page › Assets list | QR shown (own line, QR icon): QA5171-1002 | AND-…-1 |
+| Active session › Assets in Room | QR shown: Circuit Breaker-5 › 123; room Test › QA5171-1002 | AND-…-5, 5b |
+| Active session › Issues › issue card | Class + asset name, QR QA5171-1002 on the line below | AND-…-6 |
+| Active session › Issues › Manage Issues › Link Issues | QR shown (QA5171-1002, QA4956-6237) | AND-…-7 |
+| Arc Flash Analysis › Asset Details Breakdown | QR shown (FDR-asasdd › ASD456) | AND-…-2 |
+| Editing an asset › New connection › Select source node | QR shown (Q5215T-Circuit Breaker 3 › Q5215-300) | AND-…-3 |
+| Editing an asset › OCP › Link Existing Node | QR shown (Circuit Breaker-5 › 123) | AND-…-4 |
+| Active session › Task Details › Linked Assets | Not reached. On "Job - Nov 12, 3:30 PM" (Arc Flash Label Placement), the task only shows as a checklist tick on the asset | — |
+
+- **Format:** the QR code sits on its own line, not "Name (QR)" (ZP-5231, Android, To Do).
+- **iOS:** not checked.
+- **Mobile is ahead of web:** on Android 1.39 the QR code is already shown in 7 of the 8 places. On web, 5 of 5 listed places are missing it (see above).
+
+**QA test data added** (on the asset QA-DEMO 4 Nov ZP-5171 Main Distribution Panel):
+- The issue "QA-DEMO 13 Nov QR + link-to-WO check" was linked again to "Work Order - Nov 3, 5:15 PM".
+- Task "QA-DEMO 13 Nov QR mobile task" was added to "Job - Nov 12, 3:30 PM" (9975d4bd).
+  - Its checklist tick was toggled once by mistake and set back to incomplete.
+- Android sessions were started on both work orders. The last active one is "Job - Nov 12, 3:30 PM".
+
+**Chat:** the Android result is saved as an UNSENT draft in the Dharmesh DM, with 3 screenshots. It is not sent: the owner asked for a draft.
+
+**Traps:**
+- `android139/and.js` still pointed at an old session's scratchpad. The copy in `.playwright-mcp/qrmob/` fixes the path.
+- Appium needs ANDROID_HOME and ANDROID_SDK_ROOT exported.
+- UiAutomator2 crashed twice while Chrome runs were going. `qrmob/run.sh` drops the session and retries.
+- A tap at the bottom-left can hit the Gboard floating toolbar. Hide the keyboard first (keyevent 111, then the tick).
+- Tapping an asset row's "Checklist incomplete" icon in a session ticks the task complete straight away.
