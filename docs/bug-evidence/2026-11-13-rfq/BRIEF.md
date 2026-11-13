@@ -76,7 +76,7 @@ Read seats at runtime from `src/main/java/com/egalvanic/qa/constants/AppConstant
   4. Say in the verdict what you changed and when it was restored.
   - Prefer the per-plan override where the ticket allows it.
 - An action that can't be undone and hits shared data: do it on QA-DEMO data you created, or describe it as not covered.
-- **NEVER open DevRev and NEVER create a DevRev ticket** (owner, 13 Nov: TKT-1600 was created by a test). Don't submit Upload Anything "Request revision" or anything that files to DevRev; mark that step not covered.
+- **NEVER open DevRev and NEVER create a DevRev ticket** (owner, 13 Nov: TKT-1600 was created by a test). Don't submit Upload Anything "Request revision" or anything that files to DevRev, even if the ticket's QA Review asks for it (owner reaffirmed 13 Nov); mark that step not covered.
 - Anything else that sends to an outside system:
   - At most ONE submission for the whole round.
   - Clearly labelled `QA TEST <KEY> 13 Nov – automated QA check, please ignore`.
