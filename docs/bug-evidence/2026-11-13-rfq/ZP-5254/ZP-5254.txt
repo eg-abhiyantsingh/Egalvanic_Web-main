@@ -1,0 +1,22 @@
+*Result: PASS on QA* (build index-C6DvLko9.js, 13 Nov 2026)
+[^QA-13Nov-ZP-5254-video-steps.mp4]
+_Video: Build Quote with 3 QA-DEMO self-pricing services, each question asked once, first Generate priced by equation, Edit seeds the answers, no AI Edit._
+
+* GET /procedures-v2/services and /pm-plans/services return pricing_questions with keys and labels only, no formulas. A question the equation doesn't read is left out. Only global and own-company services come back; a foreign standard id gets 403.
+* Build Quote with services A, B, C shows 4 questions for 7 asks. Answers go to the shared intake, and one generate prices A $2,100, B $1,100, C $1,050 = $4,250 (math checked).
+* Edit Quote seeds 2000 / 3 / Lift / 2. The section is hidden for a site-walk row (it shows on "Both") and on a quote with pricing off. No AI Edit on the plan page.
+* Combined shutdown: the EMP wizard asks the 4 questions once. All 6 annual shutdowns price A, B and C by equation (year 1 $4,250).
+* New bug [ZP-5280|https://egalvanic.atlassian.net/browse/ZP-5280]: a service with an unanswered question is priced $0 and its labor shows as an unquoted subcontract ("Generate RFQ"), although the dialog says it will price from labor and rates.
+
+!QA-13Nov-ZP-5254-1-pricing-questions-once.png|thumbnail!
+_Pricing questions: each question once, the tooltip lists the services that ask it._
+!QA-13Nov-ZP-5254-2-first-render-priced-by-equation.png|thumbnail!
+_First render after Generate: $4,250, labor "priced by service equation"._
+!QA-13Nov-ZP-5254-3-edit-seeds-saved-answers.png|thumbnail!
+_Edit Quote: saved answers pre-filled._
+!QA-13Nov-ZP-5254-4-walk-only-row-no-questions.png|thumbnail!
+_Site-walk row: no Pricing questions section (expected)._
+!QA-13Nov-ZP-5254-5-emp-wizard-questions-once.png|thumbnail!
+_EMP wizard step 1: 3 services, 4 questions once._
+!QA-13Nov-ZP-5254-6-emp-shutdown-all-priced.png|thumbnail!
+_EMP: 6 combined shutdowns, all 3 services priced, full quote $27,491._

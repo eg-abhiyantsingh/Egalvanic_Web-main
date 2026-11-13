@@ -1,0 +1,22 @@
+*Result: PASS on QA, 1 new UI bug filed ([ZP-5279|https://egalvanic.atlassian.net/browse/ZP-5279])* (build index-C6DvLko9.js, 13 Nov 2026)
+[^QA-13Nov-ZP-5242-video-steps.mp4]
+_Video: Materials › Create Material with Mobilization Units + Labor time (validation, list, price warning); quote Materials table, customer view, no-rated-labor case._
+
+* Materials Library: "Mobilization Units" shows the calculated icon. Labor time rejects blank / 0 / 1441 minutes (the API also returns 400). Switching a $25 item warns "Saving as labor time clears the $25.00 fixed price." The list shows "15 min @ blended".
+* Quantity = floors + rooms: 3 located assets (2 floors, 3 rooms) give ×5, and one asset with no location makes it ×6.
+* Labor-priced add-on: 6 × 10 min = 1 h × blended $122.33 sell / $50.20 cost = $122.33 / $50.20. The 50 % default margin is not added.
+* Materials table: Material / Qty / Cost / Sell header (customer view: Material / Qty / Price). "×6 Mobilization Units" stays on one line with the full text on hover.
+* *New bug [ZP-5279|https://egalvanic.atlassian.net/browse/ZP-5279]:* with no rated labor, the API marks the add-on unpriced + rate_missing, but the quote shows "$0 / $0" with no marker. Labor rows get a "NO RATE" chip.
+* Not covered: v1 engine / legacy quote parity (no fixtures on QA).
+* Question: the Mobilization Units quantity box in Manage Materials is editable ("auto" placeholder), and a typed 3 overrides the computed 6. The ticket says it should not be hand-editable.
+
+!QA-13Nov-ZP-5242-1-labor-time-minutes-validation.png|thumbnail!
+_Labor time: 1441 minutes rejected (1–1440)._
+!QA-13Nov-ZP-5242-2-materials-list-min-at-blended.png|thumbnail!
+_Materials list: "15 min @ blended", unit Mobilization Units._
+!QA-13Nov-ZP-5242-3-clear-fixed-price-warning.png|thumbnail!
+_Switching a $25 material to Labor time warns that the fixed price will be cleared._
+!QA-13Nov-ZP-5242-4-plan-materials-header-mobilization-units-labor-priced.png|thumbnail!
+_Quote: header row, ×6 Mobilization Units, labor-priced line $50 / $122._
+!QA-13Nov-ZP-5242-6-no-rated-labor-0-dollars-no-rate-missing-marker.png|thumbnail!
+_Bug: no rated labor, so the add-on shows $0 / $0 with no "rate missing" marker._

@@ -1,0 +1,18 @@
+*Result: PASS on QA* (build index-C6DvLko9.js, 13 Nov 2026)
+[^QA-13Nov-ZP-5246-video-steps.mp4]
+_Video: plan with 1-Hour and 8-Hour Block materials; mobilization 30 then 60 min per move; mobilization rows removed one by one._
+
+* Blocks use crew time + mobilization: crew 28.5 h, 7 moves. Off: 29 × 1-Hour, 4 × 8-Hour. 30 min/move (+3.5 h): 32 / 4. 60 min/move (+7 h): 36 / 5.
+* Mobilization is counted once for the crew, not once per tech: 2 techs × 7 h added 7 h (per-tech would give 43 / 6).
+* The longest mobilization is used: after removing the Electrical Engineer row, the Journeyman's 7 h row kept the blocks at 36 / 5.
+* Removing both mobilization rows drops the blocks back to 29 / 4. With no mobilization the counts are the same as before.
+* Not covered: v1 plan engine and legacy quotes (no fixtures on QA).
+
+!QA-13Nov-ZP-5246-1-no-mobilization-29x1h-4x8h.png|thumbnail!
+_No mobilization: 28.5 h gives ×29 1-Hour Block and ×4 8-Hour Block._
+!QA-13Nov-ZP-5246-2-mobilization-60-adds-7h-once-36x1h-5x8h.png|thumbnail!
+_60 min per move: 28.5 + 7 = 35.5 h gives ×36 and ×5._
+!QA-13Nov-ZP-5246-3-one-mobilization-row-removed-blocks-unchanged.png|thumbnail!
+_One mobilization row removed: the other tech still moves 7 h, so the blocks stay at ×36 / ×5._
+!QA-13Nov-ZP-5246-4-mobilization-rows-removed-back-to-29x1h-4x8h.png|thumbnail!
+_Both rows removed: back to ×29 / ×4._

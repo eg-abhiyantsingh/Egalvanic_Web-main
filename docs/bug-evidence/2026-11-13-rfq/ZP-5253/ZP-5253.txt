@@ -1,0 +1,21 @@
+*Result: PASS on QA* (build index-C6DvLko9.js, 13 Nov 2026)
+[^QA-13Nov-ZP-5253-video-steps.mp4]
+_Video: one Square footage answer used by services A and B, the API resolver matrix, a choice reused only when valid, the site-walk quote and an older plan unchanged._
+
+* One shared answer reaches every service that asks it: A and B both price with Square footage 2000 (A $2,100, B $1,100, C $1,050 = $4,250, math checked).
+* Order checked through the save call on a QA-DEMO plan: the shared answer wins, then the service's own answer, then another service's non-blank answer. A blank own answer takes the other service's value.
+* A choice is reused only when valid: "Ladder" (not a Torque option) is not given to Torque; "Lift" is.
+* The site-walk quote prices from the walk's own answers as before ($800 = walk evaluate); a plan answer does not change it.
+* Older plans: all 109 quotes kept the same totals and modified time, and re-opening an older plan sends no re-price.
+* Related UI bug [ZP-5281|https://egalvanic.atlassian.net/browse/ZP-5281]: when the shared choice is invalid for one service, the panel still shows "all answered".
+
+!QA-13Nov-ZP-5253-1-service-A-uses-shared-2000.png|thumbnail!
+_Service A calculation: Square footage 2000 from the shared answer._
+!QA-13Nov-ZP-5253-2-service-B-uses-same-2000.png|thumbnail!
+_Service B calculation: the same 2000, $1,100._
+!QA-13Nov-ZP-5253-3-ladder-not-reused-for-B.png|thumbnail!
+_D answered Ladder; Torque (B) is not given it, so its line is unquoted (choice rule as described)._
+!QA-13Nov-ZP-5253-4-walk-quote-800-unchanged.png|thumbnail!
+_Site-walk quote: $800 from the walk's own answers._
+!QA-13Nov-ZP-5253-5-older-plan-total-unchanged.png|thumbnail!
+_Older plan "Q4 2026": $6,762 unchanged after re-open._

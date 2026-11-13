@@ -1,0 +1,22 @@
+*Result: PASS on QA, 1 new UI bug filed ([ZP-5278|https://egalvanic.atlassian.net/browse/ZP-5278])* (build index-C6DvLko9.js, 13 Nov 2026)
+[^QA-13Nov-ZP-5245-video-steps.mp4]
+_Video: per-quote Round up 8 vs Minimum 8; minimum top-up with Mobilization rows; equation-priced service untouched; Save button defect._
+
+* Round up 8: 9.67 h bills 16 h. Minimum 8: 9.67 h bills 9.67 h. 0.67 h is topped up to 8 h ("topped up to the 8h minimum").
+* Mobilization is added before rounding: 7 moves × 30 min = 3.5 h per tech, so 25.33 + 3.5 h rounds to 32 h. Moves = floors + rooms + 1 when an asset has no location.
+* Not changed by rounding or mobilization: subcontracted, equation-priced, typed (EDITED) and hand-entered lines. A quote's own setting beats the company default (30 min beats 15 min). With nothing set, totals are the same as before.
+* Company Minimum 8 + 15 min/move applied to a quote with no override. EG-ACME was restored to Off at 13:59 IST (API read-back: null).
+* *New bug [ZP-5278|https://egalvanic.atlassian.net/browse/ZP-5278]:* when a quote already has only a Minimum or Mobilization override, reopening Pricing settings shows Save Changes disabled. The workaround (toggle Round up on/off) saves an explicit round-up 0. The Round up field starts as "undefined".
+* Note (API only, no visible effect, not filed): /plans/\{id\}/generate accepts round-up 41 / -1 / "abc" and mobilization 241 with 200 and clamps them silently. The company endpoint returns 400 for the same values.
+* Question: mobilization rows appear for every tech, but no QA labor type has "requires scheduling" on. The hint says only those techs get a row.
+
+!QA-13Nov-ZP-5245-1-round-up-8-bills-16h.png|thumbnail!
+_Round up 8: 9.67 h → 16 h billed._
+!QA-13Nov-ZP-5245-2-minimum-8-keeps-9.67h.png|thumbnail!
+_Minimum 8: 9.67 h stays 9.67 h._
+!QA-13Nov-ZP-5245-3-minimum-topup-plus-mobilization-rows.png|thumbnail!
+_0.67 h + 3 h mobilization (6 moves × 30 min) topped up to 8 h._
+!QA-13Nov-ZP-5245-8-subcontracted-typed-handentered-lines-untouched.png|thumbnail!
+_Subcontracted, typed (20 h) and hand-entered (5.3 h) lines are not rounded and get no mobilization row._
+!QA-13Nov-ZP-5245-5-BUG-save-disabled-after-minimum-only-override.png|thumbnail!
+_Bug: Save Changes disabled after reopening a quote that only has a Minimum override._

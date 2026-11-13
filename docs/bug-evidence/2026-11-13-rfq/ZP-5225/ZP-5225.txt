@@ -1,0 +1,19 @@
+*Result: PASS on QA* (build index-C6DvLko9.js, 13 Nov 2026)
+[^QA-13Nov-ZP-5225-video-steps.mp4]
+_Video: Account › Company › Round up to 0.5 h; a v2 quote re-priced (25.33 h becomes 25.5 h); per-quote override 1 h; EG-ACME restored to Off._
+
+* Company default (opt-in) works: Round up to 0.5 h saved (toast + API read-back). After a re-price the quote shows 25.33 h → 25.5 h and 23.83 h → 24 h, each "rounded up to nearest 0.5h".
+* A per-quote override beats the company default: 1 h on the quote gives 25.33 h → 26 h while the company stays at 0.5 h.
+* Opting out gives the raw hours back (25.33 / 23.83, same total as before). A quote with no labor lines still saves.
+* The API rejects bad company values (41, -1, "abc") with 400. PM, AM, CP, FM and EE get no Company tab and 403 on save. Another company's settings return 422.
+* EG-ACME setting: changed 13:57:57 IST, restored to Off 13:59:08 IST (API read-back: all null).
+* Question: existing quotes keep their old hours after a company change until something re-prices them, and their Pricing Settings still says "Company default: off" until then. Is that intended?
+
+!QA-13Nov-ZP-5225-1-company-default-round-up-0.5-saved.png|thumbnail!
+_Account › Company: Round up to 0.5 h saved._
+!QA-13Nov-ZP-5225-2-plan-uses-company-0.5-25.33-to-25.5.png|thumbnail!
+_A quote with no override uses the company 0.5 h: 25.5 h and 24 h billed._
+!QA-13Nov-ZP-5225-3-plan-override-1h-beats-company-0.5.png|thumbnail!
+_Per-quote override 1 h wins: 26 h billed._
+!QA-13Nov-ZP-5225-4-company-default-restored-off.png|thumbnail!
+_EG-ACME restored: Round up, Minimum and Mobilization all Off._

@@ -1,0 +1,24 @@
+*Result: panel works on QA; 3 new bugs filed ([ZP-5281|https://egalvanic.atlassian.net/browse/ZP-5281], [ZP-5282|https://egalvanic.atlassian.net/browse/ZP-5282], [ZP-5283|https://egalvanic.atlassian.net/browse/ZP-5283])* (build index-C6DvLko9.js, 13 Nov 2026)
+[^QA-13Nov-ZP-5255-video-steps.mp4]
+_Video: Pricing inputs panel: clear, re-answer and re-price; hidden in Customer View and on a site-walk quote; read-only when sent; then the choice bug._
+
+* Passed: the panel is at the top of the Pricing tab (on the toolbar, as in ZP-5256) and lists each question once.
+* Passed: one Square footage answer re-prices A and B (A $2,600, B $1,350, C $1,050 = $5,000). Clearing it clears it for both and shows "1 answer required".
+* Passed: hidden in Customer View, on a site-walk quote and on a quote without pricing. Read-only once the quote is Sent.
+* New bug [ZP-5281|https://egalvanic.atlassian.net/browse/ZP-5281]: when two services share a choice question with different options, the panel offers the first service's options. Picking "Ladder" leaves Torque (B) unanswered and $0 ("Generate RFQ"), yet the header shows the green check.
+* New bug [ZP-5282|https://egalvanic.atlassian.net/browse/ZP-5282] (Low): pressing Enter in a field does not save; it saves only after clicking elsewhere.
+* New bug [ZP-5283|https://egalvanic.atlassian.net/browse/ZP-5283]: two quick edits (a number, then straight into the Access dropdown) lose one of the answers.
+* The header no longer shows a "services priced by equation" count; ZP-5256 replaced it with the check / "N answers required".
+
+!QA-13Nov-ZP-5255-1-clear-sqft-clears-for-all.png|thumbnail!
+_Square footage cleared: cleared for A and B, "1 answer required"._
+!QA-13Nov-ZP-5255-2-one-answer-reprices-all-5000.png|thumbnail!
+_One answer (3000) re-prices both services: $5,000._
+!QA-13Nov-ZP-5255-3-customer-view-hidden.png|thumbnail!
+_Customer View: no panel (expected)._
+!QA-13Nov-ZP-5255-4-locked-read-only.png|thumbnail!
+_Sent to Customer: panel fields disabled (expected)._
+!QA-13Nov-ZP-5255-5-walk-sourced-no-panel.png|thumbnail!
+_Site-walk quote: no panel (expected)._
+!QA-13Nov-ZP-5255-6-FAIL-all-answered-but-B-unpriced.png|thumbnail!
+_FAIL: green check while Torque (B) is unanswered: "1 unquoted, Generate RFQ, $0"._
