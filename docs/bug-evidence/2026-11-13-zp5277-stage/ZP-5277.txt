@@ -1,0 +1,15 @@
+*Stage check: PASS* (stage, build index-CbAeE1dg.js, 13 Nov 2026). Scope as asked: only whether *eg_get_plan_details* returns the recipient's job title. The full KROON print can't be done on stage.
+[^STAGE-13Nov-ZP-5277-video-steps.mp4] _Video (43 s): the query run on stage quotes with recipient A P, with recipient Acme Stage, and on a quote with no recipient._
+
+* All three requested keys are returned by eg_get_plan_details (via the report builder's test-query API on acme stage):
+** *recipient.job_title*: A P gives "Manager"; Acme Stage gives "D-Cathelon".
+** *recipients[].job_title*: same values in the list.
+** *contact_job_title* at the root: the first recipient's title.
+* Changing the recipient on the quote changes the title in the next query run, so the value follows the chosen recipient.
+* The title comes from each contact's customer link. All 11 contacts in the Recipient list gave their own title, for example Nency Sardhara "Client Portal", QA-DEMO contacts "QA", kd last "Contact".
+* No recipient (stage quote "Quote from site walk"): recipient null and recipients empty, but *contact_job_title* is still present ("Client", the customer's first contact). Templates always get the key.
+* Not checked (outside this stage check): the KROON quote "TEST - EHE 3" printed with the Energized Maintenance Proposal \[EN\] config, re-printing after editing a title in Admin > Customers, and a contact with no title (none of the stage contacts is blank).
+* Side note, not this ticket: once a recipient is chosen, the quote can't go back to "no recipient". Picking "Recipient — none assigned" doesn't clear it, and "Save Recipients" is disabled when no contact is ticked. Is that intended?
+
+!STAGE-13Nov-ZP-5277-1-recipient-A-P-job-title-Manager.png|thumbnail! !STAGE-13Nov-ZP-5277-2-recipient-Acme-Stage-job-title-D-Cathelon.png|thumbnail! !STAGE-13Nov-ZP-5277-3-no-recipient-fallback-contact-job-title.png|thumbnail!
+_1. Recipient A P: job_title "Manager". 2. Recipient Acme Stage: "D-Cathelon". 3. No recipient: contact_job_title "Client" (fallback)._
