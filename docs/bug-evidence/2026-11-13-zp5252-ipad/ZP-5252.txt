@@ -1,0 +1,34 @@
+h3. QA 13 Nov 2026 - iPad re-test: NOT reproduced (2 flows)
+
+*Video with steps on screen:* [^QA-13Nov-ZP-5252-ipad-video-steps.mp4] (2.5 min)
+
+*Setup*
+* iPad (A16) simulator, iPadOS 26.2
+* Z Platform-QA iOS app 1.75 (newest build we have)
+* QA, company EG-ACME, site "Abhiyant test 12", Technician login
+* Photos picked from Gallery (the simulator has no camera)
+
+*Flow A - like the customer: photos + info on a saved asset, then add a main breaker*
+# Open the saved Panelboard "QA-DEMO ZP-5252 iPad panel 2" (no photos yet).
+# Add 3 photos: Profile, Nameplate (ID tag), Arc Flash Sticker. Type Serial Number SN-ZP5252-002. The page now shows *Save Changes* (nothing saved yet).
+# OCP > + > Create New Child > name "Main Breaker", class Circuit Breaker, Lineside (Incoming) > Create.
+# *Result:* no blank screen and the page did not change. The 3 photos and the serial were still there, and the Main Breaker row was added.
+# Save Changes > Close > open the asset again.
+# *Result:* the 3 photos, serial SN-ZP5252-002 and Main Breaker are all saved.
+
+*Flow B - New Asset form*
+# Assets > + > Add Asset: name, Panelboard, 3 photos (Profile, Nameplate, Arc Flash Sticker), serial SN-ZP5252-001.
+# OCP > + > Create New Child > "Main Breaker", Circuit Breaker, Lineside > Create. It shows "Added when the asset is created". Photos and serial still there.
+# Create Asset > open the new asset: 3 photos, serial and Main Breaker are saved.
+
+*Screenshots*
+!QA-13Nov-ZP-5252-1-asset-page-3-photos-and-serial-unsaved.jpg|thumbnail! !QA-13Nov-ZP-5252-2-create-child-main-breaker.jpg|thumbnail! !QA-13Nov-ZP-5252-3-after-create-photos-still-there.jpg|thumbnail!
+!QA-13Nov-ZP-5252-4-after-save-reopen-photos-kept.jpg|thumbnail! !QA-13Nov-ZP-5252-5-after-reopen-serial-and-main-breaker.jpg|thumbnail! !QA-13Nov-ZP-5252-6-flowB-new-asset-form-photos-kept.jpg|thumbnail!
+
+*Not covered here*
+* Real iPad camera. On iPad the app opens its own camera screen (not the iPhone one). The simulator has no camera, so photos came from Gallery. If the customer took the photos with the camera, this is the biggest difference from our test.
+* The customer's app version on BCES-IQ. We tested QA build 1.75.
+* Photo Walkthrough (Add OCPDs > Photograph OCPD) was not tested.
+* The issue is intermittent. We ran each flow once.
+
+*To go further we need from the customer:* app version, iPad model, camera or Gallery photos, which screen (asset page, New Asset, or Photo Walkthrough), and the date/time it happened (to look for a crash in Sentry).
