@@ -1,0 +1,33 @@
+h3. QA result (stage hotfix): PASS for the web fix. The last step is not covered (the reset email did not arrive)
+
+*Tested on:* stage https://acme.stage.egalvanic.ai, build index-Cx_eO71S.js, which contains eg-pz-frontend PR #2032 (merged to cicd/stag 16 Nov 15:36 IST). 16 Nov 2026, 16:00–16:20 IST, Chrome on macOS, stage Electrical Engineer test seat.
+
+*Simple explanation:* the Reset Password page no longer blocks a password that has #. Before the fix the page itself refused it, because only @ $ \! % * ? & counted as special characters. Now a password with # is sent on to the server, and the error message lists example special characters.
+
+*Steps*
+# Sign-in page › email › Use my password › Forgot your password? › Send Reset Code.
+# Type a new password with no special character (Kroonstage5288) › Reset Password.
+# Type a new password with # (Kroon#Stage…) and the code 000000 › Reset Password.
+
+|| Check || Result || Status ||
+| Password with no special character | Refused on the page with the new text "Password must contain an uppercase letter, a lowercase letter, a number, and a special character (e.g. \! @ # $ % & * ? -)". Nothing is sent to the server (screenshot 1). | PASS |
+| Password with # | The page accepts it and sends POST /api/auth/reset-password. The server only answers "Invalid verification code provided" (000000 is a dummy code), with no password-rule error (screenshot 2). | PASS |
+| Same rule on Forgot Password and Register | PR #2032 moves both forms to the new check. /register is not reachable on stage (it shows the sign-in page), so only Forgot Password was tested in the browser. | PASS (Forgot Password) |
+
+*Not covered:*
+* Finishing the reset with a real code and signing in with the # password. Stage's reset email did not reach our test inbox: two seats were tried (+cpstage and +stage), and nothing arrived in Inbox or Spam. No app email has reached this mailbox since 27 Oct, so this looks like a stage email delivery issue, not this fix.
+* Mobile (iOS / Android): this hotfix changes the web only, and the mobile apps were not tested on stage.
+* The first sign-in "set new password" page: the PR doesn't change it, and it uses the server's rule.
+
+*Test data:* no password was changed; both reset attempts stopped before a real code.
+
+*Screenshots*
+
+!QA-16Nov-ZP-5288-1-no-special-char-new-message.png|width=640!
+_1. A password with no special character is refused on the page with the new message listing examples._
+
+!QA-16Nov-ZP-5288-2-hash-password-sent-server-only-rejects-dummy-code.png|width=640!
+_2. A password with # is sent to the server. The only error is "Invalid verification code" (dummy code 000000)._
+
+!QA-16Nov-ZP-5288-stage-reset-password-hash-video-steps.mp4|width=640!
+_Video, 32 s: Forgot Password › Send Reset Code › Check A (no special character) › Check B (# with a dummy code), with step captions._

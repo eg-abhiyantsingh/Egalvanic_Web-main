@@ -54,3 +54,13 @@
 - 1) Fields: Rajat's plan confirmed (Use library switch → Manufacturer → device search list → linked card with Unlink). Manual and trip fields stay in Engineering. A pick saves the same link as Engineering.
 - 2) Pole/Fuse Count: add it to Create New Child and Create Multiple, optional; it narrows the list and is saved on the asset.
 - 3) Create Multiple: one pick plus Pole Count for the batch, no per-row change. In a mixed batch the pick applies only to rows of the same type, with an "Applies to N breakers" hint. Optional, and shown only when the engineering library is on.
+
+## 9. ZP-5288 stage hotfix (Kroon: reset password with #), tested on stage only
+- PR eg-pz-frontend #2032 (merged to cicd/stag 15:36 IST) is frontend only. ForgotPasswordForm and RegisterForm now use `passwordPolicy.meetsPasswordComplexity` (the 32 Cognito special characters), and the message now lists examples.
+- Stage build index-Cx_eO71S.js:
+  - Check A: a password with no special character gets the new message, and no server call is made. PASS.
+  - Check B: a # password is sent as POST /api/auth/reset-password; the server answers only "Invalid verification code" (dummy 000000). PASS.
+- Not covered: finishing the reset with a real code. Stage reset emails reached neither +cpstage nor +stage (not in Inbox or Spam; no app email in this mailbox since 27 Oct). Mobile is not in the hotfix. /register on stage only shows the sign-in page.
+- The Android 1.39 (53) APK embeds a web "flow" bundle (assets/flow) that still has the old message. That is a hint only, not tested.
+- Jira: moved In QA (Start Testing), then comment 46202 (2 screenshots + 32 s video), then READY TO RELEASE. Sign-off posted in eg-internal-dev tagging @Shubham, with the email question.
+- No seat password was changed (both reset attempts stopped before a real code). Evidence: docs/bug-evidence/2026-11-16-zp5288-stage/.
