@@ -84,3 +84,10 @@
     - TKT-1423 video, 55 s (issue class fields, IR report counts and total, issue page, customer-style report).
   - QA-internal (@Dharmesh): TKT-1203 video, 49 s (internal Edit Issue › Comments; FM portal Comments tab read-only; CP No License sees "Not included in your plan").
   - eg-internal-dev: ZP-5288 video, 32 s.
+
+## 12. Mobile cross-check (owner: "always check cross in mobile too", saved in memory) + TKT-1423 customer reply
+- TKT-1203, Android 1.39 (53), QA: issue "QA-DEMO ZP-4707 comment check 4 Nov" (Wild Goose Brewery) has sections Details / Properties / Description / Proposed Resolution / Safety / Photos and **no Comments**. The web comment does not appear anywhere in the app. Posted in QA-internal with a video.
+- ZP-5288, Android 1.39 (53), QA: Forgot Password with Kroon#Qa5288 and dummy code 000000 → every checklist item green, then the server answers "Invalid or incorrect reset code". Android already accepts #. Posted in eg-internal-dev with a video.
+- iOS: not checked for either; the simulator lane is down (Appium 4723 not responding).
+- The Android app was signed out for the test and signed back in (SA seat, Field Technician, Wild Goose Brewery). The password manager save prompts were declined.
+- TKT-1423: the suggested customer reply (points 5–7) went to the Dharmesh DM with the video. Point 5 was then corrected per the owner: the customer adds it themselves as a custom attribute (Admin › Issue Classes › Thermal Anomaly › Core Attributes › + Add), with a 20 s clip.
