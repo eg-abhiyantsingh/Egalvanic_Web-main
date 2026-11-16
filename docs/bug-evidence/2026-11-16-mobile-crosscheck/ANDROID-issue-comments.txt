@@ -1,0 +1,18 @@
+!QA-16Nov-TKT1203-android-issue-comment-not-shown.mp4|width=320!
+_Video, 63 s: Android 1.39 (53), QA. The issue "QA-DEMO ZP-4707 comment check 4 Nov" has a comment on web, but the app has no Comments section._
+
+h3. Simple explanation
+On web every issue has a *Comments* field (ZP-4707, Web v2.5). Internal users write it in Create / Edit Issue, and it shows on the issue page. The Android app does not show this comment anywhere and has no way to add or edit it, so a comment written on web is invisible to technicians in the field. Customer request TKT-1203 asks for exactly this kind of per-issue communication.
+
+*Environment:* QA (acme), Android 1.39 (53), emulator Pixel 6 / API 35, Super Admin seat, 16 Nov 2026 about 17:10 IST.
+
+*Steps*
+# On web, the issue "QA-DEMO ZP-4707 comment check 4 Nov" (site "(s) Wild Goose Brewery", asset Transformer-1) has the comment "QA-DEMO ZP-4707 portal view check 4 Nov": https://acme.qa.egalvanic.ai/issues/53769230-c127-4c68-8fbd-1fc71833afe8
+# In the Android app, open site "(s) Wild Goose Brewery" › Issues › that issue.
+# Go through every section of the issue page.
+
+*Actual:* the sections are Details, Properties, Description, Proposed Resolution, Safety and Photos. There is no Comments section, and the comment text appears nowhere on the page.
+
+*Expected:* the issue page shows a Comments section with the web comment. Like web Create / Edit Issue, internal users can add or edit it.
+
+*Related:* ZP-4707 (web Comments field) and customer request TKT-1203 (per-issue notes). iOS has its own ticket.

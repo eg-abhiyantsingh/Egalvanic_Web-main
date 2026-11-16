@@ -1,0 +1,13 @@
+h3. Simple explanation
+On web every issue has a *Comments* field (ZP-4707, Web v2.5). Internal users write it in Create / Edit Issue, and it shows on the issue page. On Android the app does not show this comment at all (see the linked Android ticket, with video).
+
+*iOS is not verified yet.* The iOS simulator on the QA Mac is unavailable today (Xcode is being reinstalled). Please check whether the iOS issue page shows the Comments field. If it doesn't, add it the same way as web: show the comment, and let internal users add or edit it. QA will re-check on iOS as soon as the simulator is back.
+
+*Steps (for iOS)*
+# On web, the issue "QA-DEMO ZP-4707 comment check 4 Nov" (site "(s) Wild Goose Brewery", asset Transformer-1) has the comment "QA-DEMO ZP-4707 portal view check 4 Nov": https://acme.qa.egalvanic.ai/issues/53769230-c127-4c68-8fbd-1fc71833afe8
+# In the iOS app (QA), open site "(s) Wild Goose Brewery" › Issues › that issue.
+# Look for the comment.
+
+*Expected:* the issue page shows a Comments section with the web comment, and internal users can add or edit it.
+
+*Related:* ZP-4707 (web Comments field), customer request TKT-1203 (per-issue notes), and the Android ticket for the same gap.

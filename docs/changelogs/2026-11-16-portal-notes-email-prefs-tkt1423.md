@@ -91,3 +91,21 @@
 - iOS: not checked for either; the simulator lane is down (Appium 4723 not responding).
 - The Android app was signed out for the test and signed back in (SA seat, Field Technician, Wild Goose Brewery). The password manager save prompts were declined.
 - TKT-1423: the suggested customer reply (points 5–7) went to the Dharmesh DM with the video. Point 5 was then corrected per the owner: the customer adds it themselves as a custom attribute (Admin › Issue Classes › Thermal Anomaly › Core Attributes › + Add), with a 20 s clip.
+
+## 13. Tickets for the mobile gap, TKT-1262, disk + Xcode
+- New Tasks (Medium, To Do, next sprint Z-26-11-S2, no FV, linked to ZP-4707 and to each other):
+  - ZP-5294 [Android] issue page doesn't show the ZP-4707 Comments. Rajat; video at the top.
+  - ZP-5295 [iOS] show the issue Comments as on web. Kush; marked "iOS not verified yet, simulator unavailable".
+- TKT-1262 (all Account Managers see all accounts, BCES), QA:
+  - Admin (staff) sees 142 accounts; a customer Account Manager seat sees 14, only the accounts it was added to.
+  - Access is per account (Customers › ⋯ › Manage Access List). There is no company toggle, so new customers aren't shared with AMs.
+  - Mobile has no accounts list.
+  - Verdict: valid feature request, not a bug. Sent findings, a suggested customer reply and a 47 s video to the Dharmesh DM.
+- Disk: 1.4 GB → 26 GB free. Removed:
+  - app caches (Brave, Comet, qoder, drata, ChatGPT, GeoServices, Homebrew, Android Studio);
+  - Chrome profile caches;
+  - ~/.gradle/caches (wrapper kept);
+  - .playwright-mcp media older than 7 days;
+  - the broken /Applications/Xcode.app (2.5 GB, Developer/usr/bin was missing);
+  - 26 more share-to-mac clips whose edits are processed on YouTube (log: extrayou/share_plan/deleted_from_share_to_mac_2026-11-16b.json).
+- Xcode: opened the Mac App Store Xcode page. The owner must click Get/Install (Apple ID). The iOS 26.2 simulator runtime (iOS_23C54, 16 GB) is still installed, so only Xcode itself is needed.
