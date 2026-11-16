@@ -110,3 +110,34 @@
   - 26 more share-to-mac clips whose edits are processed on YouTube (log: extrayou/share_plan/deleted_from_share_to_mac_2026-11-16b.json).
 - Xcode: opened the Mac App Store Xcode page. The owner must click Get/Install (Apple ID). The iOS 26.2 simulator runtime (iOS_23C54, 16 GB) is still installed, so only Xcode itself is needed.
 - Owner: "assign to current sprint". ZP-5294 and ZP-5295 moved to Z-26-11-S1 (1227) with release fix versions Android v1.40 / iOS v1.76 (current sprint → release FV rule). Told Dharmesh in QA-internal with both links and the Android video.
+
+## 14. Technician permissions: web vs the Android app (owner: "if technician in web have extra permission … share the list to Dharmesh")
+- Seat: the QA Technician seat Dharmesh shared (avani.patel+techplat). Its password is kept only in the gitignored `.playwright-mcp/techweb/seat.json` and is never written in the repo or in chat.
+- Web (QA, v1.36 rail): `/api/auth/v2/me` gives `platform.web` and 99 permissions; `field_limits` has can_create_sites and can_create_work_orders = true. Every rail menu page was opened and its action buttons were listed (d1.js / d2.js).
+- **Web only (the Android app has none of these):**
+  1. Quotes: New Quote, Delete.
+  2. Report Builder.
+  3. Forms builder.
+  4. Customers: New / Edit / Add Site / Add Contact.
+  5. Planned Work: create, Planning Board, Maintenance Calendar.
+  6. Maintenance Program: Edit, Compliance, Reports.
+  7. Dashboards with report exports.
+  8. Assets: Bulk Edit, Bulk Ops, Upload Anything.
+  9. Create Connection; Locations: Add Building / Add Floor.
+  10. Issues: Add to WO / Add to Quote / Export CSV / Bulk Upload.
+  11. Add Tasks, Attachments (folders, upload, delete), Torque Rules.
+- **Blocked on web (correct):** the admin settings pages: issue classes, asset classes, users, labor, materials, offices, teams, guest portal users.
+- **Android 1.39 (53), same seat (Android Site 2):**
+  - Create New Site, Start New Work Order, Issues (create/edit one), Add Assets / edit one asset.
+  - Connections, Arc Flash, Schedule, Scan Asset Code, Support, Settings.
+  - SLD is view only.
+- **iOS:** not checked. Xcode was removed (broken) and is waiting for the owner to reinstall it from the App Store.
+- Nothing was saved or deleted; screens and dialogs were only opened.
+- Sent the list to the Dharmesh DM with two videos, asking which of the 11 the Technician should keep.
+- Evidence (`docs/bug-evidence/2026-11-16-tech-web-vs-mobile/`):
+  - QA-16Nov-tech-web-extras.mp4 (62 s, captions 1–8);
+  - QA-16Nov-tech-android-app.mp4 (80 s, captioned);
+  - raw-android-tech.mp4;
+  - raw-web-tech-landing.png.
+  - All were checked: no frame shows the password.
+- The Android emulator is still signed in as the Technician seat.
