@@ -109,3 +109,4 @@
   - the broken /Applications/Xcode.app (2.5 GB, Developer/usr/bin was missing);
   - 26 more share-to-mac clips whose edits are processed on YouTube (log: extrayou/share_plan/deleted_from_share_to_mac_2026-11-16b.json).
 - Xcode: opened the Mac App Store Xcode page. The owner must click Get/Install (Apple ID). The iOS 26.2 simulator runtime (iOS_23C54, 16 GB) is still installed, so only Xcode itself is needed.
+- Owner: "assign to current sprint". ZP-5294 and ZP-5295 moved to Z-26-11-S1 (1227) with release fix versions Android v1.40 / iOS v1.76 (current sprint → release FV rule). Told Dharmesh in QA-internal with both links and the Android video.
