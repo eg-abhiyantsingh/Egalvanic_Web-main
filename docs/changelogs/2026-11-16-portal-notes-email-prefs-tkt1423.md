@@ -48,3 +48,9 @@
 - **7. Problems vs Recommendations:** Problem = Title / Description; Recommendations = Proposed Resolution. Both come from the technician; the IR editor pre-fills them by fixed rules. The "Suggest with AI" resolutions are stored separately and never reach the report (0 of 105 QA issues).
 - The customer's exact template isn't on QA (the closest lookalike is config 788832bf). A developer should confirm its bindings on their tenant.
 - Evidence: docs/bug-evidence/2026-11-16-tkt1423-report/ (13 screenshots + DOCX PDFs). Side notes, not filed: the DOCX Results Summary leaves Priority blank for Critical; issue aec6e0a2 shows Severity Nominal at ΔT 21.8.
+
+## 8. ZP-3021 (Android, equipment library picker when creating OCPs): reply to Rajat (comment 46197)
+- Posted comment 46198 as Abhiyant, tagging @Rajat and @Kush (it also applies to iOS ZP-3020). Web ZP-3019 is still To Do, so there is no web screen to copy.
+- 1) Fields: Rajat's plan confirmed (Use library switch → Manufacturer → device search list → linked card with Unlink). Manual and trip fields stay in Engineering. A pick saves the same link as Engineering.
+- 2) Pole/Fuse Count: add it to Create New Child and Create Multiple, optional; it narrows the list and is saved on the asset.
+- 3) Create Multiple: one pick plus Pole Count for the batch, no per-row change. In a mixed batch the pick applies only to rows of the same type, with an "Applies to N breakers" hint. Optional, and shown only when the engineering library is on.
