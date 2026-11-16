@@ -75,3 +75,12 @@
 - Gaps: no Spare/Space status (SPACE and blank look the same), and blank breakers get a made-up name. Real customer photos (handwritten or faded) are not tested.
 - The draft was discarded; the panel is back to "Get this panel started". The test photo stays under Media on that QA-DEMO panel.
 - Evidence: docs/bug-evidence/2026-11-16-tkt1598-panel-spare-space/ (photo, result screenshot, transcribe_response.json, video).
+
+## 11. Owner: "share video … always … even in chat" — videos sent where only screenshots went
+- Rule saved in memory: video replaces screenshots in every reply (feedback_always_share_video_everywhere).
+- Sent:
+  - Dharmesh DM:
+    - TKT-1598 video, trimmed from 4:04 to 1:04 (QA-16Nov-TKT1598-transcribe-spare-space-video-short.mp4);
+    - TKT-1423 video, 55 s (issue class fields, IR report counts and total, issue page, customer-style report).
+  - QA-internal (@Dharmesh): TKT-1203 video, 49 s (internal Edit Issue › Comments; FM portal Comments tab read-only; CP No License sees "Not included in your plan").
+  - eg-internal-dev: ZP-5288 video, 32 s.
