@@ -1,0 +1,55 @@
+h3. Simple explanation
+Some users open *Account & settings › Notifications* and see only a "General" heading with an *empty grey box* under it. There are no switches and no "No email subscriptions configured yet." message. This was reported for *mukul+kroon@egalvanic.com*. Other users, for example a Super Admin with accounts, see the normal Account Notifications table.
+
+It happens when both of these are true:
+* the user has the two weekly "General" email subscriptions saved: The Week Ahead (Ops) and Opportunities Retrospective;
+* the user's company has the LaunchDarkly flags *feature-weekly-ops-emails* and *feature-weekly-opportunity-emails* OFF.
+
+The page then draws the General box but hides every row inside it.
+
+*Where:* Account & settings › Notifications (/account?tab=notifications). Also Admin › Platform Users › bell icon (Email Preferences) on a user's row. Both use the same Email Preferences component.
+
+*Environment:* QA https://acme.qa.egalvanic.ai, company EG-ACME, Super Admin seat, Chrome on macOS, web build index-BfuWG80P.js, 16 Nov 2026 about 14:00 IST.
+
+*Steps*
+On QA both weekly flags are ON for EG-ACME, so step 4 needs them OFF. For the screenshots and video I turned them off in my test browser only. No flag was changed in LaunchDarkly.
+# Sign in to QA as Super Admin and open Admin › Platform Users: https://acme.qa.egalvanic.ai/users
+# Search kush.jadia. On the row kush.jadia@egalvanic.com, click the bell icon (Email Preferences).
+# With the flags ON (QA today), General lists "The Week Ahead (Ops)" and "Opportunities Retrospective", each with a switch (screenshot 2). Close the dialog.
+# Turn feature-weekly-ops-emails and feature-weekly-opportunity-emails OFF for the company, reload the page, and open the same Email Preferences again.
+
+*Actual:* a "General" heading with an empty grey box (0 rows, screenshot 1), no switches and no message. This matches the screen reported for mukul+kroon@egalvanic.com.
+
+*Expected:*
+* If the flags hide every General row, hide the General section too.
+* If nothing at all is left to show, show "No email subscriptions configured yet.", as for other users without subscriptions.
+
+*Data (QA API):* GET /api/user/e19848b1-74c2-494b-8bf8-1caed154c21e/subscriptions (kush.jadia@egalvanic.com) returns platform = week_ahead_ops and opportunities_retrospective (both active=false) and 0 accounts. Many EG-ACME users have these two rows, including seats used by Kush, Avani, Dharmesh and Nency.
+
+*Possible cause (for the developer to confirm):*
+* In EmailPreferencesModal (QA chunk EmailPreferencesModal-DSXSqrqv.js), the General block renders when the platform list is not empty. Each row then returns nothing when its flag (weekly-ops-emails / weekly-opportunity-emails) is false, so the heading and the box stay, empty.
+* The "No email subscriptions configured yet." check counts the same unfiltered platform list, so it never shows for these users.
+* Fix idea: filter the platform rows by their flag first, and use the filtered list for both the General block and the empty-message check.
+
+*Controls*
+* Same user with the flags ON: both rows show (screenshot 2).
+* A user without the weekly subscriptions (my Super Admin seat) sees the Account Notifications table (screenshot 3).
+* QA's Demo Company (demo.qa.egalvanic.ai) has feature-weekly-opportunity-emails OFF, but none of its 11 users has the weekly subscriptions, so it does not show the empty box today.
+
+*Not checked:* the Kroon company's flags. I did not sign in as Mukul or open his environment. iOS and Android were not checked; this is a web screen.
+
+*Test data:* nothing was changed. Dialogs were closed without saving. The flags were overridden only inside my test browser.
+
+*Screenshots*
+
+!QA-16Nov-BUG-notif-1-general-empty-flags-off.png|width=640!
+_1. Weekly email flags OFF: "General" heading with an empty grey box (red)._
+
+!QA-16Nov-BUG-notif-2-general-rows-flags-on.png|width=640!
+_2. Control, same user with the flags ON: General lists both weekly emails with their switches (green)._
+
+!QA-16Nov-BUG-notif-3-table-user-without-weekly-subs.png|width=640!
+_3. Control: a user without the weekly subscriptions sees the Account Notifications table._
+
+!QA-16Nov-BUG-notifications-general-empty-video-steps.mp4|width=640!
+_Video, 49 s: Platform Users › kush.jadia@egalvanic.com › Email Preferences with the flags ON (rows show), then the same dialog with the two weekly flags OFF (empty General box). Captions show each step._
