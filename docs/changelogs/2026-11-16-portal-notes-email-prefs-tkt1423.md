@@ -160,3 +160,23 @@
 - **Side observation, not filed:** while a Beamer "Heads-up" announcement pill is showing, it sits on top of the avatar menu's "Account & settings" at 1600×1000, so clicking there opens "What's new" instead.
 - The Android emulator is now signed in as the QA FM seat (it was the techplat Technician).
 - Evidence: docs/bug-evidence/2026-11-16-portal-account-settings/.
+
+## 16. Dharmesh's Yes/No check on six DevRev tickets ("Claude told me these are already done")
+The owner allowed read-only DevRev viewing for this task. Results were checked live on QA (web build index-oFAZQ3rK.js; Android 1.39 (53)):
+
+| Ticket | Request | Answer | Evidence |
+|---|---|---|---|
+| TKT-1585 (= Jira ZP-5260, Backlog) | IR report: an issue's images next to its description, near the front | **Yes** | The Frontloaded DOCX and the HTML "Infrared Thermography Report" put issues near the front, each with its linked thermal/visual photos on the same page. Nested keeps them inside the asset section. Gap: asset-only photos print in the Assets section. A subagent generated 7 reports from WO "Job - Jul 29, 11:58 am" and WO "Job - Oct 29, 9:11 PM". |
+| TKT-1597 | Asset attributes viewable from work orders (tablet/phone) | **No** | Android: an asset inside a WO shows only Maintenance Records and Issues, and its menu has only "View on SLD". iOS not checked. |
+| TKT-1423 | Report points 5–7 | **Yes** | Nothing to build: point 5 = custom attribute; 6 and 7 are explanations (§11–12). |
+| TKT-1270 | Keep the selected site when switching pages | **Yes** | Web: the site stays across Issues → Work Orders → Issues / Assets and after a reload. |
+| TKT-1262 | All AMs see all accounts | **No** | §13: per-account access list only. |
+| TKT-1169 | Sticky location fields | **No** | Web and Android: after creating an asset in 712 5th Ave › Floor 1 › t1, the next New Asset starts with an empty location. |
+
+- Sent to the Dharmesh DM as a Yes/No list with short notes and 3 videos:
+  - QA-16Nov-TKT1270-TKT1169-web.mp4 (80 s);
+  - QA-16Nov-TKT1597-TKT1169-android.mp4 (91 s);
+  - QA-16Nov-TKT1585-ir-report-images.mp4 (56 s).
+- QA test data created on Android Site 2 (left in place per the owner's rule): assets "QA-DEMO TKT-1169 sticky A / A2 / W / W2 / W3 16 Nov" (ATS, 712 5th Ave › Floor 1 › t1).
+- The Android emulator is now signed in as the SA seat (Field Technician), with an active session on WO "QA-DEMO ZP-5244 13 Nov check-off".
+- The generated report PDFs/DOCX (34 MB, they print a seat email) stay local and are not committed.
