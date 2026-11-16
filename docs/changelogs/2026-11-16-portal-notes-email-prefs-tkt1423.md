@@ -141,3 +141,22 @@
   - raw-web-tech-landing.png.
   - All were checked: no frame shows the password.
 - The Android emulator is still signed in as the Technician seat.
+
+## 15. iOS TestFlight on the Mac + new bug ZP-5297 (portal users can't open Account & settings)
+- **TestFlight lane.** Xcode 26.6 is back. TestFlight put Z Platform-QA 1.75 (128) on the Mac as an iPhone/iPad app.
+  - Its binary is FairPlay-encrypted (cryptid 1), so it can't go into the simulator.
+  - It can be driven with System Events accessibility. Memory: project_ios_testflight_mac_lane.
+- **Owner's video `~/Downloads/pri_bug.mp4`** (Nency's portal account): avatar › Account & settings bounces back to Site Health.
+- **Reproduced on QA** (build index-oFAZQ3rK.js) with our own seats:
+  - Facility Manager (+fm@) and Client Portal (+clientportal@): /account → /maintenance-portal → /maintenance-portal/overview (about 20 ms).
+  - The same happens for a direct /account, /account/profile, /account/security, /account/notifications and /settings.
+  - Super Admin control: /account opens Profile / Security / Notifications / Company.
+- **Cause (bundle hint):** the portal confinement guard allows only "/maintenance-portal" and "/release-updates" (`ZFe=[Ec,"/release-updates"]`), and the menu item navigates to "/account".
+- **Mobile, same FM seat:**
+  - Android 1.39 (53): the Settings tab shows Account, Security (Passkeys, 2FA) and Language, so it is not affected.
+  - iOS TestFlight 1.75: the FM can sign in, and the 2FA screen points to "Security in your account menu". The iOS Settings screen was not reached (the app doesn't render while the owner's windows cover it).
+- **Filed ZP-5297:** Bug, High, Avani, To Do, Z-26-11-S1, Web v2.6, relates to ZP-5040 and ZP-5292.
+  - The description is wiki markup with the 85 s web video, the 33 s Android video and 3 screenshots, all attached; it renders with no errors.
+- **Side observation, not filed:** while a Beamer "Heads-up" announcement pill is showing, it sits on top of the avatar menu's "Account & settings" at 1600×1000, so clicking there opens "What's new" instead.
+- The Android emulator is now signed in as the QA FM seat (it was the techplat Technician).
+- Evidence: docs/bug-evidence/2026-11-16-portal-account-settings/.

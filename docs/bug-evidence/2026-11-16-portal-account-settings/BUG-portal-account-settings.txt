@@ -1,0 +1,57 @@
+!QA-16Nov-portal-account-settings-redirect.mp4|width=720!
+_Video, 85 s, QA build index-oFAZQ3rK.js, 16 Nov 2026 ~18:58 IST. Facility Manager: avatar › Account & settings → lands on Site Health; typing /account does the same. Client Portal: same. Control: Super Admin gets the Account & settings page._
+
+h3. Simple explanation
+Portal users (Facility Manager and Client Portal) cannot open *Account & settings*. In the Maintenance Portal they click their avatar (bottom left) › *Account & settings*, and the page jumps straight back to *Site Health*. *Profile*, *Security* and *Notifications* never open, so a portal user cannot see their profile, set up two-factor sign-in, change their password settings or choose their email notifications. Internal users (Super Admin) get the page normally.
+
+The two-factor prompt at sign-in even tells portal users: "You can set this up any time from Security in your account menu". That page is the one they can't reach.
+
+*Where:* Maintenance Portal › avatar (bottom left) › Account & settings. Also any direct link to /account. The Profile / Security / Notifications tabs are /account?tab=… on that same path.
+
+*Environment:* QA https://acme.qa.egalvanic.ai, company EG-ACME, build index-oFAZQ3rK.js, Chrome on macOS, 16 Nov 2026. First seen in a QA screen recording with Nency's portal account (site Android Site 2); reproduced with our own Facility Manager and Client Portal seats.
+
+*Steps*
+# Sign in as a Facility Manager portal user (QA seat abhiyant.singh+fm@egalvanic.com). You land in the Maintenance Portal.
+# Open any portal page, for example Issues: https://acme.qa.egalvanic.ai/maintenance-portal/issues
+# Click the avatar at the bottom left. The menu shows your name, the role "Facility Manager" and *Account & settings*.
+# Click *Account & settings*.
+
+*Actual*
+* The page goes /account → /maintenance-portal → /maintenance-portal/overview (Site Health) in about 20 ms. The Account & settings page never shows. In Nency's recording the left menu "Account & settings / Profile / Security / Notifications" flashes for a moment with an empty page, then Site Health loads.
+* Opening https://acme.qa.egalvanic.ai/account directly does the same. So do /account/profile, /account/security, /account/notifications and /settings.
+* Same with the Client Portal seat (abhiyant.singh+clientportal@egalvanic.com).
+
+*Expected:* the Account & settings page opens for portal users too, with Profile, Security and Notifications (Company can stay hidden for them).
+
+*Controls*
+* Super Admin, same build: avatar › Account & settings opens /account with Profile, Security, Notifications and Company.
+
+*Possible cause (for the developer to confirm):*
+* The avatar menu item calls navigate("/account").
+* The guard that keeps portal users inside the portal only lets them stay on paths under "/maintenance-portal" and "/release-updates" (in the QA bundle: {{const ZFe=\[Ec,"/release-updates"\]}} with Ec="/maintenance-portal"; anything else → <Navigate to="/maintenance-portal" replace/>).
+* "/account" is not on that list, so portal users are always sent back to the portal home, which then opens Site Health.
+* Fix idea: add "/account" to the portal-allowed paths (and check that the Profile / Security / Notifications tabs work for portal roles), or give the portal its own account page and point the menu item there for portal users.
+
+*Related:* ZP-5040 (Account & settings opens Profile), ZP-5292 (Account › Notifications empty "General" box).
+
+*Mobile (checked 16 Nov, same Facility Manager seat):*
+* Android 1.39 (53), QA: not affected. The Settings tab opens and shows Account (email, user ID), Security (Passkeys, Two-Factor Authentication) and Language. Video below.
+* iOS TestFlight 1.75 (128): the Facility Manager can sign in, and the two-factor screen says "You can set this up any time from Security in your account menu". The iOS Settings screen itself was not reached in this run.
+
+!QA-16Nov-portal-account-settings-android-fm-ok.mp4|width=360!
+_Android, 33 s: the same Facility Manager seat opens Settings with Account, Security and Language (mobile works, web doesn't)._
+
+*Not checked:* production; Portal Sales seats; the iOS Settings screen.
+
+*Test data:* QA seats abhiyant.singh+fm@ (Facility Manager) and abhiyant.singh+clientportal@ (Client Portal), EG-ACME. Nothing was changed; only pages were opened.
+
+*Screenshots*
+
+!QA-16Nov-portal-1-fm-menu.png|width=640!
+_1. Facility Manager in the portal: avatar menu with "Account & settings"._
+
+!QA-16Nov-portal-2-fm-after-click-site-health.png|width=640!
+_2. After clicking "Account & settings": Site Health (/maintenance-portal/overview) instead of the account page._
+
+!QA-16Nov-portal-3-control-super-admin-account-page.png|width=640!
+_3. Control: Super Admin gets Account & settings with Profile, Security, Notifications, Company._
