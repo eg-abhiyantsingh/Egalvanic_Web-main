@@ -1,0 +1,199 @@
+{
+  "elapsed_s": 12.28,
+  "model": "claude-opus-5",
+  "schedule": {
+    "panel_id": "cccad67b-134c-4c34-9ceb-437c762b2a28",
+    "placements": [
+      {
+        "breaker": {
+          "ampere_rating": 20,
+          "id": null,
+          "label": "LIGHTING",
+          "node_class_id": "4cec3dd4-10d3-4cd3-8fe8-27722b7ec029",
+          "node_subtype_id": null,
+          "photos": [],
+          "pole_count": 1
+        },
+        "description": "LIGHTING",
+        "load_type": "led",
+        "position": 1
+      },
+      {
+        "breaker": {
+          "ampere_rating": 20,
+          "id": null,
+          "label": "RECEPT LOBBY",
+          "node_class_id": "4cec3dd4-10d3-4cd3-8fe8-27722b7ec029",
+          "node_subtype_id": null,
+          "photos": [],
+          "pole_count": 1
+        },
+        "description": "RECEPT LOBBY",
+        "load_type": "receptacles",
+        "position": 2
+      },
+      {
+        "breaker": {
+          "ampere_rating": 20,
+          "id": null,
+          "label": "SPARE",
+          "node_class_id": "4cec3dd4-10d3-4cd3-8fe8-27722b7ec029",
+          "node_subtype_id": null,
+          "photos": [],
+          "pole_count": 1
+        },
+        "description": "SPARE",
+        "load_type": "",
+        "position": 3
+      },
+      {
+        "breaker": {
+          "ampere_rating": 20,
+          "id": null,
+          "label": "QA-DEMO ZP-4710 switchboard (delete me)-CB5",
+          "node_class_id": "4cec3dd4-10d3-4cd3-8fe8-27722b7ec029",
+          "node_subtype_id": null,
+          "photos": [],
+          "pole_count": 1
+        },
+        "description": "",
+        "load_type": "",
+        "position": 5
+      },
+      {
+        "breaker": {
+          "ampere_rating": 20,
+          "id": null,
+          "label": "QA-DEMO ZP-4710 switchboard (delete me)-CB6",
+          "node_class_id": "4cec3dd4-10d3-4cd3-8fe8-27722b7ec029",
+          "node_subtype_id": null,
+          "photos": [],
+          "pole_count": 1
+        },
+        "description": "",
+        "load_type": "",
+        "position": 6
+      },
+      {
+        "breaker": {
+          "ampere_rating": 30,
+          "id": null,
+          "label": "RTU-1",
+          "node_class_id": "4cec3dd4-10d3-4cd3-8fe8-27722b7ec029",
+          "node_subtype_id": null,
+          "photos": [],
+          "pole_count": 2
+        },
+        "description": "RTU-1",
+        "load_type": "hvac",
+        "position": 7
+      },
+      {
+        "breaker": {
+          "ampere_rating": 30,
+          "id": null,
+          "label": "SPARE",
+          "node_class_id": "4cec3dd4-10d3-4cd3-8fe8-27722b7ec029",
+          "node_subtype_id": null,
+          "photos": [],
+          "pole_count": 2
+        },
+        "description": "SPARE",
+        "load_type": "",
+        "position": 8
+      },
+      {
+        "breaker": {
+          "ampere_rating": 20,
+          "id": null,
+          "label": "EXHAUST FAN",
+          "node_class_id": "4cec3dd4-10d3-4cd3-8fe8-27722b7ec029",
+          "node_subtype_id": null,
+          "photos": [],
+          "pole_count": 1
+        },
+        "description": "EXHAUST FAN",
+        "load_type": "motors",
+        "position": 12
+      },
+      {
+        "breaker": {
+          "ampere_rating": 20,
+          "id": null,
+          "label": "Spare",
+          "node_class_id": "4cec3dd4-10d3-4cd3-8fe8-27722b7ec029",
+          "node_subtype_id": null,
+          "photos": [],
+          "pole_count": 1
+        },
+        "description": "Spare",
+        "load_type": "",
+        "position": 13
+      },
+      {
+        "breaker": {
+          "ampere_rating": 20,
+          "id": null,
+          "label": "RECEPT OFFICE",
+          "node_class_id": "4cec3dd4-10d3-4cd3-8fe8-27722b7ec029",
+          "node_subtype_id": null,
+          "photos": [],
+          "pole_count": 1
+        },
+        "description": "RECEPT OFFICE",
+        "load_type": "receptacles",
+        "position": 17
+      },
+      {
+        "breaker": {
+          "ampere_rating": 20,
+          "id": null,
+          "label": "SPARE",
+          "node_class_id": "4cec3dd4-10d3-4cd3-8fe8-27722b7ec029",
+          "node_subtype_id": null,
+          "photos": [],
+          "pole_count": 1
+        },
+        "description": "SPARE",
+        "load_type": "",
+        "position": 18
+      },
+      {
+        "breaker": {
+          "ampere_rating": 30,
+          "id": null,
+          "label": "WATER HEATER",
+          "node_class_id": "4cec3dd4-10d3-4cd3-8fe8-27722b7ec029",
+          "node_subtype_id": null,
+          "photos": [],
+          "pole_count": 2
+        },
+        "description": "WATER HEATER",
+        "load_type": "heating",
+        "position": 20
+      },
+      {
+        "breaker": {
+          "ampere_rating": 15,
+          "id": null,
+          "label": "SPARE",
+          "node_class_id": "4cec3dd4-10d3-4cd3-8fe8-27722b7ec029",
+          "node_subtype_id": null,
+          "photos": [],
+          "pole_count": 1
+        },
+        "description": "SPARE",
+        "load_type": "",
+        "position": 21
+      }
+    ],
+    "schedule_config": {
+      "circuit_count": 24,
+      "columns": 2
+    }
+  },
+  "usage": {
+    "input_tokens": 2369,
+    "output_tokens": 1026
+  }
+}

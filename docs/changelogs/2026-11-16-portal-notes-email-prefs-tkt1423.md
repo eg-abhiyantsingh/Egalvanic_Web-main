@@ -64,3 +64,14 @@
 - The Android 1.39 (53) APK embeds a web "flow" bundle (assets/flow) that still has the old message. That is a hint only, not tested.
 - Jira: moved In QA (Start Testing), then comment 46202 (2 screenshots + 32 s video), then READY TO RELEASE. Sign-off posted in eg-internal-dev tagging @Shubham, with the email question.
 - No seat password was changed (both reset attempts stopped before a real code). Evidence: docs/bug-evidence/2026-11-16-zp5288-stage/.
+
+## 10. TKT-1598: panel schedule AI transcription of Spare / Space / blank (QA), sent to Dharmesh by DM
+- QA › Panel Schedules › "QA-DEMO ZP-4710 switchboard (delete me)" › Upload Schedule Photo (a printed test schedule with SPARE/Spare, SPACE/space, a blank description with a breaker, and fully blank positions) › Transcribe Schedule Photos. Model claude-opus-5, 12 s.
+- Result:
+  - SPARE (any case, 1P and 2P) → breaker labelled as written, with the right size, no load type.
+  - SPACE / space and fully blank → no placement ("empty").
+  - A blank description with a breaker → breaker with an auto label "<panel name>-CB5".
+  - 2P breakers and the 24/2-column layout were correct.
+- Gaps: no Spare/Space status (SPACE and blank look the same), and blank breakers get a made-up name. Real customer photos (handwritten or faded) are not tested.
+- The draft was discarded; the panel is back to "Get this panel started". The test photo stays under Media on that QA-DEMO panel.
+- Evidence: docs/bug-evidence/2026-11-16-tkt1598-panel-spare-space/ (photo, result screenshot, transcribe_response.json, video).
