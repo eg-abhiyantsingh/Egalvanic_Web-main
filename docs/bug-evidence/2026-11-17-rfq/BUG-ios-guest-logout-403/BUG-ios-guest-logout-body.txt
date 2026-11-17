@@ -1,0 +1,45 @@
+!QA-17Nov-BUG-ios-guest-logout-403.mp4|width=720!
+_Video, 27 s: a user switches into Demo Company as a guest, then Settings › Logout gives "Logout Error – Server error: Logout failed (status 403)", and the user stays signed in._
+
+*In simple words:* a person who works for another company as a guest (Switch Company › the host company) can't sign out of the iOS app while they are in the host company. Logout shows an error and nothing happens. They have to switch back to their own company first, and then Logout works.
+
+*Where:* iOS app › Settings › Logout, while acting as a guest (Switch Company › host company). Backend POST /api/auth/v2/logout.
+
+*Environment:* QA (API https://eg-pz.qa.egalvanic.ai/api). Z Platform-QA 1.75 simulator build (binary 16 Nov 06:49 IST, from the owner), iPhone 17 simulator, iOS 26.2. 17 Nov 2026 16:38 IST. Seats: Project Manager test seat (home EG-ACME, guest Technician in Demo Company), reproduced twice. The same 403 shows by API for the Technician test seat (also a Demo guest). feature-guest-access is ON for EG-ACME on QA since about 15:26 today.
+
+*Steps to reproduce*
+# Sign in to the iOS app (company code acme) with a user who is a guest in another company (here Demo Company).
+# Site home › Sites › tap the company header › Switch Company › "Demo Company, Guest" › Continue.
+# Open any site (here "Demo").
+# Settings › Logout › Logout.
+
+*Actual*
+* Alert "Logout Error – Server error: Logout failed (status 403)".
+* After OK the user is still signed in, on Settings. Tapping Logout again gives the same error.
+* API (same seat and token, X-Subdomain demo): POST /api/auth/v2/logout returns 403 \{"code": "guest_route_not_allowed", "error": "Not available to guests"\}.
+
+*Expected:* Logout works from any company the user is in. At minimum the app should still sign out on the device when the server refuses. The app already has a "Server logout failed (continuing with local logout)" path, but it is not used for this 403.
+
+*Controls*
+* The same users log out fine when they are in their own company (EG-ACME): the app goes back to the company-code screen. By API with X-Subdomain acme, POST /api/auth/v2/logout returns 200 "Logged out successfully".
+* Switching back to the home company first, then Logout, works. That is the workaround.
+
+*Possible cause (for the developer to confirm):*
+* The backend guest-route guard (new with guest access) blocks /auth/v2/logout for guest context ("guest_route_not_allowed"). Logout should be on the guest allowlist.
+* iOS sends the logout with the guest company's X-Subdomain. On a non-2xx it shows the error instead of finishing the local logout.
+* Either fix alone unblocks the user.
+
+*Severity suggestion:* Medium. The user can't sign out (shared devices, account switching) until they find the workaround.
+
+*Mobile / web:*
+* Android: not checked. The Android app probably calls the same logout with the guest company header. MOBILE-CHECK: Android 1.40, Switch Company › Demo › Settings › Logout.
+* Web: related sign seen today by the web tester. For a guest Technician in Demo, the "Web Access Restricted" screen's only button is "Logout", but it returns the user to EG-ACME still signed in. This may be the same server refusal.
+
+*Related:* ZP-5143 / ZP-5144 (guest Technician creation controls), ZP-4830 (web guest access, To Do), ZP-5315 (guest route checks).
+
+*Test data:* Demo Company site Demo (https://demo.qa.egalvanic.ai/). Nothing was changed.
+
+!QA-17Nov-BUG-ios-guest-logout-1-logout-error-403.png|width=640!
+_FAIL (defect): guest in Demo Company › Settings › Logout: "Logout failed (status 403)"._
+!QA-17Nov-BUG-ios-guest-logout-2-still-signed-in-after-ok.png|width=640!
+_FAIL (defect): after OK the user is still signed in; the Logout button is still there._

@@ -1,0 +1,40 @@
+!QA-17Nov-ZP-4829-TC2-no-bump-relaunch-signout-signin.mp4|width=720!
+_Video, 57 s, iOS simulator, no epoch bump. The first sign-in on the new build only records the epoch. A relaunch keeps the data. Sign-out keeps the data. After signing in again, the app asks for a site and picking it runs the normal site switch (not the epoch reset)._
+
+*Result: TC2 PASS for the epoch logic. TC1, TC3, TC4 blocked: they need a backend DB bump of the company's data epoch. Status stays In QA.*
+
+*Build:* Z Platform-QA 1.75 simulator build (binary 16 Nov 06:49 IST, from the owner), installed over the 5 Nov 1.75 build with its local data, iPhone 17 simulator (iOS 26.2), QA, 17 Nov 2026 13:51–14:06 IST.
+*Seat:* Super Admin test seat, EG-ACME (company_data_epoch = 0 on /auth/v2/me). Site (s) Wild Goose Brewery.
+*How checked:* the screen, the app log (xcrun simctl log show for process "Z Platform-QA"), and copies of the app's local database (row counts and record keys; kept rows keep their keys).
+
+*Steps (TC2)*
+# Start the new build: "Session Expired", so the same Super Admin signs in again. This is the first /auth/v2/me on this build.
+# Relaunch the app.
+# Settings › Logout, then sign in again with the same seat.
+# Pick the same site again.
+
+*Actual*
+* Step 1: the epoch key appears with value 0, and there is no "Company data epoch changed" or "\[CompanySwitch\]" log line. Same 1,847 assets and the same record keys. The home page shows the same 286 assets / 130 connections. First sight only records the epoch. PASS
+* Step 2: same data, no loading, same keys. PASS
+* Step 3: the local data is unchanged after sign-out and after sign-in (same keys), with no epoch log line. PASS. The app then asks for a site.
+* Step 4: "Switching Sites" / "Loading", 42 s, and the site is downloaded again (new record keys).
+* Step 4 is *not* the epoch reset. The log shows the normal site switch (switchToSLD from no site → clearSLDs → upsertAllData isSiteSwitch true). Logout clears the active site on purpose (AppStateManager "Reset active SLD to force site selection on next login").
+* [~accountid:712020:9881bb6e-cbf7-47a6-bf7a-838a383b2866] does TC2's "sign out and in → nothing reloads from scratch" mean the epoch logic only (then PASS), or the whole sign-out/in flow (then it is existing design, outside this ticket)?
+
+*Blocked: TC1, TC3, TC4*
+* They need the backend to bump companies.data_epoch on QA for EG-ACME (company d59d449b-09d8-45d6-8f0a-ef70024b1293, currently 0), once before each case, with the time of each bump.
+* For TC1, also hard-delete one test room/asset first, so its removal is visible.
+* The device baseline is in place (epoch recorded as 0), so the bump can be tested right away.
+
+*Not covered:* real airplane mode for TC3 (the simulator has none; the app's own Go Offline switch will be used).
+
+*Test data:* site (s) Wild Goose Brewery, https://acme.qa.egalvanic.ai/ (EG-ACME). Nothing was created.
+
+!QA-17Nov-ZP-4829-1-first-signin-on-build-same-data.png|width=640!
+_PASS (expected): the first sign-in on the new build keeps the same site data; the epoch is only recorded._
+!QA-17Nov-ZP-4829-2-after-relaunch-same-data.png|width=640!
+_PASS (expected): a relaunch with no bump keeps the data, with no reload._
+!QA-17Nov-ZP-4829-4-same-site-picked-full-site-switch-reload.png|width=640!
+_Question, not a defect: after sign-out/in, picking the same site runs the normal site switch (full reload). This is existing Logout design, not the epoch reset._
+
+*Cross-platform:* web not applicable (no local cache; backend ZP-4834 is READY TO RELEASE) · iOS TC2 PASS, TC1/3/4 blocked (DB bump) · Android ZP-4838 Done (v1.39), not re-run; needs the same bump

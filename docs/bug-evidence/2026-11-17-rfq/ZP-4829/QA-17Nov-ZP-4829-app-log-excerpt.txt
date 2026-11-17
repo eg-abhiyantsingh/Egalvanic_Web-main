@@ -1,0 +1,21 @@
+# ZP-4829 TC2 app log excerpt (Z Platform-QA 1.75 sim, lane A, 17 Nov 2026, times IST). Emails replaced by <email>.
+# Source: xcrun simctl spawn <udid> log show --predicate 'process == "Z Platform-QA"' (saved 13:57 and 14:06).
+# grep: epoch | CompanySwitch | server reset | wipe | re-auth | login | switchToSLD | clearSLDs | upsertAllData | Sync complete
+
+## A. First sign-in on this build (Session Expired re-auth, SA): the epoch is only recorded, no wipe
+2026-11-17 13:56:54.163 I  Z Platform-QA[83171:1377385] [com.egalvanic.zplatform-QA:auth] 🔐 Re-authenticating user: <email>
+2026-11-17 13:56:55.895 I  Z Platform-QA[83171:1377385] [com.egalvanic.zplatform-QA:auth] ✅ Authentication complete
+2026-11-17 13:56:55.896 I  Z Platform-QA[83171:1377385] [com.egalvanic.zplatform-QA:auth] 🔐 Login process completed
+2026-11-17 13:56:55.898 I  Z Platform-QA[83171:1377385] [com.egalvanic.zplatform-QA:auth] ✅ Re-authentication successful
+2026-11-17 13:57:28.682 I  Z Platform-QA[83700:13782ed] [com.egalvanic.zplatform-QA:auth] ✅ Auth status: Authenticated
+
+## B. Relaunch, sign out, sign in (SA), pick the same site
+2026-11-17 14:04:54.226 I  Z Platform-QA[87602:13811f1] [com.egalvanic.zplatform-QA:auth] ✅ Auth status: Authenticated
+2026-11-17 14:05:23.394 I  Z Platform-QA[87951:1381c67] [com.egalvanic.zplatform-QA:auth] ✅ Auth status: Authenticated
+2026-11-17 14:05:28.655 I  Z Platform-QA[87951:1381c67] [com.egalvanic.zplatform-QA:sync] [Z_Platform_QA/SLDService.swift:111] switchToSLD(_:siteName:modelContext:) -> Switching from SLD 00000000-0000-0000-0000-000000000000 to 9138FD14-A3C9
+2026-11-17 14:05:28.706 I  Z Platform-QA[87951:1381c67] [com.egalvanic.zplatform-QA:sync] [Z_Platform_QA/SLDService.swift:390] clearSLDs(modelContext:preserveSyncMetadata:) -> Clearing totals - Nodes: 1847, Edges: 458, Photos: 94, IR Photos
+2026-11-17 14:05:28.706 I  Z Platform-QA[87951:1381c67] [com.egalvanic.zplatform-QA:sync] [Z_Platform_QA/SLDService.swift:394] clearSLDs(modelContext:preserveSyncMetadata:) -> Using background batch deletion...
+2026-11-17 14:05:36.422 I  Z Platform-QA[87951:1381c67] [com.egalvanic.zplatform-QA:sync] [Z_Platform_QA/SLDService.swift:483] clearSLDs(modelContext:preserveSyncMetadata:) -> Successfully cleared ALL SLD-related data from SwiftData
+2026-11-17 14:05:36.423 I  Z Platform-QA[87951:1381c67] [com.egalvanic.zplatform-QA:sync] [Z_Platform_QA/SLDSyncService.swift:287] upsertAllData(sld_id:modelContext:isSiteSwitch:) -> upsertAllData: start (isSiteSwitch: true)
+2026-11-17 14:06:09.335 I  Z Platform-QA[87951:1381c67] [com.egalvanic.zplatform-QA:sync] [Z_Platform_QA/SLDSyncService.swift:481] upsertAllData(sld_id:modelContext:isSiteSwitch:) -> Sync complete. Context now has 1 diagrams
+2026-11-17 14:06:09.357 I  Z Platform-QA[87951:1381c67] [com.egalvanic.zplatform-QA:sync] [Z_Platform_QA/SLDService.swift:146] switchToSLD(_:siteName:modelContext:) -> Successfully switched to SLD: 9138FD14-A3C9-495A-B086-6EF520F92168

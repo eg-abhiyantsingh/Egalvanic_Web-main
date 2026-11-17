@@ -37,4 +37,4 @@ _3. Flag ON (EG-ACME): the next name suggested is L2 (PASS)_
 !QA-17Nov-ZP-4942-9-ON-acme-placed-L2.png|width=640!
 _4. Flag ON: L2 placed with its group, hidden connection and elbow (PASS)_
 
-*Cross-platform:* web PASS · iOS differs: an iOS-placed copy of this assembly loses the hidden connection and the elbow on the server (new iOS bug, see ZP-5107); assembly placement on iOS is gated by the same flag (from the iOS source) · Android not checked (ZP-5112 is being tested on Android 1.40)
+*Cross-platform:* web PASS · iOS differs: an iOS-placed copy (IOS17, today) loses the hidden connection and the elbow on the server (ZP-5321); in Demo (flag OFF) iOS shows no Assembly control (PASS) · Android: the AND17 copy keeps both, and Demo shows no Assembly tool (PASS); a second placement pre-fills "L1 CB-3" instead of the next free name (ZP-5318)

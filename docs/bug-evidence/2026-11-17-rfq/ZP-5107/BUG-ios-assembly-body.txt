@@ -1,0 +1,80 @@
+!QA-17Nov-ZP-5107-ios-repro-IOS17-hidden-and-elbow-lost.mp4|width=720!
+_Video 1 (50 s), fresh repro on the iOS app, 17 Nov 2026 16:16 IST, Z Platform-QA 1.75 (release/qa, simulator build of 16 Nov): place assembly "QA4942-FDR-\{name\}" as IOS17. Right after placing, the hidden connection shows as a badge (local copy). After the SLD Refresh button, it is drawn as a normal line, because the server copy lost it._
+
+h3. Fresh repro on the iOS app (17 Nov)
+* Seat: Super Admin test seat (EG-ACME). Site "QA-DEMO v2.6 SLD editing 12 Nov", SLD c4438cd3-59b3-4639-9e60-2752dc5aa478.
+* Steps: SLD › unlock › Assembly › "QA4942-FDR-\{name\}" › name IOS17 › Place › tap an empty spot. Then tap the SLD Refresh button.
+* Server, GET /api/sld/c4438cd3-59b3-4639-9e60-2752dc5aa478:
+** "QA4942-FDR-IOS17 FUSE nosub" → "QA4942-FDR-IOS17 Load-1" (edge 1e121b41-82da-4fc3-859a-40cd01df1e30): edge_manips *null*. The hidden flag was lost.
+** "QA4942-FDR-IOS17 CB-2" → "QA4942-FDR-IOS17 PNL-2" (edge c0a96fbd-6076-4351-9811-87181b4a076a): edge_manips *null*. The elbow was lost.
+* Controls on the same SLD:
+** Web copy L2 keeps both: \{"hidden":true\} and \{"elbows":\[\[1035,1322\]\]\}.
+** Android 1.40 copy AND17 keeps both: \{"hidden":true\} and \{"elbows":\[\[904,1781\]\]\}.
+* So it is iOS-only.
+
+!QA-17Nov-ZP-5107-ios-1-right-after-placing-hidden-badge.png|width=360!
+_iOS, right after placing: the hidden connection shows as a badge (local copy)._
+!QA-17Nov-ZP-5107-ios-2-after-sld-refresh-normal-line.png|width=360!
+_FAIL (defect): after SLD Refresh, the same connection is a normal line (server copy)._
+
+h3. First seen (16 Nov placement, web read-back)
+!QA-17Nov-BUG-ios-assembly-placement-loses-hidden-and-elbow.mp4|width=720!
+_Video: web read-back of the assembly the iOS app placed on 16 Nov (connection shown as a normal line, no elbow), then the control: the same assembly placed on web keeps the hidden connection and the elbow (29 s)_
+
+*In simple words:* when the iOS app places a saved SLD assembly, the connection that the assembly marks as hidden comes back as a normal visible line on web, and the connection's fixed bend (elbow) is lost. Web placement of the same assembly keeps both. Only the iOS-placed copy is wrong.
+
+*Where:* iOS app › SLD › unlock › Assembly (Task #205, ZP-5102). It shows on web (and on any other device) after sync.
+*Environment:* QA, company EG-ACME. iOS 1.75 (release/qa 34bd67e, promoted 16 Nov). Web read-back on build index-LGhrn-48.js, 17 Nov 2026 14:26 IST.
+
+*Steps to reproduce*
+# On web, the assembly "QA4942-FDR-\{name\}" holds 4 assets and 2 connections:
+#* FUSE nosub → Load-1 is a hidden connection (edge_manips \{"hidden":true\}).
+#* CB-2 → PNL-2 has one fixed elbow (edge_manips \{"elbows":\[\[54,493\]\]\}).
+# On the iOS app: open an SLD (here Android Site 2), unlock, tap Assembly, pick "QA4942-FDR-\{name\}", name it (here ZP5102), tap Place, then tap the canvas. The iOS tester did this on 16 Nov 13:05 UTC.
+# Open the same SLD on web and look at the placed copy: https://acme.qa.egalvanic.ai/slds (site "Android Site 2", assets "QA4942-FDR-ZP5102 …").
+
+*Actual*
+* Web draws "QA4942-FDR-ZP5102 FUSE nosub → Load-1" as a normal line, with no hidden-connection badges.
+* CB-2 → PNL-2 has no elbow. API: both edges have edge_manips = null.
+* The Mutation Audit Log shows why: the iOS "edge create" payloads (mutations ed6d914a…, cab96538…) contain no edge_manips field.
+
+*Expected:* the iOS-placed copy matches a web placement:
+* FUSE nosub → Load-1 stays hidden (edge_manips \{"hidden":true\}).
+* CB-2 → PNL-2 keeps its elbow.
+This is the ZP-4942 rule "routing and the hidden flag kept".
+
+*Control (same assembly, web):* placed today as QA4942-FDR-L2 (POST /api/assemblies/\{id\}/place → 201).
+* FUSE nosub → Load-1 has edge_manips \{"hidden":true\} (badges shown).
+* CB-2 → PNL-2 has edge_manips \{"elbows":\[\[1035,1322\]\]\}.
+* The 12 Nov web placement (L1) is the same.
+
+*What did sync correctly from iOS:*
+* The 4 assets, both connections and the group "QA-DEMO ZP-4942 grp 12 Nov QA4942-FDR-ZP5102".
+* The order: node create ×4 → edge create ×2 → node_group update.
+
+*Possible cause (iOS source, release/qa 34bd67e):*
+* Core/Singletons/APIClient.swift createEdge(edge:) builds SLDDTOEdge(… points: edge.points, algorithm: edge.algorithm) without edge_manips.
+* The local EdgeV2 does keep edge_manips_json (SLDSyncService materializes it from the placement DTO), so the device looks right until a fresh sync from the server.
+* AssemblyPlacementService sends the edges through this same createEdge, both online and from the offline queue.
+
+*Also check:*
+* Android 1.40 (ZP-5112): place the same assembly and read it back on web.
+* iOS: after placement, refresh or re-sync the SLD on the device. The hidden connection probably turns into a normal line there too.
+
+*Test data*
+* https://acme.qa.egalvanic.ai/assemblies/cd981de3-5916-4481-8495-2afb906f0c62 (assembly QA4942-FDR-\{name\})
+* https://acme.qa.egalvanic.ai/slds (site "Android Site 2", SLD aadcee4c-7dd0-45b3-81b9-309c5c166084, iOS copy QA4942-FDR-ZP5102)
+* https://acme.qa.egalvanic.ai/slds (site "QA-DEMO v2.6 SLD editing 12 Nov", SLD c4438cd3-59b3-4639-9e60-2752dc5aa478, web copies QA4942-FDR-L1 and L2)
+* https://acme.qa.egalvanic.ai/admin/audit-log (mutations 16 Nov 13:05:21–13:05:24 UTC, user Kush Jadia)
+
+!QA-17Nov-BUG-ios-assembly-1-ios-placed-copy-on-web-hidden-flag-and-elbow-lost.png|width=640!
+_1. iOS-placed copy on web: FUSE nosub → Load-1 drawn as a normal line, CB-2 → PNL-2 without its elbow (FAIL)_
+!QA-17Nov-BUG-ios-assembly-2-control-web-placement-keeps-hidden-and-elbow.png|width=640!
+_2. Control: the same assembly placed on web keeps the hidden connection badges and the elbow (PASS, expected)_
+
+*Related, not a duplicate:* ZP-5048 "\[iOS\] Saving an asset while an SLD view is open replaces the view with the whole site (bends and hidden edge lost)" has a different trigger. JQL run: project = ZP AND created >= -30d AND (text ~ "edge_manips" OR text ~ "elbow" OR (text ~ "assembly" AND text ~ "hidden") OR (summary ~ "iOS" AND summary ~ "SLD")). No ticket covers this.
+
+*Severity suggestion:* Medium. The one-line drawing changes after a mobile placement; no data is lost from the assets.
+*Suggested assignee:* Kush (iOS, ZP-5102). File a separate Android ticket only if the Android check above fails.
+
+*Cross-platform:* web PASS (web placement keeps both) · iOS FAIL (shown on web for the 16 Nov iOS placement + iOS source) · Android not checked (device lane busy; ZP-5112 under test)

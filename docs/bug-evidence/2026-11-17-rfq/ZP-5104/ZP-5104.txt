@@ -1,0 +1,40 @@
+!QA-17Nov-ZP-5104-every-add-path-cable-offline-general.mp4|width=720!
+_Video, 81 s, iOS simulator. General work type adds nothing. After changing the type to Arc Flash Data Collection, every add path gets the service: New Asset, Link Existing, Quick Count, Photo Walkthrough, Create Child, Create Multiple OCP. A New Connection cable joins the work order with the service and shows in full colour on the WO SLD. Offline adds get the service at once._
+
+*Result: PASS → READY TO RELEASE.*
+
+*Build:* Z Platform-QA 1.75 simulator build (binary 16 Nov 06:49 IST, from the owner), iPhone 17 simulator (iOS 26.2), QA, 17 Nov 2026 14:56–16:05 IST. Web read-back on index-CkkAeA9o.js.
+*Seat:* Super Admin test seat, EG-ACME. Site (s) Wild Goose Brewery, room Bldg_465 › Floor 77 Updated_650 › Test. Work order "Work Order - Nov 17, 2:26 PM", created on iOS for this test.
+
+*Steps*
+# Work order Details › Capture Settings › Work Type = General. Assets tab › room Test › + › New Asset "QA-DEMO ZP-5104 17Nov G1" › long-press › Manage Services.
+# Work Type → Arc Flash Data Collection. Then add assets by each path: + › New Asset; + › Link Existing Asset (a QA-DEMO panel, its 7 breakers come along); + › Quick Count (1 Circuit Breaker); + › Photo Walkthrough (Gallery photo, no camera on the simulator); asset › Add OCP › Create New Child and Create Multiple (2). Check Manage Services on each.
+# Asset page › Connections › New Loadside Connection › target G1, method Cable › Create. Check the work order's Assets tab and its SLD tab.
+# Home › network button › Go Offline (the app's own offline mode) › New Asset "O1 offline" › Manage Services. Then Go Online and sync.
+# Web: open the work order (Assets, SLD), and read GET /api/ir_session/<id>/service-registry. Web parity: Actions › Add New Asset on the same work order.
+
+*Actual*
+* Step 1: "No services registered".
+* Step 2: every new or linked asset shows "Registered on this asset: Arc Flash Data Collection", including the breakers that came along with the linked panel.
+* Step 3: the cable is listed in the work order with the service ("AF 15 remaining"). On the work order SLD it is drawn in full colour straight away, while the asset behind it that is not in the work order stays grey.
+* Step 4: the service shows at once offline, under the "Offline — changes apply now and sync later" banner. After going online the queue synced with no errors.
+* Step 5: the server registry has 16 assets, all with Arc Flash Data Collection, including the cable and the offline asset. Web lists them with an Arc Flash cell. G1 (added under General) has no service. A web-added asset on the same work order also gets the service (same as iOS).
+
+*Notes, not defects:*
+* Changing the type does not add the new service to assets added earlier (G1). This matches the test case and web.
+* After the in-app Go Online, the queued changes waited about 2 minutes and synced when I tapped Settings › Sync Queue Analyzer › Flush Queue Now. This used the in-app toggle on a simulator, so it should be checked with real airplane mode on a device.
+
+*Not covered:* real camera in Photo Walkthrough, real airplane mode, a busway (I used a cable).
+
+*Test data:* https://acme.qa.egalvanic.ai/sessions/2dcb3c4f-5eca-4fe1-a32a-bde472a64e89 (work order "Work Order - Nov 17, 2:26 PM", site (s) Wild Goose Brewery). Assets: "QA-DEMO ZP-5104 17Nov G1 / A1 new / C1 child / O1 offline / W1 web", "QZ1AN-Circuit Breaker 1/2", and cable "FDR-QA-DEMO ZP-5104 17Nov G1".
+
+!QA-17Nov-ZP-5104-1-general-type-new-asset-no-service.png|width=640!
+_PASS (expected): Work Type General: the new asset has no service._
+!QA-17Nov-ZP-5104-2-afdc-type-new-asset-service-registered.png|width=640!
+_PASS (expected): after changing the Work Type to Arc Flash Data Collection, a new asset gets that service._
+!QA-17Nov-ZP-5104-4-wo-sld-new-cable-full-colour.png|width=640!
+_PASS (expected): the New Connection cable is drawn in full colour on the work order SLD right away._
+!QA-17Nov-ZP-5104-6-web-wo-assets-cable-and-offline-asset.png|width=640!
+_PASS (expected): web read-back. The cable and the offline asset are in the work order with the Arc Flash service (green). G1, added under General, has none (amber, expected)._
+
+*Cross-platform:* web PASS (iOS-made assets show with the service; a web-added asset gets it too, ZP-5108) · iOS PASS · Android ZP-5114 Done (v1.39), not re-run

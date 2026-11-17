@@ -1,0 +1,43 @@
+!QA-17Nov-ZP-5143-guest-tech-hidden-vs-home-and-SA.mp4|width=720!
+_Video, 54 s, iOS simulator: the normal user sees Create New Site / Start New Work Order. The Technician seat keeps Create New Site at home, loses it as a guest in Demo Company, and the empty Demo work-order list has no "Start your first work order" prompt (the control at home has it)._
+
+*Result: PASS for the guest Technician (TC1) and the normal user (TC3) → READY TO RELEASE.* TC2 (sub login) is not covered: there is no such seat on QA. It uses the same field_limits as TC1. The Android twin ZP-5144 went to READY TO RELEASE today on the same basis.
+
+*Build:* Z Platform-QA 1.75 simulator build (binary 16 Nov 06:49 IST, from the owner), iPhone 17 simulator (iOS 26.2), QA (API https://eg-pz.qa.egalvanic.ai/api), 17 Nov 2026 14:00–14:55 IST.
+*Seats:* Super Admin test seat (normal user, EG-ACME). Technician test seat: home company EG-ACME, guest Technician in Demo Company (company code demo).
+
+*Server check first (/api/auth/v2/me, the same call the app makes)*
+* Technician acting in Demo: field_limits can_create_sites = false, can_create_work_orders = false, is_guest = true, 1 site.
+* The same Technician at home in EG-ACME: both true.
+* Super Admin: both true.
+
+*Steps*
+# Super Admin › Site home › Sites › Create New Site shows and opens its form (cancelled). Work Orders › Start New Work Order shows; I used it to create a work order.
+# Technician signs in at EG-ACME › Select Site: Create New Site still shows (field_limits true at home).
+# Sites › company header › Switch Company › Demo Company (Guest · Technician) › Continue. No 2FA prompt.
+# Demo site list: only site "Demo", no Create New Site.
+# Open site Demo › Work Orders.
+# Control: switch back to EG-ACME, open the empty Work Orders list on (s) Wild Goose Brewery.
+
+*Actual*
+* Step 4: no Create New Site in Demo.
+* Step 5: the list says "No Work Orders Yet", with no Start New Work Order and no "Start your first work order" / Create First Work Order.
+* Assigned work orders, checked with a second guest Technician (Project Manager test seat, subcontractor-link guest on two Demo work orders): its Demo list shows exactly those two work orders, with no Start New Work Order, and work order 11 opens and works.
+* Step 6: the same empty list at home shows "Start your first work order" + Create First Work Order, and Create New Site is back. So the Demo screen hides them because of field_limits, not because the list is empty.
+
+*Not covered*
+* TC2, sub login (subcontractor with no company of its own): no such login exists on QA. A seat is needed.
+* A backend that omits field_limits: QA always sends it now.
+
+*Test data:* site Demo (Demo Company, https://demo.qa.egalvanic.ai/), site (s) Wild Goose Brewery (EG-ACME, https://acme.qa.egalvanic.ai/). Nothing was created for this ticket.
+
+!QA-17Nov-ZP-5143-1-SA-site-list-create-new-site-shows.png|width=640!
+_PASS (expected): Super Admin, EG-ACME: Create New Site shows in the site list._
+!QA-17Nov-ZP-5143-3-guest-tech-demo-site-list-no-create-new-site.png|width=640!
+_PASS (expected): Technician as a guest in Demo Company: the site list has only "Demo" and no Create New Site._
+!QA-17Nov-ZP-5143-4-guest-tech-demo-empty-wo-list-no-start-prompt.png|width=640!
+_PASS (expected): Demo, empty work-order list: no Start New Work Order and no "Start your first work order" prompt._
+!QA-17Nov-ZP-5143-5-control-home-company-empty-list-shows-create-first.png|width=640!
+_Control (expected): the same seat at home in EG-ACME, empty list: "Start your first work order" + Create First Work Order show._
+
+*Cross-platform:* web not checked with this seat (demo.qa.egalvanic.ai refuses the Technician with COMPANY_MISMATCH; web guest access is ZP-4830) · iOS PASS (TC1, TC3; TC2 not covered) · Android see ZP-5144 (1.40, same seat; guest answers match iOS)
