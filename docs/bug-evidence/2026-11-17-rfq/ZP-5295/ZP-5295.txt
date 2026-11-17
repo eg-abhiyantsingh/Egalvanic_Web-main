@@ -1,0 +1,28 @@
+!QA-17Nov-ZP-5295-ios-issue-no-comments-video.mp4|width=480!
+_Video (36 s), iOS app Z Platform-QA 1.75 (QA), 17 Nov 2026 19:05 IST, Super Admin test seat: site "(s) Wild Goose Brewery" › Issues › "QA-DEMO ZP-4707 comment check 4 Nov", then the issue page scrolled top to bottom. There is no Comments section, and the comment written on web is not shown._
+
+*iOS check done: the issue's Comments are NOT shown on iOS.* The description is updated to say this. iOS needs the same Comments as web: show the comment on the issue page, and let internal users add or edit it.
+
+*Steps*
+# Web: https://acme.qa.egalvanic.ai/issues/53769230-c127-4c68-8fbd-1fc71833afe8 › Comments tab shows "QA-DEMO ZP-4707 portal view check 4 Nov" (screenshot 1).
+# iOS app (QA, company code acme): Sites › "(s) Wild Goose Brewery" › Issues › "QA-DEMO ZP-4707 comment check 4 Nov".
+# Look through the issue page: section tabs Details, Properties, Description, Proposed Resolution, Safety, Photos. There is no Comments tab or section (screenshot 2).
+# Scroll to the bottom (Safety & Notification, Issue Photos, Delete Issue). The comment text is not anywhere on the page (screenshot 3).
+
+*Actual:* iOS has no Comments field on the issue page. The web comment is not visible, and it can't be added or edited from the app.
+*Expected:* the same as web (ZP-4707). A Comments section shows the issue's comment, and internal users can add or edit it.
+
+*For the developer:*
+* The API already returns the field: GET /api/issue/<id> has "comment": "QA-DEMO ZP-4707 portal view check 4 Nov" for this issue.
+* The iOS app's issue model (Core/Models/DTOs/IssueDTO.swift, Issue entity) and IssueDetailView (release/qa, 1.75) have no comment field. So it needs to be added to the model and sync, and shown and edited on the issue page.
+
+*Cross-platform:* web PASS (ZP-4707, comment shows) · iOS FAIL (this ticket) · Android FAIL (same gap, ZP-5294).
+
+!QA-17Nov-ZP-5295-web-issue-shows-comment.png|width=640!
+_1. Web (expected): the issue's Comments tab shows the comment (red box)._
+
+!QA-17Nov-ZP-5295-ios-1-issue-sections-no-comments.png|width=320!
+_2. FAIL (defect): iOS issue page, section tabs: no Comments (red box)._
+
+!QA-17Nov-ZP-5295-ios-2-issue-bottom-no-comments.png|width=320!
+_3. FAIL (defect): bottom of the iOS issue page. The comment is not shown anywhere._

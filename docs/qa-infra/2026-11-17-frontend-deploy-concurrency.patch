@@ -1,0 +1,18 @@
+--- a/.github/workflows/deploy.yml
++++ b/.github/workflows/deploy.yml
+@@ -8,6 +8,15 @@
+       - cicd/stag
+       - cicd/prod
+ 
++# One deploy per branch at a time. A newer push waits for the running deploy to finish,
++# then deploys, so the newest commit is always the one left live. Without this, two
++# pushes to cicd/qa ran in parallel on 17 Nov (runs 44047076610 and 44047168136) and the
++# OLDER build finished last and overwrote the newer one for ~40 minutes.
++# cancel-in-progress is false on purpose: cancelling mid-way could leave S3/CloudFront half-synced.
++concurrency:
++  group: frontend-deploy-${{ github.ref }}
++  cancel-in-progress: false
++
+ jobs:
+   deploy-cicd-dev:
+     runs-on: ubuntu-latest
