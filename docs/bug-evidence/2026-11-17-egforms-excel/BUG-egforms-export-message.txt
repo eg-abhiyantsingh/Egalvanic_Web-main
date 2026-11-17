@@ -1,0 +1,35 @@
+!QA-17Nov-EGForms-Export-Import-Excel.mp4|width=720!
+_Video, 73 s, QA build index-oFAZQ3rK.js, 17 Nov 2026. Step 1 shows this bug (work order without EG forms → "EG Form export failed"). Steps 2–4 are the control: a work order with a form exports the Excel file and the import writes the values back._
+
+h3. Simple explanation
+In a work order, *Actions › EG FORMS › Export to Excel* only works when EG forms have been added to the work order. When there are none, the server answers with a clear reason, "No EG form instances found for this session", but the screen shows only *"Error – EG Form export failed"*. The user can't tell what is wrong or what to do (add forms with *Actions › Manage Forms* first). Mukul (project owner) hit this on 17 Nov on the work order "EdgeCore EEM - SV01" and asked in eg-pz-qa why export fails.
+
+*Where:* Work order › Assets tab › Actions › EG FORMS › Export to Excel.
+
+*Environment:* QA https://acme.qa.egalvanic.ai, company EG-ACME, build index-oFAZQ3rK.js, Super Admin seat, Chrome on macOS, 17 Nov 2026. Also seen by Mukul on "EdgeCore EEM - SV01" (not on QA, so not opened by QA).
+
+*Steps*
+# Open the work order "QA-DEMO ZP-5244 13 Nov check-off" (it has assets but no EG forms): https://acme.qa.egalvanic.ai/sessions/d1cbacb1-55bc-4318-b432-bda1df9ffd51
+# Open the Assets tab and click *Actions*.
+# Click *Export to Excel*.
+
+*Actual*
+* A dialog says "Error – EG Form export failed". Nothing downloads.
+* Network: {{GET /api/eg-form-excel/export?session_id=d1cbacb1-…}} returns 404 with {{\{"error": "No EG form instances found for this session", "success": false\}}}. The app shows a generic text instead of this reason.
+
+*Expected:* a message that says what is missing and what to do, for example "This work order has no EG forms yet. Add forms with Manage Forms, then export." (or hide/disable Export to Excel when the work order has no forms).
+
+*Control (works):*
+* Work order "Job - Nov 6, 12:03 PM" (1 EG form): Export to Excel downloads {{eg_forms_7d2ba67a.xlsx}} (one sheet per form, one row per form, one column per reading).
+* Import from Excel of the filled file: {{POST /api/eg-form-excel/import}} 200, green message "Updated 1 form instances across 1 sheets", and the form now has the imported values (Test Voltage 600 + comment, read back from {{/api/eg-form-instance/454c2392-…}}).
+
+*Related:* ZP-1724 (Excel-based bulk filling).
+
+*Mobile:* not checked; Export / Import to Excel is in the web work order Actions menu.
+
+*Test data:* QA work orders above. The import changed only the QA test form instance 454c2392… on "Job - Nov 6, 12:03 PM" (Test Voltage and Comments).
+
+*Screenshot*
+
+!QA-17Nov-EGForms-export-failed-dialog.png|width=640!
+_The generic "EG Form export failed" dialog after step 3._
