@@ -1,0 +1,27 @@
+!QA-17Nov-BUG-safety-sld-typed-url-video.mp4|width=720!
+_Video (16 s, Project Manager seat): typed /safety/install-statuses shows Access Denied, but typed /safety/sld draws the SLD with the Scenario control._
+
+*Simple explanation:* Safety pages are only for users who hold the Construction Manager role. Three of the four Safety pages correctly show "Access Denied" when someone else types the address. The fourth, /safety/sld, still draws the full one-line diagram with the Safety "Scenario" control. The Access Denied box is hidden behind the diagram. The page's Safety data calls are refused (422), so no Safety data leaks; the user just sees a page they should not.
+
+*Where:* Web, typed address /safety/sld (Safety › SLD).
+*Environment:* QA https://acme.qa.egalvanic.ai (EG-ACME). Builds index-LGhrn-48.js and index-CkkAeA9o.js, 17 Nov 2026. Also seen on index-C1ZRIunF.js on 12 Nov (reported in ZP-4831).
+*Seats:* Project Manager test seat (customer, not staff, no Construction Manager). On 12 Nov also Account Manager and Electrical Engineer.
+
+*Steps*
+# Sign in as a user without the Construction Manager role (for example Project Manager).
+# Type https://acme.qa.egalvanic.ai/safety/install-statuses. Access Denied is shown (correct).
+# Type https://acme.qa.egalvanic.ai/safety/sld.
+
+*Actual:* the SLD canvas renders with "All Nodes", "Scenario", "Groups", "Export" and "Layout". The "Access Denied" outlet is behind the canvas. Network: GET /api/safety/install-statuses/vocabulary, /api/safety/sld/<site>/scenarios and /actual all return 422 permission_denied.
+*Expected:* Access Denied, the same as /safety/install-statuses, /safety/loto-registry and /safety/scenarios.
+
+*Controls*
+* A Construction Manager seat sees /safety/sld with data (correct).
+* The same user's typed /safety/install-statuses and /safety/scenarios show Access Denied (correct).
+* The menu never shows Safety to this user (correct).
+
+*Possible cause:* the SLD canvas is a persistent layer shown on the paths ["/sld", "/safety/sld"] (layout code `Tn=["/sld","/safety/sld"]`). It is drawn regardless of the route guard `ks permission="features.safety.sld.view"`, whose fallback renders behind it. The same pattern was seen on /maintenance-portal/sld earlier.
+*Severity:* Minor (no data exposed; UI only). Frontend. Relates to ZP-4831.
+
+!QA-17Nov-ZP-4831-11-pm-typed-safety-sld-still-renders-FAIL.png|width=640!
+_FAIL (defect): Project Manager, typed /safety/sld: the SLD with the Safety Scenario control (box)_

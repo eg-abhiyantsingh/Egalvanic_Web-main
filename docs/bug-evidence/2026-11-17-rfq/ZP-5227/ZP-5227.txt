@@ -1,0 +1,37 @@
+!QA-17Nov-ZP-5227-after-upgrade-custom-manufacturer-layout-groups.mp4|width=720!
+_Video (57 s): after the 1.39 → 1.40 upgrade, a custom manufacturer typed on a breaker is saved, kept after reopening and offered on another breaker. The web layout groups are drawn on the Android SLD._
+
+*Result: PASS* (Android 1.40 (54) QA, upgrade path 1.39 (53) → 1.40 (54))
+
+*Build:* Android 1.40 (54) QA, installed from Firebase App Tester at 12:46 IST over 1.39 (53) with real data. SLD Viewer Version 90. QA EG-ACME, Super Admin seat, site "Android Site 2", 17 Nov 2026.
+
+*Steps*
+# Upgrade 1.39 (53) → 1.40 (54) and open the app (lead, 12:46 IST).
+# Asset "QA-DEMO ZP-3021 17 Nov Child CB3 no library" > Engineering > Manufacturer > type "QA-DEMO ZP-5227 17 Nov Mfr" > 'Use "…"' > Save Changes. Reopen the asset.
+# New Asset > Circuit Breaker > Detailed > Engineering > Manufacturer > search "QA-DEMO ZP-5227".
+# SLD of "QA-DEMO ZP-4800 SLD canvas v2.4 (delete me)": look at the web layout groups.
+
+*Actual*
+* Upgrade: no crash, no "duplicate column" or SQLite migration error in logcat, still signed in. Home 632 assets / 249 connections, the same as web.
+* The custom manufacturer is saved and kept after reopening. Server: manufacturer "QA-DEMO ZP-5227 17 Nov Mfr" (id 182). A new breaker's picker lists it. Web shows it on the asset's Engineering card.
+* Layout groups "QA4940 GRP full" and "QA4940 GRP partial" are drawn on the Android SLD. Creating a group, placing an assembly offline and syncing also work (see ZP-5112).
+
+*Not covered:* the 1.38.1 → 1.40 upgrade (no 1.38.1 build on the emulator) and a fresh 1.40 install (it would wipe the data the other tests needed). The DB version can't be read on a release build.
+
+*Test data*
+* Breaker: https://acme.qa.egalvanic.ai/assets/30248abc-0157-415b-868b-58a2fd6be56c
+* EG-ACME custom manufacturer "QA-DEMO ZP-5227 17 Nov Mfr" (id 182).
+
+!QA-17Nov-ZP-5227-1-after-upgrade-home-632-249.png|width=640!
+_1. PASS (expected): after the upgrade, Home opens, still signed in, 632 assets / 249 connections._
+
+!QA-17Nov-ZP-5227-3-custom-manufacturer-saved-after-reopen.png|width=640!
+_2. PASS (expected): the reopened breaker keeps Manufacturer = QA-DEMO ZP-5227 17 Nov Mfr._
+
+!QA-17Nov-ZP-5227-4-custom-manufacturer-offered-on-new-breaker.png|width=640!
+_3. PASS (expected): another breaker's Manufacturer picker lists the custom manufacturer._
+
+!QA-17Nov-ZP-5227-5-layout-groups-drawn-after-upgrade.png|width=640!
+_4. PASS (expected): the web layout groups are drawn on the Android SLD after the upgrade._
+
+*Cross-platform:* web PASS (the custom manufacturer made on Android reads back on the web asset page) · iOS not on this platform for the DB renumbering (Android Room migrations); iOS custom manufacturers (ZP-5126) not checked today · Android PASS

@@ -1,0 +1,43 @@
+!QA-17Nov-ZP-5302-export-no-forms-message-video.mp4|width=720!
+_Video (46 s, QA build index-CkkAeA9o.js, 17 Nov 2026, Super Admin):_
+# _Work order without EG forms › Actions › Export to Excel shows the new message, which names Manage Forms._
+# _Manage Forms is in the same Actions menu._
+# _A work order with a form still downloads the Excel file._
+# _Another export error (a server 500, simulated in the test browser only) still shows "EG Form export failed"._
+
+*Result: PASS.* On a work order with no EG forms, Export to Excel now says "This work order has no EG forms yet. Add forms with Manage Forms, then export." and nothing downloads. The same message shows when a work order's only form has been removed. With a form, the file downloads. Every other export error keeps the generic "EG Form export failed".
+
+*Build:* QA index-CkkAeA9o.js, 17 Nov 2026, 14:47–15:35 IST. Super Admin seat, plus PM and Technician for the menu and API. Fix: eg-pz-frontend PR #2040.
+*Note:* between 13:59 and about 14:45 IST, QA ran build index-LGhrn-48.js, which did not have this fix. Two deploys ran at once (ZP-4830 and #2040), and the older one finished last. The fix arrived with the 14:41 IST deploy. A check made in that window would still show "EG Form export failed".
+
+*Steps*
+# Work order "QA-DEMO ZP-5244 13 Nov check-off" (no EG forms) › Assets › Actions › Export to Excel. The server answers 404 "No EG form instances found for this session". The screen says "This work order has no EG forms yet. Add forms with Manage Forms, then export.". PASS (was: "EG Form export failed").
+# The same Actions menu has EG FORMS › Manage Forms, so the message points to a real action. PASS.
+# Control: work order "Job - Nov 6, 12:03 PM" (1 form) › Export to Excel. eg_forms_7d2ba67a.xlsx downloads. PASS.
+# All forms removed: Manage Forms › add "ATS inspection" to one QA-DEMO asset › Export downloads the file › Manage Forms › Remove › Export shows the same new message. PASS. The asset is back to 0 forms.
+# Other export errors, simulated in my test browser only: 500 with an HTML page, 403, 404 "Session not found", 500 with error text, network failure. All show "EG Form export failed", and the server text is not shown. PASS.
+# Flag feature-eg-forms: ON for EG-ACME on QA (live value). OFF simulated in the test browser: the whole EG FORMS section, with Export to Excel, is hidden. PASS.
+# Roles: PM and Technician see the same menu and get the same message. Facility Manager and Client Portal have no work order page.
+
+*Not covered:* a real LaunchDarkly switch of feature-eg-forms (simulated only). Mukul's production work order "EdgeCore EEM - SV01" (not on QA).
+
+*Seen nearby (separate drafts for the lead, not part of this fix):* Import from Excel shows "File is not a zip file" for an .xls or any non-.xlsx file. It shows a green "Updated 0 form instances" when nothing was imported. A file from another work order updates that other work order.
+
+*Test data*
+* https://acme.qa.egalvanic.ai/sessions/d1cbacb1-55bc-4318-b432-bda1df9ffd51 (no EG forms)
+* https://acme.qa.egalvanic.ai/sessions/7d2ba67a-49a0-4e91-8973-f7cd5e4f2673 ("Job - Nov 6, 12:03 PM", 1 form)
+* https://acme.qa.egalvanic.ai/api/eg-form-excel/export?session_id=d1cbacb1-55bc-4318-b432-bda1df9ffd51
+
+!QA-17Nov-ZP-5302-1-no-forms-clear-message.png|width=640!
+_1. PASS (expected): work order without EG forms › Export to Excel shows the new message, which names Manage Forms._
+
+!QA-17Nov-ZP-5302-2-only-form-removed-then-export.png|width=640!
+_2. PASS (expected): the only form on the work order is being removed in Manage Forms. Export afterwards shows the same message as in screenshot 1._
+
+!QA-17Nov-ZP-5302-3-manage-forms-in-same-actions-menu.png|width=640!
+_3. PASS (expected): Manage Forms sits in the same Actions menu, under EG FORMS, right above Export to Excel._
+
+!QA-17Nov-ZP-5302-4-other-error-generic-message-simulated.png|width=640!
+_4. PASS (expected): a different export error (server 500, simulated in the test browser only) keeps the generic "EG Form export failed"._
+
+*Cross-platform:* web PASS · iOS not on this platform (no Excel export/import of EG forms in the iOS source, release/qa 1.75) · Android not checked (source not available to me, emulator lane busy; device check listed in the QA notes)

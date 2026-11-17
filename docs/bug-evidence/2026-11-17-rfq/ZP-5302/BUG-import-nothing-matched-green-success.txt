@@ -1,0 +1,37 @@
+Summary: [Web] Work order › Actions › Import from Excel shows a green "Updated 0 form instances across 1 sheets" when nothing was imported (rows skipped, or nothing to match)
+Suggested: Low · frontend (+ backend message) · relates to ZP-5302, ZP-1724
+
+!QA-17Nov-BUG-import-nothing-matched-video.mp4|width=720!
+_Video (28 s, QA build index-CkkAeA9o.js, 17 Nov 2026, Super Admin): a filled sheet whose Instance ID is not a form on any work order, then a blank workbook. Both get a green success message although nothing was imported._
+
+h3. Simple explanation
+Import from Excel matches each row by its Instance ID. When no row matches, nothing is imported. This happens when the ID was typed by hand, the form was deleted, or the workbook is empty. The app still shows the green success message "Updated 0 form instances across 1 sheets". The server even reports that it skipped a row (rows_skipped: 1), but the screen never says that a row was skipped or why. A user who filled in readings will think they were saved.
+
+*Where:* Work order › Assets tab › Actions › EG FORMS › Import from Excel.
+
+*Environment:* QA https://acme.qa.egalvanic.ai, company EG-ACME, build index-CkkAeA9o.js, Super Admin seat, Chrome on macOS, 17 Nov 2026.
+
+*Steps*
+# Open the work order "QA-DEMO ZP-5244 13 Nov check-off": https://acme.qa.egalvanic.ai/sessions/d1cbacb1-55bc-4318-b432-bda1df9ffd51
+# Actions › Import from Excel › pick an exported EG form sheet in which the Instance ID cell is changed to an ID that is not a form (here 00000000-0000-4000-8000-000000000000).
+# Repeat with an empty workbook (one blank sheet).
+
+*Actual*
+* Both times: a green success snackbar, "Updated 0 form instances across 1 sheets".
+* Network, step 2: POST /api/eg-form-excel/import returns 200 with stats \{"rows_updated": 0, "rows_skipped": 1, "sheets": 1\}.
+* Network, step 3: 200 with \{"rows_updated": 0, "rows_skipped": 0, "sheets": 1\}.
+
+*Expected:* when nothing is updated, show a warning instead of green, and say why. For example: "Nothing imported: 1 row skipped because its Instance ID is not on this work order", or "No EG form sheets found in this file. Use Export to Excel to get the template".
+
+*Controls*
+* An unchanged export of work order "Job - Nov 6, 12:03 PM" imported on that work order: green "Updated 1 form instances across 1 sheets", and the form shows the values.
+
+*Possible cause:* the frontend shows the server message in green whenever success is true. The server returns success true even when rows_updated is 0, and its message leaves out rows_skipped.
+
+*Mobile:* not applicable. Web-only menu item.
+
+!QA-17Nov-BUG-import-nothing-matched-1-unknown-instance-green.png|width=640!
+_1. FAIL (defect): a row whose Instance ID matches no form. Green "Updated 0 form instances across 1 sheets"; the server skipped the row._
+
+!QA-17Nov-BUG-import-nothing-matched-2-blank-workbook-green.png|width=640!
+_2. FAIL (defect): a blank workbook gets the same green success message._

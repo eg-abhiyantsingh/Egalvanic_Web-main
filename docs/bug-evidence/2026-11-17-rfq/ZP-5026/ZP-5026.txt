@@ -1,0 +1,26 @@
+!QA-17Nov-ZP-5026-real-no-bces-tier-then-simulated-labels.mp4|width=720!
+_Video: REAL QA state (License preview offers only Lite and No License), then SIMULATED tiers in this browser only: BCES-Lite and BCES-Viewer in the picker, and the BCES-Viewer lock text (41 s)_
+
+*Result: stays In QA (blocked).* With simulated tiers the BCES-Viewer label is right on today's build. The real check needs QA to offer BCES tiers, and there is no screen on QA that can turn them on.
+Build: index-CkkAeA9o.js, 17 Nov 2026 14:46–14:56 IST.
+
+*Steps*
+# REAL: GET /api/features/access returns offered_license_types read_only, no_license. The portal License preview and New Customer › License Type list only Lite and No License.
+# SIMULATED (tier list rewritten in the browser): the License preview lists BCES-Lite, BCES-Viewer, Lite, No License. Picking BCES-Viewer, the Issues lock text says "locked on the BCES-Viewer plan".
+# Today's build still stores the value as bces_free, and no "BCES-Free" text is left.
+
+*Why it's blocked:* the tier list comes from the QA instance's backend setting (the server refuses other values: "That license is not available on this instance"). No admin screen changes it, so no QA account can be BCES-Free or BCES-Lite.
+*Ask:* please enable bces_lite and bces_free in offered_license_types for EG-ACME on QA, or give us a BCES-IQ non-prod instance. QA will then set one QA-DEMO account to each tier, run the real rows (including "existing BCES-Free accounts keep their tier") and set the accounts back.
+
+*Test data*
+* https://acme.qa.egalvanic.ai/maintenance-portal/overview (staff License preview)
+* https://acme.qa.egalvanic.ai/accounts (New Customer, cancelled)
+
+!QA-17Nov-ZP-5026-1-REAL-portal-license-preview-no-bces-tier.png|width=640!
+_1. REAL: the License preview offers only Lite and No License (expected on QA today)_
+!QA-17Nov-ZP-5026-2-SIMULATED-portal-license-preview-bces-viewer-label.png|width=640!
+_2. SIMULATED tiers: BCES-Viewer is the label (PASS, simulated)_
+!QA-17Nov-ZP-5026-3-REAL-new-customer-license-types-no-bces-offered.png|width=640!
+_3. REAL: New Customer › License Type: Lite and No License only (expected on QA today)_
+
+*Cross-platform:* web PASS (simulated only; real check blocked) · iOS not on this platform (the iOS source has no license-tier or portal code) · Android not checked (no source access; the portal is web only)

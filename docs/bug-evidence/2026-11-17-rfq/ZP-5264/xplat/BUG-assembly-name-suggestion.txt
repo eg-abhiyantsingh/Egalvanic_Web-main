@@ -1,0 +1,34 @@
+Summary: [Android] SLD: placing an assembly a second time pre-fills "L1 CB-3" instead of the next free name (ZP-5264 still in Android SLD viewer 90)
+
+!android-BUG-assembly-name-suggestion.mp4|width=720!
+_Video (19 s): on an SLD that already has copies L1 and L2, Assembly › QA4942-FDR-{name} opens with the Name box pre-filled "L1 CB-3". The server's place-preview for the same SLD says "L3"._
+
+*Simple explanation*
+When you place a saved assembly again, the app should suggest the next free copy name (L3 when L1 and L2 exist). On Android it pre-fills a name built from an old copy plus a device name ("L1 CB-3"). If the user just taps Place, the new devices get confusing names like "QA4942-FDR-L1 CB-3 CB-2". This is the bug fixed on web in ZP-5264; the Android SLD viewer still has it. Low priority.
+
+*Where:* Android app > SLD > unlock > Assembly > pick an assembly that is already placed on this SLD.
+
+*Environment:* Android 1.40 (54), SLD Viewer Version 90, QA EG-ACME (feature-sld-assemblies ON), Super Admin seat, 17 Nov 2026. Web build index-CkkAeA9o.js.
+
+*Steps*
+# Site "QA-DEMO v2.6 SLD editing 12 Nov" (copies QA4942-FDR-L1 and -L2 already exist) > SLD > unlock.
+# Assembly > "QA4942-FDR-{name}".
+
+*Actual:* the Name box is pre-filled "L1 CB-3". Will create lists "QA4942-FDR-L1 CB-3 FUSE nosub / CB-2 / Load-1 / PNL-2".
+
+*Expected:* the next free copy name "L3", which is what the server returns: POST /api/assemblies/cd981de3-5916-4481-8495-2afb906f0c62/place-preview \{"sld_id":"c4438cd3-59b3-4639-9e60-2752dc5aa478"\} → "value":"L3", "instance_name":"QA4942-FDR-L3".
+
+*Controls*
+* On site "QA-DEMO ZP-4800 SLD canvas v2.4 (delete me)", where the only copy was named "QA-DEMO ZP-5112 17Nov", Android pre-fills "QA-DEMO ZP-5112 17Nov PNL-3". The server returns an empty value for that SLD. Same pattern: a device name is read as part of the copy name.
+* The first placement on an SLD suggests "L1", which is fine.
+* Web: ZP-5264 is READY TO RELEASE, and the server's place-preview now gives "L3".
+
+*Possible cause:* the Android SLD viewer bundle (v90) computes the suggestion on the client from existing node labels instead of using place-preview's "value". It needs the same fix as web ZP-5264, or it should use the server value.
+
+*Test data:* https://acme.qa.egalvanic.ai/slds (sites above). Nothing was placed during the repro (Cancel); AND17 was placed separately with a typed name for ZP-4942.
+
+!android-5-web-test-sld-suggested-name.png|width=640!
+_1. FAIL (defect): the second placement on the v2.6 SLD is pre-filled "L1 CB-3"._
+
+!android-1-second-placement-suggested-name.png|width=640!
+_2. FAIL (defect): on the ZP-4800 SLD it is pre-filled with the previous copy name plus "PNL-3"._

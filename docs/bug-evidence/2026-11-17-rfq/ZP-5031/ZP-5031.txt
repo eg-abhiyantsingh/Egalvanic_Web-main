@@ -1,0 +1,30 @@
+!QA-17Nov-ZP-5031-simulated-bces-lite-export-issue-report-engineering-real-lite-negative.mp4|width=720!
+_Video: SIMULATED BCES-Lite (Export Issue Report replaces Export CSV and opens the report dialog; the asset Engineering tab is view-only), then the REAL Lite negative (Export CSV, no Engineering tab) (52 s)_
+
+*Result: stays In QA (blocked).* The behaviour is right with simulated BCES tiers on today's build, and the real non-BCES negatives pass. A real BCES portal login can't exist on QA yet (see ZP-5026).
+Build: index-CkkAeA9o.js, 17 Nov 2026 14:50–14:55 IST.
+
+*Steps*
+# SIMULATED BCES-Lite › Issues: "Export Issue Report" is shown, "Export CSV" is not. Clicking it opens Generate Report with "Issue Report (Copy)" selected (not generated).
+# SIMULATED BCES-Lite › Assets › AST-2 › Engineering: the engineering fields are shown with no editable inputs, no edit or export buttons and no readiness ring.
+# SIMULATED BCES-Viewer: no Engineering tab, and Issues is locked on this plan.
+# REAL Lite (not BCES): Issues keeps "Export CSV", and AST-2 has no Engineering tab.
+
+*Blocked:* QA offers only Lite and No License (offered_license_types read_only, no_license), and no screen can change that.
+*Ask:* enable bces_lite and bces_free for EG-ACME on QA. QA will then test with one QA-DEMO BCES-Lite account and one BCES-Viewer account, each with a Client Portal login, and restore both afterwards.
+*Not covered:* the missing-attribute badge (the test asset has no gaps); generating the report.
+
+*Test data*
+* https://acme.qa.egalvanic.ai/maintenance-portal/issues (site "Test site A")
+* https://acme.qa.egalvanic.ai/maintenance-portal/assets/2e989985-adb2-408a-b84a-e4c60fe7e732 (AST-2)
+
+!QA-17Nov-ZP-5031-1-SIMULATED-bces-lite-issues-export-issue-report.png|width=640!
+_1. SIMULATED BCES-Lite: Export Issue Report replaces Export CSV (PASS, simulated)_
+!QA-17Nov-ZP-5031-2-SIMULATED-export-issue-report-dialog.png|width=640!
+_2. SIMULATED BCES-Lite: the report dialog opens with the issue-report configuration (PASS, simulated)_
+!QA-17Nov-ZP-5031-3-SIMULATED-bces-lite-engineering-tab-view-only.png|width=640!
+_3. SIMULATED BCES-Lite: Engineering tab, view-only (PASS, simulated)_
+!QA-17Nov-ZP-5031-4-REAL-lite-issues-export-csv.png|width=640!
+_4. REAL Lite (not BCES): Export CSV kept (PASS)_
+
+*Cross-platform:* web PASS (simulated BCES rows; real non-BCES negatives PASS) · iOS not on this platform (no portal or tier code in the iOS source) · Android not checked (no source access; the portal is web only)

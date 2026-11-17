@@ -1,0 +1,27 @@
+!QA-17Nov-ZP-5111-simulated-bces-connections-list-graph-viewer.mp4|width=720!
+_Video: SIMULATED BCES-Lite Connections (title, List and Graph), then SIMULATED BCES-Viewer (Issues locked) (32 s)_
+
+*Result: stays In QA (blocked on the BCES rows only).* On real data, the Client Portal user on a No License account uses the portal, and the per-page sync and DevRev calls return 200. The BCES rows pass only with simulated tiers, because QA can't offer BCES tiers (see ZP-5026).
+Build: index-CkkAeA9o.js, 17 Nov 2026 14:50–14:58 IST.
+
+*Steps*
+# REAL: sign in with the Client Portal test login (account on No License). It lands on the portal Site Overview and Assets lists 487 rows. Connections and Notes show their title and "Not included in your plan".
+# REAL: on each portal page load, POST /api/features/sync and POST /api/devrev/session-token return 200 (8 of 8).
+# SIMULATED BCES-Lite (staff preview): Connections has its title and the List / Graph switch, and both views render.
+# SIMULATED BCES-Viewer: Issues is locked on this plan.
+
+*Blocked:* real BCES-Lite and BCES-Viewer accounts. QA offers only read_only and no_license, and no screen changes that.
+*Ask:* enable bces_lite and bces_free for EG-ACME on QA. QA will then add one QA-DEMO account per tier with a Client Portal login, test them and restore both accounts.
+
+*Test data*
+* https://acme.qa.egalvanic.ai/maintenance-portal/connections (site "Test site A", staff preview)
+* https://acme.qa.egalvanic.ai/maintenance-portal/site-overview (Client Portal login, site "Android Site 2")
+
+!QA-17Nov-ZP-5111-1-SIMULATED-bces-lite-connections-list.png|width=640!
+_1. SIMULATED BCES-Lite: Connections list with the List / Graph switch (PASS, simulated)_
+!QA-17Nov-ZP-5111-2-SIMULATED-bces-lite-connections-graph.png|width=640!
+_2. SIMULATED BCES-Lite: Connections graph (PASS, simulated)_
+!QA-17Nov-ZP-5111-3-REAL-client-portal-no-license-notes-locked-title.png|width=640!
+_3. REAL Client Portal on No License: Notes has its title and the plan lock (PASS)_
+
+*Cross-platform:* web PASS (real No-License portal and calls; BCES rows simulated only) · iOS not on this platform (no portal or tier code in the iOS source) · Android not checked (no source access; the portal is web only)

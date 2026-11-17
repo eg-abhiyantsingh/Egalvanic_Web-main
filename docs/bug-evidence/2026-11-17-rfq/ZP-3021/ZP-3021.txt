@@ -1,0 +1,44 @@
+!QA-17Nov-ZP-3021-library-picker-create-main-and-multiple.mp4|width=720!
+_Video (84 s): New panel > Mains Type MCB > "Create a Main Breaker?" > Use library > SCHNEIDER/SQUARE D > PowerPact > linked card with Unlink. Then Create Multiple (2 breakers, "Applies to 2 breakers") with one QO 3-Pole pick. After Create Asset, the main's Engineering section opens with the device linked._
+
+*Result: PASS* for the main purpose (Android 1.40 (54) QA), with one gap filed as a new bug: Pole Count does not narrow the device list (also true in the existing Engineering section).
+
+*Build:* Android 1.40 (54) QA, emulator 1080 x 2400 (density 420, portrait), QA EG-ACME (engineering library on), Super Admin seat, site "Android Site 2", 17 Nov 2026.
+
+*Steps*
+# Assets > + > New Asset, class Panelboard, Detailed > Engineering > Mains Type = MCB.
+# In "Create a Main Breaker?": switch on Use library > Pole Count 3P > Manufacturer SCHNEIDER/SQUARE D > search "PowerPact" > pick J-Frame. Tap Create Main.
+# OCP > Add Child Node > Create New Child > Circuit Breaker > Use library > QO, 1-Pole.
+# OCP > Add Child Node > Create Multiple > Circuit Breaker, Quantity 3 > Use library > QO, 3-Pole.
+# Set Location > Create Asset.
+# On the saved panel: OCP > Add Child Node > Create New Child with library ON (QO 2-Pole) and with library OFF. Create Multiple with class Fuse, Quantity 2 > BUSSMANN LPJ.
+# Open each new breaker or fuse > Engineering. Read the same assets back from the web API.
+
+*Actual*
+* All three places show the Use library switch (off by default). When it is on: Manufacturer, then the matching devices with a search box. After a pick: a "Library Matched" card with Unlink. Unlink goes back to the list.
+* Create New Child and Create Multiple have Pole Count (Fuse Count for fuses). Create Multiple shows one pick for the whole batch, with a line that follows the quantity: "Applies to 3 breakers", "Applies to 2 fuses".
+* Optional: a child created with the switch off has no library link.
+* Every linked asset's Engineering section opens with the picked device and pole count. Server: eqp_lib, manufacturer and pole_count are saved on all of them, for example Panel B MCB = SCHNEIDER/SQUARE D / J-Frame, Powerpact / 150-250A, UL, pole_count 3.
+* Create Multiple takes one asset class per batch, so a batch cannot mix breakers and fuses. The "same type only" rule can't come up.
+* Gap (new bug): picking 1P, 2P or 3P does not change the matching devices (Square D stays at 550; the QO search lists 1-, 2- and 3-Pole for every choice). The existing Engineering section behaves the same.
+
+*Not covered:* a company with the engineering library off (company-wide setting, not changed); Skip and Cancel in the Create a Main Breaker? dialog; tablet and landscape.
+
+*Test data*
+* Panel B: https://acme.qa.egalvanic.ai/assets/2cb876ea-9fd1-4697-b5a9-4942abb15a95 (MCB e46e80d4-df27-4df5-87df-5540163cea82, CB1, CB2, CB3, Multi 1-3, Fuse 1-2)
+* Panel C: https://acme.qa.egalvanic.ai/assets/de139047-b0db-44f1-a003-fc6511c4dee7 (MCB e2a2f74f-5009-4884-bc40-47c28efc7f8d, C-Multi 1-2)
+* Site Android Site 2, room "QA-DEMO ZP-5120 17 Nov Room".
+
+!QA-17Nov-ZP-3021-1-create-main-use-library-off.png|width=640!
+_1. PASS (expected): Create a Main Breaker? with the Engineering card. Use library is off by default, so the picker is optional._
+
+!QA-17Nov-ZP-3021-2-create-main-device-linked-unlink.png|width=640!
+_2. PASS (expected): a device has been picked and the Library Matched card shows it, with Unlink._
+
+!QA-17Nov-ZP-3021-3-create-multiple-applies-to-3-breakers-linked.png|width=640!
+_3. PASS (expected): Create Multiple shows "Applies to 3 breakers" and one QO 3-Pole pick for the whole batch._
+
+!QA-17Nov-ZP-3021-4-saved-main-engineering-linked.png|width=640!
+_4. PASS (expected): after saving, the main breaker's Engineering section opens with the device linked._
+
+*Cross-platform:* web PASS for the read-back (the Android-picked device shows on the web Engineering card); the picker itself is not on web yet (ZP-3019 To Do) · iOS not on this platform yet (ZP-3020 To Do) · Android PASS, plus one new bug (Pole Count doesn't narrow)

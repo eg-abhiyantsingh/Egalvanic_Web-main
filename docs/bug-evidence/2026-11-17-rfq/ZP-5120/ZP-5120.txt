@@ -1,0 +1,36 @@
+!QA-17Nov-ZP-5120-new-location-existing-building.mp4|width=720!
+_Video (41 s): New Asset > Select location > + > New Location. Nothing picked: Create is grey. Only the existing building BD1 picked: Create turns orange; tapping it closes the sheet with no error and BD1 is not duplicated._
+
+*Result: PASS* (Android 1.40 (54) QA)
+
+*Build:* Android 1.40 (54) QA, emulator 1080 x 2400 (density 420, portrait), QA EG-ACME, Super Admin seat, site "Android Site 2", 17 Nov 2026.
+
+*Steps*
+# Assets tab > + (Add Assets) > New Asset > Location > Select location > + (Add Location).
+# With nothing picked, tap Create.
+# Building > pick the existing building "BD1" only. Leave Floor and Room empty.
+# Tap Create.
+# Extra rows: Building Name = three spaces; a new building only; an existing building + a new floor only; an existing building + an existing floor with no room; an existing building + an existing floor + a new room.
+
+*Actual*
+* Step 2: Create is grey and does nothing (expected).
+* Step 3: Create turns orange.
+* Step 4: the sheet closes and the app is back on Select Location, with no error. BD1 still appears once, with no floor added (web API check).
+* Three spaces: Create stays grey. A new building only: created. Existing building + new floor: floor created. Existing building + existing floor with no room: the sheet closes and nothing is duplicated. With a new room: the room is created and filled in as the asset's Location.
+
+*Not covered:* offline create and sync, other roles (Super Admin only), tablet or landscape layout of the sheet.
+
+*Test data*
+* Web Locations, site Android Site 2: https://acme.qa.egalvanic.ai/locations
+* New test locations: "QA-DEMO ZP-5120 17 Nov Bldg" > "QA-DEMO ZP-5120 17 Nov Floor" > "QA-DEMO ZP-5120 17 Nov Room". No asset was saved.
+
+!QA-17Nov-ZP-5120-1-empty-create-disabled.png|width=640!
+_1. PASS (expected): nothing picked, so Create is grey._
+
+!QA-17Nov-ZP-5120-2-existing-building-only-create-enabled.png|width=640!
+_2. PASS (expected): only the existing building BD1 is picked and Create is enabled._
+
+!QA-17Nov-ZP-5120-3-sheet-closed-back-on-select-location.png|width=640!
+_3. PASS (expected): after Create the sheet is closed, back on Select Location, and BD1 is listed once._
+
+*Cross-platform:* web PASS (the Android-made building/floor/room read back on web Locations; web adds per level, with no single New Location sheet) · iOS not checked today (ZP-4968 Done, iOS v1.72) · Android PASS

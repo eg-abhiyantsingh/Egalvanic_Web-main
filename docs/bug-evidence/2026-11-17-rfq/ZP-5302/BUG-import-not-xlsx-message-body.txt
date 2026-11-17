@@ -1,0 +1,36 @@
+!QA-17Nov-BUG-import-not-xlsx-video.mp4|width=720!
+_Video (33 s, QA build index-CkkAeA9o.js, 17 Nov 2026, Super Admin): Import from Excel with an Excel 97-2003 .xls file, then with a text file named .xlsx. Both show a red "File is not a zip file"._
+
+h3. Simple explanation
+Import from Excel only reads .xlsx files. Its file picker still offers .xls. If the user picks an .xls (an older Excel format) or any file that is not an .xlsx, the screen shows only "File is not a zip file". That is a technical error from the server's file reader. It doesn't say the file type is wrong, or which file to use. The server also answers 500 (server error) for what is a user mistake.
+
+*Where:* Work order › Assets tab › Actions › EG FORMS › Import from Excel.
+
+*Environment:* QA https://acme.qa.egalvanic.ai, company EG-ACME, build index-CkkAeA9o.js, Super Admin seat, Chrome on macOS, 17 Nov 2026.
+
+*Steps*
+# Open the work order "QA-DEMO ZP-5244 13 Nov check-off": https://acme.qa.egalvanic.ai/sessions/d1cbacb1-55bc-4318-b432-bda1df9ffd51
+# Open the Assets tab and click Actions › Import from Excel. The picker accepts ".xlsx,.xls".
+# Pick an Excel 97-2003 workbook (.xls).
+# Repeat with a plain text file renamed to .xlsx.
+
+*Actual*
+* A red message: "File is not a zip file". Nothing is imported.
+* Network: POST /api/eg-form-excel/import returns *500* with \{"error": "File is not a zip file", "success": false\}.
+
+*Expected*
+* A 400 with a plain message, for example "This file is not an Excel .xlsx workbook. Use Export to Excel, fill that file in, then import it."
+* Either read .xls files, or stop offering .xls in the file picker.
+
+*Controls*
+* An .xlsx exported from the same work order imports fine: "Updated 1 form instances across 1 sheets" (work order "Job - Nov 6, 12:03 PM").
+
+*Possible cause:* the importer opens every upload as an .xlsx, which is a zip file, without checking the type first. The zip error text is passed straight through as the user message, with status 500. The frontend input has accept=".xlsx,.xls".
+
+*Mobile:* not applicable. Import from Excel exists only in the web work order menu; the iOS source has no EG form Excel import.
+
+!QA-17Nov-BUG-import-not-xlsx-1-xls-file-not-a-zip-file.png|width=640!
+_1. FAIL (defect): an Excel 97-2003 .xls picked in Import from Excel shows only "File is not a zip file"._
+
+!QA-17Nov-BUG-import-not-xlsx-2-text-file-not-a-zip-file.png|width=640!
+_2. FAIL (defect): a text file named .xlsx gets the same technical message._

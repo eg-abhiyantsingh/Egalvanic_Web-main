@@ -1,0 +1,51 @@
+!QA-17Nov-ZP-4831-video-construction-manager-safety.mp4|width=720!
+_Video (60 s): a test seat with only the Construction Manager role sees the Safety menu, Install Statuses, LOTO Registry, Scenarios, the Safety SLD with a scenario lens and power flow, and ranked Lockout options. Then a Project Manager control: typed Safety pages are refused, but typed /safety/sld still draws the SLD._
+
+*Result: PASS on QA* (main purpose). Recommend READY TO RELEASE, with 1 small new bug (ZP-5309) and 1 open question.
+*Build:* index-LGhrn-48.js (17 Nov 2026, 14:09–14:40 IST); first sign-in on index-CFMAmUdK.js. Smoke re-check on index-CkkAeA9o.js at 14:49 IST: same.
+*Seats:* the spare Portal Sales test seat, given only Construction Manager for this test and restored after; Project Manager and Super Admin as controls.
+
+*Steps*
+# Admin › Platform Users › Edit User on the spare Portal Sales test seat: Roles = Construction Manager only, plus two QA-DEMO sites.
+# Signed in as that seat. Opened every Safety page and checked other pages by typed address.
+# Install status: on one asset (right-click on the Safety SLD), on one connection (Install Statuses page), and on 2 assets through Bulk Edit (install + engineering status). Then the history.
+# Created a scenario. Turned on the scenario lens and power flow, then set a breaker to Planned.
+# Right-click a breaker › Lockout options… and Impact if….
+# Actual lens: Apply lock / tag, Remove lock, record the breaker back to Closed. Then LOTO Registry.
+# Checked the union of Construction Manager + Portal Sales, then restored the seat to exactly what it had before.
+# Controls: Project Manager without the role; Super Admin.
+
+*Actual*
+* The Construction Manager seat lands on Safety and its menu shows only Safety: Install Statuses, LOTO Registry, SLD, Scenarios. Typed Work Orders, Users and Maintenance Portal give Access Denied. PASS.
+* The Safety API works on the seat's own sites; another site or a random id gets 422 "no permission to access this SLD". PASS.
+* Install status set on an asset, on a connection and in Bulk Edit; each change is in the history with who and when. Bulk Edit's engineering part is reported and not written for assets without a library designation, as the dialog says. PASS.
+* Power flow follows install status: with CB-F1 Planned, CB-F1 is not energizable and PNL-NORMAL goes dark; back In Service, it is live again. PASS.
+* Lockout options for CB-BYP: 3 ranked options with the back-feeds to secure (ATS-1 → Off, UPS-1 → Bypass) and the collateral list. The Impact dialog shows what goes dark. PASS.
+* LOTO Registry lists the switching operation, Lock applied and Lock removed, with tag and hole; 0 locks are left hanging. PASS.
+* Construction Manager + Portal Sales on one seat shows both Safety and Maintenance Portal. PASS.
+* Project Manager: no Safety menu, and typed Install Statuses / Scenarios give Access Denied (PASS). *But typed /safety/sld still draws the SLD with the Scenario control*; its Safety calls return 422. Minor; filed as ZP-5309 (screenshot 4).
+* Small, API only (no screen sends this body, so not filed as a bug): lockout-options with a malformed body (a bare list) returns 500 instead of 400.
+* Question (from 12 Nov, still open): Admin / Super Admin without Construction Manager get no Safety menu, but the Safety pages open by typed address and work. Should Admins see Safety, or be refused?
+
+*Seat change and restore:* before = Portal Sales only, no sites, no accounts ("Web Access Restricted" on sign-in). For the test = Construction Manager only, plus "QA-DEMO ZP-4561 site 16 Oct" and "QA-DEMO ZP-5211 13 Nov power scheme bypass". After = Portal Sales only, no sites, no accounts, and "Web Access Restricted" again. Identical to before.
+
+*Not covered*
+* The install-status badge mode under a lens (power-flow gating was checked instead).
+* "Save as scenario" from Lockout options and "Apply to scenario" from Impact.
+* A union with a working role such as Project Manager + Construction Manager.
+
+*Test data*
+* Site with the scenario and the LOTO events: "QA-DEMO ZP-5211 13 Nov power scheme bypass". https://acme.qa.egalvanic.ai/safety/loto-registry (pick that site)
+* Scenario "QA-DEMO ZP-4831 CM 17 Nov": https://acme.qa.egalvanic.ai/safety/scenarios
+* Install Statuses: https://acme.qa.egalvanic.ai/safety/install-statuses (all statuses restored to In Service)
+
+!QA-17Nov-ZP-4831-2-cm-seat-safety-menu-only-PASS.png|width=640!
+_1. PASS (expected): Construction Manager only, the menu shows just the Safety section_
+!QA-17Nov-ZP-4831-6-cm-lockout-options-ranked-PASS.png|width=640!
+_2. PASS (expected): Lockout options for CB-BYP, ranked, with back-feeds and collateral_
+!QA-17Nov-ZP-4831-10-cm-loto-registry-lock-events-PASS.png|width=640!
+_3. PASS (expected): LOTO Registry with the lock applied and removed by the Construction Manager seat_
+!QA-17Nov-ZP-4831-11-pm-typed-safety-sld-still-renders-FAIL.png|width=640!
+_4. FAIL (defect, minor): Project Manager without the role, typed /safety/sld still draws the SLD with the Scenario control (box)_
+
+*Cross-platform:* web PASS (minor typed-URL gap: ZP-5309) · iOS not on this platform (iOS 1.75 source has no Safety, install status, LOTO or Construction Manager code; device check requested that a mobile asset edit doesn't reset a web install status) · Android not checked (no device run; same check requested)

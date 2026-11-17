@@ -1,0 +1,8 @@
+*Re-check on Android 1.40 (54): still PASS.* This morning's PASS (comment above) was on 1.39 (53). 1.40 (54) was installed at 12:46 IST, so I checked it again on 1.40.
+
+The gap between the search box and the note measures 464 → 506 px = 16 dp, the same as on 1.39.
+
+!QA-17Nov-ZP-5119-recheck-1.40.png|width=480!
+_PASS (expected): the same 16 dp gap on Android 1.40 (54)._
+
+*Cross-platform:* Android PASS on 1.40 (54) and 1.39 (53) · iOS and web: see this morning's comment.

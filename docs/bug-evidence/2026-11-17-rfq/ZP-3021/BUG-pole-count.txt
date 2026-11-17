@@ -1,0 +1,43 @@
+Summary: [Android] Pole Count / Fuse Count does not narrow the matching Equipment Library devices (Create a Main Breaker?, Create New Child, Create Multiple, Engineering section)
+
+!BUG-pole-count-does-not-narrow-library-matches.mp4|width=720!
+_Video (48 s): Create New Child > Circuit Breaker > Use library > SCHNEIDER/SQUARE D > search QO. There are 19 matches with no pole picked, 19 with 1P and 19 with 3P, and 1-, 2- and 3-Pole devices stay listed every time._
+
+*Simple explanation*
+When you add a breaker and use the Equipment Library, picking the Pole Count (1P, 2P or 3P) should shorten the device list to devices with that many poles. It doesn't. The list stays the same, so a 3-pole breaker still shows 1-pole devices first and the user can link the wrong one.
+
+*Where:* Android app > any new breaker or fuse with "Use library" switched on: the "Create a Main Breaker?" dialog, OCP > Add Child Node > Create New Child, Create Multiple, and also the saved asset's Engineering section.
+
+*Environment:* Android 1.40 (54) QA, emulator 1080 x 2400, QA EG-ACME (engineering library on), Super Admin seat, site "Android Site 2", 17 Nov 2026.
+
+*Steps*
+# Open the panel "QA-DEMO ZP-3021 17 Nov Panel C" > OCP > Add Child Node > Create New Child.
+# Asset Class: Circuit Breaker. Switch on Use library.
+# Manufacturer: SCHNEIDER/SQUARE D. The list says "550 possible matches".
+# Type QO in Search matches. The list says "19 possible matches" (QO 1-Pole, QO 2-Pole, QO 3-Pole and more).
+# Tap Pole Count 1P, then 3P.
+
+*Actual:* the list stays at 19 matches and keeps the 1-Pole, 2-Pole and 3-Pole devices for every Pole Count. With no search, Square D stays at 550 matches for 1P, 2P and 3P, and the first match is a "1 Pole" device even with 3P picked.
+
+*Expected* (ZP-3021, comment 46198 point 2: "It narrows the matching devices list"): with 3P picked, only 3-pole devices, or devices that cover 3 poles, are listed and the count drops. The same for Fuse Count with fuses.
+
+*Controls*
+* Same result in the Create a Main Breaker? dialog (3P: 550 matches, 1-Pole first; still 3) and in Create Multiple.
+* The saved asset's Engineering section does the same ("QA-DEMO ZP-3021 17 Nov Child CB3 no library", Pole Count 1P saved, QO search shows 1-, 2- and 3-Pole; still 4). So this is not new in 1.40; it is how the list works everywhere.
+* The picked Pole Count IS saved on the asset (server pole_count = 3 on the Panel C MCB). Only the filtering is missing.
+
+*Possible cause:* the device-match query filters by manufacturer and search text only, and doesn't use pole_count. The pole number is only in the device names ("QO, 1-Pole", "2-3 Pole"), so a filter would need a pole field in the library data or a parse of those names.
+
+*Test data:* https://acme.qa.egalvanic.ai/assets/de139047-b0db-44f1-a003-fc6511c4dee7 (Panel C), CB3 https://acme.qa.egalvanic.ai/assets/30248abc-0157-415b-868b-58a2fd6be56c. Nothing was saved during the repro (the child form was discarded).
+
+!BUG-pole-count-1-1P-still-lists-2-and-3-pole.png|width=640!
+_1. FAIL (defect): 1P is picked, but QO 2-Pole and QO 3-Pole are still listed (19 matches)._
+
+!BUG-pole-count-2-3P-still-lists-1-and-2-pole.png|width=640!
+_2. FAIL (defect): 3P is picked, the list is the same 19 matches, and QO 1-Pole is first._
+
+!BUG-pole-count-3-create-main-3P-still-550-matches.png|width=640!
+_3. FAIL (defect): Create a Main Breaker? with 3P picked still shows 550 matches, and the first one is a 1 Pole device._
+
+!BUG-pole-count-4-control-engineering-section-1P-same.png|width=640!
+_4. Control: the existing Engineering section with 1P saved lists 1-, 2- and 3-Pole too, so the behaviour is the same there._

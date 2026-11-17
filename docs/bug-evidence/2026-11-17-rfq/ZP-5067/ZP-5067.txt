@@ -1,0 +1,22 @@
+*Result: PARTLY. The frontend sync is verified end to end; the backend / terraform / reporting-lambdas records and Eric's approval are still missing, so this stays In QA.*
+
+*Checked:* 17 Nov 2026, ~14:45 IST, from the eg-pz-frontend PRs and GitHub Actions runs (QA's GitHub account can read eg-pz-frontend and eg-pz-mobile-iOS only). QA web build now index-CFMAmUdK.js. The QA smoke test from 13 Nov (comment above) still holds.
+
+*eg-pz-frontend: the four steps ran in the right order, and each deploy was green before the next step began*
+||Step||PR||Merged (UTC)||Approved by||Deploy of the target branch||
+|1. prod → stage|[#1993|https://github.com/Egalvanic/eg-pz-frontend/pull/1993]|11 Nov 08:42|Krunal|cicd/stag 08:42–08:45, success|
+|2. stage → qa|[#1994|https://github.com/Egalvanic/eg-pz-frontend/pull/1994]|11 Nov 08:52|Krunal|cicd/qa 08:52–08:57, success|
+|3. qa → dev|[#1995|https://github.com/Egalvanic/eg-pz-frontend/pull/1995]|11 Nov 09:18|Krunal|cicd/dev 09:18–09:21, success|
+|4. dev → qa|[#2015|https://github.com/Egalvanic/eg-pz-frontend/pull/2015]|12 Nov 07:38|Dharmesh (after a "changes requested" that was lifted once eg-pz-backend #1811 merged at 07:23)|cicd/qa 07:38–07:41, success|
+* Order PASS: 1 → 2 → 3, each merged only after the previous target deployed green; step 4 ran the next day.
+* WIP PASS (frontend): none of the 72 commit titles in #2015 mention WIP, experiment or draft.
+* Between steps 3 and 4, Eric's own feature promotions (#1999–#2013) went to stag, qa and dev together. They are not part of this sync.
+
+*Still missing (QA Review rows):*
+# *Eric's approval for step 4 is not recorded.* On #2015 only Dharmesh approved. The ticket asks for Eric's approval (on the PR or in chat) pasted here.
+# *eg-pz-backend, eg-pz-terraform and eg-pz-reporting-lambdas:* QA cannot see these repos, so the merge record per repo and direction (with PR links) needs to be added here. That includes Dharmesh's 2 Nov note: reporting-lambdas #430 and backend #1721.
+# *Alembic single head* on stage, qa and dev after the backend merges (see ZP-5162): please paste the `alembic heads` output.
+
+*Not covered:* none of the backend, terraform or lambdas checks. QA has no access to those repos.
+
+*Observation for the next sync:* stage was promoted to prod on 16 Nov ([#2035|https://github.com/Egalvanic/eg-pz-frontend/pull/2035]), and cicd/prod deployed again on 17 Nov 07:55 UTC. The prod → stage → qa → dev re-baseline for that release has not run yet on the frontend.

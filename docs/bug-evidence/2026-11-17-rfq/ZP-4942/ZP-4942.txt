@@ -1,0 +1,40 @@
+!QA-17Nov-ZP-4942-flag-off-demo-on-acme.mp4|width=720!
+_Video: real flag OFF in Demo Company (no + Assembly, no Assembly… in Add to, /assemblies "Feature Not Available", no Assemblies in Admin), then flag ON in EG-ACME: + Assembly suggests L2 and places it (56 s)_
+
+*Result: PASS on QA. Recommend READY TO RELEASE.*
+Build: index-LGhrn-48.js (EG-ACME, 17 Nov 14:07–14:27 IST). The Demo OFF run was on index-CFMAmUdK.js at 14:01 IST; the two builds have the same code (only the build stamp differs).
+LaunchDarkly feature-sld-assemblies at sign-in: false for Demo Company, true for EG-ACME.
+
+Re-checked at 14:56 IST on the newest build index-CkkAeA9o.js: same result (Demo has no Assembly button; EG-ACME has it, and the next name suggested is L3).
+
+*Steps*
+# Demo Company (flag OFF) › Engineering › SLD › unlock: the toolbar has Asset, Bus, Note. No + Assembly.
+# Select two assets › Add to…: Add to Group and Add to View only. No Assembly….
+# Type /assemblies: "Feature Not Available". Admin › Config: Asset Classes, Connection Classes, Issue Classes, Devices. No Assemblies.
+# Demo, locked SLD › right-click a connection: "Select Entire Run" is still there (not behind the flag).
+# EG-ACME (flag ON) › own SLD › unlock: + Assembly is there, and Add to… offers Assembly….
+# + Assembly › QA4942-FDR-\{name\}: the Name box suggests *L2* (the 12 Nov "L1 CB-3" problem is fixed, ZP-5264). Place: 4 assets and 2 connections are created, the hidden connection stays hidden, the elbow is kept and the group is recreated.
+# Admin › Config › Assemblies: the library opens.
+# With LaunchDarkly blocked, the SLD shows no Assembly control and /assemblies says "Feature Not Available" (fails closed).
+
+*Actual:* as expected in every step. Simplify Edge and Unsimplify Edge were re-checked on today's build and also pass.
+*Note:* with the flag OFF the assemblies API still answers (GET /api/assemblies 200 in Demo), so the flag hides the UI only. Is that intended?
+*Open question from 12 Nov:* Project Manager has assemblies.manage, but /assemblies says Access Denied for PM.
+*Not covered:* per-view persistence of combined terminals.
+
+*Test data*
+* https://acme.qa.egalvanic.ai/slds (site "QA-DEMO v2.6 SLD editing 12 Nov", placed QA4942-FDR-L2)
+* https://acme.qa.egalvanic.ai/assemblies/cd981de3-5916-4481-8495-2afb906f0c62
+* https://demo.qa.egalvanic.ai/slds (site "Demo", read only)
+* https://demo.qa.egalvanic.ai/assemblies
+
+!QA-17Nov-ZP-4942-2-OFF-demo-add-to-menu-no-assembly.png|width=640!
+_1. Flag OFF (Demo): Add to… has no Assembly… (PASS)_
+!QA-17Nov-ZP-4942-4-OFF-demo-assemblies-route-feature-not-available.png|width=640!
+_2. Flag OFF (Demo): /assemblies shows "Feature Not Available" (PASS)_
+!QA-17Nov-ZP-4942-8-ON-acme-next-name-L2.png|width=640!
+_3. Flag ON (EG-ACME): the next name suggested is L2 (PASS)_
+!QA-17Nov-ZP-4942-9-ON-acme-placed-L2.png|width=640!
+_4. Flag ON: L2 placed with its group, hidden connection and elbow (PASS)_
+
+*Cross-platform:* web PASS · iOS differs: an iOS-placed copy of this assembly loses the hidden connection and the elbow on the server (new iOS bug, see ZP-5107); assembly placement on iOS is gated by the same flag (from the iOS source) · Android not checked (ZP-5112 is being tested on Android 1.40)

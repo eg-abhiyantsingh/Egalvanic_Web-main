@@ -30,3 +30,11 @@ QA build at start: `index-oFAZQ3rK.js` (re-check `curl -sk https://acme.qa.egalv
 - For a NEW bug: `BUG-<short>.txt` in the same format (simple explanation, where, environment, steps, actual, expected, controls, possible cause), plus its own video/screenshots.
 
 Return to the lead: per ticket the verdict, one-line reason, evidence paths, and any new bugs.
+
+## Cross-platform (MANDATORY, added 17 Nov after owner feedback; replaces "mobile: check only if cheap")
+For every ticket, the verdict must have a **Cross-platform** section:
+- Twins: search Jira for `[iOS]` / `[Android]` / web tickets with the same Task # or summary.
+- Does the feature exist on web / iOS / Android? Use the app UI. The eg-pz-mobile-iOS source is readable with `gh` (e.g. `gh search code --repo Egalvanic/eg-pz-mobile-iOS <term>`).
+- Web testers can't drive devices: list the exact iOS and Android checks needed (screen, steps, expected result). The lead dispatches them to the device testers.
+- Mobile testers: check the same feature on web (UI parity + web read-back of the data), and list what the other mobile app needs.
+- End the Jira draft with: `*Cross-platform:* web <result> · iOS <result> · Android <result>`. Each result is PASS / differs (details) / not on this platform (how you know) / not checked (why).

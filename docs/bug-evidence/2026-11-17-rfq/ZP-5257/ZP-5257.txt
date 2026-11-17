@@ -1,0 +1,43 @@
+!QA-17Nov-ZP-5257-table-numbers-no-crash.mp4|width=720!
+_Video (49 s): an issue whose table cells are stored as numbers, Python-style text, null, nested and boolean values opens from the asset page without a crash and shows the cells. One cell is edited and saved._
+
+*Result: PASS* (Android 1.40 (54) QA)
+
+*Build:* Android 1.40 (54) QA, emulator 1080 x 2400 (phone, portrait), QA EG-ACME, Super Admin seat, site "Android Site 2", 17 Nov 2026.
+
+*Steps*
+# Through the web API, create Thermal Anomaly issues on the test asset "QA-DEMO ZP-3021 17 Nov Child CB3 no library":
+#* Current Draw (A) = \{"A":35,"B":"38","C":33,"N":25.50\}
+#* Current Rating (A) = \{'A': 35, 'B': '38'\}
+#* Voltage Drop (mV) = \{"A":null,"B":12000000000,"C":\{"x":1\},"N":true\}
+#* Control issue: Current Draw (A) = \{"A":"35","B":"38","C":"33","N":"0"\}
+# Android: Assets > the test asset > Issues > open each issue > Properties.
+# Edit Current Draw A (35 → 36) > Save Changes. Read the issue back from the API.
+
+*Actual*
+* No crash; logcat has no FATAL or ClassCastException.
+* Current Draw shows 35, 38, 33, 25.50 (25.50 kept). The Python-style Current Rating shows 35, 38. Voltage Drop shows an empty cell for null, 12000000000 (no 1.2E10), \{"x":1\} and true.
+* Opening the issue writes nothing (Save Changes stays disabled).
+* After editing one cell, the server has \{"A":"36","B":"38","C":"33","N":"25.50\}: the other cells are kept and all are text. The tables I didn't edit are unchanged.
+* The text control shows 35, 38, 33, 0.
+* Small notes: a long value is cut off by the narrow cell on a phone. The save also added an empty "Delta T" detail.
+
+*Not covered:* tablet size and landscape for this screen.
+
+*Test data*
+* Asset: https://acme.qa.egalvanic.ai/assets/30248abc-0157-415b-868b-58a2fd6be56c
+* Issues: https://acme.qa.egalvanic.ai/issues/318dd9f5-c855-4b6b-81f8-89e957479ab2 · https://acme.qa.egalvanic.ai/issues/5fc57307-5919-4836-9226-3f750b3ff437 · https://acme.qa.egalvanic.ai/issues/71ee0878-3b11-4dae-a4d4-79ace68aff79
+
+!QA-17Nov-ZP-5257-1-asset-issues-section-3-test-issues.png|width=640!
+_1. PASS (expected): the asset's Issues section lists the three test issues._
+
+!QA-17Nov-ZP-5257-2-issue-tables-numbers-python-null-nested.png|width=640!
+_2. PASS (expected): numbers, Python-style text, null, a big number, a nested value and a boolean all render without a crash._
+
+!QA-17Nov-ZP-5257-3-edit-one-cell-36-save-enabled.png|width=640!
+_3. PASS (expected): one cell is edited to 36 and Save Changes is enabled._
+
+!QA-17Nov-ZP-5257-4-web-same-issue-numbers.png|width=640!
+_4. PASS (expected): web Class Details after the Android save show Current Draw "A: 36, B: 38, C: 33, N: 25.50". The other two rows show how web prints this odd data._
+
+*Cross-platform:* web PASS for the read-back of the Android save; differs on odd data (web prints the Python-style value raw and shows "null" / "\[object Object\]", while Android shows cells) · iOS not checked (twin ZP-5259 is To Do; per the ticket iOS empties the table) · Android PASS

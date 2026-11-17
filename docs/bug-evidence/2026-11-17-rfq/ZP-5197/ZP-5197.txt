@@ -1,0 +1,43 @@
+!QA-17Nov-ZP-5197-create-asset-section-links.mp4|width=720!
+_Video (61 s): New Asset (Quick) shows section links. Photos, Infrared and Basic each jump to their section. With Circuit Breaker in Detailed, Engineering, Commercial and Connections jump too, and scrolling by hand moves the highlight._
+
+*Result: PASS* (Android 1.40 (54) QA)
+
+*Build:* Android 1.40 (54) QA, emulator 1080 x 2400 (density 420, portrait), QA EG-ACME, Super Admin seat, site "Android Site 2", 17 Nov 2026.
+
+*Steps*
+# Assets tab > + (Add Assets) > New Asset.
+# Quick: tap Photos, Infrared, then Basic.
+# Pick asset class Circuit Breaker > Detailed. Tap Engineering, Commercial, Connections, Infrared and Notes.
+# Scroll the form by hand and watch the highlighted link.
+# Compare with an existing asset page: "29 july abhiyant asset".
+
+*Actual*
+* New Asset has an "Asset sections" row. Quick: Basic, Photos, Engineering, Infrared. Detailed: Basic, Photos, Engineering, Commercial, Connections, Infrared, Notes (the > arrow slides the row).
+* Each link jumps to its section and is highlighted. Infrared and Notes are the last sections, so they land at the end of the form.
+* While scrolling, the highlight follows the section at the top (Basic > Photos > Engineering > Commercial), and the row slides to keep it in view.
+* The asset page has the same chips plus Issues and Maintenance, which need a saved record.
+
+*Small notes (not blocking)*
+* Quick mode has no Engineering header, but the Engineering link is still shown. It lands on the "Trust the Photos" card.
+* Connections and Infrared are not highlighted while scrolling by hand: at the bottom of the form the highlight jumps to Notes. Tapping them works.
+* The > arrow covers the right edge of the last visible link, so a tap on that edge slides the row instead.
+
+*Not covered:* tablet width (side list) and landscape. Classes other than Circuit Breaker.
+
+*Test data*
+* QA web: https://acme.qa.egalvanic.ai (EG-ACME), site Android Site 2. Nothing was saved; the New Asset form was discarded.
+
+!QA-17Nov-ZP-5197-1-new-asset-quick-section-links.png|width=640!
+_1. PASS (expected): New Asset (Quick) with the section links row; Basic is highlighted._
+
+!QA-17Nov-ZP-5197-2-detailed-engineering-link.png|width=640!
+_2. PASS (expected): Detailed, Circuit Breaker: Engineering tapped, so the form is at the Engineering section and Engineering is highlighted._
+
+!QA-17Nov-ZP-5197-3-detailed-connections-link.png|width=640!
+_3. PASS (expected): Connections tapped, so the form is at Connections, and the link row slid to show it._
+
+!QA-17Nov-ZP-5197-4-scroll-highlight-follows.png|width=640!
+_4. PASS (expected): scrolled by hand inside the Engineering fields, and Engineering is the highlighted link._
+
+*Cross-platform:* web PASS (web Add Asset already has a section list: Basic Info, Engineering, Condition, Notes; same idea, different layout) · iOS not checked (ZP-5196 READY TO RELEASE) · Android PASS

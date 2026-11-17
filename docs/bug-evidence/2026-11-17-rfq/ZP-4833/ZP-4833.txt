@@ -1,0 +1,43 @@
+!QA-17Nov-ZP-4833-video-demo-linked-team-schedule.mp4|width=720!
+_Video 1 (58 s): in Demo Company (the prime), a QA-DEMO planned work order is assigned to the linked company EG-ACME and its Team "QA-DEMO ZP-4583 r8 team". The schedule saves with 14 days for that Team, and the Activity reads "Schedule locked for confirmation" (notifications off)._
+!QA-17Nov-ZP-4833-video-copy-and-linked-team-blocked.mp4|width=720!
+_Video 2 (44 s): EG-ACME: notifications OFF reads "Schedule locked for confirmation"; the notifications ON control still reads "sent for confirmation to N recipients"; Collaborators is switched off for EG-ACME today._
+
+*Result: PASS on QA*. Recommend READY TO RELEASE (see the note on direction below).
+*Build:* index-CkkAeA9o.js (17 Nov 2026, 15:13 IST); EG-ACME copy rows also on index-LGhrn-48.js. Seats: EG-ACME Super Admin test seat; Demo Company admin login (approved second QA company).
+
+*Steps*
+# The ZP-4830 tester linked the two companies: Demo Company = prime, EG-ACME = subcontractor. EG-ACME's 7 Teams show as linked crews in Demo.
+# Demo › Planned Work › Create Planned Work Order: site "test", name "QA-DEMO ZP-4833 17 Nov linked-team schedule", Infrared Thermography, 1–19 Dec.
+# Assignment › Subcontractor › "QA-DEMO ZP-4830 17 Nov sub (EG-ACME)" › Team "QA-DEMO ZP-4583 r8 team".
+# Schedule: weekdays 06:00–14:30, scheduling notifications off. Review › Plan Work Order.
+# Opened the new work order's Schedule. Checked its work blocks and field team through the API (read only, nothing released).
+# EG-ACME: opened Schedule on a notifications-OFF work order and on a notifications-ON control.
+
+*Actual*
+* The schedule saves on the linked sub's Team: work-schedules returns 200, with no 404 "Crew not found". The work order shows 14 days (1–18 Dec) for "QA-DEMO ZP-4830 17 Nov sub (EG-ACME) · QA-DEMO ZP-4583 r8 team". PASS.
+* 14 work blocks were created with no people on them. The Team's 2 people appear only in the field-team list as a "Subcontractor team", not assigned. PASS.
+* Notifications off: Activity reads "Schedule locked for confirmation" on the new Demo work order and on EG-ACME's 19 Oct one. PASS.
+* Notifications on (control): still "Schedule sent for confirmation to N recipients". PASS.
+* Note on direction: EG-ACME cannot be the prime today. Sending a subcontractor link from EG-ACME returns 403 guest_access_disabled, because LaunchDarkly feature-guest-access reads false for EG-ACME (it was true on 12 Nov). This is a flag setting, not this fix. If it was not switched off on purpose, it should be turned back on.
+
+*Not covered*
+* EG-ACME as the prime (flag above).
+* The in-house half ("in-house members are placed on the blocks"): Demo has no in-house crews.
+* Releasing to the linked Team: not done, so the PM and FM test seats did not get guest access.
+
+*Test data*
+* Demo planned work order "QA-DEMO ZP-4833 17 Nov linked-team schedule": https://demo.qa.egalvanic.ai/planned-work
+* Link (from the ZP-4830 tester): https://demo.qa.egalvanic.ai/collaborators?tab=links and https://acme.qa.egalvanic.ai/collaborators?tab=links
+* EG-ACME copy-row work orders: https://acme.qa.egalvanic.ai/planned-work (search "QA-DEMO ZP-4583")
+
+!QA-17Nov-ZP-4833-4-demo-schedule-linked-team-PASS.png|width=640!
+_1. PASS (expected): Schedule step with the linked company's Team on 14 weekdays; scheduling notifications off_
+!QA-17Nov-ZP-4833-5-demo-planned-wo-linked-team-days-PASS.png|width=640!
+_2. PASS (expected): the saved work order: 14 days for the linked Team, and Activity "Schedule locked for confirmation"_
+!QA-17Nov-ZP-4833-1-notify-off-schedule-locked-for-confirmation-PASS.png|width=640!
+_3. PASS (expected): EG-ACME, notifications off: "Schedule locked for confirmation"_
+!QA-17Nov-ZP-4833-2-notify-on-control-sent-to-recipients-PASS.png|width=640!
+_4. PASS (expected, control): notifications on: "Schedule sent for confirmation to N recipients"_
+
+*Cross-platform:* web PASS · iOS not on this platform for the Activity copy (no such strings in iOS 1.75 source); the linked-Team work order on a sub member's phone was not checked (device check requested) · Android not checked (no device run; same check requested)

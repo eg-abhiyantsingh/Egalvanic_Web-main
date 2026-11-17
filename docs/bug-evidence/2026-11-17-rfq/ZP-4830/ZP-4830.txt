@@ -1,0 +1,71 @@
+!QA-17Nov-ZP-4830-video-1-recheck-withdraw-accept-decline.mp4|width=720!
+_Video 1 (63 s): the 12 Nov FAILs re-checked: Withdraw names the email and the request is gone after a reload; the EG-ACME admin gets Accept / Decline; End link opens its dialog._
+
+!QA-17Nov-ZP-4830-video-2-linked-team-guest-access.mp4|width=720!
+_Video 2 (60 s): Demo Company creates a work order and picks a linked EG-ACME Team; the Team member (PM, non-staff) then sees Demo Company as "Guest · Technician"._
+
+*Result: FAIL on QA → To Do.* New bug ZP-5314 (High) tracks the re-tick failure. (web build index-CkkAeA9o.js, 17 Nov 2026, 14:44–15:43 IST). The 12 Nov FAILs are fixed. New: a linked subcontractor's person can't be put back on a work order after being taken off (Save → 500).
+
+Setup:
+* Two companies: EG-ACME and Demo Company.
+* Guests: non-staff EG-ACME seats PM, AM and EE (is_eg_admin false).
+* Admin actions: SA / ADMIN on EG-ACME, the Demo admin on Demo (all staff, used only to send, accept and staff).
+* LaunchDarkly feature-guest-access, read live:
+** EG-ACME false until 15:09 IST, true from 15:26 IST.
+** Demo true all along.
+
+*Re-check of the 12 Nov FAILs:*
+* PASS: Withdraw. The dialog reads "qa-demo-zp4830-withdraw@example.com's company can no longer accept it", DELETE returns 200, and the request is gone after a reload.
+* PASS: an incoming request shows Accept and Decline. Decline 200 ("Request declined"); re-sent, then Accept 200 ("You're now a subcontractor for Demo Company").
+* PASS: active links. The prime row shows Unlink; the sub row shows People + End link; the provider row shows Shared SLDs + People + End link. Each dialog opens with names and no TypeError.
+* PASS: bad email. POST /vendors/\{id\}/link and /accounts/\{id\}/company-link return 400 invalid_email for "not-an-email", "a@b", "", "x@y", "user@@example.com", "qa@example.invalid" and a missing email.
+* PASS (real flag OFF, not simulated):
+** Menu entry hidden. The People tab says "Collaboration isn't turned on…" with no Invite.
+** A subcontractor link is refused in the dialog (403 "Guest access must be enabled…"). A customer link still sends.
+** With the flag ON, the menu and "Invite individual" are back.
+
+*QA Review rows:*
+* PASS: the prime invites a sub by email. The Sent row shows only the email, and the response doesn't name the company. The sub admin accepts. Link Demo → EG-ACME is active.
+* PASS: the sub's Teams appear as crews. Create Work Order › Assignment › Subcontractor lists all 7 EG-ACME Teams ("Team · n").
+* PASS: the Team member gets Technician guest access only once ticked onto an open WO. In Demo: role Technician, no web access, field_limits false/false, only the WO's site.
+* PASS: access is lost on untick (Field team saved with nobody), on unassign, and on close. Reactivating the WO restores it.
+* PASS: edit-drawer removal (PUT /mapping/user-session/update) revokes access within 4 s, both for a Field-team tick and for a person added in the drawer.
+* *FAIL: tick again.* Tick → untick → tick the same person on the same WO: Field team › Save shows "internal_error" (PUT …/field-team → 500). Six repros on four WOs. Adding them back in the edit drawer saves, but their access doesn't come back. New bug: ZP-5314.
+* PASS: customer link.
+** EG-ACME invites Demo, Demo accepts and shares one SLD ("test"), and EG-ACME picks the AM seat.
+** AM sees only "test"; the same SLD calls for Demo's other two sites return 422.
+** Note: "test" has no nodes for the Demo admin either, so the diagram is empty for both.
+* PASS: no duplicate sub row in the Field team dialog; saving with nobody ticked works.
+* PASS: negative invites.
+** Inputs: an unknown egalvanic.com address, a gmail.com address that can't exist, an example.com address.
+** Each stays pending with no company, in the same response shape as an invite that does reach a user.
+* Also found: separate security bug ZP-5315 (Medium), details in that ticket.
+
+*Not covered:*
+* single-role replace through the drawer UI;
+* deleting a WO (no deletes on Demo);
+* an ambiguous-domain invite;
+* customer-link site pairing and crew sharing;
+* the old-invite Technician guest on web (TECH seat reserved for device testing);
+* backend PR #1820 code (no access).
+
+*Test data (left in place, full links):*
+* Demo › Collaborators › Company Links (3 links): https://demo.qa.egalvanic.ai/collaborators?tab=links
+* EG-ACME › Collaborators › Company Links: https://acme.qa.egalvanic.ai/collaborators?tab=links
+* Demo WO staffed with the linked Team: https://demo.qa.egalvanic.ai/sessions/38f48f6f-0be4-4d3b-becf-edae3a3114b6
+* Bug repro WO: https://demo.qa.egalvanic.ai/sessions/1ce761a1-da25-4b81-a66d-8562cf9e5938
+* Shared SLD in Demo ("test"): 24eb08b1-bb88-4f47-8ad0-f5b09326cf8d. Customer record on EG-ACME: "QA-DEMO ZP-4561 customer 16 Oct".
+
+!QA-17Nov-ZP-4830-1-withdraw-dialog-names-email-PASS.png|width=640!
+_1. PASS (expected): the Withdraw dialog names the email._
+
+!QA-17Nov-ZP-4830-3-acme-incoming-request-accept-decline-PASS.png|width=640!
+_2. PASS (expected): the receiving company gets Accept and Decline._
+
+!QA-17Nov-ZP-4830-6-demo-wo-assignment-linked-acme-teams-PASS.png|width=640!
+_3. PASS (expected): the linked company's Teams appear as crews on a new work order._
+
+!QA-17Nov-ZP-4830-BUG-retick-1-save-fails-FAIL.png|width=640!
+_4. FAIL (defect): ticking the same person again after unticking: "internal_error"._
+
+*Cross-platform:* web FAIL (re-tick 500; see ZP-5315) · iOS not checked (Collaborators is web-only; guest checks for ZP-5143 listed for the device tester) · Android: Create Site / Start WO hidden for the TECH guest in Demo (GUEST-MENUS/android.md); sub-link guest checks listed

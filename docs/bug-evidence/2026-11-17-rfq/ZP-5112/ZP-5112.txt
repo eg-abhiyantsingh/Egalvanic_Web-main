@@ -1,0 +1,44 @@
+!QA-17Nov-ZP-5112-layout-groups-offline-assembly.mp4|width=720!
+_Video (69 s): Android draws the web layout groups. Offline, an assembly is placed and a new layout group is created. Back online it syncs, and the groups persist after reopening. Web shows Groups (5). With the flag OFF (Demo) there is no Assembly tool._
+
+*Result: PASS* (Android 1.40 (54) QA, SLD Viewer 90)
+
+*Build:* Android 1.40 (54) QA, SLD Viewer Version 90. QA EG-ACME (feature-sld-assemblies ON), Super Admin seat. Demo Company (flag OFF) checked with the Technician guest seat. 17 Nov 2026.
+
+*Steps*
+# Site "QA-DEMO ZP-4800 SLD canvas v2.4 (delete me)" > SLD: look at the web groups "QA4940 GRP full / partial".
+# Unlock > airplane mode on > Assembly > "QA4942-FDR-{name}" > name "QA-DEMO ZP-5112 17Nov" > Place > tap the canvas.
+# Long-press the new panel > Remove from Group > Add to Group > Create new group "QA-DEMO ZP-5112 17Nov GRP".
+# Airplane mode off > Go Online > Sync. Leave the SLD and reopen it. Read the SLD back on web/API.
+# Demo Company (flag OFF) > SLD > unlock.
+# On "QA-DEMO v2.6 SLD editing 12 Nov", place the assembly as "AND17" and check its connections on the server.
+
+*Actual*
+* The web layout groups are drawn on Android (there were none on 1.39).
+* The unlocked SLD has the new Assembly tool, and the node menu has Add to Group / Remove from Group.
+* Placed offline: "saved offline", 9 pending (11 after the group change). After Go Online > Sync, the badge cleared.
+* Server: the 4 new nodes, then both connections (FUSE nosub → Load-1, CB-2 → PNL-2) created after them, and node groups 3 → 5, including "QA-DEMO ZP-5112 17Nov GRP". After reopening, the groups are still drawn.
+* AND17 kept the hidden connection (edge_manips hidden = true) and the elbow (edge_manips elbows), the same as the web copies.
+* Demo (flag OFF): no Assembly tool for the same seat that sees it in EG-ACME. Add to Group still shows there, because layout groups aren't behind this flag.
+
+*Related, filed separately:* on Android the second placement's Name box is pre-filled "L1 CB-3" where the server suggests "L3" (the web bug ZP-5264, still in Android viewer 90). See BUG-assembly-name-suggestion.
+
+*Not covered:* a real device or tablet; renaming, editing or deleting a group on Android.
+
+*Test data*
+* https://acme.qa.egalvanic.ai/slds (site "QA-DEMO ZP-4800 SLD canvas v2.4 (delete me)", SLD 363d5350-b42d-4e48-850f-b9f72d27ea08): nodes "QA4942-FDR-QA-DEMO ZP-5112 17Nov …", group "QA-DEMO ZP-5112 17Nov GRP".
+* Site "QA-DEMO v2.6 SLD editing 12 Nov" (SLD c4438cd3-59b3-4639-9e60-2752dc5aa478): nodes "QA4942-FDR-AND17 …".
+
+!QA-17Nov-ZP-5112-1-android-draws-web-layout-groups.png|width=640!
+_1. PASS (expected): Android draws the web layout groups QA4940 GRP full and partial._
+
+!QA-17Nov-ZP-5112-5-offline-assembly-placed-9-pending.png|width=640!
+_2. PASS (expected): the assembly is placed while offline, with 9 changes pending._
+
+!QA-17Nov-ZP-5112-7-after-sync-reopen-groups-persist.png|width=640!
+_3. PASS (expected): after the sync and reopening, both new groups are still drawn._
+
+!QA-17Nov-ZP-5112-9-demo-flag-off-no-assembly-tool.png|width=640!
+_4. PASS (expected): Demo Company (flag OFF) has no Assembly tool._
+
+*Cross-platform:* web PASS (the groups and assembly made on Android read back with the hidden connection and elbow kept; web twin ZP-5107 In QA) · iOS not checked (ZP-5102 RTR; the lead has an iOS repro for lost hidden edge/elbow) · Android PASS, plus a separate Android bug for the copy-name suggestion

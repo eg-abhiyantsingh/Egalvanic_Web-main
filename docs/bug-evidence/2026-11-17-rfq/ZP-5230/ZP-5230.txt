@@ -1,0 +1,39 @@
+!QA-17Nov-ZP-5230-sections-list-tablet-portrait.mp4|width=720!
+_Video (40 s): at density 216 (800 dp) the Sections list sits beside the form in portrait and stays there in landscape. At density 240 and on a phone in landscape, Sections opens a drawer (expected)._
+
+*Result: PASS* (Android 1.40 (54) QA)
+
+*Build:* Android 1.40 (54) QA, emulator 1080 x 2400 with adb wm density 216 / 240 / reset. QA EG-ACME, Super Admin seat, site "Android Site 2", 17 Nov 2026.
+
+*Steps* (Rajat's comment 46187)
+# adb shell wm density 216, then reopen the app.
+# Work order "new demo 2nov" > Forms > Trip Setting Verification > 14N-H1-2-Circuit Breaker 1 > Edit Form.
+# Portrait: tap a section in the list, then tap a cell.
+# Rotate to landscape.
+# adb shell wm density 240, reopen, portrait > Sections.
+# adb shell wm density reset, phone landscape > Sections.
+
+*Actual*
+* At 216 portrait the list sits on the left beside the form, which is not dimmed. Tapping "Short Time Element" switches the form at once and the list stays. A Range cell opens the keyboard, so the form can be edited while the list is open.
+* At 216 landscape the list stays and "Short Time Element" stays selected.
+* At 240 portrait and on a phone in landscape, Sections opens a drawer over the dimmed form (expected).
+* Small note: the app only picks up a new density after it is reopened. A live wm density change doesn't re-layout the open screen. Rotation works live.
+
+*Not covered:* a real tablet; the exact 744 dp cut-off.
+
+*Test data*
+* Work order: https://acme.qa.egalvanic.ai/sessions/23c1efff-5075-44b9-b403-b875f7e5fcc8 (Forms > Trip Setting Verification > 14N-H1-2-Circuit Breaker 1). Nothing was saved.
+
+!QA-17Nov-ZP-5230-1-density216-portrait-list-beside-form.png|width=640!
+_1. PASS (expected): density 216, portrait. The Sections list sits beside the form and the form is not dimmed._
+
+!QA-17Nov-ZP-5230-2-density216-landscape-list-stays.png|width=640!
+_2. PASS (expected): density 216, landscape. The list stays and the current section is kept._
+
+!QA-17Nov-ZP-5230-3-density240-portrait-drawer-expected.png|width=640!
+_3. PASS (expected): density 240 (720 dp), portrait. Sections opens a drawer._
+
+!QA-17Nov-ZP-5230-4-phone-landscape-drawer-expected.png|width=640!
+_4. PASS (expected): phone (density 420), landscape. Sections opens a drawer._
+
+*Cross-platform:* web PASS (the same form on web shows the Sections list beside it) · iOS not checked (side list is iPad-only per ZP-4864, Done) · Android PASS

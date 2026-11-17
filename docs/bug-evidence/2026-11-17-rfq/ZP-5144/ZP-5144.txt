@@ -1,0 +1,38 @@
+!QA-17Nov-ZP-5144-guest-technician-create-hidden.mp4|width=720!
+_Video (36 s): the Technician seat in its home company EG-ACME sees Create New Site and Start New Work Order. After switching to Demo Company as a guest Technician, both are hidden, including the empty-state prompt._
+
+*Result: PASS* (Android 1.40 (54) QA) for the guest-Technician case. The sub-login case is not covered: QA has no such seat.
+
+*Build:* Android 1.40 (54) QA. Technician seat (home EG-ACME, guest Technician in Demo Company) and the Super Admin seat as a control, 17 Nov 2026.
+
+*Steps*
+# GET /api/auth/v2/me for the Technician seat in EG-ACME and in Demo (after guest switch).
+# Android, Technician in EG-ACME: Select Site, then Work Orders.
+# Sites header > Switch Company > Demo Company (Guest · Technician) > Continue: Select Site, then site Demo > Work Orders.
+# Super Admin in EG-ACME: Select Site and Work Orders.
+
+*Actual*
+* API: EG-ACME field_limits can_create_sites true / can_create_work_orders true. Demo: is_guest true, both false. The permissions are the same Technician set, without platform.web in Demo.
+* EG-ACME: Create New Site, Start New Work Order and "Start your first work order" are shown.
+* Demo (guest): no Create New Site (only the assigned site "Demo"). Work Orders shows "No Work Orders Yet" with no Start New Work Order and no "Start your first work order".
+* Super Admin: both shown.
+
+*Not covered:* subcontractor sub-login (none on QA). A backend that omits field_limits on 1.40 (QA always sends it now).
+
+*Test data*
+* QA web: https://acme.qa.egalvanic.ai (EG-ACME) and Demo Company (subdomain demo), site "Demo". Nothing was created.
+* Every menu the guest sees is listed in GUEST-MENUS/android.md.
+
+!QA-17Nov-ZP-5144-1-acme-tech-select-site-create-shown.png|width=640!
+_1. PASS (expected): EG-ACME (field_limits true). Create New Site is shown._
+
+!QA-17Nov-ZP-5144-2-acme-tech-start-new-wo-shown.png|width=640!
+_2. PASS (expected): EG-ACME. Start New Work Order and "Start your first work order" are shown._
+
+!QA-17Nov-ZP-5144-3-demo-guest-select-site-no-create.png|width=640!
+_3. PASS (expected): Demo Company as guest Technician. No Create New Site._
+
+!QA-17Nov-ZP-5144-4-demo-guest-work-orders-no-start.png|width=640!
+_4. PASS (expected): Demo Company as guest. No Start New Work Order and no empty-state prompt._
+
+*Cross-platform:* web not checked for the guest (no platform.web in Demo per /auth/v2/me; the web bundle has no field_limits gating; at home the Technician sees Add Site / Create Work Order on web) · iOS not checked (ZP-5143 In QA; the iOS tester is building the guest-menu table) · Android PASS (guest case), sub-login not covered

@@ -1,0 +1,41 @@
+!QA-17Nov-ZP-5100-skm-import-transformer-type-core-attributes.mp4|width=720!
+_Video: SKM import of an SKM-format study into a new QA-DEMO site, then the imported transformers' and panel's Engineering tabs: Type, windings and electrode configuration (54 s)_
+
+*Result: PASS on QA. Recommend READY TO RELEASE.* The two rows left open on 12 Nov (transformer Type and reserved core attributes on import) now pass.
+Build: index-LGhrn-48.js, 17 Nov 2026 14:38–14:50 IST.
+
+*About the test file:* I could not find a real customer study (Koch Building A) in Jira, Drive, Gmail or the repo. So I built an SKM-format study from real SKM data:
+* both transformers are SKM library exports (SQUARE D PADMOUNT 75 kVA, bound to the library; SQUARE D DRY 225 kVA, hand-entered with the model named);
+* the panels carry AF_ElectrodeConfig with the same SKM field ids the platform's own SKM export writes.
+
+*Steps*
+# New site "QA-DEMO ZP-5100 17 Nov SKM transformer + core attrs" › Assets › SKM › Import (Full) › upload › Analyze: 8 assets, 7 connections, PADMOUNT matched to the library. Import.
+# Open the imported transformers' Engineering tab.
+# Open the panel's Engineering tab (second new site, same study with the exact AF field ids).
+# Export the site again (Export Engineering XML).
+
+*Actual*
+* Library-bound transformer: Type *Pad Mount* (from the library model symbol PDMT), Primary Winding Delta, Secondary Winding Wye-Ground.
+* Hand-entered transformer (model named DRY): Type *Dry Type*, Primary Delta, Secondary Wye.
+* Panels: Electrode Configuration VCB / VCBB / HCB; ampere rating and 3P4W set as before.
+* Re-export: Type, Pri/Sec Connection, AF_ElectrodeConfig and ContinuousRating are written back, with no literal "N/A".
+
+*Question:* the enclosure box size (also a reserved attribute; exported as AF_BoxHeight / AF_BoxWidth / AF_BoxDepth) is not written on import, so a re-export of an imported site drops it. Is that in scope?
+*Not covered:* a real customer study and its before/after readiness numbers (prod data); SIEMENS cables (none on QA).
+
+*Test data*
+* https://acme.qa.egalvanic.ai/assets (site "QA-DEMO ZP-5100 17 Nov SKM transformer + core attrs")
+* https://acme.qa.egalvanic.ai/assets/2a240c8e-9a4f-4345-8e41-4edeefe4480d (QA5100B-XF-PAD-LIB)
+* https://acme.qa.egalvanic.ai/assets (site "QA-DEMO ZP-5100 17 Nov SKM AF fields (exact ids)")
+* The study files are attached: QA-DEMO-ZP5100-17Nov-skm-format-study.xml and QA-DEMO-ZP5100-17Nov-skm-format-study-AF-exact-ids.xml
+
+!QA-17Nov-ZP-5100-1-import-review.png|width=640!
+_1. Import review: 8 assets, PADMOUNT matched to the SKM library (PASS)_
+!QA-17Nov-ZP-5100-2-library-bound-transformer-engineering-type-windings.png|width=640!
+_2. Library-bound transformer: Type Pad Mount, windings Delta / Wye-Ground (PASS)_
+!QA-17Nov-ZP-5100-3-hand-entered-transformer-engineering-type-inferred.png|width=640!
+_3. Hand-entered transformer: Type Dry Type inferred from the model name (PASS)_
+!QA-17Nov-ZP-5100-4-panel-engineering-electrode-configuration.png|width=640!
+_4. Panel: Electrode Configuration VCBB written on import (PASS)_
+
+*Cross-platform:* web PASS · iOS not checked (SKM import is web only; the iOS app shows Type, insulation N/A and the core attributes from the synced data, so a device check is listed) · Android not checked (no device; same check listed)

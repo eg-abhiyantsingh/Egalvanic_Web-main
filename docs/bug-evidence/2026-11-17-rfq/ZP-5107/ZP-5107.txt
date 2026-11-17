@@ -1,0 +1,33 @@
+!QA-17Nov-ZP-5107-flag-off-on-groups-persist-ios-readback.mp4|width=720!
+_Video: flag OFF in Demo Company (no + Assembly), flag ON in EG-ACME (place the assembly, its group is recreated), groups still there after reopening, then the web read-back of the assembly the iOS app placed on 16 Nov (51 s)_
+
+*Result: PASS on QA for the web part. Recommend READY TO RELEASE.* The offline part runs in the mobile apps: iOS is ZP-5102 (Ready to Release) and Android is ZP-5112 (in test). One new iOS bug is filed separately.
+Build: index-LGhrn-48.js (EG-ACME, 17 Nov 14:14–14:27 IST); the Demo OFF run was on index-CFMAmUdK.js (same code). LaunchDarkly feature-sld-assemblies: false for Demo Company, true for EG-ACME.
+
+Re-checked at 14:56 IST on the newest build index-CkkAeA9o.js: same result (Demo has no Assembly button; EG-ACME has it, and the next name suggested is L3).
+
+*Steps*
+# Demo Company (flag OFF) › SLD › unlock: no + Assembly, so an assembly can't be placed.
+# EG-ACME (flag ON) › own SLD › + Assembly › QA4942-FDR-\{name\} › L2 › Place: 4 assets, 2 connections and the group "QA-DEMO ZP-4942 grp 12 Nov QA4942-FDR-L2" are created.
+# Create two new layout groups, leave the SLD and open it again: all 6 groups are still there and still locked.
+# Admin › Audit Log data for the iOS placement of the same assembly (16 Nov): node create ×4 → edge create ×2 → node_group update. The group is sent after the assets and connections it points to.
+# Open that iOS-placed copy on web (Android Site 2): the assets and the group are there, but the hidden connection is drawn as a normal line and the elbow is missing. This is a separate iOS bug (see below).
+
+*Actual:* web rows pass. The sync order is right.
+*New bug (iOS):* an assembly placed from the iOS app loses its hidden connection and its elbow on the server. The iOS edge create does not send edge_manips. Filed separately.
+*Not covered:* a truly offline replay (airplane mode) seen in the log. This needs a device; ZP-5102 tested it on iOS.
+
+*Test data*
+* https://acme.qa.egalvanic.ai/slds (site "QA-DEMO v2.6 SLD editing 12 Nov": groups "QA-DEMO ZP-4943 badge grp 17 Nov", "QA-DEMO ZP-4943 marker grp 17 Nov", "QA-DEMO ZP-4942 grp 12 Nov QA4942-FDR-L2")
+* https://acme.qa.egalvanic.ai/slds (site "Android Site 2": iOS copy QA4942-FDR-ZP5102)
+* https://acme.qa.egalvanic.ai/admin/audit-log
+* https://demo.qa.egalvanic.ai/slds (read only)
+
+!QA-17Nov-ZP-5107-1-groups-persist-after-reload.png|width=640!
+_1. Layout groups still there after reopening the SLD (PASS)_
+!QA-17Nov-ZP-5107-3-OFF-demo-toolbar-no-plus-assembly.png|width=640!
+_2. Flag OFF (Demo): no + Assembly, so no placement (PASS)_
+!QA-17Nov-ZP-5107-2-web-readback-of-ios-placed-assembly.png|width=640!
+_3. iOS-placed assembly read back on web: assets and group are there, but the hidden connection shows as a line (FAIL, iOS bug filed separately)_
+
+*Cross-platform:* web PASS · iOS differs: groups and sync order PASS, the hidden connection and elbow are lost (new iOS bug; ZP-5102 is the iOS twin) · Android not checked (ZP-5112 is being tested on Android 1.40)

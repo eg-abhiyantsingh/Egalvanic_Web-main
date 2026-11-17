@@ -1,0 +1,24 @@
+Summary: [Backend] Safety lockout options: a malformed request body makes the server fail (500) instead of saying "bad request" (API only)
+
+*Simple explanation:* The Safety "Lockout options" call expects {"node_ids": [ ... ]}. If a client sends a plain list instead, the server crashes with "internal_error" (500) instead of answering 400 with a clear message. The app's own dialog sends the right shape, so users don't hit this in the UI. It is an input-validation gap in the API.
+
+*Where:* POST /api/safety/sld/<sld_id>/lockout-options
+*Environment:* QA https://acme.qa.egalvanic.ai (EG-ACME). Build index-LGhrn-48.js, 17 Nov 2026 14:30 IST. Also on 12 Nov (build index-C1ZRIunF.js).
+*Seats:* Construction Manager test seat on its own QA-DEMO site (17 Nov); Super Admin (12 Nov).
+
+*Steps (browser console, signed in as a user with Safety access)*
+# Sign in at https://acme.qa.egalvanic.ai and open Safety › SLD on site "QA-DEMO ZP-5211 13 Nov power scheme bypass".
+# Press F12 › Console.
+# Paste: fetch('/api/safety/sld/c037d47c-1daf-4684-94bd-3d678e5b2aa9/lockout-options',\{method:'POST',credentials:'include',headers:\{'Content-Type':'application/json'\},body:JSON.stringify(\['61bb32f5-398d-4e68-b044-269e49014c89'\])\}).then(r=>r.json().then(j=>console.log(r.status,j)))
+# Read the status that is printed.
+
+*Actual:* 500 \{"error":"internal_error","success":false,"trace_id":"9eac5d606d4f4033af60a0ec014e68cb"\}. Earlier trace ids from 12 Nov: bd68b8f4822e4789b8a73103f6a78e56, 97a4962e3f95406c8d2e163a987bb4d5.
+*Expected:* 400 with a message such as "node_ids must be a list of asset ids".
+
+*Controls*
+* The correct body \{"node_ids":\["<id>"\]\} returns 200 with ranked options.
+* \{"node_ids":"x"\} returns 200 "None of the selected assets are installed on this site" (handled).
+* Only a body that is not a JSON object crashes.
+
+*Possible cause:* the handler reads body.get("node_ids") without checking that the body is a JSON object.
+*Severity:* Low. Backend. Relates to ZP-4831.

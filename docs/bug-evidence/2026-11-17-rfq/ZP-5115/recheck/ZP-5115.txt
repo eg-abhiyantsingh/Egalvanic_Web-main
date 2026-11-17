@@ -1,0 +1,8 @@
+*Re-check on Android 1.40 (54): still PASS.* This morning's PASS (comment above) was on 1.39 (53). 1.40 (54) was installed at 12:46 IST, so I checked it again on 1.40.
+
+With the app language set to French, the New Fluid Sample sheet shows "Nouvel échantillon de fluide", "ANALYSES DE CET ÉCHANTILLON", "Gaz dissous / Physico-chimique / Furanes", "Sélectionnez au moins une analyse.", "Date de prélèvement" and "Prélevé par". I tapped Annuler (nothing saved) and set the language back to English.
+
+!QA-17Nov-ZP-5115-recheck-1.40.png|width=480!
+_PASS (expected): the fluid sample sheet in French on Android 1.40 (54)._
+
+*Cross-platform:* Android PASS on 1.40 (54) and 1.39 (53) · iOS and web: see this morning's comment.

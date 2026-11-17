@@ -1,0 +1,40 @@
+!QA-17Nov-ZP-5283-quick-edits-both-kept-video.mp4|width=720!
+_Video (42 s, QA build index-CkkAeA9o.js, 17 Nov 2026, Super Admin):_
+# _Two fast tries on the ticket's quote: type a Crew size, then pick Access 0.23 s and 0.34 s later. Both answers are kept each time._
+# _A reload shows they were saved._
+# _The answers are put back to Crew size 2 / Lift._
+
+*Result: PASS.* Two quick edits no longer lose an answer. I ran the ticket's steps 10 times: type a Crew size, then pick Access 0.20–0.36 s later. Every time, both answers were saved and were still there after a reload. The two saves now run one after the other. The second waits for the first and carries the new Crew size. Before the fix it went out at the same time with the old value.
+
+*Build:* QA index-CkkAeA9o.js, 17 Nov 2026, 14:50–15:35 IST. Super Admin seat. Fix: eg-pz-frontend PR #2039.
+
+*Steps (ticket repro, timed with Playwright)*
+# Quote "QA-DEMO ZP-5255 13 Nov pricing-inputs quote" › Pricing › Pricing inputs: Crew size 2, Access Lift.
+# Type a new Crew size, then straight away open Access and pick the other option. 10 tries: 4/Easy, 3/Lift, 5/Easy, 4/Lift, 6/Easy, 3/Lift, 2/Easy, 4/Lift, 4/Easy, 3/Lift. Access was picked 0.20–0.36 s after leaving Crew size.
+# Each try made two POST /api/plans/\{id\}/generate calls. The second started 0–9 ms after the first returned, and its body had the NEW Crew size. PASS (was: the second went out about 0.25 s after the first, in parallel, with the old Crew size).
+# Saved intake read back from the API after each try: both answers kept, 10 of 10. PASS.
+# Reload: the answers are still there (Crew 4 / Lift, and Crew 3 / Lift in the video). PASS.
+# Totals match a slow single save of the same answers every time. For example, Crew 4 / Lift is $5,825 both ways. PASS.
+# Other orders: Access first, then Crew size; Crew size, then Number of stories; three quick edits (Crew → Access → Stories). All answers kept. PASS.
+# Other saves that now share the queue: Crew size, then a labor Rate pick; Crew size, then Pricing settings › Save Changes; the walk-sourced quote's Show calculation answers (Square footage, then Access). Both edits kept each time. PASS.
+# First of two quick saves fails (500, simulated in my test browser only): an error shows, the second save still runs, Crew size visibly goes back to the saved value, and the spinner clears. PASS.
+# Put back: Crew size 2, Access Lift, Square footage 2000, Stories 3 (instructions identical to the start). The walk-sourced quote was also restored exactly.
+
+*Note on the totals:* today Crew 2 / Lift prices at $4,700, not the ticket's $4,250. All labor lines on this quote now carry 25% more hours than on 13 Nov (5 / 2.5 / 3.75 h instead of 4 / 2 / 3 h). That comes from the pricing basis, not from the answers. Quick and slow saves give the same totals.
+
+*Not covered:* the quote switcher being disabled during a save (this opportunity has only one quote). The other refactored actions were only read in the diff, not clicked: approvals, change orders, Mark as Sent, Reset, recipients, vendors, PM roster.
+
+*Test data*
+* https://acme.qa.egalvanic.ai/plans/7f6f4a25-aa8f-4ffd-9446-37e4036cb3d3 (back to Crew 2 / Lift, $4,700)
+* https://acme.qa.egalvanic.ai/plans/fd5283de-8efd-4fb4-a895-d0c1d5cc2f0c (walk-sourced quote, restored, $800)
+
+!QA-17Nov-ZP-5283-1-quick-edit-both-answers-kept.png|width=640!
+_1. PASS (expected): right after a quick edit (Crew size 4, then Access Easy 0.2 s later), both answers are kept and the total re-priced ($5,325)._
+
+!QA-17Nov-ZP-5283-2-after-reload-still-kept.png|width=640!
+_2. PASS (expected): after a reload, the last quick edit (Crew size 4 + Lift) is still saved ($5,825)._
+
+!QA-17Nov-ZP-5283-3-walk-quote-dialog-both-kept.png|width=640!
+_3. PASS (expected): walk-sourced quote › Show calculation. Square footage 1300, then Access Ladder 0.3 s later, are both kept ($850)._
+
+*Cross-platform:* web PASS · iOS not on this platform (the Quotes tab is a placeholder with no pricing inputs, per the iOS source release/qa 1.75; site-walk questions check listed in the QA notes) · Android not checked (source not available to me, emulator lane busy)

@@ -1,0 +1,50 @@
+h3. \[Web\] Field team: a linked subcontractor's person can't be put back on a work order after being taken off (Save fails with "internal_error", HTTP 500)
+
+!QA-17Nov-ZP-4830-BUG-retick-video.mp4|width=720!
+_Video (53 s): a work order staffed with a linked EG-ACME Team. Save the field team with the Team member ticked (works), untick them and Save (works), tick them again and Save: the dialog shows "internal_error"._
+
+*Simple explanation:* when a dispatcher takes a subcontractor's person off a work order, the same person can never be put back on that work order. Field team › Save fails with a raw "internal_error". The other route (adding the person again in the edit drawer) seems to save, but the person never gets their access back. A different work order works the first time.
+
+*Where:* Work order › Edit field team (Save). Also Edit work order drawer › team (add a person). Task #161 (ZP-4830).
+
+*Environment:*
+* QA, web build index-CkkAeA9o.js, 17 Nov 2026, 15:12–15:33 IST.
+* Prime company: Demo Company (https://demo.qa.egalvanic.ai), Demo admin login.
+* Sub company: EG-ACME. Linked Team "QA-DEMO ZP-4755 in-house crew (delete me)", member = PM test seat (non-staff).
+* LaunchDarkly feature-guest-access ON for Demo.
+
+*Steps:*
+# In Demo Company, open a work order staffed with the linked subcontractor and Team, e.g. https://demo.qa.egalvanic.ai/sessions/1ce761a1-da25-4b81-a66d-8562cf9e5938
+# Click Edit field team. The Team member is ticked. Click Save. It works.
+# Click Edit field team again, untick the person, click Save (nobody going). It works.
+# Click Edit field team again, tick the same person, click Save.
+
+*Actual:*
+* A red "internal_error" box appears at the top of the dialog and the person stays off the work order.
+* The request is PUT /api/ir_session/\{id\}/field-team \{"user_ids":\["<person>"\]\} → 500 \{"error":"internal_error"\}.
+* Reproduced 6 times on 4 work orders. Trace ids:
+** 6375f4c83b85fdaf1edd1ccb3e06f094
+** 670250d466114bada7b66a8cb7aed82c
+** b00276d672a647f2af79b3711bb9e59f
+** b51936aa39264fd1a6279c2f002041f7
+** c3994b2a068e48b28a8a37f14bb0dd43
+** a5e371b944d62de82132f1a5caf18a19
+* Edit-drawer route: on WO 10 (https://demo.qa.egalvanic.ai/sessions/aa4b6391-6b11-44a6-9344-5c086079eaf1) the person was added, removed, then added again (POST /api/mapping/user-session/create → 200). The person is listed as Field technician, but GET /api/guest-access/workspaces for them still shows only EG-ACME one minute later. So their guest access in Demo is not restored.
+
+*Expected:* ticking the person again puts them back on the work order and gives back their Technician guest access, the same as the first tick.
+
+*Controls:*
+* First tick on a never-used work order: 200, and access granted.
+* Save twice with the person ticked: 200, no change.
+* Save with nobody: 200, and access removed.
+* Close + reactivate the work order: access removed, then restored.
+* A person who was never removed from that work order: no error.
+
+*Possible cause:* untick / drawer removal soft-deletes the user-session mapping (and the linked guest-access record). Re-ticking tries to insert again and hits the existing row (unique key?) instead of reactivating it. The direct-create route skips reconcile_linked_access for a re-activated mapping.
+
+*Impact:* High. A dispatcher who unticks someone by mistake, or swaps people back and forth, can't restore that person on the job. The only workaround is a new work order.
+
+!QA-17Nov-ZP-4830-BUG-retick-1-save-fails-FAIL.png|width=640!
+_FAIL (defect): step 4, the Field team dialog shows "internal_error" after ticking the same person again._
+
+*Cross-platform:* web FAIL · iOS not on this platform (staffing is on web) · Android not on this platform. A device check is still useful: after the fix, the person's Demo access returns on the device too.

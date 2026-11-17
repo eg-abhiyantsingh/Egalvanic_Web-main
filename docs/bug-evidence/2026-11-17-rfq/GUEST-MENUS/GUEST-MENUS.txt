@@ -1,0 +1,31 @@
+!QA-17Nov-GUEST-MENUS-web-technician-guest-restricted-logout.mp4|width=720!
+_Video (60 s): a Technician guest (PM seat, ticked onto a Demo work order through a linked Team) switches into Demo Company. The web shows "Web Access Restricted" with one button, Logout, which takes the user back to EG-ACME still signed in._
+
+*Guest menus on web: correct* (QA, build index-CkkAeA9o.js, 17 Nov 2026, 15:09–15:43 IST). Host: Demo Company. Guests: non-staff EG-ACME seats.
+
+* Technician guest (sub link): "Web Access Restricted" on every page. Expected: Technician has no web access in Demo.
+** /auth/v2/me: guest, Technician, field_limits can_create_sites false, can_create_work_orders false, only the work order's site.
+* Electrical Engineer guest (old invite, and customer link):
+** Same menus as Electrical Engineer at home, minus Admin › Customers.
+** Typed /customers, /sites, /users, /collaborators, /teams, /subcontractors, /sessions and /planning → Access Denied.
+** Admin APIs → 403 "Not available to guests". The site picker shows only the invited or shared site.
+* Found:
+** A guest Technician can open a host work order it's not on, by id (API 200; the list is filtered). New bug: \[link\]
+** Low: an Electrical Engineer guest can open /opportunities by typed URL (Quotes page + Create Quote dialog). Demo's data is blocked by the subscription (422), not by a guest rule.
+** Minor: the restricted screen's only button says "Logout" but it returns the user to their home company.
+
+Not covered: the old-invite Technician guest on web (TECH seat reserved for device testing); Android covered it.
+
+!QA-17Nov-GUEST-1-sublink-guest-in-demo-web-access-restricted.png|width=640!
+_1. PASS (expected): the Technician guest in Demo gets "Web Access Restricted"._
+
+!QA-17Nov-GUEST-8-ee-guest-in-demo-no-admin-rail-PASS.png|width=640!
+_2. PASS (expected): the Electrical Engineer guest in Demo has Site Data and Engineering only; no Admin rail._
+
+!QA-17Nov-GUEST-7-ee-at-home-admin-customers-control.png|width=640!
+_3. Control: the same user at home in EG-ACME has Admin › Customers._
+
+!QA-17Nov-GUEST-6-ee-guest-typed-opportunities-quotes-page.png|width=640!
+_4. Finding (Low): typed /opportunities opens the Quotes page with "New Quote" for a guest._
+
+*Cross-platform:* web PASS for menus (1 API bug, 1 low finding) · iOS not checked (checks listed for the device tester, ZP-5143) · Android: Create Site / Start WO hidden for the TECH guest in Demo, no extra menu items (android.md)

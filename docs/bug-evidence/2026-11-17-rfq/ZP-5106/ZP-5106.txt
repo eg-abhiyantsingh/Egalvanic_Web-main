@@ -1,0 +1,49 @@
+!QA-17Nov-ZP-5106-video-fork-moves-open-wos.mp4|width=720!
+_Video (50 s): two open QA-DEMO work orders and a closed control on the global Insulation Resistance Testing. Builder › Services › Customize, then before/after from the API: the open ones move to EG-ACME's copy and the closed one stays._
+
+*Result: PASS on QA*. Recommend READY TO RELEASE.
+*Build:* index-LGhrn-48.js (fork at 14:19 IST, 17 Nov 2026). Smoke re-check on index-CkkAeA9o.js at 14:49 IST: same results. Super Admin test seat.
+
+*Steps*
+# I picked a global service EG-ACME had never forked that had 0 open work orders today: Insulation Resistance Testing (9 closed WOs, 0 open).
+# I created two open QA-DEMO work orders with it (A, B) and a third (C), which I closed before the fork.
+# Builder › Services › Insulation Resistance Testing › Customize › Customize.
+# I compared each work order's services (service-registry, work type, method lines) before and after.
+# Set Up Forms: on a QA-DEMO work order that still carries the global Infrared Thermography, I added a new Panelboard.
+# Build Quote with the forked services, plus a control service.
+# Negative: I forked Shutdown (Composite) (0 open WOs), then deleted that copy again.
+
+*Actual*
+* Fork: 201, and EG-ACME's copy opens (new id 86d15fef, forked_from = global d9c9efef).
+* Open WOs A and B now point at the copy: registry, work type and method lines. All 5 forms on each are kept.
+* Closed WO C still points at the global, and so do the older closed IRT work orders. PASS.
+* Set Up Forms on the new Panelboard lists "Infrared Thermography" as applying (the global is matched to EG-ACME's copy). PASS.
+* Build Quote: no "no implementation" warning on the new IRT copy, the IR copy or the NETA copy. Control: UPS Maintenance still warns. PASS.
+* Negative: forking Shutdown (Composite) returns 201, nothing is repointed (its 8 closed WOs are unchanged) and there are no errors. Delete service on that copy brings the global back. PASS.
+* Forking IRT again returns 409 already_forked with the existing copy id; nothing moves.
+
+*Not covered*
+* Deleting a copy that open work orders already point at (it would break my test WOs).
+* Planned Work rows (not yet work orders) carrying the global at fork time: QA has none for this service.
+* Roles other than Super Admin.
+
+*Note:* EG-ACME now has its own copy of Insulation Resistance Testing, with the same content as the global. Only my 2 QA-DEMO open WOs moved; no one else had an open one.
+
+*Test data*
+* WO A (open): https://acme.qa.egalvanic.ai/sessions/c26b2c5c-9a00-4bcc-9699-47c7b67aecf4
+* WO B (open): https://acme.qa.egalvanic.ai/sessions/42df4b9a-0b94-4452-8a42-d9a32887071d
+* WO C (closed control): https://acme.qa.egalvanic.ai/sessions/f853c27a-3dbf-4249-8ec4-6331e986174c
+* EG-ACME's copy of Insulation Resistance Testing: https://acme.qa.egalvanic.ai/services/86d15fef-7b1a-40d6-befc-847e97e0b387
+* Set Up Forms WO (carries the global IR): https://acme.qa.egalvanic.ai/sessions/c3791ea4-f421-465e-9c16-61b37eecdd6d
+* Quote: https://acme.qa.egalvanic.ai/plans/5fbf0dfb-7a2f-4fd8-8d6c-609725a6f9fb
+
+!QA-17Nov-ZP-5106-1-forked-copy-of-insulation-resistance-testing-PASS.png|width=640!
+_1. PASS (expected): EG-ACME's editable copy of Insulation Resistance Testing after Customize ("Update service", no Customize button)_
+!QA-17Nov-ZP-5106-2-set-up-forms-global-matched-to-fork-PASS.png|width=640!
+_2. PASS (expected): Set Up Forms on a work order that carries the global Infrared Thermography lists it as applying to the new asset_
+!QA-17Nov-ZP-5106-3-build-quote-new-fork-no-false-warning-PASS.png|width=640!
+_3. PASS (expected): Build Quote with the new Insulation Resistance Testing copy shows no "no implementation" warning_
+!QA-17Nov-ZP-5106-4-build-quote-control-ups-still-warns-PASS.png|width=640!
+_4. PASS (expected, control): UPS Maintenance still shows the real warning_
+
+*Cross-platform:* web PASS · iOS not checked (no device run; iOS 1.75 source reads the WO's services from service-registry and the services list, so the copy should show; device check requested) · Android not checked (no device run; same check requested)

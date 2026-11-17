@@ -1,0 +1,36 @@
+!QA-17Nov-ZP-4943-flag-off-and-locked-group-badges-markers.mp4|width=720!
+_Video: flag OFF in Demo Company (no Assembly…, so no Edit with AI), then EG-ACME: hidden-connection badges and simplified-edge markers inside a locked layout group (56 s)_
+
+*Result: PASS on QA. Recommend READY TO RELEASE.*
+Build: index-LGhrn-48.js (EG-ACME, 17 Nov 14:09 IST); the Demo OFF run was on index-CFMAmUdK.js (same code). LaunchDarkly feature-sld-assemblies: false for Demo Company, true for EG-ACME.
+
+Re-checked at 14:56 IST on the newest build index-CkkAeA9o.js: same result (Demo has no Assembly button; EG-ACME has it, and the next name suggested is L3).
+
+*Steps*
+# Demo Company (flag OFF): Add to… has no Assembly…, so the Save as Assembly dialog and its Edit with AI box can't be reached. EG-ACME (flag ON): Assembly… is there.
+# EG-ACME, own SLD: click the hidden-connection badge "QA4942-FDR-L1 Load-1 →" with no group yet (control): it jumps to and selects Load-1.
+# Group FUSE nosub + Load-1 with Add to… › Add to Group. The new group is locked and sits on the Background layer.
+# Click the same badge inside the locked group: it still selects Load-1, not the group. The other badge selects FUSE nosub.
+# Select Entire Run on CB-1 → PNL-1 › Simplify Edge (3 markers), then group CB-1 + PNL-1 (locked).
+# Click a marker: the simplified edge is selected, not the group. Right-click it: the connection menu opens (Unsimplify Edge, Edit/Reveal for each hidden part), not the group menu.
+# Unsimplify Edge to restore.
+# Edit with AI API re-check: 200 with the templates filled, >2000 characters → 400, nothing saved.
+
+*Actual:* as expected in every step.
+*Not covered:* terminal-handle and floating-label drag negatives; the >2000-node bound.
+
+*Test data*
+* https://acme.qa.egalvanic.ai/slds (site "QA-DEMO v2.6 SLD editing 12 Nov"; groups "QA-DEMO ZP-4943 badge grp 17 Nov" and "QA-DEMO ZP-4943 marker grp 17 Nov")
+* https://acme.qa.egalvanic.ai/assemblies/cd981de3-5916-4481-8495-2afb906f0c62
+* https://demo.qa.egalvanic.ai/slds (read only)
+
+!QA-17Nov-ZP-4943-1-locked-group-hidden-edge-badge-selects-other-end.png|width=640!
+_1. Locked group: the hidden-connection badge selects Load-1, not the group (PASS)_
+!QA-17Nov-ZP-4943-2-locked-group-marker-click-selects-simplified-edge.png|width=640!
+_2. Locked group: clicking a marker selects the simplified edge (PASS)_
+!QA-17Nov-ZP-4943-3-locked-group-marker-right-click-connection-menu.png|width=640!
+_3. Locked group: right-click on a marker opens the connection menu (PASS)_
+!QA-17Nov-ZP-4943-4-OFF-demo-add-to-menu-no-assembly-so-no-edit-with-ai.png|width=640!
+_4. Flag OFF (Demo): no Assembly…, so Edit with AI is not reachable (PASS)_
+
+*Cross-platform:* web PASS · iOS not checked (no device; #202 comes to iOS through the shared SLD viewer bundle, #203 Edit with AI is web only) · Android not checked (no device; same viewer bundle, ZP-5112 in test)

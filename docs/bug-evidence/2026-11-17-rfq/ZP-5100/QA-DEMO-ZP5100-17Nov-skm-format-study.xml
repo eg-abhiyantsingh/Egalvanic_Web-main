@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--QA-DEMO ZP-5100 17 Nov: SKM-format study. Transformer blocks are SKM library exports (SQUARE D PADMOUNT 75 kVA bound, SQUARE D DRY 225 kVA hand-entered); bus AF_* and Xformer Pri/Sec Connection use SKM field names-->
+<s:SKM xmlns:s="http://www.skm.com/schemas/powersystem" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<s:PowerSystem>
+<s:Components>
+  <s:Utility s:action="create" s:id="1" s:name="QA5100B-UTIL" s:altId="" s:altName="" xsi:ID="skm1">
+    <s:Field s:id="2293760" s:name="ConnectedComponent1" s:value="QA5100B-SWBD:1"/>
+  </s:Utility>
+  <s:Bus s:action="create" s:id="2" s:name="QA5100B-SWBD" s:altId="" s:altName="" xsi:ID="skm2">
+    <s:Field s:id="21364738" s:name="EquipmentCategory" s:value="LV Switchboard"/>
+    <s:Field s:id="37552142" s:name="NodeBus" s:value="False"/>
+    <s:Field s:id="65543" s:name="SystemNominalVoltage" s:value="480.0"/>
+    <s:Field s:id="65544" s:name="ContinuousRating" s:value="1200.0"/>
+    <s:Field s:id="65750" s:name="AF_ElectrodeConfig" s:value="VCB"/>
+    <s:Field s:id="65751" s:name="AF_BoxHeight" s:value="90"/>
+    <s:Field s:id="65752" s:name="AF_BoxWidth" s:value="36"/>
+    <s:Field s:id="65753" s:name="AF_BoxDepth" s:value="30"/>
+  </s:Bus>
+  <s:Protection s:action="create" s:id="3" s:name="QA5100B-CB-XF" s:altId="" s:altName="" xsi:ID="skm3">
+    <s:Field s:id="327680" s:name="ProtectionType" s:value="Static Trip Breaker"/>
+    <s:Field s:id="327681" s:name="ConnectedComponent1" s:value="QA5100B-SWBD:1"/>
+    <s:Field s:id="327682" s:name="ConnectedComponent2" s:value="QA5100B-XF-PAD-LIB:1"/>
+  </s:Protection>
+<s:Xformer2 s:action="create" s:id="6" s:name="QA5100B-XF-PAD-LIB" s:altId="" s:altName="" xsi:ID="skm6">
+<s:Field s:id="720915" s:name="KeyInLibrary" s:value="1"/>
+<s:Field s:id="720925" s:name="Manufacturer" s:value="SQUARE D"/>
+<s:Field s:id="720926" s:name="Type" s:value="PADMOUNT"/>
+<s:Field s:id="655362" s:name="TransformerType" s:value=""/>
+<s:Field s:id="720907" s:name="Nominal kVA" s:value="75"/>
+<s:Field s:id="720906" s:name="FullLoad kVA" s:value="75"/>
+<s:Field s:id="720909" s:name="Pri RatedVoltage" s:value="480"/>
+<s:Field s:id="720910" s:name="Sec RatedVoltage" s:value="208"/>
+<s:Field s:id="65543" s:name="SystemNominalVoltage" s:value="480.0"/>
+<s:Field s:id="720922" s:name="SystemNominalVoltageSecondary" s:value="208"/>
+<s:Field s:id="720904" s:name="Pri Connection" s:value="Delta"/>
+<s:Field s:id="720905" s:name="Sec Connection" s:value="Wye-Ground"/>
+<s:Field s:id="720896" s:name="Pri NeutralR" s:value="0.00000"/>
+<s:Field s:id="720898" s:name="Pri NeutralX" s:value="0.00000"/>
+<s:Field s:id="720912" s:name="Pri Tap" s:value="0.000"/>
+<s:Field s:id="720897" s:name="Sec NeutralR" s:value="0.00000"/>
+<s:Field s:id="720899" s:name="Sec NeutralX" s:value="0.00000"/>
+<s:Field s:id="720913" s:name="Sec Tap" s:value="0.000"/>
+<s:Field s:id="720932" s:name="LTC MovableTapBus" s:value="Fix Tap"/>
+<s:Field s:id="720963" s:name="LTC Option" s:value="Fixed"/>
+<s:Field s:id="720929" s:name="LTC StepSize" s:value="5.000"/>
+<s:Field s:id="720964" s:name="CornerGrounded" s:value="None"/>
+<s:Field s:id="720900" s:name="Rpos" s:value="1.3100"/>
+<s:Field s:id="720902" s:name="Rzero" s:value="1.3100"/>
+<s:Field s:id="720901" s:name="Xpos" s:value="3.2400"/>
+<s:Field s:id="720903" s:name="Xzero" s:value="3.2400"/>
+<s:Field s:id="720947" s:name="Z%" s:value="0.0000"/>
+<s:Field s:id="393217" s:name="ConnectedComponent1" s:value="QA5100B-CB-XF:2"/>
+<s:Field s:id="393218" s:name="ConnectedComponent2" s:value="QA5100B-PNL208:1"/>
+<s:Field s:id="65556" s:name="Data State" s:value="Incomplete"/>
+<s:Field s:id="65539" s:name="InService" s:value="In"/>
+<s:Field s:id="65553" s:name="Year Installed" s:value="0"/>
+<s:Field s:id="720914" s:name="Abbreviation" s:value=""/>
+<s:Field s:id="2" s:name="Alternate UID" s:value=""/>
+<s:Field s:id="65559" s:name="Alternate Name" s:value=""/>
+<s:Field s:id="65569" s:name="Alternate Type" s:value=""/>
+<s:Field s:id="65563" s:name="Alternate Desc 2" s:value=""/>
+<s:Field s:id="65564" s:name="Alternate Cubicle Name" s:value=""/>
+</s:Xformer2>
+  <s:Bus s:action="create" s:id="7" s:name="QA5100B-PNL208" s:altId="" s:altName="" xsi:ID="skm7">
+    <s:Field s:id="21364738" s:name="EquipmentCategory" s:value="LV Panelboard"/>
+    <s:Field s:id="37552142" s:name="NodeBus" s:value="False"/>
+    <s:Field s:id="65543" s:name="SystemNominalVoltage" s:value="208.0"/>
+    <s:Field s:id="65544" s:name="ContinuousRating" s:value="225.0"/>
+    <s:Field s:id="65750" s:name="AF_ElectrodeConfig" s:value="VCBB"/>
+    <s:Field s:id="65751" s:name="AF_BoxHeight" s:value="20"/>
+    <s:Field s:id="65752" s:name="AF_BoxWidth" s:value="20"/>
+    <s:Field s:id="65753" s:name="AF_BoxDepth" s:value="5.75"/>
+  </s:Bus>
+  <s:Protection s:action="create" s:id="8" s:name="QA5100B-CB-XF2" s:altId="" s:altName="" xsi:ID="skm8">
+    <s:Field s:id="327680" s:name="ProtectionType" s:value="Static Trip Breaker"/>
+    <s:Field s:id="327681" s:name="ConnectedComponent1" s:value="QA5100B-SWBD:1"/>
+    <s:Field s:id="327682" s:name="ConnectedComponent2" s:value="QA5100B-XF-DRY-HAND:1"/>
+  </s:Protection>
+<s:Xformer2 s:action="create" s:id="9" s:name="QA5100B-XF-DRY-HAND" s:altId="" s:altName="" xsi:ID="skm9">
+<s:Field s:id="720915" s:name="KeyInLibrary" s:value="0"/>
+<s:Field s:id="720925" s:name="Manufacturer" s:value="SQUARE D"/>
+<s:Field s:id="720926" s:name="Type" s:value="DRY"/>
+<s:Field s:id="655362" s:name="TransformerType" s:value=""/>
+<s:Field s:id="720907" s:name="Nominal kVA" s:value="225"/>
+<s:Field s:id="720906" s:name="FullLoad kVA" s:value="225"/>
+<s:Field s:id="720909" s:name="Pri RatedVoltage" s:value="480"/>
+<s:Field s:id="720910" s:name="Sec RatedVoltage" s:value="208"/>
+<s:Field s:id="65543" s:name="SystemNominalVoltage" s:value="480.0"/>
+<s:Field s:id="720922" s:name="SystemNominalVoltageSecondary" s:value="208"/>
+<s:Field s:id="720904" s:name="Pri Connection" s:value="Delta"/>
+<s:Field s:id="720905" s:name="Sec Connection" s:value="Wye"/>
+<s:Field s:id="720896" s:name="Pri NeutralR" s:value="0.00000"/>
+<s:Field s:id="720898" s:name="Pri NeutralX" s:value="0.00000"/>
+<s:Field s:id="720912" s:name="Pri Tap" s:value="0.000"/>
+<s:Field s:id="720897" s:name="Sec NeutralR" s:value="0.00000"/>
+<s:Field s:id="720899" s:name="Sec NeutralX" s:value="0.00000"/>
+<s:Field s:id="720913" s:name="Sec Tap" s:value="0.000"/>
+<s:Field s:id="720932" s:name="LTC MovableTapBus" s:value="Fix Tap"/>
+<s:Field s:id="720963" s:name="LTC Option" s:value="Fixed"/>
+<s:Field s:id="720929" s:name="LTC StepSize" s:value="5.000"/>
+<s:Field s:id="720964" s:name="CornerGrounded" s:value="None"/>
+<s:Field s:id="720900" s:name="Rpos" s:value="2.3600"/>
+<s:Field s:id="720902" s:name="Rzero" s:value="2.3600"/>
+<s:Field s:id="720901" s:name="Xpos" s:value="3.8300"/>
+<s:Field s:id="720903" s:name="Xzero" s:value="3.8300"/>
+<s:Field s:id="720947" s:name="Z%" s:value="0.0000"/>
+<s:Field s:id="393217" s:name="ConnectedComponent1" s:value="QA5100B-CB-XF2:2"/>
+<s:Field s:id="393218" s:name="ConnectedComponent2" s:value="QA5100B-PNL120:1"/>
+<s:Field s:id="65556" s:name="Data State" s:value="Incomplete"/>
+<s:Field s:id="65539" s:name="InService" s:value="In"/>
+<s:Field s:id="65553" s:name="Year Installed" s:value="0"/>
+<s:Field s:id="720914" s:name="Abbreviation" s:value=""/>
+<s:Field s:id="2" s:name="Alternate UID" s:value=""/>
+<s:Field s:id="65559" s:name="Alternate Name" s:value=""/>
+<s:Field s:id="65569" s:name="Alternate Type" s:value=""/>
+<s:Field s:id="65563" s:name="Alternate Desc 2" s:value=""/>
+<s:Field s:id="65564" s:name="Alternate Cubicle Name" s:value=""/>
+</s:Xformer2>
+  <s:Bus s:action="create" s:id="10" s:name="QA5100B-PNL120" s:altId="" s:altName="" xsi:ID="skm10">
+    <s:Field s:id="21364738" s:name="EquipmentCategory" s:value="LV Panelboard"/>
+    <s:Field s:id="37552142" s:name="NodeBus" s:value="False"/>
+    <s:Field s:id="65543" s:name="SystemNominalVoltage" s:value="208.0"/>
+    <s:Field s:id="65544" s:name="ContinuousRating" s:value="100.0"/>
+    <s:Field s:id="65750" s:name="AF_ElectrodeConfig" s:value="HCB"/>
+    <s:Field s:id="65751" s:name="AF_BoxHeight" s:value="20"/>
+    <s:Field s:id="65752" s:name="AF_BoxWidth" s:value="20"/>
+    <s:Field s:id="65753" s:name="AF_BoxDepth" s:value="8"/>
+  </s:Bus>
+</s:Components>
+<s:Topology>
+  <s:Connection action="create" s:fromId="1" s:fromPt="1" s:toId="2" s:toPt="1"/>
+  <s:Connection action="create" s:fromId="2" s:fromPt="1" s:toId="3" s:toPt="1"/>
+  <s:Connection action="create" s:fromId="3" s:fromPt="2" s:toId="6" s:toPt="1"/>
+  <s:Connection action="create" s:fromId="6" s:fromPt="2" s:toId="7" s:toPt="1"/>
+  <s:Connection action="create" s:fromId="2" s:fromPt="1" s:toId="8" s:toPt="1"/>
+  <s:Connection action="create" s:fromId="8" s:fromPt="2" s:toId="9" s:toPt="1"/>
+  <s:Connection action="create" s:fromId="9" s:fromPt="2" s:toId="10" s:toPt="1"/>
+</s:Topology>
+</s:PowerSystem>
+</s:SKM>

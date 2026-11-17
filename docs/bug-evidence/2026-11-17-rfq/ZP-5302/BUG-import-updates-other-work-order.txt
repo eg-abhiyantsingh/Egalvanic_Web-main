@@ -1,0 +1,44 @@
+Summary: [Web] Work order › Actions › Import from Excel on one work order writes into a DIFFERENT work order's forms when the file came from there (no warning) — please confirm intended
+Suggested: Medium · backend + frontend · relates to ZP-5302, ZP-1724
+
+!QA-17Nov-BUG-import-updates-other-work-order-video.mp4|width=720!
+_Video (58 s, QA build index-CkkAeA9o.js, 17 Nov 2026, Super Admin):_
+# _A file exported from work order "Job - Nov 6, 12:03 PM", with Test Voltage edited to 650, is imported on a different work order, "QA-DEMO ZP-5244 13 Nov check-off", which has no forms._
+# _The green message says 1 form was updated._
+# _A fresh export of "Job - Nov 6, 12:03 PM" now shows Test Voltage 650._
+# _The value was then put back to 600._
+
+h3. Simple explanation
+Import from Excel sits in a work order's Actions menu, so a user expects it to fill in *that* work order's forms. The upload sends only the file, not the work order. The server updates every row by its Instance ID, whatever work order the rows belong to. If someone imports the wrong file, for example last week's sheet or a colleague's sheet, the readings of another work order are overwritten. The screen just says "Updated 1 form instances across 1 sheets", even on a work order that has no forms at all.
+
+*Where:* Work order › Assets tab › Actions › EG FORMS › Import from Excel.
+
+*Environment:* QA https://acme.qa.egalvanic.ai, company EG-ACME, build index-CkkAeA9o.js, Super Admin seat, Chrome on macOS, 17 Nov 2026.
+
+*Steps*
+# Open work order "Job - Nov 6, 12:03 PM": https://acme.qa.egalvanic.ai/sessions/7d2ba67a-49a0-4e91-8973-f7cd5e4f2673. Actions › Export to Excel. In the file, change Test Voltage (row 3, instance 454c2392-4806-43fe-8a99-1863c7c1e318) from 600 to 650.
+# Open a different work order, "QA-DEMO ZP-5244 13 Nov check-off" (it has no EG forms): https://acme.qa.egalvanic.ai/sessions/d1cbacb1-55bc-4318-b432-bda1df9ffd51
+# Actions › Import from Excel › pick the edited file.
+# Go back to "Job - Nov 6, 12:03 PM" and check its form: Export to Excel, or https://acme.qa.egalvanic.ai/api/eg-form-instance/454c2392-4806-43fe-8a99-1863c7c1e318
+
+*Actual*
+* Step 3: green "Updated 1 form instances across 1 sheets" (POST /api/eg-form-excel/import 200, rows_updated 1), shown on a work order with no forms. There is no warning.
+* Step 4: the form on "Job - Nov 6, 12:03 PM" now has Test Voltage 650.
+
+*Expected:* Import from Excel on a work order updates only that work order's forms. Rows whose Instance ID belongs to another work order are skipped, with a clear message such as "1 row belongs to work order 'Job - Nov 6, 12:03 PM' and was not imported". Or the user is asked to confirm before another work order is changed.
+
+*Controls*
+* The same file imported on its own work order ("Job - Nov 6, 12:03 PM") updates the form as expected.
+* Afterwards I imported the original file (600) on "Job - Nov 6, 12:03 PM". The form reads Test Voltage 600 again.
+
+*Possible cause:* the import request carries only the file (FormData with "file", no session_id). The backend matches rows by Instance ID only, with no check that the instance belongs to the work order the user is on.
+
+*Please confirm intended:* if updating any work order from one file is meant as a feature (bulk filling across work orders, ZP-1724), the screen should at least name the work orders it changed.
+
+*Mobile:* not applicable. Web-only menu item.
+
+!QA-17Nov-BUG-import-other-wo-1-updated-1-on-wo-without-forms.png|width=640!
+_1. FAIL (defect): on "QA-DEMO ZP-5244 13 Nov check-off", which has no EG forms, importing a file from "Job - Nov 6, 12:03 PM" says "Updated 1 form instances across 1 sheets"._
+
+!QA-17Nov-BUG-import-other-wo-2-control-wo-export-now-650.png|width=640!
+_2. FAIL (defect): a fresh Excel export of "Job - Nov 6, 12:03 PM" right after step 3. Its form now reads Test Voltage 650 (it was 600)._
