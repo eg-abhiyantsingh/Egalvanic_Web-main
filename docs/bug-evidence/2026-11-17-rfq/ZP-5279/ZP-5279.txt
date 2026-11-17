@@ -1,0 +1,45 @@
+!QA-17Nov-ZP-5279-video-steps.mp4|width=720!
+_Video (44 s): with labor the "trip charge 10 min" material is priced $50 / $122. After both labor types are removed it shows RATE MISSING, a pink row, "—" and the red PRICING NEEDS ATTENTION banner. Customer View shows "—", not $0._
+
+*Result: PASS on QA* (build index-oFAZQ3rK.js, 17 Nov 2026, Super Admin + Project Manager + Account Manager)
+
+*Steps*
+# Open quote [https://acme.qa.egalvanic.ai/plans/d20d398a-26de-424c-b672-b34e92d1a9df] (Plans v2, labor-priced material "QA-DEMO ZP-5242 13 Nov trip charge 10 min", 10 min each, ×6).
+# With labor on the work order the material is priced: $50 / $122, subtext "10 min each @ blended labor rate".
+# In LABOR click the trash icon on both labor rows.
+# Look at MATERIALS and the top of the Pricing tab.
+# Click Customer View.
+
+*Actual (as expected now)*
+* The row shows a red *RATE MISSING* chip, "10 min each @ blended labor rate — no rated labor on this work order", a pink background, and "—" in Cost and Sell instead of $0.
+* A red *PRICING NEEDS ATTENTION* banner says: "QA-DEMO ZP-5242 13 Nov trip charge 10 min (material): no rated labor on this work order — priced by labor time (10 min each), so it is $0. Restore or add own (non-subcontracted) labor, or give the material a fixed price."
+* Customer View: the line shows "×6 Mobilization Units · —". There is no $0, and the internal chip and banner are hidden from the customer.
+* API: GET /api/plans/\{id\} → material cost 0, sell 0, unpriced true, rate_missing true. The screen now matches the API.
+* Same result when every labor type is set to Sub = Yes instead of removed.
+* Controls:
+** With labor present: priced, no chip, no banner.
+** Removing only one labor type reprices the material from the remaining labor ($10 / $100).
+** The fixed-price material "trip charge fixed 25" stays $150 / $180 with no chip.
+* Project Manager and Account Manager seats see the same chip and banner.
+
+*Not covered*
+* The "UNPRICED" chip variant (a material with no price on file).
+* The merged "All" view on a multi-work-order quote.
+* Mobile (web Sales screen).
+
+*Idea (not a defect):* a RATE MISSING material raises no Action Item, so Mark as Sent stays enabled. With every labor type subcontracted, the pending sub quotes did raise Action Items and greyed Mark as Sent.
+
+*Test data*
+* Quote: [https://acme.qa.egalvanic.ai/plans/d20d398a-26de-424c-b672-b34e92d1a9df]
+* Customer view: [https://acme.qa.egalvanic.ai/plans/d20d398a-26de-424c-b672-b34e92d1a9df?view=customer]
+* Material library: [https://acme.qa.egalvanic.ai/materials] → "QA-DEMO ZP-5242 13 Nov trip charge 10 min"
+* Quote restored after the test (both labor types back, $485.83).
+
+!QA-17Nov-ZP-5279-1-no-rated-labor-rate-missing-chip-and-banner.png|width=640!
+_PASS (expected): no rated labor. RATE MISSING chip, pink row, "—" instead of $0, and the banner names the material._
+!QA-17Nov-ZP-5279-2-customer-view-dash-not-0.png|width=640!
+_PASS (expected): Customer View shows "—", not a free $0 line. No internal chip._
+!QA-17Nov-ZP-5279-3-control-with-labor-priced-no-chip.png|width=640!
+_PASS (expected, control): with labor present the material is priced $50 / $122 and has no chip._
+!QA-17Nov-ZP-5279-4-all-labor-subcontracted-rate-missing.png|width=640!
+_PASS (expected): every labor type subcontracted also gives RATE MISSING and the banner._

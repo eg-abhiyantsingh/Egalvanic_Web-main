@@ -1,0 +1,50 @@
+!QA-17Nov-ZP-5249-guide-progress-steps.mp4|width=720!
+_Video: the guide opens on first sign-in, "Maybe later" closes it, Help → Getting started reopens it. A real customer and site are saved and the card ticks each one. The ticks survive a reload and a sign-out / sign-in._
+
+h3. QA 17 Nov 2026: main part PASS for staff seats → READY TO RELEASE. The gaps are filed as 4 new bugs: ZP-5305, ZP-5306, ZP-5307, ZP-5308
+
+*Build:* index-oFAZQ3rK.js (QA). *Company:* EG-ACME. *Seats:* Super Admin, Admin, Project Manager, Account Manager, Electrical Engineer, Technician, Facility Manager, Client Portal (Portal Sales has no web access).
+*Flags:* LaunchDarkly feature-user-tour = ON for EG-ACME. Company switch "Guided tours" = ON.
+
+*Steps and results*
+# Sign in for the first time on a browser. Works: "User Guide · End-to-end tour / Here's how EG-ACME works" opens by itself, once.
+# Click Maybe later, then reload. Works: it closes and does not come back. X and Esc also close it.
+# Help → Getting started. Works: it reopens.
+# The overview. Works: the stages are in order (Customer & Site Setup → Asset Onboarding → Work Order Setup → Quote Creation → One-Line Diagram) with "Your next step · Workflow 1 of 5". After progress it shows "You are here · In progress · Step 2 of 2 · To finish: Add a building."
+# Open New Customer, type a name, click Cancel. Works: nothing is ticked.
+# Create customer "QA-DEMO ZP-5249 17 Nov Customer C" and click Create. Works: "Click + New Customer…" ticks about 5 s after the save.
+# Add Site "QA-DEMO ZP-5249 17 Nov Site C" (verify address, Add Site). Works: "Add the customer and site" turns Complete within 1–5 s and the card names my site.
+# Locations → Add Building, + Add Floor, + Add Room. Works: each one ticks 4–6 s after its save. The stage turns Complete with "Verified: … Customer C · … Site C · building › floor › room mapped" and a "Next: Asset Onboarding" button.
+# Reload, then sign out and sign in again in the same browser. Works: the ticks are kept. After sign-in the card stays closed until Help → Getting started, where the stage still shows its progress.
+# Workflows per role, all matching each seat's own menu: Super Admin 5; Admin 1 (Customer & Site); Project Manager 3 (no Quote / One-Line); Account Manager 3 (no Work Order / One-Line); Electrical Engineer 3 (no Work Order / Quote); Technician 4 (no Quote). The buttons the guide names exist for these seats.
+# Texts vs real menus. Work: Admin › Customers, Site Data › Locations / Assets, Operations › Work Orders, Sales › Quotes, Engineering › SLD. Also every button name checked: + New Customer, + Add Site, Add Building, Create Asset, Upload Anything → Extract assets, Bulk Edit › Download Template / Bulk Import, SKM › Import (Full), Create Work Order, Bulk Ops, Actions › Add New Asset / Add Existing by Service / Upload IR Photos, New Quote → Create Quote, Mark as Sent, Recipient.
+# Flag feature-user-tour OFF (simulated in the browser). Works: no welcome, and Help goes straight to Z University.
+# Console: no guide errors for staff seats.
+
+*New bugs filed (each with a video):*
+* ZP-5305: another user's new site completes MY "Add the customer and site" step, and the card adopts their site. Reproduced on purpose, and it also happened by itself with another tester's site that has no customer.
+* ZP-5306: Facility Manager is offered Asset Onboarding and One-Line Diagram, but every screen they name (/assets, /slds) sends this seat to Site Health. The card also calls a refused API (422) every ~8 s.
+* ZP-5307: Client Portal, the guide opens with 0 workflows, and its only button "Revisit workflow 1" throws an error.
+* ZP-5308: company switch "Guided tours" OFF: a first sign-in still pops the guide (only the Help entry obeys the switch). Switch restored ON.
+
+*Not covered:* Asset Onboarding ways 2–5, Work Order Setup, Quote Creation and One-Line drawing were not completed with real data (texts and buttons checked only). Real-step ticks were run on the Super Admin seat. The flag OFF state was simulated, not flipped in LaunchDarkly. Demo company and French not checked. Mobile: web-only feature, not checked.
+
+*Test data (QA):*
+* Customer C (stage fully done): https://acme.qa.egalvanic.ai/accounts/b800e7c7-60bd-4dfc-9309-11f2cca8d27a
+* Customer D (video run): https://acme.qa.egalvanic.ai/accounts/4e76a5e9-64ca-49af-98e8-65544ecd6662
+* Customer B with "colleague site 1/2" (bug): https://acme.qa.egalvanic.ai/accounts/0120b301-34f3-47ad-ba08-49c9aa208e99
+* Guide: https://acme.qa.egalvanic.ai/dashboard → Help → Getting started
+* Company switch: https://acme.qa.egalvanic.ai/account → Company tab
+* PR: https://github.com/Egalvanic/eg-pz-frontend/pull/1948
+
+!QA-17Nov-ZP-5249-2-customer-saved-item-ticked.png|width=640!
+_PASS (expected): "Click + New Customer, fill it in and click Create" ticks only after the customer was saved._
+
+!QA-17Nov-ZP-5249-5-stage-complete-building-floor-room.png|width=640!
+_PASS (expected): after building, floor and room are saved, Customer & Site Setup is Complete and verified against my own customer and site._
+
+!QA-17Nov-ZP-5249-4-after-sign-out-in-progress-kept.png|width=640!
+_PASS (expected): after sign-out and sign-in, Help → Getting started still shows the stage in progress (Step 2 of 2)._
+
+!QA-17Nov-ZP-5249-BUG-FM-sent-to-screens-it-cannot-open.png|width=640!
+_FAIL (defect, ZP-5306): the Facility Manager is told "Open Site Data › Assets" (already ticked) but lands on Site Health. This seat has no Site Data menu._

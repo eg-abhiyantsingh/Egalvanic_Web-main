@@ -1,0 +1,55 @@
+!QA-17Nov-BUG-disjoint-choices-never-answerable-video-steps.mp4|width=720!
+_Video (37 s): "Scaffold (E)" asks Access with stairs/scaffold, "Torque (B)" asks it with easy/lift. On a quote with both, the Access dropdown offers only Easy/Lift. Picking Lift prices B with Lift, but Access still reads "Not answered", the header stays "1 answer required", and E never prices by its equation._
+
+h3. Simple explanation
+* Two services on one quote ask a question with the same name ("Access"), but their choices share nothing: Torque (B) takes easy/lift, Scaffold (E) takes stairs/scaffold.
+* Since ZP-5281 the quote asks the question once and offers only the choices both services accept. When there are none, it falls back to the first service's list (easy/lift).
+* E's answer can never be given: stairs and scaffold are never offered, so E always prices from labor and rates instead of its own equation.
+* The panel is confusing too. After the user picks Lift, B is priced with Lift (+$300), yet Access shows "Not answered" again and the header keeps saying "1 answer required". The user cannot clear it.
+
+h3. Where
+Sales › Quotes › a Plans v2 quote › Pricing tab › "Pricing inputs" panel (also the Build Quote / Edit Quote "PRICING QUESTIONS" block).
+
+h3. Environment
+QA [https://acme.qa.egalvanic.ai], build index-oFAZQ3rK.js, 17 Nov 2026, Super Admin (QA staff seat).
+
+h3. Steps
+# Builder › Services › "QA-DEMO ZP-5281 17 Nov Scaffold (E)" › Pricing setup: question *Access* with 2 choices, stairs and scaffold. Formula: evaluated_labor + IF(intake.access == 'scaffold', 500, 100).
+# "QA-DEMO ZP-5254 13 Nov Torque (B)" asks *Access* with easy and lift.
+# Sales › Quotes › New Quote (Standard) on site "QA-DEMO ZP-5108 ZP-5109 12 Nov" › Build Quote: add Torque (B) and Scaffold (E).
+# PRICING QUESTIONS › Access offers only Easy, Lift. Pick Easy, Square footage 1000 › Generate Quote.
+# On the Pricing tab, open Access in "Pricing inputs" and pick Lift.
+
+h3. Actual
+* Step 4: Access shows "Not answered" and the header shows "1 answer required" ($750 sell).
+* Step 5: the quote reprices (B now includes the Lift surcharge, $1,050 sell). Access shows "Not answered" again and the header still says "1 answer required".
+* stairs and scaffold are never offered anywhere, so E can never be answered.
+* API, GET /api/plans/\{id\} → content.pricing_inputs:
+** B: access null, missing \[\], priced_by_equation true, service_price 850 (= 300 labor + 250 + 300 lift). So B did use "lift", while its access is reported as null.
+** E: access null, missing \["access"\], priced_by_equation false. E falls back to 1.33 h × $150 = $199.50.
+
+h3. Expected
+* When the choice lists share nothing, ask the question per service (or offer each service's own list), so every service can be answered and priced by its own equation.
+* Show the answer the user picked for the service that accepted it, instead of "Not answered".
+
+h3. Controls
+* D (easy/ladder/lift) + B (easy/lift): Access offers Easy/Lift, both services price by equation, green check. Correct (ZP-5281 fix).
+* A + D (same 3 choices): Easy/Ladder/Lift offered, both priced. Correct.
+* Single service E alone: not checked.
+
+h3. Possible cause
+PlanDetail unionPricingQuestions (PR #2036): "When the lists share nothing, the first service's stays; the Pricing tab then flags the question as still required." So the dead end is by design of that fallback. The panel's merged value is the first non-blank across services, and the server returns access null for both services when the shared answer is not valid for all of them.
+
+h3. Test data (QA)
+* Quote: [https://acme.qa.egalvanic.ai/plans/6db35572-aa9b-45cd-85c2-3c73eb35ebc9] ("QA-DEMO ZP-5281 17 Nov disjoint choices B+E"; left with Access = Lift)
+* Service E: [https://acme.qa.egalvanic.ai/services/751591c2-aca7-4e64-9cd2-724d3bd1fca4]
+* Service B: [https://acme.qa.egalvanic.ai/services/598cb2b4-a13e-4981-97a4-51d8ba8127b9]
+
+!QA-17Nov-BUG-disjoint-choices-never-answerable-1-E-access-choices-stairs-scaffold.png|width=640!
+_Context: Scaffold (E) asks Access with stairs and scaffold only._
+!QA-17Nov-BUG-disjoint-choices-never-answerable-2-header-1-answer-required-access-not-answered.png|width=640!
+_FAIL (defect): built with Access = Easy, the Pricing tab shows Access "Not answered" and "1 answer required"._
+!QA-17Nov-BUG-disjoint-choices-never-answerable-3-dropdown-never-offers-E-choices.png|width=640!
+_FAIL (defect): the dropdown offers only Easy and Lift. E's stairs and scaffold are never offered._
+!QA-17Nov-BUG-disjoint-choices-never-answerable-4-after-picking-lift-still-unanswered.png|width=640!
+_FAIL (defect): after picking Lift (B is now priced with Lift, $1,050), Access still reads "Not answered" and the header still says "1 answer required"._

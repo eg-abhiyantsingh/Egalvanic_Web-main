@@ -1,0 +1,43 @@
+!QA-17Nov-ZP-4937-negative-delta-video-steps.mp4|width=720!
+_Video (58 s, QA build index-oFAZQ3rK.js, 17 Nov 2026). A FLIR photo with a cold-first delta (Dt1 = Sp2 − Sp1 = −85.7 °F) and a hot-first one (Dt2): the "Which delta?" previews, the separate-boxes case, the Add Issue form from the negative delta (cancelled), the stored issue made from it, and the Ambient note._
+
+*Result: PASS* (Similar criteria, create and link). Two product notes below; both are written down in PR #2019 and are not new bugs.
+*Build:* QA index-oFAZQ3rK.js, 17 Nov 2026, 11:22–11:57 IST. Super Admin seat. Fix: eg-pz-frontend PR #2019. The ticket's data (IR_4910 / IR_4912) is on stage, so I built the same case on QA.
+
+*Steps*
+# Open the work order "QA-DEMO ZP-4888 FLIR-IND retest" › IR Photos › QA4888r-FLIRDemo-with-visual › Edit IR Annotations. Sp1 reads 160.8 °F (hot) and Sp2 75.2 °F.
+# Annotations › Add delta: Sp2 then Sp1, giving Dt1 = Sp2 − Sp1 = −85.7 °F (cold first). Then Sp1 then Sp2, giving Dt2 = +85.7 °F.
+# Issues › Create issue › "Which delta?" › Dt1. Preview: Problem Temp 160.8 °F (Sp1), Reference Temp 75.2 °F (Sp2). Dt2 gives the same preview.
+# Save & create issue from Dt1. The form shows Priority Critical, Severity Criteria Similar, Problem 160.8, Reference 75.2, Delta T 85.6, Severity Critical. On 16 Oct it was Nominal / Low with the temperatures swapped.
+# Issues created from Dt1 and from Dt2 hold the same stored values (GET /api/issue/<id>): Problem 160.9 °F, Reference 75.2 °F, Delta T 85.7 °F, Severity Critical, priority Critical, and 1 Severity Criteria entry. Sp1 read 160.9 °F when these were created. The create body's origin has a = Sp1 (hot), b = Sp2.
+
+*Also checked*
+* Separate boxes, cold box first: Dt3 = Bx3 − Bx2 = −67.9 °F gives Problem 154.7 °F (hot box max), Reference 74.8 °F (cold box min). The other order, Dt4 = +79.8 °F, gives the same: PASS.
+* Linking the negative Dt1 to the Similar issue turns it round: the PUT sends Problem 160.9, Reference 75.2, Critical / Critical: PASS.
+* Linking the negative Dt1 to an issue on Ambient criteria keeps the pick order (by design in the PR), with 1 Severity Criteria entry. See note 2.
+* Overlapping boxes and spot vs box, positive deltas, are kept as drawn (as in the PR): Dt5 154.7 / 72.0, Dt6 169.0 / 74.8, Dt7 75.0 / 72.0, Dt8 75.2 / 72.0.
+* With the editor in °C: the deltas show −47.6 / +47.6 °C, and the preview assigns the same spots.
+
+*Notes for product (not bugs, both written down in PR #2019)*
+# Overlapping markers still depend on pick order. On this photo, the cold box against the big box gives +3.0 °F (Dt7, Problem 75.0 °F) in one order and +94.1 °F (Dt6, Problem 169.0 °F) in the other. The PR lists this as a follow-up that needs a decision (hotspot or largest difference).
+# Ambient plus a negative delta. After linking Dt1 to the Ambient issue, the issue reads Problem 75.2, Reference 160.9, Severity Nominal, priority Low, and Delta T 85.7 °F (screenshot 4). It is consistent with "B is the air", but no warning is shown. Please decide whether that path needs one.
+
+*Not covered:* the stage repro data (QA only this round); circle and line markers; a zero delta; roles other than Super Admin; the ZP-5037 part of the same PR. Mobile not checked (the IR editor's delta tool is web only).
+
+*Test data*
+* Work order: https://acme.qa.egalvanic.ai/sessions/9c6101aa-6624-4083-901c-dba6ceef85d5 (photo QA4888r-FLIRDemo-with-visual.jpg, with my markers Sp2, Bx1–Bx4 and deltas Dt1–Dt8)
+* Issue from the negative delta: https://acme.qa.egalvanic.ai/issues/33d51714-cbb4-41a8-98e1-e3c67313b9e3
+* Issue from the positive delta (later linked to Dt1): https://acme.qa.egalvanic.ai/issues/a8515809-ba5c-4231-9480-e887407d6427
+* Ambient issue (linked to Dt1): https://acme.qa.egalvanic.ai/issues/fe6fd01e-5f3a-4357-927f-ff04b77123ca
+
+!QA-17Nov-ZP-4937-2-which-delta-dt1-negative-problem-is-hot-spot.png|width=640!
+_1. PASS (expected): with the negative Dt1 (Sp2 − Sp1) picked, Problem Temp is the hotter spot Sp1 at 160.8 °F (green)._
+
+!QA-17Nov-ZP-4937-4-add-issue-form-from-negative-delta.png|width=640!
+_2. PASS (expected): the Add Issue form from the negative delta shows Priority Critical, Problem 160.8, Reference 75.2, Delta T 85.6, Severity Critical._
+
+!QA-17Nov-ZP-4937-5-stored-issue-from-negative-delta.png|width=640!
+_3. PASS (expected): the stored issue made from the negative delta shows Critical, Problem 160.9 °F, Reference 75.2 °F, Delta T 85.7 °F, Severity Critical._
+
+!QA-17Nov-ZP-4937-6-NOTE-ambient-link-keeps-pick-order-nominal.png|width=640!
+_4. Note (by design in the PR, for product to decide): after linking the negative Dt1 to an Ambient issue, it shows Problem 75.2, Reference 160.9, Severity Nominal and priority Low, while Delta T reads 85.7 °F (orange)._

@@ -1,0 +1,22 @@
+!QA-17Nov-ZP-5119-android-ir-key-note-no-overlap.mp4|width=360!
+_Video, 28 s, Android 1.39 (53), QA, 17 Nov 2026: IR tab in portrait, typing in the search box, then landscape._
+
+*Result: PASS.* Confirmed on device: the IR photo key note does not overlap the search box on Android, so no Android change is needed (as Rajat found).
+
+*Build:* Android 1.39 (53) QA, the latest build in App Tester. Emulator 1080 × 2400, density 420. Super Admin seat, Field Technician view.
+
+*Steps*
+# Android Site 2 › Work Orders › "Job - Nov 6, 12:03 PM" (FLIR-IND, 2 IR photos) › IR tab.
+# Portrait: the search box ends at 464 px and the note "Uploaded file names will be used as the IR and visual photo keys." starts at 506 px. That is 42 px = 16 dp of space. No overlap.
+# Type "New ats" in the search box: the list filters, the clear (x) button appears, and the note stays where it is (still 16 dp below).
+# Rotate to landscape: the box is at 252–399 px and the note at 441–478 px, still 16 dp apart.
+
+*Not covered:* a FOTRIC-IND work order and a real tablet. Android shows the same one-line note for every photo type, so the layout is the same.
+
+*Test data:* work order https://acme.qa.egalvanic.ai/sessions/7d2ba67a-49a0-4e91-8973-f7cd5e4f2673 (Android Site 2). Nothing was changed.
+
+!QA-17Nov-ZP-5119-portrait-note-below-search.png|width=300!
+_PASS (expected): portrait, the orange key note sits below the search box with a gap._
+
+!QA-17Nov-ZP-5119-landscape-note-below-search.png|width=640!
+_PASS (expected): landscape, the note is still below the box._

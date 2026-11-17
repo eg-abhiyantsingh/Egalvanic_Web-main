@@ -1,0 +1,47 @@
+!QA-17Nov-ZP-5280-video-steps.mp4|width=720!
+_Video (48 s): new quote with services A, B and C, only Square footage answered. It prices $1,350 sell / $450 cost from labor × rate, with no "Generate RFQ" and no "sub quote to enter". After the other 3 answers it prices $4,250 by the service equations._
+
+*Result: PASS on QA* (build index-oFAZQ3rK.js, 17 Nov 2026, Super Admin + Project Manager + Account Manager)
+
+*Steps*
+# Sales › Quotes › New Quote (Standard), Facility "QA-DEMO ZP-5108 ZP-5109 12 Nov".
+# Build Quote: add "QA-DEMO ZP-5254 13 Nov Visual (A)", "… Torque (B)" and "… Testing (C)".
+# PRICING QUESTIONS: Square footage = 2000; leave the other 3 blank › Generate Quote.
+# Check the Pricing tab and GET /api/plans/\{id\}.
+# Answer Number of stories 3, Crew size 2 and Access Lift in Pricing inputs.
+
+*Actual (as expected now)*
+* Step 4: *$1,350 sell / $450 cost* (9 h × $150), as the dialog promises ("until then those services price from labor and rates").
+** The labor line is own crew (Sub: No).
+** No "Generate RFQ", no "Pending: sub quote to enter".
+** The header says "3 answers required".
+** API: one labor line, 9 h, subcontracted false, cost 450, sell 1350; pending_subs \[\].
+* Partly answered (stories + crew): C prices by equation ($1,050) and A + B fall back to labor × rate ($900), for $1,950.
+* All answered: *$4,250* (A $2,100 + B $1,100 + C $1,050), the same as on 13 Nov.
+* Clearing Square footage again gives $1,950. Clearing everything gives $1,350.
+* Control: setting Journeyman to Sub = Yes on purpose still shows "Generate RFQ" and "Pending: 1 sub quote to enter". A real subcontract is still treated as one.
+* Customer View: "$1,350 price", Journeyman 9 h at $150/hr. No $0 line.
+* Frontend notice (PR #2033): on a walk-sourced quote, clearing an answer in Show calculation shows "1 unanswered question — until they're filled in below, this service prices from labor and rates."
+* Project Manager and Account Manager seats see the same $1,350, "3 answers required" and no RFQ on the same quote.
+
+*Not covered*
+* EMP wizard path (no EMP quote built today).
+* Backend PR #1817 diff (no access to that repo).
+* Mobile (web Sales screen).
+
+*Note:* unanswered questions do not raise an Action Item. Mark as Sent on these quotes is greyed only by the de-energized Shutdown approval. A quote can be sent at the labor × rate fallback price, with the "N answers required" header as the only warning. That matches the ticket's expected behaviour.
+
+*Test data*
+* Matrix quote (left with only Square footage answered): [https://acme.qa.egalvanic.ai/plans/06fc41b2-cb31-43e2-a0c0-8ee0e98e6f6c]
+* Video quote: [https://acme.qa.egalvanic.ai/plans/20fa3229-e82e-4a5a-935f-8ffd315247bf]
+* Ticket's quote (now $1,950, C priced, A + B on labor × rate): [https://acme.qa.egalvanic.ai/plans/01a369be-5daa-4bac-a140-d00858125f36]
+* Walk-sourced quote (restored): [https://acme.qa.egalvanic.ai/plans/fd5283de-8efd-4fb4-a895-d0c1d5cc2f0c]
+
+!QA-17Nov-ZP-5280-1-sqft-only-priced-from-labor-and-rates.png|width=640!
+_PASS (expected): only Square footage answered. $1,350 sell from labor × rate, labor Sub No, no RFQ, "3 answers required"._
+!QA-17Nov-ZP-5280-2-all-answered-4250-regression.png|width=640!
+_PASS (expected, regression): all answered = $4,250 priced by the service equations, green check._
+!QA-17Nov-ZP-5280-3-control-real-subcontract-still-generate-rfq.png|width=640!
+_PASS (expected, control): a labor type set to Sub = Yes on purpose still shows "Generate RFQ" and a pending sub quote._
+!QA-17Nov-ZP-5280-4-walk-quote-notice-new-wording.png|width=640!
+_PASS (expected): the per-work-order notice now says the service "prices from labor and rates" until answered._

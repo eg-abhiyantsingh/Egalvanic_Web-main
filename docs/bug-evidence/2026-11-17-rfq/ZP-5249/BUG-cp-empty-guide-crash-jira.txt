@@ -1,0 +1,26 @@
+!QA-17Nov-ZP-5249-BUG-CP-empty-guide-button-throws.mp4|width=720!
+_Video: a Client Portal user opens Getting started, sees a guide with no workflows, clicks its only button, and nothing happens (browser error)._
+
+h3. Simple explanation
+A Client Portal user has no workflow they can do, but the guide still opens by itself on first sign-in and is listed under Help. It is empty and says "Getting started is complete". Its only button, "Revisit workflow 1", crashes with a JavaScript error.
+
+*Where:* Help → Getting started, https://acme.qa.egalvanic.ai/maintenance-portal/site-overview
+*Environment:* QA, company EG-ACME, build index-oFAZQ3rK.js, Chrome, Client Portal seat. Related: ZP-5249.
+
+*Steps*
+# Sign in as a Client Portal user (or open Help → Getting started).
+# Read the guide.
+# Click "Revisit workflow 1".
+
+*Actual:*
+* The guide opens with no workflows. The text starts with ", step by step." and says "Your next step · All 0 workflows", "Getting started is complete", "0 of 0 workflows complete".
+* "Revisit workflow 1" closes the dialog and nothing opens. Browser error: "TypeError: Cannot read properties of undefined (reading 'key')" (index-oFAZQ3rK.js, onClick).
+
+*Expected:* a seat with no workflows gets no guide. No auto-open, and Help goes straight to Z University, as it already does when the company switch is off.
+
+*Controls:* staff seats get 1–5 workflows and the button opens the first one.
+
+*Possible cause:* Layout's hasGettingStarted checks workflows.length > 0 (availableWorkflows), but the guide shows stages (availableStages), which drops every step this seat lacks permission for. That leaves stages = \[\]. The overview then treats it as "complete", and next.stage = stages\[0\] = undefined goes into openStage(undefined.key).
+
+!QA-17Nov-ZP-5249-BUG-CP-empty-guide.png|width=640!
+_FAIL (defect): the Client Portal guide has no workflows, the text starts with ", step by step", and it claims "Getting started is complete"._

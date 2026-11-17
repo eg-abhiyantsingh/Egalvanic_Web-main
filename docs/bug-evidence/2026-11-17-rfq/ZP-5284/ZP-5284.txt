@@ -1,0 +1,40 @@
+!QA-17Nov-ZP-5284-upload-anything-scope-video.mp4|width=720!
+_Video (41 s, QA build index-oFAZQ3rK.js, 17 Nov 2026). The Project Manager test seat (not staff) can't pick the unassigned site. Its calls for that site's Upload Anything job now return no data. The last screen shows the controls and the other roles from the same build._
+
+*Result: PASS (web/API).* A user who can't reach a site no longer gets that site's Upload Anything job or workbook link. This was checked for the Project Manager, Account Manager, Electrical Engineer and Facility Manager seats. The staff seat, and users assigned to a site, still get their own site's job.
+
+*Build:* QA index-oFAZQ3rK.js, 17 Nov 2026, 11:20–11:42 IST. Seats: Project Manager (122 sites, site C not one of them), Account Manager, Electrical Engineer, Facility Manager, Client Portal; Super Admin (staff) as the positive control. Fix: eg-pz-backend PR #1816.
+
+*Steps (the 13 Nov repro)*
+# As the Project Manager seat, open Assets and type "QA-DEMO ZP-5243 13 Nov UA job" in the site picker. Only "UA job A looks good" is offered; "UA job C scope" is not (not assigned). PASS.
+# In the same session, call GET /api/onboarding/jobs/active?sld_id=<site C>: *400 \{"error":"site not found"\}*, no job. On 13 Nov this returned 200 with the whole job.
+# GET /api/onboarding/jobs/<job C>/status, /result and /markup: *400 \{"error":"job not found"\}*, no job and no workbook link. On 13 Nov /result returned 200 with a download link.
+# Writes, same user: POST …/feedback \{"verdict":"ok"\} → 404 job not found; POST …/cancel and …/imported → 400 job not found. Submitting a small QA-DEMO .txt to site C (POST /api/onboarding/jobs) → 400 site not found, and no job was created. "Request revision" was never sent.
+# Account Manager, Electrical Engineer and Facility Manager give the same answers. Client Portal → 422 permission_denied (needs bulk_operations.view), as before.
+# A made-up job id and a made-up site id give the same 400 answers, so a response doesn't show whether a job exists. Another company's site id → 400 site not found. GET /api/onboarding/jobs → 405 (there is no list endpoint).
+
+*Controls (same build):*
+* The Super Admin (staff) seat gets 200 + job C from all three reads.
+* The Project Manager and Account Manager get 200 + job A + workbook link on their own site.
+* The Electrical Engineer gets 200 + its own older job (status, result, link).
+* The Project Manager's other assigned sites without a job still answer 200 with no job, so the "Let's get your assets in" invite is unaffected.
+
+*Note:* refused reads answer 400. The feedback call answers 404 for the same case, and on 13 Nov a made-up id answered 404. No data comes back either way, so this is only about status-code consistency.
+
+*Not covered:* PUT …/markup, …/markup/normalize and …/markup/apply for an unassigned seat (not sent, because they could change data); another company's real job id. Mobile: not applicable (Upload Anything is web-only).
+
+*Test data*
+* Site picker: https://acme.qa.egalvanic.ai/assets
+* https://acme.qa.egalvanic.ai/api/onboarding/jobs/active?sld_id=7a1af0cb-156e-4e4c-869b-1e41b254da44 (site C, "QA-DEMO ZP-5243 13 Nov UA job C scope")
+* https://acme.qa.egalvanic.ai/api/onboarding/jobs/36b01bd9-d815-4a32-bd9e-ce19d6f7903b/status
+* https://acme.qa.egalvanic.ai/api/onboarding/jobs/36b01bd9-d815-4a32-bd9e-ce19d6f7903b/result
+* Control: https://acme.qa.egalvanic.ai/api/onboarding/jobs/active?sld_id=74415f17-82eb-4fc0-a737-6992f6630ddf ("UA job A looks good", assigned to PM and AM)
+
+!QA-17Nov-ZP-5284-1-pm-site-picker-site-not-offered.png|width=640!
+_1. PASS (expected): the Project Manager's site picker does not offer the unassigned site C (green)._
+
+!QA-17Nov-ZP-5284-2-pm-reads-refused-no-job-data.png|width=640!
+_2. PASS (expected): the same session gets 400 "site not found" / "job not found" for site C and job C, the same answer as a made-up id, with no job data or link (green)._
+
+!QA-17Nov-ZP-5284-3-controls-and-roles.png|width=640!
+_3. PASS (expected): the AM, EE and FM seats are refused too and CP is refused by permission (green). The staff seat still gets job C and assigned users get their own site's job (orange = positive control)._

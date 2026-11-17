@@ -1,0 +1,48 @@
+!QA-17Nov-ZP-5274-company-roles-video.mp4|width=720!
+_Video (45 s, QA build index-oFAZQ3rK.js, 17 Nov 2026). First, the permission table for every QA seat on EG-ACME. Then the Technician test seat opens Assets on EG-ACME. Then the same user switches to Demo Company as a guest and gets "Web Access Restricted". Last, the /auth/v2/me fields side by side._
+
+*Result: PASS for everything QA can test → READY TO RELEASE.*
+* No regression from PR #1813: every QA seat except Technician has the same permissions, menu and field_limits as before.
+* The one company override on QA (EG-ACME grants platform.web to Technician) stays inside EG-ACME.
+* Not covered: adding or removing an override needs a DB row, so QA could not run the add/remove checks (see "Not covered").
+* Two questions for the developer (no bug filed):
+** For a guest, has_web_access in /auth/v2/me still follows the home company (step 4). The web app restricts correctly, so QA found no visible effect. Does any client read this field?
+** The Technician role lost 6 permissions in every company that were not announced (step 5). Please confirm they are intended.
+
+*Build:* QA index-oFAZQ3rK.js, 17 Nov 2026, 11:15–11:45 IST. Seats: Super Admin, Admin, Project Manager, Account Manager, Electrical Engineer, Facility Manager, Client Portal, Technician, Portal Sales test seats, plus a second Technician seat. Companies: EG-ACME and Demo Company. No LaunchDarkly flag is involved.
+
+*Steps and results*
+# For every seat on EG-ACME, compare GET /api/auth/v2/me (permissions, roles, has_web_access, field_limits) and GET /api/features/access (menu) with the counts captured on 12 and 13 Nov, before the PR. Super Admin 138, Admin 114, Project Manager 101, Account Manager 83, Electrical Engineer 84, Facility Manager 79 and Client Portal 36: all the same. Full sets for Super Admin, Admin, Project Manager and Client Portal match 22 Oct / 5 Nov, apart from assemblies.manage (already there on 12 Nov). Menu features are identical. field_limits are unchanged. Portal Sales still gets "Web Access Restricted". PASS.
+# /auth/me, /auth/v2/me and /features/access return the same permission set for every seat. 422 permission_denied responses (for example GET /api/mutations for Project Manager) are unchanged. The role picker lists the same 10 platform roles as on 12 Nov, and no company role exists. PASS.
+# Two Technician users on EG-ACME get the identical set (89, including platform.web). The same Technician user, as a guest in Demo Company, gets 88 permissions without platform.web, and the web app shows "Web Access Restricted". So the EG-ACME grant does not reach another company, and the guest gets the host company's permissions. PASS.
+# In Demo Company, the same guest's /auth/v2/me still says has_web_access: true. In EG-ACME it is correctly true. *Question (no visible effect found):* has_web_access seems to use the home company, not the acting company. The web app still shows "Web Access Restricted" correctly.
+# Technician compared with 5 Nov:
+#* Gone in both companies: bulk_operations.manage, folders.manage, forms.manage, reports.manage (announced on ZP-5293).
+#* Also gone, not announced: data.export, features.opportunities.view, features.planning.view, features.scheduling.view, features.site_overview.view, features.tasks.view. The Opportunities, Scheduling, Tasks, Site Overview, Report Builder and Forms menu entries are gone for every company's Technicians.
+#* The ZP-5293 comment says schedules and tasks stay. Please confirm these 6 are intended.
+#* platform.web is granted on EG-ACME only.
+# Admin UI: by design (plan §5) there is no screen or API to edit role permissions. Admin › Platform Users › Edit User › Roles still opens and lists the roles. I cancelled without saving.
+
+*Not covered:*
+* A controlled grant/revoke, and removing an override. QA needs one row inserted on QA, for example revoke features.customers.view from Project Manager on EG-ACME (plan §9). I'll re-check menu and API on EG-ACME and Demo, then check again after the row is deleted.
+* The admin-role and non-grantable guard rails.
+* Mobile SLD permission (deferred).
+* Mobile apps not checked (ZP-5275 / ZP-5276).
+
+*Test data*
+* https://acme.qa.egalvanic.ai/api/auth/v2/me and https://acme.qa.egalvanic.ai/api/features/access (each seat)
+* https://acme.qa.egalvanic.ai/api/users/roles/company/d59d449b-09d8-45d6-8f0a-ef70024b1293
+* https://demo.qa.egalvanic.ai/api/auth/v2/me (Technician as a guest, Demo Company 93611164-13e6-47da-b2cd-a150e73173f6)
+* https://acme.qa.egalvanic.ai/assets (Technician on EG-ACME)
+
+!QA-17Nov-ZP-5274-1-role-regression-table.png|width=640!
+_1. PASS (expected): every seat except Technician matches its 12/13 Nov counts and older full sets (green). Technician (orange) changed after 16 Nov because of ZP-5293 work._
+
+!QA-17Nov-ZP-5274-3-tech-guest-demo-web-restricted.png|width=640!
+_2. PASS (expected): the EG-ACME Technician grant does not reach Demo Company. There the same user gets "Web Access Restricted" (green)._
+
+!QA-17Nov-ZP-5274-4-guest-has-web-access-mismatch.png|width=640!
+_3. Question for the developer: in Demo Company, platform.web is not in the permissions, but has_web_access is still true (red cell). The web app still restricts correctly._
+
+!QA-17Nov-ZP-5274-2-tech-eg-acme-web-app.png|width=640!
+_4. Context: on EG-ACME the same Technician opens Assets in the web app (company grant of platform.web)._

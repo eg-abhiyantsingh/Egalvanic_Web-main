@@ -1,0 +1,47 @@
+!QA-17Nov-ZP-5285-skm-names-video-steps.mp4|width=720!
+_Video (56 s, QA build index-oFAZQ3rK.js, 17 Nov 2026). The ticket's own repro on "QA-DEMO BUG SKM names 13 Nov": TX-1 (44 characters) › SLD › Export Engineering XML › the file now has the full name › Assets › SKM › Import (Full) with the same file › Update 2 assets › TX-1 still has its full name. The video ends with the edge rows from my own site._
+
+*Result: PASS.* An SKM round trip no longer shortens long asset names.
+*Build:* QA index-oFAZQ3rK.js, 17 Nov 2026, 11:24–11:34 IST. Super Admin seat. Fix: eg-pz-backend PR #1814.
+
+*Steps (ticket repro, UI path)*
+# TX-1 had been left as "QA-DEMO BUG TX-1 long nam" by the 13 Nov bug. I set it back to "QA-DEMO BUG TX-1 long name round trip 13 Nov" (44 characters) first.
+# SLD › Export › Export Engineering XML › Export Engineering XML. The file now has s:name="QA-DEMO BUG TX-1 long name round trip 13 Nov" (full name; 13 Nov: first 25 characters only).
+# Assets › SKM › Import (Full) › the same, unchanged file › Analyze. Review: "2 existing assets will be updated", and TX-1 shows its full name with a plain "Update".
+# Update 2 assets. The commit returns updated_nodes 2, created_nodes 0, removed_edges 0.
+# Result: TX-1 is still "QA-DEMO BUG TX-1 long name round trip 13 Nov". TX-2 (22 characters) is unchanged.
+
+*Edge cases on my own site "QA-DEMO ZP-5285 17 Nov" (8 transformers, all pass)*
+* Unchanged export + re-import: all names were kept, with lengths 24, 25, 26 and 60. Also kept: a 36-character name whose 25th character is a space, and "QA-DEMO 5285 "A&B" <TX> é°C ü #1/2 17 Nov" (41 characters, with é as the 25th character). The XML escapes it correctly and is well-formed. Two names share their first 25 characters. kVA and %Z are unchanged.
+* A file with every name cut to 25 characters (what the old export wrote): all 8 full names kept. That includes two components with the same 25-character name in one file.
+* The 13 Nov file (TX-1 written as "QA-DEMO BUG TX-1 long nam") re-imported on the ticket site: TX-1 keeps its 44-character name.
+* Real renames typed into the file still apply:
+** "QA-DEMO 5285 SKM rename";
+** "QA-DEMO ZP-5285 TX 26 chZ" (25 characters, not a cut);
+** "QA-DEMO ZP-5285 TX 60" (a 21-character shortening).
+** I put each name back afterwards.
+
+*Notes for the developer (not blocking)*
+# Names longer than 25 characters now go to SKM, up to 60 characters in this test. The ticket asked whether PTW needs short names. I could not check PTW itself. If PTW cuts names, the importer now keeps the full eGalvanic name, so the round trip is safe.
+# The review row looks the same whether the name will change or not. Compare screenshot 4, where the name is kept, with the R2 rename, where the name changes: both show "Update <current name>". A "name will change from … to …" line would make the difference clear.
+
+*Not covered:* SKM PowerTools itself; asset classes other than transformers; roles other than Super Admin. Mobile not checked (SKM is web only).
+
+*Test data*
+* Ticket asset TX-1: https://acme.qa.egalvanic.ai/assets/69c1dc30-da5a-4289-b638-6f585a5d5f92 (name restored to 44 characters)
+* Control TX-2: https://acme.qa.egalvanic.ai/assets/f0d37de7-c1d1-409d-b01c-f2c2ada12c32
+* My site's assets: https://acme.qa.egalvanic.ai/assets (site "QA-DEMO ZP-5285 17 Nov", SLD bf23e07f-8525-4378-be5a-bfda14fa3089), for example https://acme.qa.egalvanic.ai/assets/b7ecf268-9cef-4a76-bb30-971aa0b65ff5 (60 characters)
+* SLD export page: https://acme.qa.egalvanic.ai/slds
+* Files: QA-17Nov-ZP-5285-ticket-site-exported.xml, QA-17Nov-ZP-5285-own-site-exported.xml, QA-17Nov-ZP-5285-own-site-names-cut-to-25-crafted.xml, QA-17Nov-ZP-5285-own-site-prefix-and-25char-renames-crafted.xml
+
+!QA-17Nov-ZP-5285-2-exported-xml-full-name.png|width=640!
+_1. PASS (expected): the exported file carries TX-1's full 44-character name (green)._
+
+!QA-17Nov-ZP-5285-3-import-review-full-name.png|width=640!
+_2. PASS (expected): re-importing the same file, the review shows TX-1 with its full name and a plain "Update"._
+
+!QA-17Nov-ZP-5285-4-asset-name-after-reimport-PASS.png|width=640!
+_3. PASS (expected): after "Update 2 assets", TX-1 still has its full name._
+
+!QA-17Nov-ZP-5285-6-review-cut-name-kept-NOTE.png|width=640!
+_4. PASS (expected), with a note: importing the 13 Nov file (TX-1 written as "…long nam") keeps the full name. The review row (orange) still looks like a rename, which is note 2._

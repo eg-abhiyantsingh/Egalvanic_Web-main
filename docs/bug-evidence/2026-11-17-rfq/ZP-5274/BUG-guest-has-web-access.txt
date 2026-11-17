@@ -1,0 +1,42 @@
+!QA-17Nov-BUG-guest-has-web-access-video.mp4|width=720!
+_Video (35 s, QA build index-oFAZQ3rK.js, 17 Nov 2026). The Technician test seat opens Assets on EG-ACME (its home company). It then switches to Demo Company, where it is a guest, and gets "Web Access Restricted". The last screen shows the /auth/v2/me fields from both companies._
+
+h3. Simple explanation
+* After ZP-5274, a company can grant or revoke a permission for a role. On QA, EG-ACME grants platform.web (web access) to Technician.
+* When an EG-ACME Technician works in another company as a guest, they should get that company's permissions. They mostly do: in Demo Company, platform.web is gone from the permissions list and the web app shows "Web Access Restricted".
+* But the has_web_access field in the same /auth/v2/me response still says *true*. It seems to be worked out from the home company (EG-ACME), not the company the user is acting in.
+
+*Where:* GET /api/auth/v2/me (field has_web_access) for a guest user acting in another company.
+
+*Environment:* QA. Home company EG-ACME (https://acme.qa.egalvanic.ai), guest company Demo Company (https://demo.qa.egalvanic.ai). Technician test seat. Web build index-oFAZQ3rK.js, backend with PR #1813. 17 Nov 2026, 11:30 IST.
+
+*Steps*
+# Sign in to https://acme.qa.egalvanic.ai as the Technician test seat (home company EG-ACME, guest in Demo Company).
+# Open https://acme.qa.egalvanic.ai/api/auth/v2/me: has_web_access = true, permissions contain platform.web (89 permissions). The web app opens.
+# Switch to Demo Company with the app's workspace switch call: POST /api/guest-access/switch \{"company_id": "93611164-13e6-47da-b2cd-a150e73173f6"\}, then open the returned handoff link https://demo.qa.egalvanic.ai/auth/switch#code=… (the same calls the app's company switcher makes).
+# The web app shows "Web Access Restricted".
+# Open https://demo.qa.egalvanic.ai/api/auth/v2/me.
+
+*Actual:* is_guest = true, company_name = Demo Company. permissions has 88 entries and *no* platform.web. But has_web_access = *true*.
+
+*Expected:* has_web_access = false, matching the permissions list. The ZP-5274 plan says has_web_access must use the acting company (guest_access.acting_company_id), the same as permissions.
+
+*Controls*
+* The same user on EG-ACME: has_web_access true and platform.web present (consistent).
+* Portal Sales seat on EG-ACME (no platform.web): has_web_access false (consistent).
+* A second EG-ACME Technician seat: same 89 permissions as the first, so the EG-ACME value is a company setting, not a per-user one.
+
+*Impact:* the web app reads the permissions list, so it blocks correctly. Anything that reads has_web_access instead could let this user through in the guest company: ZP-5293 says the backend's web check uses has_web_access, and the mobile apps may read it too. Low today (only EG-ACME has the grant on QA), but it will matter for EC Powers Life Technicians who work as guests elsewhere.
+
+*Possible cause (for the developer to confirm):* in app/services/permission_service.py, has_web_access may still read the role's permissions with the user's home company, or call the resolver without the acting company id. get_user_permissions already uses the acting company.
+
+*Not checked:* mobile apps; other granted permissions in guest context (only platform.web has a company override on QA today).
+
+!QA-17Nov-BUG-guest-has-web-access-1-demo-web-restricted.png|width=640!
+_1. In Demo Company the guest Technician correctly gets "Web Access Restricted" (green)._
+
+!QA-17Nov-BUG-guest-has-web-access-2-me-has-web-access-true.png|width=640!
+_2. FAIL (defect): /auth/v2/me in Demo Company has no platform.web in the permissions, but has_web_access is true (red row)._
+
+!QA-17Nov-BUG-guest-has-web-access-3-control-eg-acme-web-opens.png|width=640!
+_3. Control: on EG-ACME (home) the same user has platform.web, and the web app opens Assets._

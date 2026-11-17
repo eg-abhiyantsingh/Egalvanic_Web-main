@@ -1,0 +1,30 @@
+!QA-17Nov-ZP-5249-BUG-FM-sent-to-screens-it-cannot-open.mp4|width=720!
+_Video: a Facility Manager opens Getting started, gets Asset Onboarding and One-Line Diagram, and every button lands on Site Health._
+
+h3. Simple explanation
+A Facility Manager only has the Maintenance Portal menu. The guide still offers two workflows, Asset Onboarding and One-Line Diagram, that send the user to Site Data › Assets and Engineering › SLD. Those screens bounce this seat to Site Health, so the user is told to press buttons they will never see. One item is even ticked although the user never saw that screen. The open card also calls an API this seat is refused, every ~8 s.
+
+*Where:* Help → Getting started, https://acme.qa.egalvanic.ai/maintenance-portal/site-overview
+*Environment:* QA, company EG-ACME, build index-oFAZQ3rK.js, Chrome, Facility Manager seat. Related: ZP-5249 (ZP-4892).
+
+*Steps*
+# Sign in as a Facility Manager. The guide opens (or use Help → Getting started).
+# Note the workflows: Asset Onboarding (5 ways) and One-Line Diagram.
+# Click Asset Onboarding.
+# In the card, click "Go to Assets".
+# Type /slds in the address bar.
+
+*Actual:*
+* Step 3 lands on /maintenance-portal/overview (Site Health), not Assets. The card says "Open Site Data › Assets", "Click + Create Asset", "Open Engineering › SLD", "Unlock editing…". This seat has no Site Data or Engineering menu.
+* "Open Site Data › Assets" shows a green tick, although the page never opened.
+* "Go to Assets" and /slds also land on Site Health. /locations, /customers, /sessions and /opportunities do the same.
+* While the card is open: POST /api/account/by-company/<company>/v2 → 422 "permission_denied", 9 times in ~50 s, and the console shows the error "\[mainAPIService\] API call failed … permission_denied".
+
+*Expected:* the Facility Manager gets only workflows whose screens this seat can open (for example the portal's own Assets screen), or no guide. No refused API calls from the guide.
+
+*Controls:* Project Manager / Electrical Engineer / Technician get only workflows that match their menus, and the screens open. The Facility Manager does have Maintenance Portal › Assets (/maintenance-portal/assets).
+
+*Possible cause:* availableWorkflows / availableStages use canReachNavPath("/assets"), which is true for this seat, while the router redirects Tier-2 portal seats to /maintenance-portal/overview. The customer check (findNewCustomer → /account/by-company/:id/v2) runs on every pass even when the Customer & Site stage is not offered to the seat.
+
+!QA-17Nov-ZP-5249-BUG-FM-sent-to-screens-it-cannot-open.png|width=640!
+_FAIL (defect): after clicking Asset Onboarding the Facility Manager is on Site Health; the card tells them to "Open Site Data › Assets" (already ticked) and "Click + Create Asset"._

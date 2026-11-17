@@ -1,0 +1,31 @@
+!QA-17Nov-ZP-5249-BUG-colleague-site-ticks-my-step.mp4|width=720!
+_Video: user A starts Customer & Site Setup and creates nothing. User B adds a site in another browser, and A's card turns "Complete" with B's site name._
+
+h3. Simple explanation
+The guide says each step is "verified against what you saved". But the "Add the customer and site" step ticks as soon as ANY new site appears in the company, made by anyone. The card then adopts that site as "your" tour site. In a company where several people work, a new user's first step can complete by itself, and the later checks then run on someone else's site.
+
+*Where:* Help → Getting started → Customer & Site Setup (progress card), https://acme.qa.egalvanic.ai/customers
+*Environment:* QA, company EG-ACME, build index-oFAZQ3rK.js, Chrome. User A = Super Admin seat, user B = Admin seat. Related: ZP-5249.
+
+*Steps*
+# User A: sign in, open Help → Getting started and click Customer & Site Setup. The card shows "0 of 2 done".
+# User A does nothing else.
+# User B (a different login, another browser): Admin › Customers → pick any customer → + Add Site → fill in the name and address → Verify address → Add Site.
+# Watch user A's card for up to 10 s.
+
+*Actual:* about 2–6 s after B's save, A's card shows "Site: QA-DEMO ZP-5249 17 Nov colleague site 2 · 1 of 2 done · Add the customer and site: Complete" (reproduced twice: colleague site 1 and 2). It also happened by itself during normal testing at 11:25 IST: my tour adopted another tester's site "QA-DEMO ZP-5285 17 Nov". That site has no customer at all, yet "Add the customer and site" showed Complete.
+*Expected:* only a customer and site saved by the reader (the signed-in user) completes the step, and the card names the reader's own site.
+
+*Controls*
+* Same flow done by the reader (create customer C, then site C): the step ticks 1–5 s after the save and names "Site C". That is correct.
+* Cancelled New Customer dialog: nothing ticks. That is correct.
+
+*Possible cause:* userGuideChecks.js findNewSite() takes the newest site visible to the user that was not in the start baseline (fetchUserSLDs), with no creator filter. The customer item is set true whenever any site is found. Work Order Setup and Quote Creation use the same "made since the tour started" rule on company-wide lists (fetchSessionsByCompany, getCompanyQuotesV2), so a colleague's new work order or quote probably ticks those too. That part was read in the code, not run.
+
+*Test data (QA):* customer https://acme.qa.egalvanic.ai/accounts/0120b301-34f3-47ad-ba08-49c9aa208e99 (sites "QA-DEMO ZP-5249 17 Nov colleague site 1/2"); other tester's site "QA-DEMO ZP-5285 17 Nov" (id bf23e07f-8525-4378-be5a-bfda14fa3089).
+
+!QA-17Nov-ZP-5249-BUG-colleague-site-ticks-my-step-FAIL.png|width=640!
+_FAIL (defect): user A created nothing, but "Add the customer and site" is Complete and the card says "Site: QA-DEMO ZP-5249 17 Nov colleague site 2" (user B's site)._
+
+!QA-17Nov-ZP-5249-BUG-colleague-site-natural-occurrence.png|width=640!
+_FAIL (defect): during normal testing I created only a customer (no site), yet the card adopted another tester's site "QA-DEMO ZP-5285 17 Nov" and marked step 1 Complete._

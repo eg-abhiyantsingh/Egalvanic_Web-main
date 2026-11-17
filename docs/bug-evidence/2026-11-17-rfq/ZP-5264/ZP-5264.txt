@@ -1,0 +1,41 @@
+!QA-17Nov-ZP-5264-next-assembly-name-video-steps.mp4|width=720!
+_Video (59 s, QA build index-oFAZQ3rK.js, 17 Nov 2026). On the ticket's site, + Assembly now suggests "L2". On my own QA-DEMO site it suggests L4, I place it, and the next suggestion is L5. Typing a name that is already used gives the duplicate warning. The video ends with the API rows._
+
+*Result: PASS (web).* After a copy is placed, + Assembly suggests the next free copy name. Device names such as "CB-2" are no longer read as copy names.
+*Build:* QA index-oFAZQ3rK.js, 17 Nov 2026, 11:15–11:52 IST. Super Admin seat. LaunchDarkly feature-sld-assemblies = true for Acme on QA (live value, 11:15 IST). Fix: eg-pz-backend PR #1815.
+
+*Steps (ticket repro)*
+# Open the site "QA-DEMO v2.6 SLD editing 12 Nov" › SLD. The assembly "QA4942-FDR-\{name\}" was already placed there once as L1.
+# Unlock › + Assembly › pick "QA4942-FDR-\{name\}".
+# Result: the Name box is pre-filled "L2". "Will create" lists QA4942-FDR-L2 FUSE nosub / CB-2 / Load-1 / PNL-2, and the button reads "Place QA4942-FDR-L2". On 12 Nov it said "L1 CB-3". The API call POST /api/assemblies/<id>/place-preview with the SLD id returns "value":"L2", twice in a row.
+
+*Edge cases on my own site "QA-DEMO ZP-5264 17 Nov" (all pass)*
+* No copy yet: the Name box is blank, with "Type a name to see what will be created."
+* Typed L1 › Place. The next suggestion is L2. Placed L2, and the next is L3.
+* Copy "L9" placed: the next is L10 (two digits).
+* Copy "Feeder A" (no number) and a second "L1": the suggestion stays L10.
+* The 4 L9 nodes deleted: the suggestion goes back to L3 (deleted copies are ignored).
+* Placed with an empty name: the server picked L3 itself, and the next is L4. Placed L4 in the UI (video), and the next is L5. Placed L5 in the UI (screenshots), and the next is L6.
+* Typing a used name (L1): each device is marked "exists", with "4 label(s) already exist on this SLD — they will be duplicated." Place stays enabled.
+* The suggestion is per SLD: at the same moment the ticket's site still says L2.
+* Bad input: place-preview with no SLD, or with an unknown SLD id → 404 "SLD not found".
+
+*Not covered:* flag OFF (I did not flip a company flag; OFF only hides the feature, as checked on ZP-4942); other roles (unchanged gating, checked on ZP-4942); an assembly without a \{name\} placeholder (the company has only one assembly).
+*Mobile:* not checked on a device. Lead for iOS: inside the iOS app, the web SLD works out this suggestion on the device. That on-device code was not changed by this backend fix, and run on the same data it still gives "L1 CB-3". Please check + Assembly after one placement in the iOS app (ZP-5102).
+
+*Test data*
+* Ticket site SLD (read only today): https://acme.qa.egalvanic.ai/slds (site "QA-DEMO v2.6 SLD editing 12 Nov", SLD c4438cd3-59b3-4639-9e60-2752dc5aa478)
+* My site: https://acme.qa.egalvanic.ai/slds (site "QA-DEMO ZP-5264 17 Nov", SLD 753d9c41-b46b-4e5b-b144-75d8e84eea14), with copies L1 (×2), L2, L3, L4, L5 and Feeder A
+* Assemblies library: https://acme.qa.egalvanic.ai/assemblies (assembly cd981de3-5916-4481-8495-2afb906f0c62)
+
+!QA-17Nov-ZP-5264-1-ticket-site-suggests-L2-PASS.png|width=640!
+_1. PASS (expected): on the ticket's site the second placement suggests "L2" (green box), and Will create lists QA4942-FDR-L2 …._
+
+!QA-17Nov-ZP-5264-2-own-site-suggests-next-free-PASS.png|width=640!
+_2. PASS (expected): on my site, with copies up to L4, the suggestion is "L5" (green box)._
+
+!QA-17Nov-ZP-5264-3-after-placing-next-suggestion-PASS.png|width=640!
+_3. PASS (expected): after placing L5, the next suggestion is "L6"._
+
+!QA-17Nov-ZP-5264-4-typed-used-name-duplicate-warning.png|width=640!
+_4. PASS (expected): typing a used name (L1) marks each device "exists" and shows "4 label(s) already exist on this SLD — they will be duplicated."_

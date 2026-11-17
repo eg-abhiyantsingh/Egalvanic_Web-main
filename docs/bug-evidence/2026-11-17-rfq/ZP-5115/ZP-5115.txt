@@ -1,0 +1,28 @@
+!QA-17Nov-ZP-5115-android-french-fluid-sample-maintenance.mp4|width=360!
+_Video, 74 s, Android 1.39 (53), QA, 17 Nov 2026, app language Français: Maintenance Records, new fluid sample, sample detail, edit and delete._
+
+*Result: PASS.* Confirmed on device: the Fluid Sample and Maintenance Records screens are in French on Android, so no Android change is needed (as Rajat found from the code).
+
+*Build:* Android 1.39 (53) QA, the latest build in App Tester. Super Admin seat, Field Technician view, Settings › Language › Français.
+
+*Steps and what showed (all in French)*
+# Asset "397 Transformer TF-Add" (Android Site 2) › Plus de sections › Maintenance: card title *Registres de maintenance*, button *Ajouter un enregistrement*, record type *Infrarouge*, dates such as *21 sept. 2026*.
+# Ajouter un enregistrement: menu with *Ajouter un échantillon de fluide*.
+# New sample sheet: *Nouvel échantillon de fluide*, *Annuler / Enregistrer*, *Analyses de cet échantillon* (Gaz dissous, Physico-chimique, Furanes), *Échantillon*, *Date de prélèvement*, *ID labo / échantillon*, *N° de seringue*, *Prélevé par*, *Type d'huile*, *État du transformateur*, *Temp. de l'huile (°C)*. With no test picked, the validation *Sélectionnez au moins une analyse.* shows; it clears once Gaz dissous is switched on.
+# Saved: the sample shows under *Échantillons de fluide* with *En attente*.
+# Sample detail: *Échantillon de fluide*, *État: En attente des résultats du laboratoire*, *Source: Saisie manuelle*, *Gaz dissous (ppm)*, *Évaluation*.
+# Long-press the sample: *Modifier / Supprimer*. Edit sheet title: *Modifier l'échantillon de fluide*.
+# Delete alert: *Supprimer cet échantillon de fluide ?* / *Tout problème qu'il a créé reste ouvert.* / *Annuler / Supprimer*. The sample was deleted.
+
+*Not covered:* the offline "waiting to sync" label, the sample count, the second validation message, and the Maintenance chip / Work order / Unknown service labels (this asset has no work-order maintenance record). Rajat checked those from the code.
+
+*Test data:* asset 397 Transformer TF-Add on Android Site 2. A test sample "QA-DEMO ZP-5115" was created and then deleted, so the asset is unchanged. The app was switched back to English.
+
+!QA-17Nov-ZP-5115-fr_sheet.png|width=300!
+_PASS (expected): new fluid sample sheet in French, with the validation message._
+
+!QA-17Nov-ZP-5115-fr_detail.png|width=300!
+_PASS (expected): sample detail in French._
+
+!QA-17Nov-ZP-5115-fr_delete_alert.png|width=300!
+_PASS (expected): delete alert in French._

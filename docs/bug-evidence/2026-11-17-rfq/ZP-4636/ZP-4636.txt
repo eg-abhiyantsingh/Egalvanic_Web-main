@@ -1,0 +1,51 @@
+!QA-17Nov-ZP-4636-created-modified-by-video.mp4|width=720!
+_Video (37 s, QA build index-oFAZQ3rK.js, 17 Nov 2026):_
+# _The QA-DEMO quote open in the web app, with its live API values: made by the Account Manager seat, edited by the Project Manager seat._
+# _The create/update results for all 7 tables._
+# _The edge cases._
+
+*Result: PASS (backend/API).*
+* All 7 tables in the ticket now carry created_by and modified_by, and their API payloads return both.
+* A create stamps the user who made the call. An edit by a different user changes modified_by and leaves created_by alone.
+* Values sent by the client are ignored. Rows from before the change stay null.
+
+*Build:* QA index-oFAZQ3rK.js, 17 Nov 2026, 11:30–11:40 IST. Seats: Account Manager and Project Manager (sales records), Super Admin and Admin (labor rates, materials, subcontractors). The ids are users.id, which equals each seat's sub in /api/auth/v2/me. Fix: eg-pz-backend PR #1812. No feature flag.
+
+*Steps (the API calls the web app makes)*
+# quotes + opportunities: Account Manager creates a quote with POST /api/quote/create-standard (Opportunities › New Quote).
+#* Quote and its opportunity: created_by = modified_by = Account Manager.
+#* Project Manager renames both (PUT /api/quote/update/\{id\}, PUT /api/opportunity/\{id\}): created_by stays Account Manager, modified_by = Project Manager. PASS.
+# quote_labor: Account Manager POST /api/quote-labor/create; Project Manager PUT /api/quote-labor/update/\{id\}. Account Manager / Project Manager. PASS.
+# quote_labor_lines: Account Manager adds a manual labor line (POST /api/workorder/\{id\}/labor-lines); Project Manager saves it (PUT …/labor-lines/bulk-save). Account Manager / Project Manager. PASS.
+# labor_rates, materials_library, vendors: Super Admin creates them (POST /api/labor-rates, /api/materials-library, /api/vendors); Admin edits them. created_by stays Super Admin, modified_by = Admin. The list endpoints return the same values. PASS.
+# Spoofing:
+#* POST /api/labor-rates with created_by/modified_by set to the Project Manager's id → stored as Super Admin.
+#* PUT with both set to the Account Manager's id → stored as Super Admin / Admin.
+#* PASS.
+# No backfill: the older quote "test new - Rev 1" (12 Jan 2026) and its opportunity are null/null, and so are the older labor rates, materials and subcontractors. PASS.
+
+*Notes (not defects by the ticket's wording):*
+# Saving a labor rate with no field changed moves modified_at but keeps the old modified_by, because the stamp only fires on a real change.
+# The quote list (POST /api/company/\{id\}/quotes/v2) doesn't include the two fields; the quote detail does.
+# No web screen shows these fields yet. Showing them is a later frontend change.
+
+*Not covered:*
+* System writes (CLI / migration / pipeline key) leaving NULL: can't be triggered from QA.
+* Bulk imports (/labor-rates/process, /materials/bulk-process).
+* The FK constraint (DB).
+* Mobile: not applicable (the apps don't edit these records).
+
+*Test data (QA, all "QA-DEMO ZP-4636 17 Nov …")*
+* Quote: https://acme.qa.egalvanic.ai/quotes/2cc081bd-752a-4946-872f-57c529b08cda (opportunity 11f4e310-44d9-4de3-920d-44df02f6382b, quote labor 7485c01f-fba5-425e-ab8c-aa41044d65e9, labor line d97658fc-824b-4799-9fda-92bc06986c9b)
+* Labor rates: https://acme.qa.egalvanic.ai/labor (404c82a2-5044-4e7f-b444-b099cc8fca4b, 8a3fc74e-f85c-4f6a-ae49-4714cbd5d517, 4ccdd942-6ad3-40ad-a593-40b963c70bed, c7297e1d-699e-4c45-8d7d-8c1a4657fded)
+* Material: https://acme.qa.egalvanic.ai/materials (bda70d09-bc89-47ac-ac7b-3da5adab7307)
+* Subcontractor: https://acme.qa.egalvanic.ai/subcontractors (149f57ae-3277-42f7-8156-e5c31f2d8b48)
+
+!QA-17Nov-ZP-4636-1-seven-tables-create-and-update.png|width=640!
+_1. PASS (expected): on all 7 tables, created_by is the creating seat and modified_by changes to the editing seat (green)._
+
+!QA-17Nov-ZP-4636-2-quote-in-app-with-live-api-values.png|width=640!
+_2. PASS (expected): the QA-DEMO quote in the web app; the green box marks the title as edited by the Project Manager seat. GET /api/quote/\{id\} for this quote returns created_by = Account Manager seat (919b4560…) and modified_by = Project Manager seat (113b6590…), and so does its opportunity._
+
+!QA-17Nov-ZP-4636-3-edge-cases-spoof-old-rows.png|width=640!
+_3. PASS (expected): client-sent values are ignored and old rows stay null (green). Grey rows are notes only._

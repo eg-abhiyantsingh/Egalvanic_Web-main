@@ -1,0 +1,43 @@
+!QA-17Nov-ZP-4892-guide-vs-spec.mp4|width=720!
+_Video: Help → Getting started on today's QA build, compared with what this ticket describes. The welcome and company name are there; the 7-step journey, "Start this tour" and the per-screen walkthrough caps are gone (replaced by ZP-5249)._
+
+h3. QA 17 Nov 2026: what is still in the product works → READY TO RELEASE. The walkthrough this ticket describes (7 steps, "Start this tour", per-screen caps) was replaced by the ZP-5249 progress tracker. [~accountid:712020:b43bccaf-6e8f-47ef-82f7-5439c6765fdb], please confirm those parts are superseded by ZP-5249 (or reopen if the per-screen walkthrough should come back). Bugs in the new guide are filed under ZP-5249: ZP-5305 to ZP-5308.
+
+*Build:* index-oFAZQ3rK.js (QA). *Company:* EG-ACME. *Seats:* Super Admin, Admin, Project Manager, Account Manager, Electrical Engineer, Technician, Facility Manager, Client Portal.
+*Flag:* LaunchDarkly feature-user-tour = ON for EG-ACME.
+
+*Steps and results*
+# Sign in for the first time on a browser. Works: the guide opens by itself once per user (remembered per browser).
+# Help → Getting started. Works: it reopens.
+# Welcome text. Works: "Here's how EG-ACME works", in EG-ACME's brand colour.
+# The journey. Changed: the 7 steps under Set up / Inspect / Fix / Prove are now 5 workflows (Customer & Site Setup, Asset Onboarding, Work Order Setup, Quote Creation, One-Line Diagram). Issues and Reports are no longer steps.
+# Open a step. Changed: it opens the real screen with a progress card. There is no app mock, no form sketch and no "Start this tour" button.
+# Per-screen walkthrough (graduation cap on menu rows). Gone: no cap on any row in all 7 menus, and no tour control on the screens checked.
+# Texts vs real menus. Work: Admin › Customers, Site Data › Locations / Assets, Operations › Work Orders, Sales › Quotes, Engineering › SLD. No "Sites tab".
+# Reduced motion. Works: hover movement stops.
+# Nency's cut-off buttons (22 Oct). That view no longer exists. The new dialog fits at 1366×768 (Maybe later fully visible, content scrolls).
+# Flag feature-user-tour OFF (simulated in the browser). Works: no welcome, and Help goes straight to Z University. This answers our 26 Oct question.
+
+*Question for PM/Dev:* most of this ticket (the 7-step journey, the app mock and form sketch, "Start this tour", and the per-screen walkthrough) was replaced by ZP-5249. Should ZP-4892 be closed as superseded, or is the per-screen walkthrough coming back? Our 26 Oct follow-ups ZP-5006 / ZP-5007 no longer exist in Jira.
+*Related bugs found in this guide today:* drafted under ZP-5249: another user's site ticks your step; Facility Manager sent to screens it cannot open; Client Portal empty guide with a crashing button; company switch "Guided tours" OFF still pops the guide.
+
+*Not covered:* Demo company and French not checked. The flag OFF state was simulated, not flipped in LaunchDarkly. Mobile: web-only feature, not checked.
+
+*Test data / links (QA):*
+* Guide: https://acme.qa.egalvanic.ai/dashboard → Help → Getting started
+* Customers screen (first workflow): https://acme.qa.egalvanic.ai/customers
+* Company switch "Guided tours": https://acme.qa.egalvanic.ai/account → Company tab
+* Replacement ticket: https://egalvanic.atlassian.net/browse/ZP-5249
+* PRs: https://github.com/Egalvanic/eg-pz-frontend/pull/1798 and https://github.com/Egalvanic/eg-pz-frontend/pull/1948
+
+!QA-17Nov-ZP-4892-1-welcome-company-name.png|width=640!
+_PASS (expected): "Here's how EG-ACME works" in the company's brand colour, opened from Help → Getting started._
+
+!QA-17Nov-ZP-4892-2-five-workflows-not-seven-steps.png|width=640!
+_Changed by ZP-5249: 5 workflows instead of the 7 steps under Set up / Inspect / Fix / Prove described in this ticket._
+
+!QA-17Nov-ZP-4892-3-progress-card-no-start-this-tour.png|width=640!
+_Changed by ZP-5249: a step opens the real screen with a progress card. There is no app mock, no form sketch and no "Start this tour"._
+
+!QA-17Nov-ZP-4892-5-overview-1366x768.png|width=640!
+_PASS (expected): at 1366×768 the dialog fits; "Maybe later" and Close are fully visible (Nency's cut-off case)._

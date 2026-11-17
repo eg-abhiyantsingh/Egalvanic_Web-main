@@ -1,0 +1,35 @@
+!QA-17Nov-BUG-tech-home-access-denied-video.mp4|width=720!
+_Video, 34 s, QA build index-oFAZQ3rK.js, 17 Nov 2026, Technician seat on EG-ACME: the app home ends on "Access Denied", "Go to Dashboard" loops back to it, and a menu page (Condition Assessment) opens fine._
+
+h3. Simple explanation
+A Technician who opens the web app's home page (https://acme.qa.egalvanic.ai/) lands on *"Access Denied"*. The app sends them / → /dashboard → /ops-dashboard, and the Technician can't open /ops-dashboard. The *Go to Dashboard* button on that page goes /dashboard → /ops-dashboard again, so it loops back to the same "Access Denied". The Technician has to know to pick a menu item instead. Right after sign-in it is fine: the app sends them to /pm-readiness (Condition Assessment).
+
+*Where:* the app home (/), the logo/home link, and the "Go to Dashboard" button on the Access Denied page.
+
+*Environment:* QA https://acme.qa.egalvanic.ai, company EG-ACME, build index-oFAZQ3rK.js, Technician test seat (role Technician only, 89 permissions, platform.web granted on EG-ACME), Chrome on macOS, 17 Nov 2026 ~12:30 IST.
+
+*Steps*
+# Sign in as a Technician on EG-ACME (QA Technician test seat).
+# Open https://acme.qa.egalvanic.ai/ (or reload the home page).
+# Click *Go to Dashboard*.
+
+*Actual*
+* Step 2: / → /dashboard → /ops-dashboard, page "Access Denied – You do not have permission to access this page."
+* Step 3: /dashboard → /ops-dashboard, the same "Access Denied" again.
+
+*Expected:* the home page sends a Technician to a page they can open (for example /pm-readiness, where sign-in already sends them), and "Go to Dashboard" never leads to a page the user can't open.
+
+*Controls*
+* Right after sign-in, the same seat lands on /pm-readiness (Condition Assessment), no error.
+* Menu pages the Technician has (Condition Assessment, Assets, Issues …) open fine.
+
+*Possible cause (for the developer to confirm):* the Technician permission changes for ZP-5293 removed features.site_overview.view (and others), so /dashboard is no longer allowed and redirects to /ops-dashboard, which the Technician can't open either. The sign-in redirect already picks /pm-readiness, but the / and "Go to Dashboard" paths don't use the same fallback.
+
+*Related:* ZP-5293 (Technicians on web, In Progress), ZP-5274 (company-level roles).
+
+*Mobile:* not affected (web routing only).
+
+*Test data:* QA Technician test seat on EG-ACME; nothing was changed.
+
+!QA-17Nov-BUG-tech-home-access-denied-ops-dashboard.png|width=640!
+_FAIL (defect): Technician on the app home: "Access Denied" at /ops-dashboard._

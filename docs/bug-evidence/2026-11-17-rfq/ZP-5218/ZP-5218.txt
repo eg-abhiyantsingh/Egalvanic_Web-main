@@ -1,0 +1,42 @@
+!QA-17Nov-ZP-5218-downstream-of-video-steps.mp4|width=720!
+_Video (60 s, QA build index-oFAZQ3rK.js, 17 Nov 2026). Add Existing by Service › Downstream of: open the list, type ZP-5171, see only the matching rows, type "Capacitor 2" (three same-name assets), pick the real match. Then the same picker in the Create Work Order wizard. Every dialog was cancelled._
+
+*Result: PASS.* Typing into "Downstream of" after opening the list now shows only the rows that match. This works in both pickers.
+*Build:* QA index-oFAZQ3rK.js, 17 Nov 2026, 11:15–11:27 IST. Super Admin seat. Fix: eg-pz-frontend PR #2028 (Downstream of rows are keyed by asset id).
+
+*Steps*
+# Open the work order "Work Order - Nov 3, 5:15 PM" › Assets › Actions › Add Existing by Service › Arc Flash Data Collection. The dialog says "284 of 284 qualifying assets selected".
+# Click the Downstream of box. The list opens with 100 rows. Type ZP-5171 key by key.
+# Result: 2 rows, and both contain ZP-5171: "QA-DEMO 4 Nov ZP-5171 Main Distribution Panel (QA5171-1002)" and "… (Copy)". No leftover rows. On 5 Nov this showed 18 rows, 17 of them wrong.
+# Clear the box and type "Capacitor 2". Three assets share this name. Result: 3 rows "Capacitor 2", one per asset (each row is keyed by its own asset id). No other names appear.
+# Type ZP-5171 again and pick the Main Distribution Panel. Result: "7 of 284 qualifying assets selected", which is its 7 breakers. On 5 Nov the user got a wrong asset and "0 of 158".
+# Create Work Order wizard › site (s) Wild Goose Brewery › Scope › add Arc Flash Data Collection › Edit assets › Pick individual assets… › Downstream of: open it and type ZP-5171. Result: the same 2 matching rows.
+
+*Also checked (all pass)*
+* Fast typing (15 ms per key): 2 rows.
+* "Main Distribution": 2 rows. On 5 Nov this gave 35 rows with Capacitor 1 first.
+* In one open list: backspace to "Capacitor" gives 24 rows, " 5" then gives 3 "Capacitor 5" rows, and clearing and typing ZP-5171 gives 2 rows. No leftovers at any point.
+* Pasting with the list closed: 2 rows. Pasting with the list open: 2 rows.
+* QR search "QA5171": 7 rows, all with a QA5171 code.
+* Text that matches nothing: "No options".
+* Parent asset control: 2 rows.
+* Wizard: "Capacitor 2" gives 3 rows. Pasting ZP-5171 and picking the match gives "7 of 284 assets selected".
+* No writes. The only POSTs were scope-preview reads. The work order still shows "Assets 1" before and after. No app console errors.
+
+*Not covered:* other sites; roles other than Super Admin (it is the same component for every role). Mobile not checked (this dialog is web only).
+
+*Test data*
+* Work order: https://acme.qa.egalvanic.ai/sessions/48e9907c-dd41-4479-baa6-fb544e32d929
+* Create Work Order wizard: https://acme.qa.egalvanic.ai/sessions (Create Work Order, never submitted)
+
+!QA-17Nov-ZP-5218-1-typed-after-opening-only-matches-PASS.png|width=640!
+_1. PASS (expected): the list was opened first, then ZP-5171 typed. Only the 2 matching rows show (green)._
+
+!QA-17Nov-ZP-5218-2-duplicate-names-capacitor-2-PASS.png|width=640!
+_2. PASS (expected): "Capacitor 2" gives 3 rows, one per same-name asset, and nothing else._
+
+!QA-17Nov-ZP-5218-3-picked-real-match-7-assets-PASS.png|width=640!
+_3. PASS (expected): picking the Main Distribution Panel narrows the scope to its 7 assets._
+
+!QA-17Nov-ZP-5218-4-wizard-typed-only-matches-PASS.png|width=640!
+_4. PASS (expected): the Create Work Order wizard picker gives the same 2 matching rows._

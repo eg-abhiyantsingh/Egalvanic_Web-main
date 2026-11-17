@@ -1,0 +1,46 @@
+!QA-17Nov-ZP-5281-video-steps.mp4|width=720!
+_Video (41 s): with Inspection (D: easy/ladder/lift) and Torque (B: easy/lift), Build Quote offers only Easy and Lift. With Lift, both services price by their equations ($1,100) and the green check is true. The 13 Nov quote that saved "ladder" now reads "Not answered" with "1 answer required"._
+
+*Result: PASS on QA for the reported scenario* (build index-oFAZQ3rK.js, 17 Nov 2026, Super Admin + Project Manager + Account Manager). One new edge-case bug was found and filed separately: ZP-5304 (two services whose choice lists share nothing, Low).
+
+*Steps*
+# Sales › Quotes › New Quote (Standard), Facility "QA-DEMO ZP-5108 ZP-5109 12 Nov".
+# Build Quote: add "QA-DEMO ZP-5253 13 Nov Inspection (D)" and "QA-DEMO ZP-5254 13 Nov Torque (B)".
+# PRICING QUESTIONS › open Access.
+# Pick Lift, Square footage 1000 › Generate Quote.
+# Open the 13 Nov BUG-B quote that saved "ladder" before the fix.
+
+*Actual (as expected now)*
+* Step 3: Access offers only *Easy, Lift*. Ladder is no longer offered. The Pricing inputs panel and Edit Quote offer the same narrowed list.
+* Step 4: both services are priced by their equations (D $250 + B $850 = *$1,100*). API pricing_inputs: D and B missing \[\], priced_by_equation true; pending_subs \[\]. The green check is true. No "Generate RFQ".
+* Switching to Easy: D $250 + B $550 = $800, both priced, green check.
+* Step 5: Access shows *"Not answered"* and the header says *"1 answer required"*, with no green check. B falls back to labor × rate ($300), not $0/RFQ.
+* Opposite case: Visual (A) + Inspection (D) have the same 3 choices, so Easy/Ladder/Lift are all still offered. Ladder prices both ($1,600).
+* Project Manager and Account Manager seats: same "1 answer required" on the 13 Nov quote, and Edit Quote offers only Easy, Lift.
+
+*New bug ZP-5304 (filed separately, Low):* when two services ask the same question with *no* choice in common (B easy/lift vs a new test service E stairs/scaffold), E can never be answered.
+* The dropdown offers only B's choices.
+* After a valid pick, Access shows "Not answered" again, and the header stays "1 answer required" forever.
+* E always prices from labor × rate.
+* The header itself is correct (no false green check).
+
+*Not covered*
+* EMP wizard (same merge).
+* Backend PR #1818 diff (no access to that repo).
+* Mobile (web Sales screen).
+
+*Minor note (legacy data only):* on the 13 Nov quote, D is still priced with the stored "ladder" (+$50) while Access shows "Not answered". The stored value is dropped on the next save.
+
+*Test data*
+* Ticket repro quote: [https://acme.qa.egalvanic.ai/plans/84defc7e-f057-4651-833a-76d8a734a99f]
+* Video quote: [https://acme.qa.egalvanic.ai/plans/fd23838b-5e16-4cae-b472-6667b80dd9c4]
+* Same-choices control: [https://acme.qa.egalvanic.ai/plans/249e79ed-69fd-4b03-a3ed-fa024f9baba3]
+* 13 Nov quote with saved "ladder": [https://acme.qa.egalvanic.ai/plans/d17666b2-6fbf-4130-9d94-42dde9feccb1]
+* Service B choices: [https://acme.qa.egalvanic.ai/services/598cb2b4-a13e-4981-97a4-51d8ba8127b9]
+
+!QA-17Nov-ZP-5281-1-build-quote-access-offers-only-easy-lift.png|width=640!
+_PASS (expected): with D and B, the merged Access question offers only the choices both accept (Easy, Lift)._
+!QA-17Nov-ZP-5281-2-lift-both-priced-green-check-is-true.png|width=640!
+_PASS (expected): Lift answered. Green check, and both services priced by equation ($1,100)._
+!QA-17Nov-ZP-5281-3-old-quote-saved-ladder-reads-not-answered-1-answer-required.png|width=640!
+_PASS (expected): the 13 Nov quote that saved "ladder" reads "Not answered" with "1 answer required"; no false green check._

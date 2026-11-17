@@ -1,0 +1,29 @@
+!QA-17Nov-ZP-5249-BUG-tours-off-guide-still-pops.mp4|width=720!
+_Video: the admin turns "Guided tours" OFF, a Project Manager signs in for the first time in another browser and still gets the guide, then the admin turns it back ON._
+
+h3. Simple explanation
+Account & settings › Company › "Guided tours" says "Turn this off and nobody here sees them". With it OFF, the Help menu correctly hides Getting started. But a user signing in for the first time on a browser still gets the guide popped up in front of them.
+
+*Where:* https://acme.qa.egalvanic.ai/account → Company tab (switch); first sign-in on any page
+*Environment:* QA, company EG-ACME, build index-oFAZQ3rK.js, Chrome. Admin = Super Admin seat; reader = Project Manager seat on a fresh browser profile. Related: ZP-5249 / ZP-4892.
+
+*Steps*
+# As an admin: Account & settings → Company → turn "Guided tours" OFF. The toast says "Guided tours are off for everyone here." GET /api/company/<id>/guided-tours returns guided_tours_enabled: false.
+# In a fresh browser (never used by this user), sign in as a Project Manager.
+# Look at the screen, then at the Help button.
+# Turn the switch back ON (done; the API returned true afterwards).
+
+*Actual:* the "User Guide · End-to-end tour" dialog opens by itself (reproduced twice). The Help button meanwhile is a plain link to Z University, so the switch was read as OFF.
+*Expected:* with the switch OFF the guide never opens by itself.
+
+*Controls:*
+* LaunchDarkly flag feature-user-tour OFF (simulated): no auto-open, and Help links to Z University. That is correct.
+* A Project Manager cannot see the switch, and PATCH /guided-tours returns 403 "Admin access required". That is correct.
+
+*Possible cause:* Layout.jsx starts companyToursOn as true "so a reader is not denied the tours for the length of one request". The first-run effect therefore opens the dialog, and stores the "seen" flag, before GET /company/:id/guided-tours answers false. Waiting for that read before auto-opening would fix it.
+
+!QA-17Nov-ZP-5249-BUG-tours-off-switch-off.png|width=640!
+_Setup: the company switch "Guided tours" is OFF ("Guided tours are off for everyone here.")._
+
+!QA-17Nov-ZP-5249-BUG-tours-off-guide-still-pops.png|width=640!
+_FAIL (defect): in the same minute, a first sign-in as a Project Manager still shows the guide._

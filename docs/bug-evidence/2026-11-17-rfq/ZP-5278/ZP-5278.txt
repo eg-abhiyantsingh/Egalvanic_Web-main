@@ -1,0 +1,46 @@
+!QA-17Nov-ZP-5278-video-steps.mp4|width=720!
+_Video (37 s), on the ticket's quote: Minimum 8 saved, Pricing settings reopened (Save Changes enabled), Mobilization 30 saved. API: round-up was not saved._
+
+*Result: PASS on QA* (build index-oFAZQ3rK.js, 17 Nov 2026, Super Admin + Project Manager + Account Manager)
+
+*Steps*
+# Open quote [https://acme.qa.egalvanic.ai/plans/d20d398a-26de-424c-b672-b34e92d1a9df] (no pricing overrides) → Pricing tab → gear *Pricing settings*.
+# Turn on *Minimum* = 8, leave Round up alone → *Save Changes*. The labor rows say "topped up to the 8h minimum".
+# Open *Pricing settings* again.
+# Turn on *Mobilization → Per move* = 30 → *Save Changes*.
+# GET /api/plans/\{id\} → instructions.pricing.
+
+*Actual (as expected now)*
+* Step 3: *Save Changes is enabled* before any change. Round up shows Off. Before the fix it was greyed out.
+* Step 4: it saves and the Mobilization rows "6 moves × 30 min" appear.
+* Step 5: labor_min_hours 8, mobilization_minutes 30. *labor_round_hours is not saved*, so the quote keeps following the company round-up default.
+* Also checked (quote [https://acme.qa.egalvanic.ai/plans/65ccf113-2d50-4b51-bda6-9139df8ea9a0]):
+** Mobilization-only override: Save enabled on reopen. Adding Minimum saves both keys, with no round key.
+** Minimum + Mobilization: Save enabled. Saving with no change keeps the same two keys.
+** Existing Round up 8 override: reopen shows 8 and Save is enabled. Adding Mobilization keeps round 8. Turning Round up off saves 0, which is an explicit user change.
+** The old workaround (Round up on → off → Save) no longer sends labor_round_hours. The pinned-0 side effect is gone.
+** Changing only the inflation rate: Save enabled; Minimum kept; no round key.
+** "Use company defaults" sends all three as null.
+** Company round-up default 4 h (set for about 20 s, then restored to off): on a Minimum-only quote, Round up opens on 4 ("Company default: round up 4 h") and Save is enabled. Saving does not pin round-up, and the labor is billed with the company 4 h rounding.
+** No override at all: Save enabled (unchanged).
+* Pricing totals are correct in every state:
+** No overrides: $2,333.50.
+** Mobilization 30: $3,208.50.
+** Round up 8: $4,000.
+* Project Manager and Account Manager seats: same steps on the second quote. Save is enabled on reopen, and the saved pricing is Minimum 8 + Mobilization 30 with no round-up key.
+
+*Not covered*
+* Quotes saved with the old workaround before this fix still have labor_round_hours 0 stored. There is no migration; they keep ignoring a company round-up default until Round up is changed on them.
+* Mobile (web Sales screen).
+
+*Test data*
+* Ticket quote: [https://acme.qa.egalvanic.ai/plans/d20d398a-26de-424c-b672-b34e92d1a9df]
+* Matrix quote: [https://acme.qa.egalvanic.ai/plans/65ccf113-2d50-4b51-bda6-9139df8ea9a0]
+* Both quotes were reset to no overrides afterwards. EG-ACME company pricing defaults were restored to off (API read-back: null).
+
+!QA-17Nov-ZP-5278-3-ticket-quote-minimum-only-reopen-save-enabled.png|width=640!
+_PASS (expected): the ticket's quote with only a Minimum 8 override, reopened. Save Changes is enabled before any change._
+!QA-17Nov-ZP-5278-1-mobilization-only-reopen-save-enabled.png|width=640!
+_PASS (expected): Mobilization-only override, reopened. Round up Off, Save Changes enabled._
+!QA-17Nov-ZP-5278-2-company-round-4-min-only-quote-save-enabled.png|width=640!
+_PASS (expected): with a company round-up default of 4 h, a Minimum-only quote opens Round up on the company 4 h, and Save is enabled. Saving does not pin round-up._
