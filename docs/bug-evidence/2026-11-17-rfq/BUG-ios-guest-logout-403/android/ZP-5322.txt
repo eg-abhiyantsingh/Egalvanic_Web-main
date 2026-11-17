@@ -1,0 +1,15 @@
+!QA-17Nov-BUG-ios-guest-logout-android-PASS.mp4|width=480!
+_Video (29 s), Android Z Platform (QA) 1.40 (54), 17 Nov 17:27–17:31 IST: the same Project Manager test seat switches to Demo Company (Guest · Technician), then Settings › Logout › Logout signs out with no error._
+
+*Cross-platform check: Android does NOT have this problem, so no Android ticket.*
+* Android 1.40 (54), Project Manager test seat as a guest in Demo Company: Settings › Logout › Logout shows "Logging out…", and about 3 s later the app is on the company-code screen.
+* No error dialog or toast. The screen was polled every 0.35 s for 8 s after the tap. Same result in two runs.
+* Not visible from the device: whether Android sends the logout with the home-company header (200), or gets the same 403 and signs out locally anyway. To the user the result is the same: signed out.
+* So the iOS fix can follow Android: finish the local logout even when the server refuses. Or the server can allow /auth/v2/logout in guest context.
+
+!QA-17Nov-BUG-ios-guest-logout-android-1-demo-guest-settings-logout.png|width=640!
+_Android, guest in Demo Company: Settings and the Logout Confirmation._
+!QA-17Nov-BUG-ios-guest-logout-android-2-signed-out-company-code.png|width=480!
+_PASS (expected): after Logout, Android is on the company-code screen (signed out)._
+
+*Cross-platform:* iOS FAIL (this ticket) · Android PASS (1.40 (54)) · web: the restricted screen's "Logout" returns the guest to EG-ACME still signed in (noted on ZP-4830).
