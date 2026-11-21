@@ -236,7 +236,7 @@ def parse_testng_xml(filepath):
                     raw_params = [(v.text or '').strip() for v in method.findall('./params/param/value')]
                     raw_params = [p for p in raw_params if p]
                     key_params = tuple(raw_params)
-                    disp_params = [p for p in raw_params if not re.match(r'^[\w.$]+@[0-9a-fA-F]+$', p)]
+                    disp_params = [p for p in raw_params if not re.match(r'^\[*[\w.$;]+@[0-9a-fA-F]+$', p)]
                     base = description if description else name
                     rbac_cell = _rbac_cell_name(disp_params)
                     if rbac_cell:

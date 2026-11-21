@@ -127,7 +127,7 @@ def compute_rerun_merge(input_dir, rerun_results_dir):
 def _short(key):
     fqcn, method, params = key
     label = f"{fqcn.rsplit('.', 1)[-1]}.{method}"
-    shown = [p for p in params if p and not re.match(r"^[\w.$]+@[0-9a-fA-F]+$", p)]
+    shown = [p for p in params if p and not re.match(r"^\[*[\w.$;]+@[0-9a-fA-F]+$", p)]
     if shown:
         label += "(" + ", ".join(shown[:3]) + ("…" if len(shown) > 3 else "") + ")"
     return label

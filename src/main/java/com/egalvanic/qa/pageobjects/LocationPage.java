@@ -724,10 +724,14 @@ public class LocationPage {
                 el.click();
                 pause(150);
                 el = wait.until(ExpectedConditions.visibilityOfElementLocated(by)); // re-find
-                String selectAll = org.openqa.selenium.Keys.chord(org.openqa.selenium.Keys.CONTROL, "a");
-                String selectAllMac = org.openqa.selenium.Keys.chord(org.openqa.selenium.Keys.COMMAND, "a");
+                // Select-all with the PLATFORM-CORRECT modifier only. Sending both chords
+                // broke Linux CI: COMMAND+A is unbound there, so it typed a literal "a"
+                // and every building/floor/room was saved as "a<name>" (e.g. "aP2_Floor_86534"),
+                // which the exact-name lookups then could not find (21 Location failures,
+                // run 44883499175). See InputUtil for the mirror-image macOS problem.
+                String selectAll = org.openqa.selenium.Keys.chord(
+                        com.egalvanic.qa.utils.InputUtil.selectAllModifier(), "a");
                 try { el.sendKeys(selectAll); } catch (Exception ignored) {}
-                try { el.sendKeys(selectAllMac); } catch (Exception ignored) {}
                 pause(100);
                 el = wait.until(ExpectedConditions.visibilityOfElementLocated(by)); // re-find again
                 el.sendKeys(text);
