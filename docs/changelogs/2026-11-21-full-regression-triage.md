@@ -28,7 +28,7 @@ Two tests failed first and passed on re-run (`MOT_AST_02`, `TC_TD_004`).
 | Voltage control changed (by hand) | 57 | Voltage is now a type-ahead box ("Select or type a voltage") instead of "Select voltage". All values are still offered (120V to 69kV for Generator; Transformer Secondary Voltage has 29). The tests look for the old placeholder. **Test upkeep.** |
 | "Battery" class renamed (by hand) | 21 | The class list has only "DC Battery". The tests open "Battery". **Test upkeep.** |
 | Library match behind a switch (by hand) | 12 | Circuit Breaker and Transformer library matching now sits behind a new "Use library" switch, which is off by default. The library search appears when it is turned on. **Test upkeep.** |
-| Location names get an extra "a" (root cause found) | 21 | **Bug in our test**, fixed in this commit (see below). Every building, floor and room was saved as `a<name>` (for example `aP2_Floor_86534`), so the exact-name lookups failed. |
+| Location tree helpers out of date for v1.36 (corrected 22 Nov) | 21 | **Bugs in our test, not the product.** Two separate problems. (1) The stray "a" prefix on names, fixed in 0a3d2e4b. (2) The tree arrow and the Edit-dialog Delete button changed labels; fixed on 22 Nov (see "Validation result" below). The first write-up blamed only the "a"; the validation run showed that was not enough. |
 | Work Orders redesign (by hand) | 24 | The list columns are now Work Order, Site, Window, Service, Crews, On site, Priority and Status. "Show planned" is gone, and the create dialog changed. The list itself works (212 open). **Test upkeep.** |
 | Accounts is now Customers (by hand) | 7 | `/accounts` redirects to `/customers`, which shows a customer tree with a detail panel. **Test upkeep.** |
 | Opportunities is now Quotes (by hand) | 1 (+32 skipped) | The page is "Quotes" and the name column is "Quote". **Test upkeep.** |
@@ -76,10 +76,38 @@ The tests then searched for the exact name they typed (`P2_Floor_86534`), found 
 - `mvn -o compile` passes.
 - I checked the pattern on real samples. It filters `[Ljava.lang.String;@…`, `com.foo.Page@1a2b` and `[[I@5e91993f`. It keeps `Battery`, `13.8kV`, `Disconnect Switch (> 1000V)` and `user@example.com`.
 - I rebuilt the per-class matrix report from this run's results with the patched script. It now reads `Battery · EDITABLE`, with 0 `Ljava` occurrences.
-- A CI run of only the Location + Task group proves the Locations fix on Linux. The result is added below when it finishes.
+- A CI run of only the Location + Task group checked the Locations fix on Linux. The result is below.
+
+## Validation result (run 44922512551, 22 Nov 2026), with a correction
+
+**Result after re-run:** 113 passed, 22 failed out of 135. The **same 21 Location tests still failed**, plus TC_CT_004 (Tasks, known).
+TC_TD_004 (Tasks) failed once and passed on re-run, so it is flaky.
+
+**What the "a" fix did:** it worked. New buildings are now saved with the exact name, for example `P2_Bldg_26760` and `Tower A - Building 1 (26683)`. The `a…` buildings still in the tree are leftovers from earlier runs.
+
+**Correction:** the "a" was not the only reason these 21 tests failed. The CI log and a live, read-only check on QA (21 Nov, v1.36) show two more test-side problems.
+
+1. **The tree arrow now has a label.** It is now `button[aria-label="Expand"]` (and `"Collapse"` once open). `LocationPage.expandNode` looked only for an arrow with **no** label (`:not([aria-label])`), so it found nothing. It then clicked the name, which only **selects** the building and doesn't open it.
+   - The CI log shows `expandNode: No arrow found, clicking text for: P2_Bldg_26760` on every call.
+   - Floors never appeared, so `ensureFloorExists()` made a new floor each time. `P2_Bldg_26760` ended with 6 floors.
+   - Every floor/room test then failed with `Location element not found: P2_Floor_26760`. That is 18 tests.
+2. **The Edit dialog's delete button is now just "Delete".** The dialog's buttons are now [close] · Cancel · **Delete** · Save. The helper looked for a button starting with `"Delete "` (with a space), as in the old "Delete Building".
+   - The CI log has **no** `Delete clicked` line anywhere, so every `deleteLocation` call in the suite failed.
+   - Most of the tests that call it swallow the error and pass. TC_NB_004/008/009 don't, so they failed with `Delete button not found`. That is 3 tests.
+
+**Fix (22 Nov), `LocationPage` only:**
+- `expandNode` uses the `Expand`/`Collapse` button first and treats `Collapse` as already open. The old lookup stays as a fallback.
+- The dialog delete locator accepts exactly `Delete` as well as `Delete …`.
+- `confirmDelete` keeps the old contained-error "Delete" locator. It falls back to the primary button in the top-most dialog (Delete / Confirm / Yes) and logs which button it clicked.
+
+**Proof still needed:** a second Location + Task CI run on this commit. Its result is added to the report when it finishes.
+
+**Product verdict unchanged:** none of the 21 is a product bug. The arrow and Delete button work when clicked by hand on QA.
 
 ## Learning notes
 
 - A test that types into a field must use the platform's own select-all key. Sending "both to be safe" is not safe: the key that isn't bound on that OS can type a character.
 - When many tests fail with "element not found" after a create step, check the stored data before blaming the UI. Here the record existed with a changed name.
+- Check a fix with a CI run before saying what caused the failures. Here the first cause was real, but a second one was hiding behind it.
+- A test that swallows errors in cleanup can hide a broken helper for months. Here every delete had been failing while those tests still passed.
 - A round number in the UI (100) is worth checking against the API, because it is often a page limit. Here it was not: the site really has 100 floors.

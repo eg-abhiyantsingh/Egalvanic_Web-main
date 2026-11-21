@@ -50,9 +50,13 @@ public class LocationPage {
     private static final By CONFIRM_DELETE_BTN = By.xpath("//button[contains(@class,'MuiButton-containedError') and contains(.,'Delete')]");
     private static final By EDIT_LOCATION_BTN = By.xpath(
         "//button[@aria-label='Edit' or @title='Edit' or @aria-label='Edit Location' or @title='Edit Location']");
-    /** The "Danger Zone" delete inside the Edit dialog: "Delete Building" / "Delete Floor" / "Delete Room". */
+    /**
+     * The delete button inside the Edit dialog. In Aug 2026 it read "Delete Building" / "Delete Floor"
+     * / "Delete Room"; by 21 Nov 2026 (QA, live-checked) the Edit dialog's buttons are just
+     * [close] Cancel · Delete · Save, with Delete an outlined error button. Accept both labels.
+     */
     private static final By DIALOG_DANGER_DELETE_BTN = By.xpath(
-        "//div[@role='dialog']//button[starts-with(normalize-space(),'Delete ')]");
+        "//div[@role='dialog']//button[normalize-space()='Delete' or starts-with(normalize-space(),'Delete ')]");
     // normalize-space(.) not contains(text(),…): MUI wraps a button's label in a nested
     // <span>, so text() is the button's own empty text node and the old form matched nothing.
     private static final By SAVE_BTN = By.xpath(
@@ -592,11 +596,33 @@ public class LocationPage {
     }
 
     public void confirmDelete() {
-        WebElement confirm = wait.until(ExpectedConditions.elementToBeClickable(CONFIRM_DELETE_BTN));
+        // Original: a contained-error "Delete" button. Fallback: the confirm step's primary
+        // action in the top-most dialog, for the 21 Nov 2026 UI where the Edit dialog's own
+        // Delete is outlined and the confirmation's styling has not been pinned down yet.
+        By confirmAny = By.xpath("(//div[@role='dialog'])[last()]//button["
+                + "contains(@class,'MuiButton-contained') and (normalize-space()='Delete'"
+                + " or starts-with(normalize-space(),'Delete ') or normalize-space()='Confirm'"
+                + " or normalize-space()='Yes, Delete' or normalize-space()='Yes')]");
+        WebElement confirm = wait.until(ExpectedConditions.or(
+                ExpectedConditions.elementToBeClickable(CONFIRM_DELETE_BTN),
+                ExpectedConditions.elementToBeClickable(confirmAny)))
+                ? firstPresent(CONFIRM_DELETE_BTN, confirmAny) : null;
+        if (confirm == null) throw new RuntimeException("Delete confirmation button not found");
+        System.out.println("[LocationPage] confirmDelete: clicking '" + confirm.getText().trim() + "'");
         js.executeScript("arguments[0].scrollIntoView({block:'center'});", confirm);
         pause(200);
         js.executeScript("arguments[0].click();", confirm);
         pause(1500);
+    }
+
+    private WebElement firstPresent(By... locators) {
+        for (By by : locators) {
+            List<WebElement> found = driver.findElements(by);
+            for (int i = found.size() - 1; i >= 0; i--) {
+                if (found.get(i).isDisplayed()) return found.get(i);
+            }
+        }
+        return null;
     }
 
     // --- Tree helpers ---
@@ -616,8 +642,14 @@ public class LocationPage {
             "var el = arguments[0];" +
             "var li = el.closest('li');" +
             "if (!li) return false;" +
-            "var btn = li.querySelector('button.MuiIconButton-root:not([aria-label])');" +
+            // 21 Nov 2026 (QA, live-checked): the tree arrow is now labelled "Expand"/"Collapse".
+            // The old ':not([aria-label])' lookup matched nothing, so every expandNode fell back
+            // to clicking the text, which only SELECTS the node (floors/rooms never rendered).
+            "var btn = li.querySelector(\"button[aria-label='Expand'], button[aria-label='Collapse']\")" +
+            "  || li.querySelector('button.MuiIconButton-root:not([aria-label])');" +
             "if (!btn) return false;" +
+            "if (btn.getAttribute('aria-label') === 'Collapse') return true;" +
+            "if (btn.getAttribute('aria-label') === 'Expand') return false;" +
             "var path = btn.querySelector('svg path');" +
             "if (!path) return false;" +
             "var d = path.getAttribute('d') || '';" +
@@ -634,7 +666,8 @@ public class LocationPage {
             "var el = arguments[0];" +
             "var li = el.closest('li');" +
             "if (!li) return false;" +
-            "var btn = li.querySelector('button.MuiIconButton-root:not([aria-label])');" +
+            "var btn = li.querySelector(\"button[aria-label='Expand']\")" +
+            "  || li.querySelector('button.MuiIconButton-root:not([aria-label])');" +
             "if (btn) { btn.click(); return true; }" +
             "return false;", item);
 
