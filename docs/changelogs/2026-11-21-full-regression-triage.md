@@ -100,7 +100,18 @@ TC_TD_004 (Tasks) failed once and passed on re-run, so it is flaky.
 - The dialog delete locator accepts exactly `Delete` as well as `Delete …`.
 - `confirmDelete` keeps the old contained-error "Delete" locator. It falls back to the primary button in the top-most dialog (Delete / Confirm / Yes) and logs which button it clicked.
 
-**Proof still needed:** a second Location + Task CI run on this commit. Its result is added to the report when it finishes.
+**Proof: run 44947213364 on 9340717a (22 Nov 2026).**
+- First pass: **133 of 135 passed**. All 80 Location tests passed, up from 59. The only failures were TC_CT_004 (Tasks, known) and TC_TD_004 (Tasks, flaky: it failed once in the previous run too and passed on re-run).
+- The log shows the fix working in practice:
+  - the arrow was clicked or seen as already open 38 times;
+  - 0 "Floor not found → creating" lines, so no more duplicate floors;
+  - 13 deletes clicked through the Edit dialog, 12 confirmed, and 0 "Delete button not found".
+  - The 3 remaining "No arrow found" lines are a building or floor with no children yet. Those correctly have no arrow.
+- **About the after-re-run report:** it shows 133/135 with TC_EF_003 failing. That comes from the re-run step, not the main pass.
+  - The `rerun-failed` job ran `failed-tests-latest.xml` with 104 methods. That is the failed list from the **full** run, not this run's 2.
+  - TC_EF_003 ran there out of order, without the class's earlier steps, and failed.
+  - It passed in the main pass (11 s).
+  - Making `rerun-failed` use only the current run's failures is a separate CI change I have not made.
 
 **Product verdict unchanged:** none of the 21 is a product bug. The arrow and Delete button work when clicked by hand on QA.
 
